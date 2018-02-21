@@ -88,19 +88,23 @@
         <variable key="host-mount">{[pgbackrest-base-dir]}:/backrest</variable>
         <variable key="image-repo">pgbackrest/test</variable>
 
-        <variable key="host-s3-server">s3-server</variable>
+        <variable key="host-s3-id">s3</variable>
+        <variable key="host-s3">s3-server</variable>
 
-        <variable key="host-pg-primary">pg-primary</variable>
-        <variable key="host-pg-primary-user">{[host-user]}</variable>
-        <variable key="host-pg-primary-image">{[image-repo]}:{[host-os]}-base</variable>
-        <variable key="host-pg-primary-mount">{[host-mount]}</variable>
+        <variable key="host-pg1-id">pg1</variable>
+        <variable key="host-pg1">pg-primary</variable>
+        <variable key="host-pg1-user">{[host-user]}</variable>
+        <variable key="host-pg1-image">{[image-repo]}:{[host-os]}-base</variable>
+        <variable key="host-pg1-mount">{[host-mount]}</variable>
 
-        <variable key="host-pg-standby">pg-standby</variable>
-        <variable key="host-pg-standby-user">{[host-pg-primary-user]}</variable>
-        <variable key="host-pg-standby-image">{[host-pg-primary-image]}</variable>
-        <variable key="host-pg-standby-mount">{[host-mount]}</variable>
+        <variable key="host-pg2-id">pg2</variable>
+        <variable key="host-pg2">pg-standby</variable>
+        <variable key="host-pg2-user">{[host-pg1-user]}</variable>
+        <variable key="host-pg2-image">{[host-pg1-image]}</variable>
+        <variable key="host-pg2-mount">{[host-mount]}</variable>
 
-        <variable key="host-repo1">repo1</variable>
+        <variable key="host-repo1-id">repo1</variable>
+        <variable key="host-repo1">repository</variable>
         <variable key="host-repo1-user">{[host-user]}</variable>
         <variable key="host-repo1-image">{[image-repo]}:{[host-os]}-base</variable>
         <variable key="host-repo1-mount">{[host-mount]}</variable>
@@ -424,15 +428,15 @@
         <title>Installation</title>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add name="{[host-s3-server]}" user="root" image="{[image-repo]}:{[host-os]}-s3-server" os="{[host-os]}"/>
+        <host-add id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[image-repo]}:{[host-os]}-s3-server" os="{[host-os]}"/>
 
-        <p>A new host named <host>pg-primary</host> is created to contain the demo cluster and run <backrest/> examples.</p>
+        <p>A new host named <host>pg1</host> is created to contain the demo cluster and run <backrest/> examples.</p>
 
-        <host-add name="{[host-pg-primary]}" user="{[host-pg-primary-user]}" image="{[host-pg-primary-image]}" os="{[host-os]}" mount="{[host-pg-primary-mount]}"/>
+        <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[host-os]}" mount="{[host-pg1-mount]}"/>
 
         <p>If <backrest/> has been installed before it's best to be sure that no prior copies of it are still installed.  Depending on how old the version of pgBackRest is it may have been installed in a few different locations.  The following commands will remove all prior versions of pgBackRest.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Remove prior <backrest/> installations</title>
 
             <execute user="root">
@@ -456,14 +460,14 @@
         </execute-list>
 
         <block id="br-install">
-            <block-variable-replace key="br-install-host">{[host-pg-primary]}</block-variable-replace>
+            <block-variable-replace key="br-install-host">{[host-pg1]}</block-variable-replace>
             <block-variable-replace key="br-install-user">postgres</block-variable-replace>
             <block-variable-replace key="br-install-group">postgres</block-variable-replace>
         </block>
 
         <p><backrest/> should now be properly installed but it is best to check.  If any dependencies were missed then you will get an error when running <backrest/> from the command line.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Make sure the installation worked</title>
 
             <execute output="y" filter="n">
@@ -484,7 +488,7 @@
 
             <p>Creating the demo cluster is optional but is strongly recommended, especially for new users, since the example commands in the user guide reference the demo cluster; the examples assume the demo cluster is running on the default port (i.e. 5432). The cluster will not be started until a later section because there is still some configuration to do.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Create the demo cluster</title>
 
                 <execute user="postgres">
@@ -500,7 +504,7 @@
 
             <p>By default <postgres/> will only accept local connections.  The examples in this guide will require connections from other servers so <pg-option>listen_addresses</pg-option> is configured to listen on all interfaces.  This may not be appropriate for secure installations.</p>
 
-            <postgres-config host="{[host-pg-primary]}" file="{[postgres-config-demo]}">
+            <postgres-config host="{[host-pg1]}" file="{[postgres-config-demo]}">
                 <title>Set <pg-option>listen_addresses</pg-option></title>
 
                 <postgres-config-option key="listen_addresses">'*'</postgres-config-option>
@@ -508,7 +512,7 @@
 
             <p>For demonstration purposes the <pg-option>log_line_prefix</pg-option> setting will be minimally configured.  This keeps the log output as brief as possible to better illustrate important information.</p>
 
-            <postgres-config host="{[host-pg-primary]}" file="{[postgres-config-demo]}">
+            <postgres-config host="{[host-pg1]}" file="{[postgres-config-demo]}">
                 <title>Set <pg-option>log_line_prefix</pg-option></title>
 
                 <postgres-config-option key="log_line_prefix">''</postgres-config-option>
@@ -516,7 +520,7 @@
 
             <p keyword="co6">By default {[user-guide-os]} includes the day of the week in the log filename.  This makes automating the user guide a bit more complicated so the <pg-option>log_filename</pg-option> is set to a constant.</p>
 
-            <postgres-config host="{[host-pg-primary]}" keyword="co6" file="{[postgres-config-demo]}">
+            <postgres-config host="{[host-pg1]}" keyword="co6" file="{[postgres-config-demo]}">
                 <title>Set <pg-option>log_filename</pg-option></title>
 
                 <postgres-config-option key="log_filename">'postgresql.log'</postgres-config-option>
@@ -537,7 +541,7 @@
 
             <p>When creating the <file>{[backrest-config-demo]}</file> file, the database owner (usually <id>postgres</id>) must be granted read privileges.</p>
 
-            <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure the <postgres/> cluster data directory</title>
 
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
@@ -558,14 +562,14 @@
             <p>For this demonstration the repository will be stored on the same host as the <postgres/> server.  This is the simplest configuration and is useful in cases where traditional backup software is employed to backup the database host.</p>
 
             <block id="br-install-repo">
-                <block-variable-replace key="br-install-host">{[host-pg-primary]}</block-variable-replace>
+                <block-variable-replace key="br-install-host">{[host-pg1]}</block-variable-replace>
                 <block-variable-replace key="br-install-user">postgres</block-variable-replace>
                 <block-variable-replace key="br-install-group">postgres</block-variable-replace>
             </block>
 
             <p>The repository path must be configured so <backrest/> knows where to find it.</p>
 
-            <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure the <backrest/> repository path</title>
 
                 <backrest-config-option section="global" key="repo1-path">{[backrest-repo-path]}</backrest-config-option>
@@ -578,7 +582,7 @@
 
             <p>Backing up a running <postgres/> cluster requires WAL archiving to be enabled.  Note that <i>at least</i> one WAL segment will be created during the backup process even if no explicit writes are made to the cluster.</p>
 
-            <postgres-config host="{[host-pg-primary]}" file="{[postgres-config-demo]}">
+            <postgres-config host="{[host-pg1]}" file="{[postgres-config-demo]}">
                 <title>Configure archive settings</title>
 
                 <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
@@ -591,7 +595,7 @@
 
             <p>The <postgres/> cluster must be restarted after making these changes and before performing a backup.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Restart the {[postgres-cluster-demo]} cluster</title>
 
                 <execute user="root">
@@ -612,7 +616,7 @@
 
             <p><backrest/> expires backups based on retention options.</p>
 
-            <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure retention to 2 full backups</title>
 
                 <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
@@ -630,7 +634,7 @@
 
             <p>It is important to use a long, random passphrase for the cipher key.  A good way to generate one is to run: <code>openssl rand -base64 48</code>.</p>
 
-            <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <backrest/> repository encryption</title>
 
                 <backrest-config-option section="global" key="repo1-cipher-type">{[backrest-repo-cipher-type]}</backrest-config-option>
@@ -646,7 +650,7 @@
 
             <p>The <cmd>stanza-create</cmd> command must be run on the host where the repository is located to initialize the stanza. It is recommended that the <cmd>check</cmd> command be run after <cmd>stanza-create</cmd> to ensure archiving and backups are properly configured.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Create the stanza and check the configuration</title>
 
                 <execute output="y">
@@ -661,7 +665,7 @@
             <title>Check the Configuration</title>
             <cmd-description key="check"/>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Check the configuration</title>
 
                 <execute output="y">
@@ -671,7 +675,7 @@
             </execute-list>
 
             <!-- Decided not to show the error in this part of the user guide but added as a debug statement for reference. -->
-            <execute-list keyword="debug" host="{[host-pg-primary]}">
+            <execute-list keyword="debug" host="{[host-pg1]}">
                 <title>Example of an invalid configuration</title>
 
                 <execute output="y" err-expect="82">
@@ -687,7 +691,7 @@
 
             <p>To perform a backup of the <postgres/> cluster run <backrest/> with the <cmd>backup</cmd> command.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Backup the {[postgres-cluster-demo]} cluster</title>
 
                 <execute output="y">
@@ -705,7 +709,7 @@
 
             <p>The <br-option>type</br-option> option can be used to specify a full or differential backup.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Differential backup of the {[postgres-cluster-demo]} cluster</title>
 
                 <execute output="y">
@@ -743,7 +747,7 @@
 
             <p>Use the <cmd>info</cmd> command to get information about backups.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Get info for the {[postgres-cluster-demo]} cluster</title>
 
                 <execute filter="n" output="y">
@@ -771,7 +775,7 @@
 
             <p>Backups can protect you from a number of disaster scenarios, the most common of which are hardware failure and data corruption.  The easiest way to simulate data corruption is to remove an important <postgres/> cluster file.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Stop the {[postgres-cluster-demo]} cluster and delete the <file>pg_control</file> file</title>
 
                 <execute user="root">
@@ -785,7 +789,7 @@
 
             <p>Starting the cluster without this important file will result in an error.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Attempt to start the corrupted {[postgres-cluster-demo]} cluster</title>
 
                 <execute keyword="default" user="root" output="y" err-expect="1">
@@ -814,7 +818,7 @@
 
             <p>To restore a backup of the <postgres/> cluster run <backrest/> with the <cmd>restore</cmd> command. The cluster needs to be stopped (in this case it is already stopped) and all files must be removed from the <postgres/> data directory.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Remove old files from {[postgres-cluster-demo]} cluster</title>
 
                 <execute>
@@ -822,7 +826,7 @@
                 </execute>
             </execute-list>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Restore the {[postgres-cluster-demo]} cluster and start <postgres/></title>
 
                 <execute>
@@ -856,7 +860,7 @@
 
             <p>By default <backrest/> will wait for the next regularly scheduled checkpoint before starting a backup.  Depending on the <pg-option>checkpoint_timeout</pg-option> and <pg-option>checkpoint_segments</pg-option> settings in <postgres/> it may be quite some time before a checkpoint completes and the backup can begin.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Incremental backup of the {[postgres-cluster-demo]} cluster with the regularly scheduled checkpoint</title>
 
                 <execute output="y">
@@ -868,13 +872,13 @@
 
             <p>When <br-setting>{[dash]}-start-fast</br-setting> is passed on the command-line or  <br-setting>start-fast=y</br-setting> is set in <file>{[backrest-config-demo]}</file> an immediate checkpoint is requested and the backup will start more quickly. This is convenient for testing and for ad-hoc backups.  For instance, if a backup is being taken at the beginning of a release window it makes no sense to wait for a checkpoint.  Since regularly scheduled backups generally only happen once per day it is unlikely that enabling the <br-option>start-fast</br-option> in <file>{[backrest-config-demo]}</file> will negatively affect performance, however for high-volume transactional systems you may want to pass <br-setting>{[dash]}-start-fast</br-setting> on the command-line instead. Alternately, it is possible to override the setting in the configuration file by passing <br-setting>{[dash]}-no-start-fast</br-setting> on the command-line.</p>
 
-            <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Enable the <br-option>start-fast</br-option> option</title>
 
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
             </backrest-config>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Incremental backup of the {[postgres-cluster-demo]} cluster with an immediate checkpoint</title>
 
                 <execute output="y">
@@ -893,7 +897,7 @@
 
             <p>Here an error is intentionally caused by removing repository permissions.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Revoke write privileges in the <backrest/> repository and attempt a backup</title>
 
                 <execute user="root">
@@ -909,7 +913,7 @@
 
             <p>Even when the permissions are fixed <backrest/> will still be unable to perform a backup because the <postgres/> cluster is stuck in backup mode.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Restore write privileges in the <backrest/> repository and attempt a backup</title>
 
                 <execute user="root">
@@ -925,7 +929,7 @@
 
             <p>Enabling the <br-option>stop-auto</br-option> option allows <backrest/> to stop the current backup if it detects that no other <backrest/> backup process is running.</p>
 
-            <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Enable the <br-option>stop-auto</br-option> option</title>
 
                 <backrest-config-option section="global" key="stop-auto">y</backrest-config-option>
@@ -933,7 +937,7 @@
 
             <p>Now <backrest/> will stop the old backup and start a new one so the process completes successfully.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Perform an incremental backup</title>
 
                 <execute output="y">
@@ -968,7 +972,7 @@
 
             <p>Set <br-option>repo1-retention-full</br-option> to the number of full backups required.  New backups must be completed before expiration will occur &amp;mdash; that means if <br-setting>repo1-retention-full=2</br-setting> then there will be three full backups stored before the oldest one is expired.</p>
 
-            <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>repo1-retention-full</br-option></title>
 
                 <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
@@ -976,7 +980,7 @@
 
             <p>Backup <br-setting>repo1-retention-full=2</br-setting> but currently there is only one full backup so the next full backup to run will not expire any full backups.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Perform a full backup</title>
 
                 <execute output="y">
@@ -992,7 +996,7 @@
 
             <p>Archive <i>is</i> expired because WAL segments were generated before the oldest backup.  These are not useful for recovery &amp;mdash; only WAL segments generated after a backup can be used to recover that backup.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Perform a full backup</title>
 
                 <execute output="y">
@@ -1011,7 +1015,7 @@
 
             <p>Set <br-option>repo1-retention-diff</br-option> to the number of differential backups required.  Differentials only rely on the prior full backup so it is possible to create a <quote>rolling</quote> set of differentials for the last day or more.  This allows quick restores to recent points-in-time but reduces overall space consumption.</p>
 
-            <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>repo1-retention-diff</br-option></title>
 
                 <backrest-config-option section="global" key="repo1-retention-diff">1</backrest-config-option>
@@ -1019,7 +1023,7 @@
 
             <p>Backup <br-setting>repo1-retention-diff=1</br-setting> so two differentials will need to be performed before one is expired.  An incremental backup is added to demonstrate incremental expiration.  Incremental backups cannot be expired independently &amp;mdash; they are always expired with their related full or differential backup.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Perform differential and incremental backups</title>
 
                 <execute>
@@ -1037,7 +1041,7 @@
 
             <p>Now performing a differential backup will expire the previous differential and incremental backups leaving only one differential backup.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Perform a differential backup</title>
 
                 <execute output="y">
@@ -1056,13 +1060,13 @@
 
             <p>Expiring archive will never remove WAL segments that are required to make a backup consistent. However, since Point-in-Time-Recovery (PITR) only works on a continuous WAL stream, care should be taken when aggressively expiring archive outside of the normal backup expiration process.</p>
 
-            <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>repo1-retention-diff</br-option></title>
 
                 <backrest-config-option section="global" key="repo1-retention-diff">2</backrest-config-option>
             </backrest-config>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Perform differential backup</title>
 
                 <execute show="n" variable-key="backup-diff-first">
@@ -1087,7 +1091,7 @@
                 </execute>
             </execute-list>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Expire archive</title>
 
                 <execute output="y">
@@ -1115,7 +1119,7 @@
 
             <p><link section="/quickstart/perform-restore">Restore a Backup</link> in <link section="/quickstart">Quick Start</link> required the database cluster directory to be cleaned before the <cmd>restore</cmd> could be performed.  The <br-option>delta</br-option> option allows <backrest/> to automatically determine which files in the database cluster directory can be preserved and which ones need to be restored from the backup &amp;mdash; it also <i>removes</i> files not present in the backup manifest so it will dispose of divergent changes.  This is accomplished by calculating a <link url="https://en.wikipedia.org/wiki/SHA-1">SHA-1</link> cryptographic hash for each file in the database cluster directory.  If the <id>SHA-1</id> hash does not match the hash stored in the backup then that file will be restored.  This operation is very efficient when combined with the <br-option>process-max</br-option> option.  Since the <postgres/> server is shut down during the restore, a larger number of processes can be used than might be desirable during a backup when the <postgres/> server is running.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Stop the {[postgres-cluster-demo]} cluster, perform delta restore</title>
 
                 <execute user="root">
@@ -1129,7 +1133,7 @@
                 </execute>
             </execute-list>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Restart <postgres/></title>
 
                 <execute user="root">
@@ -1150,7 +1154,7 @@
 
             <p>To demonstrate this feature two databases are created: test1 and test2.  A fresh backup is run so <backrest/> is aware of the new databases.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Create two test databases and perform a backup</title>
 
                 <execute output="y" filter="n">
@@ -1172,7 +1176,7 @@
 
             <p>Each test database will be seeded with tables and data to demonstrate that recovery works with selective restore.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Create a test table in each database</title>
 
                 <execute output="y" filter="n">
@@ -1192,7 +1196,7 @@
 
             <p>One of the main reasons to use selective restore is to save space.  The size of the test1 database is shown here so it can be compared with the disk utilization after a selective restore.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Show space used by test1 database</title>
 
                 <execute output="y" filter="n">
@@ -1204,7 +1208,7 @@
 
             <p>Stop the cluster and restore only the test2 database.  Built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Restore from last backup including only the test2 database</title>
 
                 <execute user="root">
@@ -1227,7 +1231,7 @@
 
             <p>Once recovery is complete the test2 database will contain all previously created tables and data.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Demonstrate that the test2 database was recovered</title>
 
                 <execute output="y" filter="n">
@@ -1239,7 +1243,7 @@
 
             <p>The test1 database, despite successful recovery, is not accessible.  This is because the entire database was restored as sparse, zeroed files.  <postgres/> can successfully apply WAL on the zeroed files but the database as a whole will not be valid because key files contain no data.  This is purposeful to prevent the database from being accidentally used when it might contain partial data that was applied during WAL replay.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Attempting to connect to the test1 database will produce an error</title>
 
                 <execute output="y" filter="n" err-expect="2">
@@ -1254,7 +1258,7 @@
 
             <p>It is clear that the test1 database uses far less disk space during the selective restore than it would have if the entire database had been restored.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Show space used by test1 database after recovery</title>
 
                 <execute output="y" filter="n">
@@ -1266,7 +1270,7 @@
 
             <p>At this point the only action that can be taken on the invalid test1 database is <id>drop database</id>. <backrest/> does not automatically drop the database since this cannot be done until recovery is complete and the cluster is accessible.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Drop the test1 database</title>
 
                 <execute output="y" filter="n">
@@ -1278,7 +1282,7 @@
 
             <p>Now that the invalid test1 database has been dropped only the test2 and built-in databases remain.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>List remaining databases</title>
 
                 <execute output="y" filter="n">
@@ -1299,7 +1303,7 @@
 
         <p>Point-in-Time Recovery (PITR) allows the WAL to be played from the last backup to a specified time, transaction id, or recovery point.  For common recovery scenarios time-based recovery is arguably the most useful.  A typical recovery scenario is to restore a table that was accidentally dropped or data that was accidentally deleted.  Recovering a dropped table is more dramatic so that's the example given here but deleted data would be recovered in exactly the same way.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Backup the {[postgres-cluster-demo]} cluster and create a table with very important data</title>
 
             <execute>
@@ -1320,7 +1324,7 @@
 
         <p>It is important to represent the time as reckoned by <postgres/> and to include timezone offsets.  This reduces the possibility of unintended timezone conversions and an unexpected recovery result.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Get the time from <postgres/></title>
 
             <execute output="y" filter="n" variable-key="time-recovery-timestamp">
@@ -1332,7 +1336,7 @@
 
         <p>Now that the time has been recorded the table is dropped.  In practice finding the exact time that the table was dropped is a lot harder than in this example.  It may not be possible to find the exact time, but some forensic work should be able to get you close.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Drop the important table</title>
 
             <execute output="y" err-expect="1">
@@ -1346,7 +1350,7 @@
 
         <p>Now the restore can be performed with time-based recovery to bring back the missing table.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Stop <postgres/>, restore the {[postgres-cluster-demo]} cluster to <id>{[time-recovery-timestamp]}</id>, and display <file>recovery.conf</file></title>
 
             <execute user="root">
@@ -1370,7 +1374,7 @@
 
         <p>The <file>recovery.conf</file> file has been automatically generated by <backrest/> so <postgres/> can be started immediately. Once <postgres/> has finished recovery the table will exist again and can be queried.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Start <postgres/> and check that the important table exists</title>
 
             <execute user="root">
@@ -1389,7 +1393,7 @@
 
         <p>The <postgres/> log also contains valuable information.  It will indicate the time and transaction where the recovery stopped and also give the time of the last transaction to be applied.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Examine the <postgres/> log output</title>
 
             <execute output="y">
@@ -1400,7 +1404,7 @@
 
         <p>This example was rigged to give the correct result.  If a backup after the required time is chosen then <postgres/> will not be able to recover the lost table. <postgres/> can only play forward, not backward.  To demonstrate this the important table must be dropped (again).</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Drop the important table (again)</title>
 
             <execute output="y" err-expect="1">
@@ -1414,7 +1418,7 @@
 
         <p>Now take a new backup and attempt recovery from the new backup.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Perform a backup then attempt recovery from that backup</title>
 
             <execute show="n" variable-key="backup-last">
@@ -1454,7 +1458,7 @@
 
         <p>Looking at the log output it's not obvious that recovery failed to restore the table.  The key is to look for the presence of the <quote>recovery stopping before...</quote> and <quote>last completed transaction...</quote> log messages.  If they are not present then the recovery to the specified point-in-time was not successful.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Examine the <postgres/> log output to discover the recovery was not successful</title>
 
             <execute output="y">
@@ -1465,7 +1469,7 @@
 
         <p>Using an earlier backup will allow <postgres/> to play forward to the correct time.  The <cmd>info</cmd> command can be used to find the next to last backup.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Get backup info for the {[postgres-cluster-demo]} cluster</title>
 
             <execute filter="n" output="y">
@@ -1476,7 +1480,7 @@
 
         <p>The default behavior for restore is to use the last backup but an earlier backup can be specified with the <br-option>{[dash]}-set</br-option> option.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Stop <postgres/>, restore from the selected backup, and start <postgres/></title>
 
             <execute user="root">
@@ -1511,7 +1515,7 @@
 
         <p>Now the the log output will contain the expected <quote>recovery stopping before...</quote> and <quote>last completed transaction...</quote> messages showing that the recovery was successful.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Examine the <postgres/> log output for log messages indicating success</title>
 
             <execute output="y">
@@ -1527,14 +1531,14 @@
 
         <p><backrest/> supports storing repositories in <proper>Amazon S3</proper>.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.</p>
 
-        <backrest-config host="{[host-pg-primary]}" show="n" file="{[backrest-config-demo]}">
+        <backrest-config host="{[host-pg1]}" show="n" file="{[backrest-config-demo]}">
             <title>Clear the cipher settings</title>
 
             <backrest-config-option section="global" key="repo1-cipher-type">none</backrest-config-option>
             <backrest-config-option section="global" key="repo1-cipher-pass"></backrest-config-option>
         </backrest-config>
 
-        <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
+        <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
             <title>Configure <proper>S3</proper></title>
 
             <backrest-config-option section="global" key="repo1-type">s3</backrest-config-option>
@@ -1551,12 +1555,12 @@
 
         <p>Commands are run exactly as if the repository were stored on a local disk.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Create the stanza</title>
 
             <!-- set host entries to redirect aws to local s3 server -->
             <execute user="root" show='n'>
-                <exe-cmd>echo "{[host-s3-server-ip]} demo-bucket.s3.amazonaws.com s3.amazonaws.com" |
+                <exe-cmd>echo "{[host-s3-ip]} demo-bucket.s3.amazonaws.com s3.amazonaws.com" |
                     sudo tee -a /etc/hosts</exe-cmd>
             </execute>
 
@@ -1572,7 +1576,7 @@
 
         <p>File creation time in <proper>S3</proper> is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Backup the {[postgres-cluster-demo]} cluster</title>
 
             <execute output="y">
@@ -1589,7 +1593,7 @@
 
         <cmd-description key="stanza-delete"/>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Stop <postgres/> cluster to be removed</title>
 
             <execute user="root">
@@ -1597,7 +1601,7 @@
             </execute>
         </execute-list>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Stop <backrest/> for the stanza</title>
 
             <execute output="y">
@@ -1606,7 +1610,7 @@
             </execute>
         </execute-list>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Delete the stanza</title>
 
             <execute output="y">
@@ -1631,7 +1635,7 @@
 
             <p>A new host named <host>repository</host> is created to store the cluster backups.</p>
 
-            <host-add name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[host-os]}" mount="{[host-repo1-mount]}"/>
+            <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[host-os]}" mount="{[host-repo1-mount]}"/>
 
             <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository.  Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
 
@@ -1682,7 +1686,7 @@
             </execute-list>
 
             <block id="setup-ssh">
-                <block-variable-replace key="setup-ssh-host">{[host-pg-primary]}</block-variable-replace>
+                <block-variable-replace key="setup-ssh-host">{[host-pg1]}</block-variable-replace>
             </block>
         </section>
 
@@ -1696,13 +1700,13 @@
                 <backrest-config-option section="global" key="repo1-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
 
-            <p>The <host>repository</host> host must be configured with the <host>pg-primary</host> host/user and database path.  The primary will be configured as <id>db1</id> to allow a standby to be added later.</p>
+            <p>The <host>repository</host> host must be configured with the <host>{[host-pg1]}</host> host/user and database path.  The primary will be configured as <id>db1</id> to allow a standby to be added later.</p>
 
             <backrest-config host="{[host-repo1]}" owner="pgbackrest:postgres" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>pg1-host</br-option>/<br-option>pg1-host-user</br-option> and <br-option>pg1-path</br-option></title>
 
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
-                <backrest-config-option section="demo" key="pg1-host">{[host-pg-primary]}</backrest-config-option>
+                <backrest-config-option section="demo" key="pg1-host">{[host-pg1]}</backrest-config-option>
                 <backrest-config-option section="demo" key="pg1-host-user">postgres</backrest-config-option>
 
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
@@ -1714,7 +1718,7 @@
 
             <p>The database host must be configured with the repository host/user.  The default for the <br-option>repo1-host-user</br-option> option is <id>pgbackrest</id>.  If the <id>postgres</id> user does restores on the repository host it is best not to also allow the <id>postgres</id> user to perform backups.  However, the <id>postgres</id> user can read the repository directly if it is in the same group as the <id>pgbackrest</id> user.</p>
 
-            <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}" reset="y">
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}" reset="y">
                 <title>Configure <br-option>repo1-host</br-option>/<br-option>repo1-host-user</br-option></title>
 
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
@@ -1741,7 +1745,7 @@
 
             <p>Check that the configuration is correct on both the <host>database</host> and <host>repository</host> hosts. More information about the <cmd>check</cmd> command can be found in <link section="/quickstart/check-configuration">Check the Configuration</link>.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Check the configuration</title>
 
                 <execute output="y" filter="n" >
@@ -1781,7 +1785,7 @@
 
             <p>To perform a restore of the <postgres/> cluster run <backrest/> with the <cmd>restore</cmd> command on the <host>database</host> host.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Stop the {[postgres-cluster-demo]} cluster, restore, and restart <postgres/></title>
 
                 <execute user="root">
@@ -1822,7 +1826,7 @@
 
             <p><b>NOTE:</b> In the original implementation of asynchronous archiving, WAL segments were copied to the spool directory before compression and transfer.  The new implementation copies WAL directly from the <path>pg_xlog</path> directory.  If asynchronous archiving was utilized in <id>v1.12</id> or prior, read the <id>v1.13</id> release notes carefully before upgrading.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Create the spool directory</title>
 
                 <execute user="root">
@@ -1835,7 +1839,7 @@
 
             <p>The spool path must be configured and asynchronous archiving enabled.  Asynchronous archiving automatically confers some benefit by reducing the number of ssh connections made to the backup server, but setting <br-option>process-max</br-option> can drastically improve performance.  Be sure not to set <br-option>process-max</br-option> so high that it affects normal database operations.</p>
 
-            <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure the spool path and asynchronous archiving</title>
 
                 <backrest-config-option section="global" key="spool-path">{[spool-path]}</backrest-config-option>
@@ -1845,7 +1849,7 @@
 
             <p>The <file>archive-async.log</file> file can be used to monitor the activity of the asynchronous process.  A good way to test this is to quickly push a number of WAL segments.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Test parallel asynchronous archiving</title>
 
                 <execute output="n" show="n">
@@ -1871,7 +1875,7 @@
 
             <p>Now the log file will contain parallel, asynchronous activity.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Check results in the log</title>
 
                 <execute output="y">
@@ -1941,7 +1945,7 @@
 
         <p>Sometimes it is useful to prevent <backrest/> from running on a system.  For example, when failing over from a primary to a standby it's best to prevent <backrest/> from running on the old primary in case <postgres/> gets restarted or can't be completely killed.  This will also prevent <backrest/> from running on <id>cron</id>.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Stop the <backrest/> services</title>
 
             <execute>
@@ -1962,7 +1966,7 @@
 
         <p>Specify the <br-option>--force</br-option> option to terminate any <backrest/> process that are currently running.  If <backrest/> is already stopped then stopping again will generate a warning.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Stop the <backrest/> services again</title>
 
             <execute output="y" filter="n">
@@ -1972,7 +1976,7 @@
 
         <p>Start <backrest/> processes again with the <cmd>start</cmd> command.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Start the <backrest/> services</title>
 
             <execute>
@@ -1982,7 +1986,7 @@
 
         <p>It is also possible to stop <backrest/> for a single stanza.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Stop <backrest/> services for the <id>demo</id> stanza</title>
 
             <execute>
@@ -2003,7 +2007,7 @@
 
         <p>The stanza must also be specified when starting the <backrest/> processes for a single stanza.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Start the <backrest/> services for the <id>demo</id> stanza</title>
 
             <execute>
@@ -2022,12 +2026,12 @@
         <section id="installation">
             <title>Installation</title>
 
-            <p>A new host named <host>pg-standby</host> is created to run the standby.</p>
+            <p>A new host named <host>{[host-pg2]}</host> is created to run the standby.</p>
 
-            <host-add name="{[host-pg-standby]}" user="{[host-pg-standby-user]}" image="{[host-pg-standby-image]}" os="{[host-os]}" mount="{[host-pg-standby-mount]}"/>
+            <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[host-os]}" mount="{[host-pg2-mount]}"/>
 
             <block id="br-install">
-                <block-variable-replace key="br-install-host">{[host-pg-standby]}</block-variable-replace>
+                <block-variable-replace key="br-install-host">{[host-pg2]}</block-variable-replace>
                 <block-variable-replace key="br-install-user">postgres</block-variable-replace>
                 <block-variable-replace key="br-install-group">postgres</block-variable-replace>
             </block>
@@ -2042,7 +2046,7 @@
             </block>
 
             <block id="setup-ssh">
-                <block-variable-replace key="setup-ssh-host">{[host-pg-standby]}</block-variable-replace>
+                <block-variable-replace key="setup-ssh-host">{[host-pg2]}</block-variable-replace>
             </block>
         </section>
 
@@ -2052,9 +2056,9 @@
 
             <p>A hot standby performs replication using the WAL archive and allows read-only queries.</p>
 
-            <p><backrest/> configuration is very similar to <host>pg-primary</host> except that the <pg-option>standby_mode</pg-option> setting will be enabled to keep the cluster in recovery mode when the end of the WAL stream has been reached.</p>
+            <p><backrest/> configuration is very similar to <host>{[host-pg1]}</host> except that the <pg-option>standby_mode</pg-option> setting will be enabled to keep the cluster in recovery mode when the end of the WAL stream has been reached.</p>
 
-            <backrest-config host="{[host-pg-standby]}" file="{[backrest-config-demo]}">
+            <backrest-config host="{[host-pg2]}" file="{[backrest-config-demo]}">
                 <title>Configure <backrest/> on the standby</title>
 
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
@@ -2069,7 +2073,7 @@
 
             <p keyword="default">The demo cluster must be created (even though it will be overwritten restore) in order to create the <postgres/> configuration files.</p>
 
-            <execute-list keyword="default" host="{[host-pg-standby]}">
+            <execute-list keyword="default" host="{[host-pg2]}">
                 <title>Create demo cluster</title>
 
                 <execute user="root">
@@ -2079,7 +2083,7 @@
 
             <p keyword="co6">Create the path where <postgres/> will be restored.</p>
 
-            <execute-list keyword="co6" host="{[host-pg-standby]}">
+            <execute-list keyword="co6" host="{[host-pg2]}">
                 <title>Create <postgres/> path</title>
 
                 <execute user="postgres">
@@ -2091,7 +2095,7 @@
 
             <p>Now the standby can be created with the <cmd>restore</cmd> command.</p>
 
-            <execute-list host="{[host-pg-standby]}">
+            <execute-list host="{[host-pg2]}">
                 <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 
                 <execute keyword="default">
@@ -2109,9 +2113,9 @@
 
             <p>Note that the <pg-setting>standby_mode</pg-setting> setting has been written into the <file>recovery.conf</file> file.  Configuring recovery settings in <backrest/> means that the <file>recovery.conf</file> file does not need to be stored elsewhere since it will be properly recreated with each restore.  The <br-setting>--type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>recovery.conf</file> file in place if that behavior is preferred.</p>
 
-            <p>The <pg-setting>hot_standby</pg-setting> setting must be enabled before starting <postgres/> to allow read-only connections on <host>pg-standby</host>.  Otherwise, connection attempts will be refused.</p>
+            <p>The <pg-setting>hot_standby</pg-setting> setting must be enabled before starting <postgres/> to allow read-only connections on <host>{[host-pg2]}</host>.  Otherwise, connection attempts will be refused.</p>
 
-            <postgres-config host="{[host-pg-standby]}" file="{[postgres-config-demo]}">
+            <postgres-config host="{[host-pg2]}" file="{[postgres-config-demo]}">
                 <title>Enable <pg-option>hot_standby</pg-option> and configure logging</title>
 
                 <postgres-config-option key="hot_standby">on</postgres-config-option>
@@ -2119,7 +2123,7 @@
                 <postgres-config-option key="log_line_prefix">''</postgres-config-option>
             </postgres-config>
 
-            <execute-list host="{[host-pg-standby]}">
+            <execute-list host="{[host-pg2]}">
                 <title>Start <postgres/></title>
 
                 <execute user="root" show="n">
@@ -2137,7 +2141,7 @@
 
             <p>The <postgres/> log gives valuable information about the recovery.  Note especially that the cluster has entered standby mode and is ready to accept read-only connections.</p>
 
-            <execute-list host="{[host-pg-standby]}">
+            <execute-list host="{[host-pg2]}">
                 <title>Examine the <postgres/> log output for log messages indicating success</title>
 
                 <execute output="y">
@@ -2146,9 +2150,9 @@
                 </execute>
             </execute-list>
 
-            <p>An easy way to test that replication is properly configured is to create a table on <host>pg-primary</host>.</p>
+            <p>An easy way to test that replication is properly configured is to create a table on <host>{[host-pg1]}</host>.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Create a new table on the primary</title>
 
                 <execute output="y">
@@ -2164,9 +2168,9 @@
                 </execute>
             </execute-list>
 
-            <p>And then query the same table on <host>pg-standby</host>.</p>
+            <p>And then query the same table on <host>{[host-pg2]}</host>.</p>
 
-            <execute-list host="{[host-pg-standby]}">
+            <execute-list host="{[host-pg2]}">
                 <title>Query new table on the standby</title>
 
                 <execute output="y" err-expect="1">
@@ -2175,11 +2179,11 @@
                 </execute>
             </execute-list>
 
-            <p>So, what went wrong?  Since <postgres/> is pulling WAL segments from the archive to perform replication, changes won't be seen on the standby until the WAL segment that contains those changes is pushed from <host>pg-primary</host>.</p>
+            <p>So, what went wrong?  Since <postgres/> is pulling WAL segments from the archive to perform replication, changes won't be seen on the standby until the WAL segment that contains those changes is pushed from <host>{[host-pg1]}</host>.</p>
 
             <p>This can be done manually by calling <code>pg_switch_xlog()</code> which pushes the current WAL segment to the archive (a new WAL segment is created to contain further changes).</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Call <code>pg_switch_xlog()</code></title>
 
                 <execute output="y" filter="n">
@@ -2189,9 +2193,9 @@
                 </execute>
             </execute-list>
 
-            <p>Now after a short delay the table will appear on <host>pg-standby</host>.</p>
+            <p>Now after a short delay the table will appear on <host>{[host-pg2]}</host>.</p>
 
-            <execute-list host="{[host-pg-standby]}">
+            <execute-list host="{[host-pg2]}">
                 <title>Now the new table exists on the standby (may require a few retries)</title>
 
                 <execute output="y" retry="15" filter="n">
@@ -2203,7 +2207,7 @@
 
             <p>Check the standby configuration for access to the repository.</p>
 
-            <execute-list host="{[host-pg-standby]}">
+            <execute-list host="{[host-pg2]}">
                 <title>Check the configuration</title>
 
                 <execute output="y">
@@ -2221,7 +2225,7 @@
 
             <p>Streaming replication requires a user with the replication privilege.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Create replication user</title>
 
                 <execute output="y" filter="n">
@@ -2232,15 +2236,15 @@
                 </execute>
             </execute-list>
 
-            <p>The <file>pg_hba.conf</file> file must be updated to allow the standby to connect as the replication user.  Be sure to replace the IP address below with the actual IP address of your <host>pg-primary</host>.  A reload will be required after modifying the <file>pg_hba.conf</file> file.</p>
+            <p>The <file>pg_hba.conf</file> file must be updated to allow the standby to connect as the replication user.  Be sure to replace the IP address below with the actual IP address of your <host>{[host-pg1]}</host>.  A reload will be required after modifying the <file>pg_hba.conf</file> file.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Create <file>pg_hba.conf</file> entry for replication user</title>
 
                 <execute>
                     <exe-cmd>
                         sh -c 'echo
-                        "host    replication     replicator      {[host-pg-standby-ip]}/32           md5"
+                        "host    replication     replicator      {[host-pg2-ip]}/32           md5"
                         >> {[postgres-hba-demo]}'
                     </exe-cmd>
                 </execute>
@@ -2252,21 +2256,21 @@
 
             <p>The standby needs to know how to contact the primary so the <pg-option>primary_conninfo</pg-option> setting will be configured in <backrest/>.</p>
 
-            <backrest-config host="{[host-pg-standby]}" file="{[backrest-config-demo]}">
+            <backrest-config host="{[host-pg2]}" file="{[backrest-config-demo]}">
                 <title>Set <pg-option>primary_conninfo</pg-option></title>
 
-                <backrest-config-option section="demo" key="recovery-option">primary_conninfo=host={[host-pg-primary-ip]} port=5432 user=replicator</backrest-config-option>
+                <backrest-config-option section="demo" key="recovery-option">primary_conninfo=host={[host-pg1-ip]} port=5432 user=replicator</backrest-config-option>
             </backrest-config>
 
             <p>It is possible to configure a password in the <pg-option>primary_conninfo</pg-option> setting but using a <file>.pgpass</file> file is more flexible and secure.</p>
 
-            <execute-list host="{[host-pg-standby]}">
+            <execute-list host="{[host-pg2]}">
                 <title>Configure the replication password in the <file>.pgpass</file> file.</title>
 
                 <execute>
                     <exe-cmd>
                         sh -c 'echo
-                        "{[host-pg-primary-ip]}:*:replication:replicator:jw8s0F4"
+                        "{[host-pg1-ip]}:*:replication:replicator:jw8s0F4"
                         >> {[postgres-pgpass]}'
                     </exe-cmd>
                 </execute>
@@ -2278,7 +2282,7 @@
 
             <p>Now the standby can be created with the <cmd>restore</cmd> command.</p>
 
-            <execute-list host="{[host-pg-standby]}">
+            <execute-list host="{[host-pg2]}">
                 <title>Stop <postgres/> and restore the {[postgres-cluster-demo]} standby cluster</title>
 
                 <execute user="root" err-suppress="y">
@@ -2294,15 +2298,15 @@
                 </execute>
             </execute-list>
 
-            <p keyword="co6">By default {[user-guide-os]} stores the <file>postgresql.conf</file> file in the <postgres/> data directory.  That means the change made to <file>postgresql.conf</file> was overwritten by the last restore and the <pg-option>hot_standby</pg-option> setting must be enabled again.  Other solutions to this problem are to store the <file>postgresql.conf</file> file elsewhere or to enable the <pg-option>hot_standby</pg-option> setting on the <host>pg-primary</host> host where it will be ignored.</p>
+            <p keyword="co6">By default {[user-guide-os]} stores the <file>postgresql.conf</file> file in the <postgres/> data directory.  That means the change made to <file>postgresql.conf</file> was overwritten by the last restore and the <pg-option>hot_standby</pg-option> setting must be enabled again.  Other solutions to this problem are to store the <file>postgresql.conf</file> file elsewhere or to enable the <pg-option>hot_standby</pg-option> setting on the <host>{[host-pg1]}</host> host where it will be ignored.</p>
 
-            <postgres-config host="{[host-pg-standby]}" keyword="co6" file="{[postgres-config-demo]}">
+            <postgres-config host="{[host-pg2]}" keyword="co6" file="{[postgres-config-demo]}">
                 <title>Enable <pg-option>hot_standby</pg-option></title>
 
                 <postgres-config-option key="hot_standby">on</postgres-config-option>
             </postgres-config>
 
-            <execute-list host="{[host-pg-standby]}">
+            <execute-list host="{[host-pg2]}">
                 <title>Start <postgres/></title>
 
                 <execute user="root" show="n">
@@ -2320,7 +2324,7 @@
 
             <p>The <postgres/> log will confirm that streaming replication has started.</p>
 
-            <execute-list host="{[host-pg-standby]}">
+            <execute-list host="{[host-pg2]}">
                 <title>Examine the <postgres/> log output for log messages indicating success</title>
 
                 <execute output="y">
@@ -2329,9 +2333,9 @@
                 </execute>
             </execute-list>
 
-            <p>Now when a table is created on <host>pg-primary</host> it will appear on <host>pg-standby</host> quickly and without the need to call <code>pg_switch_xlog()</code>.</p>
+            <p>Now when a table is created on <host>{[host-pg1]}</host> it will appear on <host>{[host-pg2]}</host> quickly and without the need to call <code>pg_switch_xlog()</code>.</p>
 
-            <execute-list host="{[host-pg-primary]}">
+            <execute-list host="{[host-pg1]}">
                 <title>Create a new table on the primary</title>
 
                 <execute output="y">
@@ -2347,7 +2351,7 @@
                 </execute>
             </execute-list>
 
-            <execute-list host="{[host-pg-standby]}">
+            <execute-list host="{[host-pg2]}">
                 <title>Query table on the standby</title>
 
                 <execute output="y" retry="2" filter="n">
@@ -2363,13 +2367,13 @@
     <section id="standby-backup" depend="/replication/streaming">
         <title>Backup from a Standby</title>
 
-        <p><backrest/> can perform backups on a standby instead of the primary.  Standby backups require the <host>pg-standby</host> host to be configured and the <br-option>backup-standby</br-option> option enabled.  If more than one standby is configured then the first running standby found will be used for the backup.</p>
+        <p><backrest/> can perform backups on a standby instead of the primary.  Standby backups require the <host>{[host-pg2]}</host> host to be configured and the <br-option>backup-standby</br-option> option enabled.  If more than one standby is configured then the first running standby found will be used for the backup.</p>
 
         <backrest-config host="{[host-repo1]}" owner="pgbackrest:postgres" file="{[backrest-config-demo]}">
             <title>Configure <br-option>pg2-host</br-option>/<br-option>pg2-host-user</br-option> and <br-option>pg2-path</br-option></title>
 
             <backrest-config-option section="demo" key="pg2-path">{[pg-path]}</backrest-config-option>
-            <backrest-config-option section="demo" key="pg2-host">{[host-pg-standby]}</backrest-config-option>
+            <backrest-config-option section="demo" key="pg2-host">{[host-pg2]}</backrest-config-option>
             <backrest-config-option section="demo" key="pg2-host-user">postgres</backrest-config-option>
 
             <backrest-config-option section="global" key="backup-standby">y</backrest-config-option>
@@ -2378,17 +2382,17 @@
         <p>Both the primary and standby databases are required to perform the backup, though the vast majority of the files will be copied from the standby to reduce load on the primary.  The database hosts can be configured in any order.  <backrest/> will automatically determine which is the primary and which is the standby.</p>
 
         <execute-list host="{[host-repo1]}">
-            <title>Backup the {[postgres-cluster-demo]} cluster from <host>pg-standby</host></title>
+            <title>Backup the {[postgres-cluster-demo]} cluster from <host>pg2</host></title>
 
             <execute user="pgbackrest" output="y" filter="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --log-level-console=detail backup</exe-cmd>
-                <exe-highlight>backup file pg-primary|replay on the standby</exe-highlight>
+                <exe-highlight>backup file {[host-pg1]}|replay on the standby</exe-highlight>
             </execute>
         </execute-list>
 
-        <p>This incremental backup shows that most of the files are copied from the <host>pg-standby</host> host and only a few are copied from the <host>pg-primary</host> host.</p>
+        <p>This incremental backup shows that most of the files are copied from the <host>{[host-pg2]}</host> host and only a few are copied from the <host>{[host-pg1]}</host> host.</p>
 
-        <p><backrest/> creates a standby backup that is identical to a backup performed on the primary.  It does this by starting/stopping the backup on the <host>pg-primary</host> host, copying only files that are replicated from the <host>pg-standby</host> host, then copying the remaining few files from the <host>pg-primary</host> host.  This means that logs and statistics from the primary database will be included in the backup.</p>
+        <p><backrest/> creates a standby backup that is identical to a backup performed on the primary.  It does this by starting/stopping the backup on the <host>{[host-pg1]}</host> host, copying only files that are replicated from the <host>{[host-pg2]}</host> host, then copying the remaining few files from the <host>{[host-pg1]}</host> host.  This means that logs and statistics from the primary database will be included in the backup.</p>
     </section>
 
     <!-- SECTION => STANZA UPGRADE -->
@@ -2398,7 +2402,7 @@
 
         <p>The following instructions are not meant to be a comprehensive guide for upgrading <postgres/>, rather they outline the general process for upgrading a primary and standby with the intent of demonstrating the steps required to reconfigure <backrest/>. It is recommended that a backup be taken prior to upgrading.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Stop old cluster and install new <postgres/> version</title>
 
             <execute user="root">
@@ -2417,7 +2421,7 @@
 
         <p>Stop the old cluster on the standby since it will be restored from the newly upgraded cluster.</p>
 
-        <execute-list host="{[host-pg-standby]}">
+        <execute-list host="{[host-pg2]}">
             <title>Stop old cluster and install new <postgres/> version</title>
 
             <execute user="root">
@@ -2436,7 +2440,7 @@
 
         <p>Create the new cluster and perform upgrade.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Create new cluster and perform the upgrade</title>
 
             <execute user="postgres">
@@ -2479,7 +2483,7 @@
 
         <p>Configure the new cluster settings and port.</p>
 
-        <postgres-config host="{[host-pg-primary]}" file="{[postgres-config-demo-upgrade]}">
+        <postgres-config host="{[host-pg1]}" file="{[postgres-config-demo-upgrade]}">
             <title>Configure <postgres/></title>
 
             <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
@@ -2493,13 +2497,13 @@
 
         <p>Update the <backrest/> configuration on all systems to point to the new cluster.</p>
 
-        <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
+        <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
             <title>Upgrade the <br-option>pg1-path</br-option></title>
 
             <backrest-config-option section="demo" key="pg1-path">{[pg-path-upgrade]}</backrest-config-option>
         </backrest-config>
 
-        <backrest-config host="{[host-pg-standby]}" file="{[backrest-config-demo]}">
+        <backrest-config host="{[host-pg2]}" file="{[backrest-config-demo]}">
             <title>Upgrade the <br-option>pg-path</br-option></title>
 
             <backrest-config-option section="demo" key="pg1-path">{[pg-path-upgrade]}</backrest-config-option>
@@ -2514,7 +2518,7 @@
             <backrest-config-option section="global" key="backup-standby">n</backrest-config-option>
         </backrest-config>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Copy hba configuration</title>
 
             <execute user="root">
@@ -2537,7 +2541,7 @@
 
         <p>Start the new cluster and confirm it is successfully installed.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Start new cluster</title>
 
             <execute user="root" output="y">
@@ -2547,7 +2551,7 @@
 
         <p>Test configuration using the <cmd>check</cmd> command.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Check configuration</title>
 
             <execute output="y" filter="n" >
@@ -2561,7 +2565,7 @@
 
         <p>Remove the old cluster.</p>
 
-        <execute-list host="{[host-pg-primary]}">
+        <execute-list host="{[host-pg1]}">
             <title>Remove old cluster</title>
 
             <execute keyword="default" user="root">
@@ -2575,7 +2579,7 @@
 
         <p>Install the new <postgres/> binaries on the standby and create the cluster.</p>
 
-        <execute-list host="{[host-pg-standby]}">
+        <execute-list host="{[host-pg2]}">
             <title>Remove old cluster and create the new cluster</title>
 
             <execute keyword="default" user="root">
@@ -2617,7 +2621,7 @@
             </execute>
         </execute-list>
 
-        <execute-list host="{[host-pg-standby]}">
+        <execute-list host="{[host-pg2]}">
             <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 
             <execute keyword="default">
@@ -2629,13 +2633,13 @@
             </execute>
         </execute-list>
 
-        <postgres-config host="{[host-pg-standby]}" file="{[postgres-config-demo-upgrade]}">
+        <postgres-config host="{[host-pg2]}" file="{[postgres-config-demo-upgrade]}">
             <title>Configure <postgres/></title>
 
             <postgres-config-option key="hot_standby">on</postgres-config-option>
         </postgres-config>
 
-        <execute-list host="{[host-pg-standby]}">
+        <execute-list host="{[host-pg2]}">
             <title>Start <postgres/> and check the <backrest/> configuration</title>
 
             <execute user="root">
