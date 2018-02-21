@@ -174,6 +174,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <id>id</id> param for hosts created with <code>host-add</code>.  The <id>host-*-ip</id> variable is created from the <id>id</id> param so the <id>name</id> param can be changed without affecting the <id>host-*-ip</id> variable.  If <id>id</id> is not specified then it is copied from <id>name</id>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Deploy historical documentation to <path>prior</path> rather than the root directory.</p>
                     </release-item>
                 </release-development-list>

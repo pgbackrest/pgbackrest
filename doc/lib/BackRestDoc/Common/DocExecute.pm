@@ -817,6 +817,15 @@ sub hostKey
         image => $self->{oManifest}->variableReplace($oHost->paramGet('image')),
     };
 
+    if (defined($oHost->paramGet('id', false)))
+    {
+        $hCacheKey->{id} = $self->{oManifest}->variableReplace($oHost->paramGet('id'));
+    }
+    else
+    {
+        $hCacheKey->{id} = $hCacheKey->{name};
+    }
+
     if (defined($oHost->paramGet('option', false)))
     {
         $$hCacheKey{option} = $self->{oManifest}->variableReplace($oHost->paramGet('option'));
@@ -997,7 +1006,7 @@ sub sectionChildProcess
 
             if ($bCacheHit)
             {
-                $self->{oManifest}->variableSet("host-$$hCacheKey{name}-ip", $$hCacheValue{ip}, true);
+                $self->{oManifest}->variableSet('host-' . $hCacheKey->{id} . '-ip', $hCacheValue->{ip}, true);
             }
             else
             {
@@ -1017,7 +1026,7 @@ sub sectionChildProcess
                     $$hCacheKey{option});
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;
-                $self->{oManifest}->variableSet("host-$$hCacheKey{name}-ip", $oHost->{strIP}, true);
+                $self->{oManifest}->variableSet('host-' . $hCacheKey->{id} . '-ip', $oHost->{strIP}, true);
                 $$hCacheValue{ip} = $oHost->{strIP};
 
                 # Add to the host group

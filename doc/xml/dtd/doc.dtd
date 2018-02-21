@@ -184,6 +184,7 @@
 
 <!-- Host elements -->
 <!ELEMENT host-add (execute*)>
+    <!ATTLIST host-add id CDATA "">
     <!ATTLIST host-add name CDATA #REQUIRED>
     <!ATTLIST host-add user CDATA #REQUIRED>
     <!ATTLIST host-add image CDATA #REQUIRED>
