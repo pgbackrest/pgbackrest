@@ -62,9 +62,16 @@
         <!-- <variable key="html-logo">&lt;img src=&quot;{[project-logo]}&quot;&gt;</variable> -->
 
         <!-- PDF variables  -->
-        <variable key="pdf-title">{[project]} User Guide</variable>
-        <variable key="pdf-subtitle">Open Source PostgreSQL Backup and Restore Utility</variable>
-        <variable key="pdf-version">Version {[version]}</variable>
+        <variable key="pdf-title1">{[project]} User Guide</variable>
+        <variable key="pdf-title2">Open Source PostgreSQL Backup and Restore Utility</variable>
+        <variable key="pdf-title3">Version {[version]}</variable>
+
+        <variable key="pdf-organization">Crunchy Data Solutions, Inc.</variable>
+
+        <variable key='pdf-footer-left'>{[pdf-title1]}\\{[pdf-title3]}</variable>
+        <variable key='pdf-footer-center'>\ \\-\ \thepage\ -</variable>
+        <variable key='pdf-footer-right'>{[pdf-organization]}\\\today</variable>
+
         <variable key="pdf-file">CrunchyBackRest-UserGuide-{[version]}</variable>
     </variable-list>
 
