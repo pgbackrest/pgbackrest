@@ -225,7 +225,8 @@ sub sectionProcess
             my $oHeader = $oChild->nodeGet('table-header');
             my @oyColumn = $oHeader->nodeList('table-column');
 
-            my $strWidth = '{' . ($oHeader->paramTest('width') ? $oHeader->paramGet('width') : '\textwidth') . '}';
+            my $strWidth =
+                '{' . ($oHeader->paramTest('width') ? ($oHeader->paramGet('width') / 100) . '\textwidth' : '\textwidth') . '}';
 
             # Build the table header
             $strLatex .= "\\vspace{1em}\\newline\n";
@@ -237,7 +238,7 @@ sub sectionProcess
                 my $strAlignCode;
                 my $strAlign = $oColumn->paramGet("align", false);
 
-                if ($oColumn->paramTest('fill', 'y'))
+                if ($oColumn->paramGet('fill', false, 'y') eq 'y')
                 {
                     if (!defined($strAlign) || $strAlign eq 'left')
                     {
