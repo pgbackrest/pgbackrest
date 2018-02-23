@@ -170,7 +170,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>PDF rendering improvements.  Check both <path>doc-path</path> and <path>bin-path</path> for logo.  Allow PDF to be output to a location other than the <path>output</path> directory. Use PDF-specific version variable for more flexible formatting.  Allow sections to be excluded from table of contents.  More flexible replacements for titles and footers.  Fill is now the default for table columns.  Column width is specified as a percentage rather that using latex-specific notation.</p>
+                        <p>PDF rendering improvements.  Check both <path>doc-path</path> and <path>bin-path</path> for logo.  Allow PDF to be output to a location other than the <path>output</path> directory. Use PDF-specific version variable for more flexible formatting.  Allow sections to be excluded from table of contents.  More flexible replacements for titles and footers.  Fill is now the default for table columns.  Column width is specified as a percentage rather that using latex-specific notation.  Fix missing variable replace for <code>code-block</code> title.</p>
                     </release-item>
 
                     <release-item>

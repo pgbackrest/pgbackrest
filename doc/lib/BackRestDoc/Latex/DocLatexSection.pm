@@ -190,7 +190,7 @@ sub sectionProcess
         # Add code block
         elsif ($oChild->nameGet() eq 'code-block')
         {
-            my $strTitle = $oChild->paramGet("title", false);
+            my $strTitle = $self->{oManifest}->variableReplace($oChild->paramGet("title", false), 'latex');
 
             if (defined($strTitle) && $strTitle eq '')
             {
