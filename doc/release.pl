@@ -179,7 +179,6 @@ eval
             executeTest("cp ${strDocHtml}/* ${strDeployPath}");
             executeTest("cp ${strDocPath}/../README.md ${strDeployPath}");
             executeTest("cp ${strDocPath}/../LICENSE ${strDeployPath}");
-            executeTest("echo 'pgbackrest.org' > ${strDeployPath}/CNAME");
         }
 
         # Update permissions
