@@ -17,6 +17,6 @@ Standard binary name
 /***********************************************************************************************************************************
 Version of the software.  Currently this value is maintained in Version.pm and updated by test.pl.
 ***********************************************************************************************************************************/
-#define PGBACKREST_VERSION                                          "2.00dev"
+#define PGBACKREST_VERSION                                          "2.00"
 
 #endif

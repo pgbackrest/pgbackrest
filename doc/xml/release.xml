@@ -4,13 +4,15 @@
     <description>The {[project]} Releases detail each version of the software and lists the changes made in each version.</description>
 
     <intro>
-        <text><backrest/> release numbers consist of two parts, major and minor.  A major release may break compatibility with the prior major release, for instance the 1.XX releases are not compatible with the 0.XX releases.  Minor releases can include bug fixes and features but do not change the repository format and strive to avoid changing options and naming.
+        <text><backrest/> release numbers consist of two parts, major and minor.  A major release <i>may</i> break compatibility with the prior major release, but <proper>v2</proper> releases are fully compatible with <proper>v1</proper> repositories and will accept all <proper>v1</proper> options.  Minor releases can include bug fixes and features but do not change the repository format and strive to avoid changing options and naming.
+
+        Documentation for the <proper>v1</proper> release can be found <link url="{[backrest-url-base]}/1">here</link>.
 
         The notes for a release may also contain <quote>Additional Notes</quote> but changes in this section are only to documentation or the test suite and have no direct impact the on the <backrest/> codebase.</text>
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.00dev" title="UNDER DEVELOPMENT">
+        <release date="2018-02-23" version="2.00" title="Performance Improvements for Archive Push">
             <release-core-list>
                 <release-feature-list>
                     <release-item>
@@ -52,7 +54,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Rename <id>db-*</id> options to <id>pg-*</id> and <id>backup-*</id> options to <id>repo-*</id> to improve consistency.  <id>repo-*</id> options are now indexed although only one is allowed.</p>
+                        <p>Rename <id>db-*</id> options to <id>pg-*</id> and <id>backup-*</id> options to <id>repo-*</id> to improve consistency.  <id>repo-*</id> options are now indexed although currently only one is allowed.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -1030,7 +1032,7 @@
 
         <release date="2017-06-27" version="1.20" title="Critical 8.3/8.4 Bug Fix">
             <release-core-list>
-                <p><b>IMPORTANT NOTE</b>: <postgres/> <proper>8.3</proper> and <proper>8.4</proper> installations utilizing tablespaces should upgrade immediately from any <id>1.XX</id> release and run a full backup.  A bug prevented tablespaces from being backed up on these versions only.  <postgres/> &amp;ge; <proper>9.0</proper> is not affected.</p>
+                <p><b>IMPORTANT NOTE</b>: <postgres/> <proper>8.3</proper> and <proper>8.4</proper> installations utilizing tablespaces should upgrade immediately from any <proper>v1</proper> release and run a full backup.  A bug prevented tablespaces from being backed up on these versions only.  <postgres/> &amp;ge; <proper>9.0</proper> is not affected.</p>
 
                 <release-bug-list>
                     <release-item>
@@ -1540,7 +1542,7 @@
                             <release-item-ideator id="golpayegani.navid"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed a regression introduced in <id>v1.13</id> that could cause backups to fail if files were removed (e.g. tables dropped) while the manifest was being built.</p>
+                        <p>Fixed a regression introduced in <proper>v1.13</proper> that could cause backups to fail if files were removed (e.g. tables dropped) while the manifest was being built.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -1978,7 +1980,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Fixed regression in section links introduced in <id>v1.10</id>.</p>
+                        <p>Fixed regression in section links introduced in <proper>v1.10</proper>.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -2072,7 +2074,7 @@
                             <release-item-ideator id="frost.stephen"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where asynchronous archiving was transferring one file per execution instead of transferring files in batches.  This regression was introduced in <id>v1.09</id> and affected efficiency only, all WAL segments were correctly archived in asynchronous mode.</p>
+                        <p>Fixed an issue where asynchronous archiving was transferring one file per execution instead of transferring files in batches.  This regression was introduced in <proper>v1.09</proper> and affected efficiency only, all WAL segments were correctly archived in asynchronous mode.</p>
                     </release-item>
                 </release-bug-list>
             </release-core-list>

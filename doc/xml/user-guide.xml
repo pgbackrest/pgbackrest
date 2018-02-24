@@ -222,7 +222,7 @@
             <execute user="root">
                 <exe-cmd>yum install perl perl-Time-HiRes perl-parent perl-JSON
                     perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
-                <exe-cmd-extra>-y</exe-cmd-extra>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
         </execute-list>
 
@@ -405,7 +405,7 @@
         <section id="v1-v2">
             <title>Upgrading {[project]} from v1 to v2</title>
 
-            <p>Upgrading from 1.xx (v1) to 2.xx (v2) is fairly straight-forward.  The repository format has not changed and all non-deprecated options from v1 are accepted, so for most installations it is simply a matter of installing the new version.</p>
+            <p>Upgrading from v1.xx to v2.xx (v2) is fairly straight-forward.  The repository format has not changed and all non-deprecated options from v1 are accepted, so for most installations it is simply a matter of installing the new version.</p>
 
             <p>However, there are a few caveats:</p>
 
