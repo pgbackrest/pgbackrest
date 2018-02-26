@@ -12,6 +12,20 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.01dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="hunley.douglas"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix incorrect enum types in <file>config.c</file> that throw warnings under clang.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+        </release>
+
         <release date="2018-02-23" version="2.00" title="Performance Improvements for Archive Push">
             <release-core-list>
                 <release-feature-list>
@@ -4097,6 +4111,11 @@
         <contributor id="harvey.john">
             <contributor-name-display>John Harvey</contributor-name-display>
             <contributor-id type="github">crunchyjohn</contributor-id>
+        </contributor>
+
+        <contributor id="hunley.douglas">
+            <contributor-name-display>Douglas J Hunley</contributor-name-display>
+            <contributor-id type="github">hunleyd</contributor-id>
         </contributor>
 
         <contributor id="james.craig">

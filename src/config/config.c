@@ -461,14 +461,14 @@ cfgOptionResetSet(ConfigOption optionId, bool reset)
 Get and set config options
 ***********************************************************************************************************************************/
 const Variant *
-cfgOption(ConfigSource optionId)
+cfgOption(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
     return configOptionValue[optionId].value;
 }
 
 bool
-cfgOptionBool(ConfigSource optionId)
+cfgOptionBool(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
 
@@ -479,7 +479,7 @@ cfgOptionBool(ConfigSource optionId)
 }
 
 double
-cfgOptionDbl(ConfigSource optionId)
+cfgOptionDbl(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
 
@@ -490,7 +490,7 @@ cfgOptionDbl(ConfigSource optionId)
 }
 
 int
-cfgOptionInt(ConfigSource optionId)
+cfgOptionInt(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
 
@@ -501,7 +501,7 @@ cfgOptionInt(ConfigSource optionId)
 }
 
 int64
-cfgOptionInt64(ConfigSource optionId)
+cfgOptionInt64(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
 
@@ -512,7 +512,7 @@ cfgOptionInt64(ConfigSource optionId)
 }
 
 const KeyValue *
-cfgOptionKv(ConfigSource optionId)
+cfgOptionKv(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
 
@@ -523,7 +523,7 @@ cfgOptionKv(ConfigSource optionId)
 }
 
 const VariantList *
-cfgOptionLst(ConfigSource optionId)
+cfgOptionLst(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
 
@@ -542,7 +542,7 @@ cfgOptionLst(ConfigSource optionId)
 }
 
 const String *
-cfgOptionStr(ConfigSource optionId)
+cfgOptionStr(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
 
@@ -650,7 +650,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
 How was the option set (default, param, config)?
 ***********************************************************************************************************************************/
 ConfigSource
-cfgOptionSource(ConfigSource optionId)
+cfgOptionSource(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
     return configOptionValue[optionId].source;
