@@ -22,6 +22,10 @@
 
                         <p>Fix incorrect enum types in <file>config.c</file> that throw warnings under clang.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Enable <id>-Wswitch-enum</id> and silence new warnings.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>

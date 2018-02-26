@@ -165,7 +165,8 @@ varEq(const Variant *this1, const Variant *this2)
                     break;
                 }
 
-                default:
+                case varTypeKeyValue:
+                case varTypeVariantList:
                     THROW(AssertError, "unable to test equality for %s", variantTypeName[this1->type]);
             }
         }
@@ -634,7 +635,8 @@ varStrForce(const Variant *this)
             break;
         }
 
-        default:
+        case varTypeKeyValue:
+        case varTypeVariantList:
             THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeString]);
     }
 

@@ -539,7 +539,10 @@ configParse(int argListSize, const char *argList[])
                                         }
 
                                         // Other types are output plain
-                                        default:
+                                        case cfgDefOptTypeFloat:
+                                        case cfgDefOptTypeHash:
+                                        case cfgDefOptTypeInteger:
+                                        case cfgDefOptTypeList:
                                         {
                                             strLstAddZ(dependValueList, dependValue);   // {uncovered - no depends of other types}
                                             break;                                      // {+uncovered}
