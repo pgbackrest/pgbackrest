@@ -28,6 +28,14 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Add CentOS/RHEL package builds.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-test-list>
         </release>
 
         <release date="2018-02-23" version="2.00" title="Performance Improvements for Archive Push">

@@ -577,7 +577,19 @@ sub containerBuild
         }
         else
         {
-            $strScript = '';
+            $strScript = sectionHeader() .
+                "# Install package build tools\n" .
+                "    yum install -y rpm-build";
+
+            $strScript .=  sectionHeader() .
+                "# Install pgBackRest package source\n" .
+                "    mkdir /root/package-src && \\\n" .
+                "    wget -O /root/package-src/pgbackrest-conf.patch " .
+                    "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
+                    "f=rpm/redhat/master/pgbackrest/master/pgbackrest-conf.patch;hb=refs/heads/master' && \\\n" .
+                "    wget -O /root/package-src/pgbackrest.spec " .
+                    "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
+                    "f=rpm/redhat/master/pgbackrest/master/pgbackrest.spec;hb=refs/heads/master'";
         }
 
         containerWrite($oStorageDocker, $strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strCopy,$strScript, $bVmForce);

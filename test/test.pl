@@ -766,6 +766,66 @@ eval
 
                         executeTest("docker rm -f test-build");
                     }
+
+                    if (!$oStorageBackRest->pathExists($strBuildPath) && $oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+                    {
+                        &log(INFO, "build package for ${strBuildVM} (${strBuildPath})");
+
+                        # Create build container
+                        executeTest(
+                            "docker run -itd -h test-build --name=test-build" .
+                            " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                            {bSuppressStdErr => true});
+
+                        # Create build directories
+                        $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
+                        $oStorageBackRest->pathCreate("${strBuildPath}/SOURCES", {bIgnoreExists => true, bCreateParent => true});
+                        $oStorageBackRest->pathCreate("${strBuildPath}/SPECS", {bIgnoreExists => true, bCreateParent => true});
+                        $oStorageBackRest->pathCreate("${strBuildPath}/RPMS", {bIgnoreExists => true, bCreateParent => true});
+                        $oStorageBackRest->pathCreate("${strBuildPath}/BUILD", {bIgnoreExists => true, bCreateParent => true});
+
+                        # Copy source files
+                        executeTest(
+                            "tar --transform='s_^_pgbackrest-release-${strVersionBase}/_'" .
+                                " -czf ${strBuildPath}/SOURCES/${strVersionBase}.tar.gz -C ${strBackRestBase}" .
+                                " lib libc src LICENSE");
+
+                        # Copy package files
+                        executeTest(
+                            "docker exec -i test-build bash -c '" .
+                            "ln -s ${strBuildPath} /root/rpmbuild && " .
+                            "cp /root/package-src/pgbackrest.spec ${strBuildPath}/SPECS && " .
+                            "cp /root/package-src/*.patch ${strBuildPath}/SOURCES && " .
+                            "sudo chown -R " . TEST_USER . " ${strBuildPath}'");
+
+                        # Patch files in RHEL package builds
+                        #
+                        # Use these commands to create a new patch (may need to modify first line):
+                        # BRDIR=/backrest;BRVM=co7;BRPATCHFILE=${BRDIR?}/test/patch/rhel-package.patch
+                        # PKDIR=${BRDIR?}/test/.vagrant/package/${BRVM}/src/SPECS
+                        # diff -Naur ${PKDIR?}.old ${PKDIR}.new > ${BRPATCHFILE?}
+                        my $strPackagePatch = "${strBackRestBase}/test/patch/rhel-package.patch";
+
+                        if ($oStorageBackRest->exists($strPackagePatch))
+                        {
+                            executeTest("cp -r ${strBuildPath}/SPECS ${strBuildPath}/SPECS.old");
+                            executeTest("patch -d ${strBuildPath}/SPECS < ${strPackagePatch}");
+                            executeTest("cp -r ${strBuildPath}/SPECS ${strBuildPath}/SPECS.new");
+                        }
+
+                        # Update version number to match current version
+                        my $strSpec = ${$oStorageBackRest->get("${strBuildPath}/SPECS/pgbackrest.spec")};
+                        $strSpec =~ s/^Version\:.*$/Version\:\t${strVersionBase}/gm;
+                        $oStorageBackRest->put("${strBuildPath}/SPECS/pgbackrest.spec", $strSpec);
+
+                        # Build package
+                        executeTest(
+                            "docker exec -i test-build rpmbuild -v -bb --clean root/rpmbuild/SPECS/pgbackrest.spec",
+                            {bSuppressStdErr => true});
+
+                        # Remove build container
+                        executeTest("docker rm -f test-build");
+                    }
                 }
 
                 # Write files to indicate the last time a build was successful
