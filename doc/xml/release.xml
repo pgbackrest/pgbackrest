@@ -40,6 +40,10 @@
                     <release-item>
                         <p>Disable console display of coverage for C files since <code>Devel::Cover</code> does not handle it well.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Remove Debian package patch now that it has been merged upstream.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
