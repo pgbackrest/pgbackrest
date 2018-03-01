@@ -663,7 +663,7 @@ bool
 cfgOptionTest(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
-    return configOptionValue[optionId].value != NULL;
+    return cfgOptionValid(optionId) && configOptionValue[optionId].value != NULL;
 }
 
 /***********************************************************************************************************************************

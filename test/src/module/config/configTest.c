@@ -106,13 +106,16 @@ testRun()
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptConfig), false, "valid defaults to false");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptConfig), false, "option not valid for the command");
         TEST_RESULT_VOID(cfgOptionValidSet(cfgOptConfig, true), "set valid");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptConfig), true, "valid is set");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptConfig), false, "option valid but value is null");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptConfig, cfgSourceParam, varNewStrZ("cfg")), "set option config");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptConfig), true, "option valid and value not null");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptOnline), false, "online is null");
+        TEST_RESULT_PTR(cfgOption(cfgOptOnline), NULL, "online is null");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptOnline, cfgSourceParam, varNewBool(false)), "set online");
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptOnline), true, "online is not null");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "online is set");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptOnline, cfgSourceParam, varNewStrZ("1")), "set online");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), true, "online is set");
