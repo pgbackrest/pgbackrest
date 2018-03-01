@@ -110,8 +110,9 @@ testRun()
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptConfig), true, "valid is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_PTR(cfgOption(cfgOptOnline), NULL, "online is null");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptOnline), false, "online is null");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptOnline, cfgSourceParam, varNewBool(false)), "set online");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptOnline), true, "online is not null");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "online is set");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptOnline, cfgSourceParam, varNewStrZ("1")), "set online");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), true, "online is set");

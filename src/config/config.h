@@ -58,6 +58,7 @@ bool cfgOptionReset(ConfigOption optionId);
 void cfgOptionResetSet(ConfigOption optionId, bool reset);
 ConfigSource cfgOptionSource(ConfigOption optionId);
 const String *cfgOptionStr(ConfigOption optionId);
+bool cfgOptionTest(ConfigOption optionId);
 bool cfgOptionValid(ConfigOption optionId);
 
 void cfgOptionNegateSet(ConfigOption optionId, bool negate);

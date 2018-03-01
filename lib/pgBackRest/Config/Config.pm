@@ -174,32 +174,6 @@ sub configLoad
     # Log the command begin
     commandBegin();
 
-    # Neutralize the umask to make the repository file/path modes more consistent
-    if (cfgOptionValid(CFGOPT_NEUTRAL_UMASK) && cfgOption(CFGOPT_NEUTRAL_UMASK))
-    {
-        umask(0000);
-    }
-
-    # Protocol timeout should be greater than db timeout
-    if (cfgOptionTest(CFGOPT_DB_TIMEOUT) && cfgOptionTest(CFGOPT_PROTOCOL_TIMEOUT) &&
-        cfgOption(CFGOPT_PROTOCOL_TIMEOUT) <= cfgOption(CFGOPT_DB_TIMEOUT))
-    {
-        # If protocol-timeout is default then increase it to be greater than db-timeout
-        if (cfgOptionSource(CFGOPT_PROTOCOL_TIMEOUT) eq CFGDEF_SOURCE_DEFAULT)
-        {
-            cfgOptionSet(CFGOPT_PROTOCOL_TIMEOUT, cfgOption(CFGOPT_DB_TIMEOUT) + 30);
-        }
-        else
-        {
-            confess &log(ERROR,
-                "'" . cfgOption(CFGOPT_PROTOCOL_TIMEOUT) . "' is not valid for '" .
-                    cfgOptionName(CFGOPT_PROTOCOL_TIMEOUT) . "' option\n" .
-                    "HINT: 'protocol-timeout' option (" . cfgOption(CFGOPT_PROTOCOL_TIMEOUT) .
-                    ") should be greater than 'db-timeout' option (" . cfgOption(CFGOPT_DB_TIMEOUT) . ").",
-                ERROR_OPTION_INVALID_VALUE);
-        }
-    }
-
     # Make sure that backup and db are not both remote
     if (cfgOptionTest(CFGOPT_PG_HOST) && cfgOptionTest(CFGOPT_REPO_HOST))
     {

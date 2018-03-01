@@ -2,6 +2,7 @@
 Configuration Load
 ***********************************************************************************************************************************/
 #include <string.h>
+#include <sys/stat.h>
 
 #include "common/memContext.h"
 #include "common/log.h"
@@ -50,7 +51,7 @@ cfgLoadParam(int argListSize, const char *argList[], String *exe)
             cfgExeSet(exe);
 
         // Set default for repo-host-cmd
-        if (cfgOptionValid(cfgOptRepoHost) && cfgOption(cfgOptRepoHost) != NULL &&
+        if (cfgOptionValid(cfgOptRepoHost) && cfgOptionTest(cfgOptRepoHost) &&
             cfgOptionSource(cfgOptRepoHostCmd) == cfgSourceDefault)
         {
             cfgOptionDefaultSet(cfgOptRepoHostCmd, varNewStr(cfgExe()));
@@ -61,8 +62,33 @@ cfgLoadParam(int argListSize, const char *argList[], String *exe)
         {
             for (int optionIdx = 0; optionIdx <= cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
             {
-                if (cfgOption(cfgOptPgHost + optionIdx) != NULL && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
+                if (cfgOptionTest(cfgOptPgHost + optionIdx) && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
                     cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, varNewStr(cfgExe()));
+            }
+        }
+
+        // Neutralize the umask to make the repository file/path modes more consistent
+        if (cfgOptionValid(cfgOptNeutralUmask) && cfgOptionBool(cfgOptNeutralUmask))
+        {
+            umask(0000);
+        }
+
+        // Protocol timeout should be greater than db timeout
+        if (cfgOptionTest(cfgOptDbTimeout) && cfgOptionTest(cfgOptProtocolTimeout) &&
+            cfgOptionDbl(cfgOptProtocolTimeout) <= cfgOptionDbl(cfgOptDbTimeout))
+        {
+            // If protocol-timeout is default then increase it to be greater than db-timeout
+            if (cfgOptionSource(cfgOptProtocolTimeout) == cfgSourceDefault)
+            {
+                cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, varNewDbl(cfgOptionDbl(cfgOptDbTimeout) + 30));
+            }
+            else
+            {
+                THROW(OptionInvalidValueError,
+                    "'%f' is not valid for '%s' option\nHINT '%s' option (%f) should be greater than '%s' option (%f).",
+                    cfgOptionDbl(cfgOptProtocolTimeout), cfgOptionName(cfgOptProtocolTimeout),
+                    cfgOptionName(cfgOptProtocolTimeout), cfgOptionDbl(cfgOptProtocolTimeout), cfgOptionName(cfgOptDbTimeout),
+                    cfgOptionDbl(cfgOptDbTimeout));
             }
         }
     }

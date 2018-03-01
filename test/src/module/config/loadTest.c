@@ -93,5 +93,50 @@ testRun()
         TEST_RESULT_STR(
             strPtr(varStr(cfgOptionDefault(cfgOptPgHostCmd + 2))), strPtr(cfgExe()),
             "    command backup, option pg3-host-cmd default");
+
+        // Set a distinct umask value and test that the umask is reset by configLoad since default for neutral-umask=y
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("archive-get"));
+        strLstAdd(argList, strNew("--stanza=db"));
+
+        umask(0111);
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for neutral-umask");
+        TEST_RESULT_INT(umask(0111), 0000, "    umask was reset");
+
+        // Set a distinct umask value and test that the umask is not reset by configLoad with option --no-neutral-umask
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("archive-get"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--no-neutral-umask"));
+
+        umask(0111);
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for no-neutral-umask");
+        TEST_RESULT_INT(umask(0), 0111, "    umask was not reset");
+
+        // db-timeout / protocol-timeout tests
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("archive-get"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--db-timeout=1830"));
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for protocol-timeout reset");
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 1830, "    db-timeout set");
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 1860, "    protocol-timeout set greater than db-timeout");
+
+        // Set the protocol-timeout so the source is the command line and not the default
+        strLstAdd(argList, strNew("--protocol-timeout=1820"));
+        TEST_ERROR(
+            cfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
+            strPtr(strNewFmt("'%f' is not valid for '%s' option\n"
+            "HINT '%s' option (%f) should be greater than '%s' option (%f).",
+            cfgOptionDbl(cfgOptProtocolTimeout), cfgOptionName(cfgOptProtocolTimeout),
+            cfgOptionName(cfgOptProtocolTimeout), cfgOptionDbl(cfgOptProtocolTimeout), cfgOptionName(cfgOptDbTimeout),
+            cfgOptionDbl(cfgOptDbTimeout))));
     }
 }
