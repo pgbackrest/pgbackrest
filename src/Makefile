@@ -94,5 +94,5 @@ pgbackrest: $(OBJS)
 # Installation.  DESTDIR can be used to modify the install location.
 ####################################################################################################################################
 install: pgbackrest
-	sudo install -d $(DESTDIR)/usr/bin
-	sudo install -m 755 pgbackrest $(DESTDIR)/usr/bin
+	install -d $(DESTDIR)/usr/bin
+	install -m 755 pgbackrest $(DESTDIR)/usr/bin
