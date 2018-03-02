@@ -324,7 +324,7 @@ sub run
                 my $strMakefile =
                     "CC=gcc\n" .
                     "CFLAGS=-I. -std=c99 -fPIC -g \\\n" .
-                    "       -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered" .
+                    "       -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wswitch-enum -Wconversion" .
                     ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -Wpedantic' : '') . "\\\n" .
                     "       `perl -MExtUtils::Embed -e ccopts`\n" .
                     "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) ? " -lgcov" : '') .

@@ -1107,15 +1107,18 @@ eval
 
                         if ($iUncoveredLines != 0)
                         {
-                            &log(ERROR, "\ncode module ${strCodeModule} is not fully covered");
-                            &log(ERROR, ('-' x 80));
+                            &log(ERROR, "code module ${strCodeModule} is not fully covered");
                             $iUncoveredCodeModuleTotal++;
 
-                            executeTest(
-                                "/usr/bin/cover -report text ${strCoveragePath} --select ${strBackRestBase}/lib/" . BACKREST_NAME .
-                                    "/${strCodeModule}.pm",
-                                {bShowOutputAsync => true});
-                            &log(ERROR, ('-' x 80));
+                            if ($strCodeModulePath !~ /\.c$/)
+                            {
+                                &log(ERROR, ('-' x 80));
+                                executeTest(
+                                    "/usr/bin/cover -report text ${strCoveragePath} --select ${strBackRestBase}/lib/" .
+                                    BACKREST_NAME . "/${strCodeModule}.pm",
+                                    {bShowOutputAsync => true});
+                                &log(ERROR, ('-' x 80));
+                            }
                         }
                     }
                     # Else test how much partial coverage there was

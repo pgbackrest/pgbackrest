@@ -17,7 +17,7 @@ Macro to handle invalid encode type errors
 Encode binary data to a printable string
 ***********************************************************************************************************************************/
 void
-encodeToStr(EncodeType encodeType, const unsigned char *source, int sourceSize, char *destination)
+encodeToStr(EncodeType encodeType, const unsigned char *source, size_t sourceSize, char *destination)
 {
     if (encodeType == encodeBase64)
         encodeToStrBase64(source, sourceSize, destination);
@@ -28,10 +28,10 @@ encodeToStr(EncodeType encodeType, const unsigned char *source, int sourceSize, 
 /***********************************************************************************************************************************
 Size of the string returned by encodeToStr()
 ***********************************************************************************************************************************/
-int
-encodeToStrSize(EncodeType encodeType, int sourceSize)
+size_t
+encodeToStrSize(EncodeType encodeType, size_t sourceSize)
 {
-    int destinationSize = 0;
+    size_t destinationSize = 0;
 
     if (encodeType == encodeBase64)
         destinationSize = encodeToStrSizeBase64(sourceSize);
@@ -56,10 +56,10 @@ decodeToBin(EncodeType encodeType, const char *source, unsigned char *destinatio
 /***********************************************************************************************************************************
 Size of the binary data returned by decodeToBin()
 ***********************************************************************************************************************************/
-int
+size_t
 decodeToBinSize(EncodeType encodeType, const char *source)
 {
-    int destinationSize = 0;
+    size_t destinationSize = 0;
 
     if (encodeType == encodeBase64)
         destinationSize = decodeToBinSizeBase64(source);

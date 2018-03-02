@@ -38,7 +38,7 @@ testRun()
         TEST_ASSIGN(bufferPtr, bufPtr(buffer), "buffer pointer");
 
         for (unsigned int bufferIdx = 0; bufferIdx < bufSize(buffer); bufferIdx++)
-            bufferPtr[bufferIdx] = bufferIdx;
+            bufferPtr[bufferIdx] = (unsigned char)bufferIdx;
 
         // Increase buffer size
         TEST_ASSIGN(bufferPtr, bufPtr(bufResize(buffer, 512)), "increase buffer size");

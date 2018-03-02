@@ -30,9 +30,9 @@ struct CipherBlock
     CipherMode mode;                                                // Mode encrypt/decrypt
     bool saltDone;                                                  // Has the salt been read/generated?
     bool processDone;                                               // Has any data been processed?
-    int passSize;                                                   // Size of passphrase in bytes
+    size_t passSize;                                                // Size of passphrase in bytes
     unsigned char *pass;                                            // Passphrase used to generate encryption key
-    int headerSize;                                                 // Size of header read during decrypt
+    size_t headerSize;                                              // Size of header read during decrypt
     unsigned char header[CIPHER_BLOCK_HEADER_SIZE];                 // Buffer to hold partial header during decrypt
     const EVP_CIPHER *cipher;                                       // Cipher object
     const EVP_MD *digest;                                           // Message digest object
@@ -43,7 +43,7 @@ struct CipherBlock
 New block encrypt/decrypt object
 ***********************************************************************************************************************************/
 CipherBlock *
-cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pass, int passSize, const char *digestName)
+cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pass, size_t passSize, const char *digestName)
 {
     // Only need to init once.
     if (!cipherIsInit())
@@ -96,11 +96,11 @@ cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pas
 /***********************************************************************************************************************************
 Determine how large the destination buffer should be
 ***********************************************************************************************************************************/
-int
-cipherBlockProcessSize(CipherBlock *this, int sourceSize)
+size_t
+cipherBlockProcessSize(CipherBlock *this, size_t sourceSize)
 {
     // Destination size is source size plus one extra block
-    int destinationSize = sourceSize + EVP_MAX_BLOCK_LENGTH;
+    size_t destinationSize = sourceSize + EVP_MAX_BLOCK_LENGTH;
 
     // On encrypt the header size must be included before the first block
     if (this->mode == cipherModeEncrypt && !this->saltDone)
@@ -112,11 +112,11 @@ cipherBlockProcessSize(CipherBlock *this, int sourceSize)
 /***********************************************************************************************************************************
 Encrypt/decrypt data
 ***********************************************************************************************************************************/
-int
-cipherBlockProcess(CipherBlock *this, const unsigned char *source, int sourceSize, unsigned char *destination)
+size_t
+cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t sourceSize, unsigned char *destination)
 {
     // Actual destination size
-    uint32 destinationSize = 0;
+    size_t destinationSize = 0;
 
     // If the salt has not been generated/read yet
     if (!this->saltDone)
@@ -175,7 +175,7 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, int sourceSiz
             unsigned char initVector[EVP_MAX_IV_LENGTH];
 
             EVP_BytesToKey(
-                this->cipher, this->digest, salt, (unsigned char *)this->pass, this->passSize, 1, key, initVector);
+                this->cipher, this->digest, salt, (unsigned char *)this->pass, (int)this->passSize, 1, key, initVector);
 
             // Create context to track cipher
             if (!(this->cipherContext = EVP_CIPHER_CTX_new()))
@@ -199,9 +199,9 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, int sourceSiz
     if (sourceSize > 0)
     {
         // Process the data
-        int destinationUpdateSize = 0;
+        size_t destinationUpdateSize = 0;
 
-        if (!EVP_CipherUpdate(this->cipherContext, destination, &destinationUpdateSize, source, sourceSize))
+        if (!EVP_CipherUpdate(this->cipherContext, destination, (int *)&destinationUpdateSize, source, (int)sourceSize))
             THROW(CipherError, "unable to process");                           // {uncoverable - no failure path known}
 
         destinationSize += destinationUpdateSize;
@@ -217,22 +217,22 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, int sourceSiz
 /***********************************************************************************************************************************
 Flush the remaining data
 ***********************************************************************************************************************************/
-int
+size_t
 cipherBlockFlush(CipherBlock *this, unsigned char *destination)
 {
     // Actual destination size
-    int iDestinationSize = 0;
+    size_t destinationSize = 0;
 
     // If no header was processed then error
     if (!this->saltDone)
         THROW(CipherError, "cipher header missing");
 
     // Only flush remaining data if some data was processed
-    if (!EVP_CipherFinal(this->cipherContext, destination, &iDestinationSize))
+    if (!EVP_CipherFinal(this->cipherContext, destination, (int *)&destinationSize))
         THROW(CipherError, "unable to flush");
 
     // Return actual destination size
-    return iDestinationSize;
+    return destinationSize;
 }
 
 /***********************************************************************************************************************************

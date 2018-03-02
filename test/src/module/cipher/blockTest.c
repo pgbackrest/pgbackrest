@@ -58,9 +58,9 @@ testRun()
     if (testBegin("Encrypt and Decrypt"))
     {
         unsigned char encryptBuffer[TEST_BUFFER_SIZE];
-        int encryptSize = 0;
+        size_t encryptSize = 0;
         unsigned char decryptBuffer[TEST_BUFFER_SIZE];
-        int decryptSize = 0;
+        size_t decryptSize = 0;
 
         // Encrypt
         // -------------------------------------------------------------------------------------------------------------------------

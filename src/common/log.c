@@ -97,7 +97,7 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
     // Should this entry be logged?
     if (logLevel <= logLevelStdOut || logLevel <= logLevelStdErr)
     {
-        int bufferPos = 0;
+        size_t bufferPos = 0;
 
         // Add time
         if (logTimestamp && logLevel > logLevelStdErr)
@@ -106,24 +106,28 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
             time_t logTime = (time_t)(logTimeUSec / USEC_PER_SEC);
 
             bufferPos += strftime(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%Y-%m-%d %H:%M:%S", localtime(&logTime));
-            bufferPos += snprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, ".%03d ", (int)(logTimeUSec / 1000 % 1000));
+            bufferPos += (size_t)snprintf(
+                logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, ".%03d ", (int)(logTimeUSec / 1000 % 1000));
         }
 
         // Add process and aligned log level
         if (logLevel > logLevelStdErr)
-            bufferPos += snprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "P00 %*s: ", 6, logLevelStr(logLevel));
+        {
+            bufferPos += (size_t)snprintf(
+                logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "P00 %*s: ", 6, logLevelStr(logLevel));
+        }
         // Else just the log level with no alignment
         else
-            bufferPos += snprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%s: ", logLevelStr(logLevel));
+            bufferPos += (size_t)snprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%s: ", logLevelStr(logLevel));
 
         // Add error code
         if (code != 0)
-            bufferPos += snprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "[%03d]: ", code);
+            bufferPos += (size_t)snprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "[%03d]: ", code);
 
         // Add debug info
         if (logLevelStdOut >= logLevelDebug)
         {
-            bufferPos += snprintf(
+            bufferPos += (size_t)snprintf(
                 logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%s:%s():%d: ", fileName, functionName, fileLine);
         }
 
@@ -132,7 +136,7 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
         va_start(argumentList, format);
 
         if (logLevel <= logLevelStdErr || strchr(format, '\n') == NULL)
-            bufferPos += vsnprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, format, argumentList);
+            bufferPos += (size_t)vsnprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, format, argumentList);
         else
         {
             vsnprintf(logFormat, LOG_BUFFER_SIZE, format, argumentList);
@@ -144,8 +148,8 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
 
             while (linefeedPtr != NULL)
             {
-                strncpy(logBuffer + bufferPos, formatPtr, linefeedPtr - formatPtr + 1);
-                bufferPos += linefeedPtr - formatPtr + 1;
+                strncpy(logBuffer + bufferPos, formatPtr, (size_t)(linefeedPtr - formatPtr + 1));
+                bufferPos += (size_t)(linefeedPtr - formatPtr + 1);
 
                 formatPtr = linefeedPtr + 1;
                 linefeedPtr = strchr(formatPtr, '\n');
@@ -171,6 +175,6 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
             stream = logHandleStdErr;
 
         THROW_ON_SYS_ERROR(
-            write(stream, logBuffer, bufferPos) != bufferPos, FileWriteError, "unable to write log to console");
+            write(stream, logBuffer, bufferPos) != (int)bufferPos, FileWriteError, "unable to write log to console");
     }
 }

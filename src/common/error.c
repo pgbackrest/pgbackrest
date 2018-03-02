@@ -380,7 +380,7 @@ errorInternalThrowSys(int result, const ErrorType *errorType, const char *fileNa
         // Create message
         va_list argument;
         va_start(argument, format);
-        int messageSize = vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, format, argument);
+        size_t messageSize = (size_t)vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, format, argument);
         va_end(argument);
 
         // Append the system message

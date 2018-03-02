@@ -362,7 +362,7 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
 /***********************************************************************************************************************************
 Get index for option
 ***********************************************************************************************************************************/
-int
+unsigned int
 cfgOptionIndex(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
@@ -385,7 +385,7 @@ cfgOptionId(const char *optionName)
 /***********************************************************************************************************************************
 Get total indexed values for option
 ***********************************************************************************************************************************/
-int
+unsigned int
 cfgOptionIndexTotal(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
@@ -396,7 +396,7 @@ cfgOptionIndexTotal(ConfigOption optionId)
 Get the id for this option define
 ***********************************************************************************************************************************/
 ConfigOption
-cfgOptionIdFromDefId(ConfigDefineOption optionDefId, int index)
+cfgOptionIdFromDefId(ConfigDefineOption optionDefId, unsigned int index)
 {
     // Search for the option
     ConfigOption optionId;

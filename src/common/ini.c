@@ -181,7 +181,7 @@ iniParse(Ini *this, const String *content)
                                 THROW(FormatError, "missing '=' in key/value at line %d: %s", lineIdx + 1, linePtr);
 
                             // Extract the key
-                            String *key = strTrim(strNewN(linePtr, lineEqual - linePtr));
+                            String *key = strTrim(strNewN(linePtr, (size_t)(lineEqual - linePtr)));
 
                             if (strSize(key) == 0)
                                 THROW(FormatError, "key is zero-length at line %d: %s", lineIdx++, linePtr);

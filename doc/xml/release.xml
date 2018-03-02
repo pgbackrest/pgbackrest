@@ -14,6 +14,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.01dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="vondendriesch.adrian"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove extraneous sudo commands from <file>src/Makefile</file>.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -24,7 +34,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Enable <id>-Wswitch-enum</id> and silence new warnings.</p>
+                        <p>Enable <id>-Wswitch-enum</id> and <id>-Wconversion</id> and silence new warnings.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -35,6 +45,16 @@
                         <p>Add CentOS/RHEL package builds.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Disable console display of coverage for C files since <code>Devel::Cover</code> does not handle it well.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove Debian package patch now that it has been merged upstream.</p>
+                    </release-item>
+                </release-development-list>
             </release-test-list>
         </release>
 

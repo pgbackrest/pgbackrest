@@ -280,7 +280,7 @@ storagePath(const Storage *storage, const String *pathExp)
                     THROW(AssertError, "end > not found in path expression '%s'", strPtr(pathExp));
 
                 // Create a string from the expression
-                String *expression = strNewN(strPtr(pathExp), end - strPtr(pathExp) + 1);
+                String *expression = strNewN(strPtr(pathExp), (size_t)(end - strPtr(pathExp) + 1));
 
                 // Create a string from the path if there is anything left after the expression
                 String *path = NULL;

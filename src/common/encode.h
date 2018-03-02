@@ -16,10 +16,10 @@ typedef enum {encodeBase64} EncodeType;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void encodeToStr(EncodeType encodeType, const unsigned char *source, int sourceSize, char *destination);
-int encodeToStrSize(EncodeType encodeType, int sourceSize);
+void encodeToStr(EncodeType encodeType, const unsigned char *source, size_t sourceSize, char *destination);
+size_t encodeToStrSize(EncodeType encodeType, size_t sourceSize);
 void decodeToBin(EncodeType encodeType, const char *source, unsigned char *destination);
-int decodeToBinSize(EncodeType encodeType, const char *source);
+size_t decodeToBinSize(EncodeType encodeType, const char *source);
 bool decodeToBinValid(EncodeType encodeType, const char *source);
 void decodeToBinValidate(EncodeType encodeType, const char *source);
 

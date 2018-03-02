@@ -74,7 +74,7 @@ strNewFmt(const char *format, ...)
     // Determine how long the allocated string needs to be
     va_list argumentList;
     va_start(argumentList, format);
-    this->size = vsnprintf(NULL, 0, format, argumentList);
+    this->size = (size_t)vsnprintf(NULL, 0, format, argumentList);
     va_end(argumentList);
 
     // Allocate and assign string
@@ -151,7 +151,7 @@ String *
 strCat(String *this, const char *cat)
 {
     // Determine length of string to append
-    int sizeGrow = strlen(cat);
+    size_t sizeGrow = strlen(cat);
 
     // Allocate and append string
     MEM_CONTEXT_BEGIN(this->memContext)
@@ -175,7 +175,7 @@ strCatFmt(String *this, const char *format, ...)
     // Determine how long the allocated string needs to be
     va_list argumentList;
     va_start(argumentList, format);
-    int sizeGrow = vsnprintf(NULL, 0, format, argumentList);
+    size_t sizeGrow = (size_t)vsnprintf(NULL, 0, format, argumentList);
     va_end(argumentList);
 
     // Allocate and append string
@@ -275,7 +275,7 @@ String *
 strFirstUpper(String *this)
 {
     if (this->size > 0)
-        this->buffer[0] = toupper(this->buffer[0]);
+        this->buffer[0] = (char)toupper(this->buffer[0]);
 
     return this;
 }
@@ -287,7 +287,7 @@ String *
 strFirstLower(String *this)
 {
     if (this->size > 0)
-        this->buffer[0] = tolower(this->buffer[0]);
+        this->buffer[0] = (char)tolower(this->buffer[0]);
 
     return this;
 }

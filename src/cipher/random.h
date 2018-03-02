@@ -5,6 +5,6 @@ Random Header
 #define RANDOM_H
 
 // Functions
-void randomBytes(unsigned char *buffer, int size);
+void randomBytes(unsigned char *buffer, size_t size);
 
 #endif

@@ -24,7 +24,7 @@ void
 sleepUSec(TimeUSec sleepUSec)
 {
     struct timeval delay;
-    delay.tv_sec = sleepUSec / USEC_PER_SEC;
-    delay.tv_usec = sleepUSec % USEC_PER_SEC;
+    delay.tv_sec = (__time_t)(sleepUSec / USEC_PER_SEC);
+    delay.tv_usec = (__time_t)(sleepUSec % USEC_PER_SEC);
     select(0, NULL, NULL, NULL, &delay);
 }

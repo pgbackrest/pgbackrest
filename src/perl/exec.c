@@ -18,6 +18,8 @@ Execute Perl for Legacy Functionality
     #define WARNING_PEDANTIC 1
 #endif
 
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+
 #if WARNING_PEDANTIC
     #pragma GCC diagnostic ignored "-Wpedantic"
 #endif
@@ -32,6 +34,8 @@ Execute Perl for Legacy Functionality
 #if WARNING_PEDANTIC
     #pragma GCC diagnostic warning "-Wpedantic"
 #endif
+
+#pragma GCC diagnostic warning "-Wsign-conversion"
 
 /***********************************************************************************************************************************
 Constants used to build perl options

@@ -11,10 +11,10 @@ typedef struct CipherBlock CipherBlock;
 
 // Functions
 CipherBlock *cipherBlockNew(
-    CipherMode mode, const char *cipherName, const unsigned char *pass, int passSize, const char *digestName);
-int cipherBlockProcessSize(CipherBlock *this, int sourceSize);
-int cipherBlockProcess(CipherBlock *this, const unsigned char *source, int sourceSize, unsigned char *destination);
-int cipherBlockFlush(CipherBlock *this, unsigned char *destination);
+    CipherMode mode, const char *cipherName, const unsigned char *pass, size_t passSize, const char *digestName);
+size_t cipherBlockProcessSize(CipherBlock *this, size_t sourceSize);
+size_t cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t sourceSize, unsigned char *destination);
+size_t cipherBlockFlush(CipherBlock *this, unsigned char *destination);
 void cipherBlockFree(CipherBlock *this);
 
 #endif

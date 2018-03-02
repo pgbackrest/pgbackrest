@@ -17,7 +17,7 @@ testRun()
         TEST_ERROR(waitNew(9999999), AssertError, "waitTime must be >= 0.1 and <= 999999.0");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        unsigned long begin = timeUSec();
+        TimeUSec begin = timeUSec();
 
         TEST_ASSIGN(wait, waitNew(0.2), "new wait = 0.2 sec");
         TEST_RESULT_DOUBLE(wait->waitTime, 200000, "    check wait time");
@@ -26,7 +26,7 @@ testRun()
         TEST_RESULT_BOOL(wait->beginTime > (unsigned long)1483228800000000, true, "    check begin time");
 
         while (waitMore(wait));
-        unsigned long end = timeUSec();
+        TimeUSec end = timeUSec();
 
         // Check bounds for time slept (within a range of .1 seconds)
         TEST_RESULT_BOOL(end - begin >= wait->waitTime, true, "    lower range check");
