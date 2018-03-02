@@ -60,7 +60,7 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
         // Set default for pg-host-cmd
         if (cfgOptionValid(cfgOptPgHostCmd))
         {
-            for (unsigned int optionIdx = 0; optionIdx <= cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
+            for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
             {
                 if (cfgOptionTest(cfgOptPgHost + optionIdx) && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
                     cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, varNewStr(cfgExe()));
@@ -69,9 +69,7 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
 
         // Neutralize the umask to make the repository file/path modes more consistent
         if (cfgOptionValid(cfgOptNeutralUmask) && cfgOptionBool(cfgOptNeutralUmask))
-        {
             umask(0000);
-        }
 
         // Protocol timeout should be greater than db timeout
         if (cfgOptionTest(cfgOptDbTimeout) && cfgOptionTest(cfgOptProtocolTimeout) &&
@@ -79,9 +77,7 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
         {
             // If protocol-timeout is default then increase it to be greater than db-timeout
             if (cfgOptionSource(cfgOptProtocolTimeout) == cfgSourceDefault)
-            {
                 cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, varNewDbl(cfgOptionDbl(cfgOptDbTimeout) + 30));
-            }
             else
             {
                 THROW(OptionInvalidValueError,
@@ -93,24 +89,43 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
         }
 
         // Make sure that repo and pg host settings are not both set - cannot both be remote
-        bool pgHostFound = false;
-        for (int optionIdx = 0; optionIdx <= cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
+        if (cfgOptionValid(cfgOptPgHost) && cfgOptionValid(cfgOptRepoHost))
         {
-            if (cfgOptionTest(cfgOptPgHost + optionIdx))
+            bool pgHostFound = false;
+
+            for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
             {
-                pgHostFound = true;
-                break;
+                if (cfgOptionTest(cfgOptPgHost + optionIdx))
+                {
+                    pgHostFound = true;
+                    break;
+                }
+            }
+
+            // If a pg-host was found, see if a repo-host is configured
+            if (pgHostFound == true)
+            {
+                for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptRepoHost); optionIdx++)
+                {
+                    if (cfgOptionTest(cfgOptRepoHost + optionIdx))
+                        THROW(ConfigError, "pg and repo hosts cannot both be configured as remote");
+                }
             }
         }
 
-        // If a pg-host was found, see if a repo-host is configured
-        if (pgHostFound == true)
+        // Warn when repo-retention-full is not set on a configured repo
+        if (cfgOptionValid(cfgOptRepoRetentionFull))
         {
-            for (int optionIdx = 0; optionIdx <= cfgOptionIndexTotal(cfgOptRepoHost); optionIdx++)
+            for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptRepoType); optionIdx++)
             {
-                if (cfgOptionTest(cfgOptRepoHost + optionIdx))
+                // If the repo-type is defined, then see if corresponding retention-full is set
+                if (cfgOptionTest(cfgOptRepoType + optionIdx) && !cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
                 {
-                    THROW(ConfigError, "pg and repo hosts cannot both be configured as remote");
+                    LOG_WARN(
+                        "option '%s' is not set, the repository may run out of space\n"
+                        "HINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
+                        cfgOptionName(cfgOptRepoRetentionFull + optionIdx),
+                        cfgOptionName(cfgOptRepoRetentionFull + optionIdx));
                 }
             }
         }

@@ -70,6 +70,7 @@ testRun()
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
+        strLstAdd(argList, strNew("--repo1-retention-full=1"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("backup"));
 
@@ -83,6 +84,7 @@ testRun()
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--pg3-host=db"));
         strLstAdd(argList, strNew("--pg3-path=/path/to/db"));
+        strLstAdd(argList, strNew("--repo1-retention-full=1"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("backup"));
 
@@ -98,8 +100,8 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        strLstAdd(argList, strNew("archive-get"));
         strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("archive-get"));
 
         umask(0111);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for neutral-umask");
@@ -109,9 +111,9 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        strLstAdd(argList, strNew("archive-get"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--no-neutral-umask"));
+        strLstAdd(argList, strNew("archive-get"));
 
         umask(0111);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for no-neutral-umask");
@@ -121,9 +123,9 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        strLstAdd(argList, strNew("archive-get"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--db-timeout=1830"));
+        strLstAdd(argList, strNew("archive-get"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for protocol-timeout reset");
         TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 1830, "    db-timeout set");
@@ -143,9 +145,9 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        strLstAdd(argList, strNew("archive-get"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--pg2-host=pg2"));
+        strLstAdd(argList, strNew("archive-get"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for pg and repo host test");
 
@@ -154,5 +156,24 @@ testRun()
         TEST_ERROR(
             cfgLoad(strLstSize(argList), strLstPtr(argList)), ConfigError,
             "pg and repo hosts cannot both be configured as remote");
+
+        // retention
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--log-level-console=info"));
+        strLstAdd(argList, strNew("--log-level-stderr=off"));
+        strLstAdd(argList, strNew("--no-log-timestamp"));
+        strLstAdd(argList, strNew("expire"));
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        testLogResult("P00   WARN: option 'repo1-retention-full' is not set, the repository may run out of space\n"
+                      "            HINT: to retain full backups indefinitely (without warning), set option " "'repo1-retention-full' to the maximum.");
+
+        strLstAdd(argList, strNew("--repo1-retention-full=1"));
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config no retention warning");
+        testLogResult(""); // confirm no warning was thrown
     }
 }

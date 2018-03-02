@@ -174,15 +174,6 @@ sub configLoad
     # Log the command begin
     commandBegin();
 
-    # Warn when repo-retention-full is not set
-    if (cfgOptionValid(CFGOPT_REPO_RETENTION_FULL) && !cfgOptionTest(CFGOPT_REPO_RETENTION_FULL))
-    {
-        &log(WARN,
-            "option " . cfgOptionName(CFGOPT_REPO_RETENTION_FULL) . " is not set, the repository may run out of space\n" .
-                "HINT: to retain full backups indefinitely (without warning), set option '" .
-                cfgOptionName(CFGOPT_REPO_RETENTION_FULL) . "' to the maximum.");
-    }
-
     # If archive retention is valid for the command, then set archive settings
     if (cfgOptionValid(CFGOPT_REPO_RETENTION_ARCHIVE))
     {
