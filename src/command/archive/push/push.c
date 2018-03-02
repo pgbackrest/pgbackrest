@@ -65,7 +65,7 @@ walStatus(const String *walSegment, bool confessOnError)
                     THROW(FormatError, "%s message must be > 0", strPtr(statusFile));
 
                 // Get contents
-                code = varIntForce(varNewStr(strNewN(strPtr(content), linefeedPtr - strPtr(content))));
+                code = varIntForce(varNewStr(strNewN(strPtr(content), (size_t)(linefeedPtr - strPtr(content)))));
                 message = strTrim(strNew(linefeedPtr + 1));
             }
 

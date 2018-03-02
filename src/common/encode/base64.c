@@ -12,12 +12,12 @@ Encode binary data to a printable string
 static const char encodeBase64Lookup[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 void
-encodeToStrBase64(const unsigned char *source, int sourceSize, char *destination)
+encodeToStrBase64(const unsigned char *source, size_t sourceSize, char *destination)
 {
-    int destinationIdx = 0;
+    unsigned int destinationIdx = 0;
 
     // Encode the string from three bytes to four characters
-    for (int sourceIdx = 0; sourceIdx < sourceSize; sourceIdx += 3)
+    for (unsigned int sourceIdx = 0; sourceIdx < sourceSize; sourceIdx += 3)
     {
         // First encoded character is always used completely
         destination[destinationIdx++] = encodeBase64Lookup[source[sourceIdx] >> 2];
@@ -61,11 +61,11 @@ encodeToStrBase64(const unsigned char *source, int sourceSize, char *destination
 /***********************************************************************************************************************************
 Size of the destination param required by encodeToStrBase64() minus space for the null terminator
 ***********************************************************************************************************************************/
-int
-encodeToStrSizeBase64(int sourceSize)
+size_t
+encodeToStrSizeBase64(size_t sourceSize)
 {
     // Calculate how many groups of three are in the source
-    int encodeGroupTotal = sourceSize / 3;
+    size_t encodeGroupTotal = sourceSize / 3;
 
     // Increase by one if there is a partial group
     if (sourceSize % 3 != 0)
@@ -132,15 +132,15 @@ decodeToBinBase64(const char *source, unsigned char *destination)
 /***********************************************************************************************************************************
 Size of the destination param required by decodeToBinBase64()
 ***********************************************************************************************************************************/
-int
+size_t
 decodeToBinSizeBase64(const char *source)
 {
     // Validate encoded string
     decodeToBinValidateBase64(source);
 
     // Start with size calculated directly from source length
-    int sourceSize = strlen(source);
-    int destinationSize = sourceSize / 4 * 3;
+    size_t sourceSize = strlen(source);
+    size_t destinationSize = sourceSize / 4 * 3;
 
     // Subtract last character if it is not present
     if (source[sourceSize - 1] == 0x3d)
@@ -162,13 +162,13 @@ void
 decodeToBinValidateBase64(const char *source)
 {
     // Check for the correct length
-    int sourceSize = strlen(source);
+    size_t sourceSize = strlen(source);
 
     if (sourceSize % 4 != 0)
         THROW(FormatError, "base64 size %d is not evenly divisible by 4", sourceSize);
 
     // Check all characters
-    for (int sourceIdx = 0; sourceIdx < sourceSize; sourceIdx++)
+    for (unsigned int sourceIdx = 0; sourceIdx < sourceSize; sourceIdx++)
     {
         // Check terminators
         if (source[sourceIdx] == 0x3d)

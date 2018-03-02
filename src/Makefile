@@ -17,7 +17,7 @@ COPT = -O2
 CINCLUDE = -I.
 
 # Compile warnings
-CWARN = -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wswitch-enum
+CWARN = -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wswitch-enum -Wconversion
 
 # Automatically generate Perl compile options for the local system
 CPERL = `perl -MExtUtils::Embed -e ccopts`

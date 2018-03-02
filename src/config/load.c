@@ -13,13 +13,13 @@ Configuration Load
 Load the configuration
 ***********************************************************************************************************************************/
 void
-cfgLoad(int argListSize, const char *argList[])
+cfgLoad(unsigned int argListSize, const char *argList[])
 {
     cfgLoadParam(argListSize, argList, NULL);
 }
 
 void
-cfgLoadParam(int argListSize, const char *argList[], String *exe)
+cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
 {
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -59,7 +59,7 @@ cfgLoadParam(int argListSize, const char *argList[], String *exe)
         // Set default for pg-host-cmd
         if (cfgOptionValid(cfgOptPgHostCmd))
         {
-            for (int optionIdx = 0; optionIdx <= cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
+            for (unsigned int optionIdx = 0; optionIdx <= cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
             {
                 if (cfgOption(cfgOptPgHost + optionIdx) != NULL && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
                     cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, varNewStr(cfgExe()));

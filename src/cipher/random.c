@@ -9,7 +9,7 @@ Cipher
 Generate random bytes
 ***********************************************************************************************************************************/
 void
-randomBytes(unsigned char *buffer, int size)
+randomBytes(unsigned char *buffer, size_t size)
 {
-    RAND_bytes(buffer, size);
+    RAND_bytes(buffer, (int)size);
 }

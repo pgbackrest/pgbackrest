@@ -7,7 +7,7 @@ Configuration Load
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void cfgLoad(int argListSize, const char *argList[]);
-void cfgLoadParam(int argListSize, const char *argList[], String *exe);
+void cfgLoad(unsigned int argListSize, const char *argList[]);
+void cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe);
 
 #endif

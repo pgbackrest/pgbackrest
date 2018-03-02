@@ -13,7 +13,7 @@ testRun()
     {
         // -------------------------------------------------------------------------------------------------------------------------
         // Test if the buffer was overrun
-        int bufferSize = 256;
+        size_t bufferSize = 256;
         unsigned char *buffer = memNew(bufferSize + 1);
 
         randomBytes(buffer, bufferSize);
@@ -23,7 +23,7 @@ testRun()
         // Count bytes that are not zero (there shouldn't be all zeroes)
         int nonZeroTotal = 0;
 
-        for (int charIdx = 0; charIdx < bufferSize; charIdx++)
+        for (unsigned int charIdx = 0; charIdx < bufferSize; charIdx++)
             if (buffer[charIdx] != 0)
                 nonZeroTotal++;
 

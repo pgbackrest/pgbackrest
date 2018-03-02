@@ -216,7 +216,7 @@ Return bool regardless of variant type
 bool
 varBoolForce(const Variant *this)
 {
-    int result = 0;
+    bool result = false;
 
     switch (this->type)
     {
@@ -611,7 +611,7 @@ varStrForce(const Variant *this)
                     break;
             }
 
-            result = strNewN(begin, end - begin + 1);
+            result = strNewN(begin, (size_t)(end - begin + 1));
             strFree(working);
 
             break;

@@ -166,13 +166,13 @@ The checksum includes the block number (to detect the case where a page is someh
 (excluding the checksum itself), and the page data.
 ***********************************************************************************************************************************/
 uint16
-pageChecksum(const unsigned char *page, int blockNo, int pageSize)
+pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageSize)
 {
     // Save pd_checksum and temporarily set it to zero, so that the checksum calculation isn't affected by the old checksum stored
     // on the page. Restore it after, because actually updating the checksum is NOT part of the API of this function.
     PageHeader pageHeader = (PageHeader)page;
 
-    uint32 originalChecksum = pageHeader->pd_checksum;
+    uint16 originalChecksum = pageHeader->pd_checksum;
     pageHeader->pd_checksum = 0;
     uint32 checksum = pageChecksumBlock(page, pageSize);
     pageHeader->pd_checksum = originalChecksum;
@@ -181,14 +181,14 @@ pageChecksum(const unsigned char *page, int blockNo, int pageSize)
     checksum ^= blockNo;
 
     // Reduce to a uint16 with an offset of one. That avoids checksums of zero, which seems like a good idea.
-    return (checksum % 65535) + 1;
+    return (uint16)((checksum % 65535) + 1);
 }
 
 /***********************************************************************************************************************************
 pageChecksumTest - test if checksum is valid for a single page
 ***********************************************************************************************************************************/
 bool
-pageChecksumTest(const unsigned char *page, int blockNo, int pageSize, uint32 ignoreWalId, uint32 ignoreWalOffset)
+pageChecksumTest(const unsigned char *page, unsigned int blockNo, unsigned int pageSize, uint32 ignoreWalId, uint32 ignoreWalOffset)
 {
     return
         // This is a new page so don't test checksum
@@ -204,15 +204,15 @@ pageChecksumBufferTest - test if checksums are valid for all pages in a buffer
 ***********************************************************************************************************************************/
 bool
 pageChecksumBufferTest(
-    const unsigned char *pageBuffer, int pageBufferSize, int blockNoBegin, int pageSize, uint32 ignoreWalId,
-    uint32 ignoreWalOffset)
+    const unsigned char *pageBuffer, unsigned int pageBufferSize, unsigned int blockNoBegin, unsigned int pageSize,
+    uint32 ignoreWalId, uint32 ignoreWalOffset)
 {
     // If the buffer does not represent an even number of pages then error
     if (pageBufferSize % pageSize != 0 || pageBufferSize / pageSize == 0)
         THROW(AssertError, "buffer size %d, page size %d are not divisible", pageBufferSize, pageSize);
 
     // Loop through all pages in the buffer
-    for (int pageIdx = 0; pageIdx < pageBufferSize / pageSize; pageIdx++)
+    for (unsigned int pageIdx = 0; pageIdx < pageBufferSize / pageSize; pageIdx++)
     {
         const unsigned char *page = pageBuffer + (pageIdx * pageSize);
 

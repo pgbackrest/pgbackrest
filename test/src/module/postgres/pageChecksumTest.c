@@ -11,7 +11,7 @@ Page data for testing -- use 8192 for page size since this is the most common va
 // GCC doesn't like this elements of this array being used as both char * and struct * so wrap it in a function to disable the
 // optimizations that cause warnings
 unsigned char *
-testPage(int pageIdx)
+testPage(unsigned int pageIdx)
 {
     static unsigned char testPageBuffer[TEST_PAGE_TOTAL][TEST_PAGE_SIZE];
     return testPageBuffer[pageIdx];
@@ -74,7 +74,7 @@ testRun()
             AssertError, "buffer size 131071, page size 8192 are not divisible");
 
         // Create pages that will pass the test (starting with block 0)
-        for (int pageIdx = 0; pageIdx < TEST_PAGE_TOTAL; pageIdx++)
+        for (unsigned int pageIdx = 0; pageIdx < TEST_PAGE_TOTAL; pageIdx++)
         {
             // Don't fill with zero because zeroes will succeed on the pd_upper check
             memset(testPage(pageIdx), 0x77, TEST_PAGE_SIZE);
@@ -87,9 +87,9 @@ testRun()
             true, "valid page buffer starting at block 0");
 
         // Create pages that will pass the test (beginning with block <> 0)
-        int blockBegin = 999;
+        unsigned int blockBegin = 999;
 
-        for (int pageIdx = 0; pageIdx < TEST_PAGE_TOTAL; pageIdx++)
+        for (unsigned int pageIdx = 0; pageIdx < TEST_PAGE_TOTAL; pageIdx++)
         {
             ((PageHeader)testPage(pageIdx))->pd_checksum = pageChecksum(
                     testPage(pageIdx), pageIdx + blockBegin, TEST_PAGE_SIZE);
@@ -101,8 +101,8 @@ testRun()
             true, "valid page buffer starting at block 999");
 
         // Break the checksum for a page and make sure it is found
-        int pageInvalid = 7;
-        assert(pageInvalid >= 0 && pageInvalid < TEST_PAGE_TOTAL);
+        unsigned int pageInvalid = 7;
+        assert(pageInvalid < TEST_PAGE_TOTAL);
         ((PageHeader)testPage(pageInvalid))->pd_checksum = 0xEEEE;
 
         TEST_RESULT_BOOL(

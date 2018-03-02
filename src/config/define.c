@@ -205,7 +205,7 @@ cfgDefDataFind(
                     break;
 
                 // Set the current command
-                commandCurrent = data;
+                commandCurrent = (unsigned int)data;
             }
             // Only find type if not in a command block yet or in the expected command
             else if (type == typeFind && (commandCurrent == UINT_MAX || commandCurrent == commandDefId))
@@ -548,7 +548,7 @@ cfgDefOptionId(const char *optionName)
 /***********************************************************************************************************************************
 Get total indexed values for option
 ***********************************************************************************************************************************/
-int
+unsigned int
 cfgDefOptionIndexTotal(ConfigDefineOption optionDefId)
 {
     cfgDefOptionCheck(optionDefId);

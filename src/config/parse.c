@@ -17,16 +17,16 @@ Command and Option Parse
 Parse option flags
 ***********************************************************************************************************************************/
 // Offset the option values so they don't conflict with getopt_long return codes
-#define PARSE_OPTION_FLAG                                           (1 << 31)
+#define PARSE_OPTION_FLAG                                           (1 << 30)
 
 // Add a flag for negation rather than checking "--no-"
-#define PARSE_NEGATE_FLAG                                           (1 << 30)
+#define PARSE_NEGATE_FLAG                                           (1 << 29)
 
 // Add a flag for reset rather than checking "--reset-"
-#define PARSE_RESET_FLAG                                            (1 << 29)
+#define PARSE_RESET_FLAG                                            (1 << 28)
 
 // Indicate that option name has been deprecated and will be removed in a future release
-#define PARSE_DEPRECATE_FLAG                                        (1 << 28)
+#define PARSE_DEPRECATE_FLAG                                        (1 << 27)
 
 // Mask to exclude all flags and get at the actual option id (only 12 bits allowed for option id, the rest reserved for flags)
 #define PARSE_OPTION_MASK                                           0xFFF
@@ -74,7 +74,7 @@ Parse the command-line arguments and config file to produce final config data
 logic to this critical path code.
 ***********************************************************************************************************************************/
 void
-configParse(int argListSize, const char *argList[])
+configParse(unsigned int argListSize, const char *argList[])
 {
     // Initialize configuration
     cfgInit();
@@ -107,7 +107,7 @@ configParse(int argListSize, const char *argList[])
         // Only the first non-option parameter should be treated as a command so track if the command has been set
         bool commandSet = false;
 
-        while ((option = getopt_long(argListSize, (char **)argList, "-:", optionList, &optionListIdx)) != -1)
+        while ((option = getopt_long((int)argListSize, (char **)argList, "-:", optionList, &optionListIdx)) != -1)
         {
             switch (option)
             {
@@ -590,7 +590,7 @@ configParse(int argListSize, const char *argList[])
                                         strPtr(strLstGet(parseOption->valueList, listIdx)), cfgOptionName(optionId));
                                 }
 
-                                kvPut(keyValue, varNewStr(strNewN(pair, equal - pair)), varNewStr(strNew(equal + 1)));
+                                kvPut(keyValue, varNewStr(strNewN(pair, (size_t)(equal - pair))), varNewStr(strNew(equal + 1)));
                             }
 
                             cfgOptionSet(optionId, parseOption->source, value);
@@ -621,7 +621,7 @@ configParse(int argListSize, const char *argList[])
                                 TRY_BEGIN()
                                 {
                                     if (optionDefType == cfgDefOptTypeInteger)
-                                        valueDbl = varInt64Force(varNewStr(value));
+                                        valueDbl = (double)varInt64Force(varNewStr(value));
                                     else
                                         valueDbl = varDblForce(varNewStr(value));
                                 }

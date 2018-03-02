@@ -9,6 +9,6 @@ Parse Configuration
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void configParse(int argListSize, const char *argList[]);
+void configParse(unsigned int argListSize, const char *argList[]);
 
 #endif

@@ -19,7 +19,7 @@ Define the console width - use a fixed with of 80 since this should be safe on v
 Helper function for helpRender() to make output look good on a console
 ***********************************************************************************************************************************/
 static String *
-helpRenderText(const String *text, int indent, bool indentFirst, int length)
+helpRenderText(const String *text, size_t indent, bool indentFirst, size_t length)
 {
     String *result = strNew("");
 
@@ -45,7 +45,7 @@ helpRenderText(const String *text, int indent, bool indentFirst, int length)
                     strCat(result, "\n");
 
                 if (strSize(strLstGet(partList, partIdx)))
-                    strCatFmt(result, "%*s", indent, "");
+                    strCatFmt(result, "%*s", (int)indent, "");
             }
 
             // Add the line

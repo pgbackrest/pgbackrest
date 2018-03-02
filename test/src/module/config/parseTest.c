@@ -13,7 +13,7 @@ Test Configuration Parse
 Option find test -- this is done a lot in the deprecated tests
 ***********************************************************************************************************************************/
 static void
-testOptionFind(const char *option, int value)
+testOptionFind(const char *option, unsigned int value)
 {
     // If not testing for a missing option, then add the option offset that is already added to each option in the list
     if (value != 0)
@@ -555,7 +555,7 @@ testRun()
 
         testOptionFind("no-db-user", 0);
 
-        for (int optionIdx = 0; optionIdx < cfgDefOptionIndexTotal(cfgDefOptPgPath); optionIdx++)
+        for (unsigned int optionIdx = 0; optionIdx < cfgDefOptionIndexTotal(cfgDefOptPgPath); optionIdx++)
         {
             testOptionFind(strPtr(strNewFmt("db%u-cmd", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostCmd + optionIdx));
             testOptionFind(

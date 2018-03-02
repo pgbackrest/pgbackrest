@@ -47,7 +47,7 @@ strLstNewSplitZ(const String *string, const char *delimiter)
         // If a match was found then add the string
         if (stringMatch != NULL)
         {
-            strLstAdd(this, strNewN(stringBase, stringMatch - stringBase));
+            strLstAdd(this, strNewN(stringBase, (size_t)(stringMatch - stringBase)));
             stringBase = stringMatch + strlen(delimiter);
         }
         // Else make whatever is left the last string
@@ -97,7 +97,7 @@ strLstNewSplitSizeZ(const String *string, const char *delimiter, size_t size)
                 if (stringMatchLast != NULL)
                     stringMatch = stringMatchLast - strlen(delimiter);
 
-                strLstAdd(this, strNewN(stringBase, stringMatch - stringBase));
+                strLstAdd(this, strNewN(stringBase, (size_t)(stringMatch - stringBase)));
                 stringBase = stringMatch + strlen(delimiter);
                 stringMatchLast = NULL;
             }
@@ -109,7 +109,7 @@ strLstNewSplitSizeZ(const String *string, const char *delimiter, size_t size)
         {
             if (stringMatchLast != NULL && strlen(stringBase) - strlen(delimiter) >= size)
             {
-                strLstAdd(this, strNewN(stringBase, (stringMatchLast - strlen(delimiter)) - stringBase));
+                strLstAdd(this, strNewN(stringBase, (size_t)((stringMatchLast - strlen(delimiter)) - stringBase)));
                 stringBase = stringMatchLast;
             }
 

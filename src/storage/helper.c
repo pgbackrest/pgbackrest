@@ -92,7 +92,7 @@ storageSpool()
         {
             storageSpoolStanza = strDup(cfgOptionStr(cfgOptStanza));
             storageSpoolData = storageNew(
-                cfgOptionStr(cfgOptSpoolPath), STORAGE_PATH_MODE_DEFAULT, cfgOptionInt(cfgOptBufferSize),
+                cfgOptionStr(cfgOptSpoolPath), STORAGE_PATH_MODE_DEFAULT, (size_t)cfgOptionInt(cfgOptBufferSize),
                 (StoragePathExpressionCallback)storageSpoolPathExpression);
         }
         MEM_CONTEXT_END();

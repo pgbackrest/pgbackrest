@@ -23,7 +23,7 @@ main(int argListSize, const char *argList[])
     {
         // Load the configuration
         // -------------------------------------------------------------------------------------------------------------------------
-        cfgLoad(argListSize, argList);
+        cfgLoad((unsigned int)argListSize, argList);
 
         // Display help
         // -------------------------------------------------------------------------------------------------------------------------
