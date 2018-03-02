@@ -174,12 +174,6 @@ sub configLoad
     # Log the command begin
     commandBegin();
 
-    # Make sure that backup and db are not both remote
-    if (cfgOptionTest(CFGOPT_PG_HOST) && cfgOptionTest(CFGOPT_REPO_HOST))
-    {
-        confess &log(ERROR, 'db and backup cannot both be configured as remote', ERROR_CONFIG);
-    }
-
     # Warn when repo-retention-full is not set
     if (cfgOptionValid(CFGOPT_REPO_RETENTION_FULL) && !cfgOptionTest(CFGOPT_REPO_RETENTION_FULL))
     {

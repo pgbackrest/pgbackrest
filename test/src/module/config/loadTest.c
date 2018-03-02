@@ -138,5 +138,21 @@ testRun()
             cfgOptionDbl(cfgOptProtocolTimeout), cfgOptionName(cfgOptProtocolTimeout),
             cfgOptionName(cfgOptProtocolTimeout), cfgOptionDbl(cfgOptProtocolTimeout), cfgOptionName(cfgOptDbTimeout),
             cfgOptionDbl(cfgOptDbTimeout))));
+
+        // pg-host and repo-host tests
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("archive-get"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--pg2-host=pg2"));
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for pg and repo host test");
+
+        strLstAdd(argList, strNew("--repo1-host=repo1"));
+
+        TEST_ERROR(
+            cfgLoad(strLstSize(argList), strLstPtr(argList)), ConfigError,
+            "pg and repo hosts cannot both be configured as remote");
     }
 }

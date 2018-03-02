@@ -91,6 +91,29 @@ cfgLoadParam(int argListSize, const char *argList[], String *exe)
                     cfgOptionDbl(cfgOptDbTimeout));
             }
         }
+
+        // Make sure that repo and pg host settings are not both set - cannot both be remote
+        bool pgHostFound = false;
+        for (int optionIdx = 0; optionIdx <= cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
+        {
+            if (cfgOptionTest(cfgOptPgHost + optionIdx))
+            {
+                pgHostFound = true;
+                break;
+            }
+        }
+
+        // If a pg-host was found, see if a repo-host is configured
+        if (pgHostFound == true)
+        {
+            for (int optionIdx = 0; optionIdx <= cfgOptionIndexTotal(cfgOptRepoHost); optionIdx++)
+            {
+                if (cfgOptionTest(cfgOptRepoHost + optionIdx))
+                {
+                    THROW(ConfigError, "pg and repo hosts cannot both be configured as remote");
+                }
+            }
+        }
     }
     MEM_CONTEXT_TEMP_END();
 }
