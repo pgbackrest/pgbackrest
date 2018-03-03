@@ -36,6 +36,10 @@
                     <release-item>
                         <p>Enable <id>-Wswitch-enum</id> and <id>-Wconversion</id> and silence new warnings.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improve code documentation in <code>config</code> module.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

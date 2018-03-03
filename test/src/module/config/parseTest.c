@@ -398,7 +398,6 @@ testRun()
         )));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), TEST_COMMAND_BACKUP " command");
-        logInit(logLevelInfo, logLevelOff, false);
         testLogErrResult(
             strPtr(
                 strNewFmt(
