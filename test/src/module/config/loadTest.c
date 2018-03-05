@@ -168,12 +168,71 @@ testRun()
         strLstAdd(argList, strNew("expire"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
-        testLogResult("P00   WARN: option 'repo1-retention-full' is not set, the repository may run out of space\n"
-                      "            HINT: to retain full backups indefinitely (without warning), set option " "'repo1-retention-full' to the maximum.");
+        testLogResult("P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option "
+            "'repo1-retention-full' to the maximum.");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
 
         strLstAdd(argList, strNew("--repo1-retention-full=1"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config no retention warning");
         testLogResult(""); // confirm no warning was thrown
+        TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 1, "    repo1-retention-archive set");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--log-level-console=info"));
+        strLstAdd(argList, strNew("--log-level-stderr=off"));
+        strLstAdd(argList, strNew("--no-log-timestamp"));
+        strLstAdd(argList, strNew("--repo1-retention-archive-type=incr"));
+        strLstAdd(argList, strNew("expire"));
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        testLogResult("P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option "
+            "'repo1-retention-full' to the maximum.\n"
+        "P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=incr' but option " "'repo1-retention-archive' is not set");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--log-level-console=info"));
+        strLstAdd(argList, strNew("--log-level-stderr=off"));
+        strLstAdd(argList, strNew("--no-log-timestamp"));
+        strLstAdd(argList, strNew("--repo1-retention-archive-type=diff"));
+        strLstAdd(argList, strNew("expire"));
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        testLogResult("P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option "
+            "'repo1-retention-full' to the maximum.\n"
+        "P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=diff' but neither option " "'repo1-retention-archive' nor option 'repo1-retention-diff' is set");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
+
+        strLstAdd(argList, strNew("--repo1-retention-diff=2"));
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        testLogResult("P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option "
+            "'repo1-retention-full' to the maximum.");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 2, "    repo1-retention-archive set to retention-diff");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--log-level-console=info"));
+        strLstAdd(argList, strNew("--log-level-stderr=off"));
+        strLstAdd(argList, strNew("--no-log-timestamp"));
+        strLstAdd(argList, strNew("--repo1-retention-archive-type=diff"));
+        strLstAdd(argList, strNew("--repo1-retention-archive=3"));
+        strLstAdd(argList, strNew("--repo1-retention-full=1"));
+        strLstAdd(argList, strNew("expire"));
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
+        testLogResult("P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
+            "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff' "
+            "to the maximum.");
     }
 }

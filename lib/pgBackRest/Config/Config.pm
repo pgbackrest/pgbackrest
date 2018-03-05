@@ -174,64 +174,6 @@ sub configLoad
     # Log the command begin
     commandBegin();
 
-    # If archive retention is valid for the command, then set archive settings
-    if (cfgOptionValid(CFGOPT_REPO_RETENTION_ARCHIVE))
-    {
-        my $strArchiveRetentionType = cfgOption(CFGOPT_REPO_RETENTION_ARCHIVE_TYPE, false);
-        my $iArchiveRetention = cfgOption(CFGOPT_REPO_RETENTION_ARCHIVE, false);
-        my $iFullRetention = cfgOption(CFGOPT_REPO_RETENTION_FULL, false);
-        my $iDifferentialRetention = cfgOption(CFGOPT_REPO_RETENTION_DIFF, false);
-
-        my $strMsgArchiveOff = "WAL segments will not be expired: option '" . cfgOptionName(CFGOPT_REPO_RETENTION_ARCHIVE_TYPE) .
-             "=${strArchiveRetentionType}' but ";
-
-        # If the archive retention is not explicitly set then determine what it should be set to so the user does not have to.
-        if (!defined($iArchiveRetention))
-        {
-            # If repo-retention-archive-type is default, then if repo-retention-full is set, set the repo-retention-archive to this
-            # value, else ignore archiving
-            if ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_FULL)
-            {
-                if (defined($iFullRetention))
-                {
-                    cfgOptionSet(CFGOPT_REPO_RETENTION_ARCHIVE, $iFullRetention);
-                }
-            }
-            elsif ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_DIFF)
-            {
-                # if repo-retention-diff is set then user must have set it
-                if (defined($iDifferentialRetention))
-                {
-                    cfgOptionSet(CFGOPT_REPO_RETENTION_ARCHIVE, $iDifferentialRetention);
-                }
-                else
-                {
-                    &log(WARN,
-                        $strMsgArchiveOff . "neither option '" . cfgOptionName(CFGOPT_REPO_RETENTION_ARCHIVE) .
-                            "' nor option '" .  cfgOptionName(CFGOPT_REPO_RETENTION_DIFF) . "' is set");
-                }
-            }
-            elsif ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_INCR)
-            {
-                &log(WARN, $strMsgArchiveOff . "option '" . cfgOptionName(CFGOPT_REPO_RETENTION_ARCHIVE) . "' is not set");
-            }
-        }
-        else
-        {
-            # If repo-retention-archive is set then check repo-retention-archive-type and issue a warning if the corresponding
-            # setting is UNDEF since UNDEF means backups will not be expired but they should be in the practice of setting this
-            # value even though expiring the archive itself is OK and will be performed.
-            if ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_DIFF && !defined($iDifferentialRetention))
-            {
-                &log(WARN,
-                    "option '" . cfgOptionName(CFGOPT_REPO_RETENTION_DIFF) . "' is not set for '" .
-                        cfgOptionName(CFGOPT_REPO_RETENTION_ARCHIVE_TYPE) . "=" . &CFGOPTVAL_BACKUP_TYPE_DIFF . "' \n" .
-                        "HINT: to retain differential backups indefinitely (without warning), set option '" .
-                        cfgOptionName(CFGOPT_REPO_RETENTION_DIFF) . "' to the maximum.");
-            }
-        }
-    }
-
     return true;
 }
 

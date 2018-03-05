@@ -40,6 +40,14 @@
                     <release-item>
                         <p>Improve code documentation in <code>config</code> module.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Port non-codified <code>config</code> module warning from Perl to C.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

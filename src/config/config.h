@@ -13,6 +13,15 @@ config/parse.c sets the command and options and determines which options are val
 #include "config/config.auto.h"
 
 /***********************************************************************************************************************************
+Constants
+
+Constants for configuration options.
+***********************************************************************************************************************************/
+#define CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF              "diff"
+#define CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL              "full"
+#define CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR              "incr"
+
+/***********************************************************************************************************************************
 Command Functions
 
 Access the current command and command parameters.

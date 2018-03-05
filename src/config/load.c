@@ -121,11 +121,74 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
                 // If the repo-type is defined, then see if corresponding retention-full is set
                 if (cfgOptionTest(cfgOptRepoType + optionIdx) && !cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
                 {
-                    LOG_WARN(
-                        "option '%s' is not set, the repository may run out of space\n"
+                    LOG_WARN("option %s is not set, the repository may run out of space\n"
                         "HINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
                         cfgOptionName(cfgOptRepoRetentionFull + optionIdx),
                         cfgOptionName(cfgOptRepoRetentionFull + optionIdx));
+                }
+            }
+        }
+
+        // If archive retention is valid for the command, then set archive settings
+        if (cfgOptionValid(cfgOptRepoRetentionArchive))
+        {
+            // For each possible repo, check and adjust the settings as appropriate
+            for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptRepoType); optionIdx++)
+            {
+                const String *archiveRetentionType = cfgOptionStr(cfgOptRepoRetentionArchiveType + optionIdx);
+
+                const String *msgArchiveOff = strNewFmt("WAL segments will not be expired: option '%s=%s' but",
+                    cfgOptionName(cfgOptRepoRetentionArchiveType), strPtr(archiveRetentionType));
+
+                // If the archive retention is not explicitly set then determine what it should be set to so the user does not have to.
+                if (!cfgOptionTest(cfgOptRepoRetentionArchive + optionIdx))
+                {
+                    // If repo-retention-archive-type is default, then if repo-retention-full is set, set the repo-retention-archive to this
+                    // value, else ignore archiving
+                    if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL))
+                    {
+                        if (cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
+                        {
+                            cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
+                                varNewInt(cfgOptionInt(cfgOptRepoRetentionFull + optionIdx)));
+                        }
+                    }
+                    else if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF))
+                    {
+                        // if repo-retention-diff is set then user must have set it
+                        if (cfgOptionTest(cfgOptRepoRetentionDiff + optionIdx))
+                        {
+                            cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
+                                varNewInt(cfgOptionInt(cfgOptRepoRetentionDiff + optionIdx)));
+                        }
+                        else
+                        {
+                            LOG_WARN("%s neither option '%s' nor option '%s' is set", strPtr(msgArchiveOff),
+                                cfgOptionName(cfgOptRepoRetentionArchive + optionIdx),
+                                cfgOptionName(cfgOptRepoRetentionDiff + optionIdx));
+                        }
+                    }
+                    else if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR))
+                    {
+                        LOG_WARN("%s option '%s' is not set", strPtr(msgArchiveOff),
+                            cfgOptionName(cfgOptRepoRetentionArchive + optionIdx));
+                    }
+                }
+                else
+                {
+                    // If repo-retention-archive is set then check repo-retention-archive-type and issue a warning if the corresponding
+                    // setting is UNDEF since UNDEF means backups will not be expired but they should be in the practice of setting this
+                    // value even though expiring the archive itself is OK and will be performed.
+                    if ((strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF)) &&
+                        (!cfgOptionTest(cfgOptRepoRetentionDiff + optionIdx)))
+                    {
+                        LOG_WARN("option '%s' is not set for '%s=%s'\n"
+                            "HINT: to retain differential backups indefinitely (without warning), set option '%s' to the maximum.",
+                            cfgOptionName(cfgOptRepoRetentionDiff + optionIdx),
+                            cfgOptionName(cfgOptRepoRetentionArchiveType + optionIdx),
+                            CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF,
+                            cfgOptionName(cfgOptRepoRetentionDiff + optionIdx));
+                    }
                 }
             }
         }
