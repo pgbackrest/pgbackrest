@@ -519,8 +519,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Validate data page checksums.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Directs pgBackRest to validate all data page checksums while backing up a cluster. This option will be automatically "
-                "enabled when the required C library is present and checksums are enabled on the cluster.\n"
+            "Directs pgBackRest to validate all data page checksums while backing up a cluster. This option is automatically "
+                "enabled when data page checksums are enabled on the cluster.\n"
             "\n"
             "Failures in checksum validation will not abort a backup. Rather, warnings will be emitted in the log (and to the "
                 "console with default settings) and the list of invalid pages will be stored in the backup manifest."

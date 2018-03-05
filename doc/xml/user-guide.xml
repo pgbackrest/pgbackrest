@@ -289,7 +289,7 @@
         </execute-list>
 
         <!-- LibC installation -->
-        <p><backrest/> includes a companion C library that enhances performance and enables the `checksum-page` option and encryption.  Pre-built packages are generally a better option than building the C library manually but the steps required are given below for completeness.  Depending on the distribution a number of packages may be required which will not be enumerated here.</p>
+        <p><backrest/> requires a companion C library that enhances performance and enables the `checksum-page` option and encryption.  Pre-built packages are generally a better option than building the C library manually but the steps required are given below for completeness.  Depending on the distribution a number of packages may be required which will not be enumerated here.</p>
 
         <execute-list host="{[br-install-host]}">
             <title>Build and Install C Library</title>
@@ -630,7 +630,7 @@
         <section id="configure-encryption">
             <title>Configure Repository Encryption</title>
 
-            <p>The repository will be configured with a cipher type and key to demonstrate encryption. The companion C library is required for encryption, see <link section="/installation">Installation</link>.</p>
+            <p>The repository will be configured with a cipher type and key to demonstrate encryption.</p>
 
             <p>It is important to use a long, random passphrase for the cipher key.  A good way to generate one is to run: <code>openssl rand -base64 48</code>.</p>
 

@@ -43,6 +43,14 @@
                 </release-development-list>
             </release-core-list>
 
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <p>Remove references to the C library being optional.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-feature-list>
                     <release-item>
