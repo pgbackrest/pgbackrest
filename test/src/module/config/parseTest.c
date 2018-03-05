@@ -348,7 +348,7 @@ testRun()
 
         TEST_RESULT_STR(strPtr(cfgExe()), TEST_BACKREST_EXE, "    exe is set");
 
-        TEST_RESULT_PTR(cfgOption(cfgOptConfig), NULL, "    config is not set");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptConfig), false, "    config is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptConfig), cfgSourceParam, "    config is source param");
         TEST_RESULT_BOOL(cfgOptionNegate(cfgOptConfig), true, "    config is negated");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "    stanza is source param");
@@ -410,13 +410,13 @@ testRun()
                     strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile),
                     strPtr(configFile))));
 
-        TEST_RESULT_PTR(cfgOption(cfgOptPgHost), NULL, "    pg1-path is not defined");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-path is not set");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), false, "    compress not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompress), cfgSourceConfig, "    compress is source config");
-        TEST_RESULT_PTR(cfgOption(cfgOptArchiveCheck), NULL, "    archive-check is not set");
-        TEST_RESULT_PTR(cfgOption(cfgOptArchiveCopy), NULL, "    archive-copy is not set");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCheck), false, "    archive-check is not set");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCopy), false, "    archive-copy is not set");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptRepoHardlink), true, "    repo-hardlink is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "    repo-hardlink is source config");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "    compress-level is set");

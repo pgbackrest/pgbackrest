@@ -42,6 +42,7 @@ unsigned int cfgOptionIndexTotal(ConfigOption optionDefId);
 const char *cfgOptionName(ConfigOption optionId);
 
 bool cfgOptionValid(ConfigOption optionId);
+bool cfgOptionTest(ConfigOption optionId);
 
 /***********************************************************************************************************************************
 Option Source Enum

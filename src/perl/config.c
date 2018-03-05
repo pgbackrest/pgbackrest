@@ -39,7 +39,7 @@ perlOptionJson()
                 strCat(result, "\"");
 
                 // Add a comma if another define will be added
-                if (cfgOption(optionId) != NULL)
+                if (cfgOptionTest(optionId))
                     strCat(result, ",");
             }
 
@@ -53,7 +53,7 @@ perlOptionJson()
                     strCatFmt(result, "\"reset\":%s", strPtr(varStrForce(varNewBool(true))));
 
                 // If has a value
-                if (cfgOption(optionId) != NULL)
+                if (cfgOptionTest(optionId))
                 {
                     // If option is reset, then add a comma separator before setting the value
                     if (cfgOptionReset(optionId))

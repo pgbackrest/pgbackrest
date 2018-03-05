@@ -50,7 +50,7 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
             cfgExeSet(exe);
 
         // Set default for repo-host-cmd
-        if (cfgOptionValid(cfgOptRepoHost) && cfgOption(cfgOptRepoHost) != NULL &&
+        if (cfgOptionValid(cfgOptRepoHost) && cfgOptionTest(cfgOptRepoHost) &&
             cfgOptionSource(cfgOptRepoHostCmd) == cfgSourceDefault)
         {
             cfgOptionDefaultSet(cfgOptRepoHostCmd, varNewStr(cfgExe()));
@@ -59,9 +59,9 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
         // Set default for pg-host-cmd
         if (cfgOptionValid(cfgOptPgHostCmd))
         {
-            for (unsigned int optionIdx = 0; optionIdx <= cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
+            for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
             {
-                if (cfgOption(cfgOptPgHost + optionIdx) != NULL && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
+                if (cfgOptionTest(cfgOptPgHost + optionIdx) && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
                     cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, varNewStr(cfgExe()));
             }
         }

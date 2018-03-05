@@ -478,7 +478,6 @@ my $oTestDef =
                     &TESTDEF_NAME => 'load',
                     &TESTDEF_TOTAL => 1,
                     &TESTDEF_C => true,
-                    &TESTDEF_CDEF => '-DNO_ERROR -DNO_LOG',
 
                     &TESTDEF_COVERAGE =>
                     {
