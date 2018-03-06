@@ -54,6 +54,14 @@
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                        </release-item-contributor-list>
+
+                        <p>Show index in examples for indexed options, i.e. <id>repo-*</id>, <id>pg-*</id>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove references to the C library being optional.</p>
                     </release-item>
                 </release-improvement-list>

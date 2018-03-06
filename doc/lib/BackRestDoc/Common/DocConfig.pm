@@ -838,6 +838,10 @@ sub helpOptionGet
     # Get the example
     my $strExample;
 
+    my $strOptionPrefix = $rhConfigDefine->{$strOption}{&CFGDEF_PREFIX};
+    my $strOptionIndex = defined($strOptionPrefix) ?
+        "${strOptionPrefix}1-" . substr($strOption, length($strOptionPrefix) + 1) : $strOption;
+
     if (defined($strCommand))
     {
         if (docConfigOptionTypeTest($strOption, CFGDEF_TYPE_BOOLEAN))
@@ -848,16 +852,16 @@ sub helpOptionGet
                              $$oOptionHash{&CONFIG_HELP_EXAMPLE});
             }
 
-            $strExample = '--' . ($$oOptionHash{&CONFIG_HELP_EXAMPLE} eq 'n' ? 'no-' : '') . $strOption;
+            $strExample = '--' . ($$oOptionHash{&CONFIG_HELP_EXAMPLE} eq 'n' ? 'no-' : '') . $strOptionIndex;
         }
         else
         {
-            $strExample = "--${strOption}=" . $$oOptionHash{&CONFIG_HELP_EXAMPLE};
+            $strExample = "--${strOptionIndex}=" . $$oOptionHash{&CONFIG_HELP_EXAMPLE};
         }
     }
     else
     {
-        $strExample = "${strOption}=" . $$oOptionHash{&CONFIG_HELP_EXAMPLE};
+        $strExample = "${strOptionIndex}=" . $$oOptionHash{&CONFIG_HELP_EXAMPLE};
     }
 
     $strCodeBlock .= (defined($strCodeBlock) ? "\n" : '') . "example: ${strExample}";
