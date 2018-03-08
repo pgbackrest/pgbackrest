@@ -35,6 +35,14 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Error when multiple arguments are set in the config file for an option that does not accept multiple arguments.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-contributor id="vondendriesch.adrian"/>
                         </release-item-contributor-list>
 
