@@ -20,46 +20,50 @@ perlOptionJson()
             if (!cfgOptionValid(optionId))
                 continue;
 
-            // Output option
-            if (strSize(result) != 1)
-                strCat(result, ",");
-
-            strCatFmt(result, "\"%s\":{", cfgOptionName(optionId));
+            String *option = strNew("");
 
             // Output source unless it is default
             if (cfgOptionSource(optionId) != cfgSourceDefault)
             {
-                strCat(result, "\"source\":\"");
+                strCat(option, "\"source\":\"");
 
                 if (cfgOptionSource(optionId) == cfgSourceParam)
-                    strCat(result, "param");
+                    strCat(option, "param");
                 else
-                    strCat(result, "config");
+                    strCat(option, "config");
 
-                strCat(result, "\"");
-
-                // Add a comma if another define will be added
-                if (cfgOptionTest(optionId))
-                    strCat(result, ",");
+                strCat(option, "\"");
             }
 
             // If option was negated
             if (cfgOptionNegate(optionId))
-                strCatFmt(result, "\"negate\":%s", strPtr(varStrForce(varNewBool(true))));
+            {
+                // Add comma if needed
+                if (strSize(option) != 0)
+                    strCat(option, ",");
+
+                strCatFmt(option, "\"negate\":%s", strPtr(varStrForce(varNewBool(true))));
+            }
             else
             {
                 // If option is reset then add flag
                 if (cfgOptionReset(optionId))
-                    strCatFmt(result, "\"reset\":%s", strPtr(varStrForce(varNewBool(true))));
+                {
+                    // Add comma if needed
+                    if (strSize(option) != 0)
+                        strCat(option, ",");
+
+                    strCatFmt(option, "\"reset\":%s", strPtr(varStrForce(varNewBool(true))));
+                }
 
                 // If has a value
                 if (cfgOptionTest(optionId))
                 {
-                    // If option is reset, then add a comma separator before setting the value
-                    if (cfgOptionReset(optionId))
-                        strCat(result, ",");
+                    // Add comma if needed
+                    if (strSize(option) != 0)
+                        strCat(option, ",");
 
-                    strCat(result, "\"value\":");
+                    strCat(option, "\"value\":");
 
                     switch (cfgDefOptionType(cfgOptionDefIdFromId(optionId)))
                     {
@@ -67,13 +71,13 @@ perlOptionJson()
                         case cfgDefOptTypeFloat:
                         case cfgDefOptTypeInteger:
                         {
-                            strCat(result, strPtr(varStrForce(cfgOption(optionId))));
+                            strCat(option, strPtr(varStrForce(cfgOption(optionId))));
                             break;
                         }
 
                         case cfgDefOptTypeString:
                         {
-                            strCatFmt(result, "\"%s\"", strPtr(cfgOptionStr(optionId)));
+                            strCatFmt(option, "\"%s\"", strPtr(cfgOptionStr(optionId)));
                             break;
                         }
 
@@ -82,19 +86,19 @@ perlOptionJson()
                             const KeyValue *valueKv = cfgOptionKv(optionId);
                             const VariantList *keyList = kvKeyList(valueKv);
 
-                            strCat(result, "{");
+                            strCat(option, "{");
 
                             for (unsigned int listIdx = 0; listIdx < varLstSize(keyList); listIdx++)
                             {
                                 if (listIdx != 0)
-                                    strCat(result, ",");
+                                    strCat(option, ",");
 
                                 strCatFmt(
-                                    result, "\"%s\":\"%s\"", strPtr(varStr(varLstGet(keyList, listIdx))),
+                                    option, "\"%s\":\"%s\"", strPtr(varStr(varLstGet(keyList, listIdx))),
                                     strPtr(varStr(kvGet(valueKv, varLstGet(keyList, listIdx)))));
                             }
 
-                            strCat(result, "}");
+                            strCat(option, "}");
 
                             break;
                         }
@@ -103,17 +107,17 @@ perlOptionJson()
                         {
                             StringList *valueList = strLstNewVarLst(cfgOptionLst(optionId));
 
-                            strCat(result, "{");
+                            strCat(option, "{");
 
                             for (unsigned int listIdx = 0; listIdx < strLstSize(valueList); listIdx++)
                             {
                                 if (listIdx != 0)
-                                    strCat(result, ",");
+                                    strCat(option, ",");
 
-                                strCatFmt(result, "\"%s\":true", strPtr(strLstGet(valueList, listIdx)));
+                                strCatFmt(option, "\"%s\":true", strPtr(strLstGet(valueList, listIdx)));
                             }
 
-                            strCat(result, "}");
+                            strCat(option, "}");
 
                             break;
                         }
@@ -121,7 +125,11 @@ perlOptionJson()
                 }
             }
 
-            strCat(result, "}");
+            // Add option to main JSON blob
+            if (strSize(result) != 1)
+                strCat(result, ",");
+
+            strCatFmt(result, "\"%s\":{%s}", cfgOptionName(optionId), strPtr(option));
         }
 
         strCat(result, "}");

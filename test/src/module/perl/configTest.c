@@ -21,6 +21,10 @@ testRun()
         cfgOptionValidSet(cfgOptCompress, true);
         cfgOptionSet(cfgOptCompress, cfgSourceParam, varNewBool(true));
 
+        cfgOptionValidSet(cfgOptConfig, true);
+        cfgOptionNegateSet(cfgOptConfig, true);
+        cfgOptionSet(cfgOptConfig, cfgSourceParam, NULL);
+
         cfgOptionValidSet(cfgOptOnline, true);
         cfgOptionNegateSet(cfgOptOnline, true);
         cfgOptionSet(cfgOptOnline, cfgSourceParam, varNewBool(false));
@@ -30,7 +34,7 @@ testRun()
 
         cfgOptionValidSet(cfgOptBackupStandby, true);
         cfgOptionResetSet(cfgOptBackupStandby, true);
-        cfgOptionSet(cfgOptBackupStandby, cfgSourceDefault, varNewBool(false));
+        cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, varNewBool(false));
 
         cfgOptionValidSet(cfgOptProtocolTimeout, true);
         cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(1.1));
@@ -48,9 +52,10 @@ testRun()
             strPtr(perlOptionJson()),
             "{"
             "\"archive-queue-max\":{\"source\":\"param\",\"value\":999999999999},"
-            "\"backup-standby\":{\"reset\":true,\"value\":false},"
+            "\"backup-standby\":{\"source\":\"param\",\"reset\":true,\"value\":false},"
             "\"compress\":{\"source\":\"param\",\"value\":true},"
             "\"compress-level\":{\"source\":\"config\",\"value\":3},"
+            "\"config\":{\"source\":\"param\",\"negate\":true},"
             "\"online\":{\"source\":\"param\",\"negate\":true},"
             "\"pg1-host\":{\"reset\":true},"
             "\"protocol-timeout\":{\"source\":\"param\",\"value\":1.1},"

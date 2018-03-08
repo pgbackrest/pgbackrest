@@ -22,6 +22,14 @@
 
                         <p>Fix <br-option>--target-action</br-option> and <br-option>--recovery-option</br-option> options being reported as invalid when restoring with <br-option>--type=immediate</br-option>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="kokdemir.ibrahim.edib"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue passing <br-option>--no-config</br-option> to embedded Perl.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
@@ -4196,6 +4204,11 @@
         <contributor id="kulkarni.nikhilchandra">
             <contributor-name-display>Nikhilchandra Kulkarni</contributor-name-display>
             <contributor-id type="github">nikhilchandra-kulkarni</contributor-id>
+        </contributor>
+
+        <contributor id="kokdemir.ibrahim.edib">
+            <contributor-name-display>Ibrahim Edib Kokdemir</contributor-name-display>
+            <contributor-id type="github">Edib</contributor-id>
         </contributor>
 
         <contributor id="lardiere.sebastien">
