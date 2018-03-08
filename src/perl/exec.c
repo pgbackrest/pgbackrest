@@ -42,6 +42,7 @@ Constants used to build perl options
 ***********************************************************************************************************************************/
 #define PGBACKREST_MODULE                                           PGBACKREST_NAME "::Main"
 #define PGBACKREST_MAIN                                             PGBACKREST_MODULE "::main"
+#define PGBACKREST_CONFIG_SET                                       PGBACKREST_MODULE "::configSet"
 
 /***********************************************************************************************************************************
 Build list of parameters to use for perl main
@@ -57,8 +58,7 @@ perlMain()
 
     // Construct Perl main call
     String *mainCall = strNewFmt(
-        PGBACKREST_MAIN "('%s','%s','%s'%s)", strPtr(cfgExe()), cfgCommandName(cfgCommand()), strPtr(perlOptionJson()),
-        strPtr(commandParam));
+        PGBACKREST_MAIN "('%s','%s'%s)", strPtr(cfgExe()), cfgCommandName(cfgCommand()), strPtr(commandParam));
 
     return mainCall;
 }
@@ -102,6 +102,9 @@ perlExec()
     perl_parse(my_perl, xs_init, 3, (char **)embedding, NULL);
     PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
     perl_run(my_perl);
+
+    // Set config data -- this is done separately to avoid it being included in stack traces
+    eval_pv(strPtr(strNewFmt(PGBACKREST_CONFIG_SET "('%s')", strPtr(perlOptionJson()))), TRUE);
 
     // Run perl main function
     eval_pv(strPtr(perlMain()), TRUE);

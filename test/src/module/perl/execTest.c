@@ -19,7 +19,7 @@ testRun()
         cfgExeSet(strNew("/path/to/pgbackrest"));
 
         TEST_RESULT_STR(
-            strPtr(perlMain()), "pgBackRest::Main::main('/path/to/pgbackrest','info','{}')", "command with no options");
+            strPtr(perlMain()), "pgBackRest::Main::main('/path/to/pgbackrest','info')", "command with no options");
 
         // -------------------------------------------------------------------------------------------------------------------------
         cfgOptionValidSet(cfgOptCompress, true);
@@ -32,7 +32,7 @@ testRun()
 
         TEST_RESULT_STR(
             strPtr(perlMain()),
-            "pgBackRest::Main::main('/path/to/pgbackrest','info','{\"compress\":{\"source\":\"param\",\"value\":true}}','A','B')",
+            "pgBackRest::Main::main('/path/to/pgbackrest','info','A','B')",
             "command with one option and params");
     }
 

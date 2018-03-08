@@ -83,7 +83,7 @@ sub configLoad
     my $bInitLogging = shift;
     my $strBackRestBin = shift;
     my $strCommandName = shift;
-    my $strConfigJson = shift;
+    my $rstrConfigJson = shift;
 
     # Clear option in case it was loaded before
     %oOption = ();
@@ -100,14 +100,14 @@ sub configLoad
     eval
     {
         # Hacky fix for backslashes that need to be escaped
-        $strConfigJson =~ s/\\/\\\\/g;
+        $$rstrConfigJson =~ s/\\/\\\\/g;
 
-        $rhOption = (JSON::PP->new()->allow_nonref())->decode($strConfigJson);
+        $rhOption = (JSON::PP->new()->allow_nonref())->decode($$rstrConfigJson);
         return true;
     }
     or do
     {
-        confess &log(ASSERT, "$EVAL_ERROR" . (defined($strConfigJson) ? ":\n${strConfigJson}" : "<undef>"));
+        confess &log(ASSERT, "unable to parse config JSON");
     };
 
     # Load options into final option hash

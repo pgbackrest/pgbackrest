@@ -25,13 +25,22 @@ use pgBackRest::Protocol::Helper;
 use pgBackRest::Version;
 
 ####################################################################################################################################
+# Set config JSON separately to avoid exposing secrets in the stack trace
+####################################################################################################################################
+my $strConfigJson;
+
+sub configSet
+{
+    $strConfigJson = shift;
+}
+
+####################################################################################################################################
 # Main entry point for the library
 ####################################################################################################################################
 sub main
 {
     my $strBackRestBin = shift;
     my $strCommand = shift;
-    my $strConfigJson = shift;
     my @stryCommandArg = @_;
 
     ################################################################################################################################
@@ -40,9 +49,9 @@ sub main
     eval
     {
         ############################################################################################################################
-        # Load command line parameters and config
+        # Load command line parameters and config -- pass config by reference to hide secrets more than for efficiency
         ############################################################################################################################
-        configLoad(undef, $strBackRestBin, $strCommand, $strConfigJson);
+        configLoad(undef, $strBackRestBin, $strCommand, \$strConfigJson);
 
         # Set test options
         if (cfgOptionTest(CFGOPT_TEST) && cfgOption(CFGOPT_TEST))

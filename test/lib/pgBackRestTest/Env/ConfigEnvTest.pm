@@ -115,7 +115,7 @@ sub configTestLoad
     my @stryArg = $self->commandTestWrite(cfgCommandName($iCommandId), $self->{&CONFIGENVTEST});
     my $strConfigJson = cfgParseTest(backrestBin(), join('|', @stryArg));
     $self->testResult(
-        sub {configLoad(false, backrestBin(), cfgCommandName($iCommandId), $strConfigJson)},
+        sub {configLoad(false, backrestBin(), cfgCommandName($iCommandId), \$strConfigJson)},
         true, 'config load: ' . join(" ", @stryArg));
 }
 
