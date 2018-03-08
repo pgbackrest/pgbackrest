@@ -98,6 +98,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add new test for <code>Common::Io::Process</code> to show that output on stderr will raise an exception on <code>close()</code> even if the exit code is 0.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove Debian package patch now that it has been merged upstream.</p>
                     </release-item>
                 </release-development-list>
