@@ -202,13 +202,6 @@ configParse(unsigned int argListSize, const char *argList[])
                         if (parseOptionList[optionId].reset != reset)
                             THROW(OptionInvalidError, "option '%s' cannot be set and reset", cfgOptionName(optionId));
 
-                        // Error if this option does not allow multiple arguments
-                        if (!(cfgDefOptionType(cfgOptionDefIdFromId(optionId)) == cfgDefOptTypeHash ||
-                              cfgDefOptionType(cfgOptionDefIdFromId(optionId)) == cfgDefOptTypeList))
-                        {
-                            THROW(OptionInvalidError, "option '%s' cannot have multiple arguments", cfgOptionName(optionId));
-                        }
-
                         // Add the argument
                         strLstAdd(parseOptionList[optionId].valueList, strNew(optarg));
                     }
@@ -435,6 +428,14 @@ configParse(unsigned int argListSize, const char *argList[])
                         THROW(
                             OptionInvalidError, "option '%s' not valid for command '%s'", cfgOptionName(optionId),
                             cfgCommandName(cfgCommand()));
+                    }
+
+                    // Error if this option does not allow multiple arguments
+                    if ((parseOption->valueList != NULL) && strLstSize(parseOption->valueList) > 1 &&
+                        !(cfgDefOptionType(cfgOptionDefIdFromId(optionId)) == cfgDefOptTypeHash ||
+                          cfgDefOptionType(cfgOptionDefIdFromId(optionId)) == cfgDefOptTypeList))
+                    {
+                        THROW(OptionInvalidError, "option '%s' cannot have multiple arguments", cfgOptionName(optionId));
                     }
 
                     // Is the option valid for this command?  If not, mark it as resolved since there is nothing more to do.

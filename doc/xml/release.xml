@@ -22,6 +22,14 @@
 
                         <p>Fix <br-option>--target-action</br-option> and <br-option>--recovery-option</br-option> options being reported as invalid when restoring with <br-option>--type=immediate</br-option>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Ensure an error is thrown when multiple arguments are set for a single argument option.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>

@@ -97,6 +97,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         strLstAdd(argList, strNew("--compress-level=3"));
         strLstAdd(argList, strNew("--compress-level=3"));
         TEST_ERROR(
@@ -299,6 +300,23 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
+        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+
+        storagePut(storageLocal(), configFile, bufNewStr(strNew(
+            "[db]\n"
+            "pg1-path=/path/to/db\n"
+            "pg1-path=/also/path/to/db\n"
+        )));
+
+        TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList)),
+            OptionInvalidError,
+            "option 'pg1-path' cannot have multiple arguments");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "no command");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "    help is set");
@@ -410,7 +428,7 @@ testRun()
                     strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile),
                     strPtr(configFile))));
 
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-path is not set");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), false, "    compress not is set");
