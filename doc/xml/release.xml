@@ -52,7 +52,7 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Set config before <code>Main::main()</code> call to avoid secrets being exposed in a stack trace.</p>
+                        <p>Improve Perl configuration. Set config before <code>Main::main()</code> call to avoid secrets being exposed in a stack trace.  Move logic for setting defaults to C.</p>
                     </release-item>
 
                     <release-item>

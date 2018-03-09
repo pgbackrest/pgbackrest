@@ -10,7 +10,7 @@ void
 testRun()
 {
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("perlMain()"))
+    if (testBegin("perlOptionJson()"))
     {
         cfgInit();
         TEST_RESULT_STR(strPtr(perlOptionJson()), "{}", "no options");
@@ -51,15 +51,15 @@ testRun()
         TEST_RESULT_STR(
             strPtr(perlOptionJson()),
             "{"
-            "\"archive-queue-max\":{\"source\":\"param\",\"value\":999999999999},"
-            "\"backup-standby\":{\"source\":\"param\",\"reset\":true,\"value\":false},"
-            "\"compress\":{\"source\":\"param\",\"value\":true},"
-            "\"compress-level\":{\"source\":\"config\",\"value\":3},"
-            "\"config\":{\"source\":\"param\",\"negate\":true},"
-            "\"online\":{\"source\":\"param\",\"negate\":true},"
-            "\"pg1-host\":{\"reset\":true},"
-            "\"protocol-timeout\":{\"source\":\"param\",\"value\":1.1},"
-            "\"stanza\":{\"value\":\"db\"}"
+            "\"archive-queue-max\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,\"value\":999999999999},"
+            "\"backup-standby\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":true,\"value\":false},"
+            "\"compress\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,\"value\":true},"
+            "\"compress-level\":{\"valid\":true,\"source\":\"config\",\"negate\":false,\"reset\":false,\"value\":3},"
+            "\"config\":{\"valid\":true,\"source\":\"param\",\"negate\":true,\"reset\":false},"
+            "\"online\":{\"valid\":true,\"source\":\"param\",\"negate\":true,\"reset\":false,\"value\":false},"
+            "\"pg1-host\":{\"valid\":true,\"source\":\"default\",\"negate\":false,\"reset\":true},"
+            "\"protocol-timeout\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,\"value\":1.1},"
+            "\"stanza\":{\"valid\":true,\"source\":\"default\",\"negate\":false,\"reset\":false,\"value\":\"db\"}"
             "}",
             "simple options");
 
@@ -94,9 +94,12 @@ testRun()
         TEST_RESULT_STR(
             strPtr(perlOptionJson()),
             "{"
-            "\"db-include\":{\"source\":\"param\",\"value\":{\"db1\":true,\"db2\":true}},"
-            "\"perl-option\":{\"source\":\"param\",\"value\":{\"-I.\":true,\"-MDevel::Cover=-silent,1\":true}},"
-            "\"recovery-option\":{\"source\":\"param\",\"value\":{\"standby_mode\":\"on\",\"primary_conn_info\":\"blah\"}}"
+            "\"db-include\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,"
+                "\"value\":{\"db1\":true,\"db2\":true}},"
+            "\"perl-option\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,"
+                "\"value\":{\"-I.\":true,\"-MDevel::Cover=-silent,1\":true}},"
+            "\"recovery-option\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,"
+                "\"value\":{\"standby_mode\":\"on\",\"primary_conn_info\":\"blah\"}}"
             "}",
             "complex options");
     }

@@ -85,24 +85,18 @@ sub configLoad
     my $strCommandName = shift;
     my $rstrConfigJson = shift;
 
-    # Clear option in case it was loaded before
-    %oOption = ();
-
     # Set backrest bin
     backrestBinSet($strBackRestBin);
 
     # Set command
     $strCommand = $strCommandName;
 
-    # Convert options from JSON to a hash
-    my $rhOption;
-
     eval
     {
         # Hacky fix for backslashes that need to be escaped
         $$rstrConfigJson =~ s/\\/\\\\/g;
 
-        $rhOption = (JSON::PP->new()->allow_nonref())->decode($$rstrConfigJson);
+        %oOption = %{(JSON::PP->new()->allow_nonref())->decode($$rstrConfigJson)};
         return true;
     }
     or do
@@ -115,51 +109,19 @@ sub configLoad
     {
         my $strOptionName = cfgOptionName($iOptionId);
 
-        # If option is not defined then it is not valid
-        if (!defined($rhOption->{$strOptionName}))
+        # If option is defined it is valid
+        if (defined($oOption{$strOptionName}))
         {
-            $oOption{$strOptionName}{valid} = false;
+            # Convert JSON bool to standard bool that Perl understands
+            if (cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_BOOLEAN && defined($oOption{$strOptionName}{value}))
+            {
+                $oOption{$strOptionName}{value} = $oOption{$strOptionName}{value} eq INI_TRUE ? true : false;
+            }
         }
-        # Else set option
+        # Else it is not valid
         else
         {
-            $oOption{$strOptionName}{valid} = true;
-            $oOption{$strOptionName}{source} =
-                defined($rhOption->{$strOptionName}{source}) ? $rhOption->{$strOptionName}{source} : CFGDEF_SOURCE_DEFAULT;
-            $oOption{$strOptionName}{reset} = false;
-            $oOption{$strOptionName}{negate} = false;
-
-            # If option is negated only boolean will have a value
-            if ($rhOption->{$strOptionName}{negate})
-            {
-                $oOption{$strOptionName}{negate} = true;
-
-                if (cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_BOOLEAN)
-                {
-                    $oOption{$strOptionName}{value} = false;
-                }
-            }
-            # Else set the value
-            else
-            {
-                # If option is reset, then indicate --reset should be prepended when passing the option to child processes
-                if ($rhOption->{$strOptionName}{reset})
-                {
-                    $oOption{$strOptionName}{reset} = true;
-                }
-
-                if (defined($rhOption->{$strOptionName}{value}))
-                {
-                    if (cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_BOOLEAN)
-                    {
-                        $oOption{$strOptionName}{value} = $rhOption->{$strOptionName}{value} eq INI_TRUE ? true : false;
-                    }
-                    else
-                    {
-                        $oOption{$strOptionName}{value} = $rhOption->{$strOptionName}{value};
-                    }
-                }
-            }
+            $oOption{$strOptionName}{valid} = false;
         }
     }
 
