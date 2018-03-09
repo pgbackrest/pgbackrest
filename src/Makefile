@@ -22,11 +22,14 @@ CWARN = -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wswitch-enu
 # Automatically generate Perl compile options for the local system
 CPERL = `perl -MExtUtils::Embed -e ccopts`
 
+# Debug options
+CDEBUG = -DNDEBUG
+
 # Extra compile options to be set by caller
 CEXTRA =
 
 # Concatenate options for easy usage
-CFLAGS = $(CINCLUDE) $(CSTD) $(COPT) $(CWARN) $(CPERL) $(CEXTRA)
+CFLAGS = $(CINCLUDE) $(CSTD) $(COPT) $(CWARN) $(CPERL) $(CDEBUG) $(CEXTRA)
 
 ####################################################################################################################################
 # Link options

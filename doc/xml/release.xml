@@ -78,6 +78,10 @@
 
                         <p>Add <code>cfgOptionTest()</code> and update <code>cfgOption()</code> calls that are better implemented as <code>cfgOptionTest()</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Build with <id>-DNDEBUG</id> by default but disable for testing.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

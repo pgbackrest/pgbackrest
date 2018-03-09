@@ -522,7 +522,7 @@ eval
                     }
 
                     executeTest(
-                        "docker exec -i test-build make --silent --directory ${strBuildPath} CEXTRA=-g",
+                        "docker exec -i test-build make --silent --directory ${strBuildPath} CEXTRA=-g CDEBUG=",
                         {bShowOutputAsync => $bLogDetail});
 
                     executeTest(
