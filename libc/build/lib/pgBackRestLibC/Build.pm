@@ -297,24 +297,8 @@ sub buildXsAll
         "\n" .
         "1;\n";
 
-    # Only save the file if it has changed
-    my $strLibFile = 'lib/' . BACKREST_NAME . '/' . LIB_AUTO_NAME . '.pm';
-    my $bChanged = true;
-
-    if ($oStorage->exists($strLibFile))
-    {
-        my $strContentOld = ${$oStorage->get($strLibFile)};
-
-        if ($strContent eq $strContentOld)
-        {
-            $bChanged = false;
-        }
-    }
-
-    if ($bChanged)
-    {
-        $oStorage->put($strLibFile, $strContent);
-    }
+    # Save the file
+    $oStorage->put('lib/' . BACKREST_NAME . '/' . LIB_AUTO_NAME . '.pm', $strContent);
 
     # Build error file
     #-------------------------------------------------------------------------------------------------------------------------------

@@ -162,25 +162,8 @@ sub buildAll
                     $strExt = $strFileType eq BLD_C ? $strFileExt : "${strFileExt}h";
                 }
 
-                # Only save the file if the content has changed
-                my $strFileName = "${strPath}/${strFile}.auto.${strExt}";
-                my $strContent = trim($rhSource->{$strFileType}) . "\n";
-                my $bChanged = true;
-
-                if ($oStorage->exists($strFileName))
-                {
-                    my $strOldContent = ${$oStorage->get($strFileName)};
-
-                    if ($strContent eq $strOldContent)
-                    {
-                        $bChanged = false;
-                    }
-                }
-
-                if ($bChanged)
-                {
-                    $oStorage->put($strFileName, $strContent);
-                }
+                # Save the file
+                $oStorage->put("${strPath}/${strFile}.auto.${strExt}", trim($rhSource->{$strFileType}) . "\n");
             }
         }
     }

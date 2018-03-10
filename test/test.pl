@@ -47,6 +47,7 @@ use pgBackRestBuild::Error::Data;
 
 use BackRestDoc::Custom::DocCustomRelease;
 
+use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::CiTest;
 use pgBackRestTest::Common::DefineTest;
@@ -238,6 +239,7 @@ eval
     }
 
     logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF);
+    &log(INFO, "test begin - log level ${strLogLevel}");
 
     if (@stryModuleTest != 0 && @stryModule != 1)
     {
@@ -303,47 +305,58 @@ eval
     {
         # Auto-generate C files
         #---------------------------------------------------------------------------------------------------------------------------
-        &log(INFO, "autogenerate C code");
+        &log(INFO, "check code autogenerate");
+
         errorDefineLoad(${$oStorageBackRest->get("build/error.yaml")});
 
-        my $rhBuild =
+        if (buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['build']) >
+            buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['src'], '\.auto\.c$'))
         {
-            'config' =>
-            {
-                &BLD_DATA => buildConfig(),
-                &BLD_PATH => 'config',
-            },
+            &log(INFO, "    autogenerate C code");
 
-            'configDefine' =>
+            my $rhBuild =
             {
-                &BLD_DATA => buildConfigDefine(),
-                &BLD_PATH => 'config',
-            },
+                'config' =>
+                {
+                    &BLD_DATA => buildConfig(),
+                    &BLD_PATH => 'config',
+                },
 
-            'configParse' =>
-            {
-                &BLD_DATA => buildConfigParse(),
-                &BLD_PATH => 'config',
-            },
+                'configDefine' =>
+                {
+                    &BLD_DATA => buildConfigDefine(),
+                    &BLD_PATH => 'config',
+                },
 
-            'error' =>
-            {
-                &BLD_DATA => buildError(),
-                &BLD_PATH => 'common',
-            },
-        };
+                'configParse' =>
+                {
+                    &BLD_DATA => buildConfigParse(),
+                    &BLD_PATH => 'config',
+                },
 
-        buildAll("${strBackRestBase}/src", $rhBuild);
+                'error' =>
+                {
+                    &BLD_DATA => buildError(),
+                    &BLD_PATH => 'common',
+                },
+            };
+
+            buildAll("${strBackRestBase}/src", $rhBuild);
+        }
 
         # Auto-generate XS files
         #
         # Use statements are put here so this will be easy to get rid of someday.
         #---------------------------------------------------------------------------------------------------------------------------
-        &log(INFO, "autogenerate Perl code");
-        use lib dirname(dirname($0)) . '/libc/build/lib';
-        use pgBackRestLibC::Build;                                      ## no critic (Modules::ProhibitConditionalUseStatements)
+        if (buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc/build']) >
+            buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc', 'lib'], '(\.auto\.pm|Auto\.pm)$'))
+        {
+            &log(INFO, "    autogenerate Perl code");
+            use lib dirname(dirname($0)) . '/libc/build/lib';
+            use pgBackRestLibC::Build;                                      ## no critic (Modules::ProhibitConditionalUseStatements)
 
-        buildXsAll("${strBackRestBase}/libc");
+            buildXsAll("${strBackRestBase}/libc");
+        }
 
         if ($bGenOnly)
         {
@@ -351,6 +364,7 @@ eval
         }
 
         # Sync time to prevent build failures when running on VirtualBox.
+        &log(INFO, "sync vbox time");
         my $strVBoxService = '/usr/sbin/VBoxService';
 
         if ($oStorageTest->exists($strVBoxService))
@@ -364,6 +378,8 @@ eval
         {
             (new pgBackRestTest::Common::CiTest($oStorageBackRest))->process();
         }
+
+        &log(INFO, "check version info");
 
         # Load the doc module dynamically since it is not supported on all systems
         require BackRestDoc::Common::Doc;
@@ -421,6 +437,7 @@ eval
 
         if (!$bDryRun || $bVmOut)
         {
+            &log(INFO, "cleanup old data and containers");
             containerRemove('test-([0-9]+|build)');
 
             for (my $iVmIdx = 0; $iVmIdx < 8; $iVmIdx++)
@@ -464,6 +481,8 @@ eval
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDryRun && $bBuildRequired)
         {
+            &log(INFO, "check bin builds");
+
             my $oVm = vmGet();
             my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
 
@@ -475,27 +494,14 @@ eval
             my @stryBinSrcPath = ('src');
 
             # Find the lastest modified time for dirs that affect the bin build
-            my $lTimestampLast = $oStorageBackRest->exists($strBinSmart) ? $oStorageBackRest->info($strBinSmart)->mtime : 0;
-
-            foreach my $strBinSrcPath (@stryBinSrcPath)
-            {
-                my $hManifest = $oStorageBackRest->manifest($strBinSrcPath);
-
-                foreach my $strFile (sort(keys(%{$hManifest})))
-                {
-                    if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampLast)
-                    {
-                        $lTimestampLast = $hManifest->{$strFile}{modification_time};
-                    }
-                }
-            }
+            my $lTimestampLast = buildLastModTime($oStorageBackRest, $strBackRestBase, \@stryBinSrcPath);
 
             # Rebuild if the modification time of the smart file does equal the last changes in source paths
             if ($bSmart)
             {
                 if (!$oStorageBackRest->exists($strBinSmart) || $oStorageBackRest->info($strBinSmart)->mtime < $lTimestampLast)
                 {
-                    &log(INFO, 'bin dependencies have changed, rebuilding...');
+                    &log(INFO, '    bin dependencies have changed, rebuilding...');
 
                     $bRebuild = true;
                 }
@@ -515,7 +521,7 @@ eval
 
                 if ($bRebuild)
                 {
-                    &log(INFO, "build bin for ${strBuildVM} (${strBuildPath})");
+                    &log(INFO, "    build bin for ${strBuildVM} (${strBuildPath})");
 
                     executeTest(
                         "docker run -itd -h test-build --name=test-build" .
@@ -554,25 +560,14 @@ eval
             my @stryLibCSrcPath = ('libc', 'src');
 
             # Find the lastest modified time for dirs that affect the libc build
-            foreach my $strLibCSrcPath (@stryLibCSrcPath)
-            {
-                my $hManifest = $oStorageBackRest->manifest($strLibCSrcPath);
-
-                foreach my $strFile (sort(keys(%{$hManifest})))
-                {
-                    if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampLast)
-                    {
-                        $lTimestampLast = $hManifest->{$strFile}{modification_time};
-                    }
-                }
-            }
+            $lTimestampLast = buildLastModTime($oStorageBackRest, $strBackRestBase, \@stryLibCSrcPath);
 
             # Rebuild if the modification time of the smart file does equal the last changes in source paths
             if ($bSmart)
             {
                 if (!$oStorageBackRest->exists($strLibCSmart) || $oStorageBackRest->info($strLibCSmart)->mtime < $lTimestampLast)
                 {
-                    &log(INFO, 'libc dependencies have changed, rebuilding...');
+                    &log(INFO, '    libc dependencies have changed, rebuilding...');
 
                     $bRebuild = true;
                 }
@@ -600,7 +595,7 @@ eval
 
                 if ($bRebuild)
                 {
-                    &log(INFO, "build C library for ${strBuildVM} (${strBuildPath})");
+                    &log(INFO, "    build C library for ${strBuildVM} (${strBuildPath})");
 
                     # It's very expensive to rebuild the Makefile so make sure it has actually changed
                     my $bMakeRebuild =

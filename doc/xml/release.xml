@@ -110,7 +110,7 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Improve bin and libc build performance.</p>
+                        <p>Buld performance improvements.  Improve bin and libc build performance.  Improve code generation performance.</p>
                     </release-item>
 
                     <release-item>
