@@ -179,6 +179,9 @@ GetOptions ('q|quiet' => \$bQuiet,
 ####################################################################################################################################
 eval
 {
+    # Record the start time
+    my $lStartTime = time();
+
     # Display version and exit if requested
     if ($bVersion || $bHelp)
     {
@@ -300,6 +303,7 @@ eval
     {
         # Auto-generate C files
         #---------------------------------------------------------------------------------------------------------------------------
+        &log(INFO, "autogenerate C code");
         errorDefineLoad(${$oStorageBackRest->get("build/error.yaml")});
 
         my $rhBuild =
@@ -335,6 +339,7 @@ eval
         #
         # Use statements are put here so this will be easy to get rid of someday.
         #---------------------------------------------------------------------------------------------------------------------------
+        &log(INFO, "autogenerate Perl code");
         use lib dirname(dirname($0)) . '/libc/build/lib';
         use pgBackRestLibC::Build;                                      ## no critic (Modules::ProhibitConditionalUseStatements)
 
@@ -466,6 +471,7 @@ eval
             #---------------------------------------------------------------------------------------------------------------------------
             my $strBinPath = "${strVagrantPath}/bin";
             my $strBinSmart = "${strBinPath}/build.timestamp";
+            my $bRebuild = !$bSmart;
             my @stryBinSrcPath = ('src');
 
             # Find the lastest modified time for dirs that affect the bin build
@@ -485,19 +491,21 @@ eval
             }
 
             # Rebuild if the modification time of the smart file does equal the last changes in source paths
-            if (!$bSmart || !$oStorageBackRest->exists($strBinSmart) ||
-                $oStorageBackRest->info($strBinSmart)->mtime < $lTimestampLast)
+            if ($bSmart)
             {
-                if ($bSmart)
+                if (!$oStorageBackRest->exists($strBinSmart) || $oStorageBackRest->info($strBinSmart)->mtime < $lTimestampLast)
                 {
                     &log(INFO, 'bin dependencies have changed, rebuilding...');
-                }
 
+                    $bRebuild = true;
+                }
+            }
+            else
+            {
                 executeTest("sudo rm -rf ${strBinPath}");
-                executeTest('sudo rm -rf /usr/bin/' . BACKREST_EXE);
             }
 
-            # Loop through VMs to do the C Library builds
+            # Loop through VMs to do the C bin builds
             my $bLogDetail = $strLogLevel eq 'detail';
             my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
 
@@ -505,7 +513,7 @@ eval
             {
                 my $strBuildPath = "${strBinPath}/${strBuildVM}/src";
 
-                if (!$oStorageBackRest->pathExists($strBuildPath))
+                if ($bRebuild)
                 {
                     &log(INFO, "build bin for ${strBuildVM} (${strBuildPath})");
 
@@ -518,7 +526,7 @@ eval
                     {
                         $oStorageBackRest->pathCreate(
                             "${strBinPath}/${strBuildVM}/${strBinSrcPath}", {bIgnoreExists => true, bCreateParent => true});
-                        executeTest("cp -r ${strBackRestBase}/${strBinSrcPath}/* ${strBinPath}/${strBuildVM}/${strBinSrcPath}");
+                        executeTest("rsync -rt ${strBackRestBase}/${strBinSrcPath}/* ${strBinPath}/${strBuildVM}/${strBinSrcPath}");
                     }
 
                     executeTest(
@@ -542,6 +550,7 @@ eval
             #---------------------------------------------------------------------------------------------------------------------------
             my $strLibCPath = "${strVagrantPath}/libc";
             my $strLibCSmart = "${strLibCPath}/build.timestamp";
+            $bRebuild = !$bSmart;
             my @stryLibCSrcPath = ('libc', 'src');
 
             # Find the lastest modified time for dirs that affect the libc build
@@ -559,15 +568,23 @@ eval
             }
 
             # Rebuild if the modification time of the smart file does equal the last changes in source paths
-            if (!$bSmart || !$oStorageBackRest->exists($strLibCSmart) ||
-                $oStorageBackRest->info($strLibCSmart)->mtime < $lTimestampLast)
+            if ($bSmart)
             {
-                if ($bSmart)
+                if (!$oStorageBackRest->exists($strLibCSmart) || $oStorageBackRest->info($strLibCSmart)->mtime < $lTimestampLast)
                 {
                     &log(INFO, 'libc dependencies have changed, rebuilding...');
-                }
 
+                    $bRebuild = true;
+                }
+            }
+            else
+            {
                 executeTest("sudo rm -rf ${strLibCPath}");
+            }
+
+            # Delete old libc files from the host
+            if ($bRebuild)
+            {
                 executeTest('sudo rm -rf ' . $oVm->{$strVmHost}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC');
                 executeTest('sudo rm -rf ' . $oVm->{$strVmHost}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest');
             }
@@ -581,9 +598,15 @@ eval
                 my $strBuildPath = "${strLibCPath}/${strBuildVM}/libc";
                 my $bContainerExists = $strVm eq VM_ALL || $strBuildVM ne $strVmHost;
 
-                if (!$oStorageBackRest->pathExists($strBuildPath))
+                if ($bRebuild)
                 {
                     &log(INFO, "build C library for ${strBuildVM} (${strBuildPath})");
+
+                    # It's very expensive to rebuild the Makefile so make sure it has actually changed
+                    my $bMakeRebuild =
+                        !$oStorageBackRest->exists("${strBuildPath}/Makefile.PL") ||
+                        ($oStorageBackRest->info("${strBackRestBase}/libc/Makefile.PL")->mtime >
+                         $oStorageBackRest->info("${strBuildPath}/Makefile.PL")->mtime);
 
                     if ($bContainerExists)
                     {
@@ -597,14 +620,18 @@ eval
                     {
                         $oStorageBackRest->pathCreate(
                             "${strLibCPath}/${strBuildVM}/${strLibCSrcPath}", {bIgnoreExists => true, bCreateParent => true});
-                        executeTest("cp -r ${strBackRestBase}/${strLibCSrcPath}/* ${strLibCPath}/${strBuildVM}/${strLibCSrcPath}");
+                        executeTest(
+                            "rsync -rt ${strBackRestBase}/${strLibCSrcPath}/* ${strLibCPath}/${strBuildVM}/${strLibCSrcPath}");
                     }
 
-                    executeTest(
-                        ($bContainerExists ? "docker exec -i test-build bash -c '" : '') .
-                        "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
-                        ($bContainerExists ? "'" : ''),
-                        {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+                    if ($bMakeRebuild)
+                    {
+                        executeTest(
+                            ($bContainerExists ? "docker exec -i test-build bash -c '" : '') .
+                            "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
+                            ($bContainerExists ? "'" : ''),
+                            {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+                    }
 
                     executeTest(
                         ($bContainerExists ? 'docker exec -i test-build ' : '') .
@@ -887,7 +914,6 @@ eval
         my $iTestIdx = 0;
         my $iVmTotal;
         my $iTestMax = @{$oyTestRun};
-        my $lStartTime = time();
         my $bShowOutputAsync = $bVmOut && (@{$oyTestRun} == 1 || $iVmMax == 1) && ! $bDryRun ? true : false;
 
         do

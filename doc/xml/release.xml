@@ -110,6 +110,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Improve bin and libc build performance.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Disable console display of coverage for C files since <code>Devel::Cover</code> does not handle it well.</p>
                     </release-item>
 
