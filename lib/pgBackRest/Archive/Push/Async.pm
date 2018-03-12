@@ -121,7 +121,7 @@ sub process
                 or confess &log(ERROR, "unable to create new session group: $OS_ERROR", ERROR_ASSERT);
 
             # Open the log file
-            logFileSet(storageLocal(), cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-archive-async');
+            logFileSet(storageLocal(), cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-archive-async', true);
 
             # Start processing
             $self->processServer();

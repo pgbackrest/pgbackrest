@@ -122,6 +122,7 @@ sub logFileSet
 {
     my $oStorage = shift;
     my $strFile = shift;
+    my $bLogFileFirstParam = shift;
 
     # Only open the log file if file logging is enabled
     if ($strLogLevelFile ne OFF)
@@ -130,7 +131,7 @@ sub logFileSet
 
         $strFile .= '.log';
         $bLogFileExists = -e $strFile ? true : false;
-        $bLogFileFirst = true;
+        $bLogFileFirst = defined($bLogFileFirstParam) ? $bLogFileFirstParam : false;
 
         if (!sysopen($hLogFile, $strFile, O_WRONLY | O_CREAT | O_APPEND, oct('0660')))
         {

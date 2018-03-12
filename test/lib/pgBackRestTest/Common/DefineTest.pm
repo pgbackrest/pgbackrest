@@ -146,7 +146,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'log',
-                    &TESTDEF_TOTAL => 3,
+                    &TESTDEF_TOTAL => 4,
                     &TESTDEF_C => true,
                     &TESTDEF_CDEF => '-DNO_LOG',
 

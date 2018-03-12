@@ -12,81 +12,129 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("archive-get")
+
+        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("archive-push")
+
+        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("backup")
+
+        CONFIG_COMMAND_LOG_FILE(true)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("check")
+
+        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("expire")
+
+        CONFIG_COMMAND_LOG_FILE(true)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("help")
+
+        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("info")
+
+        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("local")
+
+        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("remote")
+
+        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("restore")
+
+        CONFIG_COMMAND_LOG_FILE(true)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("stanza-create")
+
+        CONFIG_COMMAND_LOG_FILE(true)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("stanza-delete")
+
+        CONFIG_COMMAND_LOG_FILE(true)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("stanza-upgrade")
+
+        CONFIG_COMMAND_LOG_FILE(true)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("start")
+
+        CONFIG_COMMAND_LOG_FILE(true)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("stop")
+
+        CONFIG_COMMAND_LOG_FILE(true)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME("version")
+
+        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
     )
 )
 

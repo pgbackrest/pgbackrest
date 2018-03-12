@@ -32,6 +32,11 @@ use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
+# Build flags from the last build.  When the build flags change test files must be rebuilt
+####################################################################################################################################
+my $rhBuildFlags = undef;
+
+####################################################################################################################################
 # new
 ####################################################################################################################################
 sub new
@@ -172,11 +177,21 @@ sub run
                     {bSuppressStdErr => true});
 
                 # If testing C code copy source files to the test directory
-                if ($self->{oTest}->{&TEST_C} && !$bGCovExists)
+                if ($self->{oTest}->{&TEST_C})
                 {
-                    executeTest(
-                        "cp -r $self->{strBackRestBase}/src/*  $self->{strGCovPath} &&" .
-                        "cp -r $self->{strBackRestBase}/test/src/*  $self->{strGCovPath}");
+                    if (!$bGCovExists)
+                    {
+                        executeTest("cp -r $self->{strBackRestBase}/src/*  $self->{strGCovPath}");
+                    }
+
+                    if (!$bGCovExists || defined($rhBuildFlags->{$self->{iVmIdx}}) != defined($self->{oTest}->{&TEST_CDEF}) ||
+                        defined($rhBuildFlags->{$self->{iVmIdx}}) &&
+                        $rhBuildFlags->{$self->{iVmIdx}} ne $self->{oTest}->{&TEST_CDEF})
+                    {
+                        executeTest("cp -r $self->{strBackRestBase}/test/src/*  $self->{strGCovPath}");
+                    }
+
+                    $rhBuildFlags->{$self->{iVmIdx}} = $self->{oTest}->{&TEST_CDEF};
                 }
 
                 # If testing Perl code (or C code that calls Perl code) install bin and Perl C Library
@@ -343,7 +358,7 @@ sub run
                         " -c test.c\n" .
                     "\n" .
                     ".c.o:\n" .
-	                "\t\$(CC) \$(CFLAGS) -O2 -c \$< -o \$@\n";
+	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) -O2 -c \$< -o \$@\n";
 
                 $self->{oStorageTest}->put($self->{strGCovPath} . "/Makefile", $strMakefile);
 

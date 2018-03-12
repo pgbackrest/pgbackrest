@@ -120,6 +120,7 @@ sub buildConfig
 {
     # Build command constants and data
     #-------------------------------------------------------------------------------------------------------------------------------
+    my $rhCommandDefine = cfgDefineCommand();
     my $rhEnum = $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_ENUM}{&BLDLCL_ENUM_COMMAND};
     my $iCommandTotal = 0;
 
@@ -127,8 +128,10 @@ sub buildConfig
         'static ConfigCommandData configCommandData[' . BLDLCL_CONSTANT_COMMAND_TOTAL . "] = CONFIG_COMMAND_LIST\n" .
         "(";
 
-    foreach my $strCommand (cfgDefineCommandList())
+    foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     {
+        my $rhCommand = $rhCommandDefine->{$strCommand};
+
         # Build C enum
         my $strCommandEnum = buildConfigCommandEnum($strCommand);
         push(@{$rhEnum->{&BLD_LIST}}, $strCommandEnum);
@@ -139,6 +142,9 @@ sub buildConfig
             "    CONFIG_COMMAND\n" .
             "    (\n" .
             "        CONFIG_COMMAND_NAME(\"${strCommand}\")\n" .
+            "\n" .
+            "        CONFIG_COMMAND_LOG_FILE(" . ($rhCommand->{&CFGDEF_LOG_FILE} ? 'true' : 'false') . ")\n" .
+            "        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevel" . ucfirst(lc($rhCommand->{&CFGDEF_LOG_LEVEL_DEFAULT})) . ")\n" .
             "    )\n";
 
         $iCommandTotal++;

@@ -230,7 +230,7 @@ configParse(unsigned int argListSize, const char *argList[])
 
         // Enable logging (except for local and remote commands) so config file warnings will be output
         if (cfgCommand() != cfgCmdLocal && cfgCommand() != cfgCmdRemote)
-            logInit(logLevelWarn, logLevelWarn, false);
+            logInit(logLevelWarn, logLevelWarn, logLevelOff, false);
 
         // Phase 2: parse config file unless --no-config passed
         // ---------------------------------------------------------------------------------------------------------------------

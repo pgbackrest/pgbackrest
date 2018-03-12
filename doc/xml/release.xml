@@ -56,6 +56,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve logging.  Move command begin to C except when it must be called after another command in Perl (e.g. <cmd>expire</cmd> after <cmd>backup</cmd>).  Command begin logs correctly for complex data types like hash and list.  Specify which commands will log to file immediately and set the default log level for log messages that are common to all commands.  File logging is initiated from C.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="hunley.douglas"/>
                         </release-item-contributor-list>

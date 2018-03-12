@@ -93,5 +93,11 @@ testRun()
         TEST_RESULT_STR(
             strPtr(varStr(cfgOptionDefault(cfgOptPgHostCmd + 2))), strPtr(cfgExe()),
             "    command backup, option pg3-host-cmd default");
+
+        testLogErrResult(
+            "WARN: unable to open log file '/var/log/pgbackrest/db-backup.log': No such file or directory\n"
+            "NOTE: process will continue without log file.\n"
+            "WARN: unable to open log file '/var/log/pgbackrest/db-backup.log': No such file or directory\n"
+            "NOTE: process will continue without log file.");
     }
 }

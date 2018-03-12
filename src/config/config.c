@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Command and Option Configuration
 ***********************************************************************************************************************************/
+#include <assert.h>
 #include <string.h>
 
 #include "common/error.h"
@@ -13,6 +14,8 @@ Map command names to ids and vice versa.
 typedef struct ConfigCommandData
 {
     const char *name;
+    bool logFile:1;
+    unsigned int logLevelDefault:4;
 } ConfigCommandData;
 
 #define CONFIG_COMMAND_LIST(...)                                                                                                   \
@@ -21,6 +24,10 @@ typedef struct ConfigCommandData
 #define CONFIG_COMMAND(...)                                                                                                        \
     {__VA_ARGS__},
 
+#define CONFIG_COMMAND_LOG_FILE(logFileParam)                                                                                      \
+    .logFile = logFileParam,
+#define CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDefaultParam)                                                                     \
+    .logLevelDefault = logLevelDefaultParam,
 #define CONFIG_COMMAND_NAME(nameParam)                                                                                             \
     .name = nameParam,
 
@@ -258,6 +265,26 @@ cfgExeSet(const String *exeParam)
         exe = strDup(exeParam);
     }
     MEM_CONTEXT_END();
+}
+
+/***********************************************************************************************************************************
+Does this command log to a file?
+***********************************************************************************************************************************/
+bool
+cfgLogFile()
+{
+    assert(cfgCommand() != cfgCmdNone);
+    return configCommandData[cfgCommand()].logFile;
+}
+
+/***********************************************************************************************************************************
+Get default log level -- used for log messages that are common to all commands
+***********************************************************************************************************************************/
+LogLevel
+cfgLogLevelDefault()
+{
+    assert(cfgCommand() != cfgCmdNone);
+    return (LogLevel)configCommandData[cfgCommand()].logLevelDefault;
 }
 
 /***********************************************************************************************************************************

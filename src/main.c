@@ -6,7 +6,6 @@ Main
 
 #include "command/archive/push/push.h"
 #include "command/help/help.h"
-#include "command/command.h"
 #include "common/error.h"
 #include "common/exit.h"
 #include "config/config.h"
@@ -44,7 +43,6 @@ main(int argListSize, const char *argList[])
         // -------------------------------------------------------------------------------------------------------------------------
         else if (cfgCommand() == cfgCmdArchivePush && cfgOptionBool(cfgOptArchiveAsync))
         {
-            cmdBegin();
             cmdArchivePush();
         }
 

@@ -22,7 +22,7 @@ Initialize log for testing
 void
 testLogInit()
 {
-    logInit(logLevelInfo, logLevelOff, false);
+    logInit(logLevelInfo, logLevelOff, logLevelOff, false);
 
     stdoutFile = strNewFmt("%s/stdout.log", testPath());
     logHandleStdOut = open(strPtr(stdoutFile), O_WRONLY | O_CREAT | O_TRUNC, 0640);

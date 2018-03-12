@@ -28,9 +28,11 @@ Expose internal data for debugging/testing
 #ifndef NDEBUG
     extern LogLevel logLevelStdOut;
     extern LogLevel logLevelStdErr;
+    extern LogLevel logLevelFile;
 
     extern int logHandleStdOut;
     extern int logHandleStdErr;
+    extern int logHandleFile;
 
     extern bool logTimestamp;
 #endif
@@ -38,16 +40,25 @@ Expose internal data for debugging/testing
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void logInit(LogLevel logLevelStdOut, LogLevel logLevelStdErr, bool logTimestamp);
+void logInit(LogLevel logLevelStdOut, LogLevel logLevelStdErr, LogLevel logLevelFile, bool logTimestamp);
+void logFileSet(const char *logFile);
+
+bool logWill(LogLevel logLevel);
 
 LogLevel logLevelEnum(const char *logLevel);
 const char *logLevelStr(LogLevel logLevel);
 
 /***********************************************************************************************************************************
 Macros
+
+Only call logInternal() if the message will be logged to one of the available outputs.
 ***********************************************************************************************************************************/
 #define LOG_ANY(logLevel, code, ...)                                                                                               \
-    logInternal(logLevel, __FILE__, __func__, __LINE__, code, __VA_ARGS__)
+{                                                                                                                                  \
+    if (logWill(logLevel))                                                                                                         \
+        logInternal(logLevel, __FILE__, __func__, code, __VA_ARGS__);                                                              \
+}
+
 #define LOG_ERROR(code, ...)                                                                                                       \
     LOG_ANY(logLevelError, code, __VA_ARGS__)
 #define LOG_INFO(...)                                                                                                              \
@@ -59,6 +70,6 @@ Macros
 Internal Functions
 ***********************************************************************************************************************************/
 void logInternal(
-    LogLevel logLevel, const char *fileName, const char *functionName, int fileLine, int code, const char *format, ...);
+    LogLevel logLevel, const char *fileName, const char *functionName, int code, const char *format, ...);
 
 #endif

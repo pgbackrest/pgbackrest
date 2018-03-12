@@ -80,6 +80,14 @@ testRun()
         TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "command is backup");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup), "command set to backup");
+        TEST_RESULT_INT(cfgLogLevelDefault(), logLevelInfo, "default log level is info");
+        TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdInfo), "command set to archive-push");
+        TEST_RESULT_INT(cfgLogLevelDefault(), logLevelDebug, "default log level is debug");
+        TEST_RESULT_BOOL(cfgLogFile(), false, "log file is off");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(cfgCommandHelp(), false, "command help defaults to false");
         TEST_RESULT_VOID(cfgCommandHelpSet(true), "set command help");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "command help is set");

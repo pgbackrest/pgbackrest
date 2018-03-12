@@ -143,9 +143,10 @@ cmdArchivePush()
 
                     if ((processId = fork()) == 0)
                     {
-                        // Only want to see warnings and errors from async process
+                        // Only want to see warnings and errors on the console from async process
                         cfgOptionSet(cfgOptLogLevelConsole, cfgSourceParam, varNewStrZ("warn"));
 
+                        // Execute async process
                         perlExec();
                     }
                     // Wait for async process to exit (this should happen quickly) and report any errors

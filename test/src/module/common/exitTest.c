@@ -15,7 +15,7 @@ testRun()
         cfgInit();
         cfgCommandSet(cfgCmdArchivePush);
 
-        TEST_RESULT_INT(exitSafe(NULL), 0, "exit with no error")
+        TEST_RESULT_INT(exitSafe(false), 0, "exit with no error")
         testLogResult("P00   INFO: archive-push command end: completed successfully");
 
         // -------------------------------------------------------------------------------------------------------------------------

@@ -77,6 +77,7 @@ my @stryCFile =
     'cipher/block.c',
     'cipher/cipher.c',
     'cipher/random.c',
+    'command/command.c',
     'common/encode.c',
     'common/encode/base64.c',
     'common/error.c',

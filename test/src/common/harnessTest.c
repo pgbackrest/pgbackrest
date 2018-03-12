@@ -7,6 +7,7 @@ C Test Harness
 #include <string.h>
 
 #include "common/harnessTest.h"
+#include "common/logTest.h"
 
 #define TEST_LIST_SIZE                                              64
 
@@ -19,6 +20,7 @@ static TestData testList[TEST_LIST_SIZE];
 
 static int testRun = 0;
 static int testTotal = 0;
+static bool testFirst = true;
 
 static const char *testPathData = NULL;
 
@@ -64,11 +66,24 @@ testBegin(const char *name)
 
     if (testList[testRun - 1].selected)
     {
+#ifndef NO_LOG
+        // Make sure there is nothing untested left in the log
+        if (!testFirst)
+            testLogFinal();
+#endif
+        // No longer the first test
+        testFirst = false;
+
         if (testRun != 1)
             printf("\n");
 
         printf("run %03d - %s\n", testRun, name);
         fflush(stdout);
+
+#ifndef NO_LOG
+        // Initialize logging
+        testLogInit();
+#endif
 
         return true;
     }
@@ -82,6 +97,11 @@ testComplete - make sure all expected tests ran
 void
 testComplete()
 {
+#ifndef NO_LOG
+    // Make sure there is nothing untested left in the log
+    testLogFinal();
+#endif
+
     // Check that all tests ran
     if (testRun != testTotal)
     {

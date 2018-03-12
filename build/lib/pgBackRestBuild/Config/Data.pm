@@ -435,6 +435,19 @@ use constant CFGDEF_DEFAULT_RETENTION_MAX                           => 9999999;
 # Option definition constants - defines, types, sections, etc.
 ####################################################################################################################################
 
+# Command defines
+#-----------------------------------------------------------------------------------------------------------------------------------
+# Does this command log to a file?  This is the default behavior, but it can be overridden in code by calling logFileInit().  The
+# default is true.
+use constant CFGDEF_LOG_FILE                                        => 'log-file';
+    push @EXPORT, qw(CFGDEF_LOG_FILE);
+
+# Defines the log level to use for default messages that are output for every command.  For example, the log message that lists all
+# the options passed is usually output at the info level, but that might not be appropriate for some commands, such as info.  Allow
+# the log level to be lowered so these common messages will not be emmitted where they might be distracting.
+use constant CFGDEF_LOG_LEVEL_DEFAULT                               => 'log-level-default';
+    push @EXPORT, qw(CFGDEF_LOG_LEVEL_DEFAULT);
+
 # Option defines
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGDEF_ALLOW_LIST                                      => 'allow-list';
@@ -497,6 +510,87 @@ use constant CFGDEF_SECTION_GLOBAL                                  => 'global';
     push @EXPORT, qw(CFGDEF_SECTION_GLOBAL);
 use constant CFGDEF_SECTION_STANZA                                  => 'stanza';
     push @EXPORT, qw(CFGDEF_SECTION_STANZA);
+
+####################################################################################################################################
+# Command definition data
+####################################################################################################################################
+my $rhCommandDefine =
+{
+    &CFGCMD_ARCHIVE_GET =>
+    {
+        &CFGDEF_LOG_FILE => false,
+    },
+
+    &CFGCMD_ARCHIVE_PUSH =>
+    {
+        &CFGDEF_LOG_FILE => false,
+    },
+
+    &CFGCMD_BACKUP =>
+    {
+    },
+
+    &CFGCMD_CHECK =>
+    {
+        &CFGDEF_LOG_FILE => false,
+    },
+
+    &CFGCMD_EXPIRE =>
+    {
+    },
+
+    &CFGCMD_HELP =>
+    {
+        &CFGDEF_LOG_FILE => false,
+        &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
+    },
+
+    &CFGCMD_INFO =>
+    {
+        &CFGDEF_LOG_FILE => false,
+        &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
+    },
+
+    &CFGCMD_LOCAL =>
+    {
+        &CFGDEF_LOG_FILE => false,
+    },
+
+    &CFGCMD_REMOTE =>
+    {
+        &CFGDEF_LOG_FILE => false,
+    },
+
+    &CFGCMD_RESTORE =>
+    {
+    },
+
+    &CFGCMD_STANZA_CREATE =>
+    {
+    },
+
+    &CFGCMD_STANZA_DELETE =>
+    {
+    },
+
+    &CFGCMD_STANZA_UPGRADE =>
+    {
+    },
+
+    &CFGCMD_START =>
+    {
+    },
+
+    &CFGCMD_STOP =>
+    {
+    },
+
+    &CFGCMD_VERSION =>
+    {
+        &CFGDEF_LOG_FILE => false,
+        &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
+    },
+};
 
 ####################################################################################################################################
 # Option definition data
@@ -2085,7 +2179,25 @@ my %hConfigDefine =
 );
 
 ####################################################################################################################################
-# Process define defaults
+# Process command define defaults
+####################################################################################################################################
+foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
+{
+    # Log files are created by default
+    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOG_FILE}))
+    {
+        $rhCommandDefine->{$strCommand}{&CFGDEF_LOG_FILE} = true;
+    }
+
+    # Default log level is INFO
+    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_DEFAULT}))
+    {
+        $rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_DEFAULT} = INFO;
+    }
+}
+
+####################################################################################################################################
+# Process option define defaults
 ####################################################################################################################################
 foreach my $strKey (sort(keys(%hConfigDefine)))
 {
@@ -2191,10 +2303,19 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
     {
         confess &log(ASSERT, "int/float option '${strKey}' must have allow range or list");
     }
+
+    # Ensure all commands are valid
+    foreach my $strCommand (sort(keys(%{$hConfigDefine{$strKey}{&CFGDEF_COMMAND}})))
+    {
+        if (!defined($rhCommandDefine->{$strCommand}))
+        {
+            confess &log(ASSERT, "invalid command '${strCommand}'");
+        }
+    }
 }
 
 ####################################################################################################################################
-# Get configuration definition
+# Get option definition
 ####################################################################################################################################
 sub cfgDefine
 {
@@ -2203,29 +2324,23 @@ sub cfgDefine
 
 push @EXPORT, qw(cfgDefine);
 
+####################################################################################################################################
+# Get command definition
+####################################################################################################################################
+sub cfgDefineCommand
+{
+    return dclone($rhCommandDefine);
+}
+
+push @EXPORT, qw(cfgDefineCommand);
 
 ####################################################################################################################################
 # Get list of all commands
 ####################################################################################################################################
 sub cfgDefineCommandList
 {
-    my $rhCommandMap;
-
-    # Get unique list of commands
-    foreach my $strOption (sort(keys(%hConfigDefine)))
-    {
-        foreach my $strCommand (sort(keys(%{$hConfigDefine{$strOption}{&CFGDEF_COMMAND}})))
-        {
-            $rhCommandMap->{$strCommand} = true;
-        }
-    }
-
-    # Add special commands
-    $rhCommandMap->{&CFGCMD_HELP} = true;
-    $rhCommandMap->{&CFGCMD_VERSION} = true;
-
     # Return sorted list
-    return (sort(keys(%{$rhCommandMap})));
+    return (sort(keys(%{$rhCommandDefine})));
 }
 
 push @EXPORT, qw(cfgDefineCommandList);

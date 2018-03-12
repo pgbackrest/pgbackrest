@@ -1,6 +1,9 @@
 /***********************************************************************************************************************************
 Log Handler
 ***********************************************************************************************************************************/
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <string.h>
 #include <strings.h>
@@ -17,13 +20,26 @@ Module variables
 // Log levels
 LogLevel logLevelStdOut = logLevelError;
 LogLevel logLevelStdErr = logLevelError;
+LogLevel logLevelFile = logLevelOff;
 
 // Log file handles
 int logHandleStdOut = STDOUT_FILENO;
 int logHandleStdErr = STDERR_FILENO;
+int logHandleFile = -1;
+
+// Has the log file banner been written yet?
+bool logFileBanner = false;
 
 // Is the timestamp printed in the log?
 bool logTimestamp = false;
+
+/***********************************************************************************************************************************
+Debug Asserts
+***********************************************************************************************************************************/
+#define ASSERT_MESSAGE_LOG_LEVEL_VALID(logLevel)                                                                                   \
+{                                                                                                                                  \
+    assert(logLevel > logLevelOff);                                                                                                \
+}
 
 /***********************************************************************************************************************************
 Log buffer
@@ -81,100 +97,194 @@ logLevelStr(LogLevel logLevel)
 Initialize the log system
 ***********************************************************************************************************************************/
 void
-logInit(LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, bool logTimestampParam)
+logInit(LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam)
 {
     logLevelStdOut = logLevelStdOutParam;
     logLevelStdErr = logLevelStdErrParam;
+    logLevelFile = logLevelFileParam;
     logTimestamp = logTimestampParam;
+}
+
+/***********************************************************************************************************************************
+Set the log file
+***********************************************************************************************************************************/
+void
+logFileSet(const char *logFile)
+{
+    // Close the file handle if it is already open
+    if (logHandleFile != -1)
+    {
+        close(logHandleFile);
+        logHandleFile = -1;
+    }
+
+    // Only open the file if there is a chance to log something
+    if (logLevelFile != logLevelOff)
+    {
+        // Open the file and handle errors
+        logHandleFile = open(logFile, O_CREAT | O_APPEND | O_WRONLY, 0750);
+
+        if (logHandleFile == -1)
+        {
+            int errNo = errno;
+            LOG_WARN("unable to open log file '%s': %s\nNOTE: process will continue without log file.", logFile, strerror(errNo));
+        };
+
+        // Output the banner on first log message
+        logFileBanner = false;
+    }
+}
+
+/***********************************************************************************************************************************
+Check if a log level will be logged to any output
+
+This is useful for log messages that are expensive to generate and should be skipped if they will be discarded.
+***********************************************************************************************************************************/
+static bool
+logWillFile(LogLevel logLevel)
+{
+    ASSERT_MESSAGE_LOG_LEVEL_VALID(logLevel)
+    return logLevel <= logLevelFile && logHandleFile != -1;
+}
+
+static bool
+logWillStdErr(LogLevel logLevel)
+{
+    ASSERT_MESSAGE_LOG_LEVEL_VALID(logLevel)
+    return logLevel <= logLevelStdErr;
+}
+
+static bool
+logWillStdOut(LogLevel logLevel)
+{
+    ASSERT_MESSAGE_LOG_LEVEL_VALID(logLevel)
+    return logLevel <= logLevelStdOut;
+}
+
+bool
+logWill(LogLevel logLevel)
+{
+    ASSERT_MESSAGE_LOG_LEVEL_VALID(logLevel)
+    return logWillStdOut(logLevel) || logWillStdErr(logLevel) || logWillFile(logLevel);
 }
 
 /***********************************************************************************************************************************
 General log function
 ***********************************************************************************************************************************/
 void
-logInternal(LogLevel logLevel, const char *fileName, const char *functionName, int fileLine, int code, const char *format, ...)
+logInternal(LogLevel logLevel, const char *fileName, const char *functionName, int code, const char *format, ...)
 {
-    // Should this entry be logged?
-    if (logLevel <= logLevelStdOut || logLevel <= logLevelStdErr)
+    ASSERT_MESSAGE_LOG_LEVEL_VALID(logLevel)
+
+    size_t bufferPos = 0;   // Current position in the buffer
+
+    // Add time
+    if (logTimestamp)
     {
-        size_t bufferPos = 0;
+        TimeUSec logTimeUSec = timeUSec();
+        time_t logTime = (time_t)(logTimeUSec / USEC_PER_SEC);
 
-        // Add time
-        if (logTimestamp && logLevel > logLevelStdErr)
+        bufferPos += strftime(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%Y-%m-%d %H:%M:%S", localtime(&logTime));
+        bufferPos += (size_t)snprintf(
+            logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, ".%03d ", (int)(logTimeUSec / 1000 % 1000));
+    }
+
+    // Add process and aligned log level
+    bufferPos += (size_t)snprintf(
+        logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "P00 %*s: ", 6, logLevelStr(logLevel));
+
+    // Position after the timestamp and process id for output to stderr
+    size_t messageStdErrPos = bufferPos - strlen(logLevelStr(logLevel)) - 2;
+
+    // Check that error code matches log level
+    assert(
+        code == 0 || (logLevel == logLevelError && code != errorTypeCode(&AssertError)) ||
+        (logLevel == logLevelAssert && code == errorTypeCode(&AssertError)));
+
+    // Add code
+    if (code != 0)
+        bufferPos += (size_t)snprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "[%03d]: ", code);
+
+    // Add debug info
+    if (logLevel >= logLevelDebug)
+    {
+        bufferPos += (size_t)snprintf(
+            logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%s:%s(): ", fileName, functionName);
+    }
+
+    // Format message
+    va_list argumentList;
+    va_start(argumentList, format);
+
+    if (logLevel <= logLevelStdErr || strchr(format, '\n') == NULL)
+        bufferPos += (size_t)vsnprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, format, argumentList);
+    else
+    {
+        vsnprintf(logFormat, LOG_BUFFER_SIZE, format, argumentList);
+
+        // Indent all lines after the first
+        const char *formatPtr = logFormat;
+        const char *linefeedPtr = strchr(logFormat, '\n');
+        int indentSize = 12;
+
+        while (linefeedPtr != NULL)
         {
-            TimeUSec logTimeUSec = timeUSec();
-            time_t logTime = (time_t)(logTimeUSec / USEC_PER_SEC);
+            strncpy(logBuffer + bufferPos, formatPtr, (size_t)(linefeedPtr - formatPtr + 1));
+            bufferPos += (size_t)(linefeedPtr - formatPtr + 1);
 
-            bufferPos += strftime(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%Y-%m-%d %H:%M:%S", localtime(&logTime));
-            bufferPos += (size_t)snprintf(
-                logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, ".%03d ", (int)(logTimeUSec / 1000 % 1000));
+            formatPtr = linefeedPtr + 1;
+            linefeedPtr = strchr(formatPtr, '\n');
+
+            for (int indentIdx = 0; indentIdx < indentSize; indentIdx++)
+                logBuffer[bufferPos++] = ' ';
         }
 
-        // Add process and aligned log level
-        if (logLevel > logLevelStdErr)
+        strcpy(logBuffer + bufferPos, formatPtr);
+        bufferPos += strlen(formatPtr);
+    }
+
+    va_end(argumentList);
+
+    // Add linefeed
+    logBuffer[bufferPos++] = '\n';
+    logBuffer[bufferPos] = 0;
+
+    // Determine where to log the message based on log-level-stderr
+    if (logWillStdErr(logLevel))
+    {
+        THROW_ON_SYS_ERROR(
+            write(
+                logHandleStdErr, logBuffer + messageStdErrPos, bufferPos - messageStdErrPos) != (int)(bufferPos - messageStdErrPos),
+            FileWriteError, "unable to write log to stderr");
+    }
+    else if (logWillStdOut(logLevel))
+    {
+        THROW_ON_SYS_ERROR(
+            write(logHandleStdOut, logBuffer, bufferPos) != (int)bufferPos, FileWriteError, "unable to write log to stdout");
+    }
+
+    // Log to file
+    if (logWillFile(logLevel))
+    {
+        // If the banner has not been written
+        if (!logFileBanner)
         {
-            bufferPos += (size_t)snprintf(
-                logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "P00 %*s: ", 6, logLevelStr(logLevel));
+            // Add a blank line if the file already has content
+            if (lseek(logHandleFile, 0, SEEK_END) > 0)
+                THROW_ON_SYS_ERROR(write(logHandleFile, "\n", 1) != 1, FileWriteError, "unable to write banner spacing to file");
+
+            // Write process start banner
+            const char *banner = "-------------------PROCESS START-------------------\n";
+
+            THROW_ON_SYS_ERROR(
+                write(logHandleFile, banner, strlen(banner)) != (int)strlen(banner), FileWriteError,
+                "unable to write banner to file");
+
+            // Mark banner as written
+            logFileBanner = true;
         }
-        // Else just the log level with no alignment
-        else
-            bufferPos += (size_t)snprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%s: ", logLevelStr(logLevel));
-
-        // Add error code
-        if (code != 0)
-            bufferPos += (size_t)snprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "[%03d]: ", code);
-
-        // Add debug info
-        if (logLevelStdOut >= logLevelDebug)
-        {
-            bufferPos += (size_t)snprintf(
-                logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%s:%s():%d: ", fileName, functionName, fileLine);
-        }
-
-        // Format message
-        va_list argumentList;
-        va_start(argumentList, format);
-
-        if (logLevel <= logLevelStdErr || strchr(format, '\n') == NULL)
-            bufferPos += (size_t)vsnprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, format, argumentList);
-        else
-        {
-            vsnprintf(logFormat, LOG_BUFFER_SIZE, format, argumentList);
-
-            // Indent all lines after the first
-            const char *formatPtr = logFormat;
-            const char *linefeedPtr = strchr(logFormat, '\n');
-            int indentSize = 12;
-
-            while (linefeedPtr != NULL)
-            {
-                strncpy(logBuffer + bufferPos, formatPtr, (size_t)(linefeedPtr - formatPtr + 1));
-                bufferPos += (size_t)(linefeedPtr - formatPtr + 1);
-
-                formatPtr = linefeedPtr + 1;
-                linefeedPtr = strchr(formatPtr, '\n');
-
-                for (int indentIdx = 0; indentIdx < indentSize; indentIdx++)
-                    logBuffer[bufferPos++] = ' ';
-            }
-
-            strcpy(logBuffer + bufferPos, formatPtr);
-            bufferPos += strlen(formatPtr);
-        }
-
-        va_end(argumentList);
-
-        // Add linefeed
-        logBuffer[bufferPos++] = '\n';
-        logBuffer[bufferPos] = 0;
-
-        // Determine where to log the message based on log-level-stderr
-        int stream = logHandleStdOut;
-
-        if (logLevel <= logLevelStdErr)
-            stream = logHandleStdErr;
 
         THROW_ON_SYS_ERROR(
-            write(stream, logBuffer, bufferPos) != (int)bufferPos, FileWriteError, "unable to write log to console");
+            write(logHandleFile, logBuffer, bufferPos) != (int)bufferPos, FileWriteError, "unable to write log to file");
     }
 }

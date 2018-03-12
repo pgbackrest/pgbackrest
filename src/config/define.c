@@ -231,7 +231,7 @@ cfgDefDataFind(
     bool dataDefFound = false;                                                                                                     \
     int dataDef = 0;                                                                                                               \
     int dataDefListSize = 0;                                                                                                       \
-    const void **dataDefList = NULL;                                                                                                     \
+    const void **dataDefList = NULL;                                                                                               \
                                                                                                                                    \
     cfgDefDataFind(                                                                                                                \
         type, commandDefId, configDefineOptionData[optionDefId].data, &dataDefFound, &dataDef, &dataDefList, &dataDefListSize);

@@ -48,11 +48,6 @@ main(void)
     // Set globals
     testPathSet("{[C_TEST_PATH]}");
 
-#ifndef NO_LOG
-    // Initialize logging
-    testLogInit();
-#endif
-
     // Initialize tests
     //      run, selected
     {[C_TEST_LIST]}
@@ -63,11 +58,6 @@ main(void)
 #endif
         // Run the tests
         testRun();
-
-#ifndef NO_LOG
-        // Make sure there is nothing untested left in the log
-        testLogFinal();
-#endif
 
         // End test run and make sure all tests completed
         testComplete();

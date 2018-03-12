@@ -4,6 +4,7 @@ Test Archive Push Command
 #include <stdlib.h>
 
 #include "config/load.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -22,7 +23,7 @@ testRun()
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "archive-push");
         cfgLoad(strLstSize(argList), strLstPtr(argList));
-        logInit(logLevelInfo, logLevelOff, false);
+        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *segment = strNew("000000010000000100000001");
@@ -107,7 +108,7 @@ testRun()
         strLstAddZ(argList, "--log-level-console=off");
         strLstAddZ(argList, "--log-level-stderr=off");
         cfgLoad(strLstSize(argList), strLstPtr(argList));
-        logInit(logLevelInfo, logLevelOff, false);
+        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
 
         TRY_BEGIN()
         {
@@ -127,7 +128,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         cfgLoad(strLstSize(argList), strLstPtr(argList));
-        logInit(logLevelInfo, logLevelOff, false);
+        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveTimeoutError,

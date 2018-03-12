@@ -3,6 +3,7 @@ Configuration Load
 ***********************************************************************************************************************************/
 #include <string.h>
 
+#include "command/command.h"
 #include "common/memContext.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -31,6 +32,7 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
         {
             LogLevel logLevelConsole = logLevelOff;
             LogLevel logLevelStdErr = logLevelOff;
+            LogLevel logLevelFile = logLevelOff;
             bool logTimestamp = true;
 
             if (cfgOptionValid(cfgOptLogLevelConsole))
@@ -39,30 +41,48 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
             if (cfgOptionValid(cfgOptLogLevelStderr))
                 logLevelStdErr = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelStderr)));
 
+            if (cfgOptionValid(cfgOptLogLevelFile))
+                logLevelFile = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelFile)));
+
             if (cfgOptionValid(cfgOptLogTimestamp))
                 logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
 
-            logInit(logLevelConsole, logLevelStdErr, logTimestamp);
+            logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp);
         }
 
-        // If an exe was passed in the use that
-        if (exe != NULL)
-            cfgExeSet(exe);
-
-        // Set default for repo-host-cmd
-        if (cfgOptionValid(cfgOptRepoHost) && cfgOptionTest(cfgOptRepoHost) &&
-            cfgOptionSource(cfgOptRepoHostCmd) == cfgSourceDefault)
+        // Only continue if a command was set.  If no command is set then help will be displayed
+        if (cfgCommand() != cfgCmdNone)
         {
-            cfgOptionDefaultSet(cfgOptRepoHostCmd, varNewStr(cfgExe()));
-        }
-
-        // Set default for pg-host-cmd
-        if (cfgOptionValid(cfgOptPgHostCmd))
-        {
-            for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
+            // Open the log file if this command logs to a file
+            if (cfgLogFile())
             {
-                if (cfgOptionTest(cfgOptPgHost + optionIdx) && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
-                    cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, varNewStr(cfgExe()));
+                logFileSet(
+                    strPtr(strNewFmt("%s/%s-%s.log", strPtr(cfgOptionStr(cfgOptLogPath)), strPtr(cfgOptionStr(cfgOptStanza)),
+                    cfgCommandName(cfgCommand()))));
+            }
+
+            // Begin the command
+            cmdBegin();
+
+            // If an exe was passed in the use that
+            if (exe != NULL)
+                cfgExeSet(exe);
+
+            // Set default for repo-host-cmd
+            if (cfgOptionValid(cfgOptRepoHost) && cfgOptionTest(cfgOptRepoHost) &&
+                cfgOptionSource(cfgOptRepoHostCmd) == cfgSourceDefault)
+            {
+                cfgOptionDefaultSet(cfgOptRepoHostCmd, varNewStr(cfgExe()));
+            }
+
+            // Set default for pg-host-cmd
+            if (cfgOptionValid(cfgOptPgHostCmd))
+            {
+                for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
+                {
+                    if (cfgOptionTest(cfgOptPgHost + optionIdx) && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
+                        cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, varNewStr(cfgExe()));
+                }
             }
         }
     }

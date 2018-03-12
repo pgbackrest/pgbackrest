@@ -64,6 +64,12 @@ sub main
         ############################################################################################################################
         if (cfgCommandTest(CFGCMD_ARCHIVE_PUSH))
         {
+            # If async then run command begin so that it gets output to the log file when it is opened
+            if (cfgOption(CFGOPT_ARCHIVE_ASYNC))
+            {
+                commandBegin();
+            }
+
             # Load module dynamically
             require pgBackRest::Archive::Push::Push;
             pgBackRest::Archive::Push::Push->import();

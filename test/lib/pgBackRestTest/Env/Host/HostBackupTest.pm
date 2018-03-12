@@ -110,6 +110,7 @@ sub new
 
     # Set log/lock paths
     $self->{strLogPath} = $self->testPath() . '/' . HOST_PATH_LOG;
+    storageTest()->pathCreate($self->{strLogPath}, {strMode => '0770'});
     $self->{strLockPath} = $self->testPath() . '/' . HOST_PATH_LOCK;
 
     # Set conf file

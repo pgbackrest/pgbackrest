@@ -133,9 +133,6 @@ sub configLoad
         configLogging(true);
     }
 
-    # Log the command begin
-    commandBegin();
-
     # Neutralize the umask to make the repository file/path modes more consistent
     if (cfgOptionValid(CFGOPT_NEUTRAL_UMASK) && cfgOption(CFGOPT_NEUTRAL_UMASK))
     {
@@ -434,6 +431,8 @@ sub commandBegin
         "${strCommand} command begin " . BACKREST_VERSION . ':' .
             cfgCommandWrite(cfgCommandId($strCommand), true, '', false, undef, true));
 }
+
+push @EXPORT, qw(commandBegin);
 
 ####################################################################################################################################
 # commandEnd
