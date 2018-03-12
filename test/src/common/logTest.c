@@ -10,6 +10,8 @@ Log Test Harness
 #include "common/type.h"
 #include "storage/helper.h"
 
+#ifndef NO_LOG
+
 /***********************************************************************************************************************************
 Name of file where logs are stored for testing
 ***********************************************************************************************************************************/
@@ -81,3 +83,5 @@ testLogFinal()
     if (!strEqZ(actual, ""))
         THROW(AssertError, "\n\nexpected error log to be empty but actual error log was:\n\n%s\n\n", strPtr(actual));
 }
+
+#endif

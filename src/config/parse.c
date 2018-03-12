@@ -1,11 +1,11 @@
 /***********************************************************************************************************************************
 Command and Option Parse
 ***********************************************************************************************************************************/
-#include <assert.h>
 #include <getopt.h>
 #include <string.h>
 #include <strings.h>
 
+#include "common/debug.h"
 #include "common/error.h"
 #include "common/ini.h"
 #include "common/log.h"
@@ -165,7 +165,7 @@ configParse(unsigned int argListSize, const char *argList[])
                     reset = option & PARSE_RESET_FLAG;
 
                     // Make sure the option id is valid
-                    assert(optionId < CFG_OPTION_TOTAL);
+                    ASSERT_DEBUG(optionId < CFG_OPTION_TOTAL);
 
                     // If the the option has not been found yet then set it
                     if (!parseOptionList[optionId].found)

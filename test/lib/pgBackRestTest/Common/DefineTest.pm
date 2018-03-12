@@ -156,6 +156,27 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 'debug-on',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/debug' => TESTDEF_COVERAGE_NOCODE,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'debug-off',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_C => true,
+                    &TESTDEF_CDEF => '-DNDEBUG -DNO_LOG',
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/debug' => TESTDEF_COVERAGE_NOCODE,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'exit',
                     &TESTDEF_TOTAL => 1,
                     &TESTDEF_C => true,

@@ -84,6 +84,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>ASSERT_DEBUG()</code> macro for debugging and replace all current <code>assert()</code> calls except in tests that can't use the debug code.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>

@@ -3,7 +3,6 @@ C Test Wrapper
 
 This wrapper runs the the C unit tests.
 ***********************************************************************************************************************************/
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,17 +1,17 @@
 /***********************************************************************************************************************************
-Log Test Harness
+Test Debug Macros and Routines
 ***********************************************************************************************************************************/
-#ifndef TEST_COMMON_LOG_H
-#define TEST_COMMON_LOG_H
 
 /***********************************************************************************************************************************
-Functions
+Test Run
 ***********************************************************************************************************************************/
-#ifndef NO_LOG
-void testLogInit();
-void testLogResult(const char *expected);
-void testLogErrResult(const char *expected);
-void testLogFinal();
-#endif
-
-#endif
+void
+testRun()
+{
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("ASSERT_DEBUG()"))
+    {
+        TEST_RESULT_VOID(ASSERT_DEBUG(true), "assert true");
+        TEST_ERROR(ASSERT_DEBUG(false || false), AssertError, "assertion 'false || false' failed");
+    }
+}

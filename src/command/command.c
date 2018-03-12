@@ -1,13 +1,20 @@
 /***********************************************************************************************************************************
 Common Command Routines
 ***********************************************************************************************************************************/
-#include <assert.h>
 #include <string.h>
 
+#include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
 #include "version.h"
+
+/***********************************************************************************************************************************
+Debug Asserts
+***********************************************************************************************************************************/
+// The command must be set
+#define ASSERT_DEBUG_COMMAND_SET()                                                                                                 \
+    ASSERT_DEBUG(cfgCommand() != cfgCmdNone)
 
 /***********************************************************************************************************************************
 Begin the command
@@ -15,8 +22,7 @@ Begin the command
 void
 cmdBegin()
 {
-    // A command must be set
-    assert(cfgCommand() != cfgCmdNone);
+    ASSERT_DEBUG_COMMAND_SET();
 
     // This is fairly expensive log message to generate so skip it if it won't be output
     if (logWill(cfgLogLevelDefault()))
@@ -112,8 +118,7 @@ End the command
 void
 cmdEnd(int code)
 {
-    // A command must be set
-    assert(cfgCommand() != cfgCmdNone);
+    ASSERT_DEBUG_COMMAND_SET();
 
     // Skip this log message if it won't be output.  It's not too expensive but since we skipped cmdBegin(), may as well.
     if (logWill(cfgLogLevelDefault()))

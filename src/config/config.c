@@ -1,9 +1,9 @@
 /***********************************************************************************************************************************
 Command and Option Configuration
 ***********************************************************************************************************************************/
-#include <assert.h>
 #include <string.h>
 
+#include "common/debug.h"
 #include "common/error.h"
 #include "common/memContext.h"
 #include "config/config.h"
@@ -59,6 +59,13 @@ typedef struct ConfigOptionData
 Include the automatically generated configuration data
 ***********************************************************************************************************************************/
 #include "config.auto.c"
+
+/***********************************************************************************************************************************
+Debug Asserts
+***********************************************************************************************************************************/
+// The command must be set
+#define ASSERT_DEBUG_COMMAND_SET()                                                                                                 \
+    ASSERT_DEBUG(cfgCommand() != cfgCmdNone)
 
 /***********************************************************************************************************************************
 Store the config memory context
@@ -273,7 +280,7 @@ Does this command log to a file?
 bool
 cfgLogFile()
 {
-    assert(cfgCommand() != cfgCmdNone);
+    ASSERT_DEBUG_COMMAND_SET();
     return configCommandData[cfgCommand()].logFile;
 }
 
@@ -283,7 +290,7 @@ Get default log level -- used for log messages that are common to all commands
 LogLevel
 cfgLogLevelDefault()
 {
-    assert(cfgCommand() != cfgCmdNone);
+    ASSERT_DEBUG_COMMAND_SET();
     return (LogLevel)configCommandData[cfgCommand()].logLevelDefault;
 }
 

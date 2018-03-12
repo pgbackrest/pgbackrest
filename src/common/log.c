@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 Log Handler
 ***********************************************************************************************************************************/
-#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -10,6 +9,7 @@ Log Handler
 #include <time.h>
 #include <unistd.h>
 
+#include "common/debug.h"
 #include "common/error.h"
 #include "common/log.h"
 #include "common/time.h"
@@ -36,10 +36,8 @@ bool logTimestamp = false;
 /***********************************************************************************************************************************
 Debug Asserts
 ***********************************************************************************************************************************/
-#define ASSERT_MESSAGE_LOG_LEVEL_VALID(logLevel)                                                                                   \
-{                                                                                                                                  \
-    assert(logLevel > logLevelOff);                                                                                                \
-}
+#define ASSERT_DEBUG_MESSAGE_LOG_LEVEL_VALID(logLevel)                                                                             \
+    ASSERT_DEBUG(logLevel > logLevelOff)
 
 /***********************************************************************************************************************************
 Log buffer
@@ -143,28 +141,28 @@ This is useful for log messages that are expensive to generate and should be ski
 static bool
 logWillFile(LogLevel logLevel)
 {
-    ASSERT_MESSAGE_LOG_LEVEL_VALID(logLevel)
+    ASSERT_DEBUG_MESSAGE_LOG_LEVEL_VALID(logLevel)
     return logLevel <= logLevelFile && logHandleFile != -1;
 }
 
 static bool
 logWillStdErr(LogLevel logLevel)
 {
-    ASSERT_MESSAGE_LOG_LEVEL_VALID(logLevel)
+    ASSERT_DEBUG_MESSAGE_LOG_LEVEL_VALID(logLevel)
     return logLevel <= logLevelStdErr;
 }
 
 static bool
 logWillStdOut(LogLevel logLevel)
 {
-    ASSERT_MESSAGE_LOG_LEVEL_VALID(logLevel)
+    ASSERT_DEBUG_MESSAGE_LOG_LEVEL_VALID(logLevel)
     return logLevel <= logLevelStdOut;
 }
 
 bool
 logWill(LogLevel logLevel)
 {
-    ASSERT_MESSAGE_LOG_LEVEL_VALID(logLevel)
+    ASSERT_DEBUG_MESSAGE_LOG_LEVEL_VALID(logLevel)
     return logWillStdOut(logLevel) || logWillStdErr(logLevel) || logWillFile(logLevel);
 }
 
@@ -174,7 +172,7 @@ General log function
 void
 logInternal(LogLevel logLevel, const char *fileName, const char *functionName, int code, const char *format, ...)
 {
-    ASSERT_MESSAGE_LOG_LEVEL_VALID(logLevel)
+    ASSERT_DEBUG_MESSAGE_LOG_LEVEL_VALID(logLevel)
 
     size_t bufferPos = 0;   // Current position in the buffer
 
@@ -197,7 +195,7 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
     size_t messageStdErrPos = bufferPos - strlen(logLevelStr(logLevel)) - 2;
 
     // Check that error code matches log level
-    assert(
+    ASSERT_DEBUG(
         code == 0 || (logLevel == logLevelError && code != errorTypeCode(&AssertError)) ||
         (logLevel == logLevelAssert && code == errorTypeCode(&AssertError)));
 
