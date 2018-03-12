@@ -18,20 +18,20 @@ Log Handler
 Module variables
 ***********************************************************************************************************************************/
 // Log levels
-LogLevel logLevelStdOut = logLevelError;
-LogLevel logLevelStdErr = logLevelError;
-LogLevel logLevelFile = logLevelOff;
+DEBUG_UNIT_EXTERN LogLevel logLevelStdOut = logLevelError;
+DEBUG_UNIT_EXTERN LogLevel logLevelStdErr = logLevelError;
+DEBUG_UNIT_EXTERN LogLevel logLevelFile = logLevelOff;
 
 // Log file handles
-int logHandleStdOut = STDOUT_FILENO;
-int logHandleStdErr = STDERR_FILENO;
-int logHandleFile = -1;
+DEBUG_UNIT_EXTERN int logHandleStdOut = STDOUT_FILENO;
+DEBUG_UNIT_EXTERN int logHandleStdErr = STDERR_FILENO;
+DEBUG_UNIT_EXTERN int logHandleFile = -1;
 
 // Has the log file banner been written yet?
-bool logFileBanner = false;
+static bool logFileBanner = false;
 
 // Is the timestamp printed in the log?
-bool logTimestamp = false;
+static bool logTimestamp = false;
 
 /***********************************************************************************************************************************
 Debug Asserts

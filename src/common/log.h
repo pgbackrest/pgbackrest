@@ -23,9 +23,9 @@ typedef enum
 } LogLevel;
 
 /***********************************************************************************************************************************
-Expose internal data for debugging/testing
+Expose internal data for unit testing/debugging
 ***********************************************************************************************************************************/
-#ifndef NDEBUG
+#ifdef DEBUG_UNIT
     extern LogLevel logLevelStdOut;
     extern LogLevel logLevelStdErr;
     extern LogLevel logLevelFile;
@@ -33,8 +33,6 @@ Expose internal data for debugging/testing
     extern int logHandleStdOut;
     extern int logHandleStdErr;
     extern int logHandleFile;
-
-    extern bool logTimestamp;
 #endif
 
 /***********************************************************************************************************************************

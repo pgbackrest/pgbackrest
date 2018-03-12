@@ -84,7 +84,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <code>ASSERT_DEBUG()</code> macro for debugging and replace all current <code>assert()</code> calls except in tests that can't use the debug code.</p>
+                        <p>Improve debugging.  Add <code>ASSERT_DEBUG()</code> macro for debugging and replace all current <code>assert()</code> calls except in tests that can't use the debug code.  Replace remaining NDEBUG blocks with the more granular DEBUG_UNIT.  Remove some debug <code>memset()</code> calls in <code>MemContext</code> since valgrind is more useful for these checks.</p>
                     </release-item>
 
                     <release-item>

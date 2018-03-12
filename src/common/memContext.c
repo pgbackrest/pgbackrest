@@ -325,11 +325,6 @@ memFree(void *buffer)
     // Find the allocation
     MemContextAlloc *alloc = &(memContextCurrent()->allocList[memFind(buffer)]);
 
-    // DEBUG: zero buffer to make it more obvious that it was freed if there are still references to it
-    #ifndef NDEBUG
-        memset(alloc->buffer, 0, alloc->size);
-    #endif
-
     // Free the buffer
     memFreeInternal(alloc->buffer);
     alloc->active = false;
@@ -433,14 +428,7 @@ memContextFree(MemContext *this)
             MemContextAlloc *alloc = &(this->allocList[allocIdx]);
 
             if (alloc->active)
-            {
-                // DEBUG: zero buffer to make it more obvious that it was freed if there are still references to it
-                #ifndef NDEBUG
-                    memset(alloc->buffer, 0, alloc->size);
-                #endif
-
                 memFreeInternal(alloc->buffer);
-            }
         }
 
         memFreeInternal(this->allocList);
