@@ -122,6 +122,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Update <file>pip</file> before installing <file>awscli</file>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove Debian package patch now that it has been merged upstream.</p>
                     </release-item>
                 </release-development-list>
