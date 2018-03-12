@@ -61,6 +61,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Port most of <code>Config::Config::configLoad()</code> from Perl to C.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="hunley.douglas"/>
                         </release-item-contributor-list>
 
