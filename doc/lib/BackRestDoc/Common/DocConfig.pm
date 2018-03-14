@@ -708,7 +708,8 @@ sub helpCommandDocGet
             # Iterate sections
             foreach my $strCategory (sort(keys(%{$oCategory})))
             {
-                my $oOptionListElement = $oSectionElement->nodeAdd('section', undef, {id => "category-${strCategory}"});
+                my $oOptionListElement = $oSectionElement->nodeAdd(
+                    'section', undef, {id => "category-${strCategory}", toc => 'n'});
 
                 $oOptionListElement->
                     nodeAdd('title')->textSet(ucfirst($strCategory) . ' Options');
@@ -781,7 +782,8 @@ sub helpOptionGet
     my $oOptionHash = shift;
 
     # Create the option section
-    my $oOptionElement = $oParentElement->nodeAdd('section', undef, {id => "option-${strOption}"});
+    my $oOptionElement = $oParentElement->nodeAdd(
+        'section', undef, {id => "option-${strOption}", toc => defined($strCommand) ? 'n' : 'y'});
 
     # Set the option section title
     $oOptionElement->

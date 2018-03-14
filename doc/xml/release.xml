@@ -112,6 +112,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                        </release-item-contributor-list>
+
+                        <p>Simplify table of contents on command page by only listing commands.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove references to the C library being optional.</p>
                     </release-item>
                 </release-improvement-list>
