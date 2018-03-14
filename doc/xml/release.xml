@@ -98,6 +98,10 @@
                     <release-item>
                         <p>Build with <id>-DNDEBUG</id> by default but disable for testing.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Check <code>int</code> size in <code>common/type.h</code>.  This ensures that integers are at least 32-bits without having to run the test suite.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
