@@ -56,7 +56,7 @@ testRun()
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
         {
             int *item = lstGet(list, listIdx);
-            TEST_RESULT_INT(*item, listIdx, "check item %d", listIdx);
+            TEST_RESULT_INT(*item, listIdx, "check item %u", listIdx);
         }
 
         TEST_ERROR(lstGet(list, lstSize(list)), AssertError, "cannot get index 9 from list with 9 value(s)");

@@ -36,7 +36,7 @@ testRun()
                 TEST_RESULT_PTR(strLstGet(list, listIdx), NULL, "check null item");
             }
             else
-                TEST_RESULT_STR(strPtr(strLstGet(list, listIdx)), strPtr(strNewFmt("STR%02d", listIdx)), "check item %d", listIdx);
+                TEST_RESULT_STR(strPtr(strLstGet(list, listIdx)), strPtr(strNewFmt("STR%02u", listIdx)), "check item %u", listIdx);
         }
 
         strLstFree(list);
@@ -107,7 +107,7 @@ testRun()
                 TEST_RESULT_PTR(szList[listIdx], NULL, "check null item");
             }
             else
-                TEST_RESULT_STR(szList[listIdx], strPtr(strNewFmt("STR%02d", listIdx)), "check item %d", listIdx);
+                TEST_RESULT_STR(szList[listIdx], strPtr(strNewFmt("STR%02u", listIdx)), "check item %u", listIdx);
         }
 
         strLstFree(list);

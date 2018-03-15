@@ -17,7 +17,7 @@ testRun()
         // Generate standard error messages
         char optionDefIdInvalidHighError[256];
         snprintf(
-            optionDefIdInvalidHighError, sizeof(optionDefIdInvalidHighError), "option def id %d invalid - must be >= 0 and < %d",
+            optionDefIdInvalidHighError, sizeof(optionDefIdInvalidHighError), "option def id %u invalid - must be >= 0 and < %u",
             cfgDefOptionTotal(), cfgDefOptionTotal());
 
         char optionIdInvalidHighError[256];

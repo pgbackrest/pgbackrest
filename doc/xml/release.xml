@@ -84,7 +84,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Enable <id>-Wswitch-enum</id> and <id>-Wconversion</id> and silence new warnings.</p>
+                        <p>Enable <id>-Wswitch-enum</id>, <id>-Wconversion</id>, <id>-Wformat=2</id>, and <id>-Wformat-nonliteral</id> and silence new warnings.</p>
                     </release-item>
 
                     <release-item>

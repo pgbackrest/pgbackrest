@@ -17,22 +17,22 @@ testRun()
         // Generate standard error messages
         char optionIdInvalidHighError[256];
         snprintf(
-            optionIdInvalidHighError, sizeof(optionIdInvalidHighError), "option def id %d invalid - must be >= 0 and < %d",
+            optionIdInvalidHighError, sizeof(optionIdInvalidHighError), "option def id %u invalid - must be >= 0 and < %u",
             cfgDefOptionTotal(), cfgDefOptionTotal());
 
         char optionIdInvalidLowError[256];
         snprintf(
-            optionIdInvalidLowError, sizeof(optionIdInvalidLowError), "option def id -1 invalid - must be >= 0 and < %d",
+            optionIdInvalidLowError, sizeof(optionIdInvalidLowError), "option def id -1 invalid - must be >= 0 and < %u",
             cfgDefOptionTotal());
 
         char commandIdInvalidHighError[256];
         snprintf(
-            commandIdInvalidHighError, sizeof(commandIdInvalidHighError), "command def id %d invalid - must be >= 0 and < %d",
+            commandIdInvalidHighError, sizeof(commandIdInvalidHighError), "command def id %u invalid - must be >= 0 and < %u",
             cfgDefCommandTotal(), cfgDefCommandTotal());
 
         char commandIdInvalidLowError[256];
         snprintf(
-            commandIdInvalidLowError, sizeof(commandIdInvalidLowError), "command def id -1 invalid - must be >= 0 and < %d",
+            commandIdInvalidLowError, sizeof(commandIdInvalidLowError), "command def id -1 invalid - must be >= 0 and < %u",
             cfgDefCommandTotal());
 
         // -------------------------------------------------------------------------------------------------------------------------

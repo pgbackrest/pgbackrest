@@ -217,8 +217,9 @@ sub run
         {
             $strCommand =
                 'docker exec -i -u ' . TEST_USER . " ${strImage}" .
-                " valgrind -q --gen-suppressions=all --suppressions=$self->{strBackRestBase}/test/src/valgrind.suppress" .
-                " --leak-check=full --leak-resolution=high" .
+                ($self->{oTest}->{&TEST_VM} ne VM_CO6 ?
+                    " valgrind -q --gen-suppressions=all --suppressions=$self->{strBackRestBase}/test/src/valgrind.suppress" .
+                    " --leak-check=full --leak-resolution=high" : '') .
                 " $self->{strGCovPath}/test";
         }
         else
@@ -339,8 +340,11 @@ sub run
                 my $strMakefile =
                     "CC=gcc\n" .
                     "CFLAGS=-I. -std=c99 -fPIC -g \\\n" .
-                    "       -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wswitch-enum -Wconversion" .
-                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -Wpedantic' : '') . "\\\n" .
+                    "       -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wswitch-enum -Wconversion \\\n" .
+                    ($self->{oTest}->{&TEST_VM} eq VM_U16 ? "       -Wformat-signedness \\\n" : '') .
+                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ?
+                        "       -Wpedantic \\\n" : '') .
+                    "       -Wformat=2 -Wformat-nonliteral \\\n" .
                     "       `perl -MExtUtils::Embed -e ccopts`\n" .
                     "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) ? " -lgcov" : '') .
                         " `perl -MExtUtils::Embed -e ldopts`\n" .
