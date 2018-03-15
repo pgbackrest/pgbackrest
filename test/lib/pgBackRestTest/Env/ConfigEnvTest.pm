@@ -20,7 +20,20 @@ use pgBackRest::Config::Config;
 use pgBackRest::LibC qw(:test);
 use pgBackRest::Version;
 
+use pgBackRestTest::Common::RunTest;
+
 use constant CONFIGENVTEST                                          => 'ConfigEnvTest';
+
+####################################################################################################################################
+# Is the option secure?
+####################################################################################################################################
+sub optionTestSecure
+{
+    my $self = shift;
+    my $strOption = shift;
+
+    return (cfgDefOptionSecure(cfgOptionId($strOption)) ? true : false);
+}
 
 sub optionTestSet
 {
@@ -68,25 +81,24 @@ sub configTestSet
     $self->{&CONFIGENVTEST} = $rhConfig;
 }
 
-sub commandTestWrite
+####################################################################################################################################
+# Write all secure options to a config file
+####################################################################################################################################
+sub configFileWrite
 {
     my $self = shift;
-    my $strCommand = shift;
+    my $strConfigFile = shift;
     my $rhConfig = shift;
 
-    my @szyParam = ();
+    my $strConfig = "[global]\n";
 
     if (defined($rhConfig->{boolean}))
     {
         foreach my $strOption (sort(keys(%{$rhConfig->{boolean}})))
         {
-            if ($rhConfig->{boolean}{$strOption})
+            if ($self->optionTestSecure($strOption))
             {
-                push(@szyParam, "--${strOption}");
-            }
-            else
-            {
-                push(@szyParam, "--no-${strOption}");
+                $strConfig .= "${strOption}=" . ($rhConfig->{boolean}{$strOption} ? 'y' : 'n') . "\n";
             }
         }
     }
@@ -95,10 +107,63 @@ sub commandTestWrite
     {
         foreach my $strOption (sort(keys(%{$rhConfig->{option}})))
         {
-            push(@szyParam, "--${strOption}=$rhConfig->{option}{$strOption}");
+            if ($self->optionTestSecure($strOption))
+            {
+                $strConfig .= "${strOption}=$rhConfig->{option}{$strOption}\n";
+            }
         }
     }
 
+    storageTest()->put($strConfigFile, $strConfig);
+}
+
+####################################################################################################################################
+# Write all non-secure options to the command line
+####################################################################################################################################
+sub commandTestWrite
+{
+    my $self = shift;
+    my $strCommand = shift;
+    my $strConfigFile = shift;
+    my $rhConfig = shift;
+
+    my @szyParam = ();
+
+    # Add boolean options
+    if (defined($rhConfig->{boolean}))
+    {
+        foreach my $strOption (sort(keys(%{$rhConfig->{boolean}})))
+        {
+            if (!$self->optionTestSecure($strOption))
+            {
+                if ($rhConfig->{boolean}{$strOption})
+                {
+                    push(@szyParam, "--${strOption}");
+                }
+                else
+                {
+                    push(@szyParam, "--no-${strOption}");
+                }
+            }
+        }
+    }
+
+    # Add non-boolean options
+    if (defined($rhConfig->{option}))
+    {
+        foreach my $strOption (sort(keys(%{$rhConfig->{option}})))
+        {
+            if (!$self->optionTestSecure($strOption))
+            {
+                push(@szyParam, "--${strOption}=$rhConfig->{option}{$strOption}");
+            }
+        }
+    }
+
+    # Add config file
+    push(@szyParam, '--' . cfgOptionName(CFGOPT_CONFIG) . "=${strConfigFile}");
+
+    # Add command
     push(@szyParam, $strCommand);
 
     return @szyParam;
@@ -112,7 +177,11 @@ sub configTestLoad
     my $self = shift;
     my $iCommandId = shift;
 
-    my @stryArg = $self->commandTestWrite(cfgCommandName($iCommandId), $self->{&CONFIGENVTEST});
+    # A config file is required to store secure options before they can be parsed
+    my $strConfigFile = $self->testPath() . '/pgbackrest.test.conf';
+    $self->configFileWrite($strConfigFile, $self->{&CONFIGENVTEST});
+
+    my @stryArg = $self->commandTestWrite(cfgCommandName($iCommandId), $strConfigFile, $self->{&CONFIGENVTEST});
     my $strConfigJson = cfgParseTest(backrestBin(), join('|', @stryArg));
     $self->testResult(
         sub {configLoad(false, backrestBin(), cfgCommandName($iCommandId), \$strConfigJson)},

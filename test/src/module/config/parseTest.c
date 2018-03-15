@@ -133,11 +133,11 @@ testRun()
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--no-config"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--repo1-s3-key=xxx"));
+        strLstAdd(argList, strNew("--repo1-s3-host=xxx"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
-            "option 'repo1-s3-key' not valid without option 'repo1-type' = 's3'");
+            "option 'repo1-s3-host' not valid without option 'repo1-type' = 's3'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
