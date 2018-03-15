@@ -430,6 +430,17 @@ configParse(unsigned int argListSize, const char *argList[])
                             cfgCommandName(cfgCommand()));
                     }
 
+                    // Error if this option is secure and cannot be passed on the command line
+                    if (parseOption->found && parseOption->source == cfgSourceParam && cfgDefOptionSecure(optionDefId))
+                    {
+                        THROW(
+                            OptionInvalidError,
+                            "option '%s' is not allowed on the command-line\n"
+                            "HINT: this option could expose secrets in the process list.\n"
+                            "HINT: specify the option in '%s' instead.",
+                            cfgOptionName(optionId), cfgDefOptionDefault(commandDefId, cfgDefOptConfig));
+                    }
+
                     // Error if this option does not allow multiple arguments
                     if (parseOption->valueList != NULL && strLstSize(parseOption->valueList) > 1 &&
                         !(cfgDefOptionType(cfgOptionDefIdFromId(optionId)) == cfgDefOptTypeHash ||

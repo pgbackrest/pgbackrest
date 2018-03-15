@@ -700,6 +700,9 @@ sub helpCommandDocGet
 
             foreach my $strOption (sort(keys(%{$$oCommandHash{&CONFIG_HELP_OPTION}})))
             {
+                # Skip secure options that can't be defined on the command line
+                next if ($rhConfigDefine->{$strOption}{&CFGDEF_SECURE});
+
                 my ($oOption, $strCategory) = helpCommandDocGetOptionFind($oConfigHash, $oOptionDefine, $strCommand, $strOption);
 
                 $$oCategory{$strCategory}{$strOption} = $oOption;

@@ -131,6 +131,20 @@ testRun()
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--repo1-type=s3"));
+        strLstAdd(argList, strNew("--repo1-s3-key=xxx"));
+        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
+            "option 'repo1-s3-key' is not allowed on the command-line\n"
+            "HINT: this option could expose secrets in the process list.\n"
+            "HINT: specify the option in '/etc/pgbackrest.conf' instead.");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--no-config"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--repo1-s3-host=xxx"));

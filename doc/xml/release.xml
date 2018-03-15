@@ -25,6 +25,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="nicholson.brad"/>
+                        </release-item-contributor-list>
+
+                        <p>Immediately error when a secure option (e.g. <br-option>repo1-s3-key</br-option>) is passed on the command line.  Since <backrest/> would not pass secure options on to sub-processes an obscure error was thrown.  The new error is much clearer and provides hints about how to fix the problem.  Update command documentation to omit secure options that cannot be specified on the command-line.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="kokdemir.ibrahim.edib"/>
                         </release-item-contributor-list>
 
