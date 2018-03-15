@@ -118,9 +118,17 @@ sub isException
         # Else if a specially formatted string from the C library
         elsif ($$roException =~ /^PGBRCLIB\:[0-9]+\:/)
         {
+            # Split message and discard the first part used for identification
             my @stryException = split(/\:/, $$roException);
-            $$roException = new pgBackRest::Common::Exception(
-                "ERROR", $stryException[1] + 0, $stryException[4], $stryException[2] . qw{:} . $stryException[3]);
+            shift(@stryException);
+
+            # Construct exception fields
+            my $iCode = shift(@stryException) + 0;
+            my $strTrace = shift(@stryException) . qw{:} . shift(@stryException);
+            my $strMessage = join(':', @stryException);
+
+            # Create exception
+            $$roException = new pgBackRest::Common::Exception("ERROR", $iCode, $strMessage, $strTrace);
 
             return 1;
         }

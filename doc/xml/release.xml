@@ -102,6 +102,10 @@
                     <release-item>
                         <p>Check <code>int</code> size in <code>common/type.h</code>.  This ensures that integers are at least 32-bits without having to run the test suite.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improve conversion of C exceptions to <code>Exception</code> objects.  Colons in the message would prevent all of the message from being loaded into the <code>Exception</code> object.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

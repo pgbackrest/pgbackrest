@@ -1226,7 +1226,11 @@ eval
 or do
 {
     # If a backrest exception then return the code
-    exit $EVAL_ERROR->code() if (isException(\$EVAL_ERROR));
+    if (isException(\$EVAL_ERROR))
+    {
+        syswrite(*STDOUT, $EVAL_ERROR->message() . "\n" . $EVAL_ERROR->trace());
+        exit $EVAL_ERROR->code();
+    }
 
     # Else output the unhandled error
     syswrite(*STDOUT, $EVAL_ERROR);
