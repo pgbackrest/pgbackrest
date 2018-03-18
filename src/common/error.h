@@ -144,8 +144,9 @@ bool errorInternalStateTry();
 bool errorInternalStateCatch(const ErrorType *errorTypeCatch);
 bool errorInternalStateFinal();
 bool errorInternalProcess(bool catch);
-void errorInternalPropagate();
-void errorInternalThrow(const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...);
+void errorInternalPropagate() __attribute__((__noreturn__));
+void errorInternalThrow(
+    const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...) __attribute__((__noreturn__));
 void errorInternalThrowSys(int result, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...);
 
 #endif

@@ -67,7 +67,7 @@ memAllocInternal(size_t size, bool zero)
     void *buffer = malloc(size);
 
     // Error when malloc fails
-    if (!buffer)
+    if (buffer == NULL)
         THROW(MemoryError, "unable to allocate %lu bytes", size);
 
     // Zero the memory when requested
@@ -88,7 +88,7 @@ memReAllocInternal(void *bufferOld, size_t sizeOld, size_t sizeNew, bool zeroNew
     void *bufferNew = realloc(bufferOld, sizeNew);
 
     // Error when realloc fails
-    if(!bufferNew)
+    if (bufferNew == NULL)
         THROW(MemoryError, "unable to reallocate %lu bytes", sizeNew);
 
     // Zero the new memory when requested - old memory is left untouched else why bother with a realloc?
@@ -106,7 +106,7 @@ static void
 memFreeInternal(void *buffer)
 {
     // Error if pointer is null
-    if(!buffer)
+    if (buffer == NULL)
         THROW(MemoryError, "unable to free null pointer");
 
     // Free the buffer
@@ -265,7 +265,7 @@ static unsigned int
 memFind(const void *buffer)
 {
     // Error if buffer is null
-    if (!buffer)
+    if (buffer == NULL)
         THROW(AssertError, "unable to find null allocation");
 
     // Find memory allocation

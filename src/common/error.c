@@ -358,7 +358,7 @@ errorInternalThrow(const ErrorType *errorType, const char *fileName, int fileLin
 
     // Propogate the error
     errorInternalPropagate();
-}                                                                   // {uncoverable - errorInternalPropagate() does not return}
+}
 
 /***********************************************************************************************************************************
 Throw an error

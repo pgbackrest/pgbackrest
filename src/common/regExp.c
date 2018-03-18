@@ -26,7 +26,7 @@ regExpError(int error)
     char buffer[4096];
     regerror(error, NULL, buffer, sizeof(buffer));
     THROW(FormatError, buffer);
-}                                                                   // {uncoverable - THROW() does not return}
+}
 
 /***********************************************************************************************************************************
 New regular expression handler

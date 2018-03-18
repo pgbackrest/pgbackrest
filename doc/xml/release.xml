@@ -146,6 +146,10 @@
                     <release-item>
                         <p>Add CentOS/RHEL package builds.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Use clang for static code analysis during lint testing.  Nothing found except for some functions that should have been marked <code>__noreturn__</code>.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-development-list>

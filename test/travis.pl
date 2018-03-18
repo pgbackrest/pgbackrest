@@ -142,10 +142,10 @@ eval
             confess &log(ERROR, '--vm is required');
         }
 
-        # Only lint on CO6
+        # Only lint on U16
         my $strParam = undef;
 
-        if ($strVm ne VM_CO6)
+        if ($strVm ne VM_U16)
         {
             $strParam .= '--no-lint';
         }

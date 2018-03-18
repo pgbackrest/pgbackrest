@@ -150,12 +150,12 @@ configParse(unsigned int argListSize, const char *argList[])
                 // If the option is unknown then error
                 case '?':
                     THROW(OptionInvalidError, "invalid option '%s'", argList[optind - 1]);
-                    break;                                              // {uncoverable - case statement does not return}
+                    break;
 
                 // If the option is missing an argument then error
                 case ':':
                     THROW(OptionInvalidError, "option '%s' requires argument", argList[optind - 1]);
-                    break;                                              // {uncoverable - case statement does not return}
+                    break;
 
                 // Parse valid option
                 default:

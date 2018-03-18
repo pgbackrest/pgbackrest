@@ -535,8 +535,15 @@ eval
                         executeTest("rsync -rt ${strBackRestBase}/${strBinSrcPath}/* ${strBinPath}/${strBuildVM}/${strBinSrcPath}");
                     }
 
+                    if (vmCoverage($strVm) && !$bNoLint)
+                    {
+                        &log(INFO, "    clang static analyzer ${strBuildVM} (${strBuildPath})");
+                    }
+
                     executeTest(
-                        "docker exec -i test-build make --silent --directory ${strBuildPath} CEXTRA=-g CDEBUG=",
+                        'docker exec -i test-build' .
+                        (vmCoverage($strVm) && !$bNoLint ? ' scan-build-5.0' : '') .
+                        " make --silent --directory ${strBuildPath} CEXTRA=-g CDEBUG=",
                         {bShowOutputAsync => $bLogDetail});
 
                     executeTest(
