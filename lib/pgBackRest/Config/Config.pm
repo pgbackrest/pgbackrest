@@ -90,7 +90,7 @@ sub configLoad
 
     # Set command
     $strCommand = $strCommandName;
-
+use Data::Dumper;
     eval
     {
         # Hacky fix for backslashes that need to be escaped
@@ -101,7 +101,7 @@ sub configLoad
     }
     or do
     {
-        confess &log(ASSERT, "unable to parse config JSON");
+        confess &log(ASSERT, "unable to parse config JSON" . Dumper($$rstrConfigJson));
     };
 
     # Load options into final option hash
