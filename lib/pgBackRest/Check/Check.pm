@@ -98,7 +98,8 @@ sub process
                 $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
 
                 $oBackupManifest->build(storageDb({iRemoteIdx => $iRemoteIdx}),
-                    cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iRemoteIdx)), undef, false);
+                    cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iRemoteIdx)), undef, cfgOption(CFGOPT_ONLINE),
+                    $oDb->tablespaceMapGet());
 
                 return true;
             }

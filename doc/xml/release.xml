@@ -38,6 +38,14 @@
 
                         <p>Fix issue passing <br-option>--no-config</br-option> to embedded Perl.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix <cmd>check</cmd> command when tablespaces are present.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
