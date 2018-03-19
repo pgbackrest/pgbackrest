@@ -154,6 +154,10 @@ spool-path=[TEST_PATH]/db-master/spool
 archive-copy=y
 start-fast=y
 
+check db - check command with tablespace (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
+------------------------------------------------------------------------------------------------------------------------------------
+
 restore, type 'default', expect exit 38 - postmaster running (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --link-all --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------

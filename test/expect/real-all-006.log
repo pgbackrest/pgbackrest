@@ -226,6 +226,10 @@ repo1-type=s3
 archive-copy=y
 start-fast=y
 
+check db - check command with tablespace (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
+------------------------------------------------------------------------------------------------------------------------------------
+
 restore, type 'default' (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf  --buffer-size=16384  --link-all --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------

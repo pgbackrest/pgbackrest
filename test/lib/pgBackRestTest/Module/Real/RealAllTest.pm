@@ -660,6 +660,9 @@ sub run
 
         my $strIncrBackup = $oHostBackup->backupEnd(CFGOPTVAL_BACKUP_TYPE_INCR, $oExecuteBackup);
 
+        # Ensure the check command runs properly with a tablespace
+        $oHostBackup->check('check command with tablespace', {iTimeout => 5});
+
         # Setup the xid target
         #---------------------------------------------------------------------------------------------------------------------------
         my $strXidTarget = undef;
