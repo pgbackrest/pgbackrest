@@ -38,6 +38,14 @@
 
                         <p>Fix issue passing <br-option>--no-config</br-option> to embedded Perl.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="adams.clinton"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue where specifying <br-setting>log-level-stderr</br-setting> > <id>warn</id> would cause a <cmd>local</cmd>/<cmd>remote</cmd> process to error on exit due to output found on stderr when none was expected.  The max value for a <cmd>local</cmd>/<cmd>remote</cmd> process is now error since there's no reason for these processes to emit warnings.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>

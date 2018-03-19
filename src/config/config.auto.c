@@ -15,6 +15,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 
     CONFIG_COMMAND
@@ -23,6 +24,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 
     CONFIG_COMMAND
@@ -31,6 +33,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 
     CONFIG_COMMAND
@@ -39,6 +42,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 
     CONFIG_COMMAND
@@ -47,6 +51,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 
     CONFIG_COMMAND
@@ -55,6 +60,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 
     CONFIG_COMMAND
@@ -63,6 +69,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 
     CONFIG_COMMAND
@@ -71,6 +78,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelError)
     )
 
     CONFIG_COMMAND
@@ -79,6 +87,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelError)
     )
 
     CONFIG_COMMAND
@@ -87,6 +96,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 
     CONFIG_COMMAND
@@ -95,6 +105,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 
     CONFIG_COMMAND
@@ -103,6 +114,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 
     CONFIG_COMMAND
@@ -111,6 +123,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 
     CONFIG_COMMAND
@@ -119,6 +132,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 
     CONFIG_COMMAND
@@ -127,6 +141,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 
     CONFIG_COMMAND
@@ -135,6 +150,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
     )
 )
 

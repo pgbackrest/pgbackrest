@@ -32,6 +32,7 @@ const char *cfgCommandName(ConfigCommand commandId);
 
 bool cfgLogFile();
 LogLevel cfgLogLevelDefault();
+LogLevel cfgLogLevelStdErrMax();
 
 const StringList *cfgCommandParam();
 

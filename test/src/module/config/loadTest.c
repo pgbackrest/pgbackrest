@@ -24,7 +24,6 @@ testRun()
         TEST_RESULT_INT(logLevelStdErr, logLevelWarn, "stderr logging is error");
 
         // -------------------------------------------------------------------------------------------------------------------------
-
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--host-id=1"));
@@ -32,13 +31,15 @@ testRun()
         strLstAdd(argList, strNew("--command=backup"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--type=backup"));
+        strLstAdd(argList, strNew("--log-level-stderr=info"));
         strLstAdd(argList, strNew("local"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load local config");
 
         TEST_RESULT_STR(strPtr(cfgExe()), "pgbackrest", "check exe");
-        TEST_RESULT_INT(logLevelStdOut, logLevelWarn, "console logging is warn");
-        TEST_RESULT_INT(logLevelStdErr, logLevelWarn, "stderr logging is warn");
+        TEST_RESULT_INT(logLevelStdOut, logLevelOff, "console logging is off");
+        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+        TEST_RESULT_INT(logLevelFile, logLevelOff, "file logging is off");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cfgLoadParam(strLstSize(argList), strLstPtr(argList), strNew("pgbackrest2")), "load local config");

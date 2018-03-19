@@ -29,27 +29,30 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
         configParse(argListSize, argList);
 
         // Initialize logging
-        if (cfgCommand() != cfgCmdLocal && cfgCommand() != cfgCmdRemote)
+        LogLevel logLevelConsole = logLevelOff;
+        LogLevel logLevelStdErr = logLevelOff;
+        LogLevel logLevelFile = logLevelOff;
+        bool logTimestamp = true;
+
+        if (cfgOptionValid(cfgOptLogLevelConsole))
+            logLevelConsole = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelConsole)));
+
+        if (cfgOptionValid(cfgOptLogLevelStderr))
         {
-            LogLevel logLevelConsole = logLevelOff;
-            LogLevel logLevelStdErr = logLevelOff;
-            LogLevel logLevelFile = logLevelOff;
-            bool logTimestamp = true;
+            logLevelStdErr = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelStderr)));
 
-            if (cfgOptionValid(cfgOptLogLevelConsole))
-                logLevelConsole = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelConsole)));
-
-            if (cfgOptionValid(cfgOptLogLevelStderr))
-                logLevelStdErr = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelStderr)));
-
-            if (cfgOptionValid(cfgOptLogLevelFile))
-                logLevelFile = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelFile)));
-
-            if (cfgOptionValid(cfgOptLogTimestamp))
-                logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
-
-            logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp);
+            // If configured log level exceeds the max for a command, set it to the max
+            if (logLevelStdErr > cfgLogLevelStdErrMax())
+                logLevelStdErr = cfgLogLevelStdErrMax();
         }
+
+        if (cfgOptionValid(cfgOptLogLevelFile))
+            logLevelFile = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelFile)));
+
+        if (cfgOptionValid(cfgOptLogTimestamp))
+            logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
+
+        logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp);
 
         // Only continue if a command was set.  If no command is set then help will be displayed
         if (cfgCommand() != cfgCmdNone)
@@ -65,7 +68,7 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
             // Begin the command
             cmdBegin();
 
-            // If an exe was passed in the use that
+            // If an exe was passed in then use it
             if (exe != NULL)
                 cfgExeSet(exe);
 

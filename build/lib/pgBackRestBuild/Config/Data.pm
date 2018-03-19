@@ -448,6 +448,11 @@ use constant CFGDEF_LOG_FILE                                        => 'log-file
 use constant CFGDEF_LOG_LEVEL_DEFAULT                               => 'log-level-default';
     push @EXPORT, qw(CFGDEF_LOG_LEVEL_DEFAULT);
 
+# Defines the max log level that may be assigned for the output type.  For instance, it's not OK for the local and remote processes
+# to log anything but errors to stderr because it will cause the process to error on exit.
+use constant CFGDEF_LOG_LEVEL_STDERR_MAX                            => 'log-level-stderr-max';
+    push @EXPORT, qw(CFGDEF_LOG_LEVEL_STDERR_MAX);
+
 # Option defines
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGDEF_ALLOW_LIST                                      => 'allow-list';
@@ -554,11 +559,13 @@ my $rhCommandDefine =
     &CFGCMD_LOCAL =>
     {
         &CFGDEF_LOG_FILE => false,
+        &CFGDEF_LOG_LEVEL_STDERR_MAX => ERROR,
     },
 
     &CFGCMD_REMOTE =>
     {
         &CFGDEF_LOG_FILE => false,
+        &CFGDEF_LOG_LEVEL_STDERR_MAX => ERROR,
     },
 
     &CFGCMD_RESTORE =>
@@ -2193,6 +2200,12 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_DEFAULT}))
     {
         $rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_DEFAULT} = INFO;
+    }
+
+    # Default max stderr log level is TRACE
+    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_STDERR_MAX}))
+    {
+        $rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_STDERR_MAX} = TRACE;
     }
 }
 
