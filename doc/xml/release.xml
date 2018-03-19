@@ -182,6 +182,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Remove <setting>--smart</setting> from <setting>--expect</setting> tests.  This ensures that new binaries are built before running the tests.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove Debian package patch now that it has been merged upstream.</p>
                     </release-item>
                 </release-development-list>

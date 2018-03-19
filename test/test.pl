@@ -219,7 +219,6 @@ eval
     if ($bExpect)
     {
         $bNoLint = true;
-        $bSmart = true;
         $bNoPackage = true;
         $strVm = VM_EXPECT;
         $strPgVersion = '9.6';
