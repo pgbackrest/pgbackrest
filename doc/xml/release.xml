@@ -46,6 +46,15 @@
 
                         <p>Fix issue where specifying <br-setting>log-level-stderr</br-setting> > <id>warn</id> would cause a <cmd>local</cmd>/<cmd>remote</cmd> process to error on exit due to output found on stderr when none was expected.  The max value for a <cmd>local</cmd>/<cmd>remote</cmd> process is now error since there's no reason for these processes to emit warnings.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="flatley.thomas"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix manifest test in the <cmd>check</cmd> command when tablespaces are present.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
@@ -4232,6 +4241,11 @@
         <contributor id="fiske.keith">
             <contributor-name-display>Keith Fiske</contributor-name-display>
             <contributor-id type="github">keithf4</contributor-id>
+        </contributor>
+
+        <contributor id="flatley.thomas">
+            <contributor-name-display>Thomas Flatley</contributor-name-display>
+            <contributor-id type="github">seadba</contributor-id>
         </contributor>
 
         <contributor id="fort.chris">

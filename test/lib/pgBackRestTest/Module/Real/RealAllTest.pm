@@ -499,25 +499,11 @@ sub run
             executeTest("sudo chown root:root ${strDir}");
             executeTest("sudo chmod 400 ${strDir}");
 
-            # Determine if there is an invalid pg-host from the config file
-            my $rhConfig = iniParse(${storageTest()->get($oHostDbStandby->backrestConfig())}, {bRelaxed => true});
-            my $bBogusHost = false;
-
-            for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_PG_HOST); $iRemoteIdx++)
-            {
-                if (defined($rhConfig->{$self->stanza()}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iRemoteIdx))}) &&
-                    ($rhConfig->{$self->stanza()}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iRemoteIdx))} eq BOGUS))
-                {
-                    $bBogusHost = true;
-                    last;
-                }
-            }
-
             my $strComment = 'confirm standby manifest->build executed';
 
             # If there is an invalid host, the final error returned from check will be the inability to resolve the name which is
             # a read error instead of an open error
-            if (!$bBogusHost)
+            if (!$oHostDbStandby->bogusHost())
             {
                 $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_OPEN});
             }
@@ -530,7 +516,7 @@ sub run
             executeTest("sudo rmdir ${strDir}");
 
             # Confirm the check command runs without error on a standby (when a bogus host is not configured)
-            if (!$bBogusHost)
+            if (!$oHostDbStandby->bogusHost())
             {
                 $oHostDbStandby->check('verify check command on standby');
             }
@@ -659,6 +645,12 @@ sub run
         }
 
         my $strIncrBackup = $oHostBackup->backupEnd(CFGOPTVAL_BACKUP_TYPE_INCR, $oExecuteBackup);
+
+        # Ensure the check command runs properly with a tablespace unless there is a bogus host
+        if (!$oHostBackup->bogusHost())
+        {
+            $oHostBackup->check( 'check command with tablespace', {iTimeout => 5});
+        }
 
         # Setup the xid target
         #---------------------------------------------------------------------------------------------------------------------------

@@ -128,6 +128,9 @@ sub new
     # Default hardlink to false
     $self->{bHardLink} = false;
 
+    # By default there is no bogus host
+    $self->{bBogusHost} = false;
+
     # Create a placeholder hash for file munging
     $self->{hInfoFile} = {};
 
@@ -1117,6 +1120,9 @@ sub configCreate
             $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iInvalidReplica))} =
                 $oHostDb2->dbBasePath();
 
+            # Set a flag so we know there's a bogus host
+            $self->{bBogusHost} = true;
+
             # Set a valid replica to the last possible index to ensure skipping indexes does not make a difference.
             my $iValidReplica = cfgOptionIndexTotal(CFGOPT_PG_PATH);
             $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iValidReplica))} = $oHostDb2->nameGet();
@@ -2008,6 +2014,7 @@ sub restoreCompare
 sub backrestConfig {return shift->{strBackRestConfig}}
 sub backupDestination {return shift->{strBackupDestination}}
 sub backrestExe {return testRunGet()->backrestExe()}
+sub bogusHost {return shift->{bBogusHost}}
 sub hardLink {return shift->{bHardLink}}
 sub hasLink {storageRepo()->driver()->className() eq STORAGE_POSIX_DRIVER}
 sub isFS {storageRepo()->driver()->className() ne STORAGE_S3_DRIVER}

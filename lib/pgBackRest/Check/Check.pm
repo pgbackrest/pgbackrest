@@ -16,6 +16,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
+use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 
@@ -90,8 +91,15 @@ sub process
                     strCipherPass => 'x',
                     strCipherPassSub => 'x'});
 
+                # Set required settings not set during manifest instantiation
+                $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, 1);
+                $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
+                $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iCatalogVersion);
+                $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
+
                 $oBackupManifest->build(storageDb({iRemoteIdx => $iRemoteIdx}),
-                    cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iRemoteIdx)), undef, cfgOption(CFGOPT_ONLINE));
+                    cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iRemoteIdx)), undef, cfgOption(CFGOPT_ONLINE),
+                    $oDb->tablespaceMapGet());
 
                 return true;
             }
