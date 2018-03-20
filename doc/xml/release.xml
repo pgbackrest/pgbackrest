@@ -12,7 +12,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.01dev" title="UNDER DEVELOPMENT">
+        <release date="2018-03-19" version="2.01" title="Minor Bug Fixes and Improvements">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -44,7 +44,7 @@
                             <release-item-ideator id="adams.clinton"/>
                         </release-item-contributor-list>
 
-                        <p>Fix issue where specifying <br-setting>log-level-stderr</br-setting> > <id>warn</id> would cause a <cmd>local</cmd>/<cmd>remote</cmd> process to error on exit due to output found on stderr when none was expected.  The max value for a <cmd>local</cmd>/<cmd>remote</cmd> process is now error since there's no reason for these processes to emit warnings.</p>
+                        <p>Fix issue where specifying <br-setting>log-level-stderr</br-setting> > <id>warn</id> would cause a <cmd>local</cmd>/<cmd>remote</cmd> process to error on exit due to output found on stderr when none was expected.  The max value for a <cmd>local</cmd>/<cmd>remote</cmd> process is now <id>error</id> since there is no reason for these processes to emit warnings.</p>
                     </release-item>
 
                     <release-item>
@@ -101,7 +101,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Enable <id>-Wswitch-enum</id>, <id>-Wconversion</id>, <id>-Wformat=2</id>, and <id>-Wformat-nonliteral</id> and silence new warnings.</p>
+                        <p>Enable <id>-Wswitch-enum</id>, <id>-Wconversion</id>, <id>-Wformat=2</id>, <id>-Wformat-nonliteral</id>, and <id>-Wformat-signedness</id> and silence new warnings.</p>
                     </release-item>
 
                     <release-item>
@@ -165,7 +165,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Use clang for static code analysis during lint testing.  Nothing found except for some functions that should have been marked <code>__noreturn__</code>.</p>
+                        <p>Use clang for static code analysis.  Nothing found initially except for some functions that should have been marked <code>__noreturn__</code>.</p>
                     </release-item>
                 </release-feature-list>
 
