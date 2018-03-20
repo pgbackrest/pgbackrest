@@ -1177,8 +1177,8 @@ eval
                 if ($oStorageBackRest->exists($strLCovFile))
                 {
                     executeTest(
-                        "genhtml ${strLCovFile} --branch-coverage --show-details --output-directory" .
-                            " ${strBackRestBase}/test/coverage/c");
+                        "genhtml ${strLCovFile} --config-file=${strBackRestBase}/test/src/lcov.conf" .
+                            " --output-directory=${strBackRestBase}/test/coverage/c");
 
                     foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
                     {
