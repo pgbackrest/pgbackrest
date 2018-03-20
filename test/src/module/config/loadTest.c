@@ -2,6 +2,7 @@
 Test Configuration Load
 ***********************************************************************************************************************************/
 #include "common/log.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Test run
@@ -172,8 +173,8 @@ testRun()
         testLogResult(
             "P00   WARN: unable to open log file '/var/log/pgbackrest/db-expire.log': No such file or directory\n"
             "            NOTE: process will continue without log file.\n"
-            "P00   INFO: expire command begin 2.01dev: --log-level-console=info --log-level-stderr=off --no-log-timestamp"
-                " --stanza=db\n"
+            "P00   INFO: expire command begin " PGBACKREST_VERSION ": --log-level-console=info --log-level-stderr=off"
+                " --no-log-timestamp --stanza=db\n"
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option"
                 " 'repo1-retention-full' to the maximum.");
@@ -185,8 +186,8 @@ testRun()
         testLogResult(
             "P00   WARN: unable to open log file '/var/log/pgbackrest/db-expire.log': No such file or directory\n"
             "            NOTE: process will continue without log file.\n"
-            "P00   INFO: expire command begin 2.01dev: --log-level-console=info --log-level-stderr=off --no-log-timestamp"
-                " --repo1-retention-full=1 --stanza=db");
+            "P00   INFO: expire command begin " PGBACKREST_VERSION ": --log-level-console=info --log-level-stderr=off"
+                " --no-log-timestamp --repo1-retention-full=1 --stanza=db");
         TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 1, "    repo1-retention-archive set");
 
         argList = strLstNew();
@@ -202,8 +203,8 @@ testRun()
         testLogResult(
             "P00   WARN: unable to open log file '/var/log/pgbackrest/db-expire.log': No such file or directory\n"
             "            NOTE: process will continue without log file.\n"
-            "P00   INFO: expire command begin 2.01dev: --log-level-console=info --log-level-stderr=off --no-log-timestamp"
-                " --repo1-retention-archive-type=incr --stanza=db\n"
+            "P00   INFO: expire command begin " PGBACKREST_VERSION ": --log-level-console=info --log-level-stderr=off"
+                " --no-log-timestamp --repo1-retention-archive-type=incr --stanza=db\n"
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
                 "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full'"
                 " to the maximum.\n"
@@ -224,8 +225,8 @@ testRun()
         testLogResult(
             "P00   WARN: unable to open log file '/var/log/pgbackrest/db-expire.log': No such file or directory\n"
             "            NOTE: process will continue without log file.\n"
-            "P00   INFO: expire command begin 2.01dev: --log-level-console=info --log-level-stderr=off --no-log-timestamp"
-                " --repo1-retention-archive-type=diff --stanza=db\n"
+            "P00   INFO: expire command begin " PGBACKREST_VERSION ": --log-level-console=info --log-level-stderr=off"
+                " --no-log-timestamp --repo1-retention-archive-type=diff --stanza=db\n"
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option"
                 " 'repo1-retention-full' to the maximum.\n"
@@ -239,8 +240,8 @@ testRun()
         testLogResult(
             "P00   WARN: unable to open log file '/var/log/pgbackrest/db-expire.log': No such file or directory\n"
             "            NOTE: process will continue without log file.\n"
-            "P00   INFO: expire command begin 2.01dev: --log-level-console=info --log-level-stderr=off --no-log-timestamp"
-                " --repo1-retention-archive-type=diff --repo1-retention-diff=2 --stanza=db\n"
+            "P00   INFO: expire command begin " PGBACKREST_VERSION ": --log-level-console=info --log-level-stderr=off"
+                " --no-log-timestamp --repo1-retention-archive-type=diff --repo1-retention-diff=2 --stanza=db\n"
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option"
                 " 'repo1-retention-full' to the maximum.");
@@ -261,8 +262,9 @@ testRun()
         testLogResult(
             "P00   WARN: unable to open log file '/var/log/pgbackrest/db-expire.log': No such file or directory\n"
             "            NOTE: process will continue without log file.\n"
-            "P00   INFO: expire command begin 2.01dev: --log-level-console=info --log-level-stderr=off --no-log-timestamp"
-                " --repo1-retention-archive=3 --repo1-retention-archive-type=diff --repo1-retention-full=1 --stanza=db\n"
+            "P00   INFO: expire command begin " PGBACKREST_VERSION ": --log-level-console=info --log-level-stderr=off"
+                " --no-log-timestamp --repo1-retention-archive=3 --repo1-retention-archive-type=diff --repo1-retention-full=1"
+                " --stanza=db\n"
             "P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
                 " to the maximum.");
