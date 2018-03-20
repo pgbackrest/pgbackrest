@@ -361,7 +361,7 @@ sub containerBuild
             }
             elsif ($strOS eq VM_U16)
             {
-                $strScript .= ' clang-5.0';
+                $strScript .= ' clang-5.0 lcov';
             }
         }
 

@@ -58,8 +58,7 @@ testRun()
         int expectedTotal = 0;
 
         for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
-            if (buffer2[charIdx] == 0)
-                expectedTotal++;
+            expectedTotal += buffer2[charIdx] == 0;
 
         TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all bytes are 0");
 
@@ -71,16 +70,14 @@ testRun()
         expectedTotal = 0;
 
         for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
-            if (buffer2[charIdx] == 0xC7)
-                expectedTotal++;
+            expectedTotal += buffer2[charIdx] == 0xC7;
 
         TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all old bytes are filled");
 
         expectedTotal = 0;
 
         for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
-            if ((buffer2 + sizeof(size_t))[charIdx] == 0)
-                expectedTotal++;
+            expectedTotal += (buffer2 + sizeof(size_t))[charIdx] == 0;
 
         TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all new bytes are 0");
         memFreeInternal(buffer2);
@@ -178,8 +175,7 @@ testRun()
             int expectedTotal = 0;
 
             for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
-                if (buffer[charIdx] == 0)
-                    expectedTotal++;
+                expectedTotal += buffer[charIdx] == 0;
 
             TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all bytes are 0");
 
@@ -200,8 +196,7 @@ testRun()
         int expectedTotal = 0;
 
         for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
-            if (buffer[charIdx] == 0xFE)
-                expectedTotal++;
+            expectedTotal += buffer[charIdx] == 0xFE;
 
         TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all bytes are 0xFE in original portion");
 

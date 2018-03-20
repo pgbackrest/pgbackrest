@@ -433,6 +433,7 @@ eval
         my $iTestRetry = 0;
         my $oyProcess = [];
         my $strCoveragePath = "${strTestPath}/cover_db";
+        my $strCodePath = "${strBackRestBase}/test/.vagrant/code";
 
         if (!$bDryRun || $bVmOut)
         {
@@ -444,12 +445,24 @@ eval
                 push(@{$oyProcess}, undef);
             }
 
-
             executeTest("sudo umount ${strTestPath}", {bSuppressError => true});
             executeTest("sudo rm -rf ${strTestPath}/*");
             $oStorageTest->pathCreate($strTestPath, {strMode => '0770', bIgnoreExists => true});
             executeTest("sudo mount -t tmpfs -o size=2560M test ${strTestPath}");
             $oStorageTest->pathCreate($strCoveragePath, {strMode => '0770', bIgnoreMissing => true, bCreateParent => true});
+
+            # Remove old coverage dirs -- do it this way so the dirs stay open in finder/explorer, etc.
+            executeTest("rm -rf ${strBackRestBase}/test/coverage/c/*");
+            executeTest("rm -rf ${strBackRestBase}/test/coverage/perl/*");
+
+            # Copy C code for coverage tests
+            if (vmCoverage($strVm) && !$bDryRun)
+            {
+                $oStorageTest->pathCreate("${strCodePath}/test", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
+
+                executeTest("rsync -rt --delete --exclude=test ${strBackRestBase}/src/ ${strCodePath}");
+                executeTest("rsync -rt --delete ${strBackRestBase}/test/src/module/ ${strCodePath}/test");
+            }
         }
 
         # Determine which tests to run
@@ -991,17 +1004,16 @@ eval
         if (vmCoverage($strVm) && !$bDryRun)
         {
             &log(INFO, 'writing coverage report');
-            executeTest("rm -rf ${strBackRestBase}/test/coverage");
             executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
             executeTest(
                 "cd ${strCoveragePath}_temp && " .
-                LIB_COVER_EXE . " -report json -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp",
+                LIB_COVER_EXE . " -report json -outputdir ${strBackRestBase}/test/coverage/perl ${strCoveragePath}_temp",
                 {bSuppressStdErr => true});
             executeTest("sudo rm -rf ${strCoveragePath}_temp");
             executeTest("sudo cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
             executeTest(
                 "cd ${strCoveragePath}_temp && " .
-                LIB_COVER_EXE . " -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp",
+                LIB_COVER_EXE . " -outputdir ${strBackRestBase}/test/coverage/perl ${strCoveragePath}_temp",
                 {bSuppressStdErr => true});
             executeTest("sudo rm -rf ${strCoveragePath}_temp");
 
@@ -1031,7 +1043,7 @@ eval
 
                 # Load the results of coverage testing from JSON
                 my $oJSON = JSON::PP->new()->allow_nonref();
-                my $hCoverageResult = $oJSON->decode(${$oStorageBackRest->get('test/coverage/cover.json')});
+                my $hCoverageResult = $oJSON->decode(${$oStorageBackRest->get('test/coverage/perl/cover.json')});
 
                 # Now compare against code modules that should have full coverage
                 my $hCoverageList = testDefCoverageList();
@@ -1074,26 +1086,14 @@ eval
 
                 foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
                 {
-                    my $strCodeModulePath = "${strBackRestBase}/";
-
-                    # If the first char of the module is lower case when this is a c module
+                    # If the first char of the module is lower case then it's a c module
                     if (substr($strCodeModule, 0, 1) eq lc(substr($strCodeModule, 0, 1)))
                     {
-                        # If it ends with Test then it is a test modile
-                        if ($strCodeModule =~ /Test$/)
-                        {
-                            $strCodeModulePath .= "test/src/${strCodeModule}.c";
-                        }
-                        else
-                        {
-                            $strCodeModulePath .= "src/${strCodeModule}.c";
-                        }
+                        next;
                     }
-                    # Else a Perl module
-                    else
-                    {
-                        $strCodeModulePath .= "lib/" . BACKREST_NAME . "/${strCodeModule}.pm"
-                    }
+
+                    # Create code module path -- where the file is located on disk
+                    my $strCodeModulePath = "${strBackRestBase}/lib/" . BACKREST_NAME . "/${strCodeModule}.pm";
 
                     # Get summary results
                     my $hCoverageResultAll = $hCoverageResult->{'summary'}{$strCodeModulePath}{total};
@@ -1111,7 +1111,7 @@ eval
                         # Error if it really does have coverage
                         if ($hCoverageResultAll)
                         {
-                            confess &log(ERROR, "module ${strCodeModule} is marked 'no code' but has code");
+                            confess &log(ERROR, "perl module ${strCodeModule} is marked 'no code' but has code");
                         }
 
                         # Skip to next module
@@ -1134,18 +1134,15 @@ eval
 
                         if ($iUncoveredLines != 0)
                         {
-                            &log(ERROR, "code module ${strCodeModule} is not fully covered");
+                            &log(ERROR, "perl module ${strCodeModule} is not fully covered");
                             $iUncoveredCodeModuleTotal++;
 
-                            if ($strCodeModulePath !~ /\.c$/)
-                            {
-                                &log(ERROR, ('-' x 80));
-                                executeTest(
-                                    "/usr/bin/cover -report text ${strCoveragePath} --select ${strBackRestBase}/lib/" .
-                                    BACKREST_NAME . "/${strCodeModule}.pm",
-                                    {bShowOutputAsync => true});
-                                &log(ERROR, ('-' x 80));
-                            }
+                            &log(ERROR, ('-' x 80));
+                            executeTest(
+                                "/usr/bin/cover -report text ${strCoveragePath} --select ${strBackRestBase}/lib/" .
+                                BACKREST_NAME . "/${strCodeModule}.pm",
+                                {bShowOutputAsync => true});
+                            &log(ERROR, ('-' x 80));
                         }
                     }
                     # Else test how much partial coverage there was
@@ -1156,7 +1153,7 @@ eval
                         if ($iCoveragePercent == 100)
                         {
                             # This has been changed to a warning for now so archive/async tests will pass
-                            &log(WARN, "code module ${strCodeModule} has 100% coverage but is not marked fully covered");
+                            &log(WARN, "perl module ${strCodeModule} has 100% coverage but is not marked fully covered");
                             # $iUncoveredCodeModuleTotal++;
                         }
                         else
@@ -1170,7 +1167,50 @@ eval
                 # If any modules had partial coverage then display them
                 if (defined($strPartialCoverage))
                 {
-                    &log(INFO, "module (expected) partial coverage: ${strPartialCoverage}");
+                    &log(INFO, "perl module (expected) partial coverage: ${strPartialCoverage}");
+                }
+
+                # Generate C coverage with lcov
+                #---------------------------------------------------------------------------------------------------------------------------
+                my $strLCovFile = "${strBackRestBase}/test/.vagrant/code/all.lcov";
+
+                if ($oStorageBackRest->exists($strLCovFile))
+                {
+                    executeTest(
+                        "genhtml ${strLCovFile} --branch-coverage --show-details --output-directory" .
+                            " ${strBackRestBase}/test/coverage/c");
+
+                    foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
+                    {
+                        # If the first char of the module is upper case then it's a Perl module
+                        if (substr($strCodeModule, 0, 1) eq uc(substr($strCodeModule, 0, 1)))
+                        {
+                            next;
+                        }
+
+                        my $strCoverageFile = $strCodeModule;
+                        $strCoverageFile =~ s/^module/test/mg;
+                        $strCoverageFile = "${strBackRestBase}/test/.vagrant/code/${strCoverageFile}.lcov";
+
+                        my $strCoverage = $oStorageBackRest->get(
+                            $oStorageBackRest->openRead($strCoverageFile, {bIgnoreMissing => true}));
+
+                        if (defined($strCoverage) && defined($$strCoverage))
+                        {
+                            my $iTotalLines = (split(':', ($$strCoverage =~ m/^LF:.*$/mg)[0]))[1] + 0;
+                            my $iCoveredLines = (split(':', ($$strCoverage =~ m/^LH:.*$/mg)[0]))[1] + 0;
+
+                            if ($iCoveredLines != $iTotalLines)
+                            {
+                                &log(ERROR, "c module ${strCodeModule} is not fully covered ($iCoveredLines/$iTotalLines)");
+                                $iUncoveredCodeModuleTotal++;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    executeTest("rm -rf ${strBackRestBase}/test/coverage/c");
                 }
             }
         }

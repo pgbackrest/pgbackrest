@@ -48,8 +48,7 @@ testRun()
         unsigned int sameTotal = 0;
 
         for (unsigned int bufferIdx = 0; bufferIdx < 256; bufferIdx++)
-            if (bufferPtr[bufferIdx] == bufferIdx)
-                sameTotal++;
+            sameTotal += bufferPtr[bufferIdx] == bufferIdx;
 
         TEST_RESULT_INT(sameTotal, 256, "original bytes match");
 
@@ -61,8 +60,7 @@ testRun()
         sameTotal = 0;
 
         for (unsigned int bufferIdx = 0; bufferIdx < bufSize(buffer); bufferIdx++)
-            if (bufferPtr[bufferIdx] == bufferIdx)
-                sameTotal++;
+            sameTotal += bufferPtr[bufferIdx] == bufferIdx;
 
         TEST_RESULT_INT(sameTotal, 128, "original bytes match");
 

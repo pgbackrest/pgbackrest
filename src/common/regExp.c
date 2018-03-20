@@ -68,8 +68,8 @@ regExpMatch(RegExp *this, const String *string)
     int result = regexec(&this->regExp, strPtr(string), 0, NULL, 0);
 
     // Check for an error
-    if (result != 0 && result != REG_NOMATCH)
-        regExpError(result);                                        // {uncoverable - no error condition known}
+    if (result != 0 && result != REG_NOMATCH)                                   // {uncoverable - no error condition known}
+        regExpError(result);                                                    // {+uncoverable}
 
     return result == 0;
 }

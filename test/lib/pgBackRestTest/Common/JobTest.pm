@@ -445,73 +445,91 @@ sub end
             }
 
             # Generate coverage reports for the modules
-            executeTest(
-                'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
-                "cd $self->{strGCovPath} && " .
-                "gcov test.c'", {bSuppressStdErr => true});
+            my $strLCovExe = "lcov --config-file=$self->{strBackRestBase}/test/src/lcov.conf";
+            my $strLCovOut = $self->{strGCovPath} . '/test.lcov';
 
-            # Mark uncoverable statements as successful
+            executeTest(
+                'docker exec -i -u ' . TEST_USER . " ${strImage} " .
+                "${strLCovExe} --capture --directory=$self->{strGCovPath} --o=${strLCovOut}");
+
+            # Generate coverage report for each module
             foreach my $strModule (sort(keys(%{$hTestCoverage})))
             {
-                # File that contains coverage info for the module
-                my $strCoverageFile = "$self->{strGCovPath}/" . testRunName(basename($strModule), false) . ".c.gcov";
+                my $strModuleName = testRunName($strModule, false);
+                my $strModuleOutName = $strModuleName;
+                my $bTest = false;
 
-                # If marked as no code then error if there is code
-                if ($hTestCoverage->{$strModule} eq TESTDEF_COVERAGE_NOCODE)
+                if ($strModuleOutName =~ /^module/mg)
                 {
-                    if ($self->{oStorageTest}->exists($strCoverageFile))
+                    $strModuleOutName =~ s/^module/test/mg;
+                    $bTest = true;
+                }
+
+                # Generate lcov reports
+                my $strModulePath = $self->{strBackRestBase} . "/test/.vagrant/code/${strModuleOutName}";
+                my $strLCovFile = "${strModulePath}.lcov";
+                my $strLCovTotal = $self->{strBackRestBase} . "/test/.vagrant/code/all.lcov";
+
+                executeTest(
+                    'docker exec -i -u ' . TEST_USER . " ${strImage} " .
+                    "${strLCovExe} --extract=${strLCovOut} */${strModuleName}.c --o=${strLCovFile}");
+
+                # Update source file
+                my $strCoverage = ${$self->{oStorageTest}->get($strLCovFile)};
+
+                if (defined($strCoverage))
+                {
+                    if ($hTestCoverage->{$strModule} eq TESTDEF_COVERAGE_NOCODE)
                     {
                         confess &log(ERROR, "module '${strModule}' is marked 'no code' but has code");
                     }
 
-                    next;
-                }
+                    # Get coverage info
+                    my $iTotalLines = (split(':', ($strCoverage =~ m/^LF:.*$/mg)[0]))[1] + 0;
+                    my $iCoveredLines = (split(':', ($strCoverage =~ m/^LH:.*$/mg)[0]))[1] + 0;
 
-                # Load the coverage file
-                my $strCoverage = ${$self->{oStorageTest}->get($strCoverageFile)};
+                    my $iTotalBranches = 0;
+                    my $iCoveredBranches = 0;
 
-                # Go line by line and update uncovered statements
-                my $strUpdatedCoverage;
-                my $bFirst = true;
-
-                foreach my $strLine (split("\n", trim($strCoverage)))
-                {
-                    # Rewrite source line to the original source path
-                    if ($bFirst)
+                    if ($strCoverage =~ /^BRF\:$/mg && $strCoverage =~ /^BRH\:$/mg)
                     {
-                        $strLine =
-                            "        -:    0:Source:" .
-                                $self->{strBackRestBase} . ($strModule =~ /Test$/ ? '/test' : '') . "/src/" .
-                                testRunName(${strModule}, false) . ".c";
-                        $bFirst = false;
+                        $iTotalBranches = (split(':', ($strCoverage =~ m/^BRF:.*$/mg)[0]))[1] + 0;
+                        $iCoveredBranches = (split(':', ($strCoverage =~ m/^BRH:.*$/mg)[0]))[1] + 0;
                     }
-                    # Else if the statement is marked uncoverable
-                    elsif ($strLine =~ /\/\/ \{(uncoverable - [^\}]+|\+uncoverable|uncovered - [^\}]+|\+uncovered)\}\s*$/)
+
+                    # Report coverage if this is not a test or if the test does not have complete coverage
+                    if (!$bTest || $iTotalLines != $iCoveredLines || $iTotalBranches != $iCoveredBranches)
                     {
-                        # Error if the statement is marked uncoverable but is in fact covered
-                        if ($strLine !~ /^    \#\#\#\#\#/)
+                        # Fix source file name
+                        $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
+
+                        # Save coverage file
+                        $self->{oStorageTest}->put($strLCovFile, $strCoverage);
+
+                        if ($self->{oStorageTest}->exists(${strLCovTotal}))
                         {
-                            &log(ERROR, "line in ${strModule}.c is marked as uncoverable but is covered:\n${strLine}");
+                            executeTest(
+                                'docker exec -i -u ' . TEST_USER . " ${strImage} " .
+                                "${strLCovExe} --add-tracefile=${strLCovFile} --add-tracefile=${strLCovTotal} --o=${strLCovTotal}");
                         }
-
-                        # Mark the statement as covered with 0 executions
-                        $strLine =~ s/^    \#\#\#\#\#/^        0/;
+                        else
+                        {
+                            $self->{oStorageTest}->copy($strLCovFile, $strLCovTotal)
+                        }
                     }
-
-                    # Add to updated file
-                    $strUpdatedCoverage .= "${strLine}\n";
+                    else
+                    {
+                        $self->{oStorageTest}->remove($strLCovFile);
+                    }
                 }
-
-                # Store the updated file
-                $self->{oStorageTest}->put($strCoverageFile, $strUpdatedCoverage);
+                else
+                {
+                    if ($hTestCoverage->{$strModule} ne TESTDEF_COVERAGE_NOCODE)
+                    {
+                        confess &log(ERROR, "module '${strModule}' is marked 'code' but has no code");
+                    }
+                }
             }
-
-            executeTest(
-                'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
-                "cd $self->{strGCovPath} && " .
-                # Only generate coverage files for VMs that support coverage
-                (vmCoverage($self->{oTest}->{&TEST_VM}) ?
-                    "gcov2perl -db ../cover_db " . join(' ', @stryCoveredModule) : '') . "'");
         }
 
         # Record elapsed time

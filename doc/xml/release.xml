@@ -12,6 +12,16 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.02dev" title="UNDER DEVELOPMENT">
+            <release-test-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Use <proper>lcov</proper> for C unit test coverage reporting.  Switch from <proper>Devel::Cover</proper> because it would not report on branch coverage for reports converted from <proper>gcov</proper>.  Branch coverage is not complete, so for the time being errors will only be generated when statement coverage is not complete.  Coverage of unit tests is not displayed in the report unless they are incomplete for either statement or branch coverage.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-test-list>
+        </release>
+
         <release date="2018-03-19" version="2.01" title="Minor Bug Fixes and Improvements">
             <release-core-list>
                 <release-bug-list>
