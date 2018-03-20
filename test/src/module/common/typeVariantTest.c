@@ -65,6 +65,7 @@ testRun()
         TEST_RESULT_DOUBLE(varDblForce(varNewInt(123)), 123, "force int to double");
         TEST_RESULT_DOUBLE(varDblForce(varNewInt64(999999999999)), 999999999999, "force int64 to double");
         TEST_RESULT_DOUBLE(varDblForce(varNewStr(strNew("879.01"))), 879.01, "force String to double");
+        TEST_RESULT_DOUBLE(varDblForce(varNewStr(strNew("0"))), 0, "force String to double");
 
         TEST_ERROR(varDblForce(varNewStr(strNew("AAA"))), FormatError, "unable to force String 'AAA' to double");
         TEST_ERROR(varDblForce(varNewVarLstEmpty()), FormatError, "unable to force VariantList to double");
@@ -107,6 +108,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(varEq(NULL, NULL), true, "null, null eq");
         TEST_RESULT_BOOL(varEq(NULL, varNewInt(123)), false, "null, int not eq");
+        TEST_RESULT_BOOL(varEq(varNewInt(123), NULL), false, "int, null not eq");
 
         TEST_RESULT_BOOL(varEq(varNewInt(123), varNewInt(123)), true, "int, int eq");
         TEST_RESULT_BOOL(varEq(varNewInt(444), varNewInt(123)), false, "int, int not eq");
@@ -161,6 +163,7 @@ testRun()
         TEST_ASSIGN(keyValue, varNewKv(), "new");
         TEST_RESULT_PTR(kvPut(varKv(keyValue), varNewInt(44), varNewInt(55)), varKv(keyValue), "    put int/int");
         TEST_RESULT_INT(varInt(kvGet(varKv(keyValue), varNewInt(44))), 55, "    get int/int");
+        TEST_RESULT_PTR(varKv(NULL), NULL, "get null kv");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *keyValueDup = NULL;
@@ -185,6 +188,8 @@ testRun()
         TEST_RESULT_STR(strPtr(varStr(string)), "test-str", "string pointer");
         varFree(string);
 
+        TEST_RESULT_PTR(varStr(NULL), NULL, "get null string variant");
+
         // -------------------------------------------------------------------------------------------------------------------------
         string = varNewStr(strNew("not-a-string"));
         string->type = varTypeInt;
@@ -192,9 +197,8 @@ testRun()
         varFree(string);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        string = varNewStr(strNew("777"));
-        TEST_RESULT_INT(varIntForce(string), 777, "int from string");
-        varFree(string);
+        TEST_RESULT_INT(varIntForce(varNewStrZ("777")), 777, "int from string");
+        TEST_RESULT_INT(varIntForce(varNewStrZ("0")), 0, "int from string");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(varBoolForce(varNewStr(strNew("y"))), true, "bool from string");
@@ -249,6 +253,7 @@ testRun()
         TEST_ASSIGN(listVar, varNewVarLstEmpty(), "new empty");
 
         TEST_RESULT_INT(varLstSize(varVarLst(listVar)), 0, "    empty size");
+        TEST_RESULT_PTR(varVarLst(NULL), NULL, "get null var list");
 
         TEST_RESULT_PTR(varLstAdd(varVarLst(listVar), varNewBool(true)), varVarLst(listVar), "    add bool");
         TEST_RESULT_PTR(varLstAdd(varVarLst(listVar), varNewInt(55)), varVarLst(listVar), "    add int");

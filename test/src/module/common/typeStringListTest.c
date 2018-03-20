@@ -39,7 +39,8 @@ testRun()
                 TEST_RESULT_STR(strPtr(strLstGet(list, listIdx)), strPtr(strNewFmt("STR%02u", listIdx)), "check item %u", listIdx);
         }
 
-        strLstFree(list);
+        TEST_RESULT_VOID(strLstFree(list), "free string list");
+        TEST_RESULT_VOID(strLstFree(NULL), "free null string list");
     }
 
     // *****************************************************************************************************************************
@@ -59,6 +60,7 @@ testRun()
         TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(strNew("abc def"), " ", 4), "-")), "abc-def", "one items");
         TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(strNew("abc def ghi"), " ", 4), "-")), "abc-def-ghi", "three items");
         TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(strNew("abc def ghi"), " ", 8), "-")), "abc def-ghi", "three items");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(strNew("abc def "), " ", 4), "-")), "abc-def ", "two items");
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(strLstNewSplitSize(strNew("this is a short sentence"), strNew(" "), 10), "\n")),

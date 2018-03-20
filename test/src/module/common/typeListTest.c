@@ -38,7 +38,8 @@ testRun()
         void *ptr = NULL;
         TEST_RESULT_PTR(lstAdd(list, &ptr), list, "add item");
 
-        lstFree(list);
+        TEST_RESULT_VOID(lstFree(list), "free list");
+        TEST_RESULT_VOID(lstFree(lstNew(1)), "free empty list");
     }
 
     // *****************************************************************************************************************************

@@ -10,7 +10,7 @@ void
 testRun()
 {
     // *****************************************************************************************************************************
-    if (testBegin("strNew(), strNewBuf(), strNewN(), and strFree()"))
+    if (testBegin("strNew(), strNewBuf(), strNewN(), strPtr(), and strFree()"))
     {
         String *string = strNew("static string");
         TEST_RESULT_STR(strPtr(string), "static string", "new with static string");
@@ -32,8 +32,10 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         string = strNewFmt("formatted %s %04d", "string", 1);
         TEST_RESULT_STR(strPtr(string), "formatted string 0001", "new with formatted string");
+        TEST_RESULT_PTR(strPtr(NULL), NULL, "null string pointer");
 
         TEST_RESULT_VOID(strFree(string), "free string");
+        TEST_RESULT_VOID(strFree(NULL), "free null string");
     }
 
     // *****************************************************************************************************************************
@@ -69,6 +71,8 @@ testRun()
         String *string = strNew("duplicated string");
         String *stringDup = strDup(string);
         TEST_RESULT_STR(strPtr(stringDup), strPtr(string), "duplicated strings match");
+
+        TEST_RESULT_PTR(strDup(NULL), NULL, "duplicate null string");
     }
 
     // *****************************************************************************************************************************
@@ -127,6 +131,7 @@ testRun()
         TEST_RESULT_STR(strPtr(strTrim(strNew(""))), "", "trim empty");
         TEST_RESULT_STR(strPtr(strTrim(strNew("X"))), "X", "no trim (one char)");
         TEST_RESULT_STR(strPtr(strTrim(strNew("no-trim"))), "no-trim", "no trim (string)");
+        TEST_RESULT_STR(strPtr(strTrim(strNew(" \t\r\n"))), "", "all whitespace");
         TEST_RESULT_STR(strPtr(strTrim(strNew(" \tbegin-only"))), "begin-only", "trim begin");
         TEST_RESULT_STR(strPtr(strTrim(strNew("end-only\t "))), "end-only", "trim end");
         TEST_RESULT_STR(strPtr(strTrim(strNew("\n\rboth\r\n"))), "both", "trim both");

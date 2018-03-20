@@ -6,6 +6,7 @@ Variant Data Type
 #include <string.h>
 #include <strings.h>
 
+#include "common/debug.h"
 #include "common/memContext.h"
 #include "common/type/variant.h"
 
@@ -38,14 +39,17 @@ New variant of any supported type
 static Variant *
 varNewInternal(VariantType type, void *data, size_t dataSize)
 {
+    // Make sure there is some data to store
+    ASSERT_DEBUG(dataSize > 0);
+    ASSERT_DEBUG(data != NULL);
+
     // Allocate memory for the variant and set the type
     Variant *this = memNew(sizeof(Variant) + dataSize);
     this->memContext = memContextCurrent();
     this->type = type;
 
-    // Copy data if there is any
-    if (dataSize > 0)
-        memcpy((unsigned char *)this + sizeof(Variant), data, dataSize);
+    // Copy data
+    memcpy((unsigned char *)this + sizeof(Variant), data, dataSize);
 
     return this;
 }
@@ -597,14 +601,23 @@ varStrForce(const Variant *this)
 
         case varTypeDouble:
         {
+            // Convert to a string
             String *working = strNewFmt("%f", varDbl(this));
+
+            // Any formatted double should be at least 8 characters, i.e. 0.000000
+            ASSERT_DEBUG(strSize(working) >= 8);
+            // Any formatted double should have a decimal point
+            ASSERT_DEBUG(strchr(strPtr(working), '.') != NULL);
 
             // Strip off any final 0s and the decimal point if there are no non-zero digits after it
             const char *begin = strPtr(working);
             const char *end = begin + strSize(working) - 1;
 
-            while (end > strPtr(working) && (*end == '0' || *end == '.'))
+            while (*end == '0' || *end == '.')
             {
+                // It should not be possible to go past the beginning because format "%f" will always write a decimal point
+                ASSERT_DEBUG(end > begin);
+
                 end--;
 
                 if (*(end + 1) == '.')

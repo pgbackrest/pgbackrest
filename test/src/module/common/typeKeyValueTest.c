@@ -42,6 +42,7 @@ testRun()
         TEST_RESULT_INT(varInt(varLstGet(kvGetList(store, varNewInt(42)), 0)), 57, "get int/int");
         TEST_RESULT_INT(varInt(kvGet(store, varNewStr(strNew("str-key-int")))), 99, "get string/int");
         TEST_RESULT_PTR(kvGet(store, varNewInt(78)), NULL, "get int/null");
+        TEST_RESULT_PTR(kvGet(store, varNewInt(777)), NULL, "get missing key");
 
         // Check that a null value can be changed to non-null
         // -------------------------------------------------------------------------------------------------------------------------
@@ -65,6 +66,7 @@ testRun()
         TEST_RESULT_INT(varInt(varLstGet(varVarLst(kvGet(store, varNewInt(99))), 2)), 3, "get int/int");
 
         TEST_RESULT_INT(varInt(varLstGet(kvGetList(store, varNewInt(99)), 2)), 3, "get int/int");
+        TEST_RESULT_PTR(varLstGet(kvGetList(store, varNewInt(777)), 0), NULL, "get NULL list");
 
         // Check item in key list
         // -------------------------------------------------------------------------------------------------------------------------

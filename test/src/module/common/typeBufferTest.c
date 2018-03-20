@@ -21,6 +21,7 @@ testRun()
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TEST-STR", 8) == 0, true, "check buffer");
 
         TEST_RESULT_VOID(bufFree(buffer), "free buffer");
+        TEST_RESULT_VOID(bufFree(bufNew(0)), "free empty buffer");
     }
 
     // *****************************************************************************************************************************
