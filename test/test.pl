@@ -1178,6 +1178,7 @@ eval
                 {
                     executeTest(
                         "genhtml ${strLCovFile} --config-file=${strBackRestBase}/test/src/lcov.conf" .
+                            " --prefix=${strBackRestBase}/test/.vagrant/code" .
                             " --output-directory=${strBackRestBase}/test/coverage/c");
 
                     foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
