@@ -308,7 +308,7 @@ eval
 
         errorDefineLoad(${$oStorageBackRest->get("build/error.yaml")});
 
-        if (buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['build']) >
+        if (!$bSmart || buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['build']) >
             buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['src'], '\.auto\.c$'))
         {
             &log(INFO, "    autogenerate C code");
@@ -347,7 +347,7 @@ eval
         #
         # Use statements are put here so this will be easy to get rid of someday.
         #---------------------------------------------------------------------------------------------------------------------------
-        if (buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc/build']) >
+        if (!$bSmart || buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc/build']) >
             buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc', 'lib'], '(\.auto\.pm|Auto\.pm)$'))
         {
             &log(INFO, "    autogenerate Perl code");
