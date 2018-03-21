@@ -309,7 +309,7 @@ testRun()
 
         TEST_ERROR(configParse(
             strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
-            strPtr(strNewFmt("'%s' contains duplicate options ('db-path', 'pg1-path') in section '[db]'", strPtr(configFile))));
+            strPtr(strNew("configuration file contains duplicate options ('db-path', 'pg1-path') in section '[db]'")));
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -432,15 +432,13 @@ testRun()
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), TEST_COMMAND_BACKUP " command");
         testLogErrResult(
             strPtr(
-                strNewFmt(
-                    "WARN: '%s' contains option 'recovery-option' invalid for section 'db:backup'\n"
-                    "WARN: '%s' contains invalid option 'bogus'\n"
-                    "WARN: '%s' contains negate option 'no-compress'\n"
-                    "WARN: '%s' contains reset option 'reset-compress'\n"
-                    "WARN: '%s' contains command-line only option 'online'\n"
-                    "WARN: '%s' contains stanza-only option 'pg1-path' in global section 'global:backup'",
-                    strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile),
-                    strPtr(configFile))));
+                strNew(
+                    "WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
+                    "WARN: configuration file contains invalid option 'bogus'\n"
+                    "WARN: configuration file contains negate option 'no-compress'\n"
+                    "WARN: configuration file contains reset option 'reset-compress'\n"
+                    "WARN: configuration file contains command-line only option 'online'\n"
+                    "WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
