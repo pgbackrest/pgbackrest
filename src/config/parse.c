@@ -88,9 +88,6 @@ configParse(unsigned int argListSize, const char *argList[])
         // -------------------------------------------------------------------------------------------------------------------------
         int option;                                                     // Code returned by getopt_long
         int optionListIdx;                                              // Index of option is list (if an option was returned)
-        ConfigOption optionId;                                          // Option id extracted from option var
-        bool negate;                                                    // Option is being negated
-        bool reset;                                                     // Option is being reset
         bool argFound = false;                                          // Track args found to decide on error or help at the end
         StringList *commandParamList = NULL;                            // List of command  parameters
 
@@ -149,20 +146,25 @@ configParse(unsigned int argListSize, const char *argList[])
 
                 // If the option is unknown then error
                 case '?':
+                {
                     THROW(OptionInvalidError, "invalid option '%s'", argList[optind - 1]);
                     break;
+                }
 
                 // If the option is missing an argument then error
                 case ':':
+                {
                     THROW(OptionInvalidError, "option '%s' requires argument", argList[optind - 1]);
                     break;
+                }
 
                 // Parse valid option
                 default:
+                {
                     // Get option id and flags from the option code
-                    optionId = option & PARSE_OPTION_MASK;
-                    negate = option & PARSE_NEGATE_FLAG;
-                    reset = option & PARSE_RESET_FLAG;
+                    ConfigOption optionId = option & PARSE_OPTION_MASK;
+                    bool negate = option & PARSE_NEGATE_FLAG;
+                    bool reset = option & PARSE_RESET_FLAG;
 
                     // Make sure the option id is valid
                     ASSERT_DEBUG(optionId < CFG_OPTION_TOTAL);
@@ -207,6 +209,7 @@ configParse(unsigned int argListSize, const char *argList[])
                     }
 
                     break;
+                }
             }
 
             // Arg has been found
@@ -241,7 +244,7 @@ configParse(unsigned int argListSize, const char *argList[])
             // Get the command definition id
             ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
 
-            if (!parseOptionList[cfgOptConfig].negate && !parseOptionList[cfgOptConfig].reset)
+            if (!parseOptionList[cfgOptConfig].negate)
             {
                 // Get the config file name from the command-line if it exists else default
                 const String *configFile = NULL;
@@ -313,7 +316,7 @@ configParse(unsigned int argListSize, const char *argList[])
                                 continue;
                             }
 
-                            optionId = optionList[optionIdx].val & PARSE_OPTION_MASK;
+                            ConfigOption optionId = optionList[optionIdx].val & PARSE_OPTION_MASK;
                             ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
 
                             /// Warn if this option should be command-line only
@@ -518,7 +521,10 @@ configParse(unsigned int argListSize, const char *argList[])
                         {
                             dependResolved = cfgDefOptionDependValueValid(commandDefId, optionDefId, strPtr(varStr(dependValue)));
 
-                            // If not depend not resolved and option value is set then error
+                            // If depend not resolved and option value is set on the command-line then error.  It's OK to have
+                            // unresolved options in the config file because they may be there for another command.  For instance,
+                            // spool-path is only loaded for the archive-push command when archive-async=y, and the presense of
+                            // spool-path in the config file should not cause an error here, it will just end up null.
                             if (!dependResolved && optionSet && parseOption->source == cfgSourceParam)
                             {
                                 // Get the depend option name
