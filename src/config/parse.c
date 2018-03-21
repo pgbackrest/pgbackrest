@@ -71,8 +71,15 @@ optionFind(const String *option)
 Load the configuration file(s). MEMCONTEXT will be the parent.
 ***********************************************************************************************************************************/
 static Ini *
-loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt)
+loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt, const ParseOption *configOptInclude)
 {
+// RULES
+// - config and config-include-path are default. In this case, the config file will be loaded, if it exists, and *.conf files in the config-include-path will be appended, if they exist. A missing/empty dir will be ignored.
+// - config is specified. Only the specified config file will be loaded. The default config-include-path will be ignored.
+// - config-include-path is specified. Only *.conf files in the config-include-path will be loaded. The default config will be ignored.
+// - If the config and config-include-path are specified. Just like #1, except with the user-specified values.
+// - If --no-config is specified and --config-include-path is specified then Only *.conf files in the config-include-path will be loaded.
+// - If --no-config is specified and --config-include-path IS NOT specified then no config will be loaded.
 
     Ini *result = NULL;
 
@@ -88,6 +95,12 @@ loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt)
 
         // Load the ini file
         Buffer *buffer = storageGet(storageLocal(), configFileName, !configOpt->found);
+
+        // // Append any *.conf files in the include path
+        // if (configOptInclude->found)
+        //     configFileName = strLstGet(configOptInclude->valueList, 0);
+        // else
+        //     configFileName = strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(configOptInclude)));
 
         // Load the config file if it was found
         if (buffer != NULL)
@@ -275,8 +288,8 @@ configParse(unsigned int argListSize, const char *argList[])
             // Get the command definition id
             ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
 
-// so can specify const in function parameter list
-            Ini *config = loadConfigFile(commandDefId, &parseOptionList[cfgOptConfig]); //, &parseOptionList[cfgOptConfigIncludePath]
+            // Load the configuration file(s)
+            Ini *config = loadConfigFile(commandDefId, &parseOptionList[cfgOptConfig], &parseOptionList[cfgOptConfigIncludePath]);
 
             if (config != NULL)
             {
