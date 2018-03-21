@@ -11,10 +11,10 @@ Contains information about the wait handler
 struct Wait
 {
     MemContext *memContext;                                         // Context that contains the wait handler
-    TimeUSec waitTime;                                              // Total time to wait (in usec)
-    TimeUSec sleepTime;                                             // Next sleep time (in usec)
-    TimeUSec sleepPrevTime;                                         // Previous time slept (in usec)
-    TimeUSec beginTime;                                             // Time the wait began (in epoch usec)
+    TimeMSec waitTime;                                              // Total time to wait (in usec)
+    TimeMSec sleepTime;                                             // Next sleep time (in usec)
+    TimeMSec sleepPrevTime;                                         // Previous time slept (in usec)
+    TimeMSec beginTime;                                             // Time the wait began (in epoch usec)
 };
 
 /***********************************************************************************************************************************
@@ -37,17 +37,17 @@ waitNew(double waitTime)
         this->memContext = MEM_CONTEXT_NEW();
 
         // Store time
-        this->waitTime = (TimeUSec)(waitTime * USEC_PER_SEC);
+        this->waitTime = (TimeMSec)(waitTime * MSEC_PER_SEC);
 
         // Calculate first sleep time -- start with 1/10th of a second for anything >= 1 second
-        if (this->waitTime >= USEC_PER_SEC)
-            this->sleepTime = USEC_PER_SEC / 10;
+        if (this->waitTime >= MSEC_PER_SEC)
+            this->sleepTime = MSEC_PER_SEC / 10;
         // Unless the wait time is really small -- in that case divide wait time by 10
         else
             this->sleepTime = this->waitTime / 10;
 
         // Get beginning time
-        this->beginTime = timeUSec();
+        this->beginTime = timeMSec();
     }
     MEM_CONTEXT_NEW_END();
 
@@ -66,16 +66,16 @@ waitMore(Wait *this)
     if (this->sleepTime > 0)
     {
         // Sleep required amount
-        sleepUSec(this->sleepTime);
+        sleepMSec(this->sleepTime);
 
         // Get the end time
-        TimeUSec elapsedTime = timeUSec() - this->beginTime;
+        TimeMSec elapsedTime = timeMSec() - this->beginTime;
 
         // Is there more time to go?
         if (elapsedTime < this->waitTime)
         {
             // Calculate sleep time as a sum of current and last (a Fibonacci-type sequence)
-            TimeUSec sleepNextTime = this->sleepTime + this->sleepPrevTime;
+            TimeMSec sleepNextTime = this->sleepTime + this->sleepPrevTime;
 
             // Make sure sleep time does not go beyond end time (this won't be negative because of the if condition above)
             if (sleepNextTime > this->waitTime - elapsedTime)

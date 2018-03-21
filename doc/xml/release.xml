@@ -13,6 +13,14 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.02dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Refactor <id>usec</id> to <id>msec</id> in <code>common/time.c</code>.  The implementation provides <id>usec</id> resolution but this is not needed in practice and it makes the interface more complicated due to the extra zeros.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+
             <release-test-list>
                 <release-feature-list>
                     <release-item>

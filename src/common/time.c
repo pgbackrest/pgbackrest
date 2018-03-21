@@ -1,30 +1,35 @@
 /***********************************************************************************************************************************
 Time Management
 ***********************************************************************************************************************************/
-#include <sys/time.h>
+#include "sys/time.h"
 
 #include "common/time.h"
 #include "common/type.h"
 
 /***********************************************************************************************************************************
-Epoch time in microseconds
+Constants describing number of sub-units in an interval
 ***********************************************************************************************************************************/
-TimeUSec
-timeUSec()
+#define MSEC_PER_USEC                                               ((TimeMSec)1000)
+
+/***********************************************************************************************************************************
+Epoch time in milliseconds
+***********************************************************************************************************************************/
+TimeMSec
+timeMSec()
 {
     struct timeval currentTime;
     gettimeofday(&currentTime, NULL);
-    return ((TimeUSec)currentTime.tv_sec * USEC_PER_SEC) + (TimeUSec)currentTime.tv_usec;
+    return ((TimeMSec)currentTime.tv_sec * MSEC_PER_SEC) + (TimeMSec)currentTime.tv_usec / MSEC_PER_USEC;
 }
 
 /***********************************************************************************************************************************
-Sleep for specified microseconds
+Sleep for specified milliseconds
 ***********************************************************************************************************************************/
 void
-sleepUSec(TimeUSec sleepUSec)
+sleepMSec(TimeMSec sleepMSec)
 {
     struct timeval delay;
-    delay.tv_sec = (__time_t)(sleepUSec / USEC_PER_SEC);
-    delay.tv_usec = (__time_t)(sleepUSec % USEC_PER_SEC);
+    delay.tv_sec = (__time_t)(sleepMSec / MSEC_PER_SEC);
+    delay.tv_usec = (__time_t)(sleepMSec % MSEC_PER_SEC * 1000);
     select(0, NULL, NULL, NULL, &delay);
 }

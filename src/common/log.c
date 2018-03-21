@@ -179,12 +179,12 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
     // Add time
     if (logTimestamp)
     {
-        TimeUSec logTimeUSec = timeUSec();
-        time_t logTime = (time_t)(logTimeUSec / USEC_PER_SEC);
+        TimeMSec logTimeMSec = timeMSec();
+        time_t logTimeSec = (time_t)(logTimeMSec / MSEC_PER_SEC);
 
-        bufferPos += strftime(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%Y-%m-%d %H:%M:%S", localtime(&logTime));
+        bufferPos += strftime(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%Y-%m-%d %H:%M:%S", localtime(&logTimeSec));
         bufferPos += (size_t)snprintf(
-            logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, ".%03d ", (int)(logTimeUSec / 1000 % 1000));
+            logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, ".%03d ", (int)(logTimeMSec % 1000));
     }
 
     // Add process and aligned log level
