@@ -72,16 +72,16 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--config=/etc/config"));
         strLstAdd(argList, strNew("--no-config"));
+        strLstAdd(argList, strNew("--config=/etc/config"));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError, "option 'config' cannot be set and negated");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--log-path=/var/log"));
         strLstAdd(argList, strNew("--reset-log-path"));
+        strLstAdd(argList, strNew("--log-path=/var/log"));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError, "option 'log-path' cannot be set and reset");
 
@@ -90,6 +90,15 @@ testRun()
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--no-compress"));
         strLstAdd(argList, strNew("--reset-compress"));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
+            "option 'compress' cannot be negated and reset");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--reset-compress"));
+        strLstAdd(argList, strNew("--no-compress"));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
             "option 'compress' cannot be negated and reset");
@@ -109,6 +118,39 @@ testRun()
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--online"));
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList)), CommandRequiredError, "no command found");
+
+        // Local and remove commands should not modify log levels during parsing
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--host-id=1"));
+        strLstAdd(argList, strNew("--process=1"));
+        strLstAdd(argList, strNew("--command=backup"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--type=backup"));
+        strLstAdd(argList, strNew("--log-level-stderr=info"));
+        strLstAdd(argList, strNew("local"));
+
+        logLevelStdOut = logLevelError;
+        logLevelStdErr = logLevelError;
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "load local config");
+        TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
+        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--process=1"));
+        strLstAdd(argList, strNew("--command=backup"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--type=backup"));
+        strLstAdd(argList, strNew("--log-level-stderr=info"));
+        strLstAdd(argList, strNew("remote"));
+
+        logLevelStdOut = logLevelError;
+        logLevelStdErr = logLevelError;
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "load remote config");
+        TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
+        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -219,6 +261,7 @@ testRun()
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
             "'bogus' is not valid for 'type' option");
 
+        // Lower and upper bounds for integer ranges
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
@@ -229,6 +272,16 @@ testRun()
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
             "'0' is not valid for 'process-max' option");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--process-max=65536"));
+        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
+            "'65536' is not valid for 'process-max' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -335,6 +388,8 @@ testRun()
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "no command");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "    help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "    command is none");
+        TEST_RESULT_INT(logLevelStdOut, logLevelWarn, "console logging is warn");
+        TEST_RESULT_INT(logLevelStdErr, logLevelWarn, "stderr logging is warn");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -354,6 +409,19 @@ testRun()
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for version command");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "    help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdVersion, "    command is version");
+
+        // Help should not fail on missing options
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("help"));
+        strLstAdd(argList, strNew("backup"));
+
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for backup command");
+        TEST_RESULT_BOOL(cfgCommandHelp(), true, "    help is set");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "    command is backup");
+        TEST_RESULT_BOOL(cfgOptionValid(cfgOptPgPath), true, "    pg1-path is valid");
+        TEST_RESULT_PTR(cfgOption(cfgOptPgPath), NULL, "    pg1-path is not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -408,6 +476,7 @@ testRun()
         storagePut(storageLocal(), configFile, bufNewStr(strNew(
             "[global]\n"
             "compress-level=3\n"
+            "spool-path=/path/to/spool\n"
             "\n"
             "[global:backup]\n"
             "repo1-hardlink=y\n"
@@ -418,6 +487,7 @@ testRun()
             "online=y\n"
             "pg1-path=/not/path/to/db\n"
             "backup-standby=y\n"
+            "buffer-size=65536\n"
             "\n"
             "[db:backup]\n"
             "compress=n\n"
@@ -453,18 +523,28 @@ testRun()
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "    compress-level is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "    backup-standby not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "    backup-standby is source default");
+        TEST_RESULT_BOOL(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--archive-queue-max=4503599627370496"));
         strLstAdd(argList, strNew("archive-push"));
+
+        storagePut(storageLocal(), configFile, bufNewStr(strNew(
+            "[global]\n"
+            "spool-path=/path/to/spool\n"
+        )));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "archive-push command");
 
         TEST_RESULT_INT(cfgOptionInt64(cfgOptArchiveQueueMax), 4503599627370496, "archive-queue-max is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptArchiveQueueMax), cfgSourceParam, "    archive-queue-max is source config");
+        TEST_RESULT_PTR(cfgOption(cfgOptSpoolPath), NULL, "    spool-path is not set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptSpoolPath), cfgSourceDefault, "    spool-path is source default");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -539,6 +619,24 @@ testRun()
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
         TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("f"))))), "g", "check recovery option");
         TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("hijk"))))), "l", "check recovery option");
+
+        // Stanza options should not be loaded for commands that don't take a stanza
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
+        strLstAdd(argList, strNew("info"));
+
+        storagePut(storageLocal(), configFile, bufNewStr(strNew(
+            "[global]\n"
+            "repo1-path=/path/to/repo\n"
+            "\n"
+            "[db]\n"
+            "repo1-path=/not/the/path\n"
+        )));
+
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "info command");
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoPath)), "/path/to/repo", "check repo1-path option");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
