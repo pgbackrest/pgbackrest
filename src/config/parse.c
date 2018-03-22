@@ -71,7 +71,7 @@ optionFind(const String *option)
 Load the configuration file(s). MEMCONTEXT will be the parent.
 ***********************************************************************************************************************************/
 static Ini *
-loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt, const ParseOption *configOptInclude)
+loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt, const ParseOption *configIncludeOpt)
 {
 // RULES
 // - config and config-include-path are default. In this case, the config file will be loaded, if it exists, and *.conf files in the config-include-path will be appended, if they exist. A missing/empty dir will be ignored.
@@ -96,18 +96,58 @@ loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt, c
         // Load the ini file
         Buffer *buffer = storageGet(storageLocal(), configFileName, !configOpt->found);
 
-        // // Append any *.conf files in the include path
-        // if (configOptInclude->found)
-        //     configFileName = strLstGet(configOptInclude->valueList, 0);
-        // else
-        //     configFileName = strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(configOptInclude)));
-
-        // Load the config file if it was found
         if (buffer != NULL)
         {
             // Parse the ini file
             result = iniNew();
             iniParse(result, strNewBuf(buffer));
+        }
+    }
+    else
+    {
+        if (configIncludeOpt->found)
+        {
+            const String *configIncludePath = strLstGet(configIncludeOpt->valueList, 0);
+
+            // Get a list of conf files from the specified directory (the directory is required to exist otherwise error)
+            StringList *list = storageList(storageLocal(), configIncludePath, strNew(".+\\.conf$"), false);
+
+            String *config = strNew("");
+
+            // If conf files are found, then add them to the config string
+            if (strLstSize(list) > 0)
+            {
+                for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
+                {
+                    Buffer *fileBuffer = storageGet(
+                        storageLocal(), strLstGet(list, listIdx), false);
+
+                    if (fileBuffer != NULL)
+                    {
+                        // Convert the contents of the file buffer to a string object
+                        String *configPart = strNewBuf(fileBuffer);
+
+                        // Validate the file by parsing it as an Ini object. If the file is not properly formed, en error will occur.
+                        if (strSize(configPart) > 0)
+                        {
+                            Ini *configPartIni = iniNew();
+                            iniParse(configPartIni, configPart);
+
+                            // Make sure there is a line feed at the end before appending it to the final config
+                            strCat(config, "\n");
+                            strCat(config, strPtr(configPart));
+                        }
+                    }
+                }
+            }
+
+            // Load the config file if it was found
+            if (strSize(config) != 0)
+            {
+                // Parse the ini file
+                result = iniNew();
+                iniParse(result, config);
+            }
         }
     }
 
@@ -348,7 +388,7 @@ configParse(unsigned int argListSize, const char *argList[])
                             continue;
                         }
 
-                        optionId = optionList[optionIdx].val & PARSE_OPTION_MASK;
+                        ConfigOption optionId = optionList[optionIdx].val & PARSE_OPTION_MASK;
                         ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
 
                         /// Warn if this option should be command-line only

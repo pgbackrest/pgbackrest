@@ -206,7 +206,7 @@ sub protocolParam
             cfgOptionSource(cfgOptionIdFromIndex(CFGOPT_PG_SOCKET_PATH, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
                 undef : cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_SOCKET_PATH, $iRemoteIdx));
     }
-
+# CSHANG Is config-include-path needed here?
     # Build hash to set and override command options
     my $rhCommandOption =
     {

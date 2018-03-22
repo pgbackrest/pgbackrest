@@ -191,6 +191,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptConfig,
     },
 
+    // config-include-path option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "config-include-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptConfigIncludePath,
+    },
+    {
+        .name = "no-config-include-path",
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptConfigIncludePath,
+    },
+
     // db-include option
     // -----------------------------------------------------------------------------------------------------------------------------
     {

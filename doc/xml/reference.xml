@@ -758,6 +758,15 @@
                     <example>/var/lib/backrest/pgbackrest.conf</example>
                 </option>
 
+                <!-- OPERATION - GENERAL - CONFIG OPTION -->
+                <option id="config-include-path" name="Config Include Path">
+                    <summary>Path to additional <backrest/> configuration files.</summary>
+
+                    <text>CSHANG</text>
+
+                    <example>CSHANG</example>
+                </option>
+
                 <!-- OPERATION - GENERAL - STANZA OPTION -->
                 <option id="stanza" name="Stanza">
                     <summary>Defines the stanza.</summary>
