@@ -119,7 +119,7 @@ testRun()
         strLstAdd(argList, strNew("--online"));
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList)), CommandRequiredError, "no command found");
 
-        // Local and remove commands should not modify log levels during parsing
+        // Local and remote commands should not modify log levels during parsing
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -696,5 +696,113 @@ testRun()
                 strPtr(strNewFmt("db%u-ssh-port", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostPort + optionIdx));
             testOptionFind(strPtr(strNewFmt("db%u-user", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostUser + optionIdx));
         }
+    }
+
+    // config and config-include-path options -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("loadConfigFile()"))
+    {
+        StringList *argList = NULL;
+        String *configFile = strNewFmt("%s/test.config", testPath());
+
+        String *configIncludePath = strNewFmt("%s/config_incl", testPath());
+        mkdir(strPtr(configIncludePath), 0750);
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
+        strLstAdd(argList, strNewFmt("--config-include-path=%s", strPtr(configIncludePath)));
+        strLstAdd(argList, strNew("--no-online"));
+        strLstAdd(argList, strNew("--reset-pg1-host"));
+        strLstAdd(argList, strNew("--reset-backup-standby"));
+        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+
+        storagePut(storageLocal(), configFile, bufNewStr(strNew(
+            "[global]\n"
+            "compress-level=3\n"
+            "spool-path=/path/to/spool\n"
+        )));
+
+        storagePut(storageLocal(), strNewFmt("%s/global-backup.conf", strPtr(configIncludePath)), bufNewStr(strNew(
+            "[global:backup]\n"
+            "repo1-hardlink=y\n"
+            "bogus=bogus\n"
+            "no-compress=y\n"
+            "reset-compress=y\n"
+            "archive-copy=y\n"
+            "online=y\n"
+            "pg1-path=/not/path/to/db\n"
+            "backup-standby=y\n"
+            "buffer-size=65536\n"
+        )));
+
+        storagePut(storageLocal(), strNewFmt("%s/db-backup.conf", strPtr(configIncludePath)), bufNewStr(strNew(
+            "[db:backup]\n"
+            "compress=n\n"
+            "recovery-option=a=b\n"
+        )));
+
+        storagePut(storageLocal(), strNewFmt("%s/stanza.db.conf", strPtr(configIncludePath)), bufNewStr(strNew(
+            "[db]\n"
+            "pg1-host=db\n"
+            "pg1-path=/path/to/db\n"
+            "recovery-option=c=d\n"
+        )));
+
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), TEST_COMMAND_BACKUP " command with config-include");
+        testLogErrResult(
+            strPtr(
+                strNew(
+                    "WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
+                    "WARN: configuration file contains invalid option 'bogus'\n"
+                    "WARN: configuration file contains negate option 'no-compress'\n"
+                    "WARN: configuration file contains reset option 'reset-compress'\n"
+                    "WARN: configuration file contains command-line only option 'online'\n"
+                    "WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
+
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), false, "    compress not is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptCompress), cfgSourceConfig, "    compress is source config");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCheck), false, "    archive-check is not set");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCopy), false, "    archive-copy is not set");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptRepoHardlink), true, "    repo-hardlink is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "    repo-hardlink is source config");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "    compress-level is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "    compress-level is source config");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "    backup-standby not is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "    backup-standby is source default");
+        TEST_RESULT_BOOL(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
+        strLstAdd(argList, strNewFmt("--config-include-path=%s", strPtr(configIncludePath)));
+        strLstAdd(argList, strNew("--no-online"));
+        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+
+        // Rename conf files - ensure read of those is not attempted
+        rename(strPtr(strNewFmt("%s/db-backup.conf", strPtr(configIncludePath))),
+            strPtr(strNewFmt("%s/db-backup.conf.save", strPtr(configIncludePath))));
+        rename(strPtr(strNewFmt("%s/global-backup.conf", strPtr(configIncludePath))),
+            strPtr(strNewFmt("%s/global-backup.confsave", strPtr(configIncludePath))));
+
+        ParseOption parseOptionConfig = {.found = true, .source = cfgSourceParam, .valueList = strLstAdd(strLstNew(), configFile)};
+        ParseOption parseOptionConfigInclude = {.found = true, .source = cfgSourceParam, .valueList = strLstAdd(strLstNew(), configIncludePath)};
+
+        TEST_RESULT_STR(strPtr(loadConfigFile(cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP)), &parseOptionConfig,
+            &parseOptionConfigInclude)),
+            "[global]\n"
+            "compress-level=3\n"
+            "spool-path=/path/to/spool\n"
+            "\n"
+            "[db]\n"
+            "pg1-host=db\n"
+            "pg1-path=/path/to/db\n"
+            "recovery-option=c=d\n",
+            "loadConfigFile() - config-include-path with .conf files and non-.conf files");
     }
 }

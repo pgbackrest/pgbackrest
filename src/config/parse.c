@@ -78,13 +78,14 @@ RULES
 - If --no-config is specified and --config-include-path is specified then Only *.conf files in the config-include-path will be loaded.
 - If --no-config is specified and --config-include-path IS NOT specified then no config will be loaded.
 ***********************************************************************************************************************************/
-static Ini *
+static String *
 loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt, const ParseOption *configIncludeOpt)
 {
     bool loadConfig = true;
     bool loadConfigInclude = true;
 
-    // If the option is specified on the command line, the found will be true, else the file is not required to exist
+    // If the option is specified on the command line, then found will be true meaning the file is required to exist,
+    // else it is optional
     bool configRequired = configOpt->found;
     bool configIncludeRequired = configIncludeOpt->found;
 
@@ -104,8 +105,7 @@ loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt, c
         configIncludeRequired = false;
     }
 
-    Ini *result = NULL;
-    String *config = strNew("");
+    String *result = NULL;
 
     if (loadConfig)
     {
@@ -120,19 +120,20 @@ loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt, c
         // Load the config file
         Buffer *buffer = storageGet(storageLocal(), configFileName, !configRequired);
 
+        // Convert the contents of the file buffer to the config string object
         if (buffer != NULL)
-        {
-            // Convert the contents of the file buffer to the config string object
-            config = strNewBuf(buffer);
-
-            // Validate the file by parsing it as an Ini object. If the file is not properly formed, en error will occur.
-            result = iniNew();
-            iniParse(result, config);
-        }
+            result = strNewBuf(buffer);
     }
 
     if (loadConfigInclude)
     {
+        if (result != NULL)
+        {
+            // Validate the file by parsing it as an Ini object. If the file is not properly formed, en error will occur.
+            Ini *ini = iniNew();
+            iniParse(ini, result);
+        }
+
         const String *configIncludePath = NULL;
 
         // Get the config include path from the command-line if it exists else default
@@ -144,15 +145,15 @@ loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt, c
         // Get a list of conf files from the specified directory -don't ignore missing if the option was passed on the command line
         StringList *list = storageList(storageLocal(), configIncludePath, strNew(".+\\.conf$"), !configIncludeRequired);
 
-        bool validateFullConfig = false;
-
         // If conf files are found, then add them to the config string
         if (list != NULL && strLstSize(list) > 0)
         {
+            list = strLstSort(list, sortOrderAsc);
+
             for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
             {
                 Buffer *fileBuffer = storageGet(
-                    storageLocal(), strLstGet(list, listIdx), false);
+                    storageLocal(), strNewFmt("%s/%s", strPtr(configIncludePath), strPtr(strLstGet(list, listIdx))), false);
 
                 if (fileBuffer != NULL)
                 {
@@ -165,23 +166,16 @@ loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt, c
                         Ini *configPartIni = iniNew();
                         iniParse(configPartIni, configPart);
 
-                        // Make sure there is a line feed at the end before appending it to the final config
-                        strCat(config, "\n");
-                        strCat(config, strPtr(configPart));
+                        if (result == NULL)
+                            result = strNew("");
+                        else
+                            strCat(result, "\n");
 
-                        // Since appended data to the config, be sure to validate the entire config when done
-                        validateFullConfig = true;
+                        // Make sure there is a line feed at the end before appending it to the final config
+                        strCat(result, strPtr(configPart));
                     }
                 }
             }
-        }
-
-        // Load and validate the full config file if any files were found
-        if (validateFullConfig)
-        {
-            // Parse the full config file
-            result = iniNew();
-            iniParse(result, config);
         }
     }
 
@@ -366,10 +360,13 @@ configParse(unsigned int argListSize, const char *argList[])
             ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
 
             // Load the configuration file(s)
-            Ini *config = loadConfigFile(commandDefId, &parseOptionList[cfgOptConfig], &parseOptionList[cfgOptConfigIncludePath]);
+            String *configString = loadConfigFile(commandDefId, &parseOptionList[cfgOptConfig],
+                &parseOptionList[cfgOptConfigIncludePath]);
 
-            if (config != NULL)
+            if (configString != NULL)
             {
+                Ini *config = iniNew();
+                iniParse(config, configString);
                 // Get the stanza name
                 String *stanza = NULL;
 
