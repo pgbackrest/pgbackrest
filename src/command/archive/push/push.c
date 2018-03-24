@@ -154,8 +154,8 @@ cmdArchivePush()
                     {
                         int processStatus;
 
-                        THROW_ON_SYS_ERROR(
-                            waitpid(processId, &processStatus, 0) != processId, AssertError, "unable to find perl child process");
+                        if (waitpid(processId, &processStatus, 0) != processId)             // {uncoverable - fork() does not fail}
+                            THROW_SYS_ERROR(AssertError, "unable to find perl child process");  // {uncoverable+}
 
                         if (WEXITSTATUS(processStatus) != 0)
                             THROW(AssertError, "perl exited with error %d", WEXITSTATUS(processStatus));

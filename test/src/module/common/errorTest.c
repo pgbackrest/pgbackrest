@@ -205,14 +205,12 @@ testRun()
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("THROW_ON_SYS_ERROR()"))
+    if (testBegin("THROW_SYS_ERROR()"))
     {
-        THROW_ON_SYS_ERROR(0, AssertError, "message");
-
         TRY_BEGIN()
         {
             errno = E2BIG;
-            THROW_ON_SYS_ERROR(1, AssertError, "message");
+            THROW_SYS_ERROR(AssertError, "message");
         }
         CATCH_ANY()
         {

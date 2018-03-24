@@ -22,6 +22,10 @@
                     <release-item>
                         <p>Refactor <id>usec</id> to <id>msec</id> in <code>common/time.c</code>.  The implementation provides <id>usec</id> resolution but this is not needed in practice and it makes the interface more complicated due to the extra zeros.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Replace <code>THROW_ON_SYS_ERROR()</code> with <code>THROW_SYS_ERROR()</code>.  The former macro was hiding missing branch coverage for critical error handling.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

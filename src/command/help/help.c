@@ -339,9 +339,8 @@ cmdHelp()
     {
         String *help = helpRender();
 
-        THROW_ON_SYS_ERROR(
-            write(STDOUT_FILENO, strPtr(help), strSize(help)) != (int)strSize(help), FileWriteError,
-            "unable to write help to stdout");
+        if (write(STDOUT_FILENO, strPtr(help), strSize(help)) != (int)strSize(help))            // {uncovered - write does not fail}
+            THROW_SYS_ERROR(FileWriteError, "unable to write help to stdout");                  // {uncovered+}
     }
     MEM_CONTEXT_TEMP_END();
 }

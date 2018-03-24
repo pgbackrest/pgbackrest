@@ -59,8 +59,8 @@ testRun()
         {
             int processStatus;
 
-            THROW_ON_SYS_ERROR(
-                waitpid(processId, &processStatus, 0) != processId, AssertError, "unable to find perl child process");
+            if (waitpid(processId, &processStatus, 0) != processId)                         // {uncoverable - write does not fail}
+                THROW_SYS_ERROR(AssertError, "unable to find perl child process");          // {uncoverable+}
 
             TEST_RESULT_INT(WEXITSTATUS(processStatus), errorTypeCode(&ParamRequiredError), "check error code");
         }

@@ -177,8 +177,8 @@ storageList(const Storage *storage, const String *pathExp, const String *express
         // If the directory could not be opened process errors but ignore missing directories when specified
         if (!dir)
         {
-            THROW_ON_SYS_ERROR(
-                !ignoreMissing || errno != ENOENT, PathOpenError, "unable to open directory '%s' for read", strPtr(path));
+            if (!ignoreMissing || errno != ENOENT)
+                THROW_SYS_ERROR(PathOpenError, "unable to open directory '%s' for read", strPtr(path));
         }
         else
         {

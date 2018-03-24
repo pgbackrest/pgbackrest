@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 Error Handler
 ***********************************************************************************************************************************/
-#include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -291,7 +290,9 @@ errorInternalPropagate()
     if (fprintf(                                                    // {uncovered - output to stderr is a problem for test harness}
             stderr, "\nUncaught %s: %s\n    thrown at %s:%d\n\n",
             errorName(), errorMessage(), errorFileName(), errorFileLine()) > 0)
+    {
         fflush(stderr);                                                                                             // {+uncovered}
+    }
 
     // Exit with failure
     exit(EXIT_FAILURE);                                             // {uncovered - exit failure is a problem for test harness}
@@ -364,33 +365,26 @@ errorInternalThrow(const ErrorType *errorType, const char *fileName, int fileLin
 Throw an error
 ***********************************************************************************************************************************/
 void
-errorInternalThrowSys(int result, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
+errorInternalThrowSys(int errNo, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
 {
-    // Only error if the result is not 0
-    if (result != 0)
-    {
-        // Capture the error number
-        int errNo = errno;
+    // Setup error data
+    errorContext.error.errorType = errorType;
+    errorContext.error.fileName = fileName;
+    errorContext.error.fileLine = fileLine;
 
-        // Setup error data
-        errorContext.error.errorType = errorType;
-        errorContext.error.fileName = fileName;
-        errorContext.error.fileLine = fileLine;
+    // Create message
+    va_list argument;
+    va_start(argument, format);
+    size_t messageSize = (size_t)vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, format, argument);
+    va_end(argument);
 
-        // Create message
-        va_list argument;
-        va_start(argument, format);
-        size_t messageSize = (size_t)vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, format, argument);
-        va_end(argument);
+    // Append the system message
+    snprintf(messageBufferTemp + messageSize, ERROR_MESSAGE_BUFFER_SIZE - 1 - messageSize, ": [%d] %s", errNo, strerror(errNo));
 
-        // Append the system message
-        snprintf(messageBufferTemp + messageSize, ERROR_MESSAGE_BUFFER_SIZE - 1 - messageSize, ": [%d] %s", errNo, strerror(errNo));
+    // Assign message to the error
+    strcpy(messageBuffer, messageBufferTemp);
+    errorContext.error.message = (const char *)messageBuffer;
 
-        // Assign message to the error
-        strcpy(messageBuffer, messageBufferTemp);
-        errorContext.error.message = (const char *)messageBuffer;
-
-        // Propogate the error
-        errorInternalPropagate();
-    }
+    // Propogate the error
+    errorInternalPropagate();
 }
