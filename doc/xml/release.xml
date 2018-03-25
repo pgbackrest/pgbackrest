@@ -26,6 +26,10 @@
                     <release-item>
                         <p>Replace <code>THROW_ON_SYS_ERROR()</code> with <code>THROW_SYS_ERROR()</code>.  The former macro was hiding missing branch coverage for critical error handling.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Start work on C handle io object and use it to output help.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# CommonIoHandleTest.pm - tests for Common::Io::Handle module
+# Tests for Common::Io::Handle module
 ####################################################################################################################################
-package pgBackRestTest::Module::Common::CommonIoHandleTest;
+package pgBackRestTest::Module::Common::CommonIoHandlePerlTest;
 use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################
