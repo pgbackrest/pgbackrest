@@ -52,6 +52,10 @@
                     <release-item>
                         <p>Include VM type in <id>gcov</id> path to avoid conflicts between VMs with different architectures.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improve logic for smart builds to include version changes.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>

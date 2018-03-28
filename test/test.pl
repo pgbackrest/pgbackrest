@@ -308,8 +308,17 @@ eval
 
         errorDefineLoad(${$oStorageBackRest->get("build/error.yaml")});
 
-        if (!$bSmart || buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['build']) >
-            buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['src'], '\.auto\.c$'))
+        # Get last mod for build files and version file
+        my $lLastBuildMod = buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['build']);
+        my $lLastVersionMod = buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['lib'], 'Version\.pm$');
+
+        # If version mod is later than build mod, then make it the build mod
+        if ($lLastVersionMod > $lLastBuildMod)
+        {
+            $lLastBuildMod = $lLastVersionMod;
+        }
+
+        if (!$bSmart || $lLastBuildMod > buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['src'], '\.auto\.c$'))
         {
             &log(INFO, "    autogenerate C code");
 
@@ -347,8 +356,17 @@ eval
         #
         # Use statements are put here so this will be easy to get rid of someday.
         #---------------------------------------------------------------------------------------------------------------------------
-        if (!$bSmart || buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc/build']) >
-            buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc', 'lib'], '(\.auto\.pm|Auto\.pm)$'))
+        # Get last mod for Perl build files
+        my $lLastPerlBuildMod = buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc/build']);
+
+        # If Perl build mod is later than build mod, then make it the build mod
+        if ($lLastPerlBuildMod > $lLastBuildMod)
+        {
+            $lLastBuildMod = $lLastPerlBuildMod;
+        }
+
+        if (!$bSmart ||
+            $lLastBuildMod > buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc', 'lib'], '(\.auto\.xs|Auto\.pm)$'))
         {
             &log(INFO, "    autogenerate Perl code");
             use lib dirname(dirname($0)) . '/libc/build/lib';
