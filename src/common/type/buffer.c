@@ -112,12 +112,15 @@ Free the buffer
 void
 bufFree(Buffer *this)
 {
-    MEM_CONTEXT_BEGIN(this->memContext)
+    if (this != NULL)
     {
-        if (this->buffer != NULL)
-            memFree(this->buffer);
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            if (this->buffer != NULL)
+                memFree(this->buffer);
 
-        memFree(this);
+            memFree(this);
+        }
+        MEM_CONTEXT_END();
     }
-    MEM_CONTEXT_END();
 }
