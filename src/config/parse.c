@@ -68,18 +68,21 @@ optionFind(const String *option)
 }
 
 /***********************************************************************************************************************************
-Load the configuration file(s). MEMCONTEXT will be the parent.
+Load the configuration file(s). MEMCONTEXT will be the parent. Passing defaults for better testing.
 
 RULES
-- config and config-include-path are default. In this case, the config file will be loaded, if it exists, and *.conf files in the config-include-path will be appended, if they exist. A missing/empty dir will be ignored.
+- config and config-include-path are default. In this case, the config file will be loaded, if it exists, and *.conf files in the
+  config-include-path will be appended, if they exist. A missing/empty dir will be ignored.
 - config is specified. Only the specified config file will be loaded. The default config-include-path will be ignored.
 - config-include-path is specified. Only *.conf files in the config-include-path will be loaded. The default config will be ignored.
 - If the config and config-include-path are specified. Just like #1, except with the user-specified values.
-- If --no-config is specified and --config-include-path is specified then Only *.conf files in the config-include-path will be loaded.
+- If --no-config is specified and --config-include-path is specified then Only *.conf files in the config-include-path will be
+  loaded.
 - If --no-config is specified and --config-include-path IS NOT specified then no config will be loaded.
 ***********************************************************************************************************************************/
 static String *
-loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt, const ParseOption *configIncludeOpt)
+loadConfigFile(const ParseOption *configOpt, const ParseOption *configIncludeOpt, const String *configOptDefault,
+    const String *configOptIncludePathDefault)
 {
     bool loadConfig = true;
     bool loadConfigInclude = true;
@@ -115,7 +118,7 @@ loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt, c
         if (configOpt->found)
             configFileName = strLstGet(configOpt->valueList, 0);
         else
-            configFileName = strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfig)));
+            configFileName = configOptDefault;
 
         // Load the config file
         Buffer *buffer = storageGet(storageLocal(), configFileName, !configRequired);
@@ -140,7 +143,7 @@ loadConfigFile(ConfigDefineCommand commandDefId, const ParseOption *configOpt, c
         if (configIncludeOpt->found)
             configIncludePath = strLstGet(configIncludeOpt->valueList, 0);
         else
-            configIncludePath = strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfigIncludePath)));
+            configIncludePath = configOptIncludePathDefault;
 
         // Get a list of conf files from the specified directory -don't ignore missing if the option was passed on the command line
         StringList *list = storageList(storageLocal(), configIncludePath, strNew(".+\\.conf$"), !configIncludeRequired);
@@ -360,8 +363,10 @@ configParse(unsigned int argListSize, const char *argList[])
             ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
 
             // Load the configuration file(s)
-            String *configString = loadConfigFile(commandDefId, &parseOptionList[cfgOptConfig],
-                &parseOptionList[cfgOptConfigIncludePath]);
+            String *configString = loadConfigFile(&parseOptionList[cfgOptConfig],
+                &parseOptionList[cfgOptConfigIncludePath],
+                strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfig))),
+                strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfigIncludePath))));
 
             if (configString != NULL)
             {

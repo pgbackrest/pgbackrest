@@ -698,7 +698,7 @@ testRun()
         }
     }
 
-    // config and config-include-path options -----------------------------------------------------------------------------------------------------------------------------
+    // config and config-include-path options --------------------------------------------------------------------------------------------------------------------------------
     if (testBegin("loadConfigFile()"))
     {
         StringList *argList = NULL;
@@ -707,6 +707,13 @@ testRun()
         String *configIncludePath = strNewFmt("%s/config_incl", testPath());
         mkdir(strPtr(configIncludePath), 0750);
 
+        String *backupCmdDefConfigValue = strNew(cfgDefOptionDefault(
+            cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP)), cfgOptionDefIdFromId(cfgOptConfig)));
+        String *backupCmdDefConfigInclPathValue = strNew(cfgDefOptionDefault(
+                cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP)), cfgOptionDefIdFromId(cfgOptConfigIncludePath)));
+
+        // Confirm same behavior with multiple config include files
+        //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
@@ -776,25 +783,19 @@ testRun()
         TEST_RESULT_BOOL(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
 
-        argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
-        strLstAdd(argList, strNewFmt("--config-include-path=%s", strPtr(configIncludePath)));
-        strLstAdd(argList, strNew("--no-online"));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
-
-        // Rename conf files - ensure read of those is not attempted
+        // Rename conf files - ensure read of conf extension only is attempted
+        //--------------------------------------------------------------------------------------------------------------------------
         rename(strPtr(strNewFmt("%s/db-backup.conf", strPtr(configIncludePath))),
             strPtr(strNewFmt("%s/db-backup.conf.save", strPtr(configIncludePath))));
         rename(strPtr(strNewFmt("%s/global-backup.conf", strPtr(configIncludePath))),
             strPtr(strNewFmt("%s/global-backup.confsave", strPtr(configIncludePath))));
 
         ParseOption parseOptionConfig = {.found = true, .source = cfgSourceParam, .valueList = strLstAdd(strLstNew(), configFile)};
-        ParseOption parseOptionConfigInclude = {.found = true, .source = cfgSourceParam, .valueList = strLstAdd(strLstNew(), configIncludePath)};
+        ParseOption parseOptionConfigInclude =
+            {.found = true, .source = cfgSourceParam, .valueList = strLstAdd(strLstNew(), configIncludePath)};
 
-        TEST_RESULT_STR(strPtr(loadConfigFile(cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP)), &parseOptionConfig,
-            &parseOptionConfigInclude)),
+        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
+            backupCmdDefConfigInclPathValue)),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n"
@@ -804,5 +805,160 @@ testRun()
             "pg1-path=/path/to/db\n"
             "recovery-option=c=d\n",
             "loadConfigFile() - config-include-path with .conf files and non-.conf files");
+
+        strLstFree(parseOptionConfig.valueList);
+        strLstFree(parseOptionConfigInclude.valueList);
+
+        // config and config-include-path are "default" with files existing
+        //--------------------------------------------------------------------------------------------------------------------------
+        parseOptionConfig.found = false;
+        parseOptionConfig.source = cfgSourceDefault;
+        parseOptionConfigInclude.found = false;
+        parseOptionConfigInclude.source = cfgSourceDefault;
+
+        // Pass actual location of config files as "default" - not setting valueList above, so these are the only possible values
+        // to choose.
+        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, configFile, configIncludePath)),
+            "[global]\n"
+            "compress-level=3\n"
+            "spool-path=/path/to/spool\n"
+            "\n"
+            "[db]\n"
+            "pg1-host=db\n"
+            "pg1-path=/path/to/db\n"
+            "recovery-option=c=d\n",
+            "loadConfigFile() - config and config-include-path default, files appended");
+
+        // Config not passed as parameter (default used but does not exist). config-include-path passed as parameter (files read)
+        //--------------------------------------------------------------------------------------------------------------------------
+        parseOptionConfig.found = false;
+        parseOptionConfig.source = cfgSourceDefault;
+        parseOptionConfigInclude.found = true;
+        parseOptionConfigInclude.source = cfgSourceParam;
+        parseOptionConfigInclude.valueList = strLstAdd(strLstNew(), configIncludePath);
+
+        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
+            backupCmdDefConfigInclPathValue)),
+            "[db]\n"
+            "pg1-host=db\n"
+            "pg1-path=/path/to/db\n"
+            "recovery-option=c=d\n",
+            "loadConfigFile() - config default, only config-include-path read");
+
+        strLstFree(parseOptionConfigInclude.valueList);
+
+        // Neither config nor config-include-path passed as parameter (defaults but none exist)
+        //--------------------------------------------------------------------------------------------------------------------------
+        parseOptionConfig.found = false;
+        parseOptionConfig.source = cfgSourceDefault;
+        parseOptionConfigInclude.found = false;
+        parseOptionConfigInclude.source = cfgSourceDefault;
+
+        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
+            backupCmdDefConfigInclPathValue)),
+            NULL,
+            "loadConfigFile() - config default, config-include-path default but nothing to read");
+
+        // --no-config and config-include-path passed as parameter (files read)
+        //--------------------------------------------------------------------------------------------------------------------------
+        parseOptionConfig.found = true;
+        parseOptionConfig.source = cfgSourceParam;
+        parseOptionConfig.negate = true;
+        parseOptionConfigInclude.found = true;
+        parseOptionConfigInclude.source = cfgSourceParam;
+        parseOptionConfigInclude.valueList = strLstAdd(strLstNew(), configIncludePath);
+
+        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
+            backupCmdDefConfigInclPathValue)),
+            "[db]\n"
+            "pg1-host=db\n"
+            "pg1-path=/path/to/db\n"
+            "recovery-option=c=d\n",
+            "loadConfigFile() - --no-config, only config-include-path read");
+
+        strLstFree(parseOptionConfigInclude.valueList);
+
+        // --no-config and config-include-path default exists with files - nothing to read
+        //--------------------------------------------------------------------------------------------------------------------------
+        parseOptionConfig.found = true;
+        parseOptionConfig.source = cfgSourceParam;
+        parseOptionConfig.negate = true;
+        parseOptionConfigInclude.found = false;
+        parseOptionConfigInclude.source = cfgSourceDefault;
+
+        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
+            configIncludePath)),
+            NULL,
+            "loadConfigFile() - --no-config, config-include-path default, nothing read");
+
+        // config passed and config-include-path default exists with files - only config read
+        //--------------------------------------------------------------------------------------------------------------------------
+        parseOptionConfig.found = true;
+        parseOptionConfig.source = cfgSourceParam;
+        parseOptionConfig.negate = false;
+        parseOptionConfig.valueList = strLstAdd(strLstNew(), configFile);
+        parseOptionConfigInclude.found = false;
+        parseOptionConfigInclude.source = cfgSourceDefault;
+
+        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
+            configIncludePath)),
+            "[global]\n"
+            "compress-level=3\n"
+            "spool-path=/path/to/spool\n",
+            "loadConfigFile() - config param specified, config-include-path default, only config read");
+
+        strLstFree(parseOptionConfig.valueList);
+
+        // config default and config-include-path passed - both exists with files - only config-include-path read
+        //--------------------------------------------------------------------------------------------------------------------------
+        parseOptionConfig.found = false;
+        parseOptionConfig.source = cfgSourceDefault;
+        parseOptionConfigInclude.found = true;
+        parseOptionConfigInclude.source = cfgSourceParam;
+        parseOptionConfigInclude.valueList = strLstAdd(strLstNew(), configIncludePath);
+
+        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, configFile,
+            backupCmdDefConfigInclPathValue)),
+            "[db]\n"
+            "pg1-host=db\n"
+            "pg1-path=/path/to/db\n"
+            "recovery-option=c=d\n",
+            "loadConfigFile() - config default exists with files, config-include-path passed, only config-include-path read");
+
+        strLstFree(parseOptionConfigInclude.valueList);
+
+        // config default and config-include-path passed - but no config files in the include path
+        //--------------------------------------------------------------------------------------------------------------------------
+        system(strPtr(strNewFmt("sudo rm -rf %s/*", strPtr(configIncludePath))));
+
+        parseOptionConfig.found = false;
+        parseOptionConfig.source = cfgSourceDefault;
+        parseOptionConfigInclude.found = true;
+        parseOptionConfigInclude.source = cfgSourceParam;
+        parseOptionConfigInclude.valueList = strLstAdd(strLstNew(), configIncludePath);
+
+        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, configFile,
+            backupCmdDefConfigInclPathValue)),
+            NULL,
+            "loadConfigFile() - config default exists with files, config-include-path passed but no files in path");
+
+        strLstFree(parseOptionConfigInclude.valueList);
+
+        // config default and config-include-path passed - but only empty file in the include path
+        //--------------------------------------------------------------------------------------------------------------------------
+        system(strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/empty.conf", strPtr(configIncludePath))))));
+
+        parseOptionConfig.found = false;
+        parseOptionConfig.source = cfgSourceDefault;
+        parseOptionConfigInclude.found = true;
+        parseOptionConfigInclude.source = cfgSourceParam;
+        parseOptionConfigInclude.valueList = strLstAdd(strLstNew(), configIncludePath);
+
+        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, configFile,
+            backupCmdDefConfigInclPathValue)),
+            NULL,
+            "loadConfigFile() - config default exists with files, config-include-path passed but only empty conf file");
+
+        strLstFree(parseOptionConfigInclude.valueList);
     }
 }
