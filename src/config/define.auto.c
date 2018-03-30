@@ -770,7 +770,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Path to additional pgBackRest configuration files.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "CSHANG"
+            "Configuration files existing in the specified location with extension .conf will be concatenated with the pgBackRest "
+                "configuration file, resulting in one configuration file."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST

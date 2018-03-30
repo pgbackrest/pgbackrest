@@ -118,6 +118,8 @@ testRun()
             "                            compress=n [default=3]\n"
             "  --config                  pgBackRest configuration file\n"
             "                            [default=/etc/pgbackrest.conf]\n"
+            "  --config-include-path     path to additional pgBackRest configuration files\n"
+            "                            [default=/etc/pgbackrest.d]\n"
             "  --db-timeout              database query timeout [default=1800]\n"
             "  --lock-path               path where lock files are stored\n"
             "                            [default=/tmp/pgbackrest]\n"
