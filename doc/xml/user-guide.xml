@@ -555,6 +555,25 @@
             </backrest-config>
 
             <p><backrest/> configuration files follow the Windows INI convention.  Sections are denoted by text in brackets and key/value pairs are contained in each section.  Lines beginning with <id>#</id> are ignored and can be used as comments.</p>
+
+            <p>The <backrest/> configuration files must have the extension <file>.conf</file> and there are four ways they can be loaded:</p>
+            <list>
+                <list-item><b>config and config-include-path are default:</b> The config file will be loaded, if it exists, and *.conf files in the config include path will be appended, if they exist.</list-item>
+                <list-item><b>config option is specified:</b> Only the specified config file will be loaded.</list-item>
+                <list-item><b>config-include-path is specified:</b> Only *.conf files in the config include path will be loaded.</list-item>
+                <list-item><b>config and config-include-path are specified:</b> Using the user-specified values, the config file will be loaded, if it exists, and *.conf files in the config include path will be appended, if they exist.</list-item>
+            </list>
+
+            <p>The files are concatenated as if they were one big file; order doesn't matter, but there is precedence based on sections. The precedence is:</p>
+
+            <list>
+                <list-item>[<i>stanza</i>:<i>command</i>]</list-item>
+                <list-item>[<i>stanza</i>]</list-item>
+                <list-item>[global:<i>command</i>]</list-item>
+                <list-item>[global]</list-item>
+            </list>
+
+            <p><b>Note:</b> <br-option>config</br-option> and <br-option>config-include-path</br-option> are command-line only options.</p>
         </section>
 
         <!-- SECTION => QUICKSTART - CREATE REPOSITORY -->

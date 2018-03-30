@@ -762,9 +762,9 @@
                 <option id="config-include-path" name="Config Include Path">
                     <summary>Path to additional <backrest/> configuration files.</summary>
 
-                    <text>CSHANG</text>
+                    <text>Configuration files existing in the specified location with extension <file>.conf</file> will be concatenated with the <backrest/> configuration file, resulting in one configuration file.</text>
 
-                    <example>CSHANG</example>
+                    <example>/etc/pgbackrest.conf.d</example>
                 </option>
 
                 <!-- OPERATION - GENERAL - STANZA OPTION -->
