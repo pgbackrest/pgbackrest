@@ -129,6 +129,7 @@ sub libcAutoExportTag
             'CFGOPT_COMPRESS_LEVEL',
             'CFGOPT_COMPRESS_LEVEL_NETWORK',
             'CFGOPT_CONFIG',
+            'CFGOPT_CONFIG_INCLUDE_PATH',
             'CFGOPT_DB_INCLUDE',
             'CFGOPT_DB_TIMEOUT',
             'CFGOPT_DELTA',

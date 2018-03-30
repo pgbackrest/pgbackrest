@@ -158,7 +158,7 @@ loadConfigFile(const ParseOption *configOpt, const ParseOption *configIncludeOpt
                 Buffer *fileBuffer = storageGet(
                     storageLocal(), strNewFmt("%s/%s", strPtr(configIncludePath), strPtr(strLstGet(list, listIdx))), false);
 
-                if (fileBuffer != NULL)
+                if (fileBuffer != NULL) // {uncovered - NULL can only occur if file is missing after file list is retrieved}
                 {
                     // Convert the contents of the file buffer to a string object
                     String *configPart = strNewBuf(fileBuffer);

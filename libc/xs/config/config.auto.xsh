@@ -43,6 +43,7 @@ Option constants
 #define CFGOPT_COMPRESS_LEVEL                                       cfgOptCompressLevel
 #define CFGOPT_COMPRESS_LEVEL_NETWORK                               cfgOptCompressLevelNetwork
 #define CFGOPT_CONFIG                                               cfgOptConfig
+#define CFGOPT_CONFIG_INCLUDE_PATH                                  cfgOptConfigIncludePath
 #define CFGOPT_DB_INCLUDE                                           cfgOptDbInclude
 #define CFGOPT_DB_TIMEOUT                                           cfgOptDbTimeout
 #define CFGOPT_DELTA                                                cfgOptDelta
