@@ -9,6 +9,13 @@ void
 testRun()
 {
     // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("ASSERT()"))
+    {
+        TEST_RESULT_VOID(ASSERT(true), "assert true");
+        TEST_ERROR(ASSERT(false || false), AssertError, "assertion 'false || false' failed");
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("ASSERT_DEBUG()"))
     {
         TEST_RESULT_VOID(ASSERT_DEBUG(true), "assert true ignored");

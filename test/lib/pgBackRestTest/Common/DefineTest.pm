@@ -157,7 +157,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'debug-on',
-                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>
@@ -167,7 +167,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'debug-off',
-                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
                     &TESTDEF_CDEF => '-DNDEBUG -DNO_LOG',
 

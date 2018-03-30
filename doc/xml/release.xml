@@ -30,6 +30,10 @@
                     <release-item>
                         <p>Start work on C handle io object and use it to output help.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <code>ASSERT()</code> that is preserved in production builds.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
