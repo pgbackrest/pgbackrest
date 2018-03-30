@@ -946,7 +946,8 @@ testRun()
 
         // config default and config-include-path passed - but only empty file in the include path
         //--------------------------------------------------------------------------------------------------------------------------
-        system(strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/empty.conf", strPtr(configIncludePath))))));
+        TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/empty.conf", strPtr(configIncludePath)))))), 0,
+            "add empty conf file to include directory");
 
         parseOptionConfig.found = false;
         parseOptionConfig.source = cfgSourceDefault;
