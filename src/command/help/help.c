@@ -4,6 +4,7 @@ Help Command
 #include <string.h>
 #include <unistd.h>
 
+#include "common/io/handle.h"
 #include "common/memContext.h"
 #include "common/type.h"
 #include "config/config.h"
@@ -337,11 +338,7 @@ cmdHelp()
 {
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *help = helpRender();
-
-        THROW_ON_SYS_ERROR(
-            write(STDOUT_FILENO, strPtr(help), strSize(help)) != (int)strSize(help), FileWriteError,
-            "unable to write help to stdout");
+        ioHandleWriteOneStr(STDOUT_FILENO, helpRender());
     }
     MEM_CONTEXT_TEMP_END();
 }

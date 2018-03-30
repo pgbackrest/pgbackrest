@@ -65,6 +65,8 @@ testRun()
             storagePath(storage, strNew("<TEST>" BOGUS_STR)), AssertError, "'/' should separate expression and path '<TEST>BOGUS'");
 
         TEST_RESULT_STR(strPtr(storagePath(storage, strNew("<TEST>"))), "/path/to/test", "    expression");
+        TEST_ERROR(strPtr(storagePath(storage, strNew("<TEST>/"))), AssertError, "path '<TEST>/' should not end in '/'");
+
         TEST_RESULT_STR(
             strPtr(storagePath(storage, strNew("<TEST>/something"))), "/path/to/test/something", "    expression with path");
 
@@ -80,12 +82,31 @@ testRun()
 
         TEST_ASSIGN(storage, storageNew(strNew(testPath()), 0750, 65536, NULL), "new storage");
 
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
             storageList(storage, strNew(BOGUS_STR), NULL, false), PathOpenError,
             strPtr(strNewFmt("unable to open directory '%s/BOGUS' for read: [2] No such file or directory", testPath())));
 
         TEST_RESULT_PTR(storageList(storage, strNew(BOGUS_STR), NULL, true), NULL, "ignore missing dir");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        String *fileNoPerm = strNewFmt("%s/noperm", testPath());
+        TEST_RESULT_INT(
+            system(strPtr(strNewFmt("sudo mkdir %s && sudo chmod 700 %s", strPtr(fileNoPerm), strPtr(fileNoPerm)))), 0,
+            "create no perm file");
+
+        TEST_ERROR(
+            storageList(storage, fileNoPerm, NULL, false), PathOpenError,
+            strPtr(strNewFmt("unable to open directory '%s' for read: [13] Permission denied", strPtr(fileNoPerm))));
+
+        // Should still error even when ignore missing
+        TEST_ERROR(
+            storageList(storage, fileNoPerm, NULL, true), PathOpenError,
+            strPtr(strNewFmt("unable to open directory '%s' for read: [13] Permission denied", strPtr(fileNoPerm))));
+
+        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rmdir %s", strPtr(fileNoPerm)))), 0, "create no perm file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storagePut(storage, strNew("aaa.txt"), bufNewStr(strNew("aaa"))), "write aaa.text");
         TEST_RESULT_STR(
             strPtr(strLstJoin(storageList(storage, NULL, NULL, false), ", ")), "aaa.txt, stderr.log, stdout.log", "dir list");
@@ -102,6 +123,19 @@ testRun()
         TEST_ERROR(
             storagePut(storageTest, strNew(testPath()), NULL), FileOpenError,
             strPtr(strNewFmt("unable to open '%s' for write: Is a directory", testPath())));
+        TEST_ERROR(
+            storageGet(storageTest, strNew(testPath()), false), FileReadError,
+            strPtr(strNewFmt("unable to read '%s': [21] Is a directory", testPath())));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        String *fileNoPerm = strNewFmt("%s/noperm", testPath());
+        TEST_RESULT_INT(
+            system(strPtr(strNewFmt("sudo touch %s && sudo chmod 600 %s", strPtr(fileNoPerm), strPtr(fileNoPerm)))), 0,
+            "create no perm file");
+
+        TEST_ERROR(
+            storageGet(storageTest, fileNoPerm, true), FileOpenError,
+            strPtr(strNewFmt("unable to open '%s' for read: [13] Permission denied", strPtr(fileNoPerm))));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storageWriteError(3, 3, strNew("file")), "no write error");
@@ -121,13 +155,8 @@ testRun()
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(storageGet(storageTest, strNewFmt("%s/%s", testPath(), BOGUS_STR), false), FileOpenError,
-        strPtr(strNewFmt("unable to open '%s/%s' for read: No such file or directory", testPath(), BOGUS_STR)));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageReadError(3, strNew("file")), "no read error");
-
-        errno = ENOTBLK;
-        TEST_ERROR(storageReadError(-1, strNew("file")), FileReadError, "unable to read 'file': Block device required");
+        strPtr(strNewFmt("unable to open '%s/%s' for read: [2] No such file or directory", testPath(), BOGUS_STR)));
+        TEST_RESULT_PTR(storageGet(storageTest, strNewFmt("%s/%s", testPath(), BOGUS_STR), true), NULL, "get missing file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(buffer, storageGet(storageTest, strNewFmt("%s/test.empty", testPath()), false), "get empty");

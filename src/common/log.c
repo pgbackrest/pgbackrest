@@ -250,15 +250,16 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
     // Determine where to log the message based on log-level-stderr
     if (logWillStdErr(logLevel))
     {
-        THROW_ON_SYS_ERROR(
-            write(
-                logHandleStdErr, logBuffer + messageStdErrPos, bufferPos - messageStdErrPos) != (int)(bufferPos - messageStdErrPos),
-            FileWriteError, "unable to write log to stderr");
+        if (write(
+            logHandleStdErr, logBuffer + messageStdErrPos, bufferPos - messageStdErrPos) != (int)(bufferPos - messageStdErrPos))
+        {
+            THROW_SYS_ERROR(FileWriteError, "unable to write log to stderr");
+        }
     }
     else if (logWillStdOut(logLevel))
     {
-        THROW_ON_SYS_ERROR(
-            write(logHandleStdOut, logBuffer, bufferPos) != (int)bufferPos, FileWriteError, "unable to write log to stdout");
+        if (write(logHandleStdOut, logBuffer, bufferPos) != (int)bufferPos)                     // {uncovered - write does not fail}
+            THROW_SYS_ERROR(FileWriteError, "unable to write log to stdout");                   // {uncovered+}
     }
 
     // Log to file
@@ -269,20 +270,22 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
         {
             // Add a blank line if the file already has content
             if (lseek(logHandleFile, 0, SEEK_END) > 0)
-                THROW_ON_SYS_ERROR(write(logHandleFile, "\n", 1) != 1, FileWriteError, "unable to write banner spacing to file");
+            {
+                if (write(logHandleFile, "\n", 1) != 1)                                         // {uncovered - write does not fail}
+                    THROW_SYS_ERROR(FileWriteError, "unable to write banner spacing to file");  // {uncovered +}
+            }
 
             // Write process start banner
             const char *banner = "-------------------PROCESS START-------------------\n";
 
-            THROW_ON_SYS_ERROR(
-                write(logHandleFile, banner, strlen(banner)) != (int)strlen(banner), FileWriteError,
-                "unable to write banner to file");
+            if (write(logHandleFile, banner, strlen(banner)) != (int)strlen(banner))            // {uncovered - write does not fail}
+                THROW_SYS_ERROR(FileWriteError, "unable to write banner to file");              // {uncovered+}
 
             // Mark banner as written
             logFileBanner = true;
         }
 
-        THROW_ON_SYS_ERROR(
-            write(logHandleFile, logBuffer, bufferPos) != (int)bufferPos, FileWriteError, "unable to write log to file");
+        if (write(logHandleFile, logBuffer, bufferPos) != (int)bufferPos)                       // {uncovered - write does not fail}
+            THROW_SYS_ERROR(FileWriteError, "unable to write log to file");                     // {uncovered+}
     }
 }

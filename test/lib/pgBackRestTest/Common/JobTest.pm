@@ -92,7 +92,7 @@ sub new
     $self->{iTry} = 0;
 
     # Setup the path where gcc coverage will be performed
-    $self->{strGCovPath} = "$self->{strTestPath}/gcov-$self->{iVmIdx}";
+    $self->{strGCovPath} = "$self->{strTestPath}/gcov-$self->{oTest}->{&TEST_VM}-$self->{iVmIdx}";
 
     # Return from function and log return values if any
     return logDebugReturn

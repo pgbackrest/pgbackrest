@@ -66,20 +66,6 @@ storageNew(const String *path, int mode, size_t bufferSize, StoragePathExpressio
 }
 
 /***********************************************************************************************************************************
-Check for errors on read.  This is a separate function for testing purposes.
-***********************************************************************************************************************************/
-static void
-storageReadError(ssize_t actualBytes, const String *file)
-{
-    // Error occurred during write
-    if (actualBytes == -1)
-    {
-        int errNo = errno;
-        THROW(FileReadError, "unable to read '%s': %s", strPtr(file), strerror(errNo));
-    }
-}
-
-/***********************************************************************************************************************************
 Read from storage into a buffer
 ***********************************************************************************************************************************/
 Buffer *
@@ -99,10 +85,8 @@ storageGet(const Storage *storage, const String *fileExp, bool ignoreMissing)
 
         if (fileHandle == -1)
         {
-            int errNo = errno;
-
-            if (!ignoreMissing || errNo != ENOENT)
-                THROW(FileOpenError, "unable to open '%s' for read: %s", strPtr(file), strerror(errNo));
+            if (!ignoreMissing || errno != ENOENT)
+                THROW_SYS_ERROR(FileOpenError, "unable to open '%s' for read", strPtr(file));
         }
         else
         {
@@ -121,7 +105,10 @@ storageGet(const Storage *storage, const String *fileExp, bool ignoreMissing)
 
                 // Read and handle errors
                 actualBytes = read(fileHandle, bufPtr((Buffer *)result) + totalBytes, storage->bufferSize);
-                storageReadError(actualBytes, file);
+
+                // Error occurred during write
+                if (actualBytes == -1)
+                    THROW_SYS_ERROR(FileReadError, "unable to read '%s'", strPtr(file));
 
                 // Track total bytes read
                 totalBytes += (size_t)actualBytes;
@@ -135,8 +122,7 @@ storageGet(const Storage *storage, const String *fileExp, bool ignoreMissing)
     CATCH_ANY()
     {
         // Free buffer on error if it was allocated
-        if (result != NULL)
-            bufFree((Buffer *)result);                              // {uncoverable - cannot error after buffer is allocated}
+        bufFree((Buffer *)result);
 
         RETHROW();
     }
@@ -177,8 +163,8 @@ storageList(const Storage *storage, const String *pathExp, const String *express
         // If the directory could not be opened process errors but ignore missing directories when specified
         if (!dir)
         {
-            THROW_ON_SYS_ERROR(
-                !ignoreMissing || errno != ENOENT, PathOpenError, "unable to open directory '%s' for read", strPtr(path));
+            if (!ignoreMissing || errno != ENOENT)
+                THROW_SYS_ERROR(PathOpenError, "unable to open directory '%s' for read", strPtr(path));
         }
         else
         {
@@ -215,8 +201,7 @@ storageList(const Storage *storage, const String *pathExp, const String *express
     }
     FINALLY()
     {
-        if (path != NULL)
-            strFree(path);
+        strFree(path);
 
         if (dir != NULL)
             closedir(dir);
@@ -237,7 +222,6 @@ storagePath(const Storage *storage, const String *pathExp)
 {
     String *result = NULL;
 
-
     // If there there is no path expression then return the base storage path
     if (pathExp == NULL)
     {
@@ -251,11 +235,8 @@ storagePath(const Storage *storage, const String *pathExp)
             // Make sure the base storage path is contained within the path expression
             if (!strEqZ(storage->path, "/"))
             {
-                if (!strBeginsWith(pathExp, storage->path) ||
-                    !(strSize(pathExp) == strSize(storage->path) || *(strPtr(pathExp) + strSize(storage->path)) == '/'))
-                {
+                if (!strBeginsWith(pathExp, storage->path) || *(strPtr(pathExp) + strSize(storage->path)) != '/')
                     THROW(AssertError, "absolute path '%s' is not in base path '%s'", strPtr(pathExp), strPtr(storage->path));
-                }
             }
 
             result = strDup(pathExp);
@@ -292,8 +273,10 @@ storagePath(const Storage *storage, const String *pathExp)
                         THROW(AssertError, "'/' should separate expression and path '%s'", strPtr(pathExp));
 
                     // Only create path if there is something after the path separator
-                    if (end[2] != 0)
-                        path = strNew(end + 2);
+                    if (end[2] == 0)
+                        THROW(AssertError, "path '%s' should not end in '/'", strPtr(pathExp));
+
+                    path = strNew(end + 2);
                 }
 
                 // Evaluate the path

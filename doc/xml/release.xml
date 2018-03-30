@@ -22,8 +22,24 @@
                     <release-item>
                         <p>Refactor <id>usec</id> to <id>msec</id> in <code>common/time.c</code>.  The implementation provides <id>usec</id> resolution but this is not needed in practice and it makes the interface more complicated due to the extra zeros.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Replace <code>THROW_ON_SYS_ERROR()</code> with <code>THROW_SYS_ERROR()</code>.  The former macro was hiding missing branch coverage for critical error handling.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Start work on C handle io object and use it to output help.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Document build improvements.  Perform <code>apt-get update</code> to ensure packages are up to date before installing.  Add <id>-p</id> to the repository <file>mkdir</file> so it won't fail if the directory already exists, handy for testing packages.</p>
+                    </release-item>
+                </release-development-list>
+            </release-doc-list>
 
             <release-test-list>
                 <release-feature-list>
@@ -31,6 +47,16 @@
                         <p>Use <proper>lcov</proper> for C unit test coverage reporting.  Switch from <proper>Devel::Cover</proper> because it would not report on branch coverage for reports converted from <proper>gcov</proper>.  Branch coverage is not complete, so for the time being errors will only be generated when statement coverage is not complete.  Coverage of unit tests is not displayed in the report unless they are incomplete for either statement or branch coverage.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Include VM type in <id>gcov</id> path to avoid conflicts between VMs with different architectures.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improve logic for smart builds to include version changes.</p>
+                    </release-item>
+                </release-development-list>
             </release-test-list>
         </release>
 

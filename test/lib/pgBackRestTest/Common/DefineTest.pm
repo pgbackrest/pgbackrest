@@ -177,6 +177,16 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 'io-handle',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/io/handle' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'exit',
                     &TESTDEF_TOTAL => 1,
                     &TESTDEF_C => true,
@@ -320,7 +330,7 @@ my $oTestDef =
                     },
                 },
                 {
-                    &TESTDEF_NAME => 'io-handle',
+                    &TESTDEF_NAME => 'io-handle-perl',
                     &TESTDEF_TOTAL => 6,
 
                     &TESTDEF_COVERAGE =>

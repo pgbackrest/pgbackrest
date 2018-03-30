@@ -37,6 +37,7 @@ IMPORTANT: Never call return from within any of the error-handling blocks.
 #ifndef ERROR_H
 #define ERROR_H
 
+#include <errno.h>
 #include <setjmp.h>
 
 #include "common/type.h"
@@ -124,8 +125,8 @@ error information to stderr.
 /***********************************************************************************************************************************
 Throw an error when a system call fails
 ***********************************************************************************************************************************/
-#define THROW_ON_SYS_ERROR(result, errorType, ...)                                                                                 \
-    errorInternalThrowSys(result, &errorType, __FILE__, __LINE__, __VA_ARGS__)
+#define THROW_SYS_ERROR(errorType, ...)                                                                                            \
+    errorInternalThrowSys(errno, &errorType, __FILE__, __LINE__, __VA_ARGS__)
 
 /***********************************************************************************************************************************
 Rethrow the current error
@@ -147,6 +148,6 @@ bool errorInternalProcess(bool catch);
 void errorInternalPropagate() __attribute__((__noreturn__));
 void errorInternalThrow(
     const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...) __attribute__((__noreturn__));
-void errorInternalThrowSys(int result, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...);
+void errorInternalThrowSys(int errNo, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...);
 
 #endif

@@ -58,6 +58,7 @@ SRCS = \
 	command/command.c \
 	common/error.c \
 	common/exit.c \
+	common/io/handle.c \
 	common/ini.c \
 	common/log.c \
 	common/memContext.c \
