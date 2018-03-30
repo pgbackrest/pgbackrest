@@ -929,7 +929,7 @@ testRun()
 
         // config default and config-include-path passed - but no config files in the include path
         //--------------------------------------------------------------------------------------------------------------------------
-        system(strPtr(strNewFmt("sudo rm -rf %s/*", strPtr(configIncludePath))));
+        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm -rf %s/*", strPtr(configIncludePath)))), 0, "remove all include files");
 
         parseOptionConfig.found = false;
         parseOptionConfig.source = cfgSourceDefault;
