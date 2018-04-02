@@ -64,6 +64,8 @@ General Options:
 compress=n [default=3]
   --config                  pgBackRest configuration file
 [default=/etc/pgbackrest.conf]
+  --config-include-path     path to additional pgBackRest configuration files
+[default=/etc/pgbackrest.d]
   --lock-path               path where lock files are stored
 [default=/tmp/pgbackrest]
   --protocol-timeout        protocol timeout [default=1830]
@@ -160,6 +162,8 @@ General Options:
 compress=n [default=3]
   --config                  pgBackRest configuration file
 [default=/etc/pgbackrest.conf]
+  --config-include-path     path to additional pgBackRest configuration files
+[default=/etc/pgbackrest.d]
   --db-timeout              database query timeout [default=1800]
   --neutral-umask           use a neutral umask [default=y]
   --protocol-timeout        protocol timeout [default=1830]
