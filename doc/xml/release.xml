@@ -40,10 +40,20 @@
                     <release-item>
                         <p>Start work on C handle io object and use it to output help.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <code>ASSERT()</code> that is preserved in production builds.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
             <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <p>Remove documentation describing <code>info --output=json</code> as experimental.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Document build improvements.  Perform <code>apt-get update</code> to ensure packages are up to date before installing.  Add <id>-p</id> to the repository <file>mkdir</file> so it won't fail if the directory already exists, handy for testing packages.</p>

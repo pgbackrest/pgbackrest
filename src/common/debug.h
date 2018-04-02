@@ -15,15 +15,21 @@ NDEBUG indicates to C library routines that debugging is off -- set a more reada
 
 /***********************************************************************************************************************************
 Assert Macros
-
-Used for assertions that should only be run when debugging.  Ideal for conditions that are not likely to happen in production but
-could occur during development.
 ***********************************************************************************************************************************/
+// For very important asserts that are shipped with the production code.
+#define ASSERT(condition)                                                                                                          \
+{                                                                                                                                  \
+    if (!(condition))                                                                                                              \
+        THROW(AssertError, "assertion '%s' failed", #condition);                                                                   \
+}
+
+// Used for assertions that should only be run when debugging.  Ideal for conditions that are not likely to happen in production but
+// could occur during development.
 #ifdef DEBUG
     #define ASSERT_DEBUG(condition)                                                                                                \
     {                                                                                                                              \
         if (!(condition))                                                                                                          \
-            THROW(AssertError, "assertion '%s' failed", #condition);                                                               \
+            THROW(AssertError, "debug assertion '%s' failed", #condition);                                                         \
     }
 #else
     #define ASSERT_DEBUG(condition)

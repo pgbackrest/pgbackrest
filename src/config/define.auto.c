@@ -100,8 +100,8 @@ static ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LI
             "The info command operates on a single stanza or all stanzas. Text output is the default and gives a human-readable "
                 "summary of backups for the stanza(s) requested. This format is subject to change with any release.\n"
             "\n"
-            "For machine-readable output use --output=json. The JSON output contains far more information than the text output, "
-                "however this feature is currently experimental so the format may change between versions."
+            "For machine-readable output use --output=json. The JSON output contains far more information than the text output and "
+                "is kept stable unless a bug is found."
         )
     )
 

@@ -49,8 +49,7 @@ default and gives a human-readable summary of backups for the stanza(s)
 requested. This format is subject to change with any release.
 
 For machine-readable output use --output=json. The JSON output contains far
-more information than the text output, however this feature is currently
-experimental so the format may change between versions.
+more information than the text output and is kept stable unless a bug is found.
 
 Command Options:
 
