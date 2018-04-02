@@ -68,9 +68,11 @@ optionFind(const String *option)
 }
 
 /***********************************************************************************************************************************
-Load the configuration file(s). MEMCONTEXT will be the parent. Passing defaults for better testing.
+Load the configuration file(s)
 
-RULES
+The parent mem context is used. Defaults are passed to make testing easier.
+
+Rules:
 - config and config-include-path are default. In this case, the config file will be loaded, if it exists, and *.conf files in the
   config-include-path will be appended, if they exist. A missing/empty dir will be ignored.
 - config is specified. Only the specified config file will be loaded. The default config-include-path will be ignored.
@@ -81,7 +83,8 @@ RULES
 - If --no-config is specified and --config-include-path IS NOT specified then no config will be loaded.
 ***********************************************************************************************************************************/
 static String *
-loadConfigFile(const ParseOption *configOpt, const ParseOption *configIncludeOpt, const String *configOptDefault,
+loadConfigFile(
+    const ParseOption *configOpt, const ParseOption *configIncludeOpt, const String *configOptDefault,
     const String *configOptIncludePathDefault)
 {
     bool loadConfig = true;
@@ -110,6 +113,7 @@ loadConfigFile(const ParseOption *configOpt, const ParseOption *configIncludeOpt
 
     String *result = NULL;
 
+    // Load the main config file
     if (loadConfig)
     {
         const String *configFileName = NULL;
@@ -128,6 +132,7 @@ loadConfigFile(const ParseOption *configOpt, const ParseOption *configIncludeOpt
             result = strNewBuf(buffer);
     }
 
+    // Load *.conf files from the include directory
     if (loadConfigInclude)
     {
         if (result != NULL)
@@ -145,7 +150,7 @@ loadConfigFile(const ParseOption *configOpt, const ParseOption *configIncludeOpt
         else
             configIncludePath = configOptIncludePathDefault;
 
-        // Get a list of conf files from the specified directory -don't ignore missing if the option was passed on the command line
+        // Get a list of conf files from the specified path -- don't ignore missing if the option was passed on the command line
         StringList *list = storageList(storageLocal(), configIncludePath, strNew(".+\\.conf$"), !configIncludeRequired);
 
         // If conf files are found, then add them to the config string
@@ -163,18 +168,20 @@ loadConfigFile(const ParseOption *configOpt, const ParseOption *configIncludeOpt
                     // Convert the contents of the file buffer to a string object
                     String *configPart = strNewBuf(fileBuffer);
 
-                    // Validate the file by parsing it as an Ini object. If the file is not properly formed, en error will occur.
+                    // Validate the file by parsing it as an Ini object. If the file is not properly formed, an error will occur.
                     if (strSize(configPart) > 0)
                     {
                         Ini *configPartIni = iniNew();
                         iniParse(configPartIni, configPart);
 
+                        // Create the result config file
                         if (result == NULL)
                             result = strNew("");
+                        // Else add an LF in case the previous file did not end with one
                         else
                             strCat(result, "\n");
 
-                        // Make sure there is a line feed at the end before appending it to the final config
+                        // Add the config part to the result config file
                         strCat(result, strPtr(configPart));
                     }
                 }
