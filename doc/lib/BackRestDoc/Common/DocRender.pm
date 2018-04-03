@@ -773,8 +773,7 @@ sub processTag
 
         $strBuffer .= $strStart;
 
-        if ($strTag eq 'p' || $strTag eq 'title' || $strTag eq 'li' || $strTag eq 'code-block' || $strTag eq 'summary' ||
-            $strTag eq 'b' || $strTag eq 'i' || $strTag eq 'proper')
+        if ($strTag eq 'p' || $strTag eq 'title' || $strTag eq 'li' || $strTag eq 'code-block' || $strTag eq 'summary')
         {
             $strBuffer .= $self->processText($oTag);
         }

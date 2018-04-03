@@ -558,10 +558,10 @@
 
             <p>There are multiple ways the <backrest/> configuration files can be loaded:</p>
             <list>
-                <list-item><b><br-option>config</br-option> and <br-option>config-include-path</br-option> are default:</b> The default config file will be loaded, if it exists, and <file>*.conf</file> files in the default config include path will be appended, if they exist.</list-item>
-                <list-item><b><br-option>config</br-option> option is specified:</b> Only the specified config file will be loaded.</list-item>
-                <list-item><b><br-option>config-include-path</br-option> is specified:</b> Only <file>*.conf</file> files in the config include path will be loaded.</list-item>
-                <list-item><b><br-option>config</br-option> and <br-option>config-include-path</br-option> are specified:</b> Using the user-specified values, the config file will be loaded, if it exists, and <file>*.conf</file> files in the config include path will be appended, if they exist.</list-item>
+                <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are default: the default config file will be loaded, if it exists, and <file>*.conf</file> files in the default config include path will be appended, if they exist.</list-item>
+                <list-item><br-option>config</br-option> option is specified: only the specified config file will be loaded.</list-item>
+                <list-item><br-option>config-include-path</br-option> is specified: only <file>*.conf</file> files in the config include path will be loaded.</list-item>
+                <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are specified: using the user-specified values, the config file will be loaded, if it exists, and <file>*.conf</file> files in the config include path will be appended, if they exist.</list-item>
             </list>
 
             <p>The files are concatenated as if they were one big file; order doesn't matter, but there is precedence based on sections. The precedence is:</p>
