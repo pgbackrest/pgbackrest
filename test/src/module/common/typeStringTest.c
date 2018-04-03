@@ -39,12 +39,17 @@ testRun()
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strBase()"))
+    if (testBegin("strBase() and strPath()"))
     {
         TEST_RESULT_STR(strPtr(strBase(strNew(""))), "", "empty string");
         TEST_RESULT_STR(strPtr(strBase(strNew("/"))), "", "/ only");
         TEST_RESULT_STR(strPtr(strBase(strNew("/file"))), "file", "root file");
         TEST_RESULT_STR(strPtr(strBase(strNew("/dir1/dir2/file"))), "file", "subdirectory file");
+
+        TEST_RESULT_STR(strPtr(strPath(strNew(""))), "", "empty string");
+        TEST_RESULT_STR(strPtr(strPath(strNew("/"))), "/", "/ only");
+        TEST_RESULT_STR(strPtr(strPath(strNew("/file"))), "/", "root path");
+        TEST_RESULT_STR(strPtr(strPath(strNew("/dir1/dir2/file"))), "/dir1/dir2", "subdirectory file");
     }
 
     // *****************************************************************************************************************************

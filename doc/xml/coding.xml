@@ -45,7 +45,7 @@
 
                 <p><code>#define</code> constants should be all caps with <id>_</id> separators.</p>
 
-                <code-block>
+                <code-block type="c">
 #DEFINE MY_CONSTANT "STRING"
                 </code-block>
 
@@ -57,7 +57,7 @@
 
                 <p>Enum elements follow the same case rules as variables. They are strongly typed so this shouldn't present any confusion.</p>
 
-                <code-block>
+                <code-block type="c">
 typedef enum
 {
     cipherModeEncrypt,
@@ -75,14 +75,14 @@ typedef enum
 
                 <p>Macros should follow the format:</p>
 
-                <code-block>
+                <code-block type="c">
 #define MACRO(paramName1, paramName2)   \
     &lt;code&gt;
                 </code-block>
 
                 <p>If the macro defines a block it should look like:</p>
 
-                <code-block>
+                <code-block type="c">
 #define MACRO_2(paramName1, paramName2) \
 {                                       \
     &lt;code&gt;                              \
@@ -92,6 +92,8 @@ typedef enum
                 <p>Continuation characters should be aligned at column 132 (unlike the examples above that have been shortened for display purposes).</p>
 
                 <p>To avoid conflicts, variables in a macro will be named <id>[macro name]_[var name]</id>, e.g. <id>TEST_RESULT_resultExpected</id>. Variables that need to be accessed in wrapped code should be provided accessor macros.</p>
+
+                <p><link section="/language-elements/variadic-functions">Variadic functions</link> are an exception to the capitalization rule.</p>
             </section>
 
             <section id="begin-end">
@@ -117,14 +119,14 @@ typedef enum
 
                 <p>No braces needed:</p>
 
-                <code-block>
+                <code-block type="c">
 if (condition)
     return value;
                 </code-block>
 
                 <p>Braces needed:</p>
 
-                <code-block>
+                <code-block type="c">
 if (conditionThatUsesEntireLine1 &amp;&amp;
     conditionThatUsesEntireLine2)
 {
@@ -132,7 +134,7 @@ if (conditionThatUsesEntireLine1 &amp;&amp;
 }
                 </code-block>
 
-                <code-block>
+                <code-block type="c">
 if (condition)
 {
     return
@@ -166,6 +168,46 @@ if (condition)
 
             <p>Object-oriented programming is used extensively.  The object pointer is always referred to as <id>this</id>.</p>
         </section>
+
+        <section id="variadic-functions">
+            <title>Variadic Functions</title>
+
+            <p>Variadic functions can take a variable number of parameters.  While the <code>printf()</code> pattern is variadic, it is not very flexible in terms of optional parameters given in any order.</p>
+
+            <p>This project implements variadic functions using macros (which are exempt from the normal macro rule of being all caps).  A typical variadic function definition:</p>
+
+            <code-block type="c">
+typedef struct StoragePathCreateParam
+{
+    bool errorOnExists;
+    bool noParentCreate;
+    mode_t mode;
+} StoragePathCreateParam;
+
+#define storagePathCreateP(this, pathExp, ...)                              \
+    storagePathCreate(this, pathExp, (StoragePathCreateParam){__VA_ARGS__})
+#define storagePathCreateNP(this, pathExp)                                  \
+    storagePathCreate(this, pathExp, (StoragePathCreateParam){0})
+
+void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
+            </code-block>
+
+            <p>Continuation characters should be aligned at column 132 (unlike the example above that has been shortened for display purposes).</p>
+
+            <p>This function can be called without variable parameters:</p>
+
+            <code-block type="c">
+storagePathCreateNP(storageLocal(), "/tmp/pgbackrest");
+            </code-block>
+
+            <p>Or with variable parameters:</p>
+
+            <code-block type="c">
+storagePathCreateP(storageLocal(), "/tmp/pgbackrest", .errorOnExists = true, .mode = 0777);
+            </code-block>
+
+            <p>If the majority of functions in a module or object are variadic it is best to provide macros for all functions even if they do not have variable parameters.  Do not use the base function when variadic macros exist.</p>
+        </section>
     </section>
 
     <section id="testing">
@@ -179,7 +221,7 @@ if (condition)
 
                 <p>The <id>uncoverable</id> keyword marks code that can never be covered.  For instance, a function that never returns because it always throws a error.  Uncoverable code should be rare to non-existent outside the common libraries and test code.</p>
 
-                <code-block>
+                <code-block type="c">
 }   // {uncoverable - function throws error so never returns}
                 </code-block>
 
@@ -191,7 +233,7 @@ if (condition)
 
                 <p>Marks code that is not tested for one reason or another.  This should be kept to a minimum and an excuse given for each instance.</p>
 
-                <code-block>
+                <code-block type="c">
 exit(EXIT_FAILURE); // {uncovered - test harness does not support non-zero exit}
                 </code-block>
 

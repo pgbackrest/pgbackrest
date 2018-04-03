@@ -31,7 +31,7 @@ Type names use camel case with the first letter upper case:
 **#define Constants**
 
 `#define` constants should be all caps with `_` separators.
-```
+```c
 #DEFINE MY_CONSTANT "STRING"
 ```
 The value should be aligned at column 69 whenever possible.
@@ -41,7 +41,7 @@ This type of constant should mostly be used for strings. Use enums whenever poss
 **Enum Constants**
 
 Enum elements follow the same case rules as variables. They are strongly typed so this shouldn't present any confusion.
-```
+```c
 typedef enum
 {
     cipherModeEncrypt,
@@ -55,12 +55,12 @@ Note the comma after the last element. This reduces diff churn when new elements
 Macro names should be upper-case with underscores between words. Macros (except simple constants) should be avoided whenever possible as they make code less clear and test coverage harder to measure.
 
 Macros should follow the format:
-```
+```c
 #define MACRO(paramName1, paramName2)   \
     <code>
 ```
 If the macro defines a block it should look like:
-```
+```c
 #define MACRO_2(paramName1, paramName2) \
 {                                       \
     <code>                              \
@@ -69,6 +69,8 @@ If the macro defines a block it should look like:
 Continuation characters should be aligned at column 132 (unlike the examples above that have been shortened for display purposes).
 
 To avoid conflicts, variables in a macro will be named `[macro name]_[var name]`, e.g. `TEST_RESULT_resultExpected`. Variables that need to be accessed in wrapped code should be provided accessor macros.
+
+[Variadic functions](#variadic-functions) are an exception to the capitalization rule.
 
 #### Begin / End
 
@@ -85,19 +87,19 @@ Use `New` / `Free` for constructors and destructors rather than `Create` / `Dest
 C allows braces to be excluded for a single statement. However, braces should be used when the control statement (if, while, etc.) spans more than one line or the statement to be executed spans more than one line.
 
 No braces needed:
-```
+```c
 if (condition)
     return value;
 ```
 Braces needed:
-```
+```c
 if (conditionThatUsesEntireLine1 &&
     conditionThatUsesEntireLine2)
 {
     return value;
 }
 ```
-```
+```c
 if (condition)
 {
     return
@@ -122,6 +124,38 @@ Don't use a macro when a function could be used instead. Macros make it hard to 
 
 Object-oriented programming is used extensively. The object pointer is always referred to as `this`.
 
+### Variadic Functions
+
+Variadic functions can take a variable number of parameters. While the `printf()` pattern is variadic, it is not very flexible in terms of optional parameters given in any order.
+
+This project implements variadic functions using macros (which are exempt from the normal macro rule of being all caps). A typical variadic function definition:
+```c
+typedef struct StoragePathCreateParam
+{
+    bool errorOnExists;
+    bool noParentCreate;
+    mode_t mode;
+} StoragePathCreateParam;
+
+#define storagePathCreateP(this, pathExp, ...)                              \
+    storagePathCreate(this, pathExp, (StoragePathCreateParam){__VA_ARGS__})
+#define storagePathCreateNP(this, pathExp)                                  \
+    storagePathCreate(this, pathExp, (StoragePathCreateParam){0})
+
+void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
+```
+Continuation characters should be aligned at column 132 (unlike the example above that has been shortened for display purposes).
+
+This function can be called without variable parameters:
+```c
+storagePathCreateNP(storageLocal(), "/tmp/pgbackrest");
+```
+Or with variable parameters:
+```c
+storagePathCreateP(storageLocal(), "/tmp/pgbackrest", .errorOnExists = true, .mode = 0777);
+```
+If the majority of functions in a module or object are variadic it is best to provide macros for all functions even if they do not have variable parameters. Do not use the base function when variadic macros exist.
+
 ## Testing
 
 ### Uncoverable/Uncovered Code
@@ -129,7 +163,7 @@ Object-oriented programming is used extensively. The object pointer is always re
 #### Uncoverable Code
 
 The `uncoverable` keyword marks code that can never be covered. For instance, a function that never returns because it always throws a error. Uncoverable code should be rare to non-existent outside the common libraries and test code.
-```
+```c
 }   // {uncoverable - function throws error so never returns}
 ```
 Subsequent code that is uncoverable for the same reason is marked with `// {+uncoverable}`.
@@ -137,7 +171,7 @@ Subsequent code that is uncoverable for the same reason is marked with `// {+unc
 #### Uncovered Code
 
 Marks code that is not tested for one reason or another. This should be kept to a minimum and an excuse given for each instance.
-```
+```c
 exit(EXIT_FAILURE); // {uncovered - test harness does not support non-zero exit}
 ```
 Subsequent code that is uncovered for the same reason is marked with `// {+uncovered}`.

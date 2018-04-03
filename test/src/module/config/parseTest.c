@@ -323,7 +323,7 @@ testRun()
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
-        storagePut(storageLocal(), configFile, bufNewStr(strNew(
+        storagePutNP(storageOpenWriteNP(storageLocalWrite(), configFile), bufNewStr(strNew(
             "[global]\n"
             "compress=bogus\n"
         )));
@@ -338,7 +338,7 @@ testRun()
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
-        storagePut(storageLocal(), configFile, bufNewStr(strNew(
+        storagePutNP(storageOpenWriteNP(storageLocalWrite(), configFile), bufNewStr(strNew(
             "[global]\n"
             "compress=\n"
         )));
@@ -354,7 +354,7 @@ testRun()
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
-        storagePut(storageLocal(), configFile, bufNewStr(strNew(
+        storagePutNP(storageOpenWriteNP(storageLocalWrite(), configFile), bufNewStr(strNew(
             "[db]\n"
             "pg1-path=/path/to/db\n"
             "db-path=/also/path/to/db\n"
@@ -371,7 +371,7 @@ testRun()
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
-        storagePut(storageLocal(), configFile, bufNewStr(strNew(
+        storagePutNP(storageOpenWriteNP(storageLocalWrite(), configFile), bufNewStr(strNew(
             "[db]\n"
             "pg1-path=/path/to/db\n"
             "pg1-path=/also/path/to/db\n"
@@ -473,7 +473,7 @@ testRun()
         strLstAdd(argList, strNew("--reset-backup-standby"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
-        storagePut(storageLocal(), configFile, bufNewStr(strNew(
+        storagePutNP(storageOpenWriteNP(storageLocalWrite(), configFile), bufNewStr(strNew(
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n"
@@ -536,7 +536,7 @@ testRun()
         strLstAdd(argList, strNew("--archive-queue-max=4503599627370496"));
         strLstAdd(argList, strNew("archive-push"));
 
-        storagePut(storageLocal(), configFile, bufNewStr(strNew(
+        storagePutNP(storageOpenWriteNP(storageLocalWrite(), configFile), bufNewStr(strNew(
             "[global]\n"
             "spool-path=/path/to/spool\n"
         )));
@@ -607,7 +607,7 @@ testRun()
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
 
-        storagePut(storageLocal(), configFile, bufNewStr(strNew(
+        storagePutNP(storageOpenWriteNP(storageLocalWrite(), configFile), bufNewStr(strNew(
             "[global:restore]\n"
             "recovery-option=f=g\n"
             "recovery-option=hijk=l\n"
@@ -629,7 +629,7 @@ testRun()
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew("info"));
 
-        storagePut(storageLocal(), configFile, bufNewStr(strNew(
+        storagePutNP(storageOpenWriteNP(storageLocalWrite(), configFile), bufNewStr(strNew(
             "[global]\n"
             "repo1-path=/path/to/repo\n"
             "\n"

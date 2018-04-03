@@ -41,7 +41,7 @@ After the comparison the log is cleared so the next result can be compared.
 void
 testLogResult(const char *expected)
 {
-    String *actual = strTrim(strNewBuf(storageGet(storageLocal(), stdoutFile, false)));
+    String *actual = strTrim(strNewBuf(storageGetNP(storageOpenReadNP(storageLocal(), stdoutFile))));
 
     if (!strEqZ(actual, expected))
         THROW(AssertError, "\n\nexpected log:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expected, strPtr(actual));
@@ -58,7 +58,7 @@ After the comparison the log is cleared so the next result can be compared.
 void
 testLogErrResult(const char *expected)
 {
-    String *actual = strTrim(strNewBuf(storageGet(storageLocal(), stderrFile, false)));
+    String *actual = strTrim(strNewBuf(storageGetNP(storageOpenReadNP(storageLocal(), stderrFile))));
 
     if (!strEqZ(actual, expected))
         THROW(AssertError, "\n\nexpected error log:\n\n%s\n\nbut actual error log was:\n\n%s\n\n", expected, strPtr(actual));
@@ -73,12 +73,12 @@ Make sure nothing is left in the log after all tests have completed
 void
 testLogFinal()
 {
-    String *actual = strTrim(strNewBuf(storageGet(storageLocal(), stdoutFile, false)));
+    String *actual = strTrim(strNewBuf(storageGetNP(storageOpenReadNP(storageLocal(), stdoutFile))));
 
     if (!strEqZ(actual, ""))
         THROW(AssertError, "\n\nexpected log to be empty but actual log was:\n\n%s\n\n", strPtr(actual));
 
-    actual = strTrim(strNewBuf(storageGet(storageLocal(), stderrFile, false)));
+    actual = strTrim(strNewBuf(storageGetNP(storageOpenReadNP(storageLocal(), stderrFile))));
 
     if (!strEqZ(actual, ""))
         THROW(AssertError, "\n\nexpected error log to be empty but actual error log was:\n\n%s\n\n", strPtr(actual));

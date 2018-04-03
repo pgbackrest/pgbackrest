@@ -102,5 +102,6 @@ Free the wait
 void
 waitFree(Wait *this)
 {
-    memContextFree(this->memContext);
+    if (this != NULL)
+        memContextFree(this->memContext);
 }

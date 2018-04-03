@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Storage Helper
 ***********************************************************************************************************************************/
-#include "string.h"
+#include <string.h>
 
 #include "common/memContext.h"
 #include "config/config.h"
@@ -16,6 +16,7 @@ static MemContext *memContextStorageHelper = NULL;
 Cache for local storage
 ***********************************************************************************************************************************/
 static Storage *storageLocalData = NULL;
+static Storage *storageLocalWriteData = NULL;
 
 /***********************************************************************************************************************************
 Cache for spool storage
@@ -51,12 +52,34 @@ storageLocal()
     {
         MEM_CONTEXT_BEGIN(memContextStorageHelper)
         {
-            storageLocalData = storageNew(strNew("/"), STORAGE_PATH_MODE_DEFAULT, 65536, NULL);
+            storageLocalData = storageNewNP(strNew("/"));
         }
         MEM_CONTEXT_END();
     }
 
     return storageLocalData;
+}
+
+/***********************************************************************************************************************************
+Get a writable local storage object
+
+This should be used very sparingly.  If writes are not needed then always use storageLocal() or a specific storage object instead.
+***********************************************************************************************************************************/
+const Storage *
+storageLocalWrite()
+{
+    storageHelperInit();
+
+    if (storageLocalWriteData == NULL)
+    {
+        MEM_CONTEXT_BEGIN(memContextStorageHelper)
+        {
+            storageLocalWriteData = storageNewP(strNew("/"), .write = true);
+        }
+        MEM_CONTEXT_END();
+    }
+
+    return storageLocalWriteData;
 }
 
 /***********************************************************************************************************************************
@@ -86,14 +109,16 @@ Get a spool storage object
 const Storage *
 storageSpool()
 {
+    storageHelperInit();
+
     if (storageSpoolData == NULL)
     {
         MEM_CONTEXT_BEGIN(memContextStorageHelper)
         {
             storageSpoolStanza = strDup(cfgOptionStr(cfgOptStanza));
-            storageSpoolData = storageNew(
-                cfgOptionStr(cfgOptSpoolPath), STORAGE_PATH_MODE_DEFAULT, (size_t)cfgOptionInt(cfgOptBufferSize),
-                (StoragePathExpressionCallback)storageSpoolPathExpression);
+            storageSpoolData = storageNewP(
+                cfgOptionStr(cfgOptSpoolPath), .bufferSize = (size_t)cfgOptionInt(cfgOptBufferSize),
+                .pathExpressionFunction = storageSpoolPathExpression, .write = true);
         }
         MEM_CONTEXT_END();
     }

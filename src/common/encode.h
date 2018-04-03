@@ -3,8 +3,8 @@ Binary to String Encode/Decode
 
 These high-level functions are preferred to the low-level functions for each encoding type in the encode subdirectory.
 ***********************************************************************************************************************************/
-#ifndef ENCODE_H
-#define ENCODE_H
+#ifndef COMMON_ENCODE_H
+#define COMMON_ENCODE_H
 
 #include "common/type.h"
 

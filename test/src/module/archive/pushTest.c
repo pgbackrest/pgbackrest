@@ -38,49 +38,55 @@ testRun()
         TEST_RESULT_BOOL(walStatus(segment, false), false, "status file not present");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePut(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment)), bufNewStr(strNew(BOGUS_STR)));
+        storagePutNP(
+            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            bufNewStr(strNew(BOGUS_STR)));
         TEST_ERROR(walStatus(segment, false), FormatError, "000000010000000100000001.ok content must have at least two lines");
 
-        storagePut(
-            storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment)), bufNewStr(strNew(BOGUS_STR "\n")));
+        storagePutNP(
+            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            bufNewStr(strNew(BOGUS_STR "\n")));
         TEST_ERROR(walStatus(segment, false), FormatError, "000000010000000100000001.ok message must be > 0");
 
-        storagePut(
-            storageSpool(),
-            strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment)), bufNewStr(strNew(BOGUS_STR "\nmessage")));
+        storagePutNP(
+            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            bufNewStr(strNew(BOGUS_STR "\nmessage")));
         TEST_ERROR(walStatus(segment, false), FormatError, "unable to convert str 'BOGUS' to int");
 
-        storagePut(
-            storageSpool(),
-            strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment)), bufNewStr(strNew("0\nwarning")));
+        storagePutNP(
+            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            bufNewStr(strNew("0\nwarning")));
         TEST_RESULT_BOOL(walStatus(segment, false), true, "ok file with warning");
         testLogResult("P00   WARN: warning");
 
-        storagePut(
-            storageSpool(),
-            strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment)), bufNewStr(strNew("25\nerror")));
+        storagePutNP(
+            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            bufNewStr(strNew("25\nerror")));
         TEST_RESULT_BOOL(walStatus(segment, false), true, "error status renamed to ok");
         testLogResult(
             "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePut(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment)), bufNewStr(strNew("")));
+        storagePutNP(
+            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
+            bufNewStr(strNew("")));
         TEST_ERROR(
             walStatus(segment, false), AssertError,
             strPtr(
                 strNewFmt(
                     "multiple status files found in '%s/archive/db/out' for WAL segment '000000010000000100000001'", testPath())));
 
-        unlink(strPtr(storagePath(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment)))));
+        unlink(strPtr(storagePathNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment)))));
         TEST_ERROR(walStatus(segment, true), AssertError, "status file '000000010000000100000001.error' has no content");
 
-        storagePut(
-            storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment)), bufNewStr(strNew("25\nmessage")));
+        storagePutNP(
+            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
+            bufNewStr(strNew("25\nmessage")));
         TEST_ERROR(walStatus(segment, true), AssertError, "message");
 
         TEST_RESULT_BOOL(walStatus(segment, false), false, "suppress error");
 
-        unlink(strPtr(storagePath(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment)))));
+        unlink(strPtr(storagePathNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment)))));
     }
 
     // *****************************************************************************************************************************
@@ -136,12 +142,12 @@ testRun()
 
         // Write out a bogus .error file to make sure it is ignored on the first loop
         // -------------------------------------------------------------------------------------------------------------------------
-        String *errorFile = storagePath(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error"));
+        String *errorFile = storagePathNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error"));
 
         mkdir(strPtr(strNewFmt("%s/archive", testPath())), 0750);
         mkdir(strPtr(strNewFmt("%s/archive/db", testPath())), 0750);
         mkdir(strPtr(strNewFmt("%s/archive/db/out", testPath())), 0750);
-        storagePut(storageSpool(), errorFile, bufNewStr(strNew("25\n" BOGUS_STR)));
+        storagePutNP(storageOpenWriteNP(storageSpool(), errorFile), bufNewStr(strNew("25\n" BOGUS_STR)));
 
         TEST_ERROR(cmdArchivePush(), AssertError, BOGUS_STR);
 
@@ -149,7 +155,9 @@ testRun()
 
         // Write out a valid ok file and test for success
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePut(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok"), bufNewStr(strNew("")));
+        storagePutNP(
+            storageOpenWriteNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok")),
+            bufNewStr(strNew("")));
 
         TEST_RESULT_VOID(cmdArchivePush(), "successful push");
         testLogResult("P00   INFO: pushed WAL segment 000000010000000100000001 asynchronously");

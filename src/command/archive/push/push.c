@@ -28,8 +28,8 @@ walStatus(const String *walSegment, bool confessOnError)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StringList *fileList = storageList(
-            storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT), strNewFmt("^%s\\.(ok|error)$", strPtr(walSegment)), true);
+        StringList *fileList = storageListP(
+            storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT), .expression = strNewFmt("^%s\\.(ok|error)$", strPtr(walSegment)));
 
         if (fileList != NULL && strLstSize(fileList) > 0)
         {
@@ -38,14 +38,14 @@ walStatus(const String *walSegment, bool confessOnError)
             {
                 THROW(
                     AssertError, "multiple status files found in '%s' for WAL segment '%s'",
-                    strPtr(storagePath(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT))), strPtr(walSegment));
+                    strPtr(storagePathNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT))), strPtr(walSegment));
             }
 
             // Get the status file content
             const String *statusFile = strLstGet(fileList, 0);
 
             String *content = strNewBuf(
-                storageGet(storageSpool(), strNewFmt("%s/%s", STORAGE_SPOOL_ARCHIVE_OUT, strPtr(statusFile)), false));
+                storageGetNP(storageOpenReadNP(storageSpool(), strNewFmt("%s/%s", STORAGE_SPOOL_ARCHIVE_OUT, strPtr(statusFile)))));
 
             // Get the code and message if the file has content
             int code = 0;

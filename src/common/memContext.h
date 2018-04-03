@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
 Memory Context Manager
 ***********************************************************************************************************************************/
-#ifndef MEM_CONTEXT_H
-#define MEM_CONTEXT_H
+#ifndef COMMON_MEMCONTEXT_H
+#define COMMON_MEMCONTEXT_H
 
 #include "common/error.h"
 #include "common/type.h"
