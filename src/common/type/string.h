@@ -33,6 +33,7 @@ bool strEq(const String *this, const String *compare);
 bool strEqZ(const String *this, const char *compare);
 String *strFirstUpper(String *this);
 String *strFirstLower(String *this);
+String *strPath(const String *this);
 const char *strPtr(const String *this);
 size_t strSize(const String *this);
 String *strTrim(String *this);

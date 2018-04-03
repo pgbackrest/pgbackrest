@@ -4,8 +4,8 @@ Command and Option Configuration
 This module serves as a database for the configuration options.  The configuration rules reside in config/define.c and
 config/parse.c sets the command and options and determines which options are valid for a command.
 ***********************************************************************************************************************************/
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef CONFIG_CONFIG_H
+#define CONFIG_CONFIG_H
 
 #include "common/log.h"
 #include "common/type.h"

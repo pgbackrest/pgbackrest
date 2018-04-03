@@ -110,7 +110,7 @@ strNewN(const char *string, size_t size)
 }
 
 /***********************************************************************************************************************************
-Return the file part of a string (i.e. everthing after the last / or the entire string if there is no /)
+Return the file part of a string (i.e. everything after the last / or the entire string if there is no /)
 ***********************************************************************************************************************************/
 String *
 strBase(const String *this)
@@ -290,6 +290,20 @@ strFirstLower(String *this)
         this->buffer[0] = (char)tolower(this->buffer[0]);
 
     return this;
+}
+
+/***********************************************************************************************************************************
+Return the path part of a string (i.e. everything before the last / or "" if there is no /)
+***********************************************************************************************************************************/
+String *
+strPath(const String *this)
+{
+    const char *end = this->buffer + this->size;
+
+    while (end > this->buffer && *(end - 1) != '/')
+        end--;
+
+    return strNewN(this->buffer, end - this->buffer <= 1 ? (size_t)(end - this->buffer) : (size_t)(end - this->buffer - 1));
 }
 
 /***********************************************************************************************************************************

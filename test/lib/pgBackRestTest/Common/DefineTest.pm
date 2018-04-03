@@ -615,8 +615,18 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 'file',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'storage/file' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'storage',
-                    &TESTDEF_TOTAL => 4,
+                    &TESTDEF_TOTAL => 10,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>
@@ -626,7 +636,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'helper',
-                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_TOTAL => 3,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>

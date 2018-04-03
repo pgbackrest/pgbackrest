@@ -125,7 +125,7 @@ cfgFileLoad(
             configFileName = configOptDefault;
 
         // Load the config file
-        Buffer *buffer = storageGet(storageLocal(), configFileName, !configRequired);
+        Buffer *buffer = storageGetNP(storageOpenReadP(storageLocal(), configFileName, .ignoreMissing = !configRequired));
 
         // Convert the contents of the file buffer to the config string object
         if (buffer != NULL)
@@ -150,8 +150,9 @@ cfgFileLoad(
         else
             configIncludePath = configOptIncludePathDefault;
 
-        // Get a list of conf files from the specified path -- don't ignore missing if the option was passed on the command line
-        StringList *list = storageList(storageLocal(), configIncludePath, strNew(".+\\.conf$"), !configIncludeRequired);
+        // Get a list of conf files from the specified path -- error on missing if the option was passed on the command line
+        StringList *list = storageListP(
+            storageLocal(), configIncludePath, .expression = strNew(".+\\.conf$"), .errorOnMissing = configIncludeRequired);
 
         // If conf files are found, then add them to the config string
         if (list != NULL && strLstSize(list) > 0)
@@ -161,8 +162,10 @@ cfgFileLoad(
 
             for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
             {
-                Buffer *fileBuffer = storageGet(
-                    storageLocal(), strNewFmt("%s/%s", strPtr(configIncludePath), strPtr(strLstGet(list, listIdx))), false);
+                Buffer *fileBuffer = storageGetNP(
+                    storageOpenReadP(
+                        storageLocal(), strNewFmt("%s/%s", strPtr(configIncludePath), strPtr(strLstGet(list, listIdx))),
+                        .ignoreMissing = true));
 
                 if (fileBuffer != NULL) // {uncovered - NULL can only occur if file is missing after file list is retrieved}
                 {

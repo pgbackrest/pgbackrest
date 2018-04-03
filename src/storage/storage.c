@@ -6,11 +6,12 @@ Storage Manager
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 
+#include "common/debug.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "common/wait.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -18,49 +19,100 @@ Storage structure
 ***********************************************************************************************************************************/
 struct Storage
 {
-    const String *path;
-    int mode;
+    MemContext *memContext;
+    String *path;
+    mode_t modeFile;
+    mode_t modePath;
     size_t bufferSize;
+    bool write;
     StoragePathExpressionCallback pathExpressionFunction;
 };
 
 /***********************************************************************************************************************************
-Storage mem context
+Storage file data - holds the file handle.  This should eventually be moved to the Posix/CIFS driver.
 ***********************************************************************************************************************************/
-static MemContext *storageMemContext = NULL;
+typedef struct StorageFileDataPosix
+{
+    MemContext *memContext;
+    int handle;
+} StorageFileDataPosix;
+
+#define STORAGE_DATA(file)                                                                                                         \
+    ((StorageFileDataPosix *)storageFileData(file))
+
+/***********************************************************************************************************************************
+Debug Asserts
+***********************************************************************************************************************************/
+// Check that commands that write are not allowed unless the storage is writable
+#define ASSERT_STORAGE_ALLOWS_WRITE()                                                                                                             \
+    ASSERT(this->write == true)
 
 /***********************************************************************************************************************************
 New storage object
 ***********************************************************************************************************************************/
 Storage *
-storageNew(const String *path, int mode, size_t bufferSize, StoragePathExpressionCallback pathExpressionFunction)
+storageNew(const String *path, StorageNewParam param)
 {
-    Storage *result = NULL;
+    Storage *this = NULL;
 
     // Path is required
     if (path == NULL)
         THROW(AssertError, "storage base path cannot be null");
 
-    // If storage mem context has not been initialized yet
-    if (storageMemContext == NULL)
-    {
-        MEM_CONTEXT_BEGIN(memContextTop())
-        {
-            storageMemContext = memContextNew("storage");
-        }
-        MEM_CONTEXT_END();
-    }
-
     // Create the storage
-    MEM_CONTEXT_BEGIN(storageMemContext)
+    MEM_CONTEXT_NEW_BEGIN("Storage")
     {
-        result = (Storage *)memNew(sizeof(Storage));
-        result->path = strDup(path);
-        result->mode = mode;
-        result->bufferSize = bufferSize;
-        result->pathExpressionFunction = pathExpressionFunction;
+        this = (Storage *)memNew(sizeof(Storage));
+        this->memContext = MEM_CONTEXT_NEW();
+        this->path = strDup(path);
+        this->modeFile = param.modeFile == 0 ? STORAGE_FILE_MODE_DEFAULT : param.modeFile;
+        this->modePath = param.modePath == 0 ? STORAGE_PATH_MODE_DEFAULT : param.modePath;
+        this->bufferSize = param.bufferSize == 0 ? STORAGE_BUFFER_SIZE_DEFAULT : param.bufferSize;
+        this->write = param.write;
+        this->pathExpressionFunction = param.pathExpressionFunction;
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_NEW_END();
+
+    return this;
+}
+
+/***********************************************************************************************************************************
+Does a file/path exist?
+***********************************************************************************************************************************/
+bool
+storageExists(const Storage *this, const String *pathExp, StorageExistsParam param)
+{
+    bool result = false;
+
+    // Timeout can't be negative
+    ASSERT_DEBUG(param.timeout >= 0);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Build the path
+        String *path = storagePathNP(this, pathExp);
+
+        // Create Wait object of timeout > 0
+        Wait *wait = param.timeout != 0 ? waitNew(param.timeout) : NULL;
+
+        // Attempt to stat the file to determine if it exists
+        struct stat statFile;
+
+        do
+        {
+            // Any error other than entry not found should be reported
+            if (stat(strPtr(path), &statFile) == -1)
+            {
+                if (errno != ENOENT)
+                    THROW_SYS_ERROR(FileOpenError, "unable to stat '%s'", strPtr(path));
+            }
+            // Else found
+            else
+                result = true;
+        }
+        while (!result && wait != NULL && waitMore(wait));
+    }
+    MEM_CONTEXT_TEMP_END();
 
     return result;
 }
@@ -69,26 +121,14 @@ storageNew(const String *path, int mode, size_t bufferSize, StoragePathExpressio
 Read from storage into a buffer
 ***********************************************************************************************************************************/
 Buffer *
-storageGet(const Storage *storage, const String *fileExp, bool ignoreMissing)
+storageGet(const StorageFile *file)
 {
     Buffer volatile *result = NULL;
-    volatile int fileHandle = -1;
-    String *file = NULL;
 
-    TRY_BEGIN()
+    // Nothing to do unless a file was passed
+    if (file != NULL)
     {
-        // Build the path
-        file = storagePath(storage, fileExp);
-
-        // Open the file and handle errors
-        fileHandle = open(strPtr(file), O_RDONLY, storage->mode);
-
-        if (fileHandle == -1)
-        {
-            if (!ignoreMissing || errno != ENOENT)
-                THROW_SYS_ERROR(FileOpenError, "unable to open '%s' for read", strPtr(file));
-        }
-        else
+        TRY_BEGIN()
         {
             // Create result buffer with buffer size
             ssize_t actualBytes = 0;
@@ -98,17 +138,18 @@ storageGet(const Storage *storage, const String *fileExp, bool ignoreMissing)
             {
                 // Allocate the buffer before first read
                 if (result == NULL)
-                    result = bufNew(storage->bufferSize);
+                    result = bufNew(storageFileStorage(file)->bufferSize);
                 // Grow the buffer on subsequent reads
                 else
-                    bufResize((Buffer *)result, bufSize((Buffer *)result) + (size_t)storage->bufferSize);
+                    bufResize((Buffer *)result, bufSize((Buffer *)result) + (size_t)storageFileStorage(file)->bufferSize);
 
                 // Read and handle errors
-                actualBytes = read(fileHandle, bufPtr((Buffer *)result) + totalBytes, storage->bufferSize);
+                actualBytes = read(
+                    STORAGE_DATA(file)->handle, bufPtr((Buffer *)result) + totalBytes, storageFileStorage(file)->bufferSize);
 
                 // Error occurred during write
                 if (actualBytes == -1)
-                    THROW_SYS_ERROR(FileReadError, "unable to read '%s'", strPtr(file));
+                    THROW_SYS_ERROR(FileReadError, "unable to read '%s'", strPtr(storageFileName(file)));
 
                 // Track total bytes read
                 totalBytes += (size_t)actualBytes;
@@ -118,24 +159,20 @@ storageGet(const Storage *storage, const String *fileExp, bool ignoreMissing)
             // Resize buffer to total bytes read
             bufResize((Buffer *)result, totalBytes);
         }
-    }
-    CATCH_ANY()
-    {
-        // Free buffer on error if it was allocated
-        bufFree((Buffer *)result);
+        CATCH_ANY()
+        {
+            // Free buffer on error if it was allocated
+            bufFree((Buffer *)result);
 
-        RETHROW();
+            RETHROW();
+        }
+        FINALLY()
+        {
+            close(STORAGE_DATA(file)->handle);
+            storageFileFree(file);
+        }
+        TRY_END();
     }
-    FINALLY()
-    {
-        // Close file
-        if (fileHandle != -1)
-            close(fileHandle);
-
-        // Free file name
-        strFree(file);
-    }
-    TRY_END();
 
     return (Buffer *)result;
 }
@@ -144,7 +181,7 @@ storageGet(const Storage *storage, const String *fileExp, bool ignoreMissing)
 Get a list of files from a directory
 ***********************************************************************************************************************************/
 StringList *
-storageList(const Storage *storage, const String *pathExp, const String *expression, bool ignoreMissing)
+storageList(const Storage *this, const String *pathExp, StorageListParam param)
 {
     StringList *result = NULL;
 
@@ -155,7 +192,7 @@ storageList(const Storage *storage, const String *pathExp, const String *express
     TRY_BEGIN()
     {
         // Build the path
-        path = storagePath(storage, pathExp);
+        path = storagePathNP(this, pathExp);
 
         // Open the directory for read
         dir = opendir(strPtr(path));
@@ -163,14 +200,14 @@ storageList(const Storage *storage, const String *pathExp, const String *express
         // If the directory could not be opened process errors but ignore missing directories when specified
         if (!dir)
         {
-            if (!ignoreMissing || errno != ENOENT)
+            if (param.errorOnMissing || errno != ENOENT)
                 THROW_SYS_ERROR(PathOpenError, "unable to open directory '%s' for read", strPtr(path));
         }
         else
         {
             // Prepare regexp if an expression was passed
-            if (expression != NULL)
-                regExp = regExpNew(expression);
+            if (param.expression != NULL)
+                regExp = regExpNew(param.expression);
 
             // Create the string list now that we know the directory is valid
             result = strLstNew();
@@ -214,18 +251,106 @@ storageList(const Storage *storage, const String *pathExp, const String *express
     return result;
 }
 
+
+/***********************************************************************************************************************************
+Open a file for reading
+***********************************************************************************************************************************/
+StorageFile *
+storageOpenRead(const Storage *this, const String *fileExp, StorageOpenReadParam param)
+{
+    StorageFile *result = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("StorageFileRead")
+    {
+        String *fileName = storagePathNP(this, fileExp);
+        int fileHandle;
+
+        // Open the file and handle errors
+        fileHandle = open(strPtr(fileName), O_RDONLY, 0);
+
+        if (fileHandle == -1)
+        {
+            // Error unless ignore missing is specified
+            if (!param.ignoreMissing || errno != ENOENT)
+                THROW_SYS_ERROR(FileOpenError, "unable to open '%s' for read", strPtr(fileName));
+
+            // Free mem contexts if missing files are ignored
+            memContextSwitch(MEM_CONTEXT_OLD());
+            memContextFree(MEM_CONTEXT_NEW());
+        }
+        else
+        {
+            // Create the storage file and data
+            StorageFileDataPosix *data = NULL;
+
+            MEM_CONTEXT_NEW_BEGIN("StorageFileReadDataPosix")
+            {
+                data = memNew(sizeof(StorageFileDataPosix));
+                data->memContext = MEM_CONTEXT_NEW();
+                data->handle = fileHandle;
+            }
+            MEM_CONTEXT_NEW_END();
+
+            result = storageFileNew(this, fileName, storageFileTypeRead, data);
+        }
+    }
+    MEM_CONTEXT_NEW_END();
+
+    return result;
+}
+
+/***********************************************************************************************************************************
+Open a file for writing
+***********************************************************************************************************************************/
+StorageFile *
+storageOpenWrite(const Storage *this, const String *fileExp, StorageOpenWriteParam param)
+{
+    ASSERT_STORAGE_ALLOWS_WRITE();
+
+    StorageFile *result = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("StorageFileWrite")
+    {
+        String *fileName = storagePathNP(this, fileExp);
+        int fileHandle;
+
+        // Open the file and handle errors
+        fileHandle = open(
+            strPtr(fileName), O_CREAT | O_TRUNC | O_WRONLY, param.mode == 0 ? this->modeFile : param.mode);
+
+        if (fileHandle == -1)
+            THROW_SYS_ERROR(FileOpenError, "unable to open '%s' for write", strPtr(fileName));
+
+        // Create the storage file and data
+        StorageFileDataPosix *data = NULL;
+
+        MEM_CONTEXT_NEW_BEGIN("StorageFileReadDataPosix")
+        {
+            data = memNew(sizeof(StorageFileDataPosix));
+            data->memContext = MEM_CONTEXT_NEW();
+            data->handle = fileHandle;
+        }
+        MEM_CONTEXT_NEW_END();
+
+        result = storageFileNew(this, fileName, storageFileTypeWrite, data);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    return result;
+}
+
 /***********************************************************************************************************************************
 Get the absolute path in the storage
 ***********************************************************************************************************************************/
 String *
-storagePath(const Storage *storage, const String *pathExp)
+storagePath(const Storage *this, const String *pathExp)
 {
     String *result = NULL;
 
     // If there there is no path expression then return the base storage path
     if (pathExp == NULL)
     {
-        result = strDup(storage->path);
+        result = strDup(this->path);
     }
     else
     {
@@ -233,10 +358,13 @@ storagePath(const Storage *storage, const String *pathExp)
         if ((strPtr(pathExp))[0] == '/')
         {
             // Make sure the base storage path is contained within the path expression
-            if (!strEqZ(storage->path, "/"))
+            if (!strEqZ(this->path, "/"))
             {
-                if (!strBeginsWith(pathExp, storage->path) || *(strPtr(pathExp) + strSize(storage->path)) != '/')
-                    THROW(AssertError, "absolute path '%s' is not in base path '%s'", strPtr(pathExp), strPtr(storage->path));
+                if (!strBeginsWith(pathExp, this->path) ||
+                    !(strSize(pathExp) == strSize(this->path) || *(strPtr(pathExp) + strSize(this->path)) == '/'))
+                {
+                    THROW(AssertError, "absolute path '%s' is not in base path '%s'", strPtr(pathExp), strPtr(this->path));
+                }
             }
 
             result = strDup(pathExp);
@@ -250,7 +378,7 @@ storagePath(const Storage *storage, const String *pathExp)
             // Check if there is a path expression that needs to be evaluated
             if ((strPtr(pathExp))[0] == '<')
             {
-                if (storage->pathExpressionFunction == NULL)
+                if (this->pathExpressionFunction == NULL)
                     THROW(AssertError, "expression '%s' not valid without callback function", strPtr(pathExp));
 
                 // Get position of the expression end
@@ -280,7 +408,7 @@ storagePath(const Storage *storage, const String *pathExp)
                 }
 
                 // Evaluate the path
-                pathEvaluated = storage->pathExpressionFunction(expression, path);
+                pathEvaluated = this->pathExpressionFunction(expression, path);
 
                 // Evaluated path cannot be NULL
                 if (pathEvaluated == NULL)
@@ -294,10 +422,10 @@ storagePath(const Storage *storage, const String *pathExp)
                 strFree(path);
             }
 
-            if (strEqZ(storage->path, "/"))
+            if (strEqZ(this->path, "/"))
                 result = strNewFmt("/%s", strPtr(pathExp));
             else
-                result = strNewFmt("%s/%s", strPtr(storage->path), strPtr(pathExp));
+                result = strNewFmt("%s/%s", strPtr(this->path), strPtr(pathExp));
 
             strFree(pathEvaluated);
         }
@@ -307,57 +435,128 @@ storagePath(const Storage *storage, const String *pathExp)
 }
 
 /***********************************************************************************************************************************
-Check for errors on write.  This is a separate function for testing purposes.
+Create a path
 ***********************************************************************************************************************************/
-static void
-storageWriteError(ssize_t actualBytes, size_t expectedBytes, const String *file)
+void
+storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param)
 {
-    // Error occurred during write
-    if (actualBytes == -1)
-    {
-        int errNo = errno;
-        THROW(FileWriteError, "unable to write '%s': %s", strPtr(file), strerror(errNo));
-    }
+    ASSERT_STORAGE_ALLOWS_WRITE();
 
-    // Make sure that all expected bytes were written.  Cast to unsigned since we have already tested for -1.
-    if ((size_t)actualBytes != expectedBytes)
-        THROW(FileWriteError, "only wrote %lu byte(s) to '%s' but %lu byte(s) expected", actualBytes, strPtr(file), expectedBytes);
+    // It doesn't make sense to combine these parameters because if we are creating missing parent paths why error when they exist?
+    // If this somehow wasn't caught in testing, the worst case is that the path would not be created and an error would be thrown.
+    ASSERT_DEBUG(!(param.noParentCreate && param.errorOnExists));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Build the path
+        String *path = storagePathNP(this, pathExp);
+
+        // Attempt to create the directory
+        if (mkdir(strPtr(path), param.mode != 0 ? param.mode : STORAGE_PATH_MODE_DEFAULT) == -1)
+        {
+            // If the parent path does not exist then create it if allowed
+            if (errno == ENOENT && !param.noParentCreate)
+            {
+                storagePathCreate(this, strPath(path), param);
+                storagePathCreate(this, path, param);
+            }
+            // Ignore path exists if allowed
+            else if (errno != EEXIST || param.errorOnExists)
+                THROW_SYS_ERROR(PathCreateError, "unable to create path '%s'", strPtr(path));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
 }
 
 /***********************************************************************************************************************************
 Write a buffer to storage
 ***********************************************************************************************************************************/
 void
-storagePut(const Storage *storage, const String *fileExp, const Buffer *buffer)
+storagePut(const StorageFile *file, const Buffer *buffer)
 {
-    volatile int fileHandle = -1;
-    String *file = NULL;
+    // Write data if buffer is not null.  Otherwise, an empty file is expected.
+    if (buffer != NULL)
+    {
+        TRY_BEGIN()
+        {
+            if (write(STORAGE_DATA(file)->handle, bufPtr(buffer), bufSize(buffer)) != (ssize_t)bufSize(buffer))
+                THROW_SYS_ERROR(FileWriteError, "unable to write '%s'", strPtr(storageFileName(file)));
+        }
+        FINALLY()
+        {
+            close(STORAGE_DATA(file)->handle);
+            storageFileFree(file);
+        }
+        TRY_END();
+    }
+}
 
-    TRY_BEGIN()
+/***********************************************************************************************************************************
+Remove a file
+***********************************************************************************************************************************/
+void
+storageRemove(const Storage *this, const String *pathExp, StorageRemoveParam param)
+{
+    ASSERT_STORAGE_ALLOWS_WRITE();
+
+    MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the path
-        file = storagePath(storage, fileExp);
+        String *file = storagePathNP(this, pathExp);
 
-        // Open the file and handle errors
-        fileHandle = open(strPtr(file), O_CREAT | O_TRUNC | O_WRONLY, storage->mode);
-
-        if (fileHandle == -1)
+        // Attempt to unlink the file
+        if (unlink(strPtr(file)) == -1)
         {
-            int errNo = errno;
-            THROW(FileOpenError, "unable to open '%s' for write: %s", strPtr(file), strerror(errNo));
+            if (param.errorOnMissing || errno != ENOENT)
+                THROW_SYS_ERROR(FileRemoveError, "unable to remove '%s'", strPtr(file));
         }
-
-        // Write data if buffer is not null.  Otherwise, and empty file is expected.
-        if (buffer != NULL)
-            storageWriteError(write(fileHandle, bufPtr(buffer), bufSize(buffer)), bufSize(buffer), file);
     }
-    FINALLY()
+    MEM_CONTEXT_TEMP_END();
+}
+
+/***********************************************************************************************************************************
+Stat a file
+***********************************************************************************************************************************/
+StorageStat *
+storageStat(const Storage *this, const String *pathExp, StorageStatParam param)
+{
+    StorageStat *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (fileHandle != -1)
-            close(fileHandle);
+        // Build the path
+        String *path = storagePathNP(this, pathExp);
 
-        // Free file name
-        strFree(file);
+        // Attempt to stat the file
+        struct stat statFile;
+
+        if (stat(strPtr(path), &statFile) == -1)
+        {
+            if (errno != ENOENT || !param.ignoreMissing)
+                THROW_SYS_ERROR(FileOpenError, "unable to stat '%s'", strPtr(path));
+        }
+        // Else set stats
+        else
+        {
+            memContextSwitch(MEM_CONTEXT_OLD());
+            result = memNew(sizeof(StorageStat));
+
+            result->mode = statFile.st_mode & 0777;
+
+            memContextSwitch(MEM_CONTEXT_TEMP());
+        }
     }
-    TRY_END();
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
+}
+
+/***********************************************************************************************************************************
+Free storage
+***********************************************************************************************************************************/
+void
+storageFree(const Storage *this)
+{
+    if (this != NULL)
+        memContextFree(this->memContext);
 }

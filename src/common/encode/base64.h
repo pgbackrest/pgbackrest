@@ -3,8 +3,8 @@ Base64 Binary to String Encode/Decode
 
 The high-level functions in encode.c should be used in preference to these low-level functions.
 ***********************************************************************************************************************************/
-#ifndef BASE64_H
-#define BASE64_H
+#ifndef COMMON_ENCODE_BASE64_H
+#define COMMON_ENCODE_BASE64_H
 
 #include "common/type.h"
 

@@ -25,7 +25,7 @@ testRun()
         TimeMSec end = timeMSec();
 
         // Check bounds for time slept (within a range of .1 seconds)
-        TEST_RESULT_BOOL(end - begin > (TimeMSec)1400, true, "lower range check");
+        TEST_RESULT_BOOL(end - begin >= (TimeMSec)1400, true, "lower range check");
         TEST_RESULT_BOOL(end - begin < (TimeMSec)1500, true, "upper range check");
     }
 }

@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
 String List Handler
 ***********************************************************************************************************************************/
-#ifndef COMMON_TYPE_STRING_LIST_H
-#define COMMON_TYPE_STRING_LIST_H
+#ifndef COMMON_TYPE_STRINGLIST_H
+#define COMMON_TYPE_STRINGLIST_H
 
 #include "common/type/string.h"
 
