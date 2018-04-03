@@ -17,7 +17,8 @@ COPT = -O2
 CINCLUDE = -I.
 
 # Compile warnings
-CWARN = -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wswitch-enum -Wconversion -Wformat=2 -Wformat-nonliteral
+CWARN = -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2 -Wformat-nonliteral \
+		-Wno-clobbered -Wno-missing-field-initializers
 
 # Automatically generate Perl compile options for the local system
 CPERL = `perl -MExtUtils::Embed -e ccopts`
@@ -78,6 +79,7 @@ SRCS = \
 	config/parse.c \
 	perl/config.c \
 	perl/exec.c \
+	storage/file.c \
 	storage/helper.c \
 	storage/storage.c \
 	main.c

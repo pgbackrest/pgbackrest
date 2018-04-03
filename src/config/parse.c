@@ -255,7 +255,8 @@ configParse(unsigned int argListSize, const char *argList[])
                     configFile = strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfig)));
 
                 // Load the ini file
-                Buffer *buffer = storageGet(storageLocal(), configFile, !parseOptionList[cfgOptConfig].found);
+                Buffer *buffer = storageGetNP(
+                    storageOpenReadP(storageLocal(), configFile, .ignoreMissing = !parseOptionList[cfgOptConfig].found));
 
                 // Load the config file if it was found
                 if (buffer != NULL)

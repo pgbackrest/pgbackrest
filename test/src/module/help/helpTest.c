@@ -290,7 +290,7 @@ testRun()
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storageNew(strNew(testPath()), 0750, 65536, NULL);
-        TEST_RESULT_STR(strPtr(strNewBuf(storageGet(storage, stdoutFile, false))), generalHelp, "    check text");
+        Storage *storage = storageNewNP(strNew(testPath()));
+        TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageOpenReadNP(storage, stdoutFile)))), generalHelp, "    check text");
     }
 }

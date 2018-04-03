@@ -93,12 +93,14 @@ my @stryCFile =
     'common/type/stringList.c',
     'common/type/variant.c',
     'common/type/variantList.c',
+    'common/wait.c',
     'config/config.c',
     'config/define.c',
     'config/load.c',
     'config/parse.c',
     'perl/config.c',
     'postgres/pageChecksum.c',
+    'storage/file.c',
     'storage/helper.c',
     'storage/storage.c',
 );
@@ -117,7 +119,7 @@ WriteMakefile
     AUTHOR => 'David Steele <david@pgbackrest.org>',
 
     CCFLAGS => join(' ', qw(
-        -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered
+        -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wno-missing-field-initializers
         -o $@
         -std=c99
         -D_FILE_OFFSET_BITS=64

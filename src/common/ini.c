@@ -214,7 +214,7 @@ iniLoad(Ini *this, const String *fileName)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            iniParse(this, strNewBuf(storageGet(storageLocal(), this->fileName, false)));
+            iniParse(this, strNewBuf(storageGetNP(storageOpenReadNP(storageLocal(), this->fileName))));
         }
         MEM_CONTEXT_TEMP_END();
     }
