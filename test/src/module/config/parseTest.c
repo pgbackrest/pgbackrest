@@ -698,8 +698,9 @@ testRun()
         }
     }
 
-    // config and config-include-path options --------------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("loadConfigFile()"))
+    // config and config-include-path options
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("cfgFileLoad()"))
     {
         StringList *argList = NULL;
         String *configFile = strNewFmt("%s/test.config", testPath());
@@ -794,7 +795,7 @@ testRun()
         ParseOption parseOptionConfigInclude =
             {.found = true, .source = cfgSourceParam, .valueList = strLstAdd(strLstNew(), configIncludePath)};
 
-        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
+        TEST_RESULT_STR(strPtr(cfgFileLoad(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
             backupCmdDefConfigInclPathValue)),
             "[global]\n"
             "compress-level=3\n"
@@ -804,7 +805,7 @@ testRun()
             "pg1-host=db\n"
             "pg1-path=/path/to/db\n"
             "recovery-option=c=d\n",
-            "loadConfigFile() - config-include-path with .conf files and non-.conf files");
+            "cfgFileLoad() - config-include-path with .conf files and non-.conf files");
 
         strLstFree(parseOptionConfig.valueList);
         strLstFree(parseOptionConfigInclude.valueList);
@@ -818,7 +819,7 @@ testRun()
 
         // Pass actual location of config files as "default" - not setting valueList above, so these are the only possible values
         // to choose.
-        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, configFile, configIncludePath)),
+        TEST_RESULT_STR(strPtr(cfgFileLoad(&parseOptionConfig, &parseOptionConfigInclude, configFile, configIncludePath)),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n"
@@ -827,7 +828,7 @@ testRun()
             "pg1-host=db\n"
             "pg1-path=/path/to/db\n"
             "recovery-option=c=d\n",
-            "loadConfigFile() - config and config-include-path default, files appended");
+            "cfgFileLoad() - config and config-include-path default, files appended");
 
         // Config not passed as parameter (default used but does not exist). config-include-path passed as parameter (files read)
         //--------------------------------------------------------------------------------------------------------------------------
@@ -837,13 +838,13 @@ testRun()
         parseOptionConfigInclude.source = cfgSourceParam;
         parseOptionConfigInclude.valueList = strLstAdd(strLstNew(), configIncludePath);
 
-        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
+        TEST_RESULT_STR(strPtr(cfgFileLoad(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
             backupCmdDefConfigInclPathValue)),
             "[db]\n"
             "pg1-host=db\n"
             "pg1-path=/path/to/db\n"
             "recovery-option=c=d\n",
-            "loadConfigFile() - config default, only config-include-path read");
+            "cfgFileLoad() - config default, only config-include-path read");
 
         strLstFree(parseOptionConfigInclude.valueList);
 
@@ -854,10 +855,10 @@ testRun()
         parseOptionConfigInclude.found = false;
         parseOptionConfigInclude.source = cfgSourceDefault;
 
-        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
+        TEST_RESULT_STR(strPtr(cfgFileLoad(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
             backupCmdDefConfigInclPathValue)),
             NULL,
-            "loadConfigFile() - config default, config-include-path default but nothing to read");
+            "cfgFileLoad() - config default, config-include-path default but nothing to read");
 
         // --no-config and config-include-path passed as parameter (files read)
         //--------------------------------------------------------------------------------------------------------------------------
@@ -868,13 +869,13 @@ testRun()
         parseOptionConfigInclude.source = cfgSourceParam;
         parseOptionConfigInclude.valueList = strLstAdd(strLstNew(), configIncludePath);
 
-        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
+        TEST_RESULT_STR(strPtr(cfgFileLoad(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
             backupCmdDefConfigInclPathValue)),
             "[db]\n"
             "pg1-host=db\n"
             "pg1-path=/path/to/db\n"
             "recovery-option=c=d\n",
-            "loadConfigFile() - --no-config, only config-include-path read");
+            "cfgFileLoad() - --no-config, only config-include-path read");
 
         strLstFree(parseOptionConfigInclude.valueList);
 
@@ -886,10 +887,10 @@ testRun()
         parseOptionConfigInclude.found = false;
         parseOptionConfigInclude.source = cfgSourceDefault;
 
-        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
+        TEST_RESULT_STR(strPtr(cfgFileLoad(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
             configIncludePath)),
             NULL,
-            "loadConfigFile() - --no-config, config-include-path default, nothing read");
+            "cfgFileLoad() - --no-config, config-include-path default, nothing read");
 
         // config passed and config-include-path default exists with files - only config read
         //--------------------------------------------------------------------------------------------------------------------------
@@ -900,12 +901,12 @@ testRun()
         parseOptionConfigInclude.found = false;
         parseOptionConfigInclude.source = cfgSourceDefault;
 
-        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
+        TEST_RESULT_STR(strPtr(cfgFileLoad(&parseOptionConfig, &parseOptionConfigInclude, backupCmdDefConfigValue,
             configIncludePath)),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n",
-            "loadConfigFile() - config param specified, config-include-path default, only config read");
+            "cfgFileLoad() - config param specified, config-include-path default, only config read");
 
         strLstFree(parseOptionConfig.valueList);
 
@@ -917,13 +918,13 @@ testRun()
         parseOptionConfigInclude.source = cfgSourceParam;
         parseOptionConfigInclude.valueList = strLstAdd(strLstNew(), configIncludePath);
 
-        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, configFile,
+        TEST_RESULT_STR(strPtr(cfgFileLoad(&parseOptionConfig, &parseOptionConfigInclude, configFile,
             backupCmdDefConfigInclPathValue)),
             "[db]\n"
             "pg1-host=db\n"
             "pg1-path=/path/to/db\n"
             "recovery-option=c=d\n",
-            "loadConfigFile() - config default exists with files, config-include-path passed, only config-include-path read");
+            "cfgFileLoad() - config default exists with files, config-include-path passed, only config-include-path read");
 
         strLstFree(parseOptionConfigInclude.valueList);
 
@@ -937,10 +938,10 @@ testRun()
         parseOptionConfigInclude.source = cfgSourceParam;
         parseOptionConfigInclude.valueList = strLstAdd(strLstNew(), configIncludePath);
 
-        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, configFile,
+        TEST_RESULT_STR(strPtr(cfgFileLoad(&parseOptionConfig, &parseOptionConfigInclude, configFile,
             backupCmdDefConfigInclPathValue)),
             NULL,
-            "loadConfigFile() - config default exists with files, config-include-path passed but no files in path");
+            "cfgFileLoad() - config default exists with files, config-include-path passed but no files in path");
 
         strLstFree(parseOptionConfigInclude.valueList);
 
@@ -955,10 +956,10 @@ testRun()
         parseOptionConfigInclude.source = cfgSourceParam;
         parseOptionConfigInclude.valueList = strLstAdd(strLstNew(), configIncludePath);
 
-        TEST_RESULT_STR(strPtr(loadConfigFile(&parseOptionConfig, &parseOptionConfigInclude, configFile,
+        TEST_RESULT_STR(strPtr(cfgFileLoad(&parseOptionConfig, &parseOptionConfigInclude, configFile,
             backupCmdDefConfigInclPathValue)),
             NULL,
-            "loadConfigFile() - config default exists with files, config-include-path passed but only empty conf file");
+            "cfgFileLoad() - config default exists with files, config-include-path passed but only empty conf file");
 
         strLstFree(parseOptionConfigInclude.valueList);
     }

@@ -210,20 +210,16 @@
 <!-- Formatted elements -->
 <!ELEMENT summary (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
                    br-setting|pg-option|pg-setting|link|user|proper)*>
-<!ELEMENT p (#PCDATA|quote|b|i|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|br-setting|
-             pg-option|pg-setting|link|user|proper)*>
+<!ELEMENT p ANY>
     <!ATTLIST p keyword CDATA "">
-<!ELEMENT text (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
-                br-setting|pg-option|pg-setting|link|user|proper)*>
-<!ELEMENT i (#PCDATA)>
-<!ELEMENT b (#PCDATA)>
+<!ELEMENT text ANY>
+<!ELEMENT i ANY>
+<!ELEMENT b ANY>
 <!ELEMENT ul (li+)>
 <!ELEMENT ol (li+)>
-<!ELEMENT li (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
-              br-setting|pg-option|pg-setting|link|user|proper)*>
+<!ELEMENT li ANY>
 <!ELEMENT list (list-item+)>
-<!ELEMENT list-item (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
-              br-setting|pg-option|pg-setting|link|user|proper)*>
+<!ELEMENT list-item ANY>
 <!ELEMENT id (#PCDATA)>
 <!ELEMENT code (#PCDATA)>
 <!ELEMENT code-block (#PCDATA|exe)*>
@@ -236,7 +232,7 @@
 <!ELEMENT cmd (#PCDATA)>
 <!ELEMENT user (#PCDATA)>
 <!ELEMENT quote (#PCDATA)>
-<!ELEMENT proper (#PCDATA)>
+<!ELEMENT proper ANY>
 <!ELEMENT setting (#PCDATA)>
 <!ELEMENT br-option (#PCDATA)>
 <!ELEMENT br-setting (#PCDATA)>

@@ -83,7 +83,7 @@ Rules:
 - If --no-config is specified and --config-include-path IS NOT specified then no config will be loaded.
 ***********************************************************************************************************************************/
 static String *
-loadConfigFile(
+cfgFileLoad(
     const ParseOption *configOpt, const ParseOption *configIncludeOpt, const String *configOptDefault,
     const String *configOptIncludePathDefault)
 {
@@ -156,7 +156,8 @@ loadConfigFile(
         // If conf files are found, then add them to the config string
         if (list != NULL && strLstSize(list) > 0)
         {
-            list = strLstSort(list, sortOrderAsc);
+            // Sort the list for reproducibility only -- order does not matter
+            strLstSort(list, sortOrderAsc);
 
             for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
             {
@@ -370,7 +371,7 @@ configParse(unsigned int argListSize, const char *argList[])
             ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
 
             // Load the configuration file(s)
-            String *configString = loadConfigFile(&parseOptionList[cfgOptConfig],
+            String *configString = cfgFileLoad(&parseOptionList[cfgOptConfig],
                 &parseOptionList[cfgOptConfigIncludePath],
                 strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfig))),
                 strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfigIncludePath))));
