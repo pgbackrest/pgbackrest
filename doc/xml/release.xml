@@ -38,6 +38,10 @@
                     <release-item>
                         <p>Add <code>ASSERT()</code> that is preserved in production builds.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fix header exclusion defines that do not match the general pattern.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

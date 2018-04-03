@@ -34,8 +34,8 @@ gcc's -Wclobbered warnings are almost entirely useless for catching such issues.
 
 IMPORTANT: Never call return from within any of the error-handling blocks.
 ***********************************************************************************************************************************/
-#ifndef ERROR_H
-#define ERROR_H
+#ifndef COMMON_ERROR_H
+#define COMMON_ERROR_H
 
 #include <errno.h>
 #include <setjmp.h>

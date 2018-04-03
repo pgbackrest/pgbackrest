@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
 Checksum Implementation for Data Pages
 ***********************************************************************************************************************************/
-#ifndef PAGE_CHECKSUM_H
-#define PAGE_CHECKSUM_H
+#ifndef POSTGRES_PAGECHECKSUM_H
+#define POSTGRES_PAGECHECKSUM_H
 
 #include "common/type.h"
 
