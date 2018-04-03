@@ -14,6 +14,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.02dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="james.craig"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix directory syncs running recursively when only the specified directory should be synced.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageExists()</code>, <code>storagePathCreate()</code>, <code>storageRemove()</code>, and <code>storageStat()</code>.  Add <code>StorageFile</code> object and <code>storageOpenRead()</code>/<code>storageOpenWrite()</code>.</p>
