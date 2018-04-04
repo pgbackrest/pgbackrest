@@ -26,6 +26,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Make <path>backup.history</path> sync more efficient.  Only the <path>backup.history/[year]</path> directory was being synced, so check if the <path>backup.history</path> is newly created and sync it as well.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageExists()</code>, <code>storagePathCreate()</code>, <code>storageRemove()</code>, and <code>storageStat()</code>.  Add <code>StorageFile</code> object and <code>storageOpenRead()</code>/<code>storageOpenWrite()</code>.</p>
                     </release-item>
 
