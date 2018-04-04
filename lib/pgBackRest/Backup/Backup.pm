@@ -940,8 +940,23 @@ sub process
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_STOP, undef, $lTimestampStop + 0);
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupLabel);
 
-    # Sync all paths in the backup cluster path
-    $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . "/${strBackupLabel}", {bRecurse => true});
+    # Sync backup path if supported
+    if ($oStorageRepo->driver()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+    {
+        # Sync all paths in the backup
+        $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
+
+        foreach my $strPath ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_PATH))
+        {
+            my $strPathSync = $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}/$strPath");
+
+            # Not all paths are created for diff/incr backups, so only sync if this is a full backup or the path exists
+            if ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $oStorageRepo->pathExists($strPathSync))
+            {
+                $oStorageRepo->pathSync($strPathSync);
+            }
+        }
+    }
 
     # Final save of the backup manifest
     $oBackupManifest->save();
@@ -965,15 +980,19 @@ sub process
                 bPathCreate => true, bAtomic => true,
                 strCipherPass => defined($strCipherPassManifest) ? $strCipherPassManifest : undef}));
 
-    # Sync entire history path if it did not already exist
-    if (!$bHistoryExists)
+    # Sync history path if supported
+    if ($oStorageRepo->driver()->capability(STORAGE_CAPABILITY_PATH_SYNC))
     {
-        $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY, {bRecurse => true});
-    }
-    # Else sync only the history year path
-    else
-    {
-        $oStorageRepo->pathSync($strHistoryPath);
+        # Sync entire history path if it did not already exist
+        if (!$bHistoryExists)
+        {
+            $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY, {bRecurse => true});
+        }
+        # Else sync only the history year path
+        else
+        {
+            $oStorageRepo->pathSync($strHistoryPath);
+        }
     }
 
     # Create a link to the most recent backup
@@ -988,8 +1007,11 @@ sub process
     # Save backup info
     $oBackupInfo->add($oBackupManifest);
 
-    # Sync backup root path
-    $oStorageRepo->pathSync(STORAGE_REPO_BACKUP);
+    # Sync backup root path if supported
+    if ($oStorageRepo->driver()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+    {
+        $oStorageRepo->pathSync(STORAGE_REPO_BACKUP);
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

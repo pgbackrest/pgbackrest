@@ -24,6 +24,12 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-improvement-list>
+                    <release-item>
+                        <p>Make backup directory sync more efficient.  Scanning the entire backup directory can be very expensive if there are a lot of small tables.  The backup manifest contains the backup directory list so use it to perform syncs instead of scanning the backup directory.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Make <path>backup.history</path> sync more efficient.  Only the <path>backup.history/[year]</path> directory was being synced, so check if the <path>backup.history</path> is newly created and sync it as well.</p>
