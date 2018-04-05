@@ -100,6 +100,7 @@ my @stryCFile =
     'config/parse.c',
     'perl/config.c',
     'postgres/pageChecksum.c',
+    'storage/driver/posix.c',
     'storage/file.c',
     'storage/helper.c',
     'storage/storage.c',

@@ -1,17 +1,12 @@
 /***********************************************************************************************************************************
 Storage Manager
 ***********************************************************************************************************************************/
-#include <dirent.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 #include "common/debug.h"
 #include "common/memContext.h"
-#include "common/regExp.h"
 #include "common/wait.h"
+#include "storage/driver/posix.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -27,18 +22,6 @@ struct Storage
     bool write;
     StoragePathExpressionCallback pathExpressionFunction;
 };
-
-/***********************************************************************************************************************************
-Storage file data - holds the file handle.  This should eventually be moved to the Posix/CIFS driver.
-***********************************************************************************************************************************/
-typedef struct StorageFileDataPosix
-{
-    MemContext *memContext;
-    int handle;
-} StorageFileDataPosix;
-
-#define STORAGE_DATA(file)                                                                                                         \
-    ((StorageFileDataPosix *)storageFileData(file))
 
 /***********************************************************************************************************************************
 Debug Asserts
@@ -77,6 +60,15 @@ storageNew(const String *path, StorageNewParam param)
 }
 
 /***********************************************************************************************************************************
+Get storage buffer size
+***********************************************************************************************************************************/
+size_t
+storageBufferSize(const Storage *this)
+{
+    return this->bufferSize;
+}
+
+/***********************************************************************************************************************************
 Does a file/path exist?
 ***********************************************************************************************************************************/
 bool
@@ -95,20 +87,11 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
         // Create Wait object of timeout > 0
         Wait *wait = param.timeout != 0 ? waitNew(param.timeout) : NULL;
 
-        // Attempt to stat the file to determine if it exists
-        struct stat statFile;
-
+        // Loop until file exists or timeout
         do
         {
-            // Any error other than entry not found should be reported
-            if (stat(strPtr(path), &statFile) == -1)
-            {
-                if (errno != ENOENT)
-                    THROW_SYS_ERROR(FileOpenError, "unable to stat '%s'", strPtr(path));
-            }
-            // Else found
-            else
-                result = true;
+            // Call driver function
+            result = storageDriverPosixExists(path);
         }
         while (!result && wait != NULL && waitMore(wait));
     }
@@ -123,58 +106,13 @@ Read from storage into a buffer
 Buffer *
 storageGet(const StorageFile *file)
 {
-    Buffer volatile *result = NULL;
+    Buffer *result = NULL;
 
-    // Nothing to do unless a file was passed
+    // Call driver function if a file was passed
     if (file != NULL)
-    {
-        TRY_BEGIN()
-        {
-            // Create result buffer with buffer size
-            ssize_t actualBytes = 0;
-            size_t totalBytes = 0;
+        result = storageDriverPosixGet(file);
 
-            do
-            {
-                // Allocate the buffer before first read
-                if (result == NULL)
-                    result = bufNew(storageFileStorage(file)->bufferSize);
-                // Grow the buffer on subsequent reads
-                else
-                    bufResize((Buffer *)result, bufSize((Buffer *)result) + (size_t)storageFileStorage(file)->bufferSize);
-
-                // Read and handle errors
-                actualBytes = read(
-                    STORAGE_DATA(file)->handle, bufPtr((Buffer *)result) + totalBytes, storageFileStorage(file)->bufferSize);
-
-                // Error occurred during write
-                if (actualBytes == -1)
-                    THROW_SYS_ERROR(FileReadError, "unable to read '%s'", strPtr(storageFileName(file)));
-
-                // Track total bytes read
-                totalBytes += (size_t)actualBytes;
-            }
-            while (actualBytes != 0);
-
-            // Resize buffer to total bytes read
-            bufResize((Buffer *)result, totalBytes);
-        }
-        CATCH_ANY()
-        {
-            // Free buffer on error if it was allocated
-            bufFree((Buffer *)result);
-
-            RETHROW();
-        }
-        FINALLY()
-        {
-            close(STORAGE_DATA(file)->handle);
-            storageFileFree(file);
-        }
-        TRY_END();
-    }
-
-    return (Buffer *)result;
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -186,65 +124,18 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
     StringList *result = NULL;
 
     String *path = NULL;
-    DIR *dir = NULL;
-    RegExp *regExp = NULL;
 
     TRY_BEGIN()
     {
         // Build the path
         path = storagePathNP(this, pathExp);
 
-        // Open the directory for read
-        dir = opendir(strPtr(path));
-
-        // If the directory could not be opened process errors but ignore missing directories when specified
-        if (!dir)
-        {
-            if (param.errorOnMissing || errno != ENOENT)
-                THROW_SYS_ERROR(PathOpenError, "unable to open directory '%s' for read", strPtr(path));
-        }
-        else
-        {
-            // Prepare regexp if an expression was passed
-            if (param.expression != NULL)
-                regExp = regExpNew(param.expression);
-
-            // Create the string list now that we know the directory is valid
-            result = strLstNew();
-
-            // Read the directory entries
-            struct dirent *dirEntry = readdir(dir);
-
-            while (dirEntry != NULL)
-            {
-                String *entry = strNew(dirEntry->d_name);
-
-                // Exclude current/parent directory and apply the expression if specified
-                if (!strEqZ(entry, ".") && !strEqZ(entry, "..") && (regExp == NULL || regExpMatch(regExp, entry)))
-                    strLstAdd(result, entry);
-                else
-                    strFree(entry);
-
-                dirEntry = readdir(dir);
-            }
-        }
-    }
-    CATCH_ANY()
-    {
-        // Free list on error
-        strLstFree(result);
-
-        RETHROW();
+        // Call driver function
+        result = storageDriverPosixList(path, param.errorOnMissing, param.expression);
     }
     FINALLY()
     {
         strFree(path);
-
-        if (dir != NULL)
-            closedir(dir);
-
-        if (regExp != NULL)
-            regExpFree(regExp);
     }
     TRY_END();
 
@@ -263,36 +154,19 @@ storageOpenRead(const Storage *this, const String *fileExp, StorageOpenReadParam
     MEM_CONTEXT_NEW_BEGIN("StorageFileRead")
     {
         String *fileName = storagePathNP(this, fileExp);
-        int fileHandle;
 
-        // Open the file and handle errors
-        fileHandle = open(strPtr(fileName), O_RDONLY, 0);
+        // Call driver function
+        void *data = storageDriverPosixOpenRead(fileName, param.ignoreMissing);
 
-        if (fileHandle == -1)
+        // Free mem contexts if missing files are ignored
+        if (data == NULL)
         {
-            // Error unless ignore missing is specified
-            if (!param.ignoreMissing || errno != ENOENT)
-                THROW_SYS_ERROR(FileOpenError, "unable to open '%s' for read", strPtr(fileName));
-
-            // Free mem contexts if missing files are ignored
             memContextSwitch(MEM_CONTEXT_OLD());
             memContextFree(MEM_CONTEXT_NEW());
         }
+        // Else create the storage file
         else
-        {
-            // Create the storage file and data
-            StorageFileDataPosix *data = NULL;
-
-            MEM_CONTEXT_NEW_BEGIN("StorageFileReadDataPosix")
-            {
-                data = memNew(sizeof(StorageFileDataPosix));
-                data->memContext = MEM_CONTEXT_NEW();
-                data->handle = fileHandle;
-            }
-            MEM_CONTEXT_NEW_END();
-
             result = storageFileNew(this, fileName, storageFileTypeRead, data);
-        }
     }
     MEM_CONTEXT_NEW_END();
 
@@ -312,27 +186,11 @@ storageOpenWrite(const Storage *this, const String *fileExp, StorageOpenWritePar
     MEM_CONTEXT_NEW_BEGIN("StorageFileWrite")
     {
         String *fileName = storagePathNP(this, fileExp);
-        int fileHandle;
 
-        // Open the file and handle errors
-        fileHandle = open(
-            strPtr(fileName), O_CREAT | O_TRUNC | O_WRONLY, param.mode == 0 ? this->modeFile : param.mode);
-
-        if (fileHandle == -1)
-            THROW_SYS_ERROR(FileOpenError, "unable to open '%s' for write", strPtr(fileName));
-
-        // Create the storage file and data
-        StorageFileDataPosix *data = NULL;
-
-        MEM_CONTEXT_NEW_BEGIN("StorageFileReadDataPosix")
-        {
-            data = memNew(sizeof(StorageFileDataPosix));
-            data->memContext = MEM_CONTEXT_NEW();
-            data->handle = fileHandle;
-        }
-        MEM_CONTEXT_NEW_END();
-
-        result = storageFileNew(this, fileName, storageFileTypeWrite, data);
+        // Call driver function
+        result = storageFileNew(
+            this, fileName, storageFileTypeWrite,
+            storageDriverPosixOpenWrite(fileName, param.mode != 0 ? param.mode : this->modeFile));
     }
     MEM_CONTEXT_NEW_END();
 
@@ -451,19 +309,9 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
         // Build the path
         String *path = storagePathNP(this, pathExp);
 
-        // Attempt to create the directory
-        if (mkdir(strPtr(path), param.mode != 0 ? param.mode : STORAGE_PATH_MODE_DEFAULT) == -1)
-        {
-            // If the parent path does not exist then create it if allowed
-            if (errno == ENOENT && !param.noParentCreate)
-            {
-                storagePathCreate(this, strPath(path), param);
-                storagePathCreate(this, path, param);
-            }
-            // Ignore path exists if allowed
-            else if (errno != EEXIST || param.errorOnExists)
-                THROW_SYS_ERROR(PathCreateError, "unable to create path '%s'", strPtr(path));
-        }
+        // Call driver function
+        storageDriverPosixPathCreate(
+            path, param.errorOnExists, param.noParentCreate, param.mode != 0 ? param.mode : this->modePath);
     }
     MEM_CONTEXT_TEMP_END();
 }
@@ -476,79 +324,26 @@ storagePut(const StorageFile *file, const Buffer *buffer)
 {
     // Write data if buffer is not null.  Otherwise, an empty file is expected.
     if (buffer != NULL)
-    {
-        TRY_BEGIN()
-        {
-            if (write(STORAGE_DATA(file)->handle, bufPtr(buffer), bufSize(buffer)) != (ssize_t)bufSize(buffer))
-                THROW_SYS_ERROR(FileWriteError, "unable to write '%s'", strPtr(storageFileName(file)));
-        }
-        FINALLY()
-        {
-            close(STORAGE_DATA(file)->handle);
-            storageFileFree(file);
-        }
-        TRY_END();
-    }
+        storageDriverPosixPut(file, buffer);
 }
 
 /***********************************************************************************************************************************
 Remove a file
 ***********************************************************************************************************************************/
 void
-storageRemove(const Storage *this, const String *pathExp, StorageRemoveParam param)
+storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param)
 {
     ASSERT_STORAGE_ALLOWS_WRITE();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the path
-        String *file = storagePathNP(this, pathExp);
+        String *file = storagePathNP(this, fileExp);
 
-        // Attempt to unlink the file
-        if (unlink(strPtr(file)) == -1)
-        {
-            if (param.errorOnMissing || errno != ENOENT)
-                THROW_SYS_ERROR(FileRemoveError, "unable to remove '%s'", strPtr(file));
-        }
+        // Call driver function
+        storageDriverPosixRemove(file, param.errorOnMissing);
     }
     MEM_CONTEXT_TEMP_END();
-}
-
-/***********************************************************************************************************************************
-Stat a file
-***********************************************************************************************************************************/
-StorageStat *
-storageStat(const Storage *this, const String *pathExp, StorageStatParam param)
-{
-    StorageStat *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Build the path
-        String *path = storagePathNP(this, pathExp);
-
-        // Attempt to stat the file
-        struct stat statFile;
-
-        if (stat(strPtr(path), &statFile) == -1)
-        {
-            if (errno != ENOENT || !param.ignoreMissing)
-                THROW_SYS_ERROR(FileOpenError, "unable to stat '%s'", strPtr(path));
-        }
-        // Else set stats
-        else
-        {
-            memContextSwitch(MEM_CONTEXT_OLD());
-            result = memNew(sizeof(StorageStat));
-
-            result->mode = statFile.st_mode & 0777;
-
-            memContextSwitch(MEM_CONTEXT_TEMP());
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    return result;
 }
 
 /***********************************************************************************************************************************

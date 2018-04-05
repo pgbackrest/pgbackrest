@@ -626,11 +626,12 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'storage',
-                    &TESTDEF_TOTAL => 10,
+                    &TESTDEF_TOTAL => 9,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>
                     {
+                        'storage/driver/posix' => TESTDEF_COVERAGE_FULL,
                         'storage/storage' => TESTDEF_COVERAGE_FULL,
                     },
                 },

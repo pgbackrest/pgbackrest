@@ -79,6 +79,7 @@ SRCS = \
 	config/parse.c \
 	perl/config.c \
 	perl/exec.c \
+	storage/driver/posix.c \
 	storage/file.c \
 	storage/helper.c \
 	storage/storage.c \

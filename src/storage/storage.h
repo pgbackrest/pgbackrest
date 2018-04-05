@@ -164,32 +164,12 @@ typedef struct StorageRemoveParam
     bool errorOnMissing;
 } StorageRemoveParam;
 
-#define storageRemoveP(this, pathExp, ...)                                                                                         \
-    storageRemove(this, pathExp, (StorageRemoveParam){__VA_ARGS__})
-#define storageRemoveNP(this, pathExp)                                                                                             \
-    storageRemove(this, pathExp, (StorageRemoveParam){0})
+#define storageRemoveP(this, fileExp, ...)                                                                                         \
+    storageRemove(this, fileExp, (StorageRemoveParam){__VA_ARGS__})
+#define storageRemoveNP(this, fileExp)                                                                                             \
+    storageRemove(this, fileExp, (StorageRemoveParam){0})
 
 void storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param);
-
-/***********************************************************************************************************************************
-storageStat
-***********************************************************************************************************************************/
-typedef struct StorageStat
-{
-    mode_t mode;
-} StorageStat;
-
-typedef struct StorageStatParam
-{
-    bool ignoreMissing;
-} StorageStatParam;
-
-#define storageStatP(this, pathExp, ...)                                                                                           \
-    storageStat(this, pathExp, (StorageStatParam){__VA_ARGS__})
-#define storageStatNP(this, pathExp)                                                                                               \
-    storageStat(this, pathExp, (StorageStatParam){0})
-
-StorageStat *storageStat(const Storage *this, const String *pathExp, StorageStatParam param);
 
 /***********************************************************************************************************************************
 storageFree
@@ -198,5 +178,10 @@ storageFree
     storageFree(this)
 
 void storageFree(const Storage *this);
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+size_t storageBufferSize(const Storage *this);
 
 #endif
