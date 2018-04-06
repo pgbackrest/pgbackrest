@@ -110,8 +110,6 @@ iniSectionKeyList(const Ini *this, const String *section)
         // Get the section
         KeyValue *sectionKv = varKv(kvGet(this->store, varNewStr(section)));
 
-        memContextSwitch(MEM_CONTEXT_OLD());
-
         // Return key list of the section exists
         if (sectionKv != NULL)
             result = strLstNewVarLst(kvKeyList(sectionKv));
@@ -119,7 +117,7 @@ iniSectionKeyList(const Ini *this, const String *section)
         else
             result = strLstNew();
 
-        memContextSwitch(MEM_CONTEXT_TEMP());
+        strLstMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 

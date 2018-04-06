@@ -54,56 +54,53 @@ Read from storage into a buffer
 Buffer *
 storageDriverPosixGet(const StorageFile *file)
 {
-    Buffer volatile *result = NULL;
+    Buffer *result = NULL;
 
-    TRY_BEGIN()
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Create result buffer with buffer size
-        ssize_t actualBytes = 0;
-        size_t totalBytes = 0;
-
-        do
+        TRY_BEGIN()
         {
             size_t bufferSize = storageBufferSize(storageFileStorage(file));
+            result = bufNew(bufferSize);
 
-            // Allocate the buffer before first read
-            if (result == NULL)
-                result = bufNew(bufferSize);
-            // Grow the buffer on subsequent reads
-            else
-                bufResize((Buffer *)result, bufSize((Buffer *)result) + bufferSize);
+            // Create result buffer with buffer size
+            ssize_t actualBytes = 0;
+            size_t totalBytes = 0;
 
-            // Read and handle errors
-            actualBytes = read(
-                STORAGE_DATA(file)->handle, bufPtr((Buffer *)result) + totalBytes, bufferSize);
+            do
+            {
+                // Grow the buffer on subsequent reads
+                if (totalBytes != 0)
+                    bufResize(result, bufSize(result) + bufferSize);
 
-            // Error occurred during write
-            if (actualBytes == -1)
-                THROW_SYS_ERROR(FileReadError, "unable to read '%s'", strPtr(storageFileName(file)));
+                // Read and handle errors
+                actualBytes = read(
+                    STORAGE_DATA(file)->handle, bufPtr(result) + totalBytes, bufferSize);
 
-            // Track total bytes read
-            totalBytes += (size_t)actualBytes;
+                // Error occurred during write
+                if (actualBytes == -1)
+                    THROW_SYS_ERROR(FileReadError, "unable to read '%s'", strPtr(storageFileName(file)));
+
+                // Track total bytes read
+                totalBytes += (size_t)actualBytes;
+            }
+            while (actualBytes != 0);
+
+            // Resize buffer to total bytes read
+            bufResize(result, totalBytes);
         }
-        while (actualBytes != 0);
+        FINALLY()
+        {
+            close(STORAGE_DATA(file)->handle);
+            storageFileFree(file);
+        }
+        TRY_END();
 
-        // Resize buffer to total bytes read
-        bufResize((Buffer *)result, totalBytes);
+        bufMove(result, MEM_CONTEXT_OLD());
     }
-    CATCH_ANY()
-    {
-        // Free buffer on error if it was allocated
-        bufFree((Buffer *)result);
+    MEM_CONTEXT_TEMP_END();
 
-        RETHROW();
-    }
-    FINALLY()
-    {
-        close(STORAGE_DATA(file)->handle);
-        storageFileFree(file);
-    }
-    TRY_END();
-
-    return (Buffer *)result;
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -113,9 +110,7 @@ StringList *
 storageDriverPosixList(const String *path, bool errorOnMissing, const String *expression)
 {
     StringList *result = NULL;
-
     DIR *dir = NULL;
-    RegExp *regExp = NULL;
 
     TRY_BEGIN()
     {
@@ -130,44 +125,40 @@ storageDriverPosixList(const String *path, bool errorOnMissing, const String *ex
         }
         else
         {
-            // Prepare regexp if an expression was passed
-            if (expression != NULL)
-                regExp = regExpNew(expression);
-
-            // Create the string list now that we know the directory is valid
-            result = strLstNew();
-
-            // Read the directory entries
-            struct dirent *dirEntry = readdir(dir);
-
-            while (dirEntry != NULL)
+            MEM_CONTEXT_TEMP_BEGIN()
             {
-                String *entry = strNew(dirEntry->d_name);
+                // Prepare regexp if an expression was passed
+                RegExp *regExp = (expression == NULL) ? NULL : regExpNew(expression);
 
-                // Exclude current/parent directory and apply the expression if specified
-                if (!strEqZ(entry, ".") && !strEqZ(entry, "..") && (regExp == NULL || regExpMatch(regExp, entry)))
-                    strLstAdd(result, entry);
-                else
+                // Create the string list now that we know the directory is valid
+                result = strLstNew();
+
+                // Read the directory entries
+                struct dirent *dirEntry = readdir(dir);
+
+                while (dirEntry != NULL)
+                {
+                    String *entry = strNew(dirEntry->d_name);
+
+                    // Exclude current/parent directory and apply the expression if specified
+                    if (!strEqZ(entry, ".") && !strEqZ(entry, "..") && (regExp == NULL || regExpMatch(regExp, entry)))
+                        strLstAdd(result, entry);
+
                     strFree(entry);
 
-                dirEntry = readdir(dir);
-            }
-        }
-    }
-    CATCH_ANY()
-    {
-        // Free list on error
-        strLstFree(result);
+                    dirEntry = readdir(dir);
+                }
 
-        RETHROW();
+                // Move finished list up to the old context
+                strLstMove(result, MEM_CONTEXT_OLD());
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
     }
     FINALLY()
     {
         if (dir != NULL)
             closedir(dir);
-
-        if (regExp != NULL)
-            regExpFree(regExp);
     }
     TRY_END();
 

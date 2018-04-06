@@ -135,7 +135,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'mem-context',
-                    &TESTDEF_TOTAL => 6,
+                    &TESTDEF_TOTAL => 7,
                     &TESTDEF_C => true,
                     &TESTDEF_CDEF => '-DNO_MEM_CONTEXT -DNO_LOG',
 

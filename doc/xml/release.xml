@@ -40,6 +40,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow <code>MemContext</code> objects to be copied to a new parent.  This makes it easier to create objects and then copy them to another context when they are complete without having to worry about freeing them on error.  Update <code>List</code>, <code>StringList</code>, and <code>Buffer</code> to allow moves.  Update <code>Ini</code> and <code>Storage</code> to take advantage of moves.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improve branch coverage in C code.</p>
                     </release-item>
 

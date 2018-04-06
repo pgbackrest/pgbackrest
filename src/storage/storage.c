@@ -123,21 +123,15 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
 {
     StringList *result = NULL;
 
-    String *path = NULL;
-
-    TRY_BEGIN()
+    MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the path
-        path = storagePathNP(this, pathExp);
+        String *path = storagePathNP(this, pathExp);
 
-        // Call driver function
-        result = storageDriverPosixList(path, param.errorOnMissing, param.expression);
+        // Move list up to the old context
+        result = strLstMove(storageDriverPosixList(path, param.errorOnMissing, param.expression), MEM_CONTEXT_OLD());
     }
-    FINALLY()
-    {
-        strFree(path);
-    }
-    TRY_END();
+    MEM_CONTEXT_TEMP_END();
 
     return result;
 }
@@ -151,7 +145,7 @@ storageOpenRead(const Storage *this, const String *fileExp, StorageOpenReadParam
 {
     StorageFile *result = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageFileRead")
+    MEM_CONTEXT_NEW_BEGIN("StorageFile")
     {
         String *fileName = storagePathNP(this, fileExp);
 
@@ -159,13 +153,7 @@ storageOpenRead(const Storage *this, const String *fileExp, StorageOpenReadParam
         void *data = storageDriverPosixOpenRead(fileName, param.ignoreMissing);
 
         // Free mem contexts if missing files are ignored
-        if (data == NULL)
-        {
-            memContextSwitch(MEM_CONTEXT_OLD());
-            memContextFree(MEM_CONTEXT_NEW());
-        }
-        // Else create the storage file
-        else
+        if (data != NULL)
             result = storageFileNew(this, fileName, storageFileTypeRead, data);
     }
     MEM_CONTEXT_NEW_END();
@@ -183,7 +171,7 @@ storageOpenWrite(const Storage *this, const String *fileExp, StorageOpenWritePar
 
     StorageFile *result = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageFileWrite")
+    MEM_CONTEXT_NEW_BEGIN("StorageFile")
     {
         String *fileName = storagePathNP(this, fileExp);
 

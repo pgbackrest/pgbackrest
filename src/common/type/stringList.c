@@ -19,6 +19,15 @@ strLstNew()
 }
 
 /***********************************************************************************************************************************
+Internal add -- the string must have been created in the list's mem context before being passed
+***********************************************************************************************************************************/
+static StringList *
+strLstAddInternal(StringList *this, String *string)
+{
+    return (StringList *)lstAdd((List *)this, &string);
+}
+
+/***********************************************************************************************************************************
 Split a string into a string list based on a delimiter
 ***********************************************************************************************************************************/
 StringList *
@@ -39,22 +48,26 @@ strLstNewSplitZ(const String *string, const char *delimiter)
     // Match points to the next delimiter match that has been found
     const char *stringMatch = NULL;
 
-    do
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
     {
-        // Find a delimiter match
-        stringMatch = strstr(stringBase, delimiter);
-
-        // If a match was found then add the string
-        if (stringMatch != NULL)
+        do
         {
-            strLstAdd(this, strNewN(stringBase, (size_t)(stringMatch - stringBase)));
-            stringBase = stringMatch + strlen(delimiter);
+            // Find a delimiter match
+            stringMatch = strstr(stringBase, delimiter);
+
+            // If a match was found then add the string
+            if (stringMatch != NULL)
+            {
+                strLstAddInternal(this, strNewN(stringBase, (size_t)(stringMatch - stringBase)));
+                stringBase = stringMatch + strlen(delimiter);
+            }
+            // Else make whatever is left the last string
+            else
+                strLstAddInternal(this, strNew(stringBase));
         }
-        // Else make whatever is left the last string
-        else
-            strLstAdd(this, strNew(stringBase));
+        while(stringMatch != NULL);
     }
-    while(stringMatch != NULL);
+    MEM_CONTEXT_END();
 
     return this;
 }
@@ -84,39 +97,43 @@ strLstNewSplitSizeZ(const String *string, const char *delimiter, size_t size)
     const char *stringMatchLast = NULL;
     const char *stringMatch = NULL;
 
-    do
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
     {
-        // Find a delimiter match
-        stringMatch = strstr(stringMatchLast == NULL ? stringBase : stringMatchLast, delimiter);
-
-        // If a match was found then add the string
-        if (stringMatch != NULL)
+        do
         {
-            if ((size_t)(stringMatch - stringBase) >= size)
-            {
-                if (stringMatchLast != NULL)
-                    stringMatch = stringMatchLast - strlen(delimiter);
+            // Find a delimiter match
+            stringMatch = strstr(stringMatchLast == NULL ? stringBase : stringMatchLast, delimiter);
 
-                strLstAdd(this, strNewN(stringBase, (size_t)(stringMatch - stringBase)));
-                stringBase = stringMatch + strlen(delimiter);
-                stringMatchLast = NULL;
+            // If a match was found then add the string
+            if (stringMatch != NULL)
+            {
+                if ((size_t)(stringMatch - stringBase) >= size)
+                {
+                    if (stringMatchLast != NULL)
+                        stringMatch = stringMatchLast - strlen(delimiter);
+
+                    strLstAddInternal(this, strNewN(stringBase, (size_t)(stringMatch - stringBase)));
+                    stringBase = stringMatch + strlen(delimiter);
+                    stringMatchLast = NULL;
+                }
+                else
+                    stringMatchLast = stringMatch + strlen(delimiter);
             }
+            // Else make whatever is left the last string
             else
-                stringMatchLast = stringMatch + strlen(delimiter);
-        }
-        // Else make whatever is left the last string
-        else
-        {
-            if (stringMatchLast != NULL && strlen(stringBase) - strlen(delimiter) >= size)
             {
-                strLstAdd(this, strNewN(stringBase, (size_t)((stringMatchLast - strlen(delimiter)) - stringBase)));
-                stringBase = stringMatchLast;
-            }
+                if (stringMatchLast != NULL && strlen(stringBase) - strlen(delimiter) >= size)
+                {
+                    strLstAddInternal(this, strNewN(stringBase, (size_t)((stringMatchLast - strlen(delimiter)) - stringBase)));
+                    stringBase = stringMatchLast;
+                }
 
-            strLstAdd(this, strNew(stringBase));
+                strLstAddInternal(this, strNew(stringBase));
+            }
         }
+        while(stringMatch != NULL);
     }
-    while(stringMatch != NULL);
+    MEM_CONTEXT_END();
 
     return this;
 }
@@ -131,8 +148,12 @@ strLstNewVarLst(const VariantList *sourceList)
     StringList *this = strLstNew();
 
     // Copy variants
-    for (unsigned int listIdx = 0; listIdx < varLstSize(sourceList); listIdx++)
-        strLstAdd(this, varStr(varLstGet(sourceList, listIdx)));
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        for (unsigned int listIdx = 0; listIdx < varLstSize(sourceList); listIdx++)
+            strLstAddInternal(this, strDup(varStr(varLstGet(sourceList, listIdx))));
+    }
+    MEM_CONTEXT_END();
 
     return this;
 }
@@ -146,9 +167,13 @@ strLstDup(const StringList *sourceList)
     // Create the list
     StringList *this = strLstNew();
 
-    // Copy variants
-    for (unsigned int listIdx = 0; listIdx < strLstSize(sourceList); listIdx++)
-        strLstAdd(this, strLstGet(sourceList, listIdx));
+    // Copy strings
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        for (unsigned int listIdx = 0; listIdx < strLstSize(sourceList); listIdx++)
+            strLstAddInternal(this, strDup(strLstGet(sourceList, listIdx)));
+    }
+    MEM_CONTEXT_END();
 
     return this;
 }
@@ -159,8 +184,15 @@ Wrapper for lstAdd()
 StringList *
 strLstAdd(StringList *this, const String *string)
 {
-    String *stringCopy = strDup(string);
-    return (StringList *)lstAdd((List *)this, &stringCopy);
+    StringList *result = NULL;
+
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        result = strLstAddInternal(this, strDup(string));
+    }
+    MEM_CONTEXT_END();
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -169,7 +201,15 @@ Add a zero-terminated string to the list
 StringList *
 strLstAddZ(StringList *this, const char *string)
 {
-    return strLstAdd(this, strNew(string));
+    StringList *result = NULL;
+
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        result = strLstAddInternal(this, strNew(string));
+    }
+    MEM_CONTEXT_END();
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -201,6 +241,16 @@ strLstJoin(const StringList *this, const char *separator)
     }
 
     return join;
+}
+
+/***********************************************************************************************************************************
+Move the string list
+***********************************************************************************************************************************/
+StringList *
+strLstMove(StringList *this, MemContext *parentNew)
+{
+    lstMove((List *)this, parentNew);
+    return this;
 }
 
 /***********************************************************************************************************************************
@@ -273,6 +323,5 @@ Wrapper for lstFree()
 void
 strLstFree(StringList *this)
 {
-    if (this != NULL)
-        lstFree((List *)this);
+    lstFree((List *)this);
 }

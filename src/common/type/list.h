@@ -4,6 +4,7 @@ List Handler
 #ifndef COMMON_TYPE_LIST_H
 #define COMMON_TYPE_LIST_H
 
+#include "common/memContext.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -22,6 +23,8 @@ Functions
 List *lstNew(size_t itemSize);
 List *lstAdd(List *this, const void *item);
 void *lstGet(const List *this, unsigned int listIdx);
+MemContext *lstMemContext(const List *this);
+List *lstMove(List *this, MemContext *parentNew);
 unsigned int lstSize(const List *this);
 List *lstSort(List *this, int (*comparator)(const void *, const void*));
 void lstFree(List *this);

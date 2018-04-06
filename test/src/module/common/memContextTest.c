@@ -91,8 +91,6 @@ testRun()
         TEST_RESULT_INT(memContextTop()->contextChildListSize, 0, "top context should init with zero children");
         TEST_RESULT_PTR(memContextTop()->contextChildList, NULL, "top context child list empty");
 
-        // TEST_ERROR(memContextFree(memContextTop()), AssertError, "cannot free top context");
-
         // Current context should equal top context
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "top context == current context");
 
@@ -156,6 +154,11 @@ testRun()
         TEST_ERROR(
             memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]),
             AssertError, "cannot free inactive context");
+
+        MemContext *noAllocation = memContextNew("empty");
+        noAllocation->allocListSize = 0;
+        free(noAllocation->allocList);
+        TEST_RESULT_VOID(memContextFree(noAllocation), "free context with no allocations");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -201,6 +204,11 @@ testRun()
         TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all bytes are 0xFE in original portion");
 
         // Free memory
+        TEST_RESULT_VOID(memFree(memContextCurrent()->allocList[MEM_CONTEXT_ALLOC_INITIAL_SIZE].buffer), "free allocation");
+        TEST_ERROR(
+            memFree(memContextCurrent()->allocList[MEM_CONTEXT_ALLOC_INITIAL_SIZE].buffer), AssertError,
+            "unable to find allocation");
+
         TEST_ERROR(memFree(NULL), AssertError, "unable to find null allocation");
         TEST_ERROR(memFree((void *)0x01), AssertError, "unable to find allocation");
         memFree(buffer);
@@ -296,6 +304,47 @@ testRun()
         TEST_RESULT_BOOL(bCatch, true, "new context error was caught");
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
         TEST_RESULT_BOOL(memContext->state == memContextStateFree, true, "new mem context is not active");
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("memContextMove()"))
+    {
+        TEST_RESULT_VOID(memContextMove(NULL, NULL), "move NULL context");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        MemContext *memContext = NULL;
+        void *mem = NULL;
+
+        MEM_CONTEXT_NEW_BEGIN("outer")
+        {
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                memContextNew("not-to-be-moved");
+
+                MEM_CONTEXT_NEW_BEGIN("inner")
+                {
+                    memContext = MEM_CONTEXT_NEW();
+                    mem = memNew(sizeof(int));
+                }
+                MEM_CONTEXT_NEW_END();
+
+                TEST_RESULT_PTR(memContext->allocList[0].buffer, mem, "check memory allocation");
+                TEST_RESULT_PTR(memContextCurrent()->contextChildList[1], memContext, "check memory context");
+
+                // Null out the mem context in the parent so the move will fail
+                memContextCurrent()->contextChildList[1] = NULL;
+                TEST_ERROR(memContextMove(memContext, MEM_CONTEXT_OLD()), AssertError, "unable to find mem context in old parent");
+
+                // Set it back so the move will fail
+                memContextCurrent()->contextChildList[1] = memContext;
+                TEST_RESULT_VOID(memContextMove(memContext, MEM_CONTEXT_OLD()), "move context");
+            }
+            MEM_CONTEXT_TEMP_END();
+
+            TEST_RESULT_PTR(memContext->allocList[0].buffer, mem, "check memory allocation");
+            TEST_RESULT_PTR(memContextCurrent()->contextChildList[1], memContext, "check memory context");
+        }
+        MEM_CONTEXT_NEW_END();
     }
 
     memContextFree(memContextTop());

@@ -27,29 +27,39 @@ void
 testRun()
 {
     // *****************************************************************************************************************************
-    if (testBegin("lstNew() and lstFree()"))
+    if (testBegin("lstNew(), lstMemContext(), and lstFree()"))
     {
         List *list = lstNew(sizeof(void *));
 
         TEST_RESULT_INT(list->itemSize, sizeof(void *), "item size");
         TEST_RESULT_INT(list->listSize, 0, "list size");
         TEST_RESULT_INT(list->listSizeMax, 0, "list size max");
+        TEST_RESULT_PTR(lstMemContext(list), list->memContext, "list mem context");
 
         void *ptr = NULL;
         TEST_RESULT_PTR(lstAdd(list, &ptr), list, "add item");
 
         TEST_RESULT_VOID(lstFree(list), "free list");
         TEST_RESULT_VOID(lstFree(lstNew(1)), "free empty list");
+        TEST_RESULT_VOID(lstFree(NULL), "free null list");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("lstAdd() and lstSize()"))
+    if (testBegin("lstAdd(), lstMove(), and lstSize()"))
     {
-        List *list = lstNew(sizeof(int));
+        List *list = NULL;
 
-        // Add ints to the list
-        for (int listIdx = 0; listIdx <= LIST_INITIAL_SIZE; listIdx++)
-            TEST_RESULT_PTR(lstAdd(list, &listIdx), list, "add item %d", listIdx);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            list = lstNew(sizeof(int));
+
+            // Add ints to the list
+            for (int listIdx = 0; listIdx <= LIST_INITIAL_SIZE; listIdx++)
+                TEST_RESULT_PTR(lstAdd(list, &listIdx), list, "add item %d", listIdx);
+
+            lstMove(list, MEM_CONTEXT_OLD());
+        }
+        MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_INT(lstSize(list), 9, "list size");
 
@@ -61,6 +71,7 @@ testRun()
         }
 
         TEST_ERROR(lstGet(list, lstSize(list)), AssertError, "cannot get index 9 from list with 9 value(s)");
+        TEST_RESULT_VOID(lstMove(NULL, NULL), "move null list");
     }
 
     // *****************************************************************************************************************************

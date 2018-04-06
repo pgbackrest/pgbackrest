@@ -4,6 +4,7 @@ Memory Context Manager
 #include <stdlib.h>
 #include <string.h>
 
+#include "common/debug.h"
 #include "common/error.h"
 #include "common/memContext.h"
 
@@ -114,6 +115,55 @@ memFreeInternal(void *buffer)
 }
 
 /***********************************************************************************************************************************
+Find space for a new mem context
+***********************************************************************************************************************************/
+static unsigned int
+memContextNewIndex(MemContext *memContext, bool allowFree)
+{
+    // Try to find space for the new context
+    unsigned int contextIdx;
+
+    for (contextIdx = 0; contextIdx < memContext->contextChildListSize; contextIdx++)
+    {
+        if (!memContext->contextChildList[contextIdx] ||
+            (allowFree && memContext->contextChildList[contextIdx]->state == memContextStateFree))
+        {
+            break;
+        }
+    }
+
+    // If no space was found then allocate more
+    if (contextIdx == memContext->contextChildListSize)
+    {
+        // If no space has been allocated to the list
+        if (memContext->contextChildListSize == 0)
+        {
+            // Allocate memory before modifying anything else in case there is an error
+            memContext->contextChildList = memAllocInternal(sizeof(MemContext *) * MEM_CONTEXT_INITIAL_SIZE, true);
+
+            // Set new list size
+            memContext->contextChildListSize = MEM_CONTEXT_INITIAL_SIZE;
+        }
+        // Else grow the list
+        else
+        {
+            // Calculate new list size
+            unsigned int contextChildListSizeNew = memContext->contextChildListSize * 2;
+
+            // ReAllocate memory before modifying anything else in case there is an error
+            memContext->contextChildList = memReAllocInternal(
+                memContext->contextChildList, sizeof(MemContext *) * memContext->contextChildListSize,
+                sizeof(MemContext *) * contextChildListSizeNew, true);
+
+            // Set new list size
+            memContext->contextChildListSize = contextChildListSizeNew;
+        }
+    }
+
+    return contextIdx;
+}
+
+/***********************************************************************************************************************************
 Create a new memory context
 ***********************************************************************************************************************************/
 MemContext *
@@ -123,43 +173,8 @@ memContextNew(const char *name)
     if (strlen(name) == 0 || strlen(name) > MEM_CONTEXT_NAME_SIZE)
         THROW(AssertError, "context name length must be > 0 and <= %d", MEM_CONTEXT_NAME_SIZE);
 
-    // Try to find space for the new context
-    unsigned int contextIdx;
-
-    for (contextIdx = 0; contextIdx < memContextCurrent()->contextChildListSize; contextIdx++)
-        if (!memContextCurrent()->contextChildList[contextIdx] ||
-            memContextCurrent()->contextChildList[contextIdx]->state == memContextStateFree)
-        {
-            break;
-        }
-
-    // If no space was found then allocate more
-    if (contextIdx == memContextCurrent()->contextChildListSize)
-    {
-        // If no space has been allocated to the list
-        if (memContextCurrent()->contextChildListSize == 0)
-        {
-            // Allocate memory before modifying anything else in case there is an error
-            memContextCurrent()->contextChildList = memAllocInternal(sizeof(MemContext *) * MEM_CONTEXT_INITIAL_SIZE, true);
-
-            // Set new list size
-            memContextCurrent()->contextChildListSize = MEM_CONTEXT_INITIAL_SIZE;
-        }
-        // Else grow the list
-        else
-        {
-            // Calculate new list size
-            unsigned int contextChildListSizeNew = memContextCurrent()->contextChildListSize * 2;
-
-            // ReAllocate memory before modifying anything else in case there is an error
-            memContextCurrent()->contextChildList = memReAllocInternal(
-                memContextCurrent()->contextChildList, sizeof(MemContext *) * memContextCurrent()->contextChildListSize,
-                sizeof(MemContext *) * contextChildListSizeNew, true);
-
-            // Set new list size
-            memContextCurrent()->contextChildListSize = contextChildListSizeNew;
-        }
-    }
+    // Find space for the new context
+    unsigned int contextIdx = memContextNewIndex(memContextCurrent(), true);
 
     // If the context has not been allocated yet
     if (!memContextCurrent()->contextChildList[contextIdx])
@@ -328,6 +343,45 @@ memFree(void *buffer)
     // Free the buffer
     memFreeInternal(alloc->buffer);
     alloc->active = false;
+}
+
+/***********************************************************************************************************************************
+Move a context to a new parent context
+
+This is generally used to move objects to a new context once they have been successfully created.
+***********************************************************************************************************************************/
+void
+memContextMove(MemContext *this, MemContext *parentNew)
+{
+    // Only move if a valid mem context is provided
+    if (this != NULL)
+    {
+        // Find context in the old parent and NULL it out
+        MemContext *parentOld = this->contextParent;
+        unsigned int contextIdx;
+
+        for (contextIdx = 0; contextIdx < parentOld->contextChildListSize; contextIdx++)
+        {
+            if (parentOld->contextChildList[contextIdx] == this)
+            {
+                parentOld->contextChildList[contextIdx] = NULL;
+                break;
+            }
+        }
+
+        // The memory must be found
+        if (contextIdx == parentOld->contextChildListSize)
+            THROW(AssertError, "unable to find mem context in old parent");
+
+        // Find a place in the new parent context and assign it. The child list may be moved while finding a new index so store the
+        // index and use it with (what might be) the new pointer.
+        contextIdx = memContextNewIndex(parentNew, false);
+        ASSERT_DEBUG(parentNew->contextChildList[contextIdx] == NULL);
+        parentNew->contextChildList[contextIdx] = this;
+
+        // Assign new parent
+        this->contextParent = parentNew;
+    }
 }
 
 /***********************************************************************************************************************************
