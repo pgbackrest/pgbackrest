@@ -8,7 +8,7 @@ config/parse.c sets the command and options and determines which options are val
 #define CONFIG_CONFIG_H
 
 #include "common/log.h"
-#include "common/type.h"
+#include "common/type/stringList.h"
 #include "config/define.h"
 
 #include "config/config.auto.h"
@@ -45,7 +45,7 @@ const Variant *cfgOption(ConfigOption optionId);
 bool cfgOptionBool(ConfigOption optionId);
 double cfgOptionDbl(ConfigOption optionId);
 int cfgOptionInt(ConfigOption optionId);
-int64 cfgOptionInt64(ConfigOption optionId);
+int64_t cfgOptionInt64(ConfigOption optionId);
 const KeyValue *cfgOptionKv(ConfigOption optionId);
 const VariantList *cfgOptionLst(ConfigOption optionId);
 const String *cfgOptionStr(ConfigOption optionId);

@@ -395,7 +395,7 @@ varIntForce(const Variant *this)
 
         case varTypeInt64:
         {
-            int64 resultTest = varInt64(this);
+            int64_t resultTest = varInt64(this);
 
             if (resultTest > 2147483647 || resultTest < -2147483648)
                 THROW(
@@ -427,7 +427,7 @@ varIntForce(const Variant *this)
 New int64 variant
 ***********************************************************************************************************************************/
 Variant *
-varNewInt64(int64 data)
+varNewInt64(int64_t data)
 {
     return varNewInternal(varTypeInt64, (void *)&data, sizeof(data));
 }
@@ -435,7 +435,7 @@ varNewInt64(int64 data)
 /***********************************************************************************************************************************
 Return int64
 ***********************************************************************************************************************************/
-int64
+int64_t
 varInt64(const Variant *this)
 {
     // Only valid for int
@@ -443,16 +443,16 @@ varInt64(const Variant *this)
         THROW(AssertError, "variant type is not %s", variantTypeName[varTypeInt64]);
 
     // Get the int
-    return *((int64 *)varData(this));
+    return *((int64_t *)varData(this));
 }
 
 /***********************************************************************************************************************************
 Return int64 regardless of variant type
 ***********************************************************************************************************************************/
-int64
+int64_t
 varInt64Force(const Variant *this)
 {
-    int64 result = 0;
+    int64_t result = 0;
 
     switch (this->type)
     {
@@ -464,7 +464,7 @@ varInt64Force(const Variant *this)
 
         case varTypeInt:
         {
-            result = (int64)varInt(this);
+            result = (int64_t)varInt(this);
             break;
         }
 

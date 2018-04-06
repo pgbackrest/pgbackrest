@@ -4,7 +4,7 @@ Buffer Handler
 #ifndef COMMON_TYPE_BUFFER_H
 #define COMMON_TYPE_BUFFER_H
 
-#include "common/type.h"
+#include "common/typec.h"
 
 /***********************************************************************************************************************************
 Buffer object

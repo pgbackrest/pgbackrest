@@ -60,6 +60,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Cleanup C types.  Remove <backrest/> defined types included with the C types.  Remove redefinition of standard C types.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Fix header exclusion defines that do not match the general pattern.</p>
                     </release-item>
                 </release-development-list>

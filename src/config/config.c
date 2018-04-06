@@ -547,7 +547,7 @@ cfgOptionInt(ConfigOption optionId)
     return varIntForce(configOptionValue[optionId].value);
 }
 
-int64
+int64_t
 cfgOptionInt64(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);

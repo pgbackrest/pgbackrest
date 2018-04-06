@@ -40,7 +40,7 @@ IMPORTANT: Never call return from within any of the error-handling blocks.
 #include <errno.h>
 #include <setjmp.h>
 
-#include "common/type.h"
+#include "common/typec.h"
 
 /***********************************************************************************************************************************
 Error type object

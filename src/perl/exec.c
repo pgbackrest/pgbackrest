@@ -10,7 +10,7 @@ Execute Perl for Legacy Functionality
 #include "version.h"
 #include "common/error.h"
 #include "common/memContext.h"
-#include "common/type.h"
+#include "common/typec.h"
 #include "config/config.h"
 #include "perl/config.h"
 

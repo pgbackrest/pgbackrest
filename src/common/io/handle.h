@@ -4,7 +4,7 @@ Handle IO
 #ifndef COMMON_IO_HANDLE_H
 #define COMMON_IO_HANDLE_H
 
-#include "common/type.h"
+#include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Functions

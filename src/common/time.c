@@ -4,7 +4,7 @@ Time Management
 #include "sys/time.h"
 
 #include "common/time.h"
-#include "common/type.h"
+#include "common/typec.h"
 
 /***********************************************************************************************************************************
 Constants describing number of sub-units in an interval

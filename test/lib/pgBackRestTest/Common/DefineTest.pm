@@ -101,14 +101,14 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_NAME => 'type',
+                    &TESTDEF_NAME => 'typec',
                     &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
                     &TESTDEF_CDEF => '-DNO_ERROR -DNO_LOG',
 
                     &TESTDEF_COVERAGE =>
                     {
-                        'common/type' => TESTDEF_COVERAGE_NOCODE,
+                        'common/typec' => TESTDEF_COVERAGE_NOCODE,
                     },
                 },
                 {

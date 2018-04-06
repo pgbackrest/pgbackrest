@@ -6,7 +6,7 @@ Help Command
 
 #include "common/io/handle.h"
 #include "common/memContext.h"
-#include "common/type.h"
+#include "common/typec.h"
 #include "config/config.h"
 #include "config/define.h"
 #include "version.h"

@@ -7,7 +7,7 @@ Storage Manager
 #include <sys/types.h>
 
 #include "common/type/buffer.h"
-#include "common/type/string.h"
+#include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
 Default buffer size

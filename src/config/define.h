@@ -4,7 +4,7 @@ Command and Option Configuration Definition
 #ifndef CONFIG_DEFINE_H
 #define CONFIG_DEFINE_H
 
-#include "common/type.h"
+#include "common/typec.h"
 #include "config/define.auto.h"
 
 /***********************************************************************************************************************************

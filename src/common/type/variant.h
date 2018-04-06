@@ -4,7 +4,7 @@ Variant Data Type
 #ifndef COMMON_TYPE_VARIANT_H
 #define COMMON_TYPE_VARIANT_H
 
-#include <stdbool.h>
+#include "common/typec.h"
 
 /***********************************************************************************************************************************
 Variant type
@@ -44,9 +44,9 @@ Variant *varNewInt(int data);
 int varInt(const Variant *this);
 int varIntForce(const Variant *this);
 
-Variant *varNewInt64(int64 data);
-int64 varInt64(const Variant *this);
-int64 varInt64Force(const Variant *this);
+Variant *varNewInt64(int64_t data);
+int64_t varInt64(const Variant *this);
+int64_t varInt64Force(const Variant *this);
 
 Variant *varNewKv();
 KeyValue *varKv(const Variant *this);

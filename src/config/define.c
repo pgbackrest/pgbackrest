@@ -106,10 +106,10 @@ typedef enum
 } ConfigDefineDataType;
 
 #define CFGDATA_OPTION_OPTIONAL_PUSH_LIST(type, size, data, ...)                                                                   \
-    (const void *)((uint32)type << 24 | (uint32)size << 16 | (uint32)data), __VA_ARGS__
+    (const void *)((uint32_t)type << 24 | (uint32_t)size << 16 | (uint32_t)data), __VA_ARGS__
 
 #define CFGDATA_OPTION_OPTIONAL_PUSH(type, size, data)                                                                             \
-    (const void *)((uint32)type << 24 | (uint32)size << 16 | (uint32)data)
+    (const void *)((uint32_t)type << 24 | (uint32_t)size << 16 | (uint32_t)data)
 
 #define CFGDEFDATA_OPTION_COMMAND_LIST(...)                                                                                        \
     .commandValid = 0 __VA_ARGS__,
@@ -130,10 +130,10 @@ typedef enum
 #define CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(rangeMinParam, rangeMaxParam)                                                       \
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(                                                                                             \
         configDefDataTypeAllowRange, 4, 0,                                                                                         \
-        (const void *)(intptr_t)(int32)(((int64)((double)rangeMinParam * 100)) % 1000000000L),                                     \
-        (const void *)(intptr_t)(int32)(((int64)((double)rangeMinParam * 100)) / 1000000000L),                                     \
-        (const void *)(intptr_t)(int32)(((int64)((double)rangeMaxParam * 100)) % 1000000000L),                                     \
-        (const void *)(intptr_t)(int32)(((int64)((double)rangeMaxParam * 100)) / 1000000000L)),
+        (const void *)(intptr_t)(int32_t)(((int64_t)((double)rangeMinParam * 100)) % 1000000000L),                                 \
+        (const void *)(intptr_t)(int32_t)(((int64_t)((double)rangeMinParam * 100)) / 1000000000L),                                 \
+        (const void *)(intptr_t)(int32_t)(((int64_t)((double)rangeMaxParam * 100)) % 1000000000L),                                 \
+        (const void *)(intptr_t)(int32_t)(((int64_t)((double)rangeMaxParam * 100)) / 1000000000L)),
 
 #define CFGDEFDATA_OPTION_OPTIONAL_PREFIX(prefixParam)                                                                             \
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(configDefDataTypePrefix, 1, 0, prefixParam),
@@ -365,7 +365,7 @@ cfgDefOptionAllowRangeMax(ConfigDefineCommand commandDefId, ConfigDefineOption o
 
     CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeAllowRange);
 
-    return ((double)(((int64)(intptr_t)dataDefList[2]) + (((int64)(intptr_t)dataDefList[3]) * 1000000000L))) / 100;
+    return ((double)(((int64_t)(intptr_t)dataDefList[2]) + (((int64_t)(intptr_t)dataDefList[3]) * 1000000000L))) / 100;
 }
 
 double
@@ -375,7 +375,7 @@ cfgDefOptionAllowRangeMin(ConfigDefineCommand commandDefId, ConfigDefineOption o
 
     CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeAllowRange);
 
-    return ((double)(((int64)(intptr_t)dataDefList[0]) + (((int64)(intptr_t)dataDefList[1]) * 1000000000L))) / 100;
+    return ((double)(((int64_t)(intptr_t)dataDefList[0]) + (((int64_t)(intptr_t)dataDefList[1]) * 1000000000L))) / 100;
 }
 
 /***********************************************************************************************************************************

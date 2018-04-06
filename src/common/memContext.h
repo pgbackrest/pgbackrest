@@ -5,7 +5,7 @@ Memory Context Manager
 #define COMMON_MEMCONTEXT_H
 
 #include "common/error.h"
-#include "common/type.h"
+#include "common/typec.h"
 
 /***********************************************************************************************************************************
 Memory context names cannot be larger than this size (excluding terminator) or an error will be thrown

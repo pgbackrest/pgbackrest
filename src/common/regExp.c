@@ -6,7 +6,7 @@ Regular Expression Handler
 
 #include "common/memContext.h"
 #include "common/regExp.h"
-#include "common/type.h"
+#include "common/typec.h"
 
 /***********************************************************************************************************************************
 Contains information about the regular expression handler
