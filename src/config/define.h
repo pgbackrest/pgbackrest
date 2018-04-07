@@ -4,9 +4,6 @@ Command and Option Configuration Definition
 #ifndef CONFIG_DEFINE_H
 #define CONFIG_DEFINE_H
 
-#include "common/typec.h"
-#include "config/define.auto.h"
-
 /***********************************************************************************************************************************
 Section enum - defines which sections of the config an option can appear in
 ***********************************************************************************************************************************/
@@ -16,6 +13,8 @@ typedef enum
     cfgDefSectionGlobal,                                            // command-line or in any config section
     cfgDefSectionStanza,                                            // command-line or in any config stanza section
 } ConfigDefSection;
+
+#include "config/define.auto.h"
 
 /***********************************************************************************************************************************
 Define global section name

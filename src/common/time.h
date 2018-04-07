@@ -4,7 +4,7 @@ Time Management
 #ifndef COMMON_TIME_H
 #define COMMON_TIME_H
 
-#include "common/typec.h"
+#include <stdint.h>
 
 /***********************************************************************************************************************************
 Time types

@@ -4,7 +4,7 @@ Log Handler
 #ifndef COMMON_LOG_H
 #define COMMON_LOG_H
 
-#include "common/typec.h"
+#include <stdbool.h>
 
 /***********************************************************************************************************************************
 Log types

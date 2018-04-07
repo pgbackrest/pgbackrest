@@ -9,11 +9,11 @@ String object
 ***********************************************************************************************************************************/
 typedef struct String String;
 
+#include "common/type/buffer.h"
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-#include "common/type/buffer.h"
-
 String *strNew(const char *string);
 String *strNewBuf(const Buffer *buffer);
 String *strNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));

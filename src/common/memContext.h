@@ -4,8 +4,14 @@ Memory Context Manager
 #ifndef COMMON_MEMCONTEXT_H
 #define COMMON_MEMCONTEXT_H
 
+#include <stddef.h>
+
+/***********************************************************************************************************************************
+Memory context object
+***********************************************************************************************************************************/
+typedef struct MemContext MemContext;
+
 #include "common/error.h"
-#include "common/typec.h"
 
 /***********************************************************************************************************************************
 Memory context names cannot be larger than this size (excluding terminator) or an error will be thrown
@@ -26,11 +32,6 @@ Define initial number of memory allocations
 Space is reserved for this many allocations when a context is created.  When more space is needed the size will be doubled.
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_ALLOC_INITIAL_SIZE                              4
-
-/***********************************************************************************************************************************
-Memory context object
-***********************************************************************************************************************************/
-typedef struct MemContext MemContext;
 
 /***********************************************************************************************************************************
 Memory context callback function type, useful for casts in memContextCallback()

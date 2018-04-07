@@ -2,6 +2,7 @@
 Command and Option Configuration Definition
 ***********************************************************************************************************************************/
 #include <limits.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "common/error.h"

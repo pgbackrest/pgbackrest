@@ -2,6 +2,7 @@
 Archive Push Command
 ***********************************************************************************************************************************/
 #include <libgen.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -12,7 +13,6 @@ Archive Push Command
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
-#include "common/typec.h"
 #include "common/wait.h"
 #include "config/config.h"
 #include "perl/exec.h"

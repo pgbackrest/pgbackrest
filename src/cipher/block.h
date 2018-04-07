@@ -4,12 +4,16 @@ Block Cipher Header
 #ifndef CIPHER_BLOCK_H
 #define CIPHER_BLOCK_H
 
-#include "cipher/cipher.h"
-
-// Track cipher state
+/***********************************************************************************************************************************
+CipherBlock object
+***********************************************************************************************************************************/
 typedef struct CipherBlock CipherBlock;
 
-// Functions
+#include "cipher/cipher.h"
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
 CipherBlock *cipherBlockNew(
     CipherMode mode, const char *cipherName, const unsigned char *pass, size_t passSize, const char *digestName);
 size_t cipherBlockProcessSize(CipherBlock *this, size_t sourceSize);

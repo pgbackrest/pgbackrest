@@ -64,7 +64,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Cleanup C types.  Remove <backrest/> defined types included with the C types.  Remove redefinition of standard C types.</p>
+                        <p>Cleanup C types.  Remove <code>typec.h</code>. Order all typdefs above local includes.</p>
                     </release-item>
 
                     <release-item>

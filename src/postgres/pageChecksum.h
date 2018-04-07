@@ -4,7 +4,7 @@ Checksum Implementation for Data Pages
 #ifndef POSTGRES_PAGECHECKSUM_H
 #define POSTGRES_PAGECHECKSUM_H
 
-#include "common/typec.h"
+#include <stdint.h>
 
 /***********************************************************************************************************************************
 Functions
