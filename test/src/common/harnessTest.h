@@ -20,6 +20,14 @@ const char *testPath();
 void testPathSet(const char *testPathParam);
 
 /***********************************************************************************************************************************
+Convert a macro to a string -- handy for testing debug macros
+***********************************************************************************************************************************/
+#define MACRO_TO_STR_INNER(macro)                                                                                                  \
+    #macro
+#define MACRO_TO_STR(macro)                                                                                                        \
+    MACRO_TO_STR_INNER(macro)
+
+/***********************************************************************************************************************************
 Maximum size of a formatted result in the TEST_RESULT macro.  Strings don't count as they are output directly, so this only applies
 to the formatting of bools, ints, floats, etc.  This should be plenty of room for any of those types.
 ***********************************************************************************************************************************/

@@ -23,7 +23,7 @@ testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("DEBUG_UNIT_EXTERN"))
     {
-        const char *debugUnitExtern = "" DEBUG_UNIT_EXTERN "";
-        TEST_RESULT_STR(debugUnitExtern, "", "DEBUG_UNIT_EXTERN is static");
+        const char *debugUnitExtern = MACRO_TO_STR(DEBUG_UNIT_EXTERN);
+        TEST_RESULT_STR(debugUnitExtern, "static", "DEBUG_UNIT_EXTERN is static");
     }
 }

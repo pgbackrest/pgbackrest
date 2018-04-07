@@ -351,7 +351,8 @@ sub run
                     "       `perl -MExtUtils::Embed -e ccopts`\n" .
                     "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) ? " -lgcov" : '') .
                         " `perl -MExtUtils::Embed -e ldopts`\n" .
-                    'TESTFLAGS=-DDEBUG_UNIT' . ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
+                    'TESTFLAGS=' . ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : "-DDEBUG_UNIT ") .
+                        ($self->{oTest}->{&TEST_CDEF} ? "$self->{oTest}->{&TEST_CDEF}" : '') .
                     "\n" .
                     "\nSRCS=" . join(' ', @stryCFile) . "\n" .
                     "OBJS=\$(SRCS:.c=.o)\n" .

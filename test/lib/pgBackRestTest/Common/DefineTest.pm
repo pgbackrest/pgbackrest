@@ -46,6 +46,9 @@ use constant TESTDEF_C                                              => 'c';
 # #defines for C testing
 use constant TESTDEF_CDEF                                           => 'cdef';
     push @EXPORT, qw(TESTDEF_CDEF);
+# Don't define DEBUG_UNIT for unit tests -- this is used to test unit test debugging macros
+use constant TESTDEF_DEBUG_UNIT_SUPPRESS                            => 'debug-unit-supress';
+    push @EXPORT, qw(TESTDEF_DEBUG_UNIT_SUPPRESS);
 # Determines if each run in a test will be run in a new container
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
     push @EXPORT, qw(TESTDEF_INDIVIDUAL);
@@ -139,6 +142,7 @@ my $oTestDef =
                     &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
                     &TESTDEF_CDEF => '-DNDEBUG -DNO_LOG',
+                    &TESTDEF_DEBUG_UNIT_SUPPRESS => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -182,6 +186,7 @@ my $oTestDef =
                     &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
                     &TESTDEF_CDEF => '-DNDEBUG -DNO_LOG',
+                    &TESTDEF_DEBUG_UNIT_SUPPRESS => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -962,8 +967,8 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
 
         # Resolve variables that can be set in the module or the test
         foreach my $strVar (
-            TESTDEF_C, TESTDEF_CDEF, TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_PERL_REQ,
-            TESTDEF_VM)
+            TESTDEF_C, TESTDEF_CDEF, TESTDEF_CONTAINER, TESTDEF_DEBUG_UNIT_SUPPRESS, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL,
+            TESTDEF_PERL_REQ, TESTDEF_VM)
         {
             $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                 $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);

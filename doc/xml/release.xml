@@ -102,6 +102,10 @@
                     <release-item>
                         <p>Improve logic for smart builds to include version changes.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Allow <code>-DDEBUG_UNIT</code> to be suppressed to test how debug macros behave.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
