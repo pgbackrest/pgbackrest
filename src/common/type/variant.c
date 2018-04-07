@@ -7,7 +7,7 @@ Variant Data Type
 #include <string.h>
 #include <strings.h>
 
-#include "common/debug.h"
+#include "common/assert.h"
 #include "common/memContext.h"
 #include "common/type/variant.h"
 

@@ -60,7 +60,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <code>ASSERT()</code> that is preserved in production builds.</p>
+                        <p>Split debug and assert code into separate headers.  Assert can be used earlier because it only depends on the error-handler and not logging.  Add <code>ASSERT()</code> that is preserved in production builds.</p>
                     </release-item>
 
                     <release-item>

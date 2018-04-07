@@ -104,6 +104,7 @@ my $oTestDef =
                     &TESTDEF_NAME => 'time',
                     &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
+                    &TESTDEF_CDEF => '-DNO_ERROR -DNO_LOG',
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -120,6 +121,28 @@ my $oTestDef =
                     {
                         'common/error' => TESTDEF_COVERAGE_FULL,
                         'common/error.auto' => TESTDEF_COVERAGE_NOCODE,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'assert-on',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+                    &TESTDEF_CDEF => '-DNO_LOG',
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/assert' => TESTDEF_COVERAGE_NOCODE,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'assert-off',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+                    &TESTDEF_CDEF => '-DNDEBUG -DNO_LOG',
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/assert' => TESTDEF_COVERAGE_NOCODE,
                     },
                 },
                 {

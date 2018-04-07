@@ -3,7 +3,7 @@ Storage Manager
 ***********************************************************************************************************************************/
 #include <string.h>
 
-#include "common/debug.h"
+#include "common/assert.h"
 #include "common/memContext.h"
 #include "common/wait.h"
 #include "storage/driver/posix.h"

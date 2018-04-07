@@ -4,7 +4,7 @@ Memory Context Manager
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/debug.h"
+#include "common/assert.h"
 #include "common/error.h"
 #include "common/memContext.h"
 
