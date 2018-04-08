@@ -104,6 +104,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Move <id>archive-stop</id> and <id>expire</id> tests to the <id>mock</id> module.  These are mock integration tests so they should be grouped with the other mock integration tests.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Include VM type in <id>gcov</id> path to avoid conflicts between VMs with different architectures.</p>
                     </release-item>
 
