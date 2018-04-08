@@ -31,8 +31,8 @@ sub errorDefineLoad
 {
     my $strErrorYaml = shift;
 
-    require YAML;
-    YAML->import(qw(Dump Load));
+    require YAML::XS;
+    YAML::XS->import(qw(Load));
 
     $rhErrorDefine = Load($strErrorYaml);
 }

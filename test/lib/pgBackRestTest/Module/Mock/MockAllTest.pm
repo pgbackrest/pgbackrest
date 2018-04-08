@@ -262,6 +262,14 @@ sub run
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global/' . DB_FILE_PGINTERNALINIT, 'IGNORE');
         }
 
+        # Help and Version.  These have complete unit tests, so here just make sure there is output from the command line.
+        #---------------------------------------------------------------------------------------------------------------------------
+        if ($self->runCurrent() == 1)
+        {
+            $oHostDbMaster->executeSimple($self->backrestExe() . " version", {oLogTest => $self->expect()});
+            $oHostDbMaster->executeSimple($self->backrestExe() . " help version", {oLogTest => $self->expect()});
+        }
+
         # Backup Info (with no stanzas)
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->info('no stanzas exist');

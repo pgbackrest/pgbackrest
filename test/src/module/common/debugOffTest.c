@@ -9,16 +9,21 @@ void
 testRun()
 {
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("ASSERT()"))
+    if (testBegin("DEBUG"))
     {
-        TEST_RESULT_VOID(ASSERT(true), "assert true");
-        TEST_ERROR(ASSERT(false || false), AssertError, "assertion 'false || false' failed");
+#ifdef DEBUG
+        bool debug = true;
+#else
+        bool debug = false;
+#endif
+
+        TEST_RESULT_BOOL(debug, false, "DEBUG is not defined");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("ASSERT_DEBUG()"))
+    if (testBegin("DEBUG_UNIT_EXTERN"))
     {
-        TEST_RESULT_VOID(ASSERT_DEBUG(true), "assert true ignored");
-        TEST_RESULT_VOID(ASSERT_DEBUG(false || false), "assert false ignored");
+        const char *debugUnitExtern = MACRO_TO_STR(DEBUG_UNIT_EXTERN);
+        TEST_RESULT_STR(debugUnitExtern, "static", "DEBUG_UNIT_EXTERN is static");
     }
 }

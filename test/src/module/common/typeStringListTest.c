@@ -9,21 +9,29 @@ void
 testRun()
 {
     // *****************************************************************************************************************************
-    if (testBegin("strLstNew(), strLstAdd, strLstGet(), strLstSize(), and strLstFree()"))
+    if (testBegin("strLstNew(), strLstAdd, strLstGet(), strLstMove(), strLstSize(), and strLstFree()"))
     {
-        StringList *list = strLstNew();
-
         // Add strings to the list
         // -------------------------------------------------------------------------------------------------------------------------
-        for (int listIdx = 0; listIdx <= LIST_INITIAL_SIZE; listIdx++)
+        StringList *list = NULL;
+
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            if (listIdx == 0)
+            list = strLstNew();
+
+            for (int listIdx = 0; listIdx <= LIST_INITIAL_SIZE; listIdx++)
             {
-                TEST_RESULT_PTR(strLstAdd(list, NULL), list, "add null item");
+                if (listIdx == 0)
+                {
+                    TEST_RESULT_PTR(strLstAdd(list, NULL), list, "add null item");
+                }
+                else
+                    TEST_RESULT_PTR(strLstAdd(list, strNewFmt("STR%02d", listIdx)), list, "add item %d", listIdx);
             }
-            else
-                TEST_RESULT_PTR(strLstAdd(list, strNewFmt("STR%02d", listIdx)), list, "add item %d", listIdx);
+
+            strLstMove(list, MEM_CONTEXT_OLD());
         }
+        MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_INT(strLstSize(list), 9, "list size");
 

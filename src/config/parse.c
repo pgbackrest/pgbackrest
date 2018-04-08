@@ -5,7 +5,7 @@ Command and Option Parse
 #include <string.h>
 #include <strings.h>
 
-#include "common/debug.h"
+#include "common/assert.h"
 #include "common/error.h"
 #include "common/ini.h"
 #include "common/log.h"

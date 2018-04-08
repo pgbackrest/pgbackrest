@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Debug Macros and Routines
+Test Assert Macros and Routines when Disabled
 ***********************************************************************************************************************************/
 
 /***********************************************************************************************************************************
@@ -9,21 +9,16 @@ void
 testRun()
 {
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("DEBUG"))
+    if (testBegin("ASSERT()"))
     {
-#ifdef DEBUG
-        bool debug = true;
-#else
-        bool debug = false;
-#endif
-
-        TEST_RESULT_BOOL(debug, true, "DEBUG is defined");
+        TEST_RESULT_VOID(ASSERT(true), "assert true");
+        TEST_ERROR(ASSERT(false || false), AssertError, "assertion 'false || false' failed");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("DEBUG_UNIT_EXTERN"))
+    if (testBegin("ASSERT_DEBUG()"))
     {
-        const char *debugUnitExtern = MACRO_TO_STR(DEBUG_UNIT_EXTERN);
-        TEST_RESULT_STR(debugUnitExtern, "", "DEBUG_UNIT_EXTERN is blank (extern)");
+        TEST_RESULT_VOID(ASSERT_DEBUG(true), "assert true ignored");
+        TEST_RESULT_VOID(ASSERT_DEBUG(false || false), "assert false ignored");
     }
 }

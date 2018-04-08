@@ -3,7 +3,7 @@ Command and Option Configuration
 ***********************************************************************************************************************************/
 #include <string.h>
 
-#include "common/debug.h"
+#include "common/assert.h"
 #include "common/error.h"
 #include "common/memContext.h"
 #include "config/config.h"
@@ -547,7 +547,7 @@ cfgOptionInt(ConfigOption optionId)
     return varIntForce(configOptionValue[optionId].value);
 }
 
-int64
+int64_t
 cfgOptionInt64(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);

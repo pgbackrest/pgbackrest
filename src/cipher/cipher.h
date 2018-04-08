@@ -4,9 +4,11 @@ Cipher Header
 #ifndef CIPHER_CIPHER_H
 #define CIPHER_CIPHER_H
 
-#include "common/type.h"
+#include <stdbool.h>
 
-// Define cipher modes
+/***********************************************************************************************************************************
+Cipher modes
+***********************************************************************************************************************************/
 typedef enum
 {
     cipherModeEncrypt,

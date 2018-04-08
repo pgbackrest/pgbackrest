@@ -5,6 +5,21 @@ Test Storage Manager
 #include "storage/file.h"
 
 /***********************************************************************************************************************************
+Get the mode of a file on local storage
+***********************************************************************************************************************************/
+mode_t
+storageStatMode(const String *path)
+{
+    // Attempt to stat the file
+    struct stat statFile;
+
+    if (stat(strPtr(path), &statFile) == -1)                                                // {uncovered - error should not happen}
+        THROW_SYS_ERROR(FileOpenError, "unable to stat '%s'", strPtr(path));                // {uncovered+}
+
+    return statFile.st_mode & 0777;
+}
+
+/***********************************************************************************************************************************
 Test function for path expression
 ***********************************************************************************************************************************/
 String *
@@ -183,14 +198,14 @@ testRun()
     if (testBegin("storagePathCreate()"))
     {
         TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNew("sub1")), "create sub1");
-        TEST_RESULT_INT(storageStatNP(storageTest, strNew("sub1"))->mode, 0750, "check sub1 dir mode");
+        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, strNew("sub1"))), 0750, "check sub1 dir mode");
         TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNew("sub1")), "create sub1 again");
         TEST_ERROR(
             storagePathCreateP(storageTest, strNew("sub1"), .errorOnExists = true), PathCreateError,
             strPtr(strNewFmt("unable to create path '%s/sub1': [17] File exists", testPath())));
 
         TEST_RESULT_VOID(storagePathCreateP(storageTest, strNew("sub2"), .mode = 0777), "create sub2 with custom mode");
-        TEST_RESULT_INT(storageStatNP(storageTest, strNew("sub2"))->mode, 0777, "check sub2 dir mode");
+        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, strNew("sub2"))), 0777, "check sub2 dir mode");
 
         TEST_ERROR(
             storagePathCreateP(storageTest, strNew("sub3/sub4"), .noParentCreate = true), PathCreateError,
@@ -230,14 +245,14 @@ testRun()
         String *fileName = strNewFmt("%s/testfile", testPath());
 
         TEST_ASSIGN(file, storageOpenWriteNP(storageTest, fileName), "open file for write (defaults)");
-        TEST_RESULT_INT(storageStatNP(storageTest, fileName)->mode, 0640, "check dir mode");
+        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, fileName)), 0640, "check file mode");
         close(STORAGE_DATA(file)->handle);
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageOpenWriteP(storageTest, fileName, .mode = 0777), "open file for write (custom)");
-        TEST_RESULT_INT(storageStatNP(storageTest, fileName)->mode, 0777, "check file mode");
+        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, fileName)), 0777, "check file mode");
         close(STORAGE_DATA(file)->handle);
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
@@ -315,26 +330,5 @@ testRun()
         TEST_ERROR(
             storageRemoveNP(storageTest, fileNoPerm), FileRemoveError,
             strPtr(strNewFmt("unable to remove '%s': [13] Permission denied", strPtr(fileNoPerm))));
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("storageStat()"))
-    {
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storagePathCreateP(storageTest, strNew("dir"), .mode = 0777), "create dir with custom mode");
-        TEST_RESULT_INT(storageStatNP(storageTest, strNew("dir"))->mode, 0777, "check dir mode");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(
-            storageStatNP(storageTest, strNew("missing")), FileOpenError,
-            strPtr(strNewFmt("unable to stat '%s/missing': [2] No such file or directory", testPath())));
-        TEST_RESULT_PTR(storageStatP(storageTest, strNew("missing"), .ignoreMissing = true), NULL, "ignore missing file");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(
-            storageStatNP(storageTest, fileNoPerm), FileOpenError,
-            strPtr(strNewFmt("unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm))));
-
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm -rf %s", strPtr(strPath(fileNoPerm))))), 0, "remove no perm dir");
     }
 }
