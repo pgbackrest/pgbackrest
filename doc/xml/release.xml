@@ -14,16 +14,6 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.02dev" title="UNDER DEVELOPMENT">
             <release-core-list>
-                <release-feature-list>
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
-                        </release-item-contributor-list>
-
-                        <p>Added support for additional <backrest/> configuration files in the directory specified by the <br-option>--config-include-path</br-option> option.</p>
-                    </release-item>
-                </release-feature-list>
-
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -33,6 +23,16 @@
                         <p>Fix directory syncs running recursively when only the specified directory should be synced.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Added support for additional <backrest/> configuration files in the directory specified by the <br-option>--config-include-path</br-option> option.</p>
+                    </release-item>
+                </release-feature-list>
 
                 <release-improvement-list>
                     <release-item>
