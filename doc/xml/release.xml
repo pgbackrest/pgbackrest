@@ -96,6 +96,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Move test definitions to <file>test/define.yaml</file>.  The location is better because it is no longer buried in the Perl test libs.  Also, the data can be easily accessed from C.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Include VM type in <id>gcov</id> path to avoid conflicts between VMs with different architectures.</p>
                     </release-item>
 
