@@ -100,6 +100,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Move help/version integration tests to <id>mock/all</id>.  Help and version are covered by unit tests, so we really just to need to make sure there is output when called from the command line.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Include VM type in <id>gcov</id> path to avoid conflicts between VMs with different architectures.</p>
                     </release-item>
 
