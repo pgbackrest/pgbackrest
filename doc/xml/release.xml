@@ -112,7 +112,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve logic for smart builds to include version changes.</p>
+                        <p>Improve logic for smart builds to include version changes.  Skip version checks when testing in <setting>--dev</setting> mode.</p>
                     </release-item>
 
                     <release-item>
