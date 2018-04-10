@@ -95,20 +95,21 @@ Rules:
 ***********************************************************************************************************************************/
 static String *
 cfgFileLoad(
-    const ParseOption *configOpt, const ParseOption *configIncludeOpt, const String *configOptDefault,
-    const String *configOptIncludePathDefault)
+    const ParseOption *optionList, const String *optConfigDefault,
+    const String *optConfigIncludePathDefault)
 {
+     // const String *optConfigPathDefault,
     bool loadConfig = true;
     bool loadConfigInclude = true;
 
     // If the option is specified on the command line, then found will be true meaning the file is required to exist,
     // else it is optional
-    bool configRequired = configOpt->found;
-    bool configIncludeRequired = configIncludeOpt->found;
+    bool configRequired = optionList[cfgOptConfig].found;
+    bool configIncludeRequired = optionList[cfgOptConfigIncludePath].found;
 
     // If the --no-config option was passed or the --config option was not passed on the command line but the
     // config-include-path was passed on the command line, then do not load the config file
-    if (configOpt->negate || (!configOpt->found && configIncludeOpt->found))
+    if (optionList[cfgOptConfig].negate || (!optionList[cfgOptConfig].found && optionList[cfgOptConfigIncludePath].found))
     {
         loadConfig = false;
         configRequired = false;
@@ -116,7 +117,7 @@ cfgFileLoad(
 
     // If --config option is specified on the command line but the --config-include-path is not, then do not attempt to
     // load the include files
-    if (configOpt->found && !configIncludeOpt->found)
+    if (optionList[cfgOptConfig].found && !optionList[cfgOptConfigIncludePath].found)
     {
         loadConfigInclude = false;
         configIncludeRequired = false;
@@ -130,10 +131,10 @@ cfgFileLoad(
         const String *configFileName = NULL;
 
         // Get the config file name from the command-line if it exists else default
-        if (configOpt->found)
-            configFileName = strLstGet(configOpt->valueList, 0);
+        if (optionList[cfgOptConfig].found)
+            configFileName = strLstGet(optionList[cfgOptConfig].valueList, 0);
         else
-            configFileName = configOptDefault;
+            configFileName = optConfigDefault;
 
         // Load the config file
         Buffer *buffer = storageGetNP(storageOpenReadP(storageLocal(), configFileName, .ignoreMissing = !configRequired));
@@ -156,10 +157,10 @@ cfgFileLoad(
         const String *configIncludePath = NULL;
 
         // Get the config include path from the command-line if it exists else default
-        if (configIncludeOpt->found)
-            configIncludePath = strLstGet(configIncludeOpt->valueList, 0);
+        if (optionList[cfgOptConfigIncludePath].found)
+            configIncludePath = strLstGet(optionList[cfgOptConfigIncludePath].valueList, 0);
         else
-            configIncludePath = configOptIncludePathDefault;
+            configIncludePath = optConfigIncludePathDefault;
 
         // Get a list of conf files from the specified path -- error on missing if the option was passed on the command line
         StringList *list = storageListP(
@@ -385,8 +386,7 @@ configParse(unsigned int argListSize, const char *argList[])
             ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
 
             // Load the configuration file(s)
-            String *configString = cfgFileLoad(&parseOptionList[cfgOptConfig],
-                &parseOptionList[cfgOptConfigIncludePath],
+            String *configString = cfgFileLoad(parseOptionList,
                 strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfig))),
                 strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfigIncludePath))));
 

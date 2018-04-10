@@ -116,6 +116,8 @@ use constant CFGCMD_VERSION                                         => 'version'
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_CONFIG                                          => 'config';
     push @EXPORT, qw(CFGOPT_CONFIG);
+use constant CFGOPT_CONFIG_PATH                                     => 'config-path';
+    push @EXPORT, qw(CFGOPT_CONFIG_PATH);
 use constant CFGOPT_CONFIG_INCLUDE_PATH                             => 'config-include-path';
     push @EXPORT, qw(CFGOPT_CONFIG_INCLUDE_PATH);
 use constant CFGOPT_DELTA                                           => 'delta';
@@ -422,7 +424,8 @@ use constant CFGDEF_DEFAULT_COMPRESS_LEVEL_MIN                      => 0;
 use constant CFGDEF_DEFAULT_COMPRESS_LEVEL_MAX                      => 9;
 
 use constant CFGDEF_DEFAULT_CONFIG                                  => '/etc/' . BACKREST_CONF;
-use constant CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH                     => '/etc/pgbackrest.d';
+use constant CFGDEF_DEFAULT_CONFIG_PATH                             => '/etc/pgbackrest';
+use constant CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH                     => CFGDEF_DEFAULT_CONFIG_PATH . '/conf.d';
 
 use constant CFGDEF_DEFAULT_DB_TIMEOUT                              => 1800;
 use constant CFGDEF_DEFAULT_DB_TIMEOUT_MIN                          => WAIT_TIME_MINIMUM;
@@ -633,11 +636,33 @@ my %hConfigDefine =
         }
     },
 
+    &CFGOPT_CONFIG_PATH =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_PATH,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_EXPIRE => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_LOCAL => {},
+            &CFGCMD_REMOTE => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_START => {},
+            &CFGCMD_STOP => {},
+        }
+    },
+
     &CFGOPT_CONFIG_INCLUDE_PATH =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH,
-        &CFGDEF_NEGATE => true,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},

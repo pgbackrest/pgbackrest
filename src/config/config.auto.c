@@ -282,6 +282,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
+        CONFIG_OPTION_NAME("config-path")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptConfigPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
         CONFIG_OPTION_NAME("db-include")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptDbInclude)

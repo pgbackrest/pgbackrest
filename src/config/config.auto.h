@@ -14,7 +14,7 @@ Command constants
 /***********************************************************************************************************************************
 Option constants
 ***********************************************************************************************************************************/
-#define CFG_OPTION_TOTAL                                            140
+#define CFG_OPTION_TOTAL                                            141
 
 /***********************************************************************************************************************************
 Command enum
@@ -60,6 +60,7 @@ typedef enum
     cfgOptCompressLevelNetwork,
     cfgOptConfig,
     cfgOptConfigIncludePath,
+    cfgOptConfigPath,
     cfgOptDbInclude,
     cfgOptDbTimeout,
     cfgOptDelta,
@@ -79,14 +80,14 @@ typedef enum
     cfgOptOutput,
     cfgOptPerlOption,
     cfgOptPgHost,
-    cfgOptPgHostCmd =                                               41,
-    cfgOptPgHostConfig =                                            49,
-    cfgOptPgHostPort =                                              57,
-    cfgOptPgHostUser =                                              65,
-    cfgOptPgPath =                                                  73,
-    cfgOptPgPort =                                                  81,
-    cfgOptPgSocketPath =                                            89,
-    cfgOptProcess =                                                 97,
+    cfgOptPgHostCmd =                                               42,
+    cfgOptPgHostConfig =                                            50,
+    cfgOptPgHostPort =                                              58,
+    cfgOptPgHostUser =                                              66,
+    cfgOptPgPath =                                                  74,
+    cfgOptPgPort =                                                  82,
+    cfgOptPgSocketPath =                                            90,
+    cfgOptProcess =                                                 98,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
     cfgOptRecoveryOption,

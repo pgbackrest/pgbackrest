@@ -794,7 +794,50 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest.d")
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/conf.d")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("config-path")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("general")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Root path to pgBackRest configuration files.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "CSHANG"
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRemote)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest")
         )
     )
 

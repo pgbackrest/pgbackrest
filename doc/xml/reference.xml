@@ -758,7 +758,16 @@
                     <example>/var/lib/backrest/pgbackrest.conf</example>
                 </option>
 
-                <!-- OPERATION - GENERAL - CONFIG OPTION -->
+                <!-- OPERATION - GENERAL - CONFIG PATH OPTION -->
+                <option id="config-path" name="Config Path">
+                    <summary>Root path to <backrest/> configuration files.</summary>
+
+                    <text>CSHANG</text>
+
+                    <example>/docker/pgbackrest</example>
+                </option>
+
+                <!-- OPERATION - GENERAL - CONFIG INCLUDE PATH OPTION -->
                 <option id="config-include-path" name="Config Include Path">
                     <summary>Path to additional <backrest/> configuration files.</summary>
 

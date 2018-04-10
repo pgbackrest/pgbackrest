@@ -62,6 +62,7 @@ typedef enum
     cfgDefOptCompressLevelNetwork,
     cfgDefOptConfig,
     cfgDefOptConfigIncludePath,
+    cfgDefOptConfigPath,
     cfgDefOptDbInclude,
     cfgDefOptDbTimeout,
     cfgDefOptDelta,
