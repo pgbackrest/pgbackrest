@@ -705,7 +705,7 @@ testRun()
         StringList *argList = NULL;
         String *configFile = strNewFmt("%s/test.config", testPath());
 
-        String *configIncludePath = strNewFmt("%s/config_incl", testPath());
+        String *configIncludePath = strNewFmt("%s/conf.d", testPath());
         mkdir(strPtr(configIncludePath), 0750);
 
         // Confirm same behavior with multiple config include files
@@ -794,10 +794,9 @@ testRun()
         // Set up defaults
         String *backupCmdDefConfigValue = strNew(cfgDefOptionDefault(
             cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP)), cfgOptionDefIdFromId(cfgOptConfig)));
-        // String *backupCmdDefConfigPathValue = strNew(cfgDefOptionDefault(
-        //         cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP)), cfgOptionDefIdFromId(cfgOptConfigPath)));
         String *backupCmdDefConfigInclPathValue = strNew(cfgDefOptionDefault(
                 cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP)), cfgOptionDefIdFromId(cfgOptConfigIncludePath)));
+        String *oldConfigDefault = strNewFmt("%s%s", testPath(), PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
         // Create the option structure and initialize with 0
         ParseOption parseOptionList[CFG_OPTION_TOTAL];
@@ -812,7 +811,7 @@ testRun()
         parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
 
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue)),
+            backupCmdDefConfigInclPathValue, oldConfigDefault)),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n"
@@ -826,44 +825,6 @@ testRun()
         strLstFree(parseOptionList[cfgOptConfig].valueList);
         strLstFree(parseOptionList[cfgOptConfigIncludePath].valueList);
 
-        // config and config-include-path are "default" with files existing
-        //--------------------------------------------------------------------------------------------------------------------------
-        parseOptionList[cfgOptConfig].found = false;
-        parseOptionList[cfgOptConfig].source = cfgSourceDefault;
-        parseOptionList[cfgOptConfigIncludePath].found = false;
-        parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
-
-        // Pass actual location of config files as "default" - not setting valueList above, so these are the only possible values
-        // to choose.
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, configFile, configIncludePath)),
-            "[global]\n"
-            "compress-level=3\n"
-            "spool-path=/path/to/spool\n"
-            "\n"
-            "[db]\n"
-            "pg1-host=db\n"
-            "pg1-path=/path/to/db\n"
-            "recovery-option=c=d\n",
-            "cfgFileLoad() - config and config-include-path default, files appended");
-
-        // Config not passed as parameter (default used but does not exist). config-include-path passed as parameter (files read)
-        //--------------------------------------------------------------------------------------------------------------------------
-        parseOptionList[cfgOptConfig].found = false;
-        parseOptionList[cfgOptConfig].source = cfgSourceDefault;
-        parseOptionList[cfgOptConfigIncludePath].found = true;
-        parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
-
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue)),
-            "[db]\n"
-            "pg1-host=db\n"
-            "pg1-path=/path/to/db\n"
-            "recovery-option=c=d\n",
-            "cfgFileLoad() - config default, only config-include-path read");
-
-        strLstFree(parseOptionList[cfgOptConfigIncludePath].valueList);
-
         // Neither config nor config-include-path passed as parameter (defaults but none exist)
         //--------------------------------------------------------------------------------------------------------------------------
         parseOptionList[cfgOptConfig].found = false;
@@ -872,11 +833,59 @@ testRun()
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
 
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue)),
+            backupCmdDefConfigInclPathValue, oldConfigDefault)),
             NULL,
             "cfgFileLoad() - config default, config-include-path default but nothing to read");
 
-        // --no-config and config-include-path passed as parameter (files read)
+        // config and config-include-path are "default" with files existing. File exists in old default config location but ignored.
+        //--------------------------------------------------------------------------------------------------------------------------
+        parseOptionList[cfgOptConfig].found = false;
+        parseOptionList[cfgOptConfig].source = cfgSourceDefault;
+        parseOptionList[cfgOptConfigIncludePath].found = false;
+        parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
+
+        mkdir(strPtr(strPath(oldConfigDefault)), 0750);
+        storagePut(
+            storageOpenWriteNP(
+                    storageLocalWrite(), oldConfigDefault), bufNewStr(
+                    strNew(
+                        "[global:backup]\n"
+                        "buffer-size=65536\n")));
+
+        // Pass actual location of config files as "default" - not setting valueList above, so these are the only possible values
+        // to choose.
+        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, configFile,  configIncludePath,
+            oldConfigDefault)),
+            "[global]\n"
+            "compress-level=3\n"
+            "spool-path=/path/to/spool\n"
+            "\n"
+            "[db]\n"
+            "pg1-host=db\n"
+            "pg1-path=/path/to/db\n"
+            "recovery-option=c=d\n",
+            "cfgFileLoad() - config and config-include-path default, files appended, original config not read");
+
+        // Config not passed as parameter (a default used that does not exist). config-include-path passed as parameter (files read)
+        // config default missing does not cause an error.
+        //--------------------------------------------------------------------------------------------------------------------------
+        parseOptionList[cfgOptConfig].found = false;
+        parseOptionList[cfgOptConfig].source = cfgSourceDefault;
+        parseOptionList[cfgOptConfigIncludePath].found = true;
+        parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
+        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+
+        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
+            backupCmdDefConfigInclPathValue, oldConfigDefault)),
+            "[db]\n"
+            "pg1-host=db\n"
+            "pg1-path=/path/to/db\n"
+            "recovery-option=c=d\n",
+            "cfgFileLoad() - config default, only config-include-path read");
+
+        strLstFree(parseOptionList[cfgOptConfigIncludePath].valueList);
+
+        // --no-config and config-include-path passed as parameter (files read only from include path and not current or old config)
         //--------------------------------------------------------------------------------------------------------------------------
         parseOptionList[cfgOptConfig].found = true;
         parseOptionList[cfgOptConfig].source = cfgSourceParam;
@@ -886,7 +895,7 @@ testRun()
         parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
 
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            backupCmdDefConfigInclPathValue)),
+            backupCmdDefConfigInclPathValue, oldConfigDefault)),
             "[db]\n"
             "pg1-host=db\n"
             "pg1-path=/path/to/db\n"
@@ -904,7 +913,7 @@ testRun()
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
 
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            configIncludePath)),
+            configIncludePath, oldConfigDefault)),
             NULL,
             "cfgFileLoad() - --no-config, config-include-path default, nothing read");
 
@@ -918,7 +927,7 @@ testRun()
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
 
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-            configIncludePath)),
+            configIncludePath, oldConfigDefault)),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n",
@@ -935,7 +944,7 @@ testRun()
         parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
 
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, configFile,
-            backupCmdDefConfigInclPathValue)),
+            backupCmdDefConfigInclPathValue, oldConfigDefault)),
             "[db]\n"
             "pg1-host=db\n"
             "pg1-path=/path/to/db\n"
@@ -944,39 +953,98 @@ testRun()
 
         strLstFree(parseOptionList[cfgOptConfigIncludePath].valueList);
 
-        // config default and config-include-path passed - but no config files in the include path
+        // config and config-include-path are "default".
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm -rf %s/*", strPtr(configIncludePath)))), 0, "remove all include files");
-
         parseOptionList[cfgOptConfig].found = false;
         parseOptionList[cfgOptConfig].source = cfgSourceDefault;
-        parseOptionList[cfgOptConfigIncludePath].found = true;
-        parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        parseOptionList[cfgOptConfigIncludePath].found = false;
+        parseOptionList[cfgOptConfigIncludePath].source = cfgSourceDefault;
 
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, configFile,
-            backupCmdDefConfigInclPathValue)),
-            NULL,
-            "cfgFileLoad() - config default exists with files, config-include-path passed but no files in path");
+        // File exists in old default config location but not in current default.
+        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
+            configIncludePath, oldConfigDefault)),
+            "[global:backup]\n"
+            "buffer-size=65536\n"
+            "\n"
+            "[db]\n"
+            "pg1-host=db\n"
+            "pg1-path=/path/to/db\n"
+            "recovery-option=c=d\n",
+            "cfgFileLoad() - config-include-path files and old config default read");
 
-        strLstFree(parseOptionList[cfgOptConfigIncludePath].valueList);
+        // Pass --config-path
+        parseOptionList[cfgOptConfigPath].found = true;
+        parseOptionList[cfgOptConfigPath].source = cfgSourceParam;
+        parseOptionList[cfgOptConfigPath].valueList = strLstAddZ(strLstNew(), testPath());
+printf("PATH %s\n", strPtr(strNewFmt("sudo cp %s %s", strPtr(configFile), strPtr(strNewFmt("%s/pgbackrest.conf", testPath())))));
+        // Override default paths for config and config-include-path
+        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
+            backupCmdDefConfigInclPathValue, oldConfigDefault)),
+            "[global]\n"
+            "compress-level=3\n"
+            "spool-path=/path/to/spool\n"
+            "\n"
+            "[db]\n"
+            "pg1-host=db\n"
+            "pg1-path=/path/to/db\n"
+            "recovery-option=c=d\n",
+            "cfgFileLoad() - read config-include-path files but config not read - does not exist");
 
-        // config default and config-include-path passed - but only empty file in the include path
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/empty.conf", strPtr(configIncludePath)))))), 0,
-            "add empty conf file to include directory");
+        // TEST_RESULT_INT(
+        // system(
+        //     strPtr(strNewFmt("sudo cp %s %s", strPtr(configFile), strPtr(strNewFmt("%s/pgbackrest.conf", testPath()))))), 0,
+        //     "copy configFile to pgbackrest.conf");
+        //
+        // // Override default paths for config and config-include-path
+        // TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
+        //     backupCmdDefConfigInclPathValue, oldConfigDefault)),
+        //     "[global]\n"
+        //     "compress-level=3\n"
+        //     "spool-path=/path/to/spool\n"
+        //     "\n"
+        //     "[db]\n"
+        //     "pg1-host=db\n"
+        //     "pg1-path=/path/to/db\n"
+        //     "recovery-option=c=d\n",
+        //     "cfgFileLoad() - read config-include-path files but config not read - does not exist");
 
-        parseOptionList[cfgOptConfig].found = false;
-        parseOptionList[cfgOptConfig].source = cfgSourceDefault;
-        parseOptionList[cfgOptConfigIncludePath].found = true;
-        parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        // // config default and config-include-path passed - but no config files in the include path
+        // //--------------------------------------------------------------------------------------------------------------------------
+        // TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm -rf %s/*", strPtr(configIncludePath)))), 0, "remove all include files");
+        //
+        // parseOptionList[cfgOptConfig].found = false;
+        // parseOptionList[cfgOptConfig].source = cfgSourceDefault;
+        // parseOptionList[cfgOptConfigIncludePath].found = true;
+        // parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
+        // parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        //
+        // TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, configFile,
+        //     backupCmdDefConfigInclPathValue, oldConfigDefault)),
+        //     NULL,
+        //     "cfgFileLoad() - config default exists with files, config-include-path passed but no files in path");
+        //
+        // strLstFree(parseOptionList[cfgOptConfigIncludePath].valueList);
+        //
+        // // config default and config-include-path passed - but only empty file in the include path
+        // //--------------------------------------------------------------------------------------------------------------------------
+        // TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/empty.conf", strPtr(configIncludePath)))))), 0,
+        //     "add empty conf file to include directory");
+        //
+        // parseOptionList[cfgOptConfig].found = false;
+        // parseOptionList[cfgOptConfig].source = cfgSourceDefault;
+        // parseOptionList[cfgOptConfigIncludePath].found = true;
+        // parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
+        // parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
+        //
+        // TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, configFile,
+        //     backupCmdDefConfigInclPathValue, oldConfigDefault)),
+        //     NULL,
+        //     "cfgFileLoad() - config default exists with files, config-include-path passed but only empty conf file");
+        //
+        // strLstFree(parseOptionList[cfgOptConfigIncludePath].valueList);
 
-        TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, configFile,
-            backupCmdDefConfigInclPathValue)),
-            NULL,
-            "cfgFileLoad() - config default exists with files, config-include-path passed but only empty conf file");
 
-        strLstFree(parseOptionList[cfgOptConfigIncludePath].valueList);
+
+
     }
 }

@@ -15,9 +15,10 @@ Command and Option Parse
 #include "version.h"
 
 /***********************************************************************************************************************************
-Standard config file name
+Standard config file name and old default path and name
 ***********************************************************************************************************************************/
 #define PGBACKREST_CONFIG_FILE                                      PGBACKREST_BIN ".conf"
+#define PGBACKREST_CONFIG_ORIG_PATH_FILE                            "/etc/" PGBACKREST_CONFIG_FILE
 
 /***********************************************************************************************************************************
 Standard config include path name
@@ -96,9 +97,8 @@ Rules:
 static String *
 cfgFileLoad(
     const ParseOption *optionList, const String *optConfigDefault,
-    const String *optConfigIncludePathDefault)
+    const String *optConfigIncludePathDefault, const String *origConfigDefault)
 {
-     // const String *optConfigPathDefault,
     bool loadConfig = true;
     bool loadConfigInclude = true;
 
@@ -107,10 +107,24 @@ cfgFileLoad(
     bool configRequired = optionList[cfgOptConfig].found;
     bool configIncludeRequired = optionList[cfgOptConfigIncludePath].found;
 
+    // Save default for later determining if must check old original default config path
+    const String *optConfigDefaultOrig = optConfigDefault;
+
+    // If the config-path option is found on the command line, then its value will override the defaults for config and
+    // config-include-path
+    if (optionList[cfgOptConfigPath].found)
+    {
+        optConfigDefault =
+            strNewFmt("%s/%s", strPtr(strLstGet(optionList[cfgOptConfigPath].valueList, 0)), strPtr(strBase(optConfigDefault)));
+        optConfigIncludePathDefault =
+            strNewFmt("%s/%s", strPtr(strLstGet(optionList[cfgOptConfigPath].valueList, 0)), PGBACKREST_CONFIG_INCLUDE_PATH);
+    }
+
     // If the --no-config option was passed or the --config option was not passed on the command line but the
     // config-include-path was passed on the command line, then do not load the config file
     if (optionList[cfgOptConfig].negate || (!optionList[cfgOptConfig].found && optionList[cfgOptConfigIncludePath].found))
     {
+        printf("SETTING LOADCONFIG FALSE\n"); fflush(stdout);
         loadConfig = false;
         configRequired = false;
     }
@@ -119,6 +133,7 @@ cfgFileLoad(
     // load the include files
     if (optionList[cfgOptConfig].found && !optionList[cfgOptConfigIncludePath].found)
     {
+        printf("SETTING LOADCONFIGINCLUDE FALSE\n"); fflush(stdout);
         loadConfigInclude = false;
         configIncludeRequired = false;
     }
@@ -142,6 +157,14 @@ cfgFileLoad(
         // Convert the contents of the file buffer to the config string object
         if (buffer != NULL)
             result = strNewBuf(buffer);
+        else if (strEq(configFileName, optConfigDefaultOrig))
+        {
+            // If location is original default and it was not found, attempt to load the config file from the old default location
+            buffer = storageGetNP(storageOpenReadP(storageLocal(), origConfigDefault, .ignoreMissing = !configRequired));
+
+            if (buffer != NULL)
+                result = strNewBuf(buffer);
+        }
     }
 
     // Load *.conf files from the include directory
@@ -388,7 +411,8 @@ configParse(unsigned int argListSize, const char *argList[])
             // Load the configuration file(s)
             String *configString = cfgFileLoad(parseOptionList,
                 strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfig))),
-                strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfigIncludePath))));
+                strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfigIncludePath))),
+                strNew(PGBACKREST_CONFIG_ORIG_PATH_FILE));
 
             if (configString != NULL)
             {

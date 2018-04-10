@@ -750,7 +750,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest.conf")
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf")
         )
     )
 
@@ -1826,7 +1826,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest.conf")
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf")
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-config")
         )
@@ -2523,7 +2523,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest.conf")
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf")
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-config")
         )

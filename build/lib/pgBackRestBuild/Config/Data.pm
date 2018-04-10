@@ -423,8 +423,8 @@ use constant CFGDEF_DEFAULT_BUFFER_SIZE_MIN                         => 16384;
 use constant CFGDEF_DEFAULT_COMPRESS_LEVEL_MIN                      => 0;
 use constant CFGDEF_DEFAULT_COMPRESS_LEVEL_MAX                      => 9;
 
-use constant CFGDEF_DEFAULT_CONFIG                                  => '/etc/' . BACKREST_CONF;
 use constant CFGDEF_DEFAULT_CONFIG_PATH                             => '/etc/pgbackrest';
+use constant CFGDEF_DEFAULT_CONFIG                                  => CFGDEF_DEFAULT_CONFIG_PATH . '/' . BACKREST_CONF;
 use constant CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH                     => CFGDEF_DEFAULT_CONFIG_PATH . '/conf.d';
 
 use constant CFGDEF_DEFAULT_DB_TIMEOUT                              => 1800;
