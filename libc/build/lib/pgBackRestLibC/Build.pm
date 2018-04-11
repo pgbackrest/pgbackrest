@@ -115,6 +115,13 @@ my $rhExport =
         )],
     },
 
+    'storage' =>
+    {
+        &BLD_EXPORTTYPE_SUB => [qw(
+            storageDriverPosixPathRemove
+        )],
+    },
+
     'test' =>
     {
         &BLD_EXPORTTYPE_SUB => [qw(

@@ -65,9 +65,12 @@ Error handling macros that throw a Perl error when a C error is caught
 /***********************************************************************************************************************************
 Core context handling macros, only intended to be called from other macros
 ***********************************************************************************************************************************/
+#define MEM_CONTEXT_XS_OLD()                                                                                                       \
+    MEM_CONTEXT_XS_memContextOld
+
 #define MEM_CONTEXT_XS_CORE_BEGIN(memContext)                                                                                      \
     /* Switch to the new memory context */                                                                                         \
-    MemContext *MEM_CONTEXT_XS_memContextOld = memContextSwitch(memContext);                                                       \
+    MemContext *MEM_CONTEXT_XS_OLD() = memContextSwitch(memContext);                                                               \
                                                                                                                                    \
     /* Store any errors to be croaked to Perl at the end */                                                                        \
     bool MEM_CONTEXT_XS_croak = false;                                                                                             \
@@ -84,7 +87,7 @@ Core context handling macros, only intended to be called from other macros
     /* Free the context on error */                                                                                                \
     FINALLY()                                                                                                                      \
     {                                                                                                                              \
-        memContextSwitch(MEM_CONTEXT_XS_memContextOld);                                                                            \
+        memContextSwitch(MEM_CONTEXT_XS_OLD());                                                                                    \
     }                                                                                                                              \
     TRY_END();
 
@@ -132,6 +135,39 @@ Simplifies switching the memory context in functions and includes error handling
 
 #define MEM_CONTEXT_XS_END()                                                                                                       \
     MEM_CONTEXT_XS_CORE_END();                                                                                                     \
+                                                                                                                                   \
+    /* Croak on error */                                                                                                           \
+    if (MEM_CONTEXT_XS_croak)                                                                                                      \
+    {                                                                                                                              \
+        ERROR_XS()                                                                                                                 \
+    }                                                                                                                              \
+}
+
+/***********************************************************************************************************************************
+Simplifies switching to a temp memory context in functions and includes error handling
+***********************************************************************************************************************************/
+#define MEM_CONTEXT_XS_TEMP()                                                                                                      \
+    MEM_CONTEXT_XS_TEMP_memContext
+
+#define MEM_CONTEXT_XS_TEMP_BEGIN()                                                                                                \
+{                                                                                                                                  \
+    MemContext *MEM_CONTEXT_XS_TEMP() = memContextNew("temporary");                                                                \
+                                                                                                                                   \
+    MEM_CONTEXT_XS_CORE_BEGIN(MEM_CONTEXT_XS_TEMP())
+
+#define MEM_CONTEXT_XS_TEMP_END()                                                                                                  \
+    /* Set error to be croak to Perl later */                                                                                      \
+    CATCH_ANY()                                                                                                                    \
+    {                                                                                                                              \
+        MEM_CONTEXT_XS_croak = true;                                                                                               \
+    }                                                                                                                              \
+    /* Free the context on error */                                                                                                \
+    FINALLY()                                                                                                                      \
+    {                                                                                                                              \
+            memContextSwitch(MEM_CONTEXT_XS_OLD());                                                                                \
+            memContextFree(MEM_CONTEXT_XS_TEMP());                                                                                 \
+    }                                                                                                                              \
+    TRY_END();                                                                                                                     \
                                                                                                                                    \
     /* Croak on error */                                                                                                           \
     if (MEM_CONTEXT_XS_croak)                                                                                                      \

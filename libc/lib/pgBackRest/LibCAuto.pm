@@ -240,6 +240,11 @@ sub libcAutoExportTag
             'randomBytes',
         ],
 
+        storage =>
+        [
+            'storageDriverPosixPathRemove',
+        ],
+
         test =>
         [
             'cfgParseTest',

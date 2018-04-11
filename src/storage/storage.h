@@ -149,6 +149,22 @@ typedef struct StoragePathCreateParam
 void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
 
 /***********************************************************************************************************************************
+storagePathRemove
+***********************************************************************************************************************************/
+typedef struct StoragePathRemoveParam
+{
+    bool errorOnMissing;
+    bool recurse;
+} StoragePathRemoveParam;
+
+#define storagePathRemoveP(this, pathExp, ...)                                                                                     \
+    storagePathRemove(this, pathExp, (StoragePathRemoveParam){__VA_ARGS__})
+#define storagePathRemoveNP(this, pathExp)                                                                                         \
+    storagePathRemove(this, pathExp, (StoragePathRemoveParam){0})
+
+void storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveParam param);
+
+/***********************************************************************************************************************************
 storagePut
 ***********************************************************************************************************************************/
 #define storagePutNP(file, buffer)                                                                                                 \

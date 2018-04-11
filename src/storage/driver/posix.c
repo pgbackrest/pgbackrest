@@ -121,7 +121,7 @@ storageDriverPosixList(const String *path, bool errorOnMissing, const String *ex
         if (!dir)
         {
             if (errorOnMissing || errno != ENOENT)
-                THROW_SYS_ERROR(PathOpenError, "unable to open directory '%s' for read", strPtr(path));
+                THROW_SYS_ERROR(PathOpenError, "unable to open path '%s' for read", strPtr(path));
         }
         else
         {
@@ -242,6 +242,52 @@ storageDriverPosixPathCreate(const String *path, bool errorOnExists, bool noPare
         else if (errno != EEXIST || errorOnExists)
             THROW_SYS_ERROR(PathCreateError, "unable to create path '%s'", strPtr(path));
     }
+}
+
+/***********************************************************************************************************************************
+Remove a path
+***********************************************************************************************************************************/
+void
+storageDriverPosixPathRemove(const String *path, bool errorOnMissing, bool recurse)
+{
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Recurse if requested
+        if (recurse)
+        {
+            // Get a list of files in this path
+            StringList *fileList = storageDriverPosixList(path, errorOnMissing, NULL);
+
+            // Only continue if the path exists
+            if (fileList != NULL)
+            {
+                // Delete all paths and files
+                for (unsigned int fileIdx = 0; fileIdx < strLstSize(fileList); fileIdx++)
+                {
+                    String *file = strNewFmt("%s/%s", strPtr(path), strPtr(strLstGet(fileList, fileIdx)));
+
+                    // Rather than stat the file to discover what type it is, just try to unlink it and see what happens
+                    if (unlink(strPtr(file)) == -1)
+                    {
+                        // These errors indicate that the entry is actually a path so we'll try to delete it that way
+                        if (errno == EPERM || errno == EISDIR)              // {uncovered - EPERM is not returned on tested systems}
+                            storageDriverPosixPathRemove(file, false, true);
+                        // Else error
+                        else
+                            THROW_SYS_ERROR(PathRemoveError, "unable to remove path/file '%s'", strPtr(file));
+                    }
+                }
+            }
+        }
+
+        // Delete the path
+        if (rmdir(strPtr(path)) == -1)
+        {
+            if (errorOnMissing || errno != ENOENT)
+                THROW_SYS_ERROR(PathRemoveError, "unable to remove path '%s'", strPtr(path));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
 }
 
 /***********************************************************************************************************************************
