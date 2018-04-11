@@ -760,9 +760,11 @@
 
                 <!-- OPERATION - GENERAL - CONFIG PATH OPTION -->
                 <option id="config-path" name="Config Path">
-                    <summary>Root path to <backrest/> configuration files.</summary>
+                    <summary>Base path to <backrest/> configuration files.</summary>
 
-                    <text>CSHANG</text>
+                    <text>This setting is used to override the default base path setting for the <br-option>--config-path</br-option> and <br-option>--config-include-path</br-option> options unless they are set on the command-line.
+
+                    For example, passing <code>--config-path=/docker/pgbackrest</code> alone, results in <br-option>--config</br-option> default being set to <code>/docker/pgbackrest/pgbackrest.conf</code> and <br-option>--config-include-path</br-option> default being set to  <code>/docker/pgbackrest/conf.d</code>.</text>
 
                     <example>/docker/pgbackrest</example>
                 </option>

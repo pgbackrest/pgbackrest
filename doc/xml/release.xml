@@ -30,7 +30,7 @@
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
-                        <p>Added support for additional <backrest/> configuration files in the directory specified by the <br-option>--config-include-path</br-option> option.</p>
+                        <p>Added support for additional <backrest/> configuration files in the directory specified by the <br-option>--config-include-path</br-option> option. Added additional option <br-option>--config-path</br-option> for overriding the default base path of <br-option>--config</br-option> and <br-option>--config-include-path</br-option> when not explicitly set on the command line</p>
                     </release-item>
                 </release-feature-list>
 

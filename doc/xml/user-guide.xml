@@ -556,16 +556,13 @@
 
             <p><backrest/> configuration files follow the Windows INI convention.  Sections are denoted by text in brackets and key/value pairs are contained in each section.  Lines beginning with <id>#</id> are ignored and can be used as comments.</p>
 
-            <p>The default config directory is /etc/pgbackrest.  This can be changed with --config-path which will also changed the default for --config and --config-include-path unless they are set on the command-line.
-
-            So if we change config-path=/docker/pgbackrest, then --config default is /docker/pgbackrest/pgbackrest.conf and --config-include-path default is /docker/pgbackrest/conf.d.  But the rules for for --config only are the same.  Put "conf.d" and "pgbackrest.conf" defines into version.h</p>
-
             <p>There are multiple ways the <backrest/> configuration files can be loaded:</p>
             <list>
                 <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are default: the default config file will be loaded, if it exists, and <file>*.conf</file> files in the default config include path will be appended, if they exist.</list-item>
-                <list-item><br-option>config</br-option> option is specified: only the specified config file will be loaded.</list-item>
-                <list-item><br-option>config-include-path</br-option> is specified: only <file>*.conf</file> files in the config include path will be loaded.</list-item>
-                <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are specified: using the user-specified values, the config file will be loaded, if it exists, and <file>*.conf</file> files in the config include path will be appended, if they exist.</list-item>
+                <list-item><br-option>config</br-option> option is specified: only the specified config file will be loaded and is expected to exist.</list-item>
+                <list-item><br-option>config-include-path</br-option> is specified: only <file>*.conf</file> files in the config include path will be loaded and are expected to exist.</list-item>
+                <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are specified: using the user-specified values, the config file will be loaded and <file>*.conf</file> files in the config include path will be appended. The files are expected to exist.</list-item>
+                <list-item><br-option>config-path</br-option> is specified: this setting will override the base path for the default location of the config file and/or the base path of the default config-include-path setting unless the config and/or config-incude-path option is explicitly set.</list-item>
             </list>
 
             <p>The files are concatenated as if they were one big file; order doesn't matter, but there is precedence based on sections. The precedence is:</p>

@@ -86,18 +86,34 @@ The parent mem context is used. Defaults are passed to make testing easier.
 
 Rules:
 - config and config-include-path are default. In this case, the config file will be loaded, if it exists, and *.conf files in the
-  config-include-path will be appended, if they exist. A missing/empty dir will be ignored.
-- config is specified. Only the specified config file will be loaded. The default config-include-path will be ignored.
-- config-include-path is specified. Only *.conf files in the config-include-path will be loaded. The default config will be ignored.
-- If the config and config-include-path are specified. Just like #1, except with the user-specified values.
+  config-include-path will be appended, if they exist. A missing/empty dir will be ignored except that the original default
+  for the config file will be attempted to be loaded if the current default is not found.
+- config only is specified. Only the specified config file will be loaded and is required. The default config-include-path will be
+  ignored.
+- config and config-path are specified. The specified config file will be loaded and is required. The overridden default of the
+  config-include-path (<config-path>/conf.d) will be loaded if exists but is not required.
+- config-include-path only is specified. Only *.conf files in the config-include-path will be loaded. The default config will be
+  ignored. The directory passed for the option must exist.
+- config-include-path and config-path are specified. The *.conf files in the config-include-path will be loaded and the directory
+  passed must exist. The overridden default of the config file path (<config-path>/pgbackrest.conf) will be loaded if exists but is
+  not required.
+- If the config and config-include-path are specified. The config file will be loaded and is expected to exist and *.conf files in
+  the config-include-path will be appended and at least one is expected to exist.
 - If --no-config is specified and --config-include-path is specified then Only *.conf files in the config-include-path will be
-  loaded.
-- If --no-config is specified and --config-include-path IS NOT specified then no config will be loaded.
+  loaded and are required.
+- If --no-config is specified and --config-path is specified then Only *.conf files in the overriden default config-include-path
+  (<config-path>/conf.d) will be loaded if exist but not required.
+- If --no-config is specified and neither --config-include-path nor --config-path are specified then no configs will be loaded.
+- If --config-path only, the defaults for config and config-include-path will be changed to use that as a base path but the files
+  will not be required to exist since this is a default override.
 ***********************************************************************************************************************************/
 static String *
-cfgFileLoad(
-    const ParseOption *optionList, const String *optConfigDefault,
-    const String *optConfigIncludePathDefault, const String *origConfigDefault)
+cfgFileLoad(                                                        // NOTE: Passing defaults to enable more complete test coverage
+    const ParseOption *optionList,                                  // All options and their current settings
+    const String *optConfigDefault,                                 // Current default for --config option
+    const String *optConfigIncludePathDefault,                      // Current default for --config-include-path option
+    const String *origConfigDefault                                 // Original --config option default (/etc/pgbackrest.conf)
+    )
 {
     bool loadConfig = true;
     bool loadConfigInclude = true;
@@ -108,9 +124,9 @@ cfgFileLoad(
     bool configIncludeRequired = optionList[cfgOptConfigIncludePath].found;
 
     // Save default for later determining if must check old original default config path
-    const String *optConfigDefaultOrig = optConfigDefault;
+    const String *optConfigDefaultCurrent = optConfigDefault;
 
-    // If the config-path option is found on the command line, then its value will override the defaults for config and
+    // If the config-path option is found on the command line, then its value will override the base path defaults for config and
     // config-include-path
     if (optionList[cfgOptConfigPath].found)
     {
@@ -124,16 +140,14 @@ cfgFileLoad(
     // config-include-path was passed on the command line, then do not load the config file
     if (optionList[cfgOptConfig].negate || (!optionList[cfgOptConfig].found && optionList[cfgOptConfigIncludePath].found))
     {
-        printf("SETTING LOADCONFIG FALSE\n"); fflush(stdout);
         loadConfig = false;
         configRequired = false;
     }
 
-    // If --config option is specified on the command line but the --config-include-path is not, then do not attempt to
-    // load the include files
-    if (optionList[cfgOptConfig].found && !optionList[cfgOptConfigIncludePath].found)
+    // If --config option is specified on the command line but neither the --config-include-path nor the config-path are passed,
+    // then do not attempt to load the include files
+    if (optionList[cfgOptConfig].found && !(optionList[cfgOptConfigIncludePath].found || optionList[cfgOptConfigPath].found))
     {
-        printf("SETTING LOADCONFIGINCLUDE FALSE\n"); fflush(stdout);
         loadConfigInclude = false;
         configIncludeRequired = false;
     }
@@ -157,9 +171,9 @@ cfgFileLoad(
         // Convert the contents of the file buffer to the config string object
         if (buffer != NULL)
             result = strNewBuf(buffer);
-        else if (strEq(configFileName, optConfigDefaultOrig))
+        else if (strEq(configFileName, optConfigDefaultCurrent))
         {
-            // If location is original default and it was not found, attempt to load the config file from the old default location
+            // If confg is current default and it was not found, attempt to load the config file from the old default location
             buffer = storageGetNP(storageOpenReadP(storageLocal(), origConfigDefault, .ignoreMissing = !configRequired));
 
             if (buffer != NULL)
@@ -185,7 +199,7 @@ cfgFileLoad(
         else
             configIncludePath = optConfigIncludePathDefault;
 
-        // Get a list of conf files from the specified path -- error on missing if the option was passed on the command line
+        // Get a list of conf files from the specified path -error on missing directory if the option was passed on the command line
         StringList *list = storageListP(
             storageLocal(), configIncludePath, .expression = strNew(".+\\.conf$"), .errorOnMissing = configIncludeRequired);
 
