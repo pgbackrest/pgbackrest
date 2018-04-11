@@ -453,6 +453,24 @@ use constant CFGDEF_LOG_LEVEL_DEFAULT                               => 'log-leve
 use constant CFGDEF_LOG_LEVEL_STDERR_MAX                            => 'log-level-stderr-max';
     push @EXPORT, qw(CFGDEF_LOG_LEVEL_STDERR_MAX);
 
+# Does the command require a lock?  This doesn't mean a lock can't be taken explicitly later, just controls whether a lock will be
+# acquired as soon at the command starts.
+use constant CFGDEF_LOCK_REQUIRED                                   => 'lock-required';
+    push @EXPORT, qw(CFGDEF_LOCK_REQUIRED);
+
+# What type of lock is required?
+use constant CFGDEF_LOCK_TYPE                                       => 'lock-type';
+    push @EXPORT, qw(CFGDEF_LOCK_TYPE);
+
+use constant CFGDEF_LOCK_TYPE_ARCHIVE                               => 'archive';
+    push @EXPORT, qw(CFGDEF_LOCK_TYPE_ARCHIVE);
+use constant CFGDEF_LOCK_TYPE_BACKUP                                => 'backup';
+    push @EXPORT, qw(CFGDEF_LOCK_TYPE_BACKUP);
+use constant CFGDEF_LOCK_TYPE_ALL                                   => 'all';
+    push @EXPORT, qw(CFGDEF_LOCK_TYPE_ALL);
+use constant CFGDEF_LOCK_TYPE_NONE                                  => 'none';
+    push @EXPORT, qw(CFGDEF_LOCK_TYPE_NONE);
+
 # Option defines
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGDEF_ALLOW_LIST                                      => 'allow-list';
@@ -529,10 +547,13 @@ my $rhCommandDefine =
     &CFGCMD_ARCHIVE_PUSH =>
     {
         &CFGDEF_LOG_FILE => false,
+        &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
     },
 
     &CFGCMD_BACKUP =>
     {
+        &CFGDEF_LOCK_REQUIRED => true,
+        &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_BACKUP,
     },
 
     &CFGCMD_CHECK =>
@@ -542,6 +563,8 @@ my $rhCommandDefine =
 
     &CFGCMD_EXPIRE =>
     {
+        &CFGDEF_LOCK_REQUIRED => true,
+        &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_BACKUP,
     },
 
     &CFGCMD_HELP =>
@@ -574,14 +597,20 @@ my $rhCommandDefine =
 
     &CFGCMD_STANZA_CREATE =>
     {
+        &CFGDEF_LOCK_REQUIRED => true,
+        &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ALL,
     },
 
     &CFGCMD_STANZA_DELETE =>
     {
+        &CFGDEF_LOCK_REQUIRED => true,
+        &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ALL,
     },
 
     &CFGCMD_STANZA_UPGRADE =>
     {
+        &CFGDEF_LOCK_REQUIRED => true,
+        &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ALL,
     },
 
     &CFGCMD_START =>
@@ -2206,6 +2235,32 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_STDERR_MAX}))
     {
         $rhCommandDefine->{$strCommand}{&CFGDEF_LOG_LEVEL_STDERR_MAX} = TRACE;
+    }
+
+    # Default lock required is false
+    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOCK_REQUIRED}))
+    {
+        $rhCommandDefine->{$strCommand}{&CFGDEF_LOCK_REQUIRED} = false;
+    }
+
+    # Lock type must be set if a lock is required
+    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOCK_TYPE}))
+    {
+        # Is a lock type required?
+        if ($rhCommandDefine->{$strCommand}{&CFGDEF_LOCK_REQUIRED})
+        {
+            confess &log(ERROR, "lock type is required for command '${strCommand}'");
+        }
+
+        $rhCommandDefine->{$strCommand}{&CFGDEF_LOCK_TYPE} = CFGDEF_LOCK_TYPE_NONE;
+    }
+    else
+    {
+        if ($rhCommandDefine->{$strCommand}{&CFGDEF_LOCK_REQUIRED} &&
+            $rhCommandDefine->{$strCommand}{&CFGDEF_LOCK_TYPE} eq CFGDEF_LOCK_TYPE_NONE)
+        {
+            confess &log(ERROR, "lock type is required for command '${strCommand}' and cannot be 'none'");
+        }
     }
 }
 

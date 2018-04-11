@@ -235,6 +235,12 @@ sub libcAutoExportTag
             'encodeToStr',
         ],
 
+        lock =>
+        [
+            'lockAcquire',
+            'lockRelease',
+        ],
+
         random =>
         [
             'randomBytes',

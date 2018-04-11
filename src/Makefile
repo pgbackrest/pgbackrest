@@ -61,6 +61,7 @@ SRCS = \
 	common/exit.c \
 	common/io/handle.c \
 	common/ini.c \
+	common/lock.c \
 	common/log.c \
 	common/memContext.c \
 	common/regExp.c \

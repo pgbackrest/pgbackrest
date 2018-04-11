@@ -7,6 +7,7 @@ config/parse.c sets the command and options and determines which options are val
 #ifndef CONFIG_CONFIG_H
 #define CONFIG_CONFIG_H
 
+#include "common/lock.h"
 #include "common/log.h"
 #include "common/type/stringList.h"
 #include "config/define.h"
@@ -29,6 +30,9 @@ Access the current command and command parameters.
 ***********************************************************************************************************************************/
 ConfigCommand cfgCommand();
 const char *cfgCommandName(ConfigCommand commandId);
+
+bool cfgLockRequired();
+LockType cfgLockType();
 
 bool cfgLogFile();
 LogLevel cfgLogLevelDefault();

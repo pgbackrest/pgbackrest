@@ -43,6 +43,7 @@ These includes are from the src directory.  There is no Perl-specific code in th
 ***********************************************************************************************************************************/
 #include "cipher/random.h"
 #include "common/error.h"
+#include "common/lock.h"
 #include "config/config.h"
 #include "config/define.h"
 #include "config/load.h"
@@ -99,6 +100,7 @@ INCLUDE: const-xs.inc
 INCLUDE: xs/cipher/block.xs
 INCLUDE: xs/cipher/random.xs
 INCLUDE: xs/common/encode.xs
+INCLUDE: xs/common/lock.xs
 INCLUDE: xs/config/config.xs
 INCLUDE: xs/config/configTest.xs
 INCLUDE: xs/config/define.xs

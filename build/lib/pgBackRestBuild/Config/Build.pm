@@ -38,7 +38,6 @@ use constant BLDLCL_DATA_OPTION                                     => '02-optio
 use constant BLDLCL_ENUM_COMMAND                                    => '01-enumCommand';
 use constant BLDLCL_ENUM_OPTION                                     => '02-enumOption';
 
-
 ####################################################################################################################################
 # Definitions for constants and data to build
 ####################################################################################################################################
@@ -147,6 +146,8 @@ sub buildConfig
             "        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevel" . ucfirst(lc($rhCommand->{&CFGDEF_LOG_LEVEL_DEFAULT})) . ")\n" .
             "        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevel" .
                 ucfirst(lc($rhCommand->{&CFGDEF_LOG_LEVEL_STDERR_MAX})) . ")\n" .
+            "        CONFIG_COMMAND_LOCK_REQUIRED(" . ($rhCommand->{&CFGDEF_LOCK_REQUIRED} ? 'true' : 'false') . ")\n" .
+            "        CONFIG_COMMAND_LOCK_TYPE(lockType" . ucfirst(lc($rhCommand->{&CFGDEF_LOCK_TYPE})) . ")\n" .
             "    )\n";
 
         $iCommandTotal++;

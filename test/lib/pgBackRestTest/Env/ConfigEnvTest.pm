@@ -17,7 +17,7 @@ use Getopt::Long qw(GetOptions);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::LibC qw(:test);
+use pgBackRest::LibC qw(:test :lock);
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::RunTest;
@@ -186,6 +186,9 @@ sub configTestLoad
     $self->testResult(
         sub {configLoad(false, backrestBin(), cfgCommandName($iCommandId), \$strConfigJson)},
         true, 'config load: ' . join(" ", @stryArg));
+
+    # Release any lock that was taken during configLoad.
+    lockRelease(false);
 }
 
 1;
