@@ -78,7 +78,7 @@ infoNew(String *fileName, const Storage *storage, const bool loadFile, const boo
 }
 
 Ini *
-InfoIni(const info *this)
+infoIni(const info *this)
 {
     return this->ini;
 }

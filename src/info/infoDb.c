@@ -36,7 +36,7 @@ infoDbNew(String *fileName, const Storage *storage, const bool loadFile, const b
         this = memNew(sizeof(InfoDb));
         this->memContext = MEM_CONTEXT_NEW();
 
-        this->info = infoNew();
+        this->info = infoNew(filename, storage, loadFile, ignoreMissing);
 
         Ini *infoIni = infoIni(this->info);
 
