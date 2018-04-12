@@ -6,8 +6,14 @@ Storage Manager
 
 #include <sys/types.h>
 
+/***********************************************************************************************************************************
+Storage object
+***********************************************************************************************************************************/
+typedef struct Storage Storage;
+
 #include "common/type/buffer.h"
-#include "common/type/string.h"
+#include "common/type/stringList.h"
+#include "storage/file.h"
 
 /***********************************************************************************************************************************
 Default buffer size
@@ -23,12 +29,6 @@ Default file and path modes
 #define STORAGE_FILE_MODE_DEFAULT                                   0640
 #define STORAGE_PATH_MODE_DEFAULT                                   0750
 
-/***********************************************************************************************************************************
-Storage object
-***********************************************************************************************************************************/
-typedef struct Storage Storage;
-
-#include "storage/file.h"
 
 /***********************************************************************************************************************************
 Path expression callback function type - used to modify paths based on expressions enclosed in <>
@@ -149,6 +149,22 @@ typedef struct StoragePathCreateParam
 void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
 
 /***********************************************************************************************************************************
+storagePathRemove
+***********************************************************************************************************************************/
+typedef struct StoragePathRemoveParam
+{
+    bool errorOnMissing;
+    bool recurse;
+} StoragePathRemoveParam;
+
+#define storagePathRemoveP(this, pathExp, ...)                                                                                     \
+    storagePathRemove(this, pathExp, (StoragePathRemoveParam){__VA_ARGS__})
+#define storagePathRemoveNP(this, pathExp)                                                                                         \
+    storagePathRemove(this, pathExp, (StoragePathRemoveParam){0})
+
+void storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveParam param);
+
+/***********************************************************************************************************************************
 storagePut
 ***********************************************************************************************************************************/
 #define storagePutNP(file, buffer)                                                                                                 \
@@ -164,32 +180,12 @@ typedef struct StorageRemoveParam
     bool errorOnMissing;
 } StorageRemoveParam;
 
-#define storageRemoveP(this, pathExp, ...)                                                                                         \
-    storageRemove(this, pathExp, (StorageRemoveParam){__VA_ARGS__})
-#define storageRemoveNP(this, pathExp)                                                                                             \
-    storageRemove(this, pathExp, (StorageRemoveParam){0})
+#define storageRemoveP(this, fileExp, ...)                                                                                         \
+    storageRemove(this, fileExp, (StorageRemoveParam){__VA_ARGS__})
+#define storageRemoveNP(this, fileExp)                                                                                             \
+    storageRemove(this, fileExp, (StorageRemoveParam){0})
 
 void storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param);
-
-/***********************************************************************************************************************************
-storageStat
-***********************************************************************************************************************************/
-typedef struct StorageStat
-{
-    mode_t mode;
-} StorageStat;
-
-typedef struct StorageStatParam
-{
-    bool ignoreMissing;
-} StorageStatParam;
-
-#define storageStatP(this, pathExp, ...)                                                                                           \
-    storageStat(this, pathExp, (StorageStatParam){__VA_ARGS__})
-#define storageStatNP(this, pathExp)                                                                                               \
-    storageStat(this, pathExp, (StorageStatParam){0})
-
-StorageStat *storageStat(const Storage *this, const String *pathExp, StorageStatParam param);
 
 /***********************************************************************************************************************************
 storageFree
@@ -198,5 +194,10 @@ storageFree
     storageFree(this)
 
 void storageFree(const Storage *this);
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+size_t storageBufferSize(const Storage *this);
 
 #endif

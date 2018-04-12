@@ -20,6 +20,8 @@ use pgBackRestTest::Common::VmTest;
 
 ################################################################################################################################
 # Test definition constants
+#
+# Documentation for these constants is in test/define.yaml.
 ################################################################################################################################
 use constant TESTDEF_MODULE                                         => 'module';
     push @EXPORT, qw(TESTDEF_MODULE);
@@ -28,899 +30,35 @@ use constant TESTDEF_NAME                                           => 'name';
 use constant TESTDEF_TEST                                           => 'test';
     push @EXPORT, qw(TESTDEF_TEST);
 
-# Determines if the test will be run against multiple db versions
 use constant TESTDEF_DB                                             => 'db';
     push @EXPORT, qw(TESTDEF_DB);
-# Determines if the test will be run in a container or will create containers itself
 use constant TESTDEF_CONTAINER                                      => 'container';
     push @EXPORT, qw(TESTDEF_CONTAINER);
-# Determines coverage for the test
 use constant TESTDEF_COVERAGE                                       => 'coverage';
     push @EXPORT, qw(TESTDEF_COVERAGE);
-# Should expect log tests be run
 use constant TESTDEF_EXPECT                                         => 'expect';
     push @EXPORT, qw(TESTDEF_EXPECT);
-# Is this a C test (instead of Perl)?
 use constant TESTDEF_C                                              => 'c';
     push @EXPORT, qw(TESTDEF_C);
-# #defines for C testing
-use constant TESTDEF_CDEF                                           => 'cdef';
+use constant TESTDEF_CDEF                                           => 'cDef';
     push @EXPORT, qw(TESTDEF_CDEF);
-# Determines if each run in a test will be run in a new container
+use constant TESTDEF_DEBUG_UNIT_SUPPRESS                            => 'debugUnitSuppress';
+    push @EXPORT, qw(TESTDEF_DEBUG_UNIT_SUPPRESS);
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
     push @EXPORT, qw(TESTDEF_INDIVIDUAL);
-# Total runs in the test
 use constant TESTDEF_TOTAL                                          => 'total';
     push @EXPORT, qw(TESTDEF_TOTAL);
-# Is Perl required for this C test?
 use constant TESTDEF_PERL_REQ                                       => 'perlReq';
     push @EXPORT, qw(TESTDEF_PERL_REQ);
-# VMs that the test can run on
 use constant TESTDEF_VM                                             => 'vm';
     push @EXPORT, qw(TESTDEF_VM);
 
-# The test provides full coverage for the module
 use constant TESTDEF_COVERAGE_FULL                                  => 'full';
     push @EXPORT, qw(TESTDEF_COVERAGE_FULL);
-# The test provides partial coverage for the module
 use constant TESTDEF_COVERAGE_PARTIAL                               => 'partial';
     push @EXPORT, qw(TESTDEF_COVERAGE_PARTIAL);
-# The module does not have any code so does not have any coverage.  An error will be thrown if the module has code in the future.
-use constant TESTDEF_COVERAGE_NOCODE                                => 'nocode';
+use constant TESTDEF_COVERAGE_NOCODE                                => 'noCode';
     push @EXPORT, qw(TESTDEF_COVERAGE_NOCODE);
-
-################################################################################################################################
-# Code modules
-################################################################################################################################
-use constant TESTDEF_MODULE_COMMON                                  => 'Common';
-    push @EXPORT, qw(TESTDEF_MODULE_COMMON);
-use constant TESTDEF_MODULE_COMMON_INI                              => TESTDEF_MODULE_COMMON . '/Ini';
-    push @EXPORT, qw(TESTDEF_MODULE_COMMON_INI);
-
-use constant TESTDEF_MODULE_INFO                                    => 'Info';
-    push @EXPORT, qw(TESTDEF_MODULE_INFO);
-
-use constant TESTDEF_MODULE_STANZA                                  => 'Stanza';
-    push @EXPORT, qw(TESTDEF_MODULE_STANZA);
-
-use constant TESTDEF_MODULE_EXPIRE                                  => 'Expire';
-    push @EXPORT, qw(TESTDEF_MODULE_EXPIRE);
-
-################################################################################################################################
-# Define tests
-################################################################################################################################
-my $oTestDef =
-{
-    &TESTDEF_MODULE =>
-    [
-        # Common tests
-        {
-            &TESTDEF_NAME => 'common',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'type',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_C => true,
-                    &TESTDEF_CDEF => '-DNO_ERROR -DNO_LOG',
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/type' => TESTDEF_COVERAGE_NOCODE,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'time',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/time' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'error',
-                    &TESTDEF_TOTAL => 6,
-                    &TESTDEF_C => true,
-                    &TESTDEF_CDEF => '-DNO_ERROR -DNO_LOG',
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/error' => TESTDEF_COVERAGE_FULL,
-                        'common/error.auto' => TESTDEF_COVERAGE_NOCODE,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'mem-context',
-                    &TESTDEF_TOTAL => 6,
-                    &TESTDEF_C => true,
-                    &TESTDEF_CDEF => '-DNO_MEM_CONTEXT -DNO_LOG',
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/memContext' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'log',
-                    &TESTDEF_TOTAL => 4,
-                    &TESTDEF_C => true,
-                    &TESTDEF_CDEF => '-DNO_LOG',
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/log' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'debug-on',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/debug' => TESTDEF_COVERAGE_NOCODE,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'debug-off',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_C => true,
-                    &TESTDEF_CDEF => '-DNDEBUG -DNO_LOG',
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/debug' => TESTDEF_COVERAGE_NOCODE,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'io-handle',
-                    &TESTDEF_TOTAL => 1,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/io/handle' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'exit',
-                    &TESTDEF_TOTAL => 1,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/exit' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'wait',
-                    &TESTDEF_TOTAL => 1,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/wait' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'type-list',
-                    &TESTDEF_TOTAL => 3,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/type/list' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'type-string',
-                    &TESTDEF_TOTAL => 9,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/type/string' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'type-string-list',
-                    &TESTDEF_TOTAL => 7,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/type/stringList' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'type-buffer',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/type/buffer' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'type-variant',
-                    &TESTDEF_TOTAL => 7,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/type/variant' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'type-variant-list',
-                    &TESTDEF_TOTAL => 3,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/type/variantList' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'type-key-value',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/type/keyValue' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'encode',
-                    &TESTDEF_TOTAL => 1,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/encode' => TESTDEF_COVERAGE_FULL,
-                        'common/encode/base64' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'encode-perl',
-                    &TESTDEF_TOTAL => 1,
-                },
-                {
-                    &TESTDEF_NAME => 'http-client',
-                    &TESTDEF_TOTAL => 2,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Common/Http/Client' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'reg-exp',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/regExp' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'ini',
-                    &TESTDEF_TOTAL => 3,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/ini' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'ini-perl',
-                    &TESTDEF_TOTAL => 10,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        &TESTDEF_MODULE_COMMON_INI => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'io-handle-perl',
-                    &TESTDEF_TOTAL => 6,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Common/Io/Handle' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'io-buffered',
-                    &TESTDEF_TOTAL => 3,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Common/Io/Buffered' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'io-process',
-                    &TESTDEF_TOTAL => 3,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Common/Io/Process' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'log-perl',
-                    &TESTDEF_TOTAL => 1,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Common/Log' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-            ]
-        },
-        # Cipher tests
-        {
-            &TESTDEF_NAME => 'cipher',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'random',
-                    &TESTDEF_TOTAL => 1,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'cipher/random' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'block',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'cipher/block' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-            ]
-        },
-        # PostgreSQL tests
-        {
-            &TESTDEF_NAME => 'postgres',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'page-checksum',
-                    &TESTDEF_TOTAL => 3,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'postgres/pageChecksum' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-            ]
-        },
-        # Perl tests
-        {
-            &TESTDEF_NAME => 'perl',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'config',
-                    &TESTDEF_TOTAL => 1,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'perl/config' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-
-                {
-                    &TESTDEF_NAME => 'exec',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_C => true,
-                    &TESTDEF_PERL_REQ => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'perl/exec' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-            ]
-        },
-        # Help tests
-        {
-            &TESTDEF_NAME => 'help',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'help',
-                    &TESTDEF_TOTAL => 4,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'command/help/help' => TESTDEF_COVERAGE_FULL,
-                    },
-                }
-            ]
-        },
-        # Config tests
-        {
-            &TESTDEF_NAME => 'config',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'define',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'config/define' => TESTDEF_COVERAGE_FULL,
-                        'config/define.auto' => TESTDEF_COVERAGE_NOCODE,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'config',
-                    &TESTDEF_TOTAL => 3,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'config/config' => TESTDEF_COVERAGE_FULL,
-                        'config/config.auto' => TESTDEF_COVERAGE_NOCODE,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'parse',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'config/parse' => TESTDEF_COVERAGE_FULL,
-                        'config/parse.auto' => TESTDEF_COVERAGE_NOCODE,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'load',
-                    &TESTDEF_TOTAL => 1,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'config/load' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-            ]
-        },
-        # Storage tests
-        {
-            &TESTDEF_NAME => 'storage',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'filter-cipher-block',
-                    &TESTDEF_TOTAL => 2,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Storage/Filter/CipherBlock' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'filter-gzip',
-                    &TESTDEF_TOTAL => 3,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Storage/Filter/Gzip' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'filter-sha',
-                    &TESTDEF_TOTAL => 2,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Storage/Filter/Sha' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'posix',
-                    &TESTDEF_TOTAL => 9,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Storage/Posix/Driver' => TESTDEF_COVERAGE_PARTIAL,
-                        'Storage/Posix/FileRead' => TESTDEF_COVERAGE_PARTIAL,
-                        'Storage/Posix/FileWrite' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 's3-auth',
-                    &TESTDEF_TOTAL => 5,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Storage/S3/Auth' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 's3-cert',
-                    &TESTDEF_TOTAL => 1,
-                },
-                {
-                    &TESTDEF_NAME => 's3-request',
-                    &TESTDEF_TOTAL => 2,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Storage/S3/Request' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 's3',
-                    &TESTDEF_TOTAL => 7,
-                    &TESTDEF_VM => [VM_CO7, VM_U14, VM_U16, VM_D8],
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Storage/S3/Driver' => TESTDEF_COVERAGE_PARTIAL,
-                        'Storage/S3/FileRead' => TESTDEF_COVERAGE_PARTIAL,
-                        'Storage/S3/FileWrite' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'local',
-                    &TESTDEF_TOTAL => 10,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Storage/Local' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'helper-perl',
-                    &TESTDEF_TOTAL => 5,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Storage/Helper' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'file',
-                    &TESTDEF_TOTAL => 1,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'storage/file' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'storage',
-                    &TESTDEF_TOTAL => 10,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'storage/storage' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'helper',
-                    &TESTDEF_TOTAL => 3,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'storage/helper' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-            ]
-        },
-        # Protocol tests
-        {
-            &TESTDEF_NAME => 'protocol',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'common-minion',
-                    &TESTDEF_TOTAL => 1,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Protocol/Base/Minion' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'helper',
-                    &TESTDEF_TOTAL => 2,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Protocol/Helper' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-            ]
-        },
-        # Info tests
-        {
-            &TESTDEF_NAME => 'info',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'unit',
-                    &TESTDEF_TOTAL => 2,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        &TESTDEF_MODULE_INFO => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-            ]
-        },
-        # Command tests
-        {
-            &TESTDEF_NAME => 'command',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'command',
-                    &TESTDEF_TOTAL => 1,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'command/command' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-            ]
-        },
-        # Archive tests
-        {
-            &TESTDEF_NAME => 'archive',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'common',
-                    &TESTDEF_TOTAL => 4,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Archive/Common' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'push-perl',
-                    &TESTDEF_TOTAL => 8,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Archive/Push/Push' => TESTDEF_COVERAGE_FULL,
-                        'Archive/Push/Async' => TESTDEF_COVERAGE_PARTIAL,
-                        'Archive/Push/File' => TESTDEF_COVERAGE_PARTIAL,
-                        'Protocol/Local/Master' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'push',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_C => true,
-                    &TESTDEF_PERL_REQ => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'command/archive/push/push' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'stop',
-                    &TESTDEF_TOTAL => 7,
-                    &TESTDEF_INDIVIDUAL => true,
-                    &TESTDEF_EXPECT => true,
-                    &TESTDEF_CONTAINER => false,
-                },
-                {
-                    &TESTDEF_NAME => 'info-unit',
-                    &TESTDEF_TOTAL => 4,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Archive/Info' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'get',
-                    &TESTDEF_TOTAL => 2,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Archive/Base' => TESTDEF_COVERAGE_PARTIAL,
-                        'Archive/Get/Get' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-            ]
-        },
-        # Backup tests
-        {
-            &TESTDEF_NAME => 'backup',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_COVERAGE =>
-            {
-                'Backup/Common' => TESTDEF_COVERAGE_FULL,
-            },
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'unit',
-                    &TESTDEF_TOTAL => 3,
-                },
-                {
-                    &TESTDEF_NAME => 'info-unit',
-                    &TESTDEF_TOTAL => 3,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Backup/Info' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-            ]
-        },
-        # Expire tests
-        {
-            &TESTDEF_NAME => 'expire',
-            &TESTDEF_EXPECT => true,
-            &TESTDEF_INDIVIDUAL => true,
-
-            &TESTDEF_COVERAGE =>
-            {
-                &TESTDEF_MODULE_EXPIRE => TESTDEF_COVERAGE_PARTIAL,
-            },
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'expire',
-                    &TESTDEF_TOTAL => 4,
-                },
-            ]
-        },
-        # Manifest tests
-        {
-            &TESTDEF_NAME => 'manifest',
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'all',
-                    &TESTDEF_TOTAL => 9,
-                    &TESTDEF_CONTAINER => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Manifest' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-            ]
-        },
-        # Stanza tests
-        {
-            &TESTDEF_NAME => 'stanza',
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'all',
-                    &TESTDEF_TOTAL => 9,
-                    &TESTDEF_CONTAINER => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        &TESTDEF_MODULE_STANZA => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-            ]
-        },
-        # Mock tests
-        {
-            &TESTDEF_NAME => 'mock',
-            &TESTDEF_EXPECT => true,
-            &TESTDEF_INDIVIDUAL => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'archive',
-                    &TESTDEF_TOTAL => 3,
-                },
-                {
-                    &TESTDEF_NAME => 'all',
-                    &TESTDEF_TOTAL => 3,
-                },
-                {
-                    &TESTDEF_NAME => 'stanza',
-                    &TESTDEF_TOTAL => 3,
-                },
-            ]
-        },
-        # Real tests
-        {
-            &TESTDEF_NAME => 'real',
-            &TESTDEF_EXPECT => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'help',
-                    &TESTDEF_CONTAINER => true,
-                    &TESTDEF_TOTAL => 1,
-                },
-
-                {
-                    &TESTDEF_NAME => 'all',
-                    &TESTDEF_INDIVIDUAL => true,
-                    &TESTDEF_TOTAL => 6,
-                    &TESTDEF_DB => true,
-                }
-            ]
-        },
-        # Performance tests
-        {
-            &TESTDEF_NAME => 'performance',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'archive',
-                    &TESTDEF_TOTAL => 1,
-                },
-                {
-                    &TESTDEF_NAME => 'io',
-                    &TESTDEF_TOTAL => 1,
-                },
-            ]
-        },
-    ]
-};
 
 ####################################################################################################################################
 # Process normalized data into a more queryable form
@@ -931,73 +69,92 @@ my $hModuleTest;                                                    # Ordered li
 my $hCoverageType;                                                  # Coverage type for each code module (full/partial)
 my $hCoverageList;                                                  # Tests required for full code module coverage (if type full)
 
-# Iterate each module
-foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
+sub testDefLoad
 {
-    # Push the module onto the ordered list
-    my $strModule = $hModule->{&TESTDEF_NAME};
-    push(@stryModule, $strModule);
+    my $strDefineYaml = shift;
 
-    # Iterate each test
-    my @stryModuleTest;
+    # Load test definitions from yaml
+    require YAML::XS;
+    YAML::XS->import(qw(Load));
 
-    foreach my $hModuleTest (@{$hModule->{&TESTDEF_TEST}})
+    my $hTestDef = Load($strDefineYaml);
+
+    # Iterate each module
+    foreach my $hModule (@{$hTestDef->{&TESTDEF_MODULE}})
     {
-        # Push the test on the order list
-        my $strTest = $hModuleTest->{&TESTDEF_NAME};
-        push(@stryModuleTest, $strTest);
+        # Push the module onto the ordered list
+        my $strModule = $hModule->{&TESTDEF_NAME};
+        push(@stryModule, $strModule);
 
-        # Resolve variables that can be set in the module or the test
-        foreach my $strVar (
-            TESTDEF_C, TESTDEF_CDEF, TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_PERL_REQ,
-            TESTDEF_VM)
+        # Iterate each test
+        my @stryModuleTest;
+
+        foreach my $hModuleTest (@{$hModule->{&TESTDEF_TEST}})
         {
-            $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
-                $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);
-        }
+            # Push the test on the order list
+            my $strTest = $hModuleTest->{&TESTDEF_NAME};
+            push(@stryModuleTest, $strTest);
 
-        # Set test count
-        $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TOTAL} = $hModuleTest->{&TESTDEF_TOTAL};
-
-        # If this is a C test then add the test module to coverage
-        if ($hModuleTest->{&TESTDEF_C})
-        {
-            my $strTestFile = "module/${strModule}/${strTest}Test";
-
-            $hModuleTest->{&TESTDEF_COVERAGE}{$strTestFile} = TESTDEF_COVERAGE_FULL;
-        }
-
-        # Concatenate coverage for modules and tests
-        foreach my $hCoverage ($hModule->{&TESTDEF_COVERAGE}, $hModuleTest->{&TESTDEF_COVERAGE})
-        {
-            foreach my $strCodeModule (sort(keys(%{$hCoverage})))
+            # Resolve variables that can be set in the module or the test
+            foreach my $strVar (
+                TESTDEF_C, TESTDEF_CDEF, TESTDEF_CONTAINER, TESTDEF_DEBUG_UNIT_SUPPRESS, TESTDEF_DB, TESTDEF_EXPECT,
+                TESTDEF_INDIVIDUAL, TESTDEF_PERL_REQ, TESTDEF_VM)
             {
-                if (defined($hTestDefHash->{$strModule}{$strTest}{&TESTDEF_COVERAGE}{$strCodeModule}))
-                {
-                    confess &log(ASSERT,
-                        "${strCodeModule} is defined for coverage in both module ${strModule} and test ${strTest}");
-                }
+                $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
+                    $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);
 
-                $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_COVERAGE}{$strCodeModule} = $hCoverage->{$strCodeModule};
-
-                # Build coverage type hash and make sure coverage type does not change
-                if (!defined($hCoverageType->{$strCodeModule}))
+                # Make false = 0 for debugging
+                if ($strVar ne TESTDEF_VM && $hTestDefHash->{$strModule}{$strTest}{$strVar} eq '')
                 {
-                    $hCoverageType->{$strCodeModule} = $hCoverage->{$strCodeModule};
+                    $hTestDefHash->{$strModule}{$strTest}{$strVar} = false;
                 }
-                elsif ($hCoverageType->{$strCodeModule} ne $hCoverage->{$strCodeModule})
-                {
-                    confess &log(ASSERT, "cannot mix coverage types for ${strCodeModule}");
-                }
+            }
 
-                # Add to coverage list
-                push(@{$hCoverageList->{$strCodeModule}}, {strModule=> $strModule, strTest => $strTest});
+            # Set test count
+            $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TOTAL} = $hModuleTest->{&TESTDEF_TOTAL};
+
+            # If this is a C test then add the test module to coverage
+            if ($hModuleTest->{&TESTDEF_C})
+            {
+                my $strTestFile = "module/${strModule}/${strTest}Test";
+
+                $hModuleTest->{&TESTDEF_COVERAGE}{$strTestFile} = TESTDEF_COVERAGE_FULL;
+            }
+
+            # Concatenate coverage for modules and tests
+            foreach my $hCoverage ($hModule->{&TESTDEF_COVERAGE}, $hModuleTest->{&TESTDEF_COVERAGE})
+            {
+                foreach my $strCodeModule (sort(keys(%{$hCoverage})))
+                {
+                    if (defined($hTestDefHash->{$strModule}{$strTest}{&TESTDEF_COVERAGE}{$strCodeModule}))
+                    {
+                        confess &log(ASSERT,
+                            "${strCodeModule} is defined for coverage in both module ${strModule} and test ${strTest}");
+                    }
+
+                    $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_COVERAGE}{$strCodeModule} = $hCoverage->{$strCodeModule};
+
+                    # Build coverage type hash and make sure coverage type does not change
+                    if (!defined($hCoverageType->{$strCodeModule}))
+                    {
+                        $hCoverageType->{$strCodeModule} = $hCoverage->{$strCodeModule};
+                    }
+                    elsif ($hCoverageType->{$strCodeModule} ne $hCoverage->{$strCodeModule})
+                    {
+                        confess &log(ASSERT, "cannot mix coverage types for ${strCodeModule}");
+                    }
+
+                    # Add to coverage list
+                    push(@{$hCoverageList->{$strCodeModule}}, {strModule=> $strModule, strTest => $strTest});
+                }
             }
         }
-    }
 
-    $hModuleTest->{$strModule} = \@stryModuleTest;
+        $hModuleTest->{$strModule} = \@stryModuleTest;
+    }
 }
+
+push @EXPORT, qw(testDefLoad);
 
 ####################################################################################################################################
 # testDefModuleList

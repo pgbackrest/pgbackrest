@@ -750,7 +750,7 @@ sub pathSync
             {name => 'bRecurse', default => false},
         );
 
-    $self->driver()->pathSync($self->pathGet($strPathExp), {bRecurse => true});
+    $self->driver()->pathSync($self->pathGet($strPathExp), {bRecurse => $bRecurse});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

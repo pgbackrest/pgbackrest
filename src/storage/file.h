@@ -4,7 +4,10 @@ Storage File
 #ifndef STORAGE_FILE_H
 #define STORAGE_FILE_H
 
-#include "common/type/string.h"
+/***********************************************************************************************************************************
+Storage file object
+***********************************************************************************************************************************/
+typedef struct StorageFile StorageFile;
 
 /***********************************************************************************************************************************
 Types of storage files, i.e. read or write.  The storage module does not allow files to be opened for both read and write since this
@@ -15,11 +18,6 @@ typedef enum
     storageFileTypeRead,
     storageFileTypeWrite,
 } StorageFileType;
-
-/***********************************************************************************************************************************
-Storage file object
-***********************************************************************************************************************************/
-typedef struct StorageFile StorageFile;
 
 #include "storage/storage.h"
 

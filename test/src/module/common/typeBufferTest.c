@@ -9,11 +9,17 @@ void
 testRun()
 {
     // *****************************************************************************************************************************
-    if (testBegin("bufNew(), bufNewStr(), bufSize(), bufPtr(), and bufFree()"))
+    if (testBegin("bufNew(), bufNewStr(), bufMove(), bufSize(), bufPtr(), and bufFree()"))
     {
         Buffer *buffer = NULL;
 
-        TEST_ASSIGN(buffer, bufNew(256), "new buffer");
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(buffer, bufNew(256), "new buffer");
+            bufMove(buffer, MEM_CONTEXT_OLD());
+        }
+        MEM_CONTEXT_TEMP_END();
+
         TEST_RESULT_PTR(bufPtr(buffer), buffer->buffer, "buffer pointer");
         TEST_RESULT_INT(bufSize(buffer), 256, "buffer size");
 
@@ -23,6 +29,8 @@ testRun()
         TEST_RESULT_VOID(bufFree(buffer), "free buffer");
         TEST_RESULT_VOID(bufFree(bufNew(0)), "free empty buffer");
         TEST_RESULT_VOID(bufFree(NULL), "free null buffer");
+
+        TEST_RESULT_VOID(bufMove(NULL, NULL), "move null buffer");
     }
 
     // *****************************************************************************************************************************

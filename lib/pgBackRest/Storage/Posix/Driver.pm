@@ -927,14 +927,14 @@ sub remove
     my
     (
         $strOperation,
-        $xstryPathFile,
+        $strPathFile,
         $bIgnoreMissing,
         $bRecurse,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->remove', \@_,
-            {name => 'xstryPathFile', trace => true},
+            {name => 'strPathFile', trace => true},
             {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
             {name => 'bRecurse', optional => true, default => false, trace => true},
         );
@@ -945,36 +945,16 @@ sub remove
     # Remove a tree
     if ($bRecurse)
     {
-        my $oManifest = $self->manifest($xstryPathFile, {bIgnoreMissing => true});
+        # Dynamically load the driver
+        require pgBackRest::LibC;
+        pgBackRest::LibC->import(qw(:storage));
 
-        # Iterate all files in the manifest
-        foreach my $strFile (sort({$b cmp $a} keys(%{$oManifest})))
-        {
-            # remove directory
-            if ($oManifest->{$strFile}{type} eq 'd')
-            {
-                my $xstryPathFileRemove = $strFile eq '.' ? $xstryPathFile : "${xstryPathFile}/${strFile}";
-
-                if (!rmdir($xstryPathFileRemove))
-                {
-                    # Throw error if this is not an ignored missing path
-                    if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
-                    {
-                        logErrorResult(ERROR_PATH_REMOVE, "unable to remove path '${strFile}'", $OS_ERROR);
-                    }
-                }
-            }
-            # Remove file
-            else
-            {
-                $self->remove("${xstryPathFile}/${strFile}", {bIgnoreMissing => true});
-            }
-        }
+        storageDriverPosixPathRemove($strPathFile, !$bIgnoreMissing, $bRecurse)
     }
     # Only remove the specified file
     else
     {
-        foreach my $strFile (ref($xstryPathFile) ? @{$xstryPathFile} : ($xstryPathFile))
+        foreach my $strFile (ref($strPathFile) ? @{$strPathFile} : ($strPathFile))
         {
             if (unlink($strFile) != 1)
             {

@@ -4,7 +4,10 @@ String List Handler
 #ifndef COMMON_TYPE_STRINGLIST_H
 #define COMMON_TYPE_STRINGLIST_H
 
-#include "common/type/string.h"
+/***********************************************************************************************************************************
+StringList object
+***********************************************************************************************************************************/
+typedef struct StringList StringList;
 
 /***********************************************************************************************************************************
 Sort orders
@@ -15,16 +18,13 @@ typedef enum
     sortOrderDesc,
 } SortOrder;
 
-/***********************************************************************************************************************************
-String list type
-***********************************************************************************************************************************/
-typedef struct StringList StringList;
+#include "common/memContext.h"
+#include "common/type/string.h"
+#include "common/type/variantList.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-#include "common/type/variantList.h"
-
 StringList *strLstNew();
 StringList *strLstNewSplit(const String *string, const String *delimiter);
 StringList *strLstNewSplitZ(const String *string, const char *delimiter);
@@ -37,6 +37,7 @@ StringList *strLstAdd(StringList *this, const String *string);
 StringList *strLstAddZ(StringList *this, const char *string);
 String *strLstGet(const StringList *this, unsigned int listIdx);
 String *strLstJoin(const StringList *this, const char *separator);
+StringList * strLstMove(StringList *this, MemContext *parentNew);
 const char **strLstPtr(const StringList *this);
 unsigned int strLstSize(const StringList *this);
 StringList *strLstSort(StringList *this, SortOrder sortOrder);

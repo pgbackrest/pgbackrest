@@ -5,6 +5,21 @@ Test Storage Manager
 #include "storage/file.h"
 
 /***********************************************************************************************************************************
+Get the mode of a file on local storage
+***********************************************************************************************************************************/
+mode_t
+storageStatMode(const String *path)
+{
+    // Attempt to stat the file
+    struct stat statFile;
+
+    if (stat(strPtr(path), &statFile) == -1)                                                // {uncovered - error should not happen}
+        THROW_SYS_ERROR(FileOpenError, "unable to stat '%s'", strPtr(path));                // {uncovered+}
+
+    return statFile.st_mode & 0777;
+}
+
+/***********************************************************************************************************************************
 Test function for path expression
 ***********************************************************************************************************************************/
 String *
@@ -108,19 +123,19 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
             storageListP(storageTest, strNew(BOGUS_STR), .errorOnMissing = true), PathOpenError,
-            strPtr(strNewFmt("unable to open directory '%s/BOGUS' for read: [2] No such file or directory", testPath())));
+            strPtr(strNewFmt("unable to open path '%s/BOGUS' for read: [2] No such file or directory", testPath())));
 
         TEST_RESULT_PTR(storageListNP(storageTest, strNew(BOGUS_STR)), NULL, "ignore missing dir");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
             storageListNP(storageTest, pathNoPerm), PathOpenError,
-            strPtr(strNewFmt("unable to open directory '%s' for read: [13] Permission denied", strPtr(pathNoPerm))));
+            strPtr(strNewFmt("unable to open path '%s' for read: [13] Permission denied", strPtr(pathNoPerm))));
 
         // Should still error even when ignore missing
         TEST_ERROR(
             storageListNP(storageTest, pathNoPerm), PathOpenError,
-            strPtr(strNewFmt("unable to open directory '%s' for read: [13] Permission denied", strPtr(pathNoPerm))));
+            strPtr(strNewFmt("unable to open path '%s' for read: [13] Permission denied", strPtr(pathNoPerm))));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
@@ -183,14 +198,14 @@ testRun()
     if (testBegin("storagePathCreate()"))
     {
         TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNew("sub1")), "create sub1");
-        TEST_RESULT_INT(storageStatNP(storageTest, strNew("sub1"))->mode, 0750, "check sub1 dir mode");
+        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, strNew("sub1"))), 0750, "check sub1 dir mode");
         TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNew("sub1")), "create sub1 again");
         TEST_ERROR(
             storagePathCreateP(storageTest, strNew("sub1"), .errorOnExists = true), PathCreateError,
             strPtr(strNewFmt("unable to create path '%s/sub1': [17] File exists", testPath())));
 
         TEST_RESULT_VOID(storagePathCreateP(storageTest, strNew("sub2"), .mode = 0777), "create sub2 with custom mode");
-        TEST_RESULT_INT(storageStatNP(storageTest, strNew("sub2"))->mode, 0777, "check sub2 dir mode");
+        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, strNew("sub2"))), 0777, "check sub2 dir mode");
 
         TEST_ERROR(
             storagePathCreateP(storageTest, strNew("sub3/sub4"), .noParentCreate = true), PathCreateError,
@@ -198,6 +213,66 @@ testRun()
         TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNew("sub3/sub4")), "create sub3/sub4");
 
         TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/sub*", testPath()))), 0, "remove sub paths");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storagePathRemove()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        String *pathRemove1 = strNewFmt("%s/remove1", testPath());
+
+        TEST_ERROR(
+            storagePathRemoveP(storageTest, pathRemove1, .errorOnMissing = true), PathRemoveError,
+            strPtr(strNewFmt("unable to remove path '%s': [2] No such file or directory", strPtr(pathRemove1))));
+        TEST_RESULT_VOID(storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "ignore missing path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        String *pathRemove2 = strNewFmt("%s/remove2", strPtr(pathRemove1));
+
+        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo mkdir -p -m 700 %s", strPtr(pathRemove2)))), 0, "create noperm paths");
+
+        TEST_ERROR(
+            storagePathRemoveNP(storageTest, pathRemove2), PathRemoveError,
+            strPtr(strNewFmt("unable to remove path '%s': [13] Permission denied", strPtr(pathRemove2))));
+        TEST_ERROR(
+            storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
+            strPtr(strNewFmt("unable to open path '%s' for read: [13] Permission denied", strPtr(pathRemove2))));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chmod 777 %s", strPtr(pathRemove1)))), 0, "top path can be removed");
+
+        TEST_ERROR(
+            storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
+            strPtr(strNewFmt("unable to open path '%s' for read: [13] Permission denied", strPtr(pathRemove2))));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        String *fileRemove = strNewFmt("%s/remove.txt", strPtr(pathRemove2));
+
+        TEST_RESULT_INT(
+            system(strPtr(strNewFmt(
+                "sudo chmod 755 %s && sudo touch %s && sudo chmod 777 %s", strPtr(pathRemove2), strPtr(fileRemove),
+                strPtr(fileRemove)))),
+            0, "add no perm file");
+
+        TEST_ERROR(
+            storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError,
+            strPtr(strNewFmt("unable to remove path/file '%s': [13] Permission denied", strPtr(fileRemove))));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chmod 777 %s", strPtr(pathRemove2)))), 0, "bottom path can be removed");
+
+        TEST_RESULT_VOID(
+            storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "remove path");
+        TEST_RESULT_BOOL(
+            storageExistsNP(storageTest, pathRemove1), false, "path is removed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_INT(system(strPtr(strNewFmt("mkdir -p %s", strPtr(pathRemove2)))), 0, "create subpaths");
+
+        TEST_RESULT_VOID(
+            storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "remove path");
+        TEST_RESULT_BOOL(
+            storageExistsNP(storageTest, pathRemove1), false, "path is removed");
     }
 
     // *****************************************************************************************************************************
@@ -230,14 +305,14 @@ testRun()
         String *fileName = strNewFmt("%s/testfile", testPath());
 
         TEST_ASSIGN(file, storageOpenWriteNP(storageTest, fileName), "open file for write (defaults)");
-        TEST_RESULT_INT(storageStatNP(storageTest, fileName)->mode, 0640, "check dir mode");
+        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, fileName)), 0640, "check file mode");
         close(STORAGE_DATA(file)->handle);
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageOpenWriteP(storageTest, fileName, .mode = 0777), "open file for write (custom)");
-        TEST_RESULT_INT(storageStatNP(storageTest, fileName)->mode, 0777, "check file mode");
+        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, fileName)), 0777, "check file mode");
         close(STORAGE_DATA(file)->handle);
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
@@ -315,26 +390,5 @@ testRun()
         TEST_ERROR(
             storageRemoveNP(storageTest, fileNoPerm), FileRemoveError,
             strPtr(strNewFmt("unable to remove '%s': [13] Permission denied", strPtr(fileNoPerm))));
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("storageStat()"))
-    {
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storagePathCreateP(storageTest, strNew("dir"), .mode = 0777), "create dir with custom mode");
-        TEST_RESULT_INT(storageStatNP(storageTest, strNew("dir"))->mode, 0777, "check dir mode");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(
-            storageStatNP(storageTest, strNew("missing")), FileOpenError,
-            strPtr(strNewFmt("unable to stat '%s/missing': [2] No such file or directory", testPath())));
-        TEST_RESULT_PTR(storageStatP(storageTest, strNew("missing"), .ignoreMissing = true), NULL, "ignore missing file");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(
-            storageStatNP(storageTest, fileNoPerm), FileOpenError,
-            strPtr(strNewFmt("unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm))));
-
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm -rf %s", strPtr(strPath(fileNoPerm))))), 0, "remove no perm dir");
     }
 }

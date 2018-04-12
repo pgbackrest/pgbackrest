@@ -6,6 +6,7 @@ Configuration Load
 
 #include "command/command.h"
 #include "common/memContext.h"
+#include "common/lock.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "config/load.h"
@@ -88,6 +89,9 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
                         cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, varNewStr(cfgExe()));
                 }
             }
+
+            if (cfgLockRequired())
+                lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
         }
 
         // Neutralize the umask to make the repository file/path modes more consistent

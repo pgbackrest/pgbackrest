@@ -4,11 +4,13 @@ Log Handler
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 #include <strings.h>
 #include <time.h>
 #include <unistd.h>
 
+#include "common/assert.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/log.h"

@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# ExpireExpireTest.pm - Tests for expire command
+# Tests for expire command
 ####################################################################################################################################
-package pgBackRestTest::Module::Expire::ExpireExpireTest;
+package pgBackRestTest::Module::Mock::MockExpireTest;
 use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################

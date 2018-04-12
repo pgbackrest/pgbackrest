@@ -3,7 +3,7 @@ Command and Option Configuration
 ***********************************************************************************************************************************/
 #include <string.h>
 
-#include "common/debug.h"
+#include "common/assert.h"
 #include "common/error.h"
 #include "common/memContext.h"
 #include "config/config.h"
@@ -14,6 +14,10 @@ Map command names to ids and vice versa.
 typedef struct ConfigCommandData
 {
     const char *name;
+
+    bool lockRequired:1;
+    unsigned int lockType:2;
+
     bool logFile:1;
     unsigned int logLevelDefault:4;
     unsigned int logLevelStdErrMax:4;
@@ -25,6 +29,10 @@ typedef struct ConfigCommandData
 #define CONFIG_COMMAND(...)                                                                                                        \
     {__VA_ARGS__},
 
+#define CONFIG_COMMAND_LOCK_REQUIRED(lockRequiredParam)                                                                            \
+    .lockRequired = lockRequiredParam,
+#define CONFIG_COMMAND_LOCK_TYPE(lockTypeParam)                                                                                    \
+    .lockType = lockTypeParam,
 #define CONFIG_COMMAND_LOG_FILE(logFileParam)                                                                                      \
     .logFile = logFileParam,
 #define CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDefaultParam)                                                                     \
@@ -275,6 +283,26 @@ cfgExeSet(const String *exeParam)
         exe = strDup(exeParam);
     }
     MEM_CONTEXT_END();
+}
+
+/***********************************************************************************************************************************
+Does this command require an immediate lock?
+***********************************************************************************************************************************/
+bool
+cfgLockRequired()
+{
+    ASSERT_DEBUG_COMMAND_SET();
+    return configCommandData[cfgCommand()].lockRequired;
+}
+
+/***********************************************************************************************************************************
+Get the lock type required for this command
+***********************************************************************************************************************************/
+LockType
+cfgLockType()
+{
+    ASSERT_DEBUG_COMMAND_SET();
+    return (LockType)configCommandData[cfgCommand()].lockType;
 }
 
 /***********************************************************************************************************************************
@@ -547,7 +575,7 @@ cfgOptionInt(ConfigOption optionId)
     return varIntForce(configOptionValue[optionId].value);
 }
 
-int64
+int64_t
 cfgOptionInt64(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);

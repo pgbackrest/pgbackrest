@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# ArchiveStopTest.pm - Tests for archive-push command to make sure aync queue limits are implemented correctly
+# Tests for archive-push command to make sure aync queue limits are implemented correctly
 ####################################################################################################################################
-package pgBackRestTest::Module::Archive::ArchiveStopTest;
+package pgBackRestTest::Module::Mock::MockArchiveStopTest;
 use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################

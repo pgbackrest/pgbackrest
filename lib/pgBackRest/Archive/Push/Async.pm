@@ -28,6 +28,7 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
+use pgBackRest::LibC qw(:lock);
 use pgBackRest::Protocol::Local::Process;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Storage::Helper;
@@ -81,14 +82,17 @@ sub process
 
     my $bClient = true;
 
+    # Check if processes have been stopped
+    lockStopTest();
+
     # This first lock request is a quick test to see if the async process is running.  If the lock is successful we need to release
     # the lock, fork, and then let the async process acquire its own lock.  Otherwise the lock will be held by the client process
     # which will soon exit and leave the async process unlocked.
-    if (lockAcquire(cfgCommandName(cfgCommandGet()), false))
+    if (lockAcquire(cfgOption(CFGOPT_LOCK_PATH), cfgCommandName(cfgCommandGet()), cfgOption(CFGOPT_STANZA), 30, false))
     {
         &log(TEST, TEST_ARCHIVE_PUSH_ASYNC_START);
 
-        lockRelease(cfgCommandName(cfgCommandGet()));
+        lockRelease(true);
         $bClient = fork() == 0 ? false : true;
     }
     else
@@ -100,7 +104,7 @@ sub process
     if (!$bClient)
     {
         # uncoverable branch false - reacquire the lock since it was released by the client process above
-        if (lockAcquire(cfgCommandName(cfgCommandGet()), false))
+        if (lockAcquire(cfgOption(CFGOPT_LOCK_PATH), cfgCommandName(cfgCommandGet()), cfgOption(CFGOPT_STANZA), 30, false))
         {
             # uncoverable branch true - chdir to /
             chdir '/'

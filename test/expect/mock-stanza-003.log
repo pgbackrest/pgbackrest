@@ -219,7 +219,6 @@ P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], s
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: archive-push command end: completed successfully
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 stanza-create db - fail on archive info file missing from non-empty dir (db-master host)
@@ -443,7 +442,6 @@ P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], s
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: archive-push command end: completed successfully
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
@@ -535,7 +533,6 @@ P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], s
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: archive-get command end: completed successfully
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
@@ -956,7 +953,6 @@ P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], s
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: stop command end: completed successfully
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 stanza-delete db - successfully delete the stanza (db-master host)

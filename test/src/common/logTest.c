@@ -7,7 +7,6 @@ Log Test Harness
 #include "common/harnessTest.h"
 
 #include "common/log.h"
-#include "common/type.h"
 #include "storage/helper.h"
 
 #ifndef NO_LOG

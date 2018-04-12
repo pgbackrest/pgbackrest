@@ -5,15 +5,16 @@ Variant List Handler
 #define COMMON_TYPE_VARIANTLIST_H
 
 /***********************************************************************************************************************************
-Variant list type
+Variant list object
 ***********************************************************************************************************************************/
 typedef struct VariantList VariantList;
+
+#include "common/type/stringList.h"
+#include "common/type/variant.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-#include "common/type/variant.h"
-
 VariantList *varLstNew();
 VariantList *varLstNewStrLst(const StringList *stringList);
 VariantList *varLstDup(const VariantList *source);

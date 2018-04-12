@@ -14,9 +14,37 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.02dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="james.craig"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix directory syncs running recursively when only the specified directory should be synced.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <p>Make backup directory sync more efficient.  Scanning the entire backup directory can be very expensive if there are a lot of small tables.  The backup manifest contains the backup directory list so use it to perform syncs instead of scanning the backup directory.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
-                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageExists()</code>, <code>storagePathCreate()</code>, <code>storageRemove()</code>, and <code>storageStat()</code>.  Add <code>StorageFile</code> object and <code>storageOpenRead()</code>/<code>storageOpenWrite()</code>.</p>
+                        <p>Make <path>backup.history</path> sync more efficient.  Only the <path>backup.history/[year]</path> directory was being synced, so check if the <path>backup.history</path> is newly created and sync it as well.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improved lock implementation written in C.  Now only two types of locks can be taken: <id>archive</id> and <id>backup</id>.  Most commands use one or the other but the <cmd>stanza-*</cmd> commands acquire both locks.  This provides better protection than the old command-based locking scheme.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageExists()</code>, <code>storagePathCreate()</code>, and <code>storageRemove()</code>.  Add <code>StorageFile</code> object and <code>storageOpenRead()</code>/<code>storageOpenWrite()</code>.  Abstract Posix driver code into a separate module.  Add <code>storagePathRemove()</code> and use it in the Perl Posix driver.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Allow <code>MemContext</code> objects to be copied to a new parent.  This makes it easier to create objects and then copy them to another context when they are complete without having to worry about freeing them on error.  Update <code>List</code>, <code>StringList</code>, and <code>Buffer</code> to allow moves.  Update <code>Ini</code> and <code>Storage</code> to take advantage of moves.</p>
                     </release-item>
 
                     <release-item>
@@ -36,7 +64,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <code>ASSERT()</code> that is preserved in production builds.</p>
+                        <p>Split debug and assert code into separate headers.  Assert can be used earlier because it only depends on the error-handler and not logging.  Add <code>ASSERT()</code> that is preserved in production builds.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Cleanup C types.  Remove <code>typec.h</code>. Order all typdefs above local includes.</p>
                     </release-item>
 
                     <release-item>
@@ -68,11 +100,27 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Move test definitions to <file>test/define.yaml</file>.  The location is better because it is no longer buried in the Perl test libs.  Also, the data can be easily accessed from C.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Move help/version integration tests to <id>mock/all</id>.  Help and version are covered by unit tests, so we really just to need to make sure there is output when called from the command line.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Move <id>archive-stop</id> and <id>expire</id> tests to the <id>mock</id> module.  These are mock integration tests so they should be grouped with the other mock integration tests.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Include VM type in <id>gcov</id> path to avoid conflicts between VMs with different architectures.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Improve logic for smart builds to include version changes.</p>
+                        <p>Improve logic for smart builds to include version changes.  Skip version checks when testing in <setting>--dev</setting> mode.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Allow <code>-DDEBUG_UNIT</code> to be suppressed to test how debug macros behave.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>

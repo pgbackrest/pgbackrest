@@ -72,8 +72,8 @@ For historical reasons, the 64-bit LSN value is stored as two 32-bit values.
 ***********************************************************************************************************************************/
 typedef struct
 {
-    uint32 walid;                                                   // high bits
-    uint32 xrecoff;                                                 // low bits
+    uint32_t walid;                                                 // high bits
+    uint32_t xrecoff;                                               // low bits
 } PageWalRecPtr;
 
 /***********************************************************************************************************************************
@@ -95,11 +95,11 @@ relating to checksums.
 typedef struct PageHeaderData
 {
     // LSN is member of *any* block, not only page-organized ones
-    PageWalRecPtr pd_lsn;  /* LSN: next byte after last byte of wal * record for last change to this page */
-    uint16 pd_checksum;     /* checksum */
-    uint16 pd_flags;        /* flag bits, see below */
-    uint16 pd_lower;        /* offset to start of free space */
-    uint16 pd_upper;        /* offset to end of free space */
+    PageWalRecPtr pd_lsn;                                           // Lsn for last change to this page
+    uint16_t pd_checksum;                                           // checksum
+    uint16_t pd_flags;                                              // flag bits, see below
+    uint16_t pd_lower;                                              // offset to start of free space
+    uint16_t pd_upper;                                              // offset to end of free space
 } PageHeaderData;
 
 typedef PageHeaderData *PageHeader;
@@ -116,7 +116,7 @@ The data argument must be aligned on a 4-byte boundary.
 #define FNV_PRIME 16777619
 
 // Base offsets to initialize each of the parallel FNV hashes into a different initial state.
-static const uint32 checksumBaseOffsets[N_SUMS] =
+static const uint32_t checksumBaseOffsets[N_SUMS] =
 {
     0x5B1F36E9, 0xB8525960, 0x02AB50AA, 0x1DE66D2A, 0x79FF467A, 0x9BB9F8A3, 0x217E7CD2, 0x83E13D2C,
     0xF8D4474F, 0xE39EB970, 0x42C6AE16, 0x993216FA, 0x7B093B5D, 0x98DAFF3C, 0xF718902A, 0x0B1C9CDB,
@@ -127,23 +127,23 @@ static const uint32 checksumBaseOffsets[N_SUMS] =
 // Calculate one round of the checksum.
 #define CHECKSUM_COMP(checksum, value) \
 do { \
-    uint32 temp = (checksum) ^ (value); \
+    uint32_t temp = (checksum) ^ (value); \
     (checksum) = temp * FNV_PRIME ^ (temp >> 17); \
 } while (0)
 
-static uint32
-pageChecksumBlock(const unsigned char *data, uint32 size)
+static uint32_t
+pageChecksumBlock(const unsigned char *data, uint32_t size)
 {
-    uint32 sums[N_SUMS];
-    uint32 (*dataArray)[N_SUMS] = (uint32 (*)[N_SUMS])data;
-    uint32 result = 0;
-    uint32 i, j;
+    uint32_t sums[N_SUMS];
+    uint32_t (*dataArray)[N_SUMS] = (uint32_t (*)[N_SUMS])data;
+    uint32_t result = 0;
+    uint32_t i, j;
 
     /* initialize partial checksums to their corresponding offsets */
     memcpy(sums, checksumBaseOffsets, sizeof(checksumBaseOffsets));
 
     /* main checksum calculation */
-    for (i = 0; i < size / sizeof(uint32) / N_SUMS; i++)
+    for (i = 0; i < size / sizeof(uint32_t) / N_SUMS; i++)
         for (j = 0; j < N_SUMS; j++)
             CHECKSUM_COMP(sums[j], dataArray[i][j]);
 
@@ -165,30 +165,31 @@ pageChecksum - compute the checksum for a PostgreSQL page
 The checksum includes the block number (to detect the case where a page is somehow moved to a different location), the page header
 (excluding the checksum itself), and the page data.
 ***********************************************************************************************************************************/
-uint16
+uint16_t
 pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageSize)
 {
     // Save pd_checksum and temporarily set it to zero, so that the checksum calculation isn't affected by the old checksum stored
     // on the page. Restore it after, because actually updating the checksum is NOT part of the API of this function.
     PageHeader pageHeader = (PageHeader)page;
 
-    uint16 originalChecksum = pageHeader->pd_checksum;
+    uint16_t originalChecksum = pageHeader->pd_checksum;
     pageHeader->pd_checksum = 0;
-    uint32 checksum = pageChecksumBlock(page, pageSize);
+    uint32_t checksum = pageChecksumBlock(page, pageSize);
     pageHeader->pd_checksum = originalChecksum;
 
     // Mix in the block number to detect transposed pages
     checksum ^= blockNo;
 
     // Reduce to a uint16 with an offset of one. That avoids checksums of zero, which seems like a good idea.
-    return (uint16)((checksum % 65535) + 1);
+    return (uint16_t)((checksum % 65535) + 1);
 }
 
 /***********************************************************************************************************************************
 pageChecksumTest - test if checksum is valid for a single page
 ***********************************************************************************************************************************/
 bool
-pageChecksumTest(const unsigned char *page, unsigned int blockNo, unsigned int pageSize, uint32 ignoreWalId, uint32 ignoreWalOffset)
+pageChecksumTest(
+    const unsigned char *page, unsigned int blockNo, unsigned int pageSize, uint32_t ignoreWalId, uint32_t ignoreWalOffset)
 {
     return
         // This is a new page so don't test checksum
@@ -205,7 +206,7 @@ pageChecksumBufferTest - test if checksums are valid for all pages in a buffer
 bool
 pageChecksumBufferTest(
     const unsigned char *pageBuffer, unsigned int pageBufferSize, unsigned int blockNoBegin, unsigned int pageSize,
-    uint32 ignoreWalId, uint32 ignoreWalOffset)
+    uint32_t ignoreWalId, uint32_t ignoreWalOffset)
 {
     // If the buffer does not represent an even number of pages then error
     if (pageBufferSize % pageSize != 0 || pageBufferSize / pageSize == 0)

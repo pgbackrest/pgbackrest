@@ -6,8 +6,6 @@ The high-level functions in encode.c should be used in preference to these low-l
 #ifndef COMMON_ENCODE_BASE64_H
 #define COMMON_ENCODE_BASE64_H
 
-#include "common/type.h"
-
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/

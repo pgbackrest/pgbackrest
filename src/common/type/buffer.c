@@ -3,7 +3,6 @@ String Handler
 ***********************************************************************************************************************************/
 #include <string.h>
 
-#include "common/memContext.h"
 #include "common/type/buffer.h"
 
 /***********************************************************************************************************************************
@@ -22,14 +21,20 @@ Create a new buffer
 Buffer *
 bufNew(size_t size)
 {
-    // Create object
-    Buffer *this = memNew(sizeof(Buffer));
-    this->memContext = memContextCurrent();
-    this->size = size;
+    Buffer *this = NULL;
 
-    // Allocate buffer
-    if (size > 0)
-        this->buffer = memNewRaw(this->size);
+    MEM_CONTEXT_NEW_BEGIN("Buffer")
+    {
+        // Create object
+        this = memNew(sizeof(Buffer));
+        this->memContext = MEM_CONTEXT_NEW();
+        this->size = size;
+
+        // Allocate buffer
+        if (size > 0)
+            this->buffer = memNewRaw(this->size);
+    }
+    MEM_CONTEXT_NEW_END();
 
     return this;
 }
@@ -45,6 +50,18 @@ bufNewStr(const String *string)
 
     // Copy the data
     memcpy(this->buffer, strPtr(string), this->size);
+
+    return this;
+}
+
+/***********************************************************************************************************************************
+Move buffer to a new mem context
+***********************************************************************************************************************************/
+Buffer *
+bufMove(Buffer *this, MemContext *parentNew)
+{
+    if (this != NULL)
+        memContextMove(this->memContext, parentNew);
 
     return this;
 }
@@ -113,14 +130,5 @@ void
 bufFree(Buffer *this)
 {
     if (this != NULL)
-    {
-        MEM_CONTEXT_BEGIN(this->memContext)
-        {
-            if (this->buffer != NULL)
-                memFree(this->buffer);
-
-            memFree(this);
-        }
-        MEM_CONTEXT_END();
-    }
+        memContextFree(this->memContext);
 }

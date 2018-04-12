@@ -115,20 +115,8 @@ sub main
             my $oRemote = new pgBackRest::Protocol::Remote::Minion(
                 cfgOption(CFGOPT_BUFFER_SIZE), cfgOption(CFGOPT_PROTOCOL_TIMEOUT));
 
-            # Acquire a remote lock (except for commands that are read-only or local processes)
-            my $strLockName;
-
-            if (!(cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_ARCHIVE_GET)) ||
-                  cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_INFO)) ||
-                  cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_RESTORE)) ||
-                  cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_CHECK)) ||
-                  cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_LOCAL))))
-            {
-                $strLockName = cfgOption(CFGOPT_COMMAND);
-            }
-
             # Process remote requests
-            exitSafe($oRemote->process($strLockName));
+            exitSafe($oRemote->process(cfgOption(CFGOPT_LOCK_PATH), cfgOption(CFGOPT_COMMAND), cfgOption(CFGOPT_STANZA, false)));
         }
 
         ############################################################################################################################
@@ -218,9 +206,9 @@ sub main
         }
 
         ############################################################################################################################
-        # Acquire the command lock
+        # Check if processes have been stopped
         ############################################################################################################################
-        lockAcquire(cfgCommandName(cfgCommandGet()));
+        lockStopTest();
 
         ############################################################################################################################
         # Open the log file
@@ -306,7 +294,7 @@ sub main
             }
         }
 
-        lockRelease();
+        # Exit with success
         exitSafe(0);
 
         # uncoverable statement - exit should happen above
