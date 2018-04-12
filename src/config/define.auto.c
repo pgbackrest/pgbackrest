@@ -811,10 +811,14 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Root path to pgBackRest configuration files.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Base path to pgBackRest configuration files.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "CSHANG"
+            "This setting is used to override the default base path setting for the --config-path and --config-include-path "
+                "options unless they are set on the command-line.\n"
+            "\n"
+            "For example, passing --config-path=/docker/pgbackrest alone, results in --config default being set to "
+                "/docker/pgbackrest/pgbackrest.conf and --config-include-path default being set to /docker/pgbackrest/conf.d."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
