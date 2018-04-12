@@ -150,7 +150,7 @@ testRun()
             "                            [current=backup.example.net]\n"
             "  --repo-host-cmd           pgBackRest exe path on the repository host\n"
             "  --repo-host-config        pgBackRest repository host configuration file\n"
-            "                            [default=/etc/pgbackrest.conf]\n"
+            "                            [default=/etc/pgbackrest/pgbackrest.conf]\n"
             "  --repo-host-port          repository host port when repo-host is set\n"
             "  --repo-host-user          repository host user when repo-host is set\n"
             "                            [default=pgbackrest]\n"
