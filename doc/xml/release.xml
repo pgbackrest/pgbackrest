@@ -90,6 +90,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Add logic to find the real oid of the <id>test1</id> database during restore testing.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Document build improvements.  Perform <code>apt-get update</code> to ensure packages are up to date before installing.  Add <id>-p</id> to the repository <file>mkdir</file> so it won't fail if the directory already exists, handy for testing packages.</p>
                     </release-item>
                 </release-development-list>

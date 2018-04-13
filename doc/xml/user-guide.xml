@@ -1203,9 +1203,15 @@
             <execute-list host="{[host-pg1]}">
                 <title>Show space used by test1 database</title>
 
+                <execute show="n" variable-key="database-test1-oid">
+                    <exe-cmd>
+                        psql -Atc "select oid from pg_database where datname = 'test1'"
+                    </exe-cmd>
+                </execute>
+
                 <execute output="y" filter="n">
                     <exe-cmd>
-                        du -sh {[pg-path]}/base/16384
+                        du -sh {[pg-path]}/base/{[database-test1-oid]}
                     </exe-cmd>
                 </execute>
             </execute-list>
@@ -1267,7 +1273,7 @@
 
                 <execute output="y" filter="n">
                     <exe-cmd>
-                        du -sh {[pg-path]}/base/16384
+                        du -sh {[pg-path]}/base/{[database-test1-oid]}
                     </exe-cmd>
                 </execute>
             </execute-list>
