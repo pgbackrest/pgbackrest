@@ -1851,13 +1851,13 @@
                 <backrest-config-option section="global:archive-push" key="process-max">2</backrest-config-option>
             </backrest-config>
 
-            <p>The <file>archive-async.log</file> file can be used to monitor the activity of the asynchronous process.  A good way to test this is to quickly push a number of WAL segments.</p>
+            <p>The <file>[stanza]-archive-push-async.log</file> file can be used to monitor the activity of the asynchronous process.  A good way to test this is to quickly push a number of WAL segments.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Test parallel asynchronous archiving</title>
 
                 <execute output="n" show="n">
-                    <exe-cmd>rm -f /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
+                    <exe-cmd>rm -f /var/log/pgbackrest/demo-archive-push-async.log</exe-cmd>
                 </execute>
 
                 <execute output="n">
@@ -1883,7 +1883,7 @@
                 <title>Check results in the log</title>
 
                 <execute output="y">
-                    <exe-cmd>cat /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
+                    <exe-cmd>cat /var/log/pgbackrest/demo-archive-push-async.log</exe-cmd>
                     <exe-highlight> WAL file\(s\) to archive|pushed WAL file 0000000</exe-highlight>
                 </execute>
             </execute-list>

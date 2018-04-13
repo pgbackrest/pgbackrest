@@ -69,78 +69,6 @@ sub new
 }
 
 ####################################################################################################################################
-# process
-#
-# Fork and run the async process if it is not already running.
-####################################################################################################################################
-sub process
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
-
-    my $bClient = true;
-
-    # Check if processes have been stopped
-    lockStopTest();
-
-    # This first lock request is a quick test to see if the async process is running.  If the lock is successful we need to release
-    # the lock, fork, and then let the async process acquire its own lock.  Otherwise the lock will be held by the client process
-    # which will soon exit and leave the async process unlocked.
-    if (lockAcquire(cfgOption(CFGOPT_LOCK_PATH), cfgCommandName(cfgCommandGet()), cfgOption(CFGOPT_STANZA), 30, false))
-    {
-        &log(TEST, TEST_ARCHIVE_PUSH_ASYNC_START);
-
-        lockRelease(true);
-        $bClient = fork() == 0 ? false : true;
-    }
-    else
-    {
-        logDebugMisc($strOperation, 'async archive-push process is already running');
-    }
-
-    # Run async process
-    if (!$bClient)
-    {
-        # uncoverable branch false - reacquire the lock since it was released by the client process above
-        if (lockAcquire(cfgOption(CFGOPT_LOCK_PATH), cfgCommandName(cfgCommandGet()), cfgOption(CFGOPT_STANZA), 30, false))
-        {
-            # uncoverable branch true - chdir to /
-            chdir '/'
-                or confess &log(ERROR, "unable to chdir to /: $OS_ERROR", ERROR_PATH_MISSING);
-
-            # uncoverable branch true - close stdin
-            open(STDIN, '<', '/dev/null')
-                or confess &log(ERROR, "unable to close stdin: $OS_ERROR", ERROR_FILE_OPEN);
-            # uncoverable branch true - close stdout
-            open(STDOUT, '>', '/dev/null')
-                or confess &log(ERROR, "unable to close stdout: $OS_ERROR", ERROR_FILE_OPEN);
-            # uncoverable branch true - close stderr
-            open(STDERR, '>', '/dev/null')
-                or confess &log(ERROR, "unable to close stderr: $OS_ERROR", ERROR_FILE_OPEN);
-
-            # uncoverable branch true - create new session group
-            setsid()
-                or confess &log(ERROR, "unable to create new session group: $OS_ERROR", ERROR_ASSERT);
-
-            # Open the log file
-            logFileSet(storageLocal(), cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-archive-async', true);
-
-            # Start processing
-            $self->processServer();
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'bClient', value => $bClient, trace => true}
-    );
-}
-
-####################################################################################################################################
 # initServer
 #
 # Create the spool directory and initialize the archive process.
@@ -166,16 +94,19 @@ sub initServer
 }
 
 ####################################################################################################################################
-# processServer
+# process
 #
 # Setup the server and process the queue.  This function is separate from processQueue() for testing purposes.
 ####################################################################################################################################
-sub processServer
+sub process
 {
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->processServer');
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
+
+    # Open the log file
+    logFileSet(storageLocal(), cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-archive-push-async');
 
     # There is no loop here because it seems wise to let the async process exit periodically.  As the queue grows each async
     # execution will naturally run longer.  This behavior is also far easier to test.

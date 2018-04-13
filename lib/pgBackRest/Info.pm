@@ -131,11 +131,7 @@ sub process
     }
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'iResult', value => 0, trace => true}
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################

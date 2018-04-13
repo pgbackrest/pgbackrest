@@ -36,6 +36,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Move async forking and more error handling to C. The Perl process was exiting directly when called but that interfered with proper locking for the forked async process.  Now Perl returns results to the C process which handles all errors, including signals.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improved lock implementation written in C.  Now only two types of locks can be taken: <id>archive</id> and <id>backup</id>.  Most commands use one or the other but the <cmd>stanza-*</cmd> commands acquire both locks.  This provides better protection than the old command-based locking scheme.</p>
                     </release-item>
 

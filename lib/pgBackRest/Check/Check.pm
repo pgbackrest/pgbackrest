@@ -201,7 +201,7 @@ sub process
     }
     else
     {
-        # Throw the captured error
+        # Log the captured error
         &log(ERROR, $strResultMessage, $iResult);
 
         # If a WAL switch was attempted, then alert the user that the WAL that did not reach the archive

@@ -1185,9 +1185,8 @@ eval
 
                         if ($iCoveragePercent == 100)
                         {
-                            # This has been changed to a warning for now so archive/async tests will pass
-                            &log(WARN, "perl module ${strCodeModule} has 100% coverage but is not marked fully covered");
-                            # $iUncoveredCodeModuleTotal++;
+                            &log(ERROR, "perl module ${strCodeModule} has 100% coverage but is not marked fully covered");
+                            $iUncoveredCodeModuleTotal++;
                         }
                         else
                         {

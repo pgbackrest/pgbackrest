@@ -590,7 +590,7 @@ sub run
         my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
-        $self->testResult(sub {$oPush->process("pg_xlog/${strSegment}")}, 0, "${strSegment} WAL pushed (with relative path)");
+        $self->testResult(sub {$oPush->process("pg_xlog/${strSegment}")}, undef, "${strSegment} WAL pushed (with relative path)");
 
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment)}, "${strSegment}-$self->{strWalHash}",
@@ -606,7 +606,7 @@ sub run
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
-        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "${strSegment} WAL dropped");
+        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, undef, "${strSegment} WAL dropped");
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment)}, '[undef]',
             "${strSegment} WAL in archive");
@@ -615,7 +615,7 @@ sub run
         $self->optionTestSet(CFGOPT_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 4);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "${strSegment} WAL pushed");
+        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, undef, "${strSegment} WAL pushed");
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment)}, "${strSegment}-$self->{strWalHash}",
             "${strSegment} WAL in archive");
@@ -634,18 +634,7 @@ sub run
 
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
-        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "${strSegment} WAL pushed async");
-        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "hit lock - already running");
-
-        # Wait for child process to exit
-        if ($iProcessId == $PID)
-        {
-            waitpid(-1, 0);
-        }
-        else
-        {
-            exit 0;
-        }
+        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, undef, "${strSegment} WAL pushed async");
 
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment, 5)}, "${strSegment}-$self->{strWalHash}",
@@ -662,28 +651,10 @@ sub run
         $self->optionTestSet(CFGOPT_ARCHIVE_TIMEOUT, 5);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-
-        # Wait for error file to appear
-        my $oWait = waitInit(10);
-        my $strErrorFile = STORAGE_SPOOL_ARCHIVE_OUT . "/${strSegment}.error";
-
-        do
-        {
-            $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, 'process connect error');
-
-            # Wait for child process to exit
-            if ($iProcessId == $PID)
-            {
-                waitpid(-1, 0);
-            }
-            else
-            {
-                exit 0;
-            }
-        }
-        while (!storageSpool()->exists($strErrorFile) && waitMore($oWait));
+        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, undef, 'process connect error');
 
         # Check contents of error file
+        my $strErrorFile = STORAGE_SPOOL_ARCHIVE_OUT . "/${strSegment}.error";
         my $strErrorFileContents = ${storageSpool()->get($strErrorFile)};
 
         $self->testResult(

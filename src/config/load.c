@@ -13,6 +13,39 @@ Configuration Load
 #include "config/parse.h"
 
 /***********************************************************************************************************************************
+Load log settings
+***********************************************************************************************************************************/
+void
+cfgLoadLogSetting()
+{
+    // Initialize logging
+    LogLevel logLevelConsole = logLevelOff;
+    LogLevel logLevelStdErr = logLevelOff;
+    LogLevel logLevelFile = logLevelOff;
+    bool logTimestamp = true;
+
+    if (cfgOptionValid(cfgOptLogLevelConsole))
+        logLevelConsole = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelConsole)));
+
+    if (cfgOptionValid(cfgOptLogLevelStderr))
+    {
+        logLevelStdErr = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelStderr)));
+
+        // If configured log level exceeds the max for a command, set it to the max
+        if (logLevelStdErr > cfgLogLevelStdErrMax())
+            logLevelStdErr = cfgLogLevelStdErrMax();
+    }
+
+    if (cfgOptionValid(cfgOptLogLevelFile))
+        logLevelFile = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelFile)));
+
+    if (cfgOptionValid(cfgOptLogTimestamp))
+        logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
+
+    logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp);
+}
+
+/***********************************************************************************************************************************
 Load the configuration
 ***********************************************************************************************************************************/
 void
@@ -29,31 +62,8 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
         // Parse config from command line and config file
         configParse(argListSize, argList);
 
-        // Initialize logging
-        LogLevel logLevelConsole = logLevelOff;
-        LogLevel logLevelStdErr = logLevelOff;
-        LogLevel logLevelFile = logLevelOff;
-        bool logTimestamp = true;
-
-        if (cfgOptionValid(cfgOptLogLevelConsole))
-            logLevelConsole = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelConsole)));
-
-        if (cfgOptionValid(cfgOptLogLevelStderr))
-        {
-            logLevelStdErr = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelStderr)));
-
-            // If configured log level exceeds the max for a command, set it to the max
-            if (logLevelStdErr > cfgLogLevelStdErrMax())
-                logLevelStdErr = cfgLogLevelStdErrMax();
-        }
-
-        if (cfgOptionValid(cfgOptLogLevelFile))
-            logLevelFile = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelFile)));
-
-        if (cfgOptionValid(cfgOptLogTimestamp))
-            logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
-
-        logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp);
+        // Load the log settings
+        cfgLoadLogSetting();
 
         // Only continue if a command was set.  If no command is set then help will be displayed
         if (cfgCommand() != cfgCmdNone)
@@ -67,7 +77,7 @@ cfgLoadParam(unsigned int argListSize, const char *argList[], String *exe)
             }
 
             // Begin the command
-            cmdBegin();
+            cmdBegin(true);
 
             // If an exe was passed in then use it
             if (exe != NULL)

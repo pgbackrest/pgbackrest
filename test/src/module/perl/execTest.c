@@ -18,8 +18,7 @@ testRun()
         cfgCommandSet(cfgCmdInfo);
         cfgExeSet(strNew("/path/to/pgbackrest"));
 
-        TEST_RESULT_STR(
-            strPtr(perlMain()), "pgBackRest::Main::main('/path/to/pgbackrest','info')", "command with no options");
+        TEST_RESULT_STR(strPtr(perlMain()), "($result, $message) = pgBackRest::Main::main('info')", "command with no options");
 
         // -------------------------------------------------------------------------------------------------------------------------
         cfgOptionValidSet(cfgOptCompress, true);
@@ -31,13 +30,12 @@ testRun()
         cfgCommandParamSet(commandParamList);
 
         TEST_RESULT_STR(
-            strPtr(perlMain()),
-            "pgBackRest::Main::main('/path/to/pgbackrest','info','A','B')",
+            strPtr(perlMain()), "($result, $message) = pgBackRest::Main::main('info','A','B')",
             "command with one option and params");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("perlExec()"))
+    if (testBegin("perlInit(), perlExec(), and perlFree()"))
     {
         StringList *argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -48,21 +46,9 @@ testRun()
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load archive-push config");
 
-        int processId = 0;
-
-        if ((processId = fork()) == 0)
-        {
-            perlExec();
-        }
-        // Wait for async process to exit (this should happen quickly) and report any errors
-        else
-        {
-            int processStatus;
-
-            if (waitpid(processId, &processStatus, 0) != processId)                         // {uncoverable - write does not fail}
-                THROW_SYS_ERROR(AssertError, "unable to find perl child process");          // {uncoverable+}
-
-            TEST_RESULT_INT(WEXITSTATUS(processStatus), errorTypeCode(&ParamRequiredError), "check error code");
-        }
+        TEST_RESULT_VOID(perlFree(0), "free Perl before it is init'd");
+        TEST_RESULT_VOID(perlInit(), "init Perl");
+        TEST_ERROR(perlExec(), ParamRequiredError, PERL_EMBED_ERROR);
+        TEST_RESULT_VOID(perlFree(0), "free Perl");
     }
 }

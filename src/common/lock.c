@@ -190,6 +190,36 @@ lockAcquire(const String *lockPath, const String *stanza, LockType lockType, dou
 }
 
 /***********************************************************************************************************************************
+Clear the lock without releasing it.  This is used by a master process after it has spawned a child so the child can keep the lock
+and the master process won't try to free it.
+***********************************************************************************************************************************/
+bool
+lockClear(bool failOnNoLock)
+{
+    bool result = false;
+
+    if (lockTypeHeld == lockTypeNone)
+    {
+        if (failOnNoLock)
+            THROW(AssertError, "no lock is held by this process");
+    }
+    else
+    {
+        // Clear locks
+        LockType lockMin = lockTypeHeld == lockTypeAll ? lockTypeArchive : lockTypeHeld;
+        LockType lockMax = lockTypeHeld == lockTypeAll ? (lockTypeAll - 1) : lockTypeHeld;
+
+        for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
+            strFree(lockFile[lockIdx]);
+
+        lockTypeHeld = lockTypeNone;
+        result = true;
+    }
+
+    return result;
+}
+
+/***********************************************************************************************************************************
 Release a lock type
 ***********************************************************************************************************************************/
 bool

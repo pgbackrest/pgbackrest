@@ -514,10 +514,10 @@ sub run
         my $oStanza = new pgBackRest::Stanza();
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(sub {$oStanza->stanzaUpgrade()}, 0, 'successfully upgraded');
+        $self->testResult(sub {$oStanza->stanzaUpgrade()}, undef, 'successfully upgraded');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(sub {$oStanza->stanzaUpgrade()}, 0, 'upgrade not required');
+        $self->testResult(sub {$oStanza->stanzaUpgrade()}, undef, 'upgrade not required');
 
         # Attempt to change the encryption settings
         #---------------------------------------------------------------------------------------------------------------------------
@@ -570,7 +570,7 @@ sub run
         $self->testResult(sub {storageRepo()->encrypted($strArchivedFile)}, true, 'created encrypted archive WAL');
 
         # Upgrade
-        $self->testResult(sub {$oStanza->stanzaUpgrade()}, 0, '    successfully upgraded');
+        $self->testResult(sub {$oStanza->stanzaUpgrade()}, undef, '    successfully upgraded');
         $self->testResult(sub {storageRepo()->encrypted(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . '/'
             . ARCHIVE_INFO_FILE)}, true, '    upgraded archive info encrypted');
         $self->testResult(sub {storageRepo()->encrypted(storageRepo()->pathGet(STORAGE_REPO_BACKUP) . '/'
@@ -720,7 +720,7 @@ sub run
         $self->optionTestSetBool(CFGOPT_FORCE, true);
         $self->configTestLoad(CFGCMD_STANZA_DELETE);
 
-        $self->testResult(sub {$oStanza->stanzaDelete()}, 0, 'successfully delete stanza with force');
+        $self->testResult(sub {$oStanza->stanzaDelete()}, undef, 'successfully delete stanza with force');
         $self->testResult(sub {storageRepo()->pathExists($self->{strArchivePath}) ||
             storageRepo()->pathExists($self->{strBackupPath})},
             false, '    neither archive nor backup repo paths for the stanza exist');
@@ -731,7 +731,7 @@ sub run
 
         # Rerun stanza-delete without force and with missing stanza directories
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(sub {$oStanza->stanzaDelete()}, 0, 'successful - stanza already deleted');
+        $self->testResult(sub {$oStanza->stanzaDelete()}, undef, 'successful - stanza already deleted');
 
         # Recursive dir delete with archive directory and stanza directory but missing info files
         #---------------------------------------------------------------------------------------------------------------------------
@@ -750,7 +750,7 @@ sub run
         executeTest("sudo chown 777 " . $self->{strBackupPath} . "/${strFullLabel}/" . BOGUS);
 
         lockStop();
-        $self->testResult(sub {$oStanza->stanzaDelete()}, 0,
+        $self->testResult(sub {$oStanza->stanzaDelete()}, undef,
             'successful - recursive delete with missing info files and inaccessible file');
         $self->testResult(sub {storageRepo()->pathExists($self->{strArchivePath}) ||
             storageRepo()->pathExists($self->{strBackupPath})},
@@ -801,7 +801,7 @@ sub run
             "[undef]", '    manifest saved');
 
         lockStop();
-        $self->testResult(sub {$oStanza->stanzaDelete()}, 0,
+        $self->testResult(sub {$oStanza->stanzaDelete()}, undef,
             '    successful - recursive delete on encrypted repo');
         $self->testResult(sub {storageRepo()->pathExists($self->{strArchivePath}) ||
             storageRepo()->pathExists($self->{strBackupPath})},

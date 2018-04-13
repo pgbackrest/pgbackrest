@@ -70,6 +70,15 @@ module:
           common/assert: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: fork
+        total: 1
+        c: true
+        cDef: -DNO_LOG
+
+        coverage:
+          common/fork: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: mem-context
         total: 7
         c: true
@@ -123,7 +132,7 @@ module:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exit
-        total: 1
+        total: 3
         c: true
 
         coverage:
@@ -541,7 +550,7 @@ module:
         total: 8
 
         coverage:
-          Archive/Push/Async: partial
+          Archive/Push/Async: full
           Archive/Push/File: partial
           Archive/Push/Push: full
           Protocol/Local/Master: full
