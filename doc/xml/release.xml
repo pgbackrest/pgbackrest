@@ -84,6 +84,15 @@
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="faherty.brian"/>
+                        </release-item-contributor-list>
+
+                        <p>Add monitoring examples using <postgres/> and <proper>jq</proper>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove documentation describing <code>info --output=json</code> as experimental.</p>
                     </release-item>
                 </release-improvement-list>
@@ -4358,6 +4367,11 @@
         <contributor id="didovicher.dmitry">
             <contributor-name-display>Dmitry Didovicher</contributor-name-display>
             <contributor-id type="github">anarazel</contributor-id>
+        </contributor>
+
+        <contributor id="faherty.brian">
+            <contributor-name-display>Brian Faherty</contributor-name-display>
+            <contributor-id type="github">scrummyin</contributor-id>
         </contributor>
 
         <contributor id="fiske.keith">
