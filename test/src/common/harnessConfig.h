@@ -1,14 +1,8 @@
 /***********************************************************************************************************************************
-Configuration Load
+Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
-#ifndef CONFIG_LOAD_H
-#define CONFIG_LOAD_H
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void cfgLoad(unsigned int argListSize, const char *argList[]);
-void cfgLoadLogSetting();
-void cfgLoadUpdateOption();
-
-#endif
+void harnessCfgLoad(unsigned int argListSize, const char *argList[]);

@@ -6,6 +6,8 @@ Test Archive Push Command
 #include "config/load.h"
 #include "version.h"
 
+#include "common/harnessConfig.h"
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -22,8 +24,7 @@ testRun()
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "archive-push");
-        cfgLoad(strLstSize(argList), strLstPtr(argList));
-        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *segment = strNew("000000010000000100000001");
@@ -114,8 +115,7 @@ testRun()
         strLstAddZ(argList, "--log-level-console=off");
         strLstAddZ(argList, "--log-level-stderr=off");
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
-        cfgLoad(strLstSize(argList), strLstPtr(argList));
-        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveTimeoutError,

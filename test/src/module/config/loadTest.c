@@ -43,11 +43,6 @@ testRun()
         TEST_RESULT_INT(logLevelFile, logLevelOff, "file logging is off");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(cfgLoadParam(strLstSize(argList), strLstPtr(argList), strNew("pgbackrest2")), "load local config");
-
-        TEST_RESULT_STR(strPtr(cfgExe()), "pgbackrest2", "check exe");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));

@@ -186,9 +186,6 @@ sub configTestLoad
     $self->testResult(
         sub {configLoad(false, backrestBin(), cfgCommandName($iCommandId), \$strConfigJson)},
         true, 'config load: ' . join(" ", @stryArg));
-
-    # Release any lock that was taken during configLoad.
-    lockRelease(false);
 }
 
 1;

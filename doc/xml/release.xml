@@ -48,6 +48,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Split <code>cfgLoad()</code> into multiple functions to make testing easier.  Mainly this helps with unit tests that need to do log expect testing.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow <code>MemContext</code> objects to be copied to a new parent.  This makes it easier to create objects and then copy them to another context when they are complete without having to worry about freeing them on error.  Update <code>List</code>, <code>StringList</code>, and <code>Buffer</code> to allow moves.  Update <code>Ini</code> and <code>Storage</code> to take advantage of moves.</p>
                     </release-item>
 
@@ -126,6 +130,10 @@
 
                     <release-item>
                         <p>Move <id>archive-stop</id> and <id>expire</id> tests to the <id>mock</id> module.  These are mock integration tests so they should be grouped with the other mock integration tests.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>harnessCfgLoad()</code> test function, which allows a new config to be loaded for unit testing without resetting log functions, opening a log file, or taking locks.</p>
                     </release-item>
 
                     <release-item>

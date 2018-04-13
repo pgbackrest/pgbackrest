@@ -12,6 +12,11 @@ Log Test Harness
 #ifndef NO_LOG
 
 /***********************************************************************************************************************************
+Has the log harness been init'd?
+***********************************************************************************************************************************/
+static bool harnessLogInit = false;
+
+/***********************************************************************************************************************************
 Name of file where logs are stored for testing
 ***********************************************************************************************************************************/
 String *stdoutFile = NULL;
@@ -23,13 +28,18 @@ Initialize log for testing
 void
 testLogInit()
 {
-    logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+    if (!harnessLogInit)
+    {
+        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
 
-    stdoutFile = strNewFmt("%s/stdout.log", testPath());
-    logHandleStdOut = open(strPtr(stdoutFile), O_WRONLY | O_CREAT | O_TRUNC, 0640);
+        stdoutFile = strNewFmt("%s/stdout.log", testPath());
+        logHandleStdOut = open(strPtr(stdoutFile), O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
-    stderrFile = strNewFmt("%s/stderr.log", testPath());
-    logHandleStdErr = open(strPtr(stderrFile), O_WRONLY | O_CREAT | O_TRUNC, 0640);
+        stderrFile = strNewFmt("%s/stderr.log", testPath());
+        logHandleStdErr = open(strPtr(stderrFile), O_WRONLY | O_CREAT | O_TRUNC, 0640);
+
+        harnessLogInit = true;
+    }
 }
 
 /***********************************************************************************************************************************
