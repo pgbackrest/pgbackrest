@@ -145,6 +145,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Use <proper>pip 9.03</proper> in test VMs.  <proper>pip 10</proper> drops support for <proper>Python 2.6</proper> which is still used by the older test VMs.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow <code>-DDEBUG_UNIT</code> to be suppressed to test how debug macros behave.</p>
                     </release-item>
                 </release-development-list>
