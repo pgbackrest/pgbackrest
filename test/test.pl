@@ -46,6 +46,7 @@ use pgBackRestBuild::Error::Build;
 use pgBackRestBuild::Error::Data;
 
 use pgBackRestTest::Common::BuildTest;
+use pgBackRestTest::Common::CodeCountTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::CiTest;
 use pgBackRestTest::Common::DefineTest;
@@ -81,6 +82,7 @@ test.pl [options]
    --coverage-only      only run coverage tests (as a subset of selected tests)
    --c-only             only run C tests
    --gen-only           only run auto-generation
+   --code-count         generate code counts
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
@@ -133,6 +135,7 @@ my $bBuildOnly = false;
 my $bCoverageOnly = false;
 my $bCOnly = false;
 my $bGenOnly = false;
+my $bCodeCount = false;
 my $bSmart = false;
 my $bNoPackage = false;
 my $bNoCiConfig = false;
@@ -167,6 +170,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'coverage-only' => \$bCoverageOnly,
             'c-only' => \$bCOnly,
             'gen-only' => \$bGenOnly,
+            'code-count' => \$bCodeCount,
             'smart' => \$bSmart,
             'dev' => \$bDev,
             'expect' => \$bExpect,
@@ -305,6 +309,15 @@ eval
     ################################################################################################################################
     if (!defined($iVmId))
     {
+        # Generate code counts
+        if ($bCodeCount)
+        {
+            &log(INFO, "classify code files");
+
+            codeCountScan($oStorageBackRest, $strBackRestBase);
+            exit 0;
+        }
+
         # Auto-generate C files
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, "check code autogenerate");
