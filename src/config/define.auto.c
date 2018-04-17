@@ -3313,14 +3313,15 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Path where WAL segments are spooled during async archiving.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Path where transient data is stored.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "When asynchronous archiving is enabled pgBackRest needs a local directory to store WAL segments before they are "
-                "compressed and moved to the repository. Depending on the volume of WAL generated this directory could become very "
-                "large so be sure to plan accordingly.\n"
+            "This path is used to store acknowledgements from the asynchronous archive-push process. These files are generally "
+                "very small (zero to a few hundred bytes) so not much space is required.\n"
             "\n"
-            "The archive-queue-max option can be used to limit the amount of WAL that will be spooled locally."
+            "The data stored in the spool path is not strictly temporary since it can and should survive a reboot. Loss of the "
+                "data in the spool path is not an issue. pgBackRest will simply recheck each WAL segment to ensure it is safely "
+                "archived."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST

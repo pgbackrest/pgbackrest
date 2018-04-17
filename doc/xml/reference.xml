@@ -174,11 +174,11 @@
 
                     <!-- CONFIG - GENERAL SECTION - LOG-PATH KEY -->
                     <config-key id="spool-path" name="Spool Path">
-                        <summary>Path where WAL segments are spooled during async archiving.</summary>
+                        <summary>Path where transient data is stored.</summary>
 
-                        <text>When asynchronous archiving is enabled <backrest/> needs a local directory to store WAL segments before they are compressed and moved to the repository.  Depending on the volume of WAL generated this directory could become very large so be sure to plan accordingly.
+                        <text>This path is used to store acknowledgements from the asynchronous <cmd>archive-push</cmd> process.  These files are generally very small (zero to a few hundred bytes) so not much space is required.
 
-                        The <setting>archive-queue-max</setting> option can be used to limit the amount of WAL that will be spooled locally.</text>
+                        The data stored in the spool path is not strictly temporary since it can and should survive a reboot.  However, loss of the data in the spool path is not a problem.  <backrest/> will simply recheck each WAL segment to ensure it is safely archived.</text>
 
                         <example>/backup/db/spool</example>
                     </config-key>

@@ -99,6 +99,10 @@
                     <release-item>
                         <p>Remove documentation describing <code>info --output=json</code> as experimental.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Update out-of-date description for the <br-option>spool-path</br-option> option.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
