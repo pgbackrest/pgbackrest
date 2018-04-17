@@ -18,7 +18,6 @@ use pgBackRest::Backup::File;
 use pgBackRest::Backup::Info;
 use pgBackRest::Common::Cipher;
 use pgBackRest::Common::Exception;
-use pgBackRest::Common::Exit;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;

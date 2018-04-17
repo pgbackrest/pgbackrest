@@ -88,14 +88,12 @@ P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFil
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::Push::File::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000001
-P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
+P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::Command::Master->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: archive-push command end: completed successfully
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
-P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get --log-level-console=debug 000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -127,14 +125,12 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::Get::Get->get=>: iResult = 0
-P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
+P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::Command::Master->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: archive-get command end: completed successfully
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
-P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --compress --archive-async --process-max=2 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------

@@ -6,6 +6,8 @@ Test Archive Push Command
 #include "config/load.h"
 #include "version.h"
 
+#include "common/harnessConfig.h"
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -22,8 +24,7 @@ testRun()
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "archive-push");
-        cfgLoad(strLstSize(argList), strLstPtr(argList));
-        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *segment = strNew("000000010000000100000001");
@@ -107,34 +108,24 @@ testRun()
 
         TEST_ERROR(cmdArchivePush(), AssertError, "archive-push in C does not support synchronous mode");
 
-        // Test that a bogus perl bin generates the correct errors
+        // Make sure the process times out when there is nothing to archive
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--log-level-console=off");
         strLstAddZ(argList, "--log-level-stderr=off");
-        cfgLoad(strLstSize(argList), strLstPtr(argList));
-        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
-
-        TRY_BEGIN()
-        {
-            cmdArchivePush();
-
-            THROW(AssertError, "error should have been thrown");    // {uncoverable - test should not get here}
-        }
-        CATCH_ANY()
-        {
-            // Check expected error on the parent process
-            TEST_RESULT_INT(errorCode(), errorTypeCode(&AssertError), "error code matches after failed Perl exec");
-            TEST_RESULT_STR(errorMessage(), "perl exited with error 37", "error message matches after failed Perl exec");
-        }
-        TRY_END();
-
-        // Make sure the process times out when there is nothing to archive
-        // -------------------------------------------------------------------------------------------------------------------------
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
-        cfgLoad(strLstSize(argList), strLstPtr(argList));
-        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(
+            cmdArchivePush(), ArchiveTimeoutError,
+            "unable to push WAL segment '000000010000000100000001' asynchronously after 1 second(s)");
+
+        // Make sure the process times out when there is nothing to archive and it can't get a lock
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(
+            lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30, true), "acquire lock");
+        TEST_RESULT_VOID(lockClear(true), "clear lock");
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveTimeoutError,

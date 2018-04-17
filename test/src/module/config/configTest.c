@@ -83,10 +83,20 @@ testRun()
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup), "command set to backup");
         TEST_RESULT_INT(cfgLogLevelDefault(), logLevelInfo, "default log level is info");
         TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
+        TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
+        TEST_RESULT_INT(cfgLockType(), lockTypeBackup, "lock is type backup");
+
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdInfo), "command set to info");
         TEST_RESULT_INT(cfgLogLevelDefault(), logLevelDebug, "default log level is debug");
         TEST_RESULT_INT(cfgLogLevelStdErrMax(), logLevelTrace, "max stderr log level is trace");
         TEST_RESULT_BOOL(cfgLogFile(), false, "log file is off");
+        TEST_RESULT_BOOL(cfgLockRequired(), false, "lock is not required");
+        TEST_RESULT_INT(cfgLockType(), lockTypeNone, "lock is type none");
+
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdStanzaCreate), "command set to stanza-create");
+        TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
+        TEST_RESULT_INT(cfgLockType(), lockTypeAll, "lock is type all");
+
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdLocal), "command set to local");
         TEST_RESULT_INT(cfgLogLevelStdErrMax(), logLevelError, "max stderr log level is error");
         TEST_RESULT_BOOL(cfgLogFile(), false, "log file is off");

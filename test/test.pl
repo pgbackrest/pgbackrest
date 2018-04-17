@@ -45,9 +45,8 @@ use pgBackRestBuild::Config::BuildParse;
 use pgBackRestBuild::Error::Build;
 use pgBackRestBuild::Error::Data;
 
-use BackRestDoc::Custom::DocCustomRelease;
-
 use pgBackRestTest::Common::BuildTest;
+use pgBackRestTest::Common::CodeCountTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::CiTest;
 use pgBackRestTest::Common::DefineTest;
@@ -83,6 +82,7 @@ test.pl [options]
    --coverage-only      only run coverage tests (as a subset of selected tests)
    --c-only             only run C tests
    --gen-only           only run auto-generation
+   --code-count         generate code counts
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
@@ -135,6 +135,7 @@ my $bBuildOnly = false;
 my $bCoverageOnly = false;
 my $bCOnly = false;
 my $bGenOnly = false;
+my $bCodeCount = false;
 my $bSmart = false;
 my $bNoPackage = false;
 my $bNoCiConfig = false;
@@ -169,6 +170,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'coverage-only' => \$bCoverageOnly,
             'c-only' => \$bCOnly,
             'gen-only' => \$bGenOnly,
+            'code-count' => \$bCodeCount,
             'smart' => \$bSmart,
             'dev' => \$bDev,
             'expect' => \$bExpect,
@@ -307,6 +309,15 @@ eval
     ################################################################################################################################
     if (!defined($iVmId))
     {
+        # Generate code counts
+        if ($bCodeCount)
+        {
+            &log(INFO, "classify code files");
+
+            codeCountScan($oStorageBackRest, $strBackRestBase);
+            exit 0;
+        }
+
         # Auto-generate C files
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, "check code autogenerate");
@@ -401,53 +412,65 @@ eval
             (new pgBackRestTest::Common::CiTest($oStorageBackRest))->process();
         }
 
-        &log(INFO, "check version info");
-
-        # Load the doc module dynamically since it is not supported on all systems
-        require BackRestDoc::Common::Doc;
-        BackRestDoc::Common::Doc->import();
-
-        # Make sure version number matches the latest release
-        my $strReleaseFile = dirname(dirname(abs_path($0))) . '/doc/xml/release.xml';
-        my $oRelease = (new BackRestDoc::Custom::DocCustomRelease(new BackRestDoc::Common::Doc($strReleaseFile)))->releaseLast();
-        my $strVersion = $oRelease->paramGet('version');
-        my $bVersionDev = false;
-        my $strVersionBase = $strVersion;
-
-        if ($strVersion =~ /dev$/)
-        {
-            $bVersionDev = true;
-            $strVersionBase = substr($strVersion, 0, length($strVersion) - 3);
-
-            if (BACKREST_VERSION !~ /dev$/ && $oRelease->nodeTest('release-core-list'))
-            {
-                confess "dev release ${strVersion} must match the program version when core changes have been made";
-            }
-        }
-        elsif ($strVersion ne BACKREST_VERSION)
-        {
-            confess 'unable to find version ' . BACKREST_VERSION . " as the most recent release in ${strReleaseFile}";
-        }
-
-        # Update version for the C code based on the current Perl version
+        # Check Perl version against release notes and update version in C code if needed
         #---------------------------------------------------------------------------------------------------------------------------
-        my $strCVersionFile = "${strBackRestBase}/src/version.h";
-        my $strCVersionOld = ${$oStorageTest->get($strCVersionFile)};
-        my $strCVersionNew;
+        my $bVersionDev = true;
+        my $strVersionBase;
 
-        foreach my $strLine (split("\n", $strCVersionOld))
+        if (!$bDev)
         {
-            if ($strLine =~ /^#define PGBACKREST_VERSION/)
+            # Make sure version number matches the latest release
+            #-----------------------------------------------------------------------------------------------------------------------
+            &log(INFO, "check version info");
+
+            # Load the doc modules dynamically since they are not supported on all systems
+            require BackRestDoc::Common::Doc;
+            BackRestDoc::Common::Doc->import();
+            require BackRestDoc::Custom::DocCustomRelease;
+            BackRestDoc::Custom::DocCustomRelease->import();
+
+            my $strReleaseFile = dirname(dirname(abs_path($0))) . '/doc/xml/release.xml';
+            my $oRelease =
+                (new BackRestDoc::Custom::DocCustomRelease(new BackRestDoc::Common::Doc($strReleaseFile)))->releaseLast();
+            my $strVersion = $oRelease->paramGet('version');
+            $bVersionDev = false;
+            $strVersionBase = $strVersion;
+
+            if ($strVersion =~ /dev$/)
             {
-                $strLine = '#define PGBACKREST_VERSION' . (' ' x 42) . '"' . BACKREST_VERSION . '"';
+                $bVersionDev = true;
+                $strVersionBase = substr($strVersion, 0, length($strVersion) - 3);
+
+                if (BACKREST_VERSION !~ /dev$/ && $oRelease->nodeTest('release-core-list'))
+                {
+                    confess "dev release ${strVersion} must match the program version when core changes have been made";
+                }
+            }
+            elsif ($strVersion ne BACKREST_VERSION)
+            {
+                confess 'unable to find version ' . BACKREST_VERSION . " as the most recent release in ${strReleaseFile}";
             }
 
-            $strCVersionNew .= "${strLine}\n";
-        }
+            # Update version for the C code based on the current Perl version
+            #-----------------------------------------------------------------------------------------------------------------------
+            my $strCVersionFile = "${strBackRestBase}/src/version.h";
+            my $strCVersionOld = ${$oStorageTest->get($strCVersionFile)};
+            my $strCVersionNew;
 
-        if ($strCVersionNew ne $strCVersionOld)
-        {
-            $oStorageTest->put($strCVersionFile, $strCVersionNew);
+            foreach my $strLine (split("\n", $strCVersionOld))
+            {
+                if ($strLine =~ /^#define PGBACKREST_VERSION/)
+                {
+                    $strLine = '#define PGBACKREST_VERSION' . (' ' x 42) . '"' . BACKREST_VERSION . '"';
+                }
+
+                $strCVersionNew .= "${strLine}\n";
+            }
+
+            if ($strCVersionNew ne $strCVersionOld)
+            {
+                $oStorageTest->put($strCVersionFile, $strCVersionNew);
+            }
         }
 
         # Clean up
@@ -1175,9 +1198,8 @@ eval
 
                         if ($iCoveragePercent == 100)
                         {
-                            # This has been changed to a warning for now so archive/async tests will pass
-                            &log(WARN, "perl module ${strCodeModule} has 100% coverage but is not marked fully covered");
-                            # $iUncoveredCodeModuleTotal++;
+                            &log(ERROR, "perl module ${strCodeModule} has 100% coverage but is not marked fully covered");
+                            $iUncoveredCodeModuleTotal++;
                         }
                         else
                         {

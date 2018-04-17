@@ -108,10 +108,25 @@ my $rhExport =
         )],
     },
 
+    'lock' =>
+    {
+        &BLD_EXPORTTYPE_SUB => [qw(
+            lockAcquire
+            lockRelease
+        )],
+    },
+
     'random' =>
     {
         &BLD_EXPORTTYPE_SUB => [qw(
             randomBytes
+        )],
+    },
+
+    'storage' =>
+    {
+        &BLD_EXPORTTYPE_SUB => [qw(
+            storageDriverPosixPathRemove
         )],
     },
 

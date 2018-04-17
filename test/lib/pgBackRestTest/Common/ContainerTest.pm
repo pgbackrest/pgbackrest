@@ -519,7 +519,7 @@ sub containerBuild
         {
             $strScript .= sectionHeader() .
                 "# Install AWS CLI\n" .
-                "    pip install --upgrade pip && \\\n" .
+                "    pip install --upgrade --no-cache-dir pip==9.0.3 && \\\n" .
                 "    pip install --upgrade awscli && \\\n" .
                 '    sudo -i -u ' . TEST_USER . " aws configure set region us-east-1 && \\\n" .
                 '    sudo -i -u ' . TEST_USER . " aws configure set aws_access_key_id accessKey1 && \\\n" .

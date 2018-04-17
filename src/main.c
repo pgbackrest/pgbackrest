@@ -6,6 +6,7 @@ Main
 
 #include "command/archive/push/push.h"
 #include "command/help/help.h"
+#include "command/command.h"
 #include "common/error.h"
 #include "common/exit.h"
 #include "config/config.h"
@@ -16,7 +17,11 @@ Main
 int
 main(int argListSize, const char *argList[])
 {
-    bool error = false;
+    volatile bool result = 0;
+    volatile bool error = false;
+
+    // Initialize exit handler
+    exitInit();
 
     TRY_BEGIN()
     {
@@ -46,11 +51,27 @@ main(int argListSize, const char *argList[])
             cmdArchivePush();
         }
 
+        // Backup command.  Still executed in Perl but this implements running expire after backup.
+        // -------------------------------------------------------------------------------------------------------------------------
+        else if (cfgCommand() == cfgCmdBackup)
+        {
+            // Run backup
+            perlExec();
+
+            // Switch to expire command
+            cmdEnd(0, NULL);
+            cfgCommandSet(cfgCmdExpire);
+            cmdBegin(false);
+
+            // Run expire
+            perlExec();
+        }
+
         // Execute Perl for commands not implemented in C
         // -------------------------------------------------------------------------------------------------------------------------
         else
         {
-            perlExec();
+            result = perlExec();
         }
     }
     CATCH_ANY()
@@ -59,5 +80,5 @@ main(int argListSize, const char *argList[])
     }
     TRY_END();
 
-    return exitSafe(error);
+    return exitSafe(result, error, 0);
 }

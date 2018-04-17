@@ -4,17 +4,21 @@ Archive Push Command
 #include <libgen.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "command/command.h"
+#include "common/fork.h"
 #include "common/error.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "common/wait.h"
 #include "config/config.h"
+#include "config/load.h"
 #include "perl/exec.h"
 #include "storage/helper.h"
 
@@ -124,7 +128,9 @@ cmdArchivePush()
         if (cfgOptionBool(cfgOptArchiveAsync))
         {
             bool pushed = false;                                        // Has the WAL segment been pushed yet?
+            bool forked = false;                                        // Has the async process been forked yet?
             bool confessOnError = false;                                // Should we confess errors?
+            bool server = false;                                        // Is this the async server process?
 
             // Loop and wait for the WAL segment to be pushed
             Wait *wait = waitNew(cfgOptionDbl(cfgOptArchiveTimeout));
@@ -135,50 +141,77 @@ cmdArchivePush()
                 // process a chance to fix them.
                 pushed = walStatus(walSegment, confessOnError);
 
-                // If the WAL segment has not already been pushed then start the async process to push it
-                if (!pushed)
+                // If the WAL segment has not already been pushed then start the async process to push it.  There's no point in
+                // forking the async process off more than once so track that as well.  Use an archive lock to prevent more than
+                // one async process being launched.
+                if (!pushed && !forked &&
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
                 {
-                    // Async process is currently implemented in Perl
-                    int processId = 0;
-
-                    if ((processId = fork()) == 0)
+                    // Fork off the async process
+                    if (fork() == 0)
                     {
-                        // Only want to see warnings and errors on the console from async process
-                        cfgOptionSet(cfgOptLogLevelConsole, cfgSourceParam, varNewStrZ("warn"));
+                        // This is the server process
+                        server = true;
 
-                        // Execute async process
-                        perlExec();
+                        // The async process should not output on the console at all
+                        cfgOptionSet(cfgOptLogLevelConsole, cfgSourceParam, varNewStrZ("off"));
+                        cfgOptionSet(cfgOptLogLevelStderr, cfgSourceParam, varNewStrZ("off"));
+                        cfgLoadLogSetting();
+
+                        // Open the log file
+                        logFileSet(
+                            strPtr(strNewFmt("%s/%s-%s-async.log", strPtr(cfgOptionStr(cfgOptLogPath)),
+                            strPtr(cfgOptionStr(cfgOptStanza)), cfgCommandName(cfgCommand()))));
+
+                        // Log command info since we are starting a new log
+                        cmdBegin(true);
+
+                        // Detach from parent process
+                        forkDetach();
+
+                        // Execute async process and catch exceptions
+                        TRY_BEGIN()
+                        {
+                            perlExec();
+                        }
+                        CATCH_ANY()
+                        {
+                            RETHROW();
+                        }
+                        FINALLY()
+                        {
+                            // Release the lock (mostly here for testing since it would be freed in exitSafe() anyway)
+                            lockRelease(true);
+                        }
+                        TRY_END();
                     }
-                    // Wait for async process to exit (this should happen quickly) and report any errors
+                    // Else mark async process as forked
                     else
                     {
-                        int processStatus;
-
-                        if (waitpid(processId, &processStatus, 0) != processId)             // {uncoverable - fork() does not fail}
-                            THROW_SYS_ERROR(AssertError, "unable to find perl child process");  // {uncoverable+}
-
-                        if (WEXITSTATUS(processStatus) != 0)
-                            THROW(AssertError, "perl exited with error %d", WEXITSTATUS(processStatus));
+                        lockClear(true);
+                        forked = true;
                     }
                 }
 
                 // Now that the async process has been launched, confess any errors that are found
                 confessOnError = true;
             }
-            while (!pushed && waitMore(wait));
+            while (!server && !pushed && waitMore(wait));
 
-            waitFree(wait);
-
-            // If the WAL segment was not pushed then error
-            if (!pushed)
+            // The aysnc server does not give notifications
+            if (!server)
             {
-                THROW(
-                    ArchiveTimeoutError, "unable to push WAL segment '%s' asynchronously after %lg second(s)", strPtr(walSegment),
-                    cfgOptionDbl(cfgOptArchiveTimeout));
-            }
+                // If the WAL segment was not pushed then error
+                if (!pushed)
+                {
+                    THROW(
+                        ArchiveTimeoutError, "unable to push WAL segment '%s' asynchronously after %lg second(s)",
+                        strPtr(walSegment), cfgOptionDbl(cfgOptArchiveTimeout));
+                }
 
-            // Log success
-            LOG_INFO("pushed WAL segment %s asynchronously", strPtr(walSegment));
+                // Log success
+                LOG_INFO("pushed WAL segment %s asynchronously", strPtr(walSegment));
+            }
         }
         else
             THROW(AssertError, "archive-push in C does not support synchronous mode");

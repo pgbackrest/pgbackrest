@@ -20,6 +20,7 @@ StringList *storageDriverPosixList(const String *path, bool errorOnMissing, cons
 void *storageDriverPosixOpenRead(const String *file, bool ignoreMissing);
 void *storageDriverPosixOpenWrite(const String *file, mode_t mode);
 void storageDriverPosixPathCreate(const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
+void storageDriverPosixPathRemove(const String *path, bool errorOnMissing, bool recurse);
 void storageDriverPosixPut(const StorageFile *file, const Buffer *buffer);
 void storageDriverPosixRemove(const String *file, bool errorOnMissing);
 

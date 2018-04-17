@@ -82,6 +82,8 @@ my @stryCFile =
     'common/encode/base64.c',
     'common/error.c',
     'common/ini.c',
+    'common/io/handle.c',
+    'common/lock.c',
     'common/log.c',
     'common/memContext.c',
     'common/regExp.c',

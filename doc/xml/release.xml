@@ -46,7 +46,19 @@
                     </release-item>
 
                     <release-item>
-                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageExists()</code>, <code>storagePathCreate()</code>, and <code>storageRemove()</code>.  Add <code>StorageFile</code> object and <code>storageOpenRead()</code>/<code>storageOpenWrite()</code>.  Abstract Posix driver code into a separate module.</p>
+                        <p>Move async forking and more error handling to C. The Perl process was exiting directly when called but that interfered with proper locking for the forked async process.  Now Perl returns results to the C process which handles all errors, including signals.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improved lock implementation written in C.  Now only two types of locks can be taken: <id>archive</id> and <id>backup</id>.  Most commands use one or the other but the <cmd>stanza-*</cmd> commands acquire both locks.  This provides better protection than the old command-based locking scheme.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageExists()</code>, <code>storagePathCreate()</code>, and <code>storageRemove()</code>.  Add <code>StorageFile</code> object and <code>storageOpenRead()</code>/<code>storageOpenWrite()</code>.  Abstract Posix driver code into a separate module.  Add <code>storagePathRemove()</code> and use it in the Perl Posix driver.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Split <code>cfgLoad()</code> into multiple functions to make testing easier.  Mainly this helps with unit tests that need to do log expect testing.</p>
                     </release-item>
 
                     <release-item>
@@ -86,11 +98,24 @@
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="faherty.brian"/>
+                        </release-item-contributor-list>
+
+                        <p>Add monitoring examples using <postgres/> and <proper>jq</proper>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove documentation describing <code>info --output=json</code> as experimental.</p>
                     </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
+                    <release-item>
+                        <p>Add logic to find the real oid of the <id>test1</id> database during restore testing.</p>
+                    </release-item>
+
                     <release-item>
                         <p>Document build improvements.  Perform <code>apt-get update</code> to ensure packages are up to date before installing.  Add <id>-p</id> to the repository <file>mkdir</file> so it won't fail if the directory already exists, handy for testing packages.</p>
                     </release-item>
@@ -118,11 +143,23 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>harnessCfgLoad()</code> test function, which allows a new config to be loaded for unit testing without resetting log functions, opening a log file, or taking locks.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Generate code counts for all source files.  The source files are also classified by type and purpose.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Include VM type in <id>gcov</id> path to avoid conflicts between VMs with different architectures.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Improve logic for smart builds to include version changes.</p>
+                        <p>Improve logic for smart builds to include version changes.  Skip version checks when testing in <setting>--dev</setting> mode.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Use <proper>pip 9.03</proper> in test VMs.  <proper>pip 10</proper> drops support for <proper>Python 2.6</proper> which is still used by the older test VMs.</p>
                     </release-item>
 
                     <release-item>
@@ -4356,6 +4393,11 @@
         <contributor id="didovicher.dmitry">
             <contributor-name-display>Dmitry Didovicher</contributor-name-display>
             <contributor-id type="github">anarazel</contributor-id>
+        </contributor>
+
+        <contributor id="faherty.brian">
+            <contributor-name-display>Brian Faherty</contributor-name-display>
+            <contributor-id type="github">scrummyin</contributor-id>
         </contributor>
 
         <contributor id="fiske.keith">

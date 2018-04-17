@@ -1,0 +1,1292 @@
+# File types for source files in the project
+build/error.yaml:
+  class: build
+  type: yaml
+
+build/lib/pgBackRestBuild/Build.pm:
+  class: build
+  type: perl
+
+build/lib/pgBackRestBuild/Build/Common.pm:
+  class: build
+  type: perl
+
+build/lib/pgBackRestBuild/Config/Build.pm:
+  class: build
+  type: perl
+
+build/lib/pgBackRestBuild/Config/BuildDefine.pm:
+  class: build
+  type: perl
+
+build/lib/pgBackRestBuild/Config/BuildParse.pm:
+  class: build
+  type: perl
+
+build/lib/pgBackRestBuild/Config/Data.pm:
+  class: build
+  type: perl
+
+build/lib/pgBackRestBuild/Error/Build.pm:
+  class: build
+  type: perl
+
+build/lib/pgBackRestBuild/Error/Data.pm:
+  class: build
+  type: perl
+
+doc/doc.pl:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Common/Doc.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Common/DocConfig.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Common/DocExecute.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Common/DocManifest.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Common/DocRender.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Custom/DocCustomRelease.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Html/DocHtmlBuilder.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Html/DocHtmlElement.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Html/DocHtmlPage.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Html/DocHtmlSite.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Latex/DocLatex.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Latex/DocLatexSection.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Markdown/DocMarkdown.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/BackRestDoc/Markdown/DocMarkdownRender.pm:
+  class: doc/core
+  type: perl
+
+doc/manifest.xml:
+  class: doc/source
+  type: xml
+
+doc/release.pl:
+  class: doc/core
+  type: perl
+
+doc/resource/html/default.css:
+  class: doc/core
+  type: css
+
+doc/resource/latex/preamble.tex:
+  class: doc/core
+  type: latex
+
+doc/xml/coding.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/dtd/doc.dtd:
+  class: doc/source
+  type: dtd
+
+doc/xml/dtd/manifest.dtd:
+  class: doc/source
+  type: dtd
+
+doc/xml/index.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/reference.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/test.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/user-guide.xml:
+  class: doc/source
+  type: xml
+
+lib/pgBackRest/Archive/Base.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Archive/Common.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Archive/Get/Get.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Archive/Info.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Archive/Push/Async.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Archive/Push/File.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Archive/Push/Push.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Backup/Backup.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Backup/Common.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Backup/File.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Backup/Filter/PageChecksum.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Backup/Info.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Check/Check.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/Cipher.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/Exception.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/ExceptionAuto.pm:
+  class: core/auto
+  type: perl
+
+lib/pgBackRest/Common/Http/Client.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/Http/Common.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/Ini.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/Io/Base.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/Io/Buffered.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/Io/Filter.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/Io/Handle.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/Io/Process.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/Lock.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/Log.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/String.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/Wait.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Common/Xml.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Config/Config.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Db.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/DbVersion.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Expire.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Info.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/InfoCommon.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Main.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Manifest.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Protocol/Base/Master.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Protocol/Base/Minion.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Protocol/Command/Master.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Protocol/Command/Minion.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Protocol/Helper.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Protocol/Local/Master.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Protocol/Local/Minion.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Protocol/Local/Process.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Protocol/Remote/Master.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Protocol/Remote/Minion.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Protocol/Storage/File.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Protocol/Storage/Helper.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Protocol/Storage/Remote.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Restore.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/RestoreFile.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Stanza.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/Base.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/Cifs/Driver.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/Filter/CipherBlock.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/Filter/Gzip.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/Filter/Sha.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/Helper.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/Local.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/Posix/Driver.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/Posix/FileRead.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/Posix/FileWrite.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/S3/Auth.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/S3/Driver.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/S3/FileRead.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/S3/FileWrite.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/S3/Info.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Storage/S3/Request.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/Version.pm:
+  class: core
+  type: perl
+
+libc/LibC.h:
+  class: core
+  type: c/h
+
+libc/LibC.xs:
+  class: core
+  type: xs
+
+libc/Makefile.PL:
+  class: build
+  type: perl
+
+libc/build/lib/pgBackRestLibC/Build.pm:
+  class: build
+  type: perl
+
+libc/build/lib/pgBackRestLibC/Config/Build.pm:
+  class: build
+  type: perl
+
+libc/build/lib/pgBackRestLibC/Config/BuildDefine.pm:
+  class: build
+  type: perl
+
+libc/lib/pgBackRest/LibC.pm:
+  class: core
+  type: perl
+
+libc/lib/pgBackRest/LibCAuto.pm:
+  class: core/auto
+  type: perl
+
+libc/t/sanity.t:
+  class: test/module
+  type: perl
+
+libc/xs/cipher/block.xs:
+  class: core
+  type: xs
+
+libc/xs/cipher/block.xsh:
+  class: core
+  type: c/h
+
+libc/xs/cipher/random.xs:
+  class: core
+  type: xs
+
+libc/xs/common/encode.xs:
+  class: core
+  type: xs
+
+libc/xs/common/encode.xsh:
+  class: core
+  type: c/h
+
+libc/xs/common/lock.xs:
+  class: core
+  type: xs
+
+libc/xs/config/config.auto.xsh:
+  class: core
+  type: c/h
+
+libc/xs/config/config.xs:
+  class: core
+  type: xs
+
+libc/xs/config/configTest.xs:
+  class: core
+  type: xs
+
+libc/xs/config/define.auto.xsh:
+  class: core
+  type: c/h
+
+libc/xs/config/define.xs:
+  class: core
+  type: xs
+
+libc/xs/postgres/pageChecksum.xs:
+  class: core
+  type: xs
+
+libc/xs/storage/storage.xs:
+  class: core
+  type: xs
+
+src/Makefile:
+  class: build
+  type: make
+
+src/cipher/block.c:
+  class: core
+  type: c
+
+src/cipher/block.h:
+  class: core
+  type: c/h
+
+src/cipher/cipher.c:
+  class: core
+  type: c
+
+src/cipher/cipher.h:
+  class: core
+  type: c/h
+
+src/cipher/random.c:
+  class: core
+  type: c
+
+src/cipher/random.h:
+  class: core
+  type: c/h
+
+src/command/archive/push/push.c:
+  class: core
+  type: c
+
+src/command/archive/push/push.h:
+  class: core
+  type: c/h
+
+src/command/command.c:
+  class: core
+  type: c
+
+src/command/command.h:
+  class: core
+  type: c/h
+
+src/command/help/help.c:
+  class: core
+  type: c
+
+src/command/help/help.h:
+  class: core
+  type: c/h
+
+src/common/assert.h:
+  class: core
+  type: c/h
+
+src/common/debug.h:
+  class: core
+  type: c/h
+
+src/common/encode.c:
+  class: core
+  type: c
+
+src/common/encode.h:
+  class: core
+  type: c/h
+
+src/common/encode/base64.c:
+  class: core
+  type: c
+
+src/common/encode/base64.h:
+  class: core
+  type: c/h
+
+src/common/error.auto.c:
+  class: core/auto
+  type: c
+
+src/common/error.auto.h:
+  class: core/auto
+  type: c/h
+
+src/common/error.c:
+  class: core
+  type: c
+
+src/common/error.h:
+  class: core
+  type: c/h
+
+src/common/exit.c:
+  class: core
+  type: c
+
+src/common/exit.h:
+  class: core
+  type: c/h
+
+src/common/fork.c:
+  class: core
+  type: c
+
+src/common/fork.h:
+  class: core
+  type: c/h
+
+src/common/ini.c:
+  class: core
+  type: c
+
+src/common/ini.h:
+  class: core
+  type: c/h
+
+src/common/io/handle.c:
+  class: core
+  type: c
+
+src/common/io/handle.h:
+  class: core
+  type: c/h
+
+src/common/lock.c:
+  class: core
+  type: c
+
+src/common/lock.h:
+  class: core
+  type: c/h
+
+src/common/log.c:
+  class: core
+  type: c
+
+src/common/log.h:
+  class: core
+  type: c/h
+
+src/common/memContext.c:
+  class: core
+  type: c
+
+src/common/memContext.h:
+  class: core
+  type: c/h
+
+src/common/regExp.c:
+  class: core
+  type: c
+
+src/common/regExp.h:
+  class: core
+  type: c/h
+
+src/common/time.c:
+  class: core
+  type: c
+
+src/common/time.h:
+  class: core
+  type: c/h
+
+src/common/type/buffer.c:
+  class: core
+  type: c
+
+src/common/type/buffer.h:
+  class: core
+  type: c/h
+
+src/common/type/keyValue.c:
+  class: core
+  type: c
+
+src/common/type/keyValue.h:
+  class: core
+  type: c/h
+
+src/common/type/list.c:
+  class: core
+  type: c
+
+src/common/type/list.h:
+  class: core
+  type: c/h
+
+src/common/type/string.c:
+  class: core
+  type: c
+
+src/common/type/string.h:
+  class: core
+  type: c/h
+
+src/common/type/stringList.c:
+  class: core
+  type: c
+
+src/common/type/stringList.h:
+  class: core
+  type: c/h
+
+src/common/type/variant.c:
+  class: core
+  type: c
+
+src/common/type/variant.h:
+  class: core
+  type: c/h
+
+src/common/type/variantList.c:
+  class: core
+  type: c
+
+src/common/type/variantList.h:
+  class: core
+  type: c/h
+
+src/common/wait.c:
+  class: core
+  type: c
+
+src/common/wait.h:
+  class: core
+  type: c/h
+
+src/config/config.auto.c:
+  class: core/auto
+  type: c
+
+src/config/config.auto.h:
+  class: core/auto
+  type: c/h
+
+src/config/config.c:
+  class: core
+  type: c
+
+src/config/config.h:
+  class: core
+  type: c/h
+
+src/config/define.auto.c:
+  class: core/auto
+  type: c
+
+src/config/define.auto.h:
+  class: core/auto
+  type: c/h
+
+src/config/define.c:
+  class: core
+  type: c
+
+src/config/define.h:
+  class: core
+  type: c/h
+
+src/config/load.c:
+  class: core
+  type: c
+
+src/config/load.h:
+  class: core
+  type: c/h
+
+src/config/parse.auto.c:
+  class: core/auto
+  type: c
+
+src/config/parse.c:
+  class: core
+  type: c
+
+src/config/parse.h:
+  class: core
+  type: c/h
+
+src/main.c:
+  class: core
+  type: c
+
+src/perl/config.c:
+  class: core
+  type: c
+
+src/perl/config.h:
+  class: core
+  type: c/h
+
+src/perl/exec.c:
+  class: core
+  type: c
+
+src/perl/exec.h:
+  class: core
+  type: c/h
+
+src/postgres/pageChecksum.c:
+  class: core
+  type: c
+
+src/postgres/pageChecksum.h:
+  class: core
+  type: c/h
+
+src/storage/driver/posix.c:
+  class: core
+  type: c
+
+src/storage/driver/posix.h:
+  class: core
+  type: c/h
+
+src/storage/file.c:
+  class: core
+  type: c
+
+src/storage/file.h:
+  class: core
+  type: c/h
+
+src/storage/helper.c:
+  class: core
+  type: c
+
+src/storage/helper.h:
+  class: core
+  type: c/h
+
+src/storage/storage.c:
+  class: core
+  type: c
+
+src/storage/storage.h:
+  class: core
+  type: c/h
+
+src/version.h:
+  class: core
+  type: c/h
+
+test/define.yaml:
+  class: test/harness
+  type: yaml
+
+test/lib/pgBackRestTest/Common/BuildTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/CiTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/CodeCountTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/ContainerTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/DefineTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/ExecuteTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/FileTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/HostGroupTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/HostTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/JobTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/ListTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/LogTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/RunTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/VmTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/ConfigEnvTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/ExpireEnvTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/Host/HostBackupTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/Host/HostBaseTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/Host/HostDbCommonTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/Host/HostDbSyntheticTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/Host/HostDbTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/Host/HostS3Test.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/HostEnvTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/S3EnvTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Module/Archive/ArchiveCommonTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Archive/ArchiveGetTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Archive/ArchiveInfoUnitTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Archive/ArchivePushPerlTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Backup/BackupInfoUnitTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Backup/BackupUnitTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Common/CommonEncodePerlTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Common/CommonHttpClientTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Common/CommonIniPerlTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Common/CommonIoBufferedTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Common/CommonIoHandlePerlTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Common/CommonIoProcessTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Common/CommonLogPerlTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Info/InfoUnitTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Manifest/ManifestAllTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Mock/MockAllTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Mock/MockArchiveStopTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Mock/MockArchiveTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Mock/MockExpireTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Mock/MockStanzaTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Performance/PerformanceArchiveTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Performance/PerformanceIoTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Protocol/ProtocolCommonMinionTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Protocol/ProtocolHelperTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Real/RealAllTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Stanza/StanzaAllTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Storage/StorageFilterCipherBlockTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Storage/StorageFilterGzipTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Storage/StorageFilterShaTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Storage/StorageHelperPerlTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Storage/StorageLocalTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Storage/StoragePosixTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Storage/StorageS3AuthTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Storage/StorageS3CertTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Storage/StorageS3RequestTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Storage/StorageS3Test.pm:
+  class: test/module
+  type: perl
+
+test/src/common/harnessConfig.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessConfig.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessTest.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessTest.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/logTest.c:
+  class: test/harness
+  type: c
+
+test/src/common/logTest.h:
+  class: test/harness
+  type: c/h
+
+test/src/module/archive/pushTest.c:
+  class: test/module
+  type: c
+
+test/src/module/cipher/blockTest.c:
+  class: test/module
+  type: c
+
+test/src/module/cipher/randomTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/commandTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/assertOffTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/assertOnTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/debugOffTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/debugOnTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/encodeTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/errorTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/exitTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/forkTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/iniTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/ioHandleTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/lockTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/logTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/memContextTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/regExpTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/timeTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typeBufferTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typeKeyValueTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typeListTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typeStringListTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typeStringTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typeVariantListTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typeVariantTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typecTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/waitTest.c:
+  class: test/module
+  type: c
+
+test/src/module/config/configTest.c:
+  class: test/module
+  type: c
+
+test/src/module/config/defineTest.c:
+  class: test/module
+  type: c
+
+test/src/module/config/loadTest.c:
+  class: test/module
+  type: c
+
+test/src/module/config/parseTest.c:
+  class: test/module
+  type: c
+
+test/src/module/help/helpTest.c:
+  class: test/module
+  type: c
+
+test/src/module/perl/configTest.c:
+  class: test/module
+  type: c
+
+test/src/module/perl/execTest.c:
+  class: test/module
+  type: c
+
+test/src/module/postgres/pageChecksumTest.c:
+  class: test/module
+  type: c
+
+test/src/module/storage/fileTest.c:
+  class: test/module
+  type: c
+
+test/src/module/storage/helperTest.c:
+  class: test/module
+  type: c
+
+test/src/module/storage/storageTest.c:
+  class: test/module
+  type: c
+
+test/src/test.c:
+  class: test/harness
+  type: c
+
+test/test.pl:
+  class: test/harness
+  type: perl
+
+test/travis.pl:
+  class: test/harness
+  type: perl

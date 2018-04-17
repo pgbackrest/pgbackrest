@@ -17,6 +17,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
+use pgBackRest::LibC qw(:lock);
 use pgBackRest::Protocol::Base::Master;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Version;
@@ -134,7 +135,9 @@ sub cmdRead
 sub process
 {
     my $self = shift;
-    my $strLockName = shift;
+    my $strLockPath = shift;
+    my $strLockCommand = shift;
+    my $strLockStanza = shift;
 
     # Reset stderr log level so random errors do not get output
     logLevelSet(undef, undef, OFF);
@@ -146,19 +149,24 @@ sub process
     # Loop until the exit command is received
     eval
     {
-        # Aquire a lock if a lock name is defined.  This is done here so any errors will be transmitted through the protocol layer
-        # and cause a graceful shutdown rather than a remote abort.
-        if (defined($strLockName))
+        # Aquire a lock if required (this will be determined by lockAcquire()).  This is done here so any errors will be transmitted
+        # through the protocol layer and cause a graceful shutdown rather than a remote abort.
+        if (defined($strLockPath) && defined($strLockStanza))
         {
             eval
             {
-                lockAcquire($strLockName, undef, true);
+                if (lockAcquire($strLockPath, $strLockCommand, $strLockStanza, 30, true))
+                {
+                    # Check if processes have been stopped
+                    lockStopTest();
+                }
+
                 return true;
             }
             or do
             {
                 $oPermanentError = $EVAL_ERROR;
-            }
+            };
         }
 
         while (true)
@@ -227,8 +235,6 @@ sub process
         # Else unexpected Perl exception
         confess &log(ERROR, 'unknown error: ' . $oException, ERROR_UNKNOWN);
     };
-
-    return 0;
 }
 
 ####################################################################################################################################

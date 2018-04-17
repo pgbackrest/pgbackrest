@@ -175,7 +175,7 @@ sub run
 
         # Output No stanzas exist in default text option
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(sub {$oInfo->process()}, 0, 'No stanzas exist and default text option');
+        $self->testResult(sub {$oInfo->process()}, undef, 'No stanzas exist and default text option');
 
         # Invalid option
         #---------------------------------------------------------------------------------------------------------------------------
@@ -188,7 +188,7 @@ sub run
         $self->optionTestSet(CFGOPT_OUTPUT, CFGOPTVAL_INFO_OUTPUT_JSON);
         $self->configTestLoad(CFGCMD_INFO);
 
-        $self->testResult(sub {$oInfo->process()}, 0, 'json option');
+        $self->testResult(sub {$oInfo->process()}, undef, 'json option');
 
         # Add linefeed to JSON
         #---------------------------------------------------------------------------------------------------------------------------
@@ -285,7 +285,7 @@ sub run
         $self->optionTestClear(CFGOPT_OUTPUT);
         $self->configTestLoad(CFGCMD_INFO);
 
-        $self->testResult(sub {$oInfo->process()}, 0, 'stanza set');
+        $self->testResult(sub {$oInfo->process()}, undef, 'stanza set');
 
         # Create the stanza - no WAL or backups
         #---------------------------------------------------------------------------------------------------------------------------

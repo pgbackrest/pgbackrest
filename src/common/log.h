@@ -61,6 +61,8 @@ Only call logInternal() if the message will be logged to one of the available ou
     LOG_ANY(logLevelAssert, errorTypeCode(&AssertError), __VA_ARGS__)
 #define LOG_ERROR(code, ...)                                                                                                       \
     LOG_ANY(logLevelError, code, __VA_ARGS__)
+#define LOG_DEBUG(...)                                                                                                             \
+    LOG_ANY(logLevelDebug, 0, __VA_ARGS__)
 #define LOG_INFO(...)                                                                                                              \
     LOG_ANY(logLevelInfo, 0, __VA_ARGS__)
 #define LOG_WARN(...)                                                                                                              \

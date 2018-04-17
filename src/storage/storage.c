@@ -305,6 +305,25 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
 }
 
 /***********************************************************************************************************************************
+Remove a path
+***********************************************************************************************************************************/
+void
+storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveParam param)
+{
+    ASSERT_STORAGE_ALLOWS_WRITE();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Build the path
+        String *path = storagePathNP(this, pathExp);
+
+        // Call driver function
+        storageDriverPosixPathRemove(path, param.errorOnMissing, param.recurse);
+    }
+    MEM_CONTEXT_TEMP_END();
+}
+
+/***********************************************************************************************************************************
 Write a buffer to storage
 ***********************************************************************************************************************************/
 void

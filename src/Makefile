@@ -57,10 +57,12 @@ SRCS = \
 	command/archive/push/push.c \
 	command/help/help.c \
 	command/command.c \
+	common/fork.c \
 	common/error.c \
 	common/exit.c \
 	common/io/handle.c \
 	common/ini.c \
+	common/lock.c \
 	common/log.c \
 	common/memContext.c \
 	common/regExp.c \

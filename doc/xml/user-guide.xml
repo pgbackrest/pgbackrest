@@ -984,6 +984,111 @@
         </section>
     </section>
 
+    <!-- *********************************************************************************************************************** -->
+    <section id="monitor" depend="/quickstart/perform-backup">
+        <title>Monitoring</title>
+
+        <p>Monitoring is an important part of any production system.  There are many tools available and <backrest/> can be monitored on any of them with a little work.</p>
+
+        <p><backrest/> can output information about the repository in JSON format which includes a list of all backups for each stanza and WAL archive info.  A script is needed to extract information in a format that the monitoring system can understand.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Get <backrest/> info in JSON format</title>
+
+            <execute show="y">
+                <exe-cmd>pgbackrest --output=json info</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <section id="postgresql">
+            <title>In <postgres/></title>
+
+            <p>The <postgres/> <id>COPY</id> command allows <backrest/> info to be loaded into a table.  The following example wraps that logic in a function that can be used to perform real-time queries.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Load <backrest/> info function for <postgres/></title>
+
+                <execute user="postgres" show="n">
+                    <exe-cmd>mkdir -p /home/postgres/pgbackrest/doc/example</exe-cmd>
+                </execute>
+
+                <execute user="postgres" show="n">
+                    <exe-cmd>cp -r /backrest/doc/example/*
+                        /home/postgres/pgbackrest/doc/example</exe-cmd>
+                </execute>
+
+                <execute output="y">
+                    <exe-cmd>cat
+                        /home/postgres/pgbackrest/doc/example/pgsql-pgbackrest-info.sql</exe-cmd>
+                </execute>
+
+                <execute>
+                    <exe-cmd>psql -f
+                        /home/postgres/pgbackrest/doc/example/pgsql-pgbackrest-info.sql</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>Now the <code>monitor.pgbackrest_info()</code> function can be used to determine the last successful backup time and archived WAL for a stanza.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Query last successful backup time and archived WAL</title>
+
+                <execute output="y">
+                    <exe-cmd>cat
+                        /home/postgres/pgbackrest/doc/example/pgsql-pgbackrest-query.sql</exe-cmd>
+                </execute>
+
+                <execute output="y">
+                    <exe-cmd>psql -f
+                        /home/postgres/pgbackrest/doc/example/pgsql-pgbackrest-query.sql</exe-cmd>
+                </execute>
+            </execute-list>
+        </section>
+
+        <section keyword="default" id="jq">
+            <title>Using <proper>jq</proper></title>
+
+            <p><proper>jq</proper> is a command-line utility that can easily extract data from JSON.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Install <proper>jq</proper> utility</title>
+
+                <execute user="root">
+                    <exe-cmd>apt-get install jq</exe-cmd>
+                    <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+                </execute>
+            </execute-list>
+
+            <p>Now <proper>jq</proper> can be used to query the last successful backup time for a stanza.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Query last successful backup time</title>
+
+                <execute output="y">
+                    <exe-cmd>
+                      pgbackrest --output=json --stanza=demo info |
+                          jq '.[0] | .backup[-1] | .timestamp.stop'
+                    </exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>Or the last archived WAL.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Query last archived WAL</title>
+
+                <execute output="y">
+                    <exe-cmd>
+                      pgbackrest --output=json --stanza=demo info |
+                          jq '.[0] | .archive[-1] | .max'
+                    </exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>Note that this syntax requires <proper>jq v1.5</proper>.</p>
+        </section>
+    </section>
+
     <!-- SECTION => RETENTION -->
     <section id="retention" depend="quickstart/perform-backup">
         <title>Retention</title>
@@ -1223,9 +1328,15 @@
             <execute-list host="{[host-pg1]}">
                 <title>Show space used by test1 database</title>
 
+                <execute show="n" variable-key="database-test1-oid">
+                    <exe-cmd>
+                        psql -Atc "select oid from pg_database where datname = 'test1'"
+                    </exe-cmd>
+                </execute>
+
                 <execute output="y" filter="n">
                     <exe-cmd>
-                        du -sh {[pg-path]}/base/16384
+                        du -sh {[pg-path]}/base/{[database-test1-oid]}
                     </exe-cmd>
                 </execute>
             </execute-list>
@@ -1287,7 +1398,7 @@
 
                 <execute output="y" filter="n">
                     <exe-cmd>
-                        du -sh {[pg-path]}/base/16384
+                        du -sh {[pg-path]}/base/{[database-test1-oid]}
                     </exe-cmd>
                 </execute>
             </execute-list>
@@ -1871,13 +1982,13 @@
                 <backrest-config-option section="global:archive-push" key="process-max">2</backrest-config-option>
             </backrest-config>
 
-            <p>The <file>archive-async.log</file> file can be used to monitor the activity of the asynchronous process.  A good way to test this is to quickly push a number of WAL segments.</p>
+            <p>The <file>[stanza]-archive-push-async.log</file> file can be used to monitor the activity of the asynchronous process.  A good way to test this is to quickly push a number of WAL segments.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Test parallel asynchronous archiving</title>
 
                 <execute output="n" show="n">
-                    <exe-cmd>rm -f /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
+                    <exe-cmd>rm -f /var/log/pgbackrest/demo-archive-push-async.log</exe-cmd>
                 </execute>
 
                 <execute output="n">
@@ -1903,7 +2014,7 @@
                 <title>Check results in the log</title>
 
                 <execute output="y">
-                    <exe-cmd>cat /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
+                    <exe-cmd>cat /var/log/pgbackrest/demo-archive-push-async.log</exe-cmd>
                     <exe-highlight> WAL file\(s\) to archive|pushed WAL file 0000000</exe-highlight>
                 </execute>
             </execute-list>

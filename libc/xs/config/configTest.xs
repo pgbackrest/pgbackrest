@@ -19,7 +19,11 @@ CODE:
         // This should run in a temp context but for some reason getopt_long gets upset when if gets called again after the previous
         // arg list being freed.  So, this is a memory leak but it is only used for testing, not production.
         StringList *paramList = strLstNewSplitZ(strCat(strNew("pgbackrest|"), parseParam), "|");
-        cfgLoadParam(strLstSize(paramList), strLstPtr(paramList), strNew(backrestBin));
+
+        // Don't use cfgLoad() because it has a lot of side effects that we don't want
+        configParse(strLstSize(paramList), strLstPtr(paramList));
+        cfgExeSet(strNew(backrestBin));
+        cfgLoadUpdateOption();
 
         String *result = perlOptionJson();
 

@@ -74,7 +74,7 @@ sub configLogging
 push @EXPORT, qw(configLogging);
 
 ####################################################################################################################################
-# configLoad - load configuration
+# Load configuration
 #
 # Additional conditions that cannot be codified by the option definitions are also tested here.
 ####################################################################################################################################
@@ -321,56 +321,13 @@ sub cfgCommandTest
 push @EXPORT, qw(cfgCommandTest);
 
 ####################################################################################################################################
-# commandBegin
-#
-# Log information about the command when it begins.
-####################################################################################################################################
-sub commandBegin
-{
-    &log(
-        $strCommand eq cfgCommandName(CFGCMD_INFO) ? DEBUG : INFO,
-        "${strCommand} command begin " . BACKREST_VERSION . ':' .
-            cfgCommandWrite(cfgCommandId($strCommand), true, '', false, undef, true));
-}
-
-push @EXPORT, qw(commandBegin);
-
-####################################################################################################################################
-# commandEnd
-#
-# Log information about the command that ended.
-####################################################################################################################################
-sub commandEnd
-{
-    my $iExitCode = shift;
-    my $strSignal = shift;
-
-    if (defined($strCommand))
-    {
-        &log(
-            $strCommand eq cfgCommandName(CFGCMD_INFO) ? DEBUG : INFO,
-            "${strCommand} command end: " . (defined($iExitCode) && $iExitCode != 0 ?
-                ($iExitCode == ERROR_TERM ? "terminated on signal " .
-                    (defined($strSignal) ? "[SIG${strSignal}]" : 'from child process') :
-                sprintf('aborted with exception [%03d]', $iExitCode)) :
-                'completed successfully'));
-    }
-}
-
-push @EXPORT, qw(commandEnd);
-
-####################################################################################################################################
-# cfgCommandSet - set current command (usually for triggering follow-on commands)
+# Set current command
 ####################################################################################################################################
 sub cfgCommandSet
 {
     my $iCommandId = shift;
 
-    commandEnd();
-
     $strCommand = cfgCommandName($iCommandId);
-
-    commandBegin();
 }
 
 push @EXPORT, qw(cfgCommandSet);

@@ -43,11 +43,6 @@ testRun()
         TEST_RESULT_INT(logLevelFile, logLevelOff, "file logging is off");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(cfgLoadParam(strLstSize(argList), strLstPtr(argList), strNew("pgbackrest2")), "load local config");
-
-        TEST_RESULT_STR(strPtr(cfgExe()), "pgbackrest2", "check exe");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
@@ -78,6 +73,7 @@ testRun()
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load backup config");
         TEST_RESULT_PTR(cfgOptionDefault(cfgOptPgHostCmd), NULL, "    command backup, option pg1-host-cmd default");
+        TEST_RESULT_BOOL(lockRelease(true), true, "release backup lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -97,6 +93,7 @@ testRun()
         TEST_RESULT_STR(
             strPtr(varStr(cfgOptionDefault(cfgOptPgHostCmd + 2))), strPtr(cfgExe()),
             "    command backup, option pg3-host-cmd default");
+        TEST_RESULT_BOOL(lockRelease(true), true, "release backup lock");
 
         // Set a distinct umask value and test that the umask is reset by configLoad since default for neutral-umask=y
         // -------------------------------------------------------------------------------------------------------------------------
@@ -179,6 +176,7 @@ testRun()
             "            HINT: to retain full backups indefinitely (without warning), set option"
                 " 'repo1-retention-full' to the maximum.");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
+        TEST_RESULT_BOOL(lockRelease(true), true, "release expire lock");
 
         strLstAdd(argList, strNew("--repo1-retention-full=1"));
 
@@ -189,6 +187,7 @@ testRun()
             "P00   INFO: expire command begin " PGBACKREST_VERSION ": --log-level-console=info --log-level-stderr=off"
                 " --no-log-timestamp --repo1-retention-full=1 --stanza=db");
         TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 1, "    repo1-retention-archive set");
+        TEST_RESULT_BOOL(lockRelease(true), true, "release expire lock");
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -211,6 +210,7 @@ testRun()
             "P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=incr' but option"
                 " 'repo1-retention-archive' is not set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
+        TEST_RESULT_BOOL(lockRelease(true), true, "release expire lock");
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -233,6 +233,7 @@ testRun()
             "P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=diff' but neither option"
                 " 'repo1-retention-archive' nor option 'repo1-retention-diff' is set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
+        TEST_RESULT_BOOL(lockRelease(true), true, "release expire lock");
 
         strLstAdd(argList, strNew("--repo1-retention-diff=2"));
 
@@ -246,6 +247,7 @@ testRun()
             "            HINT: to retain full backups indefinitely (without warning), set option"
                 " 'repo1-retention-full' to the maximum.");
         TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 2, "    repo1-retention-archive set to retention-diff");
+        TEST_RESULT_BOOL(lockRelease(true), true, "release expire lock");
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -268,6 +270,7 @@ testRun()
             "P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
                 " to the maximum.");
+        TEST_RESULT_BOOL(lockRelease(true), true, "release expire lock");
 
         testLogErrResult(
             "WARN: unable to open log file '/var/log/pgbackrest/db-backup.log': No such file or directory\n"
