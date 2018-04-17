@@ -829,7 +829,7 @@ testRun()
         TEST_ERROR(
             cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
                 backupCmdDefConfigInclPathValue, oldConfigDefault), PathOpenError,
-                "unable to open directory '/BOGUS' for read: [2] No such file or directory");
+                "unable to open path '/BOGUS' for read: [2] No such file or directory");
 
         // --config-include-path valid, --config invalid (does not exist)
         parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
