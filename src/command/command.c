@@ -36,6 +36,29 @@ cmdBegin(bool logOption)
             {
                 strCatFmt(info, " %s:", PGBACKREST_VERSION);
 
+                // Add command parameters if they exist
+                const StringList *commandParamList = cfgCommandParam();
+
+                if (strLstSize(commandParamList) != 0)
+                {
+                    strCatFmt(info, " [");
+
+                    for (unsigned int commandParamIdx = 0; commandParamIdx < strLstSize(commandParamList); commandParamIdx++)
+                    {
+                        const String *commandParam = strLstGet(commandParamList, commandParamIdx);
+
+                        if (commandParamIdx != 0)
+                            strCatFmt(info, ", ");
+
+                        if (strchr(strPtr(commandParam), ' ') != NULL)
+                            commandParam = strNewFmt("\"%s\"", strPtr(commandParam));
+
+                        strCat(info, strPtr(commandParam));
+                    }
+
+                    strCatFmt(info, "]");
+                }
+
                 // Loop though options and add the ones that are interesting
                 for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {

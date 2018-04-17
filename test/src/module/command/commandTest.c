@@ -23,6 +23,24 @@ testRun()
         cfgOptionValidSet(cfgOptCompress, true);
         cfgOptionSet(cfgOptCompress, cfgSourceParam, varNewBool(true));
 
+        StringList *commandParamList = strLstNew();
+        strLstAddZ(commandParamList, "param1");
+        cfgCommandParamSet(commandParamList);
+
+        TEST_RESULT_VOID(cmdBegin(true), "command begin with command parameter");
+        testLogResult(
+            "P00   INFO: archive-get command begin " PGBACKREST_VERSION ": [param1] --compress");
+
+        strLstAddZ(commandParamList, "param 2");
+        cfgCommandParamSet(commandParamList);
+
+        TEST_RESULT_VOID(cmdBegin(true), "command begin with command parameters");
+        testLogResult(
+            "P00   INFO: archive-get command begin " PGBACKREST_VERSION ": [param1, \"param 2\"] --compress");
+
+        cfgInit();
+        cfgCommandSet(cfgCmdArchiveGet);
+
         cfgOptionValidSet(cfgOptConfig, true);
         cfgOptionNegateSet(cfgOptConfig, true);
         cfgOptionSet(cfgOptConfig, cfgSourceParam, NULL);
@@ -55,8 +73,8 @@ testRun()
 
         TEST_RESULT_VOID(cmdBegin(true), "command begin with option logging");
         testLogResult(
-            "P00   INFO: archive-get command begin " PGBACKREST_VERSION ": --compress --no-config --db-include=db1"
-                " --db-include=db2 --recovery-option=standby_mode=on --recovery-option=primary_conn_info=blah --reset-repo1-host"
+            "P00   INFO: archive-get command begin " PGBACKREST_VERSION ": --no-config --db-include=db1 --db-include=db2"
+                " --recovery-option=standby_mode=on --recovery-option=primary_conn_info=blah --reset-repo1-host"
                 " --repo1-path=\"/path/to the/repo\" --repo1-s3-key=<redacted>");
 
         TEST_RESULT_VOID(cmdBegin(false), "command begin no option logging");

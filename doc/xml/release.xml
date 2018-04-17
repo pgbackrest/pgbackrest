@@ -28,6 +28,10 @@
                     <release-item>
                         <p>Make backup directory sync more efficient.  Scanning the entire backup directory can be very expensive if there are a lot of small tables.  The backup manifest contains the backup directory list so use it to perform syncs instead of scanning the backup directory.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Show command parameters as well as command options in initial info message.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
