@@ -99,9 +99,9 @@ Rules:
   not required.
 - If the config and config-include-path are specified. The config file will be loaded and is expected to exist and *.conf files in
   the config-include-path will be appended and at least one is expected to exist.
-- If --no-config is specified and --config-include-path is specified then Only *.conf files in the config-include-path will be
+- If --no-config is specified and --config-include-path is specified then only *.conf files in the config-include-path will be
   loaded and are required.
-- If --no-config is specified and --config-path is specified then Only *.conf files in the overriden default config-include-path
+- If --no-config is specified and --config-path is specified then only *.conf files in the overriden default config-include-path
   (<config-path>/conf.d) will be loaded if exist but not required.
 - If --no-config is specified and neither --config-include-path nor --config-path are specified then no configs will be loaded.
 - If --config-path only, the defaults for config and config-include-path will be changed to use that as a base path but the files
@@ -112,8 +112,7 @@ cfgFileLoad(                                                        // NOTE: Pas
     const ParseOption *optionList,                                  // All options and their current settings
     const String *optConfigDefault,                                 // Current default for --config option
     const String *optConfigIncludePathDefault,                      // Current default for --config-include-path option
-    const String *origConfigDefault                                 // Original --config option default (/etc/pgbackrest.conf)
-    )
+    const String *origConfigDefault)                                // Original --config option default (/etc/pgbackrest.conf)
 {
     bool loadConfig = true;
     bool loadConfigInclude = true;
