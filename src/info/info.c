@@ -6,16 +6,18 @@ Info Handler for pgbackrest information
 #include <string.h>
 
 #include "common/memContext.h"
+#include "info/info.h"
 #include "common/ini.h"
 #include "storage/helper.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Internal constants
 ***********************************************************************************************************************************/
-#define INI_COPY_EXT                                       ".copy";
-#define INI_SECTION_BACKREST                               "backrest";
-#define INI_KEY_FORMAT                                     "backrest-format";
-#define INI_KEY_VERSION                                    "backrest-version";
+#define INI_COPY_EXT                                       ".copy"
+#define INI_SECTION_BACKREST                               "backrest"
+#define INI_KEY_FORMAT                                     "backrest-format"
+#define INI_KEY_VERSION                                    "backrest-version"
 
 /***********************************************************************************************************************************
 Contains information about the info
@@ -23,10 +25,45 @@ Contains information about the info
 struct Info
 {
     MemContext *memContext;                                         // Context that contains the info
-    bool exists;                                                    // Does the file exist?
-    bool modified;                                                  // Has the data been modified since last load/save?
+    // bool modified;   CSHANG may need later                       // Has the data been modified since last load/save?
     Ini *ini;                                                       // Parsed file contents
 };
+
+
+/***********************************************************************************************************************************
+Internal function to check if the information is valid or not
+***********************************************************************************************************************************/
+bool
+infoValidInternal(Ini *ini, const bool ignoreError)
+{
+    bool result = true;
+
+    // CSHANG Need to add in checksum validation as first check
+
+    // Make sure that the format is current, otherwise error
+    if (varInt(iniGet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT))) != PGBACKREST_FORMAT)
+    {
+        if (!ignoreError)
+        {
+            THROW(
+                FormatError, "invalid format in '%s', expected %d but found %d",
+                strPtr(iniFileName(ini)), PGBACKREST_FORMAT, varInt(iniGet(ini, strNew(INI_SECTION_BACKREST),
+                strNew(INI_KEY_FORMAT))));
+        }
+        else
+        {
+            result = false;
+        }
+    }
+
+    // Check if the version has changed - update it if different so we know which version of backrest is saving the file
+    if (strEqZ(varStr(iniGet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION))), PGBACKREST_VERSION))
+    {
+        iniSet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION), varNewStrZ(PGBACKREST_VERSION));
+    }
+
+    return result;
+}
 
 /***********************************************************************************************************************************
 Create a new Info object
@@ -36,7 +73,7 @@ CSHANG Also need to be able to load a string - so optional strContent param need
 CSHANG need to handle modified flag, encryption and checksum - but checksum can't be set until the file is saved
 ***********************************************************************************************************************************/
 Info *
-infoNew(String *fileName, const Storage *storage, const bool loadFile, const bool ignoreMissing)
+infoNew(String *fileName, const bool loadFile, const bool ignoreMissing)
 {
     Info *this = NULL;
 
@@ -50,25 +87,30 @@ infoNew(String *fileName, const Storage *storage, const bool loadFile, const boo
 
         if (loadFile)
         {
-            // CSHANG this really should be calling an infoLoad/fileLoad function but right now assuming main file always exists
+            // CSHANG iniLoad should take an "ignore missing"  and should set the exists flag since if doesn't exist, then don't
+            // cal/ infoValidInternal
             iniLoad(this->ini, fileName);
 
-            // CSHANG Maybe exists should be set in iniLoad or infoLoad?
-            this->exists = true;
+            // If the main file does not exist and ignore missing is set, or if the main is in valid, try the copy file
+            if ((!iniFileExists(this->ini) && ignoreMissing) || !infoValidInternal(this->ini, true))
+            {
+                iniLoad(this->ini, strCat(strDup(fileName), INI_COPY_EXT));
+                if (!infoValidInternal(this->ini, false))
+                    if (!ignoreMissing)
+                        THROW(
+                            FileMissingError, "unable to open %s or %s", strPtr(fileName),
+                            strPtr(strCat(strDup(fileName), INI_COPY_EXT)));
+            }
 
-            // CSHANG When checking for the info and the info.copy then the first call ignoreError would be true & second call false
-            // CSHANG result is just a temporary variable
-            const bool result = infoValidInternal(this->ini, false);
-            //if (!infoValidInternal(this->ini, true))
-            // CSHANG Need to check the two files against each other? Where does that responsibility lie? Will all files that have
-            // an info section have a .copy file? Maybe have a flag?
+            // CSHANG Do we need to check the two files against each other? We don't now - we just pick the first that appears valid
+            // give the header and the checksum
         }
 
         // If there is no content to load then initialize the data
-        if (!this->exists)
+        if (!iniFileExists(this->ini))
         {
-            iniSet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION), PGBACKREST_VERSION);
-            iniSet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT), varNewInt(PGBACKREST_FORMAT));
+            iniSet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION), varNewStrZ(PGBACKREST_VERSION));
+            iniSet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT), varNewInt(PGBACKREST_FORMAT));
         }
     }
     MEM_CONTEXT_NEW_END();
@@ -78,50 +120,17 @@ infoNew(String *fileName, const Storage *storage, const bool loadFile, const boo
 }
 
 Ini *
-infoIni(const info *this)
+infoIni(const Info *this)
 {
     return this->ini;
 }
 
-/***********************************************************************************************************************************
-Internal function to check if the information is valid or not
-***********************************************************************************************************************************/
-bool
-infoValidInternal(const Ini *this, const bool ignoreError)
-{
-    // CSHANG Need to add in checksum validation as first check
-    // CSHANG Need to add in whether invalid should be ignored - since we have 2 files, if one is invalid, then it can be ignored
-    bool result = true;
-
-    // Make sure that the format is current, otherwise error
-    if (varInt(iniGet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT))) != PGBACKREST_FORMAT)
-    {
-        if (!ignoreError)
-        {
-            THROW(
-                FormatError, "invalid format in '%s', expected %d but found %d",
-                strPtr(this->fileName), PGBACKREST_FORMAT, varInt(iniGet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT))));
-        }
-        else
-        {
-            result = false;
-        }
-    }
-
-    // Check if the version has changed - update it if different so we know which version of backrest is saving the file
-    if (strPtr(varStr(iniGet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION))))) != PGBACKREST_VERSION)
-    {
-        iniSet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION), PGBACKREST_VERSION);
-    }
-
-    return result;
-}
 
 /***********************************************************************************************************************************
 Internal function to initialize the header information
 ***********************************************************************************************************************************/
 // void
-// infoInitInternal(Ini *this)
+// infoInitInternal(Info *this)
 // {
 //     //
 // }
@@ -135,7 +144,7 @@ CSHANG Maybe use the storageFile object here such that we do:
     if (storageFileIni != NULL) then the fileName is in the storage object so
 ***********************************************************************************************************************************/
 // void
-// infoLoad(Ini *this, String *fileName, const bool ignoreMissing)
+// infoLoad(Ini *ini, String *fileName, const bool ignoreMissing)
 // {
 //     // If main was not loaded then try the copy
 //     if (infoLoadFile(false, true))
@@ -153,7 +162,7 @@ CSHANG Maybe use the storageFile object here such that we do:
 // }
 //
 // bool
-// infoLoadFile(Ini *this, String *fileName, const bool loadCopy, const bool ignoreMissing)
+// infoLoadFile(Info *this, String *fileName, const bool loadCopy, const bool ignoreMissing)
 // {
 //     // CSHANG Need to add ignore missing
 //     iniLoad(this->ini, fileName);

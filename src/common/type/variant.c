@@ -31,6 +31,7 @@ static const char *variantTypeName[] =
     "int64",                                                        // varTypeInt64
     "KeyValue",                                                     // varTypeKeyValue
     "String",                                                       // varTypeString
+    "uint64",                                                       // varTypeUint64
     "VariantList",                                                  // varTypeVariantList
 };
 
@@ -496,6 +497,85 @@ varInt64Force(const Variant *this)
 
     return result;
 }
+//
+// /***********************************************************************************************************************************
+// New uint64 variant
+// ***********************************************************************************************************************************/
+// Variant *
+// varNewUint64(uint64_t data)
+// {
+//     return varNewInternal(varTypeUint64, (void *)&data, sizeof(data));
+// }
+//
+// /***********************************************************************************************************************************
+// Return int64
+// ***********************************************************************************************************************************/
+// uint64_t
+// varUint64(const Variant *this)
+// {
+//     // Only valid for int
+//     if (this->type != varTypeUint64)
+//         THROW(AssertError, "variant type is not %s", variantTypeName[varTypeUint64]);
+//
+//     // Get the int
+//     return *((uint64_t *)varData(this));
+// }
+//
+// /***********************************************************************************************************************************
+// Return int64 regardless of variant type
+// ***********************************************************************************************************************************/
+// uint64_t
+// varUint64Force(const Variant *this)
+// {
+//     uint64_t result = 0;
+//
+//     switch (this->type)
+//     {
+//         case varTypeBool:
+//         {
+//             result = varBool(this);
+//             break;
+//         }
+//
+//         case varTypeInt:
+//         {
+//             result = (uint64_t)varInt(this);
+//             break;
+//         }
+//
+//         case varTypeInt64:
+//         {
+//             result = (uint64_t)varInt64(this);
+//             break;
+//         }
+//
+//         case varTypeUint64:
+//         {
+//             result = varUint64(this);
+//             break;
+//         }
+//
+//         case varTypeString:
+//         {
+//             result = atoll(strPtr(varStr(this)));
+//
+//             char buffer[32];
+//             snprintf(buffer, sizeof(buffer), "%" PRIu64, result);
+//
+//             if (strcmp(strPtr(varStr(this)), buffer) != 0)
+//                 THROW(
+//                     FormatError, "unable to convert %s '%s' to %s", variantTypeName[varTypeString], strPtr(varStr(this)),
+//                     variantTypeName[varTypeUint64]);
+//
+//             break;
+//         }
+//
+//         default:
+//             THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUint64]);
+//     }
+//
+//     return result;
+// }
 
 /***********************************************************************************************************************************
 New key/value variant

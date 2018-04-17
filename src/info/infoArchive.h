@@ -1,28 +1,19 @@
 /***********************************************************************************************************************************
-Ini Handler
+Info Archive Handler for pgbackrest information
 ***********************************************************************************************************************************/
-#ifndef COMMON_INI_H
-#define COMMON_INI_H
+#ifndef INFO_INFOARCHIVE_H
+#define INFO_INFOARCHIVE_H
 
 /***********************************************************************************************************************************
-Ini object
+Info Archive object
 ***********************************************************************************************************************************/
-typedef struct Ini Ini;
-
-#include "common/type/variant.h"
+typedef struct InfoArchive InfoArchive;
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-Ini *iniNew();
-const Variant *iniGet(const Ini *this, const String *section, const String *key);
-const Variant *iniGetDefault(const Ini *this, const String *section, const String *key, Variant *defaultValue);
-StringList *iniSectionKeyList(const Ini *this, const String *section);
-void iniParse(Ini *this, const String *content);
-void iniLoad(Ini *this, const String *fileName);
-void iniSet(Ini *this, const String *section, const String *key, const Variant *value);
-void iniFree(Ini *this);
-String *iniFileName(const Ini *this);
-bool iniFileExists(const Ini *this);
+InfoArchive *infoArchiveNew(String *fileName, const bool loadFile, const bool ignoreMissing);
+
+void infoArchiveFree(InfoArchive *this);
 
 #endif
