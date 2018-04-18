@@ -3319,9 +3319,9 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "This path is used to store acknowledgements from the asynchronous archive-push process. These files are generally "
                 "very small (zero to a few hundred bytes) so not much space is required.\n"
             "\n"
-            "The data stored in the spool path is not strictly temporary since it can and should survive a reboot. Loss of the "
-                "data in the spool path is not an issue. pgBackRest will simply recheck each WAL segment to ensure it is safely "
-                "archived."
+            "The data stored in the spool path is not strictly temporary since it can and should survive a reboot. However, loss "
+                "of the data in the spool path is not a problem. pgBackRest will simply recheck each WAL segment to ensure it is "
+                "safely archived."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
