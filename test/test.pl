@@ -396,16 +396,6 @@ eval
             exit 0;
         }
 
-        # Sync time to prevent build failures when running on VirtualBox.
-        &log(INFO, "sync vbox time");
-        my $strVBoxService = '/usr/sbin/VBoxService';
-
-        if ($oStorageTest->exists($strVBoxService))
-        {
-            executeTest("sudo killall VBoxService");
-            executeTest("sudo ${strVBoxService} --timesync-set-start");
-        }
-
         # Build CI configuration
         if (!$bNoCiConfig)
         {
