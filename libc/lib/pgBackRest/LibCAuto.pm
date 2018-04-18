@@ -118,7 +118,7 @@ sub libcAutoExportTag
             'CFGOPT_ARCHIVE_ASYNC',
             'CFGOPT_ARCHIVE_CHECK',
             'CFGOPT_ARCHIVE_COPY',
-            'CFGOPT_ARCHIVE_QUEUE_MAX',
+            'CFGOPT_ARCHIVE_PUSH_QUEUE_MAX',
             'CFGOPT_ARCHIVE_TIMEOUT',
             'CFGOPT_BACKUP_STANDBY',
             'CFGOPT_BUFFER_SIZE',

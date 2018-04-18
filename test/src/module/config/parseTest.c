@@ -533,7 +533,7 @@ testRun()
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--archive-queue-max=4503599627370496"));
+        strLstAdd(argList, strNew("--archive-push-queue-max=4503599627370496"));
         strLstAdd(argList, strNew("archive-push"));
 
         storagePutNP(storageOpenWriteNP(storageLocalWrite(), configFile), bufNewStr(strNew(
@@ -543,8 +543,8 @@ testRun()
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "archive-push command");
 
-        TEST_RESULT_INT(cfgOptionInt64(cfgOptArchiveQueueMax), 4503599627370496, "archive-queue-max is set");
-        TEST_RESULT_INT(cfgOptionSource(cfgOptArchiveQueueMax), cfgSourceParam, "    archive-queue-max is source config");
+        TEST_RESULT_INT(cfgOptionInt64(cfgOptArchivePushQueueMax), 4503599627370496, "archive-push-queue-max is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptArchivePushQueueMax), cfgSourceParam, "    archive-push-queue-max is source config");
         TEST_RESULT_PTR(cfgOption(cfgOptSpoolPath), NULL, "    spool-path is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptSpoolPath), cfgSourceDefault, "    spool-path is source default");
 
@@ -648,6 +648,9 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         testOptionFind("hardlink", PARSE_DEPRECATE_FLAG | cfgOptRepoHardlink);
         testOptionFind("no-hardlink", PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoHardlink);
+
+        testOptionFind("archive-queue-max", PARSE_DEPRECATE_FLAG | cfgOptArchivePushQueueMax);
+        testOptionFind("reset-archive-queue-max", PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | cfgOptArchivePushQueueMax);
 
         testOptionFind("backup-cmd", PARSE_DEPRECATE_FLAG | cfgOptRepoHostCmd);
         testOptionFind("backup-config", PARSE_DEPRECATE_FLAG | cfgOptRepoHostConfig);

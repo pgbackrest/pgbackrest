@@ -54,16 +54,25 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveCopy,
     },
 
-    // archive-queue-max option
+    // archive-push-queue-max option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "archive-push-queue-max",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptArchivePushQueueMax,
+    },
+    {
+        .name = "reset-archive-push-queue-max",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchivePushQueueMax,
+    },
     {
         .name = "archive-queue-max",
         .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptArchiveQueueMax,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptArchivePushQueueMax,
     },
     {
         .name = "reset-archive-queue-max",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveQueueMax,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | cfgOptArchivePushQueueMax,
     },
 
     // archive-timeout option

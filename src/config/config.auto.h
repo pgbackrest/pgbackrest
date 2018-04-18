@@ -48,7 +48,7 @@ typedef enum
     cfgOptArchiveAsync,
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,
-    cfgOptArchiveQueueMax,
+    cfgOptArchivePushQueueMax,
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
     cfgOptBufferSize,

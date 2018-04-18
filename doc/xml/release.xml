@@ -32,6 +32,10 @@
                     <release-item>
                         <p>Show command parameters as well as command options in initial info message.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Rename <br-option>archive-queue-max</br-option> option to <br-option>archive-push-queue-max</br-option> to avoid confusion with the <br-option>archive-get-queue-max</br-option> option.  The old option name will continue to be accepted.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>

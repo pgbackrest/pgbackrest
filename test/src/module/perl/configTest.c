@@ -39,8 +39,8 @@ testRun()
         cfgOptionValidSet(cfgOptProtocolTimeout, true);
         cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(1.1));
 
-        cfgOptionValidSet(cfgOptArchiveQueueMax, true);
-        cfgOptionSet(cfgOptArchiveQueueMax, cfgSourceParam, varNewInt64(999999999999));
+        cfgOptionValidSet(cfgOptArchivePushQueueMax, true);
+        cfgOptionSet(cfgOptArchivePushQueueMax, cfgSourceParam, varNewInt64(999999999999));
 
         cfgOptionValidSet(cfgOptCompressLevel, true);
         cfgOptionSet(cfgOptCompressLevel, cfgSourceConfig, varNewInt(3));
@@ -51,7 +51,8 @@ testRun()
         TEST_RESULT_STR(
             strPtr(perlOptionJson()),
             "{"
-            "\"archive-queue-max\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,\"value\":999999999999},"
+            "\"archive-push-queue-max\":"
+                "{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,\"value\":999999999999},"
             "\"backup-standby\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":true,\"value\":false},"
             "\"compress\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,\"value\":true},"
             "\"compress-level\":{\"valid\":true,\"source\":\"config\",\"negate\":false,\"reset\":false,\"value\":3},"

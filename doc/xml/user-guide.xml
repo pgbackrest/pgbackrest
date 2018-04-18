@@ -416,7 +416,7 @@
             <list>
                 <list-item>The deprecated <br-option>thread-max</br-option> option is no longer valid.  Use <br-option>process-max</br-option> instead.</list-item>
 
-                <list-item>The deprecated <br-option>archive-max-mb</br-option> option is no longer valid.  This has been replaced with the <br-option>archive-queue-max</br-option> option which has different semantics.</list-item>
+                <list-item>The deprecated <br-option>archive-max-mb</br-option> option is no longer valid.  This has been replaced with the <br-option>archive-push-queue-max</br-option> option which has different semantics.</list-item>
 
                 <list-item>The default for the <br-option>backup-user</br-option> option has changed from <id>backrest</id> to <id>pgbackrest</id>.</list-item>
             </list>

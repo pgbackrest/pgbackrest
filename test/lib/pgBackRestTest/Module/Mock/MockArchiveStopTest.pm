@@ -87,7 +87,7 @@ sub run
                 {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
         }
 
-        # Push two more segments with errors to exceed archive-queue-max
+        # Push two more segments with errors to exceed archive-push-queue-max
         $oHostDbMaster->archivePush(
             $strWalPath, $strWalTestFile, 2, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
 

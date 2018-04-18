@@ -103,7 +103,7 @@ testRun()
             "Command Options:\n"
             "\n"
             "  --archive-async           archive WAL segments asynchronously [default=n]\n"
-            "  --archive-queue-max       limit size (in bytes) of the PostgreSQL archive\n"
+            "  --archive-push-queue-max  limit size (in bytes) of the PostgreSQL archive\n"
             "                            queue\n"
             "  --archive-timeout         archive timeout [default=60]\n"
             "\n"

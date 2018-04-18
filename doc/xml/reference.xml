@@ -550,7 +550,7 @@
                     </config-key>
 
                     <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-QUEUE-MAX KEY -->
-                    <config-key id="archive-queue-max" name="Maximum Archive Queue Size">
+                    <config-key id="archive-push-queue-max" name="Maximum Archive Push Queue Size">
                         <summary>Limit size (in bytes) of the <postgres/> archive queue.</summary>
 
                         <text>After the limit is reached, the following will happen:

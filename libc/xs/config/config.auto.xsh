@@ -32,7 +32,7 @@ Option constants
 #define CFGOPT_ARCHIVE_ASYNC                                        cfgOptArchiveAsync
 #define CFGOPT_ARCHIVE_CHECK                                        cfgOptArchiveCheck
 #define CFGOPT_ARCHIVE_COPY                                         cfgOptArchiveCopy
-#define CFGOPT_ARCHIVE_QUEUE_MAX                                    cfgOptArchiveQueueMax
+#define CFGOPT_ARCHIVE_PUSH_QUEUE_MAX                               cfgOptArchivePushQueueMax
 #define CFGOPT_ARCHIVE_TIMEOUT                                      cfgOptArchiveTimeout
 #define CFGOPT_BACKUP_STANDBY                                       cfgOptBackupStandby
 #define CFGOPT_BUFFER_SIZE                                          cfgOptBufferSize
