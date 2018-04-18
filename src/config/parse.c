@@ -92,15 +92,15 @@ Rules:
   ignored.
 - config and config-path are specified. The specified config file will be loaded and is required. The overridden default of the
   config-include-path (<config-path>/conf.d) will be loaded if exists but is not required.
-- config-include-path only is specified. Only *.conf files in the config-include-path will be loaded. The default config will be
-  ignored. The directory passed for the option must exist.
+- config-include-path only is specified. *.conf files in the config-include-path will be loaded and the path is required to exist.
+  The default config will be be loaded if it exists.
 - config-include-path and config-path are specified. The *.conf files in the config-include-path will be loaded and the directory
   passed must exist. The overridden default of the config file path (<config-path>/pgbackrest.conf) will be loaded if exists but is
   not required.
 - If the config and config-include-path are specified. The config file will be loaded and is expected to exist and *.conf files in
   the config-include-path will be appended and at least one is expected to exist.
 - If --no-config is specified and --config-include-path is specified then only *.conf files in the config-include-path will be
-  loaded and are required.
+  loaded; the directory is required.
 - If --no-config is specified and --config-path is specified then only *.conf files in the overriden default config-include-path
   (<config-path>/conf.d) will be loaded if exist but not required.
 - If --no-config is specified and neither --config-include-path nor --config-path are specified then no configs will be loaded.
@@ -135,9 +135,8 @@ cfgFileLoad(                                                        // NOTE: Pas
             strNewFmt("%s/%s", strPtr(strLstGet(optionList[cfgOptConfigPath].valueList, 0)), PGBACKREST_CONFIG_INCLUDE_PATH);
     }
 
-    // If the --no-config option was passed or the --config option was not passed on the command line but the
-    // config-include-path was passed on the command line, then do not load the config file
-    if (optionList[cfgOptConfig].negate || (!optionList[cfgOptConfig].found && optionList[cfgOptConfigIncludePath].found))
+    // If the --no-config option was passed then do not load the config file
+    if (optionList[cfgOptConfig].negate)
     {
         loadConfig = false;
         configRequired = false;
