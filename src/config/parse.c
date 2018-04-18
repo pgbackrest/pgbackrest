@@ -562,6 +562,7 @@ configParse(unsigned int argListSize, const char *argList[])
                                         case cfgDefOptTypeHash:
                                         case cfgDefOptTypeInteger:
                                         case cfgDefOptTypeList:
+                                        case cfgDefOptTypeSize:  // CSHANG
                                         {
                                             strLstAddZ(dependValueList, dependValue);   // {uncovered - no depends of other types}
                                             break;                                      // {+uncovered}
@@ -632,15 +633,18 @@ configParse(unsigned int argListSize, const char *argList[])
                             }
 
                             // If a numeric type check that the value is valid
-                            if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeFloat)
+                            if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeFloat || optionDefType == cfgDefOptTypeSize)
                             {
                                 double valueDbl = 0;
 
                                 // Check that the value can be converted
                                 TRY_BEGIN()
                                 {
-                                    if (optionDefType == cfgDefOptTypeInteger)
+                                    if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeSize)  // CSHANG
+                                    {
+                                        // CSHANG here need a call to a function or something to convert the size
                                         valueDbl = (double)varInt64Force(varNewStr(value));
+                                    } // CSHANG
                                     else
                                         valueDbl = varDblForce(varNewStr(value));
                                 }

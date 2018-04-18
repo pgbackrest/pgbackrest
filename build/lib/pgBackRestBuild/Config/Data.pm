@@ -526,6 +526,8 @@ use constant CFGDEF_TYPE_LIST                                       => 'list';
     push @EXPORT, qw(CFGDEF_TYPE_LIST);
 use constant CFGDEF_TYPE_STRING                                     => 'string';
     push @EXPORT, qw(CFGDEF_TYPE_STRING);
+use constant CFGDEF_TYPE_SIZE                                       => 'size';
+    push @EXPORT, qw(CFGDEF_TYPE_SIZE);
 
 # Option config sections
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -1829,7 +1831,7 @@ my %hConfigDefine =
     &CFGOPT_ARCHIVE_QUEUE_MAX =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_TYPE => CFGDEF_TYPE_SIZE,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_ALLOW_RANGE => [0, 4 * 1024 * 1024 * 1024 * 1024 * 1024], # 0-4PiB
         &CFGDEF_COMMAND =>

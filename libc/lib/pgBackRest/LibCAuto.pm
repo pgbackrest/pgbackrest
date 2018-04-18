@@ -211,6 +211,7 @@ sub libcAutoExportTag
             'CFGDEF_TYPE_HASH',
             'CFGDEF_TYPE_INTEGER',
             'CFGDEF_TYPE_LIST',
+            'CFGDEF_TYPE_SIZE',
             'CFGDEF_TYPE_STRING',
             'cfgCommandId',
             'cfgDefOptionDefault',

@@ -673,6 +673,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                 }
 
                 case cfgDefOptTypeInteger:
+                case cfgDefOptTypeSize:
                 {
                     if (varType(value) == varTypeInt64)
                         configOptionValue[optionId].value = varDup(value);
