@@ -2278,6 +2278,12 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
         # Copy the option being inherited from
         $hConfigDefine{$strKey} = dclone($hConfigDefine{$hConfigDefine{$strKey}{&CFGDEF_INHERIT}});
 
+        # No need to copy the inheritance key
+        delete($hConfigDefine{$strKey}{&CFGDEF_INHERIT});
+
+        # It makes no sense to inherit alt names - they must be specified for each option
+        delete($hConfigDefine{$strKey}{&CFGDEF_NAME_ALT});
+
         # Apply overrides
         foreach my $strOptionDef (sort(keys(%{$hConfigDefineOverride})))
         {
