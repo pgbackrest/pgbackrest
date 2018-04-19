@@ -758,6 +758,26 @@
                     <example>/var/lib/backrest/pgbackrest.conf</example>
                 </option>
 
+                <!-- OPERATION - GENERAL - CONFIG PATH OPTION -->
+                <option id="config-path" name="Config Path">
+                    <summary>Base path to <backrest/> configuration files.</summary>
+
+                    <text>This setting is used to override the default base path setting for the <br-option>--config-path</br-option> and <br-option>--config-include-path</br-option> options unless they are set on the command-line.
+
+                    For example, passing <code>--config-path=/docker/pgbackrest</code> alone, results in <br-option>--config</br-option> default being set to <code>/docker/pgbackrest/pgbackrest.conf</code> and <br-option>--config-include-path</br-option> default being set to  <code>/docker/pgbackrest/conf.d</code>.</text>
+
+                    <example>/docker/pgbackrest</example>
+                </option>
+
+                <!-- OPERATION - GENERAL - CONFIG INCLUDE PATH OPTION -->
+                <option id="config-include-path" name="Config Include Path">
+                    <summary>Path to additional <backrest/> configuration files.</summary>
+
+                    <text>Configuration files existing in the specified location with extension <file>.conf</file> will be concatenated with the <backrest/> configuration file, resulting in one configuration file.</text>
+
+                    <example>/etc/pgbackrest.conf.d</example>
+                </option>
+
                 <!-- OPERATION - GENERAL - STANZA OPTION -->
                 <option id="stanza" name="Stanza">
                     <summary>Defines the stanza.</summary>

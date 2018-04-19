@@ -14,7 +14,7 @@ Command constants
 /***********************************************************************************************************************************
 Option constants
 ***********************************************************************************************************************************/
-#define CFG_OPTION_TOTAL                                            139
+#define CFG_OPTION_TOTAL                                            141
 
 /***********************************************************************************************************************************
 Command enum
@@ -59,6 +59,8 @@ typedef enum
     cfgOptCompressLevel,
     cfgOptCompressLevelNetwork,
     cfgOptConfig,
+    cfgOptConfigIncludePath,
+    cfgOptConfigPath,
     cfgOptDbInclude,
     cfgOptDbTimeout,
     cfgOptDelta,
@@ -78,14 +80,14 @@ typedef enum
     cfgOptOutput,
     cfgOptPerlOption,
     cfgOptPgHost,
-    cfgOptPgHostCmd =                                               40,
-    cfgOptPgHostConfig =                                            48,
-    cfgOptPgHostPort =                                              56,
-    cfgOptPgHostUser =                                              64,
-    cfgOptPgPath =                                                  72,
-    cfgOptPgPort =                                                  80,
-    cfgOptPgSocketPath =                                            88,
-    cfgOptProcess =                                                 96,
+    cfgOptPgHostCmd =                                               42,
+    cfgOptPgHostConfig =                                            50,
+    cfgOptPgHostPort =                                              58,
+    cfgOptPgHostUser =                                              66,
+    cfgOptPgPath =                                                  74,
+    cfgOptPgPort =                                                  82,
+    cfgOptPgSocketPath =                                            90,
+    cfgOptProcess =                                                 98,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
     cfgOptRecoveryOption,
