@@ -306,6 +306,22 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
+        CONFIG_OPTION_NAME("config-include-path")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptConfigIncludePath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("config-path")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptConfigPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
         CONFIG_OPTION_NAME("db-include")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptDbInclude)
@@ -637,6 +653,134 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME("pg8-host-config")
         CONFIG_OPTION_INDEX(7)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg1-host-config-include-path")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg2-host-config-include-path")
+        CONFIG_OPTION_INDEX(1)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg3-host-config-include-path")
+        CONFIG_OPTION_INDEX(2)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg4-host-config-include-path")
+        CONFIG_OPTION_INDEX(3)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg5-host-config-include-path")
+        CONFIG_OPTION_INDEX(4)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg6-host-config-include-path")
+        CONFIG_OPTION_INDEX(5)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg7-host-config-include-path")
+        CONFIG_OPTION_INDEX(6)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg8-host-config-include-path")
+        CONFIG_OPTION_INDEX(7)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg1-host-config-path")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg2-host-config-path")
+        CONFIG_OPTION_INDEX(1)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg3-host-config-path")
+        CONFIG_OPTION_INDEX(2)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg4-host-config-path")
+        CONFIG_OPTION_INDEX(3)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg5-host-config-path")
+        CONFIG_OPTION_INDEX(4)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg6-host-config-path")
+        CONFIG_OPTION_INDEX(5)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg7-host-config-path")
+        CONFIG_OPTION_INDEX(6)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg8-host-config-path")
+        CONFIG_OPTION_INDEX(7)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -1037,6 +1181,22 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME("repo1-host-config")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostConfig)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("repo1-host-config-include-path")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostConfigIncludePath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("repo1-host-config-path")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostConfigPath)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

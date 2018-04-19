@@ -200,6 +200,22 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptConfig,
     },
 
+    // config-include-path option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "config-include-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptConfigIncludePath,
+    },
+
+    // config-path option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "config-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptConfigPath,
+    },
+
     // db-include option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -764,6 +780,156 @@ static const struct option optionList[] =
         .name = "db8-config",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (cfgOptPgHostConfig + 7),
+    },
+
+    // pg-host-config-include-path option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "pg1-host-config-include-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptPgHostConfigIncludePath,
+    },
+    {
+        .name = "reset-pg1-host-config-include-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgHostConfigIncludePath,
+    },
+    {
+        .name = "pg2-host-config-include-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigIncludePath + 1),
+    },
+    {
+        .name = "reset-pg2-host-config-include-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigIncludePath + 1),
+    },
+    {
+        .name = "pg3-host-config-include-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigIncludePath + 2),
+    },
+    {
+        .name = "reset-pg3-host-config-include-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigIncludePath + 2),
+    },
+    {
+        .name = "pg4-host-config-include-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigIncludePath + 3),
+    },
+    {
+        .name = "reset-pg4-host-config-include-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigIncludePath + 3),
+    },
+    {
+        .name = "pg5-host-config-include-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigIncludePath + 4),
+    },
+    {
+        .name = "reset-pg5-host-config-include-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigIncludePath + 4),
+    },
+    {
+        .name = "pg6-host-config-include-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigIncludePath + 5),
+    },
+    {
+        .name = "reset-pg6-host-config-include-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigIncludePath + 5),
+    },
+    {
+        .name = "pg7-host-config-include-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigIncludePath + 6),
+    },
+    {
+        .name = "reset-pg7-host-config-include-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigIncludePath + 6),
+    },
+    {
+        .name = "pg8-host-config-include-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigIncludePath + 7),
+    },
+    {
+        .name = "reset-pg8-host-config-include-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigIncludePath + 7),
+    },
+
+    // pg-host-config-path option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "pg1-host-config-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptPgHostConfigPath,
+    },
+    {
+        .name = "reset-pg1-host-config-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgHostConfigPath,
+    },
+    {
+        .name = "pg2-host-config-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigPath + 1),
+    },
+    {
+        .name = "reset-pg2-host-config-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigPath + 1),
+    },
+    {
+        .name = "pg3-host-config-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigPath + 2),
+    },
+    {
+        .name = "reset-pg3-host-config-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigPath + 2),
+    },
+    {
+        .name = "pg4-host-config-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigPath + 3),
+    },
+    {
+        .name = "reset-pg4-host-config-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigPath + 3),
+    },
+    {
+        .name = "pg5-host-config-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigPath + 4),
+    },
+    {
+        .name = "reset-pg5-host-config-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigPath + 4),
+    },
+    {
+        .name = "pg6-host-config-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigPath + 5),
+    },
+    {
+        .name = "reset-pg6-host-config-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigPath + 5),
+    },
+    {
+        .name = "pg7-host-config-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigPath + 6),
+    },
+    {
+        .name = "reset-pg7-host-config-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigPath + 6),
+    },
+    {
+        .name = "pg8-host-config-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfigPath + 7),
+    },
+    {
+        .name = "reset-pg8-host-config-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfigPath + 7),
     },
 
     // pg-host-port option and deprecations
@@ -1516,6 +1682,30 @@ static const struct option optionList[] =
         .name = "backup-config",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoHostConfig,
+    },
+
+    // repo-host-config-include-path option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo1-host-config-include-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoHostConfigIncludePath,
+    },
+    {
+        .name = "reset-repo1-host-config-include-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoHostConfigIncludePath,
+    },
+
+    // repo-host-config-path option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo1-host-config-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoHostConfigPath,
+    },
+    {
+        .name = "reset-repo1-host-config-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoHostConfigPath,
     },
 
     // repo-host-port option and deprecations

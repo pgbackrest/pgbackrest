@@ -43,6 +43,8 @@ Option constants
 #define CFGOPT_COMPRESS_LEVEL                                       cfgOptCompressLevel
 #define CFGOPT_COMPRESS_LEVEL_NETWORK                               cfgOptCompressLevelNetwork
 #define CFGOPT_CONFIG                                               cfgOptConfig
+#define CFGOPT_CONFIG_INCLUDE_PATH                                  cfgOptConfigIncludePath
+#define CFGOPT_CONFIG_PATH                                          cfgOptConfigPath
 #define CFGOPT_DB_INCLUDE                                           cfgOptDbInclude
 #define CFGOPT_DB_TIMEOUT                                           cfgOptDbTimeout
 #define CFGOPT_DELTA                                                cfgOptDelta
@@ -64,6 +66,8 @@ Option constants
 #define CFGOPT_PG_HOST                                              cfgOptPgHost
 #define CFGOPT_PG_HOST_CMD                                          cfgOptPgHostCmd
 #define CFGOPT_PG_HOST_CONFIG                                       cfgOptPgHostConfig
+#define CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH                          cfgOptPgHostConfigIncludePath
+#define CFGOPT_PG_HOST_CONFIG_PATH                                  cfgOptPgHostConfigPath
 #define CFGOPT_PG_HOST_PORT                                         cfgOptPgHostPort
 #define CFGOPT_PG_HOST_USER                                         cfgOptPgHostUser
 #define CFGOPT_PG_PATH                                              cfgOptPgPath
@@ -79,6 +83,8 @@ Option constants
 #define CFGOPT_REPO_HOST                                            cfgOptRepoHost
 #define CFGOPT_REPO_HOST_CMD                                        cfgOptRepoHostCmd
 #define CFGOPT_REPO_HOST_CONFIG                                     cfgOptRepoHostConfig
+#define CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH                        cfgOptRepoHostConfigIncludePath
+#define CFGOPT_REPO_HOST_CONFIG_PATH                                cfgOptRepoHostConfigPath
 #define CFGOPT_REPO_HOST_PORT                                       cfgOptRepoHostPort
 #define CFGOPT_REPO_HOST_USER                                       cfgOptRepoHostUser
 #define CFGOPT_REPO_PATH                                            cfgOptRepoPath

@@ -24,6 +24,16 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add support for additional <backrest/> configuration files in the directory specified by the <br-option>--config-include-path</br-option> option. Add <br-option>--config-path</br-option> option for overriding the default base path of the <br-option>--config</br-option> and <br-option>--config-include-path</br-option> option.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p>Make backup directory sync more efficient.  Scanning the entire backup directory can be very expensive if there are a lot of small tables.  The backup manifest contains the backup directory list so use it to perform syncs instead of scanning the backup directory.</p>
