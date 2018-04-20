@@ -10,6 +10,7 @@ Command and Option Parse
 #include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/regExp.h"
 #include "config/parse.h"
 #include "storage/helper.h"
 
@@ -65,6 +66,48 @@ optionFind(const String *option)
     }
 
     return optionIdx;
+}
+
+/***********************************************************************************************************************************
+Convert the value passed into bytes and update valueDbl for range checking
+***********************************************************************************************************************************/
+void
+convertToByte(String *value, double *valueDbl)
+{
+    strLower(value);
+    if (regExpMatchOne(strNew("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p)$"), value))
+    {
+        if (strChr(value, 'k'))
+        {
+            strTrunc(value, strChr(value, 'k'));
+            *valueDbl = (double)varInt64Force(varNewStr(value)) * 1024;
+            value = varStrForce(varNewDbl(*valueDbl));  // CSHANG How to replace the contents of an existing string?
+        }
+        else if (strChr(value, 'm'))
+        {
+            strTrunc(value, strChr(value, 'm'));
+            *valueDbl = (double)varInt64Force(varNewStr(value)) * 1024 * 1024;
+            value = varStrForce(varNewDbl(*valueDbl));
+        }
+        else if (strChr(value, 'g'))
+        {
+            strTrunc(value, strChr(value, 'g'));
+            *valueDbl = (double)varInt64Force(varNewStr(value)) * 1024 * 1024 * 1024;
+            value = varStrForce(varNewDbl(*valueDbl));
+        }
+        else if (strChr(value, 't'))
+        {
+            strTrunc(value, strChr(value, 't'));
+            *valueDbl = (double)varInt64Force(varNewStr(value)) * 1024 * 1024 * 1024 * 1024;
+            value = varStrForce(varNewDbl(*valueDbl));
+        }
+        else if (strChr(value, 'p'))
+        {
+            strTrunc(value, strChr(value, 'p'));
+            *valueDbl = (double)varInt64Force(varNewStr(value)) * 1024 * 1024 * 1024 * 1024 * 1024;
+            value = varStrForce(varNewDbl(*valueDbl));
+        }
+    }
 }
 
 /***********************************************************************************************************************************
@@ -642,9 +685,26 @@ configParse(unsigned int argListSize, const char *argList[])
                                 {
                                     if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeSize)  // CSHANG
                                     {
-                                        // CSHANG here need a call to a function or something to convert the size
                                         valueDbl = (double)varInt64Force(varNewStr(value));
-                                    } // CSHANG
+                                    }
+                                    // // CSHANG here need a call to a function or something to strip the Ending letters (if any)
+                                    // // CSHANG and convert the size into bytes. Store the new string value into the value variable
+                                    // // CSHANG so the cfgOptionSet uses the correct byte value -- this will not affect the actual
+                                    // // CSHANG thing the user entered
+                                    // //value = convertToBytes(value); KB, MB, GB, TB, PB
+                                    // else if (optionDefType == cfgDefOptTypeSize)
+                                    // {
+                                    //     strLower(value);
+                                    //     if (regExpMatchOne(strNew("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p)$"), value)
+                                    //     {
+                                    //         if (strChr(value, 'k'))
+                                    //         {
+                                    //             strTrunc(value, strChr(value, 'k');
+                                    //             valueDbl = (double)varInt64Force(varNewStr(value)) * 1024;
+                                    //             value = varStr(varNewDbl(valueDbl));
+                                    //         }
+                                    //     }
+                                    // }
                                     else
                                         valueDbl = varDblForce(varNewStr(value));
                                 }

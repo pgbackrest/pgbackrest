@@ -29,6 +29,16 @@ void
 testRun()
 {
     // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("convertToByte()"))
+    {
+        String *value = strNew("10K");
+        double valueDbl = 0;
+        convertToByte(value, &valueDbl);
+        TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl K to bytes");
+        TEST_RESULT_STR(strPtr(value), "10240", "value K to bytes");
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("configParse()"))
     {
         StringList *argList = NULL;

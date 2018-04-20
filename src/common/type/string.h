@@ -33,10 +33,14 @@ bool strEq(const String *this, const String *compare);
 bool strEqZ(const String *this, const char *compare);
 String *strFirstUpper(String *this);
 String *strFirstLower(String *this);
+String *strUpper(String *this);
+String *strLower(String *this);
 String *strPath(const String *this);
 const char *strPtr(const String *this);
 size_t strSize(const String *this);
 String *strTrim(String *this);
+const char *strChr(const String *this, const char chr);
+String *strTrunc(String *this, const char *end);
 
 void strFree(String *this);
 

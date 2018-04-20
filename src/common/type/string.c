@@ -294,6 +294,32 @@ strFirstLower(String *this)
 }
 
 /***********************************************************************************************************************************
+Upper-case entire string
+***********************************************************************************************************************************/
+String *
+strUpper(String *this)
+{
+    if (this->size > 0)
+        for (unsigned int idx = 0; idx <= this->size; idx++)
+            this->buffer[idx] = (char)toupper(this->buffer[idx]);
+
+    return this;
+}
+
+/***********************************************************************************************************************************
+Upper-case entire string
+***********************************************************************************************************************************/
+String *
+strLower(String *this)
+{
+    if (this->size > 0)
+        for (unsigned int idx = 0; idx <= this->size; idx++)
+            this->buffer[idx] = (char)tolower(this->buffer[idx]);
+
+    return this;
+}
+
+/***********************************************************************************************************************************
 Return the path part of a string (i.e. everything before the last / or "" if there is no /)
 ***********************************************************************************************************************************/
 String *
@@ -331,7 +357,7 @@ strSize(const String *this)
 }
 
 /***********************************************************************************************************************************
-Return string size
+Trim whitespace from the beginnning and end of a string
 ***********************************************************************************************************************************/
 String *
 strTrim(String *this)
@@ -370,6 +396,43 @@ strTrim(String *this)
             }
             MEM_CONTEXT_END();
         }
+    }
+
+    return this;
+}
+
+/***********************************************************************************************************************************
+Return a point to the location of the character within a string, else NULL
+***********************************************************************************************************************************/
+const char *
+strChr(const String *this, const char chr)
+{
+    const char *result = NULL;
+
+    if (this->size > 0)
+        result = strchr(this->buffer, chr);
+
+    return result;
+}
+
+/***********************************************************************************************************************************
+Truncate the end of a string given a pointer to a location within the string
+***********************************************************************************************************************************/
+String *
+strTrunc(String *this, const char *end)
+{
+    // CSHANG What if truncate the whole buffer, then free it?
+    if (this->size > 0 && end >= this->buffer)
+    {
+        this->size = (size_t)(end - this->buffer);
+        this->buffer[this->size] = 0;
+
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            // Resize the buffer
+            this->buffer = memGrowRaw(this->buffer, this->size + 1);  // CSHANG This seems not to free the old memory - should we?
+        }
+        MEM_CONTEXT_END();
     }
 
     return this;

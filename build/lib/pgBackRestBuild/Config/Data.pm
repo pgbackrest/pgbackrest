@@ -2368,7 +2368,8 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
 
     # All int and float options must have an allow range
     if (($hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_INTEGER ||
-         $hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_FLOAT) &&
+         $hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_FLOAT ||
+         $hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_SIZE) &&
          !(defined($hConfigDefine{$strKey}{&CFGDEF_ALLOW_RANGE}) || defined($hConfigDefine{$strKey}{&CFGDEF_ALLOW_LIST})))
     {
         confess &log(ASSERT, "int/float option '${strKey}' must have allow range or list");
