@@ -88,7 +88,7 @@ testRun()
             "\n"
         );
 
-        TEST_RESULT_VOID(storagePutNP(storageOpenWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put ini to file");
+        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put ini to file");
         TEST_RESULT_VOID(iniLoad(ini, fileName), "load ini from file");
 
         TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("global"), strNew("compress")))), "y", "get compress");

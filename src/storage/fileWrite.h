@@ -1,83 +1,57 @@
 /***********************************************************************************************************************************
-Storage File
+Storage File Write
 ***********************************************************************************************************************************/
-#include "common/assert.h"
-#include "common/memContext.h"
-#include "storage/file.h"
+#ifndef STORAGE_FILEWRITE_H
+#define STORAGE_FILEWRITE_H
+
+#include <sys/types.h>
 
 /***********************************************************************************************************************************
-Storage file structure
+Storage file read object
 ***********************************************************************************************************************************/
-struct StorageFile
-{
-    MemContext *memContext;
-    const Storage *storage;
-    String *name;
-    StorageFileType type;
-    void *data;
-};
+typedef struct StorageFileWrite StorageFileWrite;
+
+#include "common/type/buffer.h"
+#include "common/type/string.h"
+#include "storage/driver/posix/driverWrite.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
-Create a new storage file
-
-This object expects its context to be created in advance.  This is so the calling function can add whatever data it wants without
-required multiple functions and contexts to make it safe.
+Temporary file extension
 ***********************************************************************************************************************************/
-StorageFile *storageFileNew(const Storage *storage, String *name, StorageFileType type, void *data)
-{
-    ASSERT_DEBUG(storage != NULL);
-    ASSERT_DEBUG(name != NULL);
-    ASSERT_DEBUG(data != NULL);
-
-    StorageFile *this = memNew(sizeof(StorageFile));
-    this->memContext = memContextCurrent();
-    this->storage = storage;
-    this->name = name;
-    this->type = type;
-    this->data = data;
-
-    return this;
-}
+#define STORAGE_FILE_TEMP_EXT                                       PGBACKREST_BIN ".tmp"
 
 /***********************************************************************************************************************************
-Get file data
+Constructor
 ***********************************************************************************************************************************/
-void *
-storageFileData(const StorageFile *this)
-{
-    ASSERT_DEBUG(this != NULL);
-
-    return this->data;
-}
+StorageFileWrite *storageFileWriteNew(
+    const String *name, mode_t modeFile, mode_t modePath, bool noCreatePath, bool noSyncFile, bool noSyncPath, bool noAtomic);
 
 /***********************************************************************************************************************************
-Get file name
+Functions
 ***********************************************************************************************************************************/
-const String *
-storageFileName(const StorageFile *this)
-{
-    ASSERT_DEBUG(this != NULL);
+void storageFileWriteOpen(StorageFileWrite *this);
+void storageFileWrite(StorageFileWrite *this, const Buffer *buffer);
+void storageFileWriteClose(StorageFileWrite *this);
 
-    return this->name;
-}
+StorageFileWrite *storageFileWriteMove(StorageFileWrite *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
-Get file storage object
+Getters
 ***********************************************************************************************************************************/
-const Storage *
-storageFileStorage(const StorageFile *this)
-{
-    ASSERT_DEBUG(this != NULL);
-
-    return this->storage;
-}
+bool storageFileWriteAtomic(const StorageFileWrite *this);
+bool storageFileWriteCreatePath(const StorageFileWrite *this);
+StorageFileWritePosix *storageFileWriteFileDriver(const StorageFileWrite *this);
+mode_t storageFileWriteModeFile(const StorageFileWrite *this);
+mode_t storageFileWriteModePath(const StorageFileWrite *this);
+const String *storageFileWriteName(const StorageFileWrite *this);
+const String *storageFileWritePath(const StorageFileWrite *this);
+bool storageFileWriteSyncFile(const StorageFileWrite *this);
+bool storageFileWriteSyncPath(const StorageFileWrite *this);
 
 /***********************************************************************************************************************************
-Free the file
+Destructor
 ***********************************************************************************************************************************/
-void
-storageFileFree(const StorageFile *this)
-{
-    if (this != NULL)
-        memContextFree(this->memContext);
-}
+void storageFileWriteFree(const StorageFileWrite *this);
+
+#endif

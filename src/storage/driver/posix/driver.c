@@ -1,28 +1,18 @@
 /***********************************************************************************************************************************
-Storage Posix Driver
+Storage Driver Posix
 ***********************************************************************************************************************************/
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #include "common/memContext.h"
 #include "common/regExp.h"
-#include "storage/driver/posix.h"
+#include "storage/driver/posix/driver.h"
+#include "storage/driver/posix/driverFile.h"
 #include "storage/storage.h"
-
-/***********************************************************************************************************************************
-Storage file data - holds the file handle.
-***********************************************************************************************************************************/
-typedef struct StorageFileDataPosix
-{
-    MemContext *memContext;
-    int handle;
-} StorageFileDataPosix;
-
-#define STORAGE_DATA(file)                                                                                                         \
-    ((StorageFileDataPosix *)storageFileData(file))
 
 /***********************************************************************************************************************************
 Does a file/path exist?
@@ -44,61 +34,6 @@ storageDriverPosixExists(const String *path)
     // Else found
     else
         result = !S_ISDIR(statFile.st_mode);
-
-    return result;
-}
-
-/***********************************************************************************************************************************
-Read from storage into a buffer
-***********************************************************************************************************************************/
-Buffer *
-storageDriverPosixGet(const StorageFile *file)
-{
-    Buffer *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        TRY_BEGIN()
-        {
-            size_t bufferSize = storageBufferSize(storageFileStorage(file));
-            result = bufNew(bufferSize);
-
-            // Create result buffer with buffer size
-            ssize_t actualBytes = 0;
-            size_t totalBytes = 0;
-
-            do
-            {
-                // Grow the buffer on subsequent reads
-                if (totalBytes != 0)
-                    bufResize(result, bufSize(result) + bufferSize);
-
-                // Read and handle errors
-                actualBytes = read(
-                    STORAGE_DATA(file)->handle, bufPtr(result) + totalBytes, bufferSize);
-
-                // Error occurred during write
-                if (actualBytes == -1)
-                    THROW_SYS_ERROR(FileReadError, "unable to read '%s'", strPtr(storageFileName(file)));
-
-                // Track total bytes read
-                totalBytes += (size_t)actualBytes;
-            }
-            while (actualBytes != 0);
-
-            // Resize buffer to total bytes read
-            bufResize(result, totalBytes);
-        }
-        FINALLY()
-        {
-            close(STORAGE_DATA(file)->handle);
-            storageFileFree(file);
-        }
-        TRY_END();
-
-        bufMove(result, MEM_CONTEXT_OLD());
-    }
-    MEM_CONTEXT_TEMP_END();
 
     return result;
 }
@@ -166,59 +101,59 @@ storageDriverPosixList(const String *path, bool errorOnMissing, const String *ex
 }
 
 /***********************************************************************************************************************************
-Open a file for reading
+Move a file
 ***********************************************************************************************************************************/
-void *
-storageDriverPosixOpenRead(const String *file, bool ignoreMissing)
+bool
+storageDriverPosixMove(StorageFileReadPosix *source, StorageFileWritePosix *destination)
 {
-    StorageFileDataPosix *result = NULL;
+    bool result = true;
 
-    // Open the file and handle errors
-    int fileHandle = open(strPtr(file), O_RDONLY, 0);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *sourceFile = storageFileReadPosixName(source);
+        const String *destinationFile = storageFileWritePosixName(destination);
+        const String *destinationPath = storageFileWritePosixPath(destination);
 
-    if (fileHandle == -1)
-    {
-        // Error unless ignore missing is specified
-        if (!ignoreMissing || errno != ENOENT)
-            THROW_SYS_ERROR(FileOpenError, "unable to open '%s' for read", strPtr(file));
-    }
-    // Else create the storage file and data
-    else
-    {
-        MEM_CONTEXT_NEW_BEGIN("StorageFileDataPosix")
+        // Attempt to move the file
+        if (rename(strPtr(sourceFile), strPtr(destinationFile)) == -1)
         {
-            result = memNew(sizeof(StorageFileDataPosix));
-            result->memContext = MEM_CONTEXT_NEW();
-            result->handle = fileHandle;
+            // Detemine which file/path is missing
+            if (errno == ENOENT)
+            {
+                if (!storageDriverPosixExists(sourceFile))
+                    THROW_SYS_ERROR(FileMissingError, "unable to move missing file '%s'", strPtr(sourceFile));
+
+                if (!storageFileWritePosixCreatePath(destination))
+                {
+                    THROW_SYS_ERROR(
+                        PathMissingError, "unable to move '%s' to missing path '%s'", strPtr(sourceFile), strPtr(destinationPath));
+                }
+
+                storageDriverPosixPathCreate(destinationPath, false, false, storageFileWritePosixModePath(destination));
+                result = storageDriverPosixMove(source, destination);
+            }
+            // Else the destination is on a different device so a copy will be needed
+            else if (errno == EXDEV)
+            {
+                result = false;
+            }
+            else
+                THROW_SYS_ERROR(FileMoveError, "unable to move '%s' to '%s'", strPtr(sourceFile), strPtr(destinationFile));
         }
-        MEM_CONTEXT_NEW_END();
+        // Sync paths on success
+        else
+        {
+            // Sync source path if the destination path was synced and the paths are not equal
+            if (storageFileWritePosixSyncPath(destination))
+            {
+                String *sourcePath = strPath(sourceFile);
+
+                if (!strEq(destinationPath, sourcePath))
+                    storageDriverPosixPathSync(sourcePath, false);
+            }
+        }
     }
-
-    return result;
-}
-
-/***********************************************************************************************************************************
-Open a file for writing
-***********************************************************************************************************************************/
-void *
-storageDriverPosixOpenWrite(const String *file, mode_t mode)
-{
-    // Open the file and handle errors
-    int fileHandle = open(strPtr(file), O_CREAT | O_TRUNC | O_WRONLY, mode);
-
-    if (fileHandle == -1)
-        THROW_SYS_ERROR(FileOpenError, "unable to open '%s' for write", strPtr(file));
-
-    // Create the storage file and data
-    StorageFileDataPosix *result = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("StorageFileDataPosix")
-    {
-        result = memNew(sizeof(StorageFileDataPosix));
-        result->memContext = MEM_CONTEXT_NEW();
-        result->handle = fileHandle;
-    }
-    MEM_CONTEXT_NEW_END();
+    MEM_CONTEXT_TEMP_END();
 
     return result;
 }
@@ -291,22 +226,23 @@ storageDriverPosixPathRemove(const String *path, bool errorOnMissing, bool recur
 }
 
 /***********************************************************************************************************************************
-Write a buffer to storage
+Sync a path
 ***********************************************************************************************************************************/
 void
-storageDriverPosixPut(const StorageFile *file, const Buffer *buffer)
+storageDriverPosixPathSync(const String *path, bool ignoreMissing)
 {
-    TRY_BEGIN()
+    // Open directory and handle errors
+    int handle = storageFilePosixOpen(path, O_RDONLY, 0, ignoreMissing, &PathOpenError, "sync");
+
+    // On success
+    if (handle != -1)
     {
-        if (write(STORAGE_DATA(file)->handle, bufPtr(buffer), bufSize(buffer)) != (ssize_t)bufSize(buffer))
-            THROW_SYS_ERROR(FileWriteError, "unable to write '%s'", strPtr(storageFileName(file)));
+        // Attempt to sync the directory
+        storageFilePosixSync(handle, path, &PathSyncError, true);
+
+        // Close the directory
+        storageFilePosixClose(handle, path, &PathCloseError);
     }
-    FINALLY()
-    {
-        close(STORAGE_DATA(file)->handle);
-        storageFileFree(file);
-    }
-    TRY_END();
 }
 
 /***********************************************************************************************************************************

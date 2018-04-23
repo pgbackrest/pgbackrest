@@ -305,6 +305,6 @@ testRun()
         dup2(stdoutSave, STDOUT_FILENO);
 
         Storage *storage = storageNewNP(strNew(testPath()));
-        TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageOpenReadNP(storage, stdoutFile)))), generalHelp, "    check text");
+        TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))), generalHelp, "    check text");
     }
 }

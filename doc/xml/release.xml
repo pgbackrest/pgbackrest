@@ -62,7 +62,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageExists()</code>, <code>storagePathCreate()</code>, and <code>storageRemove()</code>.  Add <code>StorageFile</code> object and <code>storageOpenRead()</code>/<code>storageOpenWrite()</code>.  Abstract Posix driver code into a separate module.  Add <code>storagePathRemove()</code> and use it in the Perl Posix driver.</p>
+                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageCopy()</code>, <code>storageExists()</code>, <code>storageMove()</code>, <code>storageNewRead()</code>/<code>storageNewWrite()</code>, <code>storagePathCreate()</code>, <code>storagePathRemove()</code>, <code>storagePathSync()</code>, and <code>storageRemove()</code>.  Add <code>StorageFileRead</code> and <code>StorageFileWrite</code> objects.  Abstract Posix driver code into a separate module. Call <code>storagePathCreate()</code> from the Perl Posix driver.</p>
                     </release-item>
 
                     <release-item>

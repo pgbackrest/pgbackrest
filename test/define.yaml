@@ -466,19 +466,23 @@ module:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: file
-        total: 1
+        total: 3
         c: true
 
         coverage:
-          storage/file: full
+          storage/driver/posix/driverFile: full
+          storage/driver/posix/driverRead: full
+          storage/driver/posix/driverWrite: full
+          storage/fileRead: full
+          storage/fileWrite: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: storage
-        total: 10
+        total: 13
         c: true
 
         coverage:
-          storage/driver/posix: full
+          storage/driver/posix/driver: full
           storage/storage: full
 
       # ----------------------------------------------------------------------------------------------------------------------------

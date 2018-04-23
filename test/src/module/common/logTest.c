@@ -128,7 +128,7 @@ testRun()
         Storage *storage = storageNewNP(strNew(testPath()));
 
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageOpenReadNP(storage, stdoutFile)))),
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))),
             "P00   WARN: format 99\n"
             "P00  ERROR: [026]: message\n"
             "P00  ERROR: [026]: message1\n"
@@ -137,7 +137,7 @@ testRun()
 
         // Check stderr
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageOpenReadNP(storage, stderrFile)))),
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stderrFile)))),
             "DEBUG: test.c:test_func(): message\n"
             "INFO: info message\n"
             "WARN: unable to open log file '/BOGUS': Permission denied\n"
@@ -146,7 +146,7 @@ testRun()
 
         // Check file
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageOpenReadNP(storage, fileFile)))),
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, fileFile)))),
             "-------------------PROCESS START-------------------\n"
             "P00  DEBUG: test.c:test_func(): message\n"
             "\n"
