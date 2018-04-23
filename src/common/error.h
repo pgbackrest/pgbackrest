@@ -114,9 +114,13 @@ Throw an error
 
 Errors can be thrown any time, but if there is no TRY block somewhere in the call stack then the program will exit and print the
 error information to stderr.
+
+The seldom used "THROWP" variants allow an error to be thrown with a pointer to the error type.
 ***********************************************************************************************************************************/
 #define THROW(errorType, ...)                                                                                                      \
     errorInternalThrow(&errorType, __FILE__, __LINE__, __VA_ARGS__)
+#define THROWP(errorType, ...)                                                                                                     \
+    errorInternalThrow(errorType, __FILE__, __LINE__, __VA_ARGS__)
 
 #define THROW_CODE(errorCode, ...)                                                                                                 \
     errorInternalThrow(errorTypeFromCode(errorCode), __FILE__, __LINE__, __VA_ARGS__)
@@ -126,6 +130,13 @@ Throw an error when a system call fails
 ***********************************************************************************************************************************/
 #define THROW_SYS_ERROR(errorType, ...)                                                                                            \
     errorInternalThrowSys(errno, &errorType, __FILE__, __LINE__, __VA_ARGS__)
+#define THROWP_SYS_ERROR(errorType, ...)                                                                                           \
+    errorInternalThrowSys(errno, errorType, __FILE__, __LINE__, __VA_ARGS__)
+
+#define THROW_SYS_ERROR_CODE(errNo, errorType, ...)                                                                                \
+    errorInternalThrowSys(errNo, &errorType, __FILE__, __LINE__, __VA_ARGS__)
+#define THROWP_SYS_ERROR_CODE(errNo, errorType, ...)                                                                               \
+    errorInternalThrowSys(errNo, errorType, __FILE__, __LINE__, __VA_ARGS__)
 
 /***********************************************************************************************************************************
 Rethrow the current error
