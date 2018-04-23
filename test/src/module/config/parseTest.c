@@ -31,11 +31,17 @@ testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("convertToByte()"))
     {
-        String *value = strNew("10K");
+        String *value = strNew("10KB");
         double valueDbl = 0;
-        convertToByte(value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl K to bytes");
-        TEST_RESULT_STR(strPtr(value), "10240", "value K to bytes");
+        convertToByte(&value, &valueDbl);
+        TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl KB to bytes");
+        TEST_RESULT_STR(strPtr(value), "10240", "value KB to bytes");
+
+// CSHANG This test results in module/config/parseTest.c:42:82: error: integer constant is so large that it is unsigned
+        // strCat(value, "Pb");
+        // convertToByte(&value, &valueDbl);
+        // TEST_RESULT_DOUBLE(valueDbl, 11529215046068469760, "valueDbl Pb to bytes");
+        // TEST_RESULT_STR(strPtr(value), "11529215046068469760", "value Pb to bytes");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -553,7 +559,7 @@ testRun()
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "archive-push command");
 
-        TEST_RESULT_INT(cfgOptionInt64(cfgOptArchiveQueueMax), 4503599627370496, "archive-queue-max is set");  // CSHANG
+        TEST_RESULT_INT(cfgOptionInt64(cfgOptArchiveQueueMax), 4503599627370496, "archive-queue-max is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptArchiveQueueMax), cfgSourceParam, "    archive-queue-max is source config");
         TEST_RESULT_PTR(cfgOption(cfgOptSpoolPath), NULL, "    spool-path is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptSpoolPath), cfgSourceDefault, "    spool-path is source default");

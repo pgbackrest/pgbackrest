@@ -39,8 +39,8 @@ String *strPath(const String *this);
 const char *strPtr(const String *this);
 size_t strSize(const String *this);
 String *strTrim(String *this);
-const char *strChr(const String *this, const char chr);
-String *strTrunc(String *this, const char *end);
+int strChr(const String *this, char chr);
+String *strTrunc(String *this, int idx);
 
 void strFree(String *this);
 

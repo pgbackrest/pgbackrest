@@ -402,35 +402,43 @@ strTrim(String *this)
 }
 
 /***********************************************************************************************************************************
-Return a point to the location of the character within a string, else NULL
+Return the index to the location of the character within a string, else -1
 ***********************************************************************************************************************************/
-const char *
-strChr(const String *this, const char chr)
+int
+strChr(const String *this, char chr)
 {
-    const char *result = NULL;
+    int result = -1;
 
     if (this->size > 0)
-        result = strchr(this->buffer, chr);
+    {
+        const char *ptr = strchr(this->buffer, chr);
+        if (ptr != NULL)
+            result =  (int)(ptr - this->buffer);
+    }
 
     return result;
 }
 
 /***********************************************************************************************************************************
-Truncate the end of a string given a pointer to a location within the string
+Truncate the end of a string given an index to a location within the string
 ***********************************************************************************************************************************/
 String *
-strTrunc(String *this, const char *end)
+strTrunc(String *this, int idx)
 {
-    // CSHANG What if truncate the whole buffer, then free it?
-    if (this->size > 0 && end >= this->buffer)
+    // If the index position is outside the array boundaries then error
+    if (idx < 0 || (size_t)idx > this->size)
+        THROW(AssertError, "index passed is outside the string boundaries");
+
+    if (this->size > 0)
     {
-        this->size = (size_t)(end - this->buffer);
+        // Reset the size to end at the
+        this->size = (size_t)(idx + 1);
         this->buffer[this->size] = 0;
 
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             // Resize the buffer
-            this->buffer = memGrowRaw(this->buffer, this->size + 1);  // CSHANG This seems not to free the old memory - should we?
+            this->buffer = memGrowRaw(this->buffer, this->size + 1);
         }
         MEM_CONTEXT_END();
     }

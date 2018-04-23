@@ -72,42 +72,77 @@ optionFind(const String *option)
 Convert the value passed into bytes and update valueDbl for range checking
 ***********************************************************************************************************************************/
 void
-convertToByte(String *value, double *valueDbl)
+convertToByte(String **value, double *valueDbl)
 {
-    strLower(value);
-    if (regExpMatchOne(strNew("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p)$"), value))
+    String *result = strLower(strDup(*value));
+    if (regExpMatchOne(strNew("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p|b)*$"), result))
     {
-        if (strChr(value, 'k'))
+        // Get the character array and size
+        const char *strArray = strPtr(result);
+        size_t size = strSize(result);
+        int chrPos = -1;
+
+        // If there is a b on the end, then see if the previous character is a number
+        if (strArray[size - 1] == 'b')
         {
-            strTrunc(value, strChr(value, 'k'));
-            *valueDbl = (double)varInt64Force(varNewStr(value)) * 1024;
-            value = varStrForce(varNewDbl(*valueDbl));  // CSHANG How to replace the contents of an existing string?
+            // If the previous character is a number, then the letter to look at is b which is the last position else it is in the
+            // next to last position (e.g. bb - so the k is the position of interest)
+            if (strArray[size - 2] >= '0' &&  strArray[size - 2] <= '9')
+                chrPos = (int)(size - 1);
+            else
+                chrPos = (int)(size - 2);
         }
-        else if (strChr(value, 'm'))
+        // else if there is no b at the end but the last position is not a number then it must be one of the letters, e.g. k
+        else if (strArray[size - 1] > '9')
+            chrPos = (int)(size - 1);
+
+        // If a letter was found, then truncate and convert to bytes, else do nothing since assumed value is already in bytes
+        if (chrPos != -1)
         {
-            strTrunc(value, strChr(value, 'm'));
-            *valueDbl = (double)varInt64Force(varNewStr(value)) * 1024 * 1024;
-            value = varStrForce(varNewDbl(*valueDbl));
-        }
-        else if (strChr(value, 'g'))
-        {
-            strTrunc(value, strChr(value, 'g'));
-            *valueDbl = (double)varInt64Force(varNewStr(value)) * 1024 * 1024 * 1024;
-            value = varStrForce(varNewDbl(*valueDbl));
-        }
-        else if (strChr(value, 't'))
-        {
-            strTrunc(value, strChr(value, 't'));
-            *valueDbl = (double)varInt64Force(varNewStr(value)) * 1024 * 1024 * 1024 * 1024;
-            value = varStrForce(varNewDbl(*valueDbl));
-        }
-        else if (strChr(value, 'p'))
-        {
-            strTrunc(value, strChr(value, 'p'));
-            *valueDbl = (double)varInt64Force(varNewStr(value)) * 1024 * 1024 * 1024 * 1024 * 1024;
-            value = varStrForce(varNewDbl(*valueDbl));
+            double multiplier = 1;
+
+            if (strArray[chrPos] != 'b')
+            {
+                switch (strArray[chrPos])
+                {
+                    case 'k':
+                        multiplier = 1024;
+                        break;
+
+                    case 'm':
+                        multiplier = 1024 * 1024;
+                        break;
+
+                    case 'g':
+                        multiplier = 1024 * 1024 * 1024;
+                        break;
+
+                    case 't':
+                        multiplier = 1024L * 1024L * 1024L * 1024L;
+                        break;
+
+                    case 'p':
+                        multiplier = 1024L * 1024L * 1024L * 1024L * 1024L;
+                        break;
+
+                    default:
+                        THROW(                                      // {uncoverable - regex covers all cases}
+                            AssertError, "character %c is not a valid type", strArray[chrPos]);
+                }
+            }
+
+            // Remove any letters and update the values
+            strTrunc(result, chrPos);
+            double newDbl = varDblForce(varNewStr(result)) * multiplier;
+            result = varStrForce(varNewDbl(newDbl));
+
+            // If nothing has blown up then safe to overwrite the original values
+            *valueDbl = newDbl;
+            *value = result;
         }
     }
+    else
+        THROW(FormatError, "value '%s' is not valid", strPtr(*value));
 }
 
 /***********************************************************************************************************************************
@@ -683,30 +718,21 @@ configParse(unsigned int argListSize, const char *argList[])
                                 // Check that the value can be converted
                                 TRY_BEGIN()
                                 {
-                                    if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeSize)  // CSHANG
+
+                                    if (optionDefType == cfgDefOptTypeInteger)
                                     {
                                         valueDbl = (double)varInt64Force(varNewStr(value));
                                     }
-                                    // // CSHANG here need a call to a function or something to strip the Ending letters (if any)
-                                    // // CSHANG and convert the size into bytes. Store the new string value into the value variable
-                                    // // CSHANG so the cfgOptionSet uses the correct byte value -- this will not affect the actual
-                                    // // CSHANG thing the user entered
-                                    // //value = convertToBytes(value); KB, MB, GB, TB, PB
-                                    // else if (optionDefType == cfgDefOptTypeSize)
-                                    // {
-                                    //     strLower(value);
-                                    //     if (regExpMatchOne(strNew("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p)$"), value)
-                                    //     {
-                                    //         if (strChr(value, 'k'))
-                                    //         {
-                                    //             strTrunc(value, strChr(value, 'k');
-                                    //             valueDbl = (double)varInt64Force(varNewStr(value)) * 1024;
-                                    //             value = varStr(varNewDbl(valueDbl));
-                                    //         }
-                                    //     }
-                                    // }
+                                    else if (optionDefType == cfgDefOptTypeSize)
+                                    {
+                                        convertToByte(&value, &valueDbl);
+                                    }
                                     else
                                         valueDbl = varDblForce(varNewStr(value));
+                                }
+                                CATCH(AssertError)
+                                {
+                                    RETHROW();
                                 }
                                 CATCH_ANY()
                                 {
