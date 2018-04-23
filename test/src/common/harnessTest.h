@@ -65,6 +65,19 @@ Test that an expected error is actually thrown and error when it isn't
 }
 
 /***********************************************************************************************************************************
+Test error with a formatted expected message
+***********************************************************************************************************************************/
+#define TEST_ERROR_FMT(statement, errorTypeExpected, ...)                                                                          \
+{                                                                                                                                  \
+    char TEST_ERROR_FMT_buffer[8192];                                                                                              \
+                                                                                                                                   \
+    if (snprintf(TEST_ERROR_FMT_buffer, sizeof(TEST_ERROR_FMT_buffer), __VA_ARGS__) >= (int)sizeof(TEST_ERROR_FMT_buffer))         \
+        THROW(AssertError, "error message needs more than the %d characters available", sizeof(TEST_ERROR_FMT_buffer));            \
+                                                                                                                                   \
+    TEST_ERROR(statement, errorTypeExpected, TEST_ERROR_FMT_buffer);                                                               \
+}
+
+/***********************************************************************************************************************************
 Format the test type into the given buffer -- or return verbatim if char *
 ***********************************************************************************************************************************/
 #define TEST_TYPE_FORMAT_VAR(value)                                                                                                \

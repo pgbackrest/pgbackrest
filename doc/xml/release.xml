@@ -163,6 +163,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>TEST_ERROR_FMT</code> macro to simplify testing of formatted error messages.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Generate code counts for all source files.  The source files are also classified by type and purpose.</p>
                     </release-item>
 
