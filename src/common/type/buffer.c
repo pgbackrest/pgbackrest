@@ -3,6 +3,7 @@ String Handler
 ***********************************************************************************************************************************/
 #include <string.h>
 
+#include "common/assert.h"
 #include "common/type/buffer.h"
 
 /***********************************************************************************************************************************
@@ -52,6 +53,42 @@ bufNewStr(const String *string)
     memcpy(this->buffer, strPtr(string), this->size);
 
     return this;
+}
+
+/***********************************************************************************************************************************
+Append the contents of another buffer
+***********************************************************************************************************************************/
+Buffer *
+bufCat(Buffer *this, const Buffer *cat)
+{
+    ASSERT_DEBUG(this != NULL);
+
+    if (cat != NULL && cat->size > 0)
+    {
+        size_t sizeOld = this->size;
+
+        bufResize(this, sizeOld + cat->size);
+        memcpy(this->buffer + sizeOld, cat->buffer, cat->size);
+    }
+
+    return this;
+}
+
+/***********************************************************************************************************************************
+Are two buffers equal?
+***********************************************************************************************************************************/
+bool
+bufEq(const Buffer *this, const Buffer *compare)
+{
+    bool result = false;
+
+    ASSERT_DEBUG(this != NULL);
+    ASSERT_DEBUG(compare != NULL);
+
+    if (this->size == compare->size)
+        result = memcmp(this->buffer, compare->buffer, compare->size) == 0;
+
+    return result;
 }
 
 /***********************************************************************************************************************************

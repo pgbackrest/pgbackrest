@@ -80,4 +80,20 @@ testRun()
         TEST_ASSIGN(bufferPtr, bufPtr(bufResize(buffer, 0)), "decrease to zero again");
         TEST_RESULT_INT(bufSize(buffer), 0, "check size");
     }
+
+    // *****************************************************************************************************************************
+    if (testBegin("bufEq()"))
+    {
+        TEST_RESULT_BOOL(bufEq(bufNewStr(strNew("123")), bufNewStr(strNew("1234"))), false, "buffer sizes not equal");
+        TEST_RESULT_BOOL(bufEq(bufNewStr(strNew("321")), bufNewStr(strNew("123"))), false, "buffer sizes equal");
+        TEST_RESULT_BOOL(bufEq(bufNewStr(strNew("123")), bufNewStr(strNew("123"))), true, "buffers equal");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("bufCat()"))
+    {
+        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewStr(strNew("123")), NULL))), "123", "cat null buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewStr(strNew("123")), bufNew(0)))), "123", "cat empty buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewStr(strNew("123")), bufNewStr(strNew("ABC"))))), "123ABC", "cat buffer");
+    }
 }
