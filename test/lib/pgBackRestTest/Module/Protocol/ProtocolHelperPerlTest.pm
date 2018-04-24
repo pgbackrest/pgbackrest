@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # Protocol Helper Tests
 ####################################################################################################################################
-package pgBackRestTest::Module::Protocol::ProtocolHelperTest;
+package pgBackRestTest::Module::Protocol::ProtocolHelperPerlTest;
 use parent 'pgBackRestTest::Env::ConfigEnvTest';
 
 ####################################################################################################################################
@@ -92,13 +92,37 @@ sub run
         $self->optionTestSet(cfgOptionIdFromIndex(CFGOPT_PG_PATH, 2), '/db2');
         $self->optionTestSet(cfgOptionIdFromIndex(CFGOPT_PG_PORT, 2), '2222');
         $self->optionTestSet(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CMD, 2), 'pgbackrest2');
+        $self->optionTestSet(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CONFIG, 2), '/config2');
+        $self->optionTestSet(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH, 2), '/config-include2');
+        $self->optionTestSet(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CONFIG_PATH, 2), '/config-path2');
         $self->configTestLoad(CFGCMD_BACKUP);
 
         $self->testResult(
             sub {pgBackRest::Protocol::Helper::protocolParam(cfgCommandName(CFGCMD_BACKUP), CFGOPTVAL_REMOTE_TYPE_DB, 2)},
             '(pg-host-2, postgres, [undef], pgbackrest2 --buffer-size=4194304 --command=backup --compress-level=6' .
-                ' --compress-level-network=3 --pg1-path=/db2 --pg1-port=2222 --protocol-timeout=1830 --stanza=db --type=db remote)',
+                ' --compress-level-network=3 --config=/config2 --config-include-path=/config-include2 --config-path=/config-path2' .
+                ' --pg1-path=/db2 --pg1-port=2222 --protocol-timeout=1830 --stanza=db --type=db remote)',
             'more than one backup db host');
+
+        # --------------------------------------------------------------------------------------------------------------------------
+        $self->configTestClear();
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(cfgOptionIdFromIndex(CFGOPT_PG_PATH, 1), '/db1');
+        $self->optionTestSet(CFGOPT_REPO_HOST, 'repo-host');
+        $self->optionTestSet(CFGOPT_REPO_PATH, '/repo');
+        $self->optionTestSet(CFGOPT_REPO_HOST_CMD, 'pgbackrest-repo');
+        $self->optionTestSet(CFGOPT_REPO_HOST_CONFIG, '/config-repo');
+        $self->optionTestSet(CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH, '/config-include-repo');
+        $self->optionTestSet(CFGOPT_REPO_HOST_CONFIG_PATH, '/config-path-repo');
+        $self->configTestLoad(CFGCMD_RESTORE);
+
+        $self->testResult(
+            sub {pgBackRest::Protocol::Helper::protocolParam(cfgCommandName(CFGCMD_RESTORE), CFGOPTVAL_REMOTE_TYPE_BACKUP)},
+            '(repo-host, pgbackrest, [undef], pgbackrest-repo --buffer-size=4194304 --command=restore --compress-level=6' .
+                ' --compress-level-network=3 --config=/config-repo --config-include-path=/config-include-repo' .
+                ' --config-path=/config-path-repo --pg1-path=/db1 --protocol-timeout=1830 --repo1-path=/repo --stanza=db' .
+                ' --type=backup remote)',
+            'config params to repo host');
     }
 
     ################################################################################################################################

@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# ManifestAllTest.pm - Unit tests for Manifest module
+# Unit tests for Manifest module
 ####################################################################################################################################
-package pgBackRestTest::Module::Manifest::ManifestAllTest;
+package pgBackRestTest::Module::Manifest::ManifestAllPerlTest;
 use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################

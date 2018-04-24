@@ -65,9 +65,9 @@ testRun()
 
         TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMin(cfgDefCmdBackup, cfgDefOptDbTimeout), 0.1, "range min");
         TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMax(cfgDefCmdBackup, cfgDefOptCompressLevel), 9, "range max");
-        TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMin(cfgDefCmdArchivePush, cfgDefOptArchiveQueueMax), 0, "range min");
+        TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMin(cfgDefCmdArchivePush, cfgDefOptArchivePushQueueMax), 0, "range min");
         TEST_RESULT_DOUBLE(
-            cfgDefOptionAllowRangeMax(cfgDefCmdArchivePush, cfgDefOptArchiveQueueMax), 4503599627370496, "range max");
+            cfgDefOptionAllowRangeMax(cfgDefCmdArchivePush, cfgDefOptArchivePushQueueMax), 4503599627370496, "range max");
 
         TEST_ERROR(cfgDefOptionDefault(-1, cfgDefOptCompressLevel), AssertError, commandIdInvalidLowError);
         TEST_ERROR(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptionTotal()), AssertError, optionIdInvalidHighError);

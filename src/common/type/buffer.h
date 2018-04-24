@@ -17,6 +17,8 @@ Functions
 ***********************************************************************************************************************************/
 Buffer *bufNew(size_t size);
 Buffer *bufNewStr(const String *string);
+Buffer *bufCat(Buffer *this, const Buffer *cat);
+bool bufEq(const Buffer *this, const Buffer *compare);
 Buffer *bufMove(Buffer *this, MemContext *parentNew);
 Buffer *bufResize(Buffer *this, size_t size);
 size_t bufSize(const Buffer *this);

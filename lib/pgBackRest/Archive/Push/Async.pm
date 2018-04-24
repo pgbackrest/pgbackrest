@@ -192,7 +192,7 @@ sub processQueue
                 }
 
                 # Drop any jobs that exceed the queue max
-                if (cfgOptionTest(CFGOPT_ARCHIVE_QUEUE_MAX))
+                if (cfgOptionTest(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX))
                 {
                     my $stryDropList = $self->dropList($self->readyList());
 
@@ -203,7 +203,7 @@ sub processQueue
                             $self->walStatusWrite(
                                 WAL_STATUS_OK, $strDropFile, 0,
                                 "dropped WAL file ${strDropFile} because archive queue exceeded " .
-                                    cfgOption(CFGOPT_ARCHIVE_QUEUE_MAX) . ' bytes');
+                                    cfgOption(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX) . ' bytes');
 
                             $iDropTotal++;
                         }

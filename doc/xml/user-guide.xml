@@ -42,7 +42,9 @@
         <variable key="br-home-path">/home/{[br-user]}</variable>
 
         <variable key="postgres-cluster-demo">demo</variable>
-        <variable key="backrest-config-demo">/etc/{[project-exe]}.conf</variable>
+        <variable key="backrest-config-path">/etc/{[project-exe]}</variable>
+        <variable key="backrest-config-include-path">{[backrest-config-path]}/conf.d</variable>
+        <variable key="backrest-config-demo">{[backrest-config-path]}/{[project-exe]}.conf</variable>
 
         <variable key="pg-path-default" keyword="default">/var/lib/postgresql/[version]/[cluster]</variable>
         <variable key="pg-path-default" keyword="co6">/var/lib/pgsql/[version]/data</variable>
@@ -282,6 +284,12 @@
                 <exe-cmd>chown {[br-install-user]}:{[br-install-group]} /var/log/pgbackrest</exe-cmd>
             </execute>
             <execute user="root">
+                <exe-cmd>mkdir {[backrest-config-path]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>mkdir {[backrest-config-include-path]}</exe-cmd>
+            </execute>
+            <execute user="root">
                 <exe-cmd>touch {[backrest-config-demo]}</exe-cmd>
             </execute>
             <execute user="root">
@@ -416,9 +424,11 @@
             <list>
                 <list-item>The deprecated <br-option>thread-max</br-option> option is no longer valid.  Use <br-option>process-max</br-option> instead.</list-item>
 
-                <list-item>The deprecated <br-option>archive-max-mb</br-option> option is no longer valid.  This has been replaced with the <br-option>archive-queue-max</br-option> option which has different semantics.</list-item>
+                <list-item>The deprecated <br-option>archive-max-mb</br-option> option is no longer valid.  This has been replaced with the <br-option>archive-push-queue-max</br-option> option which has different semantics.</list-item>
 
                 <list-item>The default for the <br-option>backup-user</br-option> option has changed from <id>backrest</id> to <id>pgbackrest</id>.</list-item>
+
+                <list-item>In <proper>v2.02</proper> the default location of the <backrest/> configuration file has changed from <file>/etc/pgbackrest.conf</file> to <file>/etc/pgbackrest/pgbackrest.conf</file>. If <file>/etc/pgbackrest/pgbackrest.conf</file> does not exist, the <file>/etc/pgbackrest.conf</file> file will be loaded instead, if it exists.</list-item>
             </list>
 
             <p>Many option names have changed to improve consistency although the old names from <proper>v1</proper> are still accepted.  In general, <id>db-*</id> options have been renamed to <id>pg-*</id> and <id>backup-*</id>/<id>retention-*</id> options have been renamed to <id>repo-*</id> when appropriate.</p>
@@ -555,6 +565,26 @@
             </backrest-config>
 
             <p><backrest/> configuration files follow the Windows INI convention.  Sections are denoted by text in brackets and key/value pairs are contained in each section.  Lines beginning with <id>#</id> are ignored and can be used as comments.</p>
+
+            <p>There are multiple ways the <backrest/> configuration files can be loaded:</p>
+            <list>
+                <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are default: the default config file will be loaded, if it exists, and <file>*.conf</file> files in the default config include path will be appended, if they exist.</list-item>
+                <list-item><br-option>config</br-option> option is specified: only the specified config file will be loaded and is expected to exist.</list-item>
+                <list-item><br-option>config-include-path</br-option> is specified: <file>*.conf</file> files in the config include path will be loaded and the path is required to exist. The default config file will be be loaded if it exists. If it is desireable to load only the files in the specified config include path, then the <br-option>--no-config</br-option> option can also be passed.</list-item>
+                <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are specified: using the user-specified values, the config file will be loaded and <file>*.conf</file> files in the config include path will be appended. The files are expected to exist.</list-item>
+                <list-item><br-option>config-path</br-option> is specified: this setting will override the base path for the default location of the config file and/or the base path of the default config-include-path setting unless the config and/or config-incude-path option is explicitly set.</list-item>
+            </list>
+
+            <p>The files are concatenated as if they were one big file; order doesn't matter, but there is precedence based on sections. The precedence (highest to lowest) is:</p>
+
+            <list>
+                <list-item>[<i>stanza</i>:<i>command</i>]</list-item>
+                <list-item>[<i>stanza</i>]</list-item>
+                <list-item>[global:<i>command</i>]</list-item>
+                <list-item>[global]</list-item>
+            </list>
+
+            <p><b>Note:</b> <br-option>--config</br-option>, <br-option>--config-include-path</br-option> and <br-option>--config-path</br-option> are command-line only options.</p>
         </section>
 
         <!-- SECTION => QUICKSTART - CREATE REPOSITORY -->

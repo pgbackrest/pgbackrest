@@ -116,6 +116,10 @@ use constant CFGCMD_VERSION                                         => 'version'
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_CONFIG                                          => 'config';
     push @EXPORT, qw(CFGOPT_CONFIG);
+use constant CFGOPT_CONFIG_PATH                                     => 'config-path';
+    push @EXPORT, qw(CFGOPT_CONFIG_PATH);
+use constant CFGOPT_CONFIG_INCLUDE_PATH                             => 'config-include-path';
+    push @EXPORT, qw(CFGOPT_CONFIG_INCLUDE_PATH);
 use constant CFGOPT_DELTA                                           => 'delta';
     push @EXPORT, qw(CFGOPT_DELTA);
 use constant CFGOPT_FORCE                                           => 'force';
@@ -243,6 +247,10 @@ use constant CFGOPT_REPO_HOST_CMD                                   => CFGOPT_RE
     push @EXPORT, qw(CFGOPT_REPO_HOST_CMD);
 use constant CFGOPT_REPO_HOST_CONFIG                                => CFGOPT_REPO_HOST . '-config';
     push @EXPORT, qw(CFGOPT_REPO_HOST_CONFIG);
+use constant CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH                   => CFGOPT_REPO_HOST_CONFIG . '-include-path';
+    push @EXPORT, qw(CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH);
+use constant CFGOPT_REPO_HOST_CONFIG_PATH                           => CFGOPT_REPO_HOST_CONFIG . '-path';
+    push @EXPORT, qw(CFGOPT_REPO_HOST_CONFIG_PATH);
 use constant CFGOPT_REPO_HOST_PORT                                  => CFGOPT_REPO_HOST . '-port';
     push @EXPORT, qw(CFGOPT_REPO_HOST_PORT);
 use constant CFGOPT_REPO_HOST_USER                                  => CFGOPT_REPO_HOST . '-user';
@@ -273,8 +281,8 @@ use constant CFGOPT_REPO_S3_VERIFY_SSL                              => CFGDEF_RE
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_ARCHIVE_ASYNC                                   => 'archive-async';
     push @EXPORT, qw(CFGOPT_ARCHIVE_ASYNC);
-use constant CFGOPT_ARCHIVE_QUEUE_MAX                               => 'archive-queue-max';
-    push @EXPORT, qw(CFGOPT_ARCHIVE_QUEUE_MAX);
+use constant CFGOPT_ARCHIVE_PUSH_QUEUE_MAX                          => 'archive-push-queue-max';
+    push @EXPORT, qw(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX);
 
 # Backup options
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -326,6 +334,10 @@ use constant CFGOPT_PG_HOST_CMD                                     => CFGOPT_PG
     push @EXPORT, qw(CFGOPT_PG_HOST_CMD);
 use constant CFGOPT_PG_HOST_CONFIG                                  => CFGOPT_PG_HOST . '-config';
     push @EXPORT, qw(CFGOPT_PG_HOST_CONFIG);
+use constant CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH                     => CFGOPT_PG_HOST_CONFIG . '-include-path';
+    push @EXPORT, qw(CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH);
+use constant CFGOPT_PG_HOST_CONFIG_PATH                             => CFGOPT_PG_HOST_CONFIG . '-path';
+    push @EXPORT, qw(CFGOPT_PG_HOST_CONFIG_PATH);
 use constant CFGOPT_PG_HOST_PORT                                    => CFGOPT_PG_HOST . '-port';
     push @EXPORT, qw(CFGOPT_PG_HOST_PORT);
 use constant CFGOPT_PG_HOST_USER                                    => CFGOPT_PG_HOST . '-user';
@@ -419,7 +431,9 @@ use constant CFGDEF_DEFAULT_BUFFER_SIZE_MIN                         => 16384;
 use constant CFGDEF_DEFAULT_COMPRESS_LEVEL_MIN                      => 0;
 use constant CFGDEF_DEFAULT_COMPRESS_LEVEL_MAX                      => 9;
 
-use constant CFGDEF_DEFAULT_CONFIG                                  => '/etc/' . BACKREST_CONF;
+use constant CFGDEF_DEFAULT_CONFIG_PATH                             => '/etc/pgbackrest';
+use constant CFGDEF_DEFAULT_CONFIG                                  => CFGDEF_DEFAULT_CONFIG_PATH . '/' . BACKREST_CONF;
+use constant CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH                     => CFGDEF_DEFAULT_CONFIG_PATH . '/conf.d';
 
 use constant CFGDEF_DEFAULT_DB_TIMEOUT                              => 1800;
 use constant CFGDEF_DEFAULT_DB_TIMEOUT_MIN                          => WAIT_TIME_MINIMUM;
@@ -659,6 +673,20 @@ my %hConfigDefine =
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
         }
+    },
+
+    &CFGOPT_CONFIG_INCLUDE_PATH =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_CONFIG,
+        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH,
+        &CFGDEF_NEGATE => false,
+    },
+
+    &CFGOPT_CONFIG_PATH =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_CONFIG,
+        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_PATH,
+        &CFGDEF_NEGATE => false,
     },
 
     &CFGOPT_DELTA =>
@@ -1427,6 +1455,18 @@ my %hConfigDefine =
         },
     },
 
+    &CFGOPT_REPO_HOST_CONFIG_PATH =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_HOST_CONFIG,
+        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_PATH,
+    },
+
+    &CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_HOST_CONFIG,
+        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH,
+    },
+
     &CFGOPT_REPO_HOST_PORT =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
@@ -1828,12 +1868,16 @@ my %hConfigDefine =
         }
     },
 
-    &CFGOPT_ARCHIVE_QUEUE_MAX =>
+    &CFGOPT_ARCHIVE_PUSH_QUEUE_MAX =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_SIZE,
         &CFGDEF_REQUIRED => false,
-        &CFGDEF_ALLOW_RANGE => [0, 4 * 1024 * 1024 * 1024 * 1024 * 1024], # 0-4PiB
+        &CFGDEF_NAME_ALT =>
+        {
+            'archive-queue-max' => {},
+        },
+        &CFGDEF_ALLOW_RANGE => [0, 4 * 1024 * 1024 * 1024 * 1024 * 1024], # 0-4PB
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -2109,6 +2153,18 @@ my %hConfigDefine =
         },
     },
 
+    &CFGOPT_PG_HOST_CONFIG_PATH =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_PG_HOST_CMD,
+        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_PATH,
+    },
+
+    &CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_PG_HOST_CMD,
+        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH,
+    },
+
     &CFGOPT_PG_HOST_PORT =>
     {
         &CFGDEF_INHERIT => CFGOPT_PG_HOST_CMD,
@@ -2279,6 +2335,12 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
 
         # Copy the option being inherited from
         $hConfigDefine{$strKey} = dclone($hConfigDefine{$hConfigDefine{$strKey}{&CFGDEF_INHERIT}});
+
+        # No need to copy the inheritance key
+        delete($hConfigDefine{$strKey}{&CFGDEF_INHERIT});
+
+        # It makes no sense to inherit alt names - they must be specified for each option
+        delete($hConfigDefine{$strKey}{&CFGDEF_NAME_ALT});
 
         # Apply overrides
         foreach my $strOptionDef (sort(keys(%{$hConfigDefineOverride})))

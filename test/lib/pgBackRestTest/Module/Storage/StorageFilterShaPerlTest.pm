@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# StorageFilterShaTest.pm - Tests for StorageFilterSha module.
+# Tests for StorageFilterSha module
 ####################################################################################################################################
-package pgBackRestTest::Module::Storage::StorageFilterShaTest;
+package pgBackRestTest::Module::Storage::StorageFilterShaPerlTest;
 use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################

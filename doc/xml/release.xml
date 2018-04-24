@@ -24,6 +24,16 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add support for additional <backrest/> configuration files in the directory specified by the <br-option>--config-include-path</br-option> option. Add <br-option>--config-path</br-option> option for overriding the default base path of the <br-option>--config</br-option> and <br-option>--config-include-path</br-option> option.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p>Make backup directory sync more efficient.  Scanning the entire backup directory can be very expensive if there are a lot of small tables.  The backup manifest contains the backup directory list so use it to perform syncs instead of scanning the backup directory.</p>
@@ -31,6 +41,10 @@
 
                     <release-item>
                         <p>Show command parameters as well as command options in initial info message.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Rename <br-option>archive-queue-max</br-option> option to <br-option>archive-push-queue-max</br-option> to avoid confusion with the <br-option>archive-get-queue-max</br-option> option.  The old option name will continue to be accepted.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -48,7 +62,15 @@
                     </release-item>
 
                     <release-item>
-                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageExists()</code>, <code>storagePathCreate()</code>, and <code>storageRemove()</code>.  Add <code>StorageFile</code> object and <code>storageOpenRead()</code>/<code>storageOpenWrite()</code>.  Abstract Posix driver code into a separate module.  Add <code>storagePathRemove()</code> and use it in the Perl Posix driver.</p>
+                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageCopy()</code>, <code>storageExists()</code>, <code>storageMove()</code>, <code>storageNewRead()</code>/<code>storageNewWrite()</code>, <code>storagePathCreate()</code>, <code>storagePathRemove()</code>, <code>storagePathSync()</code>, and <code>storageRemove()</code>.  Add <code>StorageFileRead</code> and <code>StorageFileWrite</code> objects.  Abstract Posix driver code into a separate module. Call <code>storagePathCreate()</code> from the Perl Posix driver.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>bufEq</code> and <code>bufCat</code> to <code>Buffer</code> object.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>THROWP_</code>* macro variants for error handling.  These macros allow an <code>ErrorType</code> pointer to be passed and are required for functions that may return different errors based on a parameter.</p>
                     </release-item>
 
                     <release-item>
@@ -73,6 +95,10 @@
 
                     <release-item>
                         <p>Start work on C handle io object and use it to output help.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Don't copy <id>CFGDEF_NAME_ALT</id> or <id>CFGDEF_INHERIT</id> when processing config option inheritance.</p>
                     </release-item>
 
                     <release-item>
@@ -145,6 +171,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>TEST_ERROR_FMT</code> macro to simplify testing of formatted error messages.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Generate code counts for all source files.  The source files are also classified by type and purpose.</p>
                     </release-item>
 
@@ -166,6 +196,14 @@
 
                     <release-item>
                         <p>Rename Perl tests so they don't conflict with their C counterparts.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Divide tests into three types (<id>unit</id>, <id>integration</id>, <id>performance</id>).  Many options that were set per test can instead be inferred from the types, i.e. <id>container</id>, <id>c</id>, <id>expect</id>, and <id>individual</id>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Try tweaking time sync settings to prevent clock drift rather than restarting <id>VBoxService</id> on every test run.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>

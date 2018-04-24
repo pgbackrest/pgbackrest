@@ -338,7 +338,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
-        CFGDEFDATA_OPTION_NAME("archive-queue-max")
+        CFGDEFDATA_OPTION_NAME("archive-push-queue-max")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeSize)
@@ -374,6 +374,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 4503599627370496)
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("archive-queue-max")
         )
     )
 
@@ -750,7 +751,98 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest.conf")
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("config-include-path")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("general")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Path to additional pgBackRest configuration files.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Configuration files existing in the specified location with extension .conf will be concatenated with the pgBackRest "
+                "configuration file, resulting in one configuration file."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRemote)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/conf.d")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("config-path")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("general")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Base path of pgBackRest configuration files.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "This setting is used to override the default base path setting for the --config and --config-include-path options "
+                "unless they are explicitly set on the command-line.\n"
+            "\n"
+            "For example, passing only --config-path=/conf/pgbackrest results in the --config default being set to "
+                "/conf/pgbackrest/pgbackrest.conf and the --config-include-path default being set to /conf/pgbackrest/conf.d."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRemote)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest")
         )
     )
 
@@ -1739,9 +1831,91 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest.conf")
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf")
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-config")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("pg-host-config-include-path")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest database host configuration include path.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Sets the location of the configuration include path on the PostgreSQL host. This is only required if the PostgreSQL "
+                "host configuration include path is in a different location than the local configuration include path."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/conf.d")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("pg-host-config-path")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest database host configuration path.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Sets the location of the configuration path on the PostgreSQL host. This is only required if the PostgreSQL host "
+                "configuration path is in a different location than the local configuration path."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
         )
     )
 
@@ -2436,9 +2610,89 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest.conf")
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf")
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-config")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-host-config-include-path")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest repository host configuration include path.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Sets the location of the configuration include path on the repository host. This is only required if the repository "
+                "host configuration include path is in a different location than the local configuration include path."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/conf.d")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-host-config-path")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest repository host configuration path.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Sets the location of the configuration path on the repository host. This is only required if the repository host "
+                "configuration path is in a different location than the local configuration path."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 

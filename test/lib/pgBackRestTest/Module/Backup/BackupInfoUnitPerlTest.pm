@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# BackupInfoUnitTest.pm - Unit tests for BackupInfo
+# Unit tests for BackupInfo
 ####################################################################################################################################
-package pgBackRestTest::Module::Backup::BackupInfoUnitTest;
+package pgBackRestTest::Module::Backup::BackupInfoUnitPerlTest;
 use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################

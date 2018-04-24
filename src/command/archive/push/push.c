@@ -49,7 +49,7 @@ walStatus(const String *walSegment, bool confessOnError)
             const String *statusFile = strLstGet(fileList, 0);
 
             String *content = strNewBuf(
-                storageGetNP(storageOpenReadNP(storageSpool(), strNewFmt("%s/%s", STORAGE_SPOOL_ARCHIVE_OUT, strPtr(statusFile)))));
+                storageGetNP(storageNewReadNP(storageSpool(), strNewFmt("%s/%s", STORAGE_SPOOL_ARCHIVE_OUT, strPtr(statusFile)))));
 
             // Get the code and message if the file has content
             int code = 0;

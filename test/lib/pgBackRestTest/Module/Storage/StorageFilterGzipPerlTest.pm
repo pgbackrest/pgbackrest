@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# StorageFilterGzipTest.pm - Tests for Storage::Filter::Gzip module.
+# Tests for Storage::Filter::Gzip module
 ####################################################################################################################################
-package pgBackRestTest::Module::Storage::StorageFilterGzipTest;
+package pgBackRestTest::Module::Storage::StorageFilterGzipPerlTest;
 use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################

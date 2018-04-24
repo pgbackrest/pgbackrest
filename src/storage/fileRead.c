@@ -1,39 +1,36 @@
 /***********************************************************************************************************************************
-String Handler
+Storage File Read
 ***********************************************************************************************************************************/
-#include <string.h>
-
 #include "common/assert.h"
-#include "common/type/buffer.h"
+#include "common/memContext.h"
+#include "storage/fileRead.h"
 
 /***********************************************************************************************************************************
-Contains information about the buffer
+Storage file structure
 ***********************************************************************************************************************************/
-struct Buffer
+struct StorageFileRead
 {
     MemContext *memContext;
-    size_t size;
-    unsigned char *buffer;
+    StorageFileReadPosix *fileDriver;
 };
 
 /***********************************************************************************************************************************
-Create a new buffer
+Create a new storage file
 ***********************************************************************************************************************************/
-Buffer *
-bufNew(size_t size)
+StorageFileRead *
+storageFileReadNew(const String *name, bool ignoreMissing, size_t bufferSize)
 {
-    Buffer *this = NULL;
+    StorageFileRead *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Buffer")
+    ASSERT_DEBUG(name != NULL);
+
+    MEM_CONTEXT_NEW_BEGIN("StorageFileRead")
     {
-        // Create object
-        this = memNew(sizeof(Buffer));
-        this->memContext = MEM_CONTEXT_NEW();
-        this->size = size;
+        this = memNew(sizeof(StorageFileRead));
+        this->memContext = memContextCurrent();
 
-        // Allocate buffer
-        if (size > 0)
-            this->buffer = memNewRaw(this->size);
+        // Call driver function
+        this->fileDriver = storageFileReadPosixNew(name, ignoreMissing, bufferSize);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -41,61 +38,32 @@ bufNew(size_t size)
 }
 
 /***********************************************************************************************************************************
-Create a new buffer from a string
-***********************************************************************************************************************************/
-Buffer *
-bufNewStr(const String *string)
-{
-    // Create object
-    Buffer *this = bufNew(strSize(string));
-
-    // Copy the data
-    memcpy(this->buffer, strPtr(string), this->size);
-
-    return this;
-}
-
-/***********************************************************************************************************************************
-Append the contents of another buffer
-***********************************************************************************************************************************/
-Buffer *
-bufCat(Buffer *this, const Buffer *cat)
-{
-    ASSERT_DEBUG(this != NULL);
-
-    if (cat != NULL && cat->size > 0)
-    {
-        size_t sizeOld = this->size;
-
-        bufResize(this, sizeOld + cat->size);
-        memcpy(this->buffer + sizeOld, cat->buffer, cat->size);
-    }
-
-    return this;
-}
-
-/***********************************************************************************************************************************
-Are two buffers equal?
+Open the file
 ***********************************************************************************************************************************/
 bool
-bufEq(const Buffer *this, const Buffer *compare)
+storageFileReadOpen(StorageFileRead *this)
 {
-    bool result = false;
-
     ASSERT_DEBUG(this != NULL);
-    ASSERT_DEBUG(compare != NULL);
 
-    if (this->size == compare->size)
-        result = memcmp(this->buffer, compare->buffer, compare->size) == 0;
-
-    return result;
+    return storageFileReadPosixOpen(this->fileDriver);
 }
 
 /***********************************************************************************************************************************
-Move buffer to a new mem context
+Read data from the file
 ***********************************************************************************************************************************/
 Buffer *
-bufMove(Buffer *this, MemContext *parentNew)
+storageFileRead(StorageFileRead *this)
+{
+    ASSERT_DEBUG(this != NULL);
+
+    return storageFileReadPosix(this->fileDriver);
+}
+
+/***********************************************************************************************************************************
+Move the file object to a new context
+***********************************************************************************************************************************/
+StorageFileRead *
+storageFileReadMove(StorageFileRead *this, MemContext *parentNew)
 {
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
@@ -104,67 +72,54 @@ bufMove(Buffer *this, MemContext *parentNew)
 }
 
 /***********************************************************************************************************************************
-Return buffer ptr
-***********************************************************************************************************************************/
-unsigned char *
-bufPtr(const Buffer *this)
-{
-    return this->buffer;
-}
-
-/***********************************************************************************************************************************
-Resize the buffer
-***********************************************************************************************************************************/
-Buffer *
-bufResize(Buffer *this, size_t size)
-{
-    // If new size is zero then free memory if allocated
-    if (size == 0)
-    {
-        if (this->buffer != NULL)
-        {
-            MEM_CONTEXT_BEGIN(this->memContext)
-            {
-                memFree(this->buffer);
-            }
-            MEM_CONTEXT_END();
-        }
-
-        this->buffer = NULL;
-        this->size = 0;
-    }
-    // Else allocate or resize
-    else
-    {
-        MEM_CONTEXT_BEGIN(this->memContext)
-        {
-            if (this->buffer == NULL)
-                this->buffer = memNew(size);
-            else
-                this->buffer = memGrowRaw(this->buffer, size);
-        }
-        MEM_CONTEXT_END();
-
-        this->size = size;
-    }
-
-    return this;
-}
-
-/***********************************************************************************************************************************
-Return buffer size
-***********************************************************************************************************************************/
-size_t
-bufSize(const Buffer *this)
-{
-    return this->size;
-}
-
-/***********************************************************************************************************************************
-Free the buffer
+Close the file
 ***********************************************************************************************************************************/
 void
-bufFree(Buffer *this)
+storageFileReadClose(StorageFileRead *this)
+{
+    ASSERT_DEBUG(this != NULL);
+
+    storageFileReadPosixClose(this->fileDriver);
+}
+
+/***********************************************************************************************************************************
+Get file driver
+***********************************************************************************************************************************/
+StorageFileReadPosix *
+storageFileReadFileDriver(const StorageFileRead *this)
+{
+    ASSERT_DEBUG(this != NULL);
+
+    return this->fileDriver;
+}
+
+/***********************************************************************************************************************************
+Should a missing file be ignored?
+***********************************************************************************************************************************/
+bool
+storageFileReadIgnoreMissing(const StorageFileRead *this)
+{
+    ASSERT_DEBUG(this != NULL);
+
+    return storageFileReadPosixIgnoreMissing(this->fileDriver);
+}
+
+/***********************************************************************************************************************************
+Get file name
+***********************************************************************************************************************************/
+const String *
+storageFileReadName(const StorageFileRead *this)
+{
+    ASSERT_DEBUG(this != NULL);
+
+    return storageFileReadPosixName(this->fileDriver);
+}
+
+/***********************************************************************************************************************************
+Free the file
+***********************************************************************************************************************************/
+void
+storageFileReadFree(StorageFileRead *this)
 {
     if (this != NULL)
         memContextFree(this->memContext);

@@ -239,7 +239,25 @@
 
                         <text>Sets the location of the configuration file on the repository host.  This is only required if the repository host configuration file is in a different location than the local configuration file.</text>
 
-                        <example>/etc/pgbackrest_backup.conf</example>
+                        <example>/conf/pgbackrest/pgbackrest.conf</example>
+                    </config-key>
+
+                    <!-- CONFIG - REPO SECTION - REPO-HOST-CONFIG-INCLUDE-PATH KEY -->
+                    <config-key id="repo-host-config-include-path" name="Repository Host Configuration Include Path">
+                        <summary><backrest/> repository host configuration include path.</summary>
+
+                        <text>Sets the location of the configuration include path on the repository host.  This is only required if the repository host configuration include path is in a different location than the local configuration include path.</text>
+
+                        <example>/conf/pgbackrest/conf.d</example>
+                    </config-key>
+
+                    <!-- CONFIG - REPO SECTION - REPO-HOST-CONFIG-PATH KEY -->
+                    <config-key id="repo-host-config-path" name="Repository Host Configuration Path">
+                        <summary><backrest/> repository host configuration path.</summary>
+
+                        <text>Sets the location of the configuration path on the repository host.  This is only required if the repository host configuration path is in a different location than the local configuration path.</text>
+
+                        <example>/conf/pgbackrest</example>
                     </config-key>
 
                     <!-- CONFIG - REPO SECTION - REPO-HOST-USER KEY -->
@@ -550,7 +568,7 @@
                     </config-key>
 
                     <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-QUEUE-MAX KEY -->
-                    <config-key id="archive-queue-max" name="Maximum Archive Queue Size">
+                    <config-key id="archive-push-queue-max" name="Maximum Archive Push Queue Size">
                         <summary>Limit size (in bytes) of the <postgres/> archive queue.</summary>
 
                         <text>After the limit is reached, the following will happen:
@@ -674,7 +692,25 @@
 
                         <text>Sets the location of the configuration file on the <postgres/> host.  This is only required if the <postgres/> host configuration file is in a different location than the local configuration file.</text>
 
-                        <example>/etc/pgbackrest_db.conf</example>
+                        <example>/conf/pgbackrest/pgbackrest.conf</example>
+                    </config-key>
+
+                    <!-- CONFIG - STANZA SECTION - PG-HOST-CONFIG-INCLUDE-PATH KEY -->
+                    <config-key id="pg-host-config-include-path" name="PostgreSQL Host Configuration Include Path">
+                        <summary><backrest/> database host configuration include path.</summary>
+
+                        <text>Sets the location of the configuration include path on the <postgres/> host.  This is only required if the <postgres/> host configuration include path is in a different location than the local configuration include path.</text>
+
+                        <example>/conf/pgbackrest/conf.d</example>
+                    </config-key>
+
+                    <!-- CONFIG - STANZA SECTION - PG-HOST-CONFIG-PATH KEY -->
+                    <config-key id="pg-host-config-path" name="PostgreSQL Host Configuration Path">
+                        <summary><backrest/> database host configuration path.</summary>
+
+                        <text>Sets the location of the configuration path on the <postgres/> host.  This is only required if the <postgres/> host configuration path is in a different location than the local configuration path.</text>
+
+                        <example>/conf/pgbackrest</example>
                     </config-key>
 
                     <!-- CONFIG - STANZA SECTION - PG-HOST KEY -->
@@ -755,7 +791,27 @@
 
                     <text>Use this option to specify a different configuration file than the default.</text>
 
-                    <example>/var/lib/backrest/pgbackrest.conf</example>
+                    <example>/conf/pgbackrest/pgbackrest.conf</example>
+                </option>
+
+                <!-- OPERATION - GENERAL - CONFIG INCLUDE PATH OPTION -->
+                <option id="config-include-path" name="Config Include Path">
+                    <summary>Path to additional <backrest/> configuration files.</summary>
+
+                    <text>Configuration files existing in the specified location with extension <file>.conf</file> will be concatenated with the <backrest/> configuration file, resulting in one configuration file.</text>
+
+                    <example>/conf/pgbackrest/conf.d</example>
+                </option>
+
+                <!-- OPERATION - GENERAL - CONFIG PATH OPTION -->
+                <option id="config-path" name="Config Path">
+                    <summary>Base path of <backrest/> configuration files.</summary>
+
+                    <text>This setting is used to override the default base path setting for the <br-option>--config</br-option> and <br-option>--config-include-path</br-option> options unless they are explicitly set on the command-line.
+
+                    For example, passing only <code>--config-path=/conf/pgbackrest</code> results in the  <br-option>--config</br-option> default being set to <code>/conf/pgbackrest/pgbackrest.conf</code> and the <br-option>--config-include-path</br-option> default being set to  <code>/conf/pgbackrest/conf.d</code>.</text>
+
+                    <example>/conf/pgbackrest</example>
                 </option>
 
                 <!-- OPERATION - GENERAL - STANZA OPTION -->

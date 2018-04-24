@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# CommonIoProcessTest.pm - tests for Common::Io::Process module
+# Tests for Common::Io::Process module
 ####################################################################################################################################
-package pgBackRestTest::Module::Common::CommonIoProcessTest;
+package pgBackRestTest::Module::Common::CommonIoProcessPerlTest;
 use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################

@@ -161,6 +161,8 @@ use constant ERROR_CIPHER                                           => 95;
 push @EXPORT, qw(ERROR_CIPHER);
 use constant ERROR_PARAM_INVALID                                    => 96;
 push @EXPORT, qw(ERROR_PARAM_INVALID);
+use constant ERROR_PATH_CLOSE                                       => 97;
+push @EXPORT, qw(ERROR_PATH_CLOSE);
 use constant ERROR_RUNTIME                                          => 122;
 push @EXPORT, qw(ERROR_RUNTIME);
 use constant ERROR_INVALID                                          => 123;
