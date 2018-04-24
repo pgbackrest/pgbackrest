@@ -3,7 +3,7 @@
 #
 # Verify that SSL certificate validation works on live S3 servers.
 ####################################################################################################################################
-package pgBackRestTest::Module::Storage::StorageS3CertTest;
+package pgBackRestTest::Module::Storage::StorageS3CertPerlTest;
 use parent 'pgBackRestTest::Env::ConfigEnvTest';
 
 ####################################################################################################################################

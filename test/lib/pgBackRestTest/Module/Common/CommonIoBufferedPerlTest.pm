@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# CommonIoBufferedTest.pm - tests for Common::Io::Buffered module
+# Tests for Common::Io::Buffered module
 ####################################################################################################################################
-package pgBackRestTest::Module::Common::CommonIoBufferedTest;
+package pgBackRestTest::Module::Common::CommonIoBufferedPerlTest;
 use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################

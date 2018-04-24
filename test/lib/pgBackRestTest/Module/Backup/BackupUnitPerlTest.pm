@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# BackupUnitTest.pm - Tests for Backup module
+# Tests for Backup module
 ####################################################################################################################################
-package pgBackRestTest::Module::Backup::BackupUnitTest;
+package pgBackRestTest::Module::Backup::BackupUnitPerlTest;
 use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################

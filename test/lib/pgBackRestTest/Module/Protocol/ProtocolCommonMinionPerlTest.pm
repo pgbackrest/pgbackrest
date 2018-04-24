@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# ProtocolCommonMinionTest.pm - tests for Protocol::Common::Minion module
+# Tests for Protocol::Common::Minion module
 ####################################################################################################################################
-package pgBackRestTest::Module::Protocol::ProtocolCommonMinionTest;
+package pgBackRestTest::Module::Protocol::ProtocolCommonMinionPerlTest;
 use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################

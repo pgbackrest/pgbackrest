@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# StorageLocalTest.pm - Tests for Storage::Local module
+# Tests for Storage::Local module
 ####################################################################################################################################
-package pgBackRestTest::Module::Storage::StorageLocalTest;
+package pgBackRestTest::Module::Storage::StorageLocalPerlTest;
 use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################

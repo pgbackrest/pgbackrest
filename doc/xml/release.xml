@@ -199,6 +199,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Divide tests into three types (<id>unit</id>, <id>integration</id>, <id>performance</id>).  Many options that were set per test can instead be inferred from the types, i.e. <id>container</id>, <id>c</id>, <id>expect</id>, and <id>individual</id>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Try tweaking time sync settings to prevent clock drift rather than restarting <id>VBoxService</id> on every test run.</p>
                     </release-item>
                 </release-development-list>
