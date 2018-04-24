@@ -86,8 +86,9 @@ convertToByte(String **value, double *valueDbl)
         if (strArray[size - 1] == 'b')
         {
             // If the previous character is a number, then the letter to look at is b which is the last position else it is in the
-            // next to last position (e.g. bb - so the k is the position of interest)
-            if (strArray[size - 2] >= '0' &&  strArray[size - 2] <= '9')
+            // next to last position (e.g. kb - so the k is the position of interest).  Only need to test for <= 9 since the regex
+            // enforces the format.
+            if (strArray[size - 2] <= '9')
                 chrPos = (int)(size - 1);
             else
                 chrPos = (int)(size - 2);
@@ -96,11 +97,11 @@ convertToByte(String **value, double *valueDbl)
         else if (strArray[size - 1] > '9')
             chrPos = (int)(size - 1);
 
-        // If a letter was found, then truncate and convert to bytes, else do nothing since assumed value is already in bytes
+        double multiplier = 1;
+
+        // If a letter was found, then truncate, else do nothing since assumed value is already in bytes
         if (chrPos != -1)
         {
-            double multiplier = 1;
-
             if (strArray[chrPos] != 'b')
             {
                 switch (strArray[chrPos])
@@ -126,20 +127,22 @@ convertToByte(String **value, double *valueDbl)
                         break;
 
                     default:
-                        THROW(                                      // {uncoverable - regex covers all cases}
+                        THROW(                                      // {uncoverable - regex covers all cases but default required}
                             AssertError, "character %c is not a valid type", strArray[chrPos]);
                 }
             }
 
-            // Remove any letters and update the values
+            // Remove any letters
             strTrunc(result, chrPos);
-            double newDbl = varDblForce(varNewStr(result)) * multiplier;
-            result = varStrForce(varNewDbl(newDbl));
-
-            // If nothing has blown up then safe to overwrite the original values
-            *valueDbl = newDbl;
-            *value = result;
         }
+
+        // Convert string to bytes
+        double newDbl = varDblForce(varNewStr(result)) * multiplier;
+        result = varStrForce(varNewDbl(newDbl));
+
+        // If nothing has blown up then safe to overwrite the original values
+        *valueDbl = newDbl;
+        *value = result;
     }
     else
         THROW(FormatError, "value '%s' is not valid", strPtr(*value));
@@ -701,15 +704,6 @@ configParse(unsigned int argListSize, const char *argList[])
                         {
                             String *value = strLstGet(parseOption->valueList, 0);
 
-                            // If the option has an allow list then check it
-                            if (cfgDefOptionAllowList(commandDefId, optionDefId) &&
-                                !cfgDefOptionAllowListValueValid(commandDefId, optionDefId, strPtr(value)))
-                            {
-                                THROW(
-                                    OptionInvalidValueError, "'%s' is not valid for '%s' option", strPtr(value),
-                                    cfgOptionName(optionId));
-                            }
-
                             // If a numeric type check that the value is valid
                             if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeFloat || optionDefType == cfgDefOptTypeSize)
                             {
@@ -732,7 +726,7 @@ configParse(unsigned int argListSize, const char *argList[])
                                 }
                                 CATCH(AssertError)
                                 {
-                                    RETHROW();
+                                    RETHROW();                      // {uncovered - asserts can't currently happen here this is JIC}
                                 }
                                 CATCH_ANY()
                                 {
@@ -748,9 +742,18 @@ configParse(unsigned int argListSize, const char *argList[])
                                      valueDbl > cfgDefOptionAllowRangeMax(commandDefId, optionDefId)))
                                 {
                                     THROW(
-                                        OptionInvalidValueError, "'%s' is not valid for '%s' option", strPtr(value),
+                                        OptionInvalidValueError, "'%s' is out of range for '%s' option", strPtr(value),
                                         cfgOptionName(optionId));
                                 }
+                            }
+
+                            // If the option has an allow list then check it
+                            if (cfgDefOptionAllowList(commandDefId, optionDefId) &&
+                                !cfgDefOptionAllowListValueValid(commandDefId, optionDefId, strPtr(value)))
+                            {
+                                THROW(
+                                    OptionInvalidValueError, "'%s' is not allowed for '%s' option", strPtr(value),
+                                    cfgOptionName(optionId));
                             }
 
                             cfgOptionSet(optionId, parseOption->source, varNewStr(value));

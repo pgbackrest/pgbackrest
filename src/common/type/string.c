@@ -402,7 +402,7 @@ strTrim(String *this)
 }
 
 /***********************************************************************************************************************************
-Return the index to the location of the character within a string, else -1
+Return the index to the location of the the first occurrence of a character within a string, else -1
 ***********************************************************************************************************************************/
 int
 strChr(const String *this, char chr)
@@ -420,7 +420,7 @@ strChr(const String *this, char chr)
 }
 
 /***********************************************************************************************************************************
-Truncate the end of a string given an index to a location within the string
+Truncate the end of a string from the index provided to the current end (e.g. 123KB pass index of K returns 123)
 ***********************************************************************************************************************************/
 String *
 strTrunc(String *this, int idx)
@@ -431,8 +431,8 @@ strTrunc(String *this, int idx)
 
     if (this->size > 0)
     {
-        // Reset the size to end at the
-        this->size = (size_t)(idx + 1);
+        // Reset the size to end at the index
+        this->size = (size_t)(idx);
         this->buffer[this->size] = 0;
 
         MEM_CONTEXT_BEGIN(this->memContext)

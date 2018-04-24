@@ -156,15 +156,21 @@ testRun()
     // *****************************************************************************************************************************
     if (testBegin("strChr(), strTrunc()"))
     {
-        TEST_RESULT_STR(strChr(strNew("abcd"), 'c'), "cd", "c found");
-        TEST_RESULT_STR(strChr(strNew("abcd"), 'C'), NULL, "capital C not found");
-        TEST_RESULT_STR(strChr(strNew("abcd"), 'i'), NULL, "i not found");
-
+        TEST_RESULT_INT(strChr(strNew("abcd"), 'c'), 2, "c found");
+        TEST_RESULT_INT(strChr(strNew("abcd"), 'C'), -1, "capital C not found");
+        TEST_RESULT_INT(strChr(strNew("abcd"), 'i'), -1, "i not found");
+        TEST_RESULT_INT(strChr(strNew(""), 'x'), -1, "empty string - x not found");
 
         String *val = strNew("abcdef");
+        TEST_ERROR(strTrunc(val, (int)(strSize(val) + 1)), AssertError, "index passed is outside the string boundaries");
+        TEST_ERROR(strTrunc(val, -1), AssertError, "index passed is outside the string boundaries");
+
         TEST_RESULT_STR(strPtr(strTrunc(val, strChr(val, 'd'))), "abc", "simple string truncated");
         strCat(val, "\r\n to end");
         TEST_RESULT_STR(strPtr(strTrunc(val, strChr(val, 'n'))), "abc\r\n to e", "complex string truncated");
         TEST_RESULT_STR(strPtr(strTrunc(val, strChr(val, 'a'))), "", "complete string truncated - empty string");
+
+        TEST_RESULT_INT(strSize(val), 0, "0 size");
+        TEST_RESULT_STR(strPtr(strTrunc(val, 0)), "", "test coverage of empty string - no error thrown for index 0");
     }
 }
