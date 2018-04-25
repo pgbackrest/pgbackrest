@@ -131,11 +131,11 @@ convertToByte(String **value, double *valueDbl)
                         break;
 
                     case 't':
-                        multiplier = 1024L * 1024L * 1024L * 1024L;
+                        multiplier = 1024LL * 1024LL * 1024LL * 1024LL;
                         break;
 
                     case 'p':
-                        multiplier = 1024L * 1024L * 1024L * 1024L * 1024L;
+                        multiplier = 1024LL * 1024LL * 1024LL * 1024LL * 1024LL;
                         break;
 
                     default:
