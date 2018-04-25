@@ -66,6 +66,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>String object improvements.  Add <code>strUpper</code>, <code>strLower</code>, <code>strChr</code>, and <code>strTrunc</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>bufEq</code> and <code>bufCat</code> to <code>Buffer</code> object.</p>
                     </release-item>
 

@@ -294,6 +294,32 @@ strFirstLower(String *this)
 }
 
 /***********************************************************************************************************************************
+Upper-case entire string
+***********************************************************************************************************************************/
+String *
+strUpper(String *this)
+{
+    if (this->size > 0)
+        for (unsigned int idx = 0; idx <= this->size; idx++)
+            this->buffer[idx] = (char)toupper(this->buffer[idx]);
+
+    return this;
+}
+
+/***********************************************************************************************************************************
+Upper-case entire string
+***********************************************************************************************************************************/
+String *
+strLower(String *this)
+{
+    if (this->size > 0)
+        for (unsigned int idx = 0; idx <= this->size; idx++)
+            this->buffer[idx] = (char)tolower(this->buffer[idx]);
+
+    return this;
+}
+
+/***********************************************************************************************************************************
 Return the path part of a string (i.e. everything before the last / or "" if there is no /)
 ***********************************************************************************************************************************/
 String *
@@ -331,7 +357,7 @@ strSize(const String *this)
 }
 
 /***********************************************************************************************************************************
-Return string size
+Trim whitespace from the beginnning and end of a string
 ***********************************************************************************************************************************/
 String *
 strTrim(String *this)
@@ -370,6 +396,51 @@ strTrim(String *this)
             }
             MEM_CONTEXT_END();
         }
+    }
+
+    return this;
+}
+
+/***********************************************************************************************************************************
+Return the index to the location of the the first occurrence of a character within a string, else -1
+***********************************************************************************************************************************/
+int
+strChr(const String *this, char chr)
+{
+    int result = -1;
+
+    if (this->size > 0)
+    {
+        const char *ptr = strchr(this->buffer, chr);
+        if (ptr != NULL)
+            result =  (int)(ptr - this->buffer);
+    }
+
+    return result;
+}
+
+/***********************************************************************************************************************************
+Truncate the end of a string from the index provided to the current end (e.g. 123KB pass index of K returns 123)
+***********************************************************************************************************************************/
+String *
+strTrunc(String *this, int idx)
+{
+    // If the index position is outside the array boundaries then error
+    if (idx < 0 || (size_t)idx > this->size)
+        THROW(AssertError, "index passed is outside the string boundaries");
+
+    if (this->size > 0)
+    {
+        // Reset the size to end at the index
+        this->size = (size_t)(idx);
+        this->buffer[this->size] = 0;
+
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            // Resize the buffer
+            this->buffer = memGrowRaw(this->buffer, this->size + 1);
+        }
+        MEM_CONTEXT_END();
     }
 
     return this;
