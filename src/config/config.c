@@ -390,6 +390,7 @@ cfgOptionDefault(ConfigOption optionId)
                         }
 
                         case cfgDefOptTypeInteger:
+                        case cfgDefOptTypeSize:
                         {
                             configOptionValue[optionId].defaultValue = varNewInt64(varInt64Force(defaultValue));
                             break;

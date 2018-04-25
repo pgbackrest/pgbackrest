@@ -807,7 +807,7 @@ configParse(unsigned int argListSize, const char *argList[])
                                         case cfgDefOptTypeHash:
                                         case cfgDefOptTypeInteger:
                                         case cfgDefOptTypeList:
-                                        case cfgDefOptTypeSize:  // CSHANG
+                                        case cfgDefOptTypeSize:
                                         {
                                             strLstAddZ(dependValueList, dependValue);   // {uncovered - no depends of other types}
                                             break;                                      // {+uncovered}

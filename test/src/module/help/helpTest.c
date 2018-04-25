@@ -220,7 +220,10 @@ testRun()
             "\n"
             "Set the buffer size used for copy, compress, and uncompress functions. A\n"
             "maximum of 3 buffers will be in use at a time per process. An additional\n"
-            "maximum of 256K per process may be used for zlib buffers.\n",
+            "maximum of 256K per process may be used for zlib buffers.\n"
+            "\n"
+            "Size entered can be in bytes (default) or KB, MB, GB, TB or PB where the\n"
+            "multiplier is a power of 1024.\n",
             helpVersion));
 
         argList = strLstNew();

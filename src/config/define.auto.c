@@ -363,7 +363,9 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "is exceeded again.\n"
             "\n"
             "The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop "
-                "completely. Better to lose the backup than have PostgreSQL go down."
+                "completely. Better to lose the backup than have PostgreSQL go down.\n"
+            "\n"
+            "Size entered can be in bytes (default) or KB, MB, GB, TB or PB where the multiplier is a power of 1024."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -464,7 +466,9 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Set the buffer size used for copy, compress, and uncompress functions. A maximum of 3 buffers will be in use at a "
-                "time per process. An additional maximum of 256K per process may be used for zlib buffers."
+                "time per process. An additional maximum of 256K per process may be used for zlib buffers.\n"
+            "\n"
+            "Size entered can be in bytes (default) or KB, MB, GB, TB or PB where the multiplier is a power of 1024."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1481,7 +1485,9 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "Defines how often the manifest will be saved during a backup (in bytes). Saving the manifest is important because it "
                 "stores the checksums and allows the resume function to work efficiently. The actual threshold used is 1% of the "
-                "backup size or manifest-save-threshold, whichever is greater."
+                "backup size or manifest-save-threshold, whichever is greater.\n"
+            "\n"
+            "Size entered can be in bytes (default) or KB, MB, GB, TB or PB where the multiplier is a power of 1024."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
