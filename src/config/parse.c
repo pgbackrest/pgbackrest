@@ -10,6 +10,7 @@ Command and Option Parse
 #include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/regExp.h"
 #include "config/parse.h"
 #include "storage/helper.h"
 #include "version.h"
@@ -77,6 +78,86 @@ optionFind(const String *option)
     }
 
     return optionIdx;
+}
+
+/***********************************************************************************************************************************
+Convert the value passed into bytes and update valueDbl for range checking
+***********************************************************************************************************************************/
+void
+convertToByte(String **value, double *valueDbl)
+{
+    String *result = strLower(strDup(*value));
+    if (regExpMatchOne(strNew("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p|b)*$"), result))
+    {
+        // Get the character array and size
+        const char *strArray = strPtr(result);
+        size_t size = strSize(result);
+        int chrPos = -1;
+
+        // If there is a b on the end, then see if the previous character is a number
+        if (strArray[size - 1] == 'b')
+        {
+            // If the previous character is a number, then the letter to look at is b which is the last position else it is in the
+            // next to last position (e.g. kb - so the k is the position of interest).  Only need to test for <= 9 since the regex
+            // enforces the format.
+            if (strArray[size - 2] <= '9')
+                chrPos = (int)(size - 1);
+            else
+                chrPos = (int)(size - 2);
+        }
+        // else if there is no b at the end but the last position is not a number then it must be one of the letters, e.g. k
+        else if (strArray[size - 1] > '9')
+            chrPos = (int)(size - 1);
+
+        double multiplier = 1;
+
+        // If a letter was found, then truncate, else do nothing since assumed value is already in bytes
+        if (chrPos != -1)
+        {
+            if (strArray[chrPos] != 'b')
+            {
+                switch (strArray[chrPos])
+                {
+                    case 'k':
+                        multiplier = 1024;
+                        break;
+
+                    case 'm':
+                        multiplier = 1024 * 1024;
+                        break;
+
+                    case 'g':
+                        multiplier = 1024 * 1024 * 1024;
+                        break;
+
+                    case 't':
+                        multiplier = 1024LL * 1024LL * 1024LL * 1024LL;
+                        break;
+
+                    case 'p':
+                        multiplier = 1024LL * 1024LL * 1024LL * 1024LL * 1024LL;
+                        break;
+
+                    default:
+                        THROW(                                      // {uncoverable - regex covers all cases but default required}
+                            AssertError, "character %c is not a valid type", strArray[chrPos]);
+                }
+            }
+
+            // Remove any letters
+            strTrunc(result, chrPos);
+        }
+
+        // Convert string to bytes
+        double newDbl = varDblForce(varNewStr(result)) * multiplier;
+        result = varStrForce(varNewDbl(newDbl));
+
+        // If nothing has blown up then safe to overwrite the original values
+        *valueDbl = newDbl;
+        *value = result;
+    }
+    else
+        THROW(FormatError, "value '%s' is not valid", strPtr(*value));
 }
 
 /***********************************************************************************************************************************
@@ -726,6 +807,7 @@ configParse(unsigned int argListSize, const char *argList[])
                                         case cfgDefOptTypeHash:
                                         case cfgDefOptTypeInteger:
                                         case cfgDefOptTypeList:
+                                        case cfgDefOptTypeSize:
                                         {
                                             strLstAddZ(dependValueList, dependValue);   // {uncovered - no depends of other types}
                                             break;                                      // {+uncovered}
@@ -786,27 +868,29 @@ configParse(unsigned int argListSize, const char *argList[])
                         {
                             String *value = strLstGet(parseOption->valueList, 0);
 
-                            // If the option has an allow list then check it
-                            if (cfgDefOptionAllowList(commandDefId, optionDefId) &&
-                                !cfgDefOptionAllowListValueValid(commandDefId, optionDefId, strPtr(value)))
-                            {
-                                THROW(
-                                    OptionInvalidValueError, "'%s' is not valid for '%s' option", strPtr(value),
-                                    cfgOptionName(optionId));
-                            }
-
                             // If a numeric type check that the value is valid
-                            if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeFloat)
+                            if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeFloat || optionDefType == cfgDefOptTypeSize)
                             {
                                 double valueDbl = 0;
 
                                 // Check that the value can be converted
                                 TRY_BEGIN()
                                 {
+
                                     if (optionDefType == cfgDefOptTypeInteger)
+                                    {
                                         valueDbl = (double)varInt64Force(varNewStr(value));
+                                    }
+                                    else if (optionDefType == cfgDefOptTypeSize)
+                                    {
+                                        convertToByte(&value, &valueDbl);
+                                    }
                                     else
                                         valueDbl = varDblForce(varNewStr(value));
+                                }
+                                CATCH(AssertError)
+                                {
+                                    RETHROW();                      // {uncovered - asserts can't currently happen here this is JIC}
                                 }
                                 CATCH_ANY()
                                 {
@@ -822,9 +906,18 @@ configParse(unsigned int argListSize, const char *argList[])
                                      valueDbl > cfgDefOptionAllowRangeMax(commandDefId, optionDefId)))
                                 {
                                     THROW(
-                                        OptionInvalidValueError, "'%s' is not valid for '%s' option", strPtr(value),
+                                        OptionInvalidValueError, "'%s' is out of range for '%s' option", strPtr(value),
                                         cfgOptionName(optionId));
                                 }
+                            }
+
+                            // If the option has an allow list then check it
+                            if (cfgDefOptionAllowList(commandDefId, optionDefId) &&
+                                !cfgDefOptionAllowListValueValid(commandDefId, optionDefId, strPtr(value)))
+                            {
+                                THROW(
+                                    OptionInvalidValueError, "'%s' is not allowed for '%s' option", strPtr(value),
+                                    cfgOptionName(optionId));
                             }
 
                             cfgOptionSet(optionId, parseOption->source, varNewStr(value));

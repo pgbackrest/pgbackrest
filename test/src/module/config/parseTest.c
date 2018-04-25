@@ -453,6 +453,89 @@ testRun()
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("convertToByte()"))
+    {
+        double valueDbl = 0;
+        String *value = strNew("10.0");
+
+        TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value '10.0' is not valid");
+        strTrunc(value, strChr(value, '.'));
+        strCat(value, "K2");
+        TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value '10K2' is not valid");
+        strTrunc(value, strChr(value, '1'));
+        strCat(value, "ab");
+        TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value 'ab' is not valid");
+
+        strTrunc(value, strChr(value, 'a'));
+        strCat(value, "10");
+        convertToByte(&value, &valueDbl);
+        TEST_RESULT_DOUBLE(valueDbl, 10, "valueDbl no character identifier - straight to bytes");
+        TEST_RESULT_STR(strPtr(value), "10", "value no character identifier - straight to bytes");
+
+        strCat(value, "B");
+        convertToByte(&value, &valueDbl);
+        TEST_RESULT_DOUBLE(valueDbl, 10, "valueDbl B to bytes");
+        TEST_RESULT_STR(strPtr(value), "10", "value B to bytes");
+
+        strCat(value, "Kb");
+        convertToByte(&value, &valueDbl);
+        TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl KB to bytes");
+        TEST_RESULT_STR(strPtr(value), "10240", "value KB to bytes");
+
+        strTrunc(value, strChr(value, '2'));
+        strCat(value, "k");
+        convertToByte(&value, &valueDbl);
+        TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl k to bytes");
+        TEST_RESULT_STR(strPtr(value), "10240", "value k to bytes");
+
+        strCat(value, "pB");
+        convertToByte(&value, &valueDbl);
+        TEST_RESULT_DOUBLE(valueDbl, 11529215046068469760U, "valueDbl Pb to bytes");
+        TEST_RESULT_STR(strPtr(value), "11529215046068469760", "value Pb to bytes");
+
+        strTrunc(value, strChr(value, '5'));
+        strCat(value, "GB");
+        convertToByte(&value, &valueDbl);
+        TEST_RESULT_DOUBLE(valueDbl, 11811160064U, "valueDbl GB to bytes");
+        TEST_RESULT_STR(strPtr(value), "11811160064", "value GB to bytes");
+
+        strTrunc(value, strChr(value, '8'));
+        strCat(value, "g");
+        convertToByte(&value, &valueDbl);
+        TEST_RESULT_DOUBLE(valueDbl, 11811160064U, "valueDbl g to bytes");
+        TEST_RESULT_STR(strPtr(value), "11811160064", "value g to bytes");
+
+        strTrunc(value, strChr(value, '8'));
+        strCat(value, "T");
+        convertToByte(&value, &valueDbl);
+        TEST_RESULT_DOUBLE(valueDbl, 12094627905536U, "valueDbl T to bytes");
+        TEST_RESULT_STR(strPtr(value), "12094627905536", "value T to bytes");
+
+        strTrunc(value, strChr(value, '0'));
+        strCat(value, "tb");
+        convertToByte(&value, &valueDbl);
+        TEST_RESULT_DOUBLE(valueDbl, 13194139533312U, "valueDbl tb to bytes");
+        TEST_RESULT_STR(strPtr(value), "13194139533312", "value tb to bytes");
+
+        strTrunc(value, strChr(value, '3'));
+        strCat(value, "0m");
+        convertToByte(&value, &valueDbl);
+        TEST_RESULT_DOUBLE(valueDbl, 10485760, "valueDbl m to bytes");
+        TEST_RESULT_STR(strPtr(value), "10485760", "value m to bytes");
+
+        strCat(value, "mb");
+        convertToByte(&value, &valueDbl);
+        TEST_RESULT_DOUBLE(valueDbl, 10995116277760U, "valueDbl mb to bytes");
+        TEST_RESULT_STR(strPtr(value), "10995116277760", "value mb to bytes");
+
+        strTrunc(value, strChr(value, '0'));
+        strCat(value, "99999999999999999999p");
+        convertToByte(&value, &valueDbl);
+        TEST_RESULT_STR(strPtr(value), "225179981368524800000000000000000000", "value really large  to bytes");
+
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("configParse()"))
     {
         StringList *argList = NULL;
@@ -543,7 +626,23 @@ testRun()
         strLstAdd(argList, strNew("--online"));
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList)), CommandRequiredError, "no command found");
 
-        // Local and remote commands should not modify log levels during parsing
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAdd(argList, strNew("--manifest-save-threshold=123Q"));
+        TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
+            "'123Q' is not valid for 'manifest-save-threshold' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAdd(argList, strNew("--manifest-save-threshold=199999999999999999999p"));
+        TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
+            "'225179981368524800000000000000000000' is out of range for 'manifest-save-threshold' option");
+
+        // Local and remove commands should not modify log levels during parsing
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -683,7 +782,7 @@ testRun()
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
-            "'bogus' is not valid for 'type' option");
+            "'bogus' is not allowed for 'type' option");
 
         // Lower and upper bounds for integer ranges
         // -------------------------------------------------------------------------------------------------------------------------
@@ -695,7 +794,7 @@ testRun()
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
-            "'0' is not valid for 'process-max' option");
+            "'0' is out of range for 'process-max' option");
 
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
@@ -705,7 +804,7 @@ testRun()
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
-            "'65536' is not valid for 'process-max' option");
+            "'65536' is out of range for 'process-max' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -727,7 +826,7 @@ testRun()
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
-            "'.01' is not valid for 'protocol-timeout' option");
+            "'.01' is out of range for 'protocol-timeout' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -956,6 +1055,7 @@ testRun()
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--archive-push-queue-max=4503599627370496"));
+        strLstAdd(argList, strNew("--buffer-size=2MB"));
         strLstAdd(argList, strNew("archive-push"));
 
         storagePutNP(storageNewWriteNP(storageLocalWrite(), configFile), bufNewStr(strNew(
@@ -967,6 +1067,8 @@ testRun()
 
         TEST_RESULT_INT(cfgOptionInt64(cfgOptArchivePushQueueMax), 4503599627370496, "archive-push-queue-max is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptArchivePushQueueMax), cfgSourceParam, "    archive-push-queue-max is source config");
+        TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 2097152, "buffer-size is set to bytes from MB");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceParam, "    buffer-size is source config");
         TEST_RESULT_PTR(cfgOption(cfgOptSpoolPath), NULL, "    spool-path is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptSpoolPath), cfgSourceDefault, "    spool-path is source default");
 

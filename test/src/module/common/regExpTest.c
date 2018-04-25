@@ -28,5 +28,6 @@ testRun()
         TEST_ERROR(regExpMatchOne(strNew("[[["), strNew("")), FormatError, "Unmatched [ or [^");
         TEST_RESULT_BOOL(regExpMatchOne(strNew("^abc"), strNew("abcdef")), true, "match regexp");
         TEST_RESULT_BOOL(regExpMatchOne(strNew("^abc"), strNew("bcdef")), false, "no match regexp");
+        TEST_RESULT_BOOL(regExpMatchOne(strNew("^[0-9]+(b|B|kB)$"), strNew("345kB")), true, "yes match regexp");
     }
 }

@@ -119,7 +119,7 @@ testRun()
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strFirstUpper() and strFirstLower()"))
+    if (testBegin("strFirstUpper(), strFirstLower(), strUpper(), strLower()"))
     {
         TEST_RESULT_STR(strPtr(strFirstUpper(strNew(""))), "", "empty first upper");
         TEST_RESULT_STR(strPtr(strFirstUpper(strNew("aaa"))), "Aaa", "first upper");
@@ -128,6 +128,16 @@ testRun()
         TEST_RESULT_STR(strPtr(strFirstLower(strNew(""))), "", "empty first lower");
         TEST_RESULT_STR(strPtr(strFirstLower(strNew("AAA"))), "aAA", "first lower");
         TEST_RESULT_STR(strPtr(strFirstLower(strNew("aAA"))), "aAA", "first already lower");
+
+        TEST_RESULT_STR(strPtr(strLower(strNew("K123aBc"))), "k123abc", "all lower");
+        TEST_RESULT_STR(strPtr(strLower(strNew("k123abc"))), "k123abc", "already lower");
+        TEST_RESULT_STR(strPtr(strLower(strNew("C"))), "c", "char lower");
+        TEST_RESULT_STR(strPtr(strLower(strNew(""))), "", "empty lower");
+
+        TEST_RESULT_STR(strPtr(strUpper(strNew("K123aBc"))), "K123ABC", "all upper");
+        TEST_RESULT_STR(strPtr(strUpper(strNew("K123ABC"))), "K123ABC", "already upper");
+        TEST_RESULT_STR(strPtr(strUpper(strNew("c"))), "C", "char upper");
+        TEST_RESULT_STR(strPtr(strUpper(strNew(""))), "", "empty upper");
     }
 
     // *****************************************************************************************************************************
@@ -141,5 +151,26 @@ testRun()
         TEST_RESULT_STR(strPtr(strTrim(strNew("end-only\t "))), "end-only", "trim end");
         TEST_RESULT_STR(strPtr(strTrim(strNew("\n\rboth\r\n"))), "both", "trim both");
         TEST_RESULT_STR(strPtr(strTrim(strNew("begin \r\n\tend"))), "begin \r\n\tend", "ignore whitespace in middle");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("strChr(), strTrunc()"))
+    {
+        TEST_RESULT_INT(strChr(strNew("abcd"), 'c'), 2, "c found");
+        TEST_RESULT_INT(strChr(strNew("abcd"), 'C'), -1, "capital C not found");
+        TEST_RESULT_INT(strChr(strNew("abcd"), 'i'), -1, "i not found");
+        TEST_RESULT_INT(strChr(strNew(""), 'x'), -1, "empty string - x not found");
+
+        String *val = strNew("abcdef");
+        TEST_ERROR(strTrunc(val, (int)(strSize(val) + 1)), AssertError, "index passed is outside the string boundaries");
+        TEST_ERROR(strTrunc(val, -1), AssertError, "index passed is outside the string boundaries");
+
+        TEST_RESULT_STR(strPtr(strTrunc(val, strChr(val, 'd'))), "abc", "simple string truncated");
+        strCat(val, "\r\n to end");
+        TEST_RESULT_STR(strPtr(strTrunc(val, strChr(val, 'n'))), "abc\r\n to e", "complex string truncated");
+        TEST_RESULT_STR(strPtr(strTrunc(val, strChr(val, 'a'))), "", "complete string truncated - empty string");
+
+        TEST_RESULT_INT(strSize(val), 0, "0 size");
+        TEST_RESULT_STR(strPtr(strTrunc(val, 0)), "", "test coverage of empty string - no error thrown for index 0");
     }
 }
