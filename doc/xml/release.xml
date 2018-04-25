@@ -40,6 +40,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Update the <br-option>archive-push-queue-max</br-option>, <br-option>manifest-save-threshold</br-option>, and <br-option>buffer-size</br-option> options to accept values in <id>KB</id>, <id>MB</id>, <id>GB</id>, <id>TB</id>, or <id>PB</id> where the multiplier is a power of <id>1024</id>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Show command parameters as well as command options in initial info message.</p>
                     </release-item>
 

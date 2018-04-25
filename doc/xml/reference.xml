@@ -99,10 +99,11 @@
                     <config-key id="buffer-size" name="Buffer Size">
                         <summary>Buffer size for file operations.</summary>
 
-                        <text>Set the buffer size used for copy, compress, and uncompress functions.  A maximum of 3 buffers will be in use at a time per process.  An additional maximum of 256K per process may be used for zlib buffers.</text>
+                        <text>Set the buffer size used for copy, compress, and uncompress functions.  A maximum of 3 buffers will be in use at a time per process.  An additional maximum of 256K per process may be used for zlib buffers.
 
-                        <allow>16384 - 8388608</allow>
-                        <example>32768</example>
+                        Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024.</text>
+
+                        <example>32K</example>
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - CMD-SSH KEY -->
@@ -513,9 +514,11 @@
                     <config-key id="manifest-save-threshold" name="Manifest Save Threshold">
                         <summary>Manifest save threshold during backup.</summary>
 
-                        <text>Defines how often the manifest will be saved during a backup (in bytes).  Saving the manifest is important because it stores the checksums and allows the resume function to work efficiently.  The actual threshold used is 1% of the backup size or <setting>manifest-save-threshold</setting>, whichever is greater.</text>
+                        <text>Defines how often the manifest will be saved during a backup (in bytes).  Saving the manifest is important because it stores the checksums and allows the resume function to work efficiently.  The actual threshold used is 1% of the backup size or <setting>manifest-save-threshold</setting>, whichever is greater.
 
-                        <example>5368709120</example>
+                        Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024.</text>
+
+                        <example>5G</example>
                     </config-key>
 
                     <!-- CONFIG - BACKUP SECTION - RESUME -->
@@ -580,9 +583,11 @@
 
                         In asynchronous mode the entire queue will be dropped to prevent spurts of WAL getting through before the queue limit is exceeded again.
 
-                        The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have <postgres/> go down.</text>
+                        The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have <postgres/> go down.
 
-                        <example>1073741824</example>
+                        Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024.</text>
+
+                        <example>1GB</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->

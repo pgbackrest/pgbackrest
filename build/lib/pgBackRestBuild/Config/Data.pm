@@ -540,6 +540,8 @@ use constant CFGDEF_TYPE_LIST                                       => 'list';
     push @EXPORT, qw(CFGDEF_TYPE_LIST);
 use constant CFGDEF_TYPE_STRING                                     => 'string';
     push @EXPORT, qw(CFGDEF_TYPE_STRING);
+use constant CFGDEF_TYPE_SIZE                                       => 'size';
+    push @EXPORT, qw(CFGDEF_TYPE_SIZE);
 
 # Option config sections
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -1055,7 +1057,7 @@ my %hConfigDefine =
     &CFGOPT_BUFFER_SIZE =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_TYPE => CFGDEF_TYPE_SIZE,
         &CFGDEF_DEFAULT => COMMON_IO_BUFFER_MAX,
         &CFGDEF_ALLOW_LIST =>
         [
@@ -1869,7 +1871,7 @@ my %hConfigDefine =
     &CFGOPT_ARCHIVE_PUSH_QUEUE_MAX =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_TYPE => CFGDEF_TYPE_SIZE,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
@@ -1947,7 +1949,7 @@ my %hConfigDefine =
     &CFGOPT_MANIFEST_SAVE_THRESHOLD =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_TYPE => CFGDEF_TYPE_SIZE,
         &CFGDEF_DEFAULT => 1 * 1024 * 1024 * 1024,
         &CFGDEF_ALLOW_RANGE => [1, 1024 * 1024 * 1024 * 1024],      # 1-1TB
         &CFGDEF_COMMAND =>
@@ -2428,7 +2430,8 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
 
     # All int and float options must have an allow range
     if (($hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_INTEGER ||
-         $hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_FLOAT) &&
+         $hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_FLOAT ||
+         $hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_SIZE) &&
          !(defined($hConfigDefine{$strKey}{&CFGDEF_ALLOW_RANGE}) || defined($hConfigDefine{$strKey}{&CFGDEF_ALLOW_LIST})))
     {
         confess &log(ASSERT, "int/float option '${strKey}' must have allow range or list");
