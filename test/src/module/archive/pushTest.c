@@ -6,6 +6,8 @@ Test Archive Push Command
 #include "config/load.h"
 #include "version.h"
 
+#include "common/harnessConfig.h"
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -22,8 +24,7 @@ testRun()
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "archive-push");
-        cfgLoad(strLstSize(argList), strLstPtr(argList));
-        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *segment = strNew("000000010000000100000001");
@@ -39,28 +40,28 @@ testRun()
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
-            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewStr(strNew(BOGUS_STR)));
         TEST_ERROR(walStatus(segment, false), FormatError, "000000010000000100000001.ok content must have at least two lines");
 
         storagePutNP(
-            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewStr(strNew(BOGUS_STR "\n")));
         TEST_ERROR(walStatus(segment, false), FormatError, "000000010000000100000001.ok message must be > 0");
 
         storagePutNP(
-            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewStr(strNew(BOGUS_STR "\nmessage")));
         TEST_ERROR(walStatus(segment, false), FormatError, "unable to convert str 'BOGUS' to int");
 
         storagePutNP(
-            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewStr(strNew("0\nwarning")));
         TEST_RESULT_BOOL(walStatus(segment, false), true, "ok file with warning");
         testLogResult("P00   WARN: warning");
 
         storagePutNP(
-            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewStr(strNew("25\nerror")));
         TEST_RESULT_BOOL(walStatus(segment, false), true, "error status renamed to ok");
         testLogResult(
@@ -68,7 +69,7 @@ testRun()
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
-            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
+            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
             bufNewStr(strNew("")));
         TEST_ERROR(
             walStatus(segment, false), AssertError,
@@ -80,7 +81,7 @@ testRun()
         TEST_ERROR(walStatus(segment, true), AssertError, "status file '000000010000000100000001.error' has no content");
 
         storagePutNP(
-            storageOpenWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
+            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
             bufNewStr(strNew("25\nmessage")));
         TEST_ERROR(walStatus(segment, true), AssertError, "message");
 
@@ -107,34 +108,24 @@ testRun()
 
         TEST_ERROR(cmdArchivePush(), AssertError, "archive-push in C does not support synchronous mode");
 
-        // Test that a bogus perl bin generates the correct errors
+        // Make sure the process times out when there is nothing to archive
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--log-level-console=off");
         strLstAddZ(argList, "--log-level-stderr=off");
-        cfgLoad(strLstSize(argList), strLstPtr(argList));
-        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
-
-        TRY_BEGIN()
-        {
-            cmdArchivePush();
-
-            THROW(AssertError, "error should have been thrown");    // {uncoverable - test should not get here}
-        }
-        CATCH_ANY()
-        {
-            // Check expected error on the parent process
-            TEST_RESULT_INT(errorCode(), errorTypeCode(&AssertError), "error code matches after failed Perl exec");
-            TEST_RESULT_STR(errorMessage(), "perl exited with error 37", "error message matches after failed Perl exec");
-        }
-        TRY_END();
-
-        // Make sure the process times out when there is nothing to archive
-        // -------------------------------------------------------------------------------------------------------------------------
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
-        cfgLoad(strLstSize(argList), strLstPtr(argList));
-        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(
+            cmdArchivePush(), ArchiveTimeoutError,
+            "unable to push WAL segment '000000010000000100000001' asynchronously after 1 second(s)");
+
+        // Make sure the process times out when there is nothing to archive and it can't get a lock
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(
+            lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30, true), "acquire lock");
+        TEST_RESULT_VOID(lockClear(true), "clear lock");
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveTimeoutError,
@@ -147,7 +138,7 @@ testRun()
         mkdir(strPtr(strNewFmt("%s/archive", testPath())), 0750);
         mkdir(strPtr(strNewFmt("%s/archive/db", testPath())), 0750);
         mkdir(strPtr(strNewFmt("%s/archive/db/out", testPath())), 0750);
-        storagePutNP(storageOpenWriteNP(storageSpool(), errorFile), bufNewStr(strNew("25\n" BOGUS_STR)));
+        storagePutNP(storageNewWriteNP(storageSpool(), errorFile), bufNewStr(strNew("25\n" BOGUS_STR)));
 
         TEST_ERROR(cmdArchivePush(), AssertError, BOGUS_STR);
 
@@ -156,7 +147,7 @@ testRun()
         // Write out a valid ok file and test for success
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
-            storageOpenWriteNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok")),
+            storageNewWriteNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok")),
             bufNewStr(strNew("")));
 
         TEST_RESULT_VOID(cmdArchivePush(), "successful push");

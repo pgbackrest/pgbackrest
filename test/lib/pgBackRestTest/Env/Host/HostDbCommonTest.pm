@@ -143,7 +143,7 @@ sub archivePush
     $self->executeSimple(
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
-        ' --log-level-console=warn --archive-queue-max=' . int(2 * PG_WAL_SIZE) .
+        ' --log-level-console=warn --archive-push-queue-max=' . int(2 * PG_WAL_SIZE) .
         ' --stanza=' . $self->stanza() .
         (defined($iExpectedError) && $iExpectedError == ERROR_FILE_READ ? ' --repo1-host=bogus' : '') .
         ($bAsync ? '' : ' --no-archive-async') .

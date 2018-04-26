@@ -99,10 +99,11 @@
                     <config-key id="buffer-size" name="Buffer Size">
                         <summary>Buffer size for file operations.</summary>
 
-                        <text>Set the buffer size used for copy, compress, and uncompress functions.  A maximum of 3 buffers will be in use at a time per process.  An additional maximum of 256K per process may be used for zlib buffers.</text>
+                        <text>Set the buffer size used for copy, compress, and uncompress functions.  A maximum of 3 buffers will be in use at a time per process.  An additional maximum of 256K per process may be used for zlib buffers.
 
-                        <allow>16384 - 8388608</allow>
-                        <example>32768</example>
+                        Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024.</text>
+
+                        <example>32K</example>
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - CMD-SSH KEY -->
@@ -174,11 +175,11 @@
 
                     <!-- CONFIG - GENERAL SECTION - LOG-PATH KEY -->
                     <config-key id="spool-path" name="Spool Path">
-                        <summary>Path where WAL segments are spooled during async archiving.</summary>
+                        <summary>Path where transient data is stored.</summary>
 
-                        <text>When asynchronous archiving is enabled <backrest/> needs a local directory to store WAL segments before they are compressed and moved to the repository.  Depending on the volume of WAL generated this directory could become very large so be sure to plan accordingly.
+                        <text>This path is used to store acknowledgements from the asynchronous <cmd>archive-push</cmd> process.  These files are generally very small (zero to a few hundred bytes) so not much space is required.
 
-                        The <setting>archive-queue-max</setting> option can be used to limit the amount of WAL that will be spooled locally.</text>
+                        The data stored in the spool path is not strictly temporary since it can and should survive a reboot.  However, loss of the data in the spool path is not a problem.  <backrest/> will simply recheck each WAL segment to ensure it is safely archived.</text>
 
                         <example>/backup/db/spool</example>
                     </config-key>
@@ -239,7 +240,25 @@
 
                         <text>Sets the location of the configuration file on the repository host.  This is only required if the repository host configuration file is in a different location than the local configuration file.</text>
 
-                        <example>/etc/pgbackrest_backup.conf</example>
+                        <example>/conf/pgbackrest/pgbackrest.conf</example>
+                    </config-key>
+
+                    <!-- CONFIG - REPO SECTION - REPO-HOST-CONFIG-INCLUDE-PATH KEY -->
+                    <config-key id="repo-host-config-include-path" name="Repository Host Configuration Include Path">
+                        <summary><backrest/> repository host configuration include path.</summary>
+
+                        <text>Sets the location of the configuration include path on the repository host.  This is only required if the repository host configuration include path is in a different location than the local configuration include path.</text>
+
+                        <example>/conf/pgbackrest/conf.d</example>
+                    </config-key>
+
+                    <!-- CONFIG - REPO SECTION - REPO-HOST-CONFIG-PATH KEY -->
+                    <config-key id="repo-host-config-path" name="Repository Host Configuration Path">
+                        <summary><backrest/> repository host configuration path.</summary>
+
+                        <text>Sets the location of the configuration path on the repository host.  This is only required if the repository host configuration path is in a different location than the local configuration path.</text>
+
+                        <example>/conf/pgbackrest</example>
                     </config-key>
 
                     <!-- CONFIG - REPO SECTION - REPO-HOST-USER KEY -->
@@ -495,9 +514,11 @@
                     <config-key id="manifest-save-threshold" name="Manifest Save Threshold">
                         <summary>Manifest save threshold during backup.</summary>
 
-                        <text>Defines how often the manifest will be saved during a backup (in bytes).  Saving the manifest is important because it stores the checksums and allows the resume function to work efficiently.  The actual threshold used is 1% of the backup size or <setting>manifest-save-threshold</setting>, whichever is greater.</text>
+                        <text>Defines how often the manifest will be saved during a backup (in bytes).  Saving the manifest is important because it stores the checksums and allows the resume function to work efficiently.  The actual threshold used is 1% of the backup size or <setting>manifest-save-threshold</setting>, whichever is greater.
 
-                        <example>5368709120</example>
+                        Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024.</text>
+
+                        <example>5G</example>
                     </config-key>
 
                     <!-- CONFIG - BACKUP SECTION - RESUME -->
@@ -550,7 +571,7 @@
                     </config-key>
 
                     <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-QUEUE-MAX KEY -->
-                    <config-key id="archive-queue-max" name="Maximum Archive Queue Size">
+                    <config-key id="archive-push-queue-max" name="Maximum Archive Push Queue Size">
                         <summary>Limit size (in bytes) of the <postgres/> archive queue.</summary>
 
                         <text>After the limit is reached, the following will happen:
@@ -562,9 +583,11 @@
 
                         In asynchronous mode the entire queue will be dropped to prevent spurts of WAL getting through before the queue limit is exceeded again.
 
-                        The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have <postgres/> go down.</text>
+                        The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have <postgres/> go down.
 
-                        <example>1073741824</example>
+                        Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024.</text>
+
+                        <example>1GB</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -674,7 +697,25 @@
 
                         <text>Sets the location of the configuration file on the <postgres/> host.  This is only required if the <postgres/> host configuration file is in a different location than the local configuration file.</text>
 
-                        <example>/etc/pgbackrest_db.conf</example>
+                        <example>/conf/pgbackrest/pgbackrest.conf</example>
+                    </config-key>
+
+                    <!-- CONFIG - STANZA SECTION - PG-HOST-CONFIG-INCLUDE-PATH KEY -->
+                    <config-key id="pg-host-config-include-path" name="PostgreSQL Host Configuration Include Path">
+                        <summary><backrest/> database host configuration include path.</summary>
+
+                        <text>Sets the location of the configuration include path on the <postgres/> host.  This is only required if the <postgres/> host configuration include path is in a different location than the local configuration include path.</text>
+
+                        <example>/conf/pgbackrest/conf.d</example>
+                    </config-key>
+
+                    <!-- CONFIG - STANZA SECTION - PG-HOST-CONFIG-PATH KEY -->
+                    <config-key id="pg-host-config-path" name="PostgreSQL Host Configuration Path">
+                        <summary><backrest/> database host configuration path.</summary>
+
+                        <text>Sets the location of the configuration path on the <postgres/> host.  This is only required if the <postgres/> host configuration path is in a different location than the local configuration path.</text>
+
+                        <example>/conf/pgbackrest</example>
                     </config-key>
 
                     <!-- CONFIG - STANZA SECTION - PG-HOST KEY -->
@@ -755,7 +796,27 @@
 
                     <text>Use this option to specify a different configuration file than the default.</text>
 
-                    <example>/var/lib/backrest/pgbackrest.conf</example>
+                    <example>/conf/pgbackrest/pgbackrest.conf</example>
+                </option>
+
+                <!-- OPERATION - GENERAL - CONFIG INCLUDE PATH OPTION -->
+                <option id="config-include-path" name="Config Include Path">
+                    <summary>Path to additional <backrest/> configuration files.</summary>
+
+                    <text>Configuration files existing in the specified location with extension <file>.conf</file> will be concatenated with the <backrest/> configuration file, resulting in one configuration file.</text>
+
+                    <example>/conf/pgbackrest/conf.d</example>
+                </option>
+
+                <!-- OPERATION - GENERAL - CONFIG PATH OPTION -->
+                <option id="config-path" name="Config Path">
+                    <summary>Base path of <backrest/> configuration files.</summary>
+
+                    <text>This setting is used to override the default base path setting for the <br-option>--config</br-option> and <br-option>--config-include-path</br-option> options unless they are explicitly set on the command-line.
+
+                    For example, passing only <code>--config-path=/conf/pgbackrest</code> results in the  <br-option>--config</br-option> default being set to <code>/conf/pgbackrest/pgbackrest.conf</code> and the <br-option>--config-include-path</br-option> default being set to  <code>/conf/pgbackrest/conf.d</code>.</text>
+
+                    <example>/conf/pgbackrest</example>
                 </option>
 
                 <!-- OPERATION - GENERAL - STANZA OPTION -->

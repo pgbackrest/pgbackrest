@@ -78,6 +78,7 @@ ERROR_DEFINE( 93, FileExistsError, RuntimeError);
 ERROR_DEFINE( 94, MemoryError, RuntimeError);
 ERROR_DEFINE( 95, CipherError, RuntimeError);
 ERROR_DEFINE( 96, ParamInvalidError, RuntimeError);
+ERROR_DEFINE( 97, PathCloseError, RuntimeError);
 ERROR_DEFINE(122, RuntimeError, RuntimeError);
 ERROR_DEFINE(123, InvalidError, RuntimeError);
 ERROR_DEFINE(124, UnhandledError, RuntimeError);
@@ -159,6 +160,7 @@ static const ErrorType *errorTypeList[] =
     &MemoryError,
     &CipherError,
     &ParamInvalidError,
+    &PathCloseError,
     &RuntimeError,
     &InvalidError,
     &UnhandledError,

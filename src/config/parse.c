@@ -10,8 +10,21 @@ Command and Option Parse
 #include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/regExp.h"
 #include "config/parse.h"
 #include "storage/helper.h"
+#include "version.h"
+
+/***********************************************************************************************************************************
+Standard config file name and old default path and name
+***********************************************************************************************************************************/
+#define PGBACKREST_CONFIG_FILE                                      PGBACKREST_BIN ".conf"
+#define PGBACKREST_CONFIG_ORIG_PATH_FILE                            "/etc/" PGBACKREST_CONFIG_FILE
+
+/***********************************************************************************************************************************
+Standard config include path name
+***********************************************************************************************************************************/
+#define PGBACKREST_CONFIG_INCLUDE_PATH                              "conf.d"
 
 /***********************************************************************************************************************************
 Parse option flags
@@ -65,6 +78,253 @@ optionFind(const String *option)
     }
 
     return optionIdx;
+}
+
+/***********************************************************************************************************************************
+Convert the value passed into bytes and update valueDbl for range checking
+***********************************************************************************************************************************/
+void
+convertToByte(String **value, double *valueDbl)
+{
+    // Make a copy of the value so it is not updated until we know the conversion will succeed
+    String *result = strLower(strDup(*value));
+
+    // Match the value against possible values
+    if (regExpMatchOne(strNew("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p|b)*$"), result))
+    {
+        // Get the character array and size
+        const char *strArray = strPtr(result);
+        size_t size = strSize(result);
+        int chrPos = -1;
+
+        // If there is a 'b' on the end, then see if the previous character is a number
+        if (strArray[size - 1] == 'b')
+        {
+            // If the previous character is a number, then the letter to look at is 'b' which is the last position else it is in the
+            // next to last position (e.g. kb - so the 'k' is the position of interest).  Only need to test for <= 9 since the regex
+            // enforces the format.
+            if (strArray[size - 2] <= '9')
+                chrPos = (int)(size - 1);
+            else
+                chrPos = (int)(size - 2);
+        }
+        // else if there is no 'b' at the end but the last position is not a number then it must be one of the letters, e.g. 'k'
+        else if (strArray[size - 1] > '9')
+            chrPos = (int)(size - 1);
+
+        double multiplier = 1;
+
+        // If a letter was found, then truncate, else do nothing since assumed value is already in bytes
+        if (chrPos != -1)
+        {
+            if (strArray[chrPos] != 'b')
+            {
+                switch (strArray[chrPos])
+                {
+                    case 'k':
+                        multiplier = 1024;
+                        break;
+
+                    case 'm':
+                        multiplier = 1024 * 1024;
+                        break;
+
+                    case 'g':
+                        multiplier = 1024 * 1024 * 1024;
+                        break;
+
+                    case 't':
+                        multiplier = 1024LL * 1024LL * 1024LL * 1024LL;
+                        break;
+
+                    case 'p':
+                        multiplier = 1024LL * 1024LL * 1024LL * 1024LL * 1024LL;
+                        break;
+
+                    default:
+                        THROW(                                      // {uncoverable - regex covers all cases but default required}
+                            AssertError, "character %c is not a valid type", strArray[chrPos]);
+                }
+            }
+
+            // Remove any letters
+            strTrunc(result, chrPos);
+        }
+
+        // Convert string to bytes
+        double newDbl = varDblForce(varNewStr(result)) * multiplier;
+        result = varStrForce(varNewDbl(newDbl));
+
+        // If nothing has blown up then safe to overwrite the original values
+        *valueDbl = newDbl;
+        *value = result;
+    }
+    else
+        THROW(FormatError, "value '%s' is not valid", strPtr(*value));
+}
+
+/***********************************************************************************************************************************
+Load the configuration file(s)
+
+The parent mem context is used. Defaults are passed to make testing easier.
+
+Rules:
+- config and config-include-path are default. In this case, the config file will be loaded, if it exists, and *.conf files in the
+  config-include-path will be appended, if they exist. A missing/empty dir will be ignored except that the original default
+  for the config file will be attempted to be loaded if the current default is not found.
+- config only is specified. Only the specified config file will be loaded and is required. The default config-include-path will be
+  ignored.
+- config and config-path are specified. The specified config file will be loaded and is required. The overridden default of the
+  config-include-path (<config-path>/conf.d) will be loaded if exists but is not required.
+- config-include-path only is specified. *.conf files in the config-include-path will be loaded and the path is required to exist.
+  The default config will be be loaded if it exists.
+- config-include-path and config-path are specified. The *.conf files in the config-include-path will be loaded and the directory
+  passed must exist. The overridden default of the config file path (<config-path>/pgbackrest.conf) will be loaded if exists but is
+  not required.
+- If the config and config-include-path are specified. The config file will be loaded and is expected to exist and *.conf files in
+  the config-include-path will be appended and at least one is expected to exist.
+- If --no-config is specified and --config-include-path is specified then only *.conf files in the config-include-path will be
+  loaded; the directory is required.
+- If --no-config is specified and --config-path is specified then only *.conf files in the overriden default config-include-path
+  (<config-path>/conf.d) will be loaded if exist but not required.
+- If --no-config is specified and neither --config-include-path nor --config-path are specified then no configs will be loaded.
+- If --config-path only, the defaults for config and config-include-path will be changed to use that as a base path but the files
+  will not be required to exist since this is a default override.
+***********************************************************************************************************************************/
+static String *
+cfgFileLoad(                                                        // NOTE: Passing defaults to enable more complete test coverage
+    const ParseOption *optionList,                                  // All options and their current settings
+    const String *optConfigDefault,                                 // Current default for --config option
+    const String *optConfigIncludePathDefault,                      // Current default for --config-include-path option
+    const String *origConfigDefault)                                // Original --config option default (/etc/pgbackrest.conf)
+{
+    bool loadConfig = true;
+    bool loadConfigInclude = true;
+
+    // If the option is specified on the command line, then found will be true meaning the file is required to exist,
+    // else it is optional
+    bool configRequired = optionList[cfgOptConfig].found;
+    bool configIncludeRequired = optionList[cfgOptConfigIncludePath].found;
+
+    // Save default for later determining if must check old original default config path
+    const String *optConfigDefaultCurrent = optConfigDefault;
+
+    // If the config-path option is found on the command line, then its value will override the base path defaults for config and
+    // config-include-path
+    if (optionList[cfgOptConfigPath].found)
+    {
+        optConfigDefault =
+            strNewFmt("%s/%s", strPtr(strLstGet(optionList[cfgOptConfigPath].valueList, 0)), strPtr(strBase(optConfigDefault)));
+        optConfigIncludePathDefault =
+            strNewFmt("%s/%s", strPtr(strLstGet(optionList[cfgOptConfigPath].valueList, 0)), PGBACKREST_CONFIG_INCLUDE_PATH);
+    }
+
+    // If the --no-config option was passed then do not load the config file
+    if (optionList[cfgOptConfig].negate)
+    {
+        loadConfig = false;
+        configRequired = false;
+    }
+
+    // If --config option is specified on the command line but neither the --config-include-path nor the config-path are passed,
+    // then do not attempt to load the include files
+    if (optionList[cfgOptConfig].found && !(optionList[cfgOptConfigIncludePath].found || optionList[cfgOptConfigPath].found))
+    {
+        loadConfigInclude = false;
+        configIncludeRequired = false;
+    }
+
+    String *result = NULL;
+
+    // Load the main config file
+    if (loadConfig)
+    {
+        const String *configFileName = NULL;
+
+        // Get the config file name from the command-line if it exists else default
+        if (optionList[cfgOptConfig].found)
+            configFileName = strLstGet(optionList[cfgOptConfig].valueList, 0);
+        else
+            configFileName = optConfigDefault;
+
+        // Load the config file
+        Buffer *buffer = storageGetNP(storageNewReadP(storageLocal(), configFileName, .ignoreMissing = !configRequired));
+
+        // Convert the contents of the file buffer to the config string object
+        if (buffer != NULL)
+            result = strNewBuf(buffer);
+        else if (strEq(configFileName, optConfigDefaultCurrent))
+        {
+            // If confg is current default and it was not found, attempt to load the config file from the old default location
+            buffer = storageGetNP(storageNewReadP(storageLocal(), origConfigDefault, .ignoreMissing = !configRequired));
+
+            if (buffer != NULL)
+                result = strNewBuf(buffer);
+        }
+    }
+
+    // Load *.conf files from the include directory
+    if (loadConfigInclude)
+    {
+        if (result != NULL)
+        {
+            // Validate the file by parsing it as an Ini object. If the file is not properly formed, en error will occur.
+            Ini *ini = iniNew();
+            iniParse(ini, result);
+        }
+
+        const String *configIncludePath = NULL;
+
+        // Get the config include path from the command-line if it exists else default
+        if (optionList[cfgOptConfigIncludePath].found)
+            configIncludePath = strLstGet(optionList[cfgOptConfigIncludePath].valueList, 0);
+        else
+            configIncludePath = optConfigIncludePathDefault;
+
+        // Get a list of conf files from the specified path -error on missing directory if the option was passed on the command line
+        StringList *list = storageListP(
+            storageLocal(), configIncludePath, .expression = strNew(".+\\.conf$"), .errorOnMissing = configIncludeRequired);
+
+        // If conf files are found, then add them to the config string
+        if (list != NULL && strLstSize(list) > 0)
+        {
+            // Sort the list for reproducibility only -- order does not matter
+            strLstSort(list, sortOrderAsc);
+
+            for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
+            {
+                Buffer *fileBuffer = storageGetNP(
+                    storageNewReadP(
+                        storageLocal(), strNewFmt("%s/%s", strPtr(configIncludePath), strPtr(strLstGet(list, listIdx))),
+                        .ignoreMissing = true));
+
+                if (fileBuffer != NULL) // {uncovered - NULL can only occur if file is missing after file list is retrieved}
+                {
+                    // Convert the contents of the file buffer to a string object
+                    String *configPart = strNewBuf(fileBuffer);
+
+                    // Validate the file by parsing it as an Ini object. If the file is not properly formed, an error will occur.
+                    if (strSize(configPart) > 0)
+                    {
+                        Ini *configPartIni = iniNew();
+                        iniParse(configPartIni, configPart);
+
+                        // Create the result config file
+                        if (result == NULL)
+                            result = strNew("");
+                        // Else add an LF in case the previous file did not end with one
+                        else
+                            strCat(result, "\n");
+
+                        // Add the config part to the result config file
+                        strCat(result, strPtr(configPart));
+                    }
+                }
+            }
+        }
+    }
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -244,159 +504,147 @@ configParse(unsigned int argListSize, const char *argList[])
             // Get the command definition id
             ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
 
-            if (!parseOptionList[cfgOptConfig].negate)
+            // Load the configuration file(s)
+            String *configString = cfgFileLoad(parseOptionList,
+                strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfig))),
+                strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfigIncludePath))),
+                strNew(PGBACKREST_CONFIG_ORIG_PATH_FILE));
+
+            if (configString != NULL)
             {
-                // Get the config file name from the command-line if it exists else default
-                const String *configFile = NULL;
+                Ini *config = iniNew();
+                iniParse(config, configString);
+                // Get the stanza name
+                String *stanza = NULL;
 
-                if (parseOptionList[cfgOptConfig].found)
-                    configFile = strLstGet(parseOptionList[cfgOptConfig].valueList, 0);
-                else
-                    configFile = strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfig)));
+                if (parseOptionList[cfgOptStanza].found)
+                    stanza = strLstGet(parseOptionList[cfgOptStanza].valueList, 0);
 
-                // Load the ini file
-                Buffer *buffer = storageGetNP(
-                    storageOpenReadP(storageLocal(), configFile, .ignoreMissing = !parseOptionList[cfgOptConfig].found));
+                // Build list of sections to search for options
+                StringList *sectionList = strLstNew();
 
-                // Load the config file if it was found
-                if (buffer != NULL)
+                if (stanza != NULL)
                 {
-                    // Parse the ini file
-                    Ini *config = iniNew();
-                    iniParse(config, strNewBuf(buffer));
+                    strLstAdd(sectionList, strNewFmt("%s:%s", strPtr(stanza), cfgCommandName(cfgCommand())));
+                    strLstAdd(sectionList, stanza);
+                }
 
-                    // Get the stanza name
-                    String *stanza = NULL;
+                strLstAdd(sectionList, strNewFmt(CFGDEF_SECTION_GLOBAL ":%s", cfgCommandName(cfgCommand())));
+                strLstAdd(sectionList, strNew(CFGDEF_SECTION_GLOBAL));
 
-                    if (parseOptionList[cfgOptStanza].found)
-                        stanza = strLstGet(parseOptionList[cfgOptStanza].valueList, 0);
+                // Loop through sections to search for options
+                for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
+                {
+                    String *section = strLstGet(sectionList, sectionIdx);
+                    StringList *keyList = iniSectionKeyList(config, section);
+                    KeyValue *optionFound = kvNew();
 
-                    // Build list of sections to search for options
-                    StringList *sectionList = strLstNew();
-
-                    if (stanza != NULL)
+                    // Loop through keys to search for options
+                    for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
                     {
-                        strLstAdd(sectionList, strNewFmt("%s:%s", strPtr(stanza), cfgCommandName(cfgCommand())));
-                        strLstAdd(sectionList, stanza);
-                    }
+                        String *key = strLstGet(keyList, keyIdx);
 
-                    strLstAdd(sectionList, strNewFmt(CFGDEF_SECTION_GLOBAL ":%s", cfgCommandName(cfgCommand())));
-                    strLstAdd(sectionList, strNew(CFGDEF_SECTION_GLOBAL));
+                        // Find the optionName in the main list
+                        unsigned int optionIdx = optionFind(key);
 
-                    // Loop through sections to search for options
-                    for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
-                    {
-                        String *section = strLstGet(sectionList, sectionIdx);
-                        StringList *keyList = iniSectionKeyList(config, section);
-                        KeyValue *optionFound = kvNew();
-
-                        // Loop through keys to search for options
-                        for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+                        // Warn if the option not found
+                        if (optionList[optionIdx].name == NULL)
                         {
-                            String *key = strLstGet(keyList, keyIdx);
+                            LOG_WARN("configuration file contains invalid option '%s'", strPtr(key));
+                            continue;
+                        }
+                        // Warn if negate option found in config
+                        else if (optionList[optionIdx].val & PARSE_NEGATE_FLAG)
+                        {
+                            LOG_WARN("configuration file contains negate option '%s'", strPtr(key));
+                            continue;
+                        }
+                        // Warn if reset option found in config
+                        else if (optionList[optionIdx].val & PARSE_RESET_FLAG)
+                        {
+                            LOG_WARN("configuration file contains reset option '%s'", strPtr(key));
+                            continue;
+                        }
 
-                            // Find the optionName in the main list
-                            unsigned int optionIdx = optionFind(key);
+                        ConfigOption optionId = optionList[optionIdx].val & PARSE_OPTION_MASK;
+                        ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
 
-                            // Warn if the option not found
-                            if (optionList[optionIdx].name == NULL)
-                            {
-                                LOG_WARN("'%s' contains invalid option '%s'", strPtr(configFile), strPtr(key));
-                                continue;
-                            }
-                            // Warn if negate option found in config
-                            else if (optionList[optionIdx].val & PARSE_NEGATE_FLAG)
-                            {
-                                LOG_WARN("'%s' contains negate option '%s'", strPtr(configFile), strPtr(key));
-                                continue;
-                            }
-                            // Warn if reset option found in config
-                            else if (optionList[optionIdx].val & PARSE_RESET_FLAG)
-                            {
-                                LOG_WARN("'%s' contains reset option '%s'", strPtr(configFile), strPtr(key));
-                                continue;
-                            }
+                        /// Warn if this option should be command-line only
+                        if (cfgDefOptionSection(optionDefId) == cfgDefSectionCommandLine)
+                        {
+                            LOG_WARN("configuration file contains command-line only option '%s'", strPtr(key));
+                            continue;
+                        }
 
-                            ConfigOption optionId = optionList[optionIdx].val & PARSE_OPTION_MASK;
-                            ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
+                        // Make sure this option does not appear in the same section with an alternate name
+                        Variant *optionFoundKey = varNewInt(optionId);
+                        const Variant *optionFoundName = kvGet(optionFound, optionFoundKey);
 
-                            /// Warn if this option should be command-line only
-                            if (cfgDefOptionSection(optionDefId) == cfgDefSectionCommandLine)
-                            {
-                                LOG_WARN("'%s' contains command-line only option '%s'", strPtr(configFile), strPtr(key));
-                                continue;
-                            }
+                        if (optionFoundName != NULL)
+                        {
+                            THROW(
+                                OptionInvalidError, "configuration file contains duplicate options ('%s', '%s') in section '[%s]'",
+                                strPtr(key), strPtr(varStr(optionFoundName)), strPtr(section));
+                        }
+                        else
+                            kvPut(optionFound, optionFoundKey, varNewStr(key));
 
-                            // Make sure this option does not appear in the same section with an alternate name
-                            Variant *optionFoundKey = varNewInt(optionId);
-                            const Variant *optionFoundName = kvGet(optionFound, optionFoundKey);
-
-                            if (optionFoundName != NULL)
-                            {
-                                THROW(
-                                    OptionInvalidError, "'%s' contains duplicate options ('%s', '%s') in section '[%s]'",
-                                    strPtr(configFile), strPtr(key), strPtr(varStr(optionFoundName)), strPtr(section));
-                            }
-                            else
-                                kvPut(optionFound, optionFoundKey, varNewStr(key));
-
-                            // Continue if the option is not valid for this command
-                            if (!cfgDefOptionValid(commandDefId, optionDefId))
-                            {
-                                // Warn if it is in a command section
-                                if (sectionIdx % 2 == 0)
-                                {
-                                    LOG_WARN(
-                                        "'%s' contains option '%s' invalid for section '%s'", strPtr(configFile), strPtr(key),
-                                        strPtr(section));
-                                    continue;
-                                }
-
-                                continue;
-                            }
-
-                            // Continue if stanza option is in a global section
-                            if (cfgDefOptionSection(optionDefId) == cfgDefSectionStanza &&
-                                strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL))
+                        // Continue if the option is not valid for this command
+                        if (!cfgDefOptionValid(commandDefId, optionDefId))
+                        {
+                            // Warn if it is in a command section
+                            if (sectionIdx % 2 == 0)
                             {
                                 LOG_WARN(
-                                    "'%s' contains stanza-only option '%s' in global section '%s'", strPtr(configFile), strPtr(key),
+                                    "configuration file contains option '%s' invalid for section '%s'", strPtr(key),
                                     strPtr(section));
                                 continue;
                             }
 
-                            // Continue if this option has already been found in another section
-                            if (parseOptionList[optionId].found)
-                                continue;
-
-                            // Get the option value
-                            const Variant *value = iniGetDefault(config, section, key, NULL);
-
-                            if (varType(value) == varTypeString && strSize(varStr(value)) == 0)
-                                THROW(OptionInvalidValueError, "section '%s', key '%s' must have a value", strPtr(section),
-                                strPtr(key));
-
-                            parseOptionList[optionId].found = true;
-                            parseOptionList[optionId].source = cfgSourceConfig;
-
-                            // Convert boolean to string
-                            if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
-                            {
-                                if (strcasecmp(strPtr(varStr(value)), "n") == 0)
-                                    parseOptionList[optionId].negate = true;
-                                else if (strcasecmp(strPtr(varStr(value)), "y") != 0)
-                                    THROW(OptionInvalidError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
-                            }
-                            // Else add the string value
-                            else if (varType(value) == varTypeString)
-                            {
-                                parseOptionList[optionId].valueList = strLstNew();
-                                strLstAdd(parseOptionList[optionId].valueList, varStr(value));
-                            }
-                            // Else add the string list
-                            else
-                                parseOptionList[optionId].valueList = strLstNewVarLst(varVarLst(value));
+                            continue;
                         }
+
+                        // Continue if stanza option is in a global section
+                        if (cfgDefOptionSection(optionDefId) == cfgDefSectionStanza &&
+                            strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL))
+                        {
+                            LOG_WARN(
+                                "configuration file contains stanza-only option '%s' in global section '%s'", strPtr(key),
+                                strPtr(section));
+                            continue;
+                        }
+
+                        // Continue if this option has already been found in another section
+                        if (parseOptionList[optionId].found)
+                            continue;
+
+                        // Get the option value
+                        const Variant *value = iniGetDefault(config, section, key, NULL);
+
+                        if (varType(value) == varTypeString && strSize(varStr(value)) == 0)
+                            THROW(OptionInvalidValueError, "section '%s', key '%s' must have a value", strPtr(section),
+                            strPtr(key));
+
+                        parseOptionList[optionId].found = true;
+                        parseOptionList[optionId].source = cfgSourceConfig;
+
+                        // Convert boolean to string
+                        if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
+                        {
+                            if (strcasecmp(strPtr(varStr(value)), "n") == 0)
+                                parseOptionList[optionId].negate = true;
+                            else if (strcasecmp(strPtr(varStr(value)), "y") != 0)
+                                THROW(OptionInvalidError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
+                        }
+                        // Else add the string value
+                        else if (varType(value) == varTypeString)
+                        {
+                            parseOptionList[optionId].valueList = strLstNew();
+                            strLstAdd(parseOptionList[optionId].valueList, varStr(value));
+                        }
+                        // Else add the string list
+                        else
+                            parseOptionList[optionId].valueList = strLstNewVarLst(varVarLst(value));
                     }
                 }
             }
@@ -562,6 +810,7 @@ configParse(unsigned int argListSize, const char *argList[])
                                         case cfgDefOptTypeHash:
                                         case cfgDefOptTypeInteger:
                                         case cfgDefOptTypeList:
+                                        case cfgDefOptTypeSize:
                                         {
                                             strLstAddZ(dependValueList, dependValue);   // {uncovered - no depends of other types}
                                             break;                                      // {+uncovered}
@@ -622,27 +871,29 @@ configParse(unsigned int argListSize, const char *argList[])
                         {
                             String *value = strLstGet(parseOption->valueList, 0);
 
-                            // If the option has an allow list then check it
-                            if (cfgDefOptionAllowList(commandDefId, optionDefId) &&
-                                !cfgDefOptionAllowListValueValid(commandDefId, optionDefId, strPtr(value)))
-                            {
-                                THROW(
-                                    OptionInvalidValueError, "'%s' is not valid for '%s' option", strPtr(value),
-                                    cfgOptionName(optionId));
-                            }
-
                             // If a numeric type check that the value is valid
-                            if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeFloat)
+                            if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeFloat || optionDefType == cfgDefOptTypeSize)
                             {
                                 double valueDbl = 0;
 
                                 // Check that the value can be converted
                                 TRY_BEGIN()
                                 {
+
                                     if (optionDefType == cfgDefOptTypeInteger)
+                                    {
                                         valueDbl = (double)varInt64Force(varNewStr(value));
+                                    }
+                                    else if (optionDefType == cfgDefOptTypeSize)
+                                    {
+                                        convertToByte(&value, &valueDbl);
+                                    }
                                     else
                                         valueDbl = varDblForce(varNewStr(value));
+                                }
+                                CATCH(AssertError)
+                                {
+                                    RETHROW();                      // {uncovered - asserts can't currently happen here this is JIC}
                                 }
                                 CATCH_ANY()
                                 {
@@ -658,9 +909,18 @@ configParse(unsigned int argListSize, const char *argList[])
                                      valueDbl > cfgDefOptionAllowRangeMax(commandDefId, optionDefId)))
                                 {
                                     THROW(
-                                        OptionInvalidValueError, "'%s' is not valid for '%s' option", strPtr(value),
+                                        OptionInvalidValueError, "'%s' is out of range for '%s' option", strPtr(value),
                                         cfgOptionName(optionId));
                                 }
+                            }
+
+                            // If the option has an allow list then check it
+                            if (cfgDefOptionAllowList(commandDefId, optionDefId) &&
+                                !cfgDefOptionAllowListValueValid(commandDefId, optionDefId, strPtr(value)))
+                            {
+                                THROW(
+                                    OptionInvalidValueError, "'%s' is not allowed for '%s' option", strPtr(value),
+                                    cfgOptionName(optionId));
                             }
 
                             cfgOptionSet(optionId, parseOption->source, varNewStr(value));

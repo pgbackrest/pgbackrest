@@ -3,21 +3,17 @@
 ####################################################################################################################################
 package pgBackRest::Main;
 
-####################################################################################################################################
-# Perl includes
-####################################################################################################################################
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
 # Convert die to confess to capture the stack trace
-$SIG{__DIE__} = sub { Carp::confess @_ };
+$SIG{__DIE__} = sub {Carp::confess @_};
 
 use File::Basename qw(dirname);
 
 use pgBackRest::Common::Exception;
-use pgBackRest::Common::Exit;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
@@ -28,9 +24,12 @@ use pgBackRest::Version;
 # Set config JSON separately to avoid exposing secrets in the stack trace
 ####################################################################################################################################
 my $strConfigJson;
+my $strConfigBin;
+my $bConfigLoaded = false;
 
-sub configSet
+sub mainConfigSet
 {
+    $strConfigBin = shift;
     $strConfigJson = shift;
 }
 
@@ -39,60 +38,60 @@ sub configSet
 ####################################################################################################################################
 sub main
 {
-    my $strBackRestBin = shift;
     my $strCommand = shift;
     my @stryCommandArg = @_;
 
-    ################################################################################################################################
     # Run in eval block to catch errors
-    ################################################################################################################################
+    # ------------------------------------------------------------------------------------------------------------------------------
+    my $result = 0;
+    my $message = '';
+
     eval
     {
-        ############################################################################################################################
         # Load command line parameters and config -- pass config by reference to hide secrets more than for efficiency
-        ############################################################################################################################
-        configLoad(undef, $strBackRestBin, $strCommand, \$strConfigJson);
-
-        # Set test options
-        if (cfgOptionTest(CFGOPT_TEST) && cfgOption(CFGOPT_TEST))
+        # --------------------------------------------------------------------------------------------------------------------------
+        if (!$bConfigLoaded)
         {
-            testSet(cfgOption(CFGOPT_TEST), cfgOption(CFGOPT_TEST_DELAY), cfgOption(CFGOPT_TEST_POINT, false));
-        }
+            configLoad(undef, $strConfigBin, $strCommand, \$strConfigJson);
 
-        ############################################################################################################################
-        # Process archive-push command
-        ############################################################################################################################
-        if (cfgCommandTest(CFGCMD_ARCHIVE_PUSH))
-        {
-            # If async then run command begin so that it gets output to the log file when it is opened
-            if (cfgOption(CFGOPT_ARCHIVE_ASYNC))
+            # Set test options
+            if (cfgOptionTest(CFGOPT_TEST) && cfgOption(CFGOPT_TEST))
             {
-                commandBegin();
+                testSet(cfgOption(CFGOPT_TEST), cfgOption(CFGOPT_TEST_DELAY), cfgOption(CFGOPT_TEST_POINT, false));
             }
 
+            $bConfigLoaded = true;
+        }
+        else
+        {
+            cfgCommandSet(cfgCommandId($strCommand));
+        }
+
+        # Process archive-push command
+        # --------------------------------------------------------------------------------------------------------------------------
+        if (cfgCommandTest(CFGCMD_ARCHIVE_PUSH))
+        {
             # Load module dynamically
             require pgBackRest::Archive::Push::Push;
             pgBackRest::Archive::Push::Push->import();
 
-            exitSafe(new pgBackRest::Archive::Push::Push()->process($stryCommandArg[0]));
+            new pgBackRest::Archive::Push::Push()->process($stryCommandArg[0]);
         }
 
-        ############################################################################################################################
         # Process archive-get command
-        ############################################################################################################################
-        if (cfgCommandTest(CFGCMD_ARCHIVE_GET))
+        # --------------------------------------------------------------------------------------------------------------------------
+        elsif (cfgCommandTest(CFGCMD_ARCHIVE_GET))
         {
             # Load module dynamically
             require pgBackRest::Archive::Get::Get;
             pgBackRest::Archive::Get::Get->import();
 
-            exitSafe(new pgBackRest::Archive::Get::Get()->process($stryCommandArg[0], $stryCommandArg[1]));
+            $result = new pgBackRest::Archive::Get::Get()->process($stryCommandArg[0], $stryCommandArg[1]);
         }
 
-        ############################################################################################################################
-        # Process remote commands
-        ############################################################################################################################
-        if (cfgCommandTest(CFGCMD_REMOTE))
+        # Process remote command
+        # --------------------------------------------------------------------------------------------------------------------------
+        elsif (cfgCommandTest(CFGCMD_REMOTE))
         {
             # Set log levels
             cfgOptionSet(CFGOPT_LOG_LEVEL_STDERR, PROTOCOL, true);
@@ -116,13 +115,12 @@ sub main
                 cfgOption(CFGOPT_BUFFER_SIZE), cfgOption(CFGOPT_PROTOCOL_TIMEOUT));
 
             # Process remote requests
-            exitSafe($oRemote->process(cfgOption(CFGOPT_LOCK_PATH), cfgOption(CFGOPT_COMMAND), cfgOption(CFGOPT_STANZA, false)));
+            $oRemote->process(cfgOption(CFGOPT_LOCK_PATH), cfgOption(CFGOPT_COMMAND), cfgOption(CFGOPT_STANZA, false));
         }
 
-        ############################################################################################################################
-        # Process local commands
-        ############################################################################################################################
-        if (cfgCommandTest(CFGCMD_LOCAL))
+        # Process local command
+        # --------------------------------------------------------------------------------------------------------------------------
+        elsif (cfgCommandTest(CFGCMD_LOCAL))
         {
             # Set log levels
             cfgOptionSet(CFGOPT_LOG_LEVEL_STDERR, PROTOCOL, true);
@@ -136,186 +134,207 @@ sub main
             my $oLocal = new pgBackRest::Protocol::Local::Minion();
 
             # Process local requests
-            exitSafe($oLocal->process());
+            $oLocal->process();
         }
 
-        ############################################################################################################################
         # Process check command
-        ############################################################################################################################
-        if (cfgCommandTest(CFGCMD_CHECK))
+        # --------------------------------------------------------------------------------------------------------------------------
+        elsif (cfgCommandTest(CFGCMD_CHECK))
         {
             # Load module dynamically
             require pgBackRest::Check::Check;
             pgBackRest::Check::Check->import();
 
-            exitSafe(new pgBackRest::Check::Check()->process());
+            $result = new pgBackRest::Check::Check()->process();
         }
 
-        ############################################################################################################################
         # Process start/stop commands
-        ############################################################################################################################
-        if (cfgCommandTest(CFGCMD_START))
+        # --------------------------------------------------------------------------------------------------------------------------
+        elsif (cfgCommandTest(CFGCMD_START))
         {
             lockStart();
-            exitSafe(0);
         }
         elsif (cfgCommandTest(CFGCMD_STOP))
         {
             lockStop();
-            exitSafe(0);
-        }
-
-        # Check that the repo path exists
-        require pgBackRest::Protocol::Storage::Helper;
-        pgBackRest::Protocol::Storage::Helper->import();
-
-        if (isRepoLocal() && !cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3) && !storageRepo()->pathExists(''))
-        {
-            confess &log(ERROR,
-                cfgOptionName(CFGOPT_REPO_PATH) . ' \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
-        }
-
-        ############################################################################################################################
-        # Process info command
-        ############################################################################################################################
-        if (cfgCommandTest(CFGCMD_INFO))
-        {
-            # Load module dynamically
-            require pgBackRest::Info;
-            pgBackRest::Info->import();
-
-            exitSafe(new pgBackRest::Info()->process());
-        }
-
-        ############################################################################################################################
-        # Process stanza-delete command
-        ############################################################################################################################
-        if (cfgCommandTest(CFGCMD_STANZA_DELETE))
-        {
-            if (!isRepoLocal())
-            {
-                confess &log(ERROR,
-                    cfgCommandName(cfgCommandGet()) . ' command must be run on the repository host', ERROR_HOST_INVALID);
-            }
-
-            # Load module dynamically
-            require pgBackRest::Stanza;
-            pgBackRest::Stanza->import();
-
-            exitSafe(new pgBackRest::Stanza()->process());
-        }
-
-        ############################################################################################################################
-        # Check if processes have been stopped
-        ############################################################################################################################
-        lockStopTest();
-
-        ############################################################################################################################
-        # Open the log file
-        ############################################################################################################################
-        require pgBackRest::Storage::Helper;
-        pgBackRest::Storage::Helper->import();
-
-        logFileSet(
-            storageLocal(),
-            cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())));
-
-        ############################################################################################################################
-        # Process stanza-create command
-        ############################################################################################################################
-        if (cfgCommandTest(CFGCMD_STANZA_CREATE) || cfgCommandTest(CFGCMD_STANZA_UPGRADE))
-        {
-            if (!isRepoLocal())
-            {
-                confess &log(ERROR,
-                    cfgCommandName(cfgCommandGet()) . ' command must be run on the repository host', ERROR_HOST_INVALID);
-            }
-
-            # Load module dynamically
-            require pgBackRest::Stanza;
-            pgBackRest::Stanza->import();
-
-            exitSafe(new pgBackRest::Stanza()->process());
-        }
-
-        ############################################################################################################################
-        # RESTORE
-        ############################################################################################################################
-        if (cfgCommandTest(CFGCMD_RESTORE))
-        {
-            if (!isDbLocal())
-            {
-                confess &log(ERROR, 'restore command must be run on the PostgreSQL host', ERROR_HOST_INVALID);
-            }
-
-            # Load module dynamically
-            require pgBackRest::Restore;
-            pgBackRest::Restore->import();
-
-            # Do the restore
-            new pgBackRest::Restore()->process();
-
-            exitSafe(0);
         }
         else
         {
-            ########################################################################################################################
-            # Make sure backup and expire commands happen on the backup side
-            ########################################################################################################################
-            if (!isRepoLocal())
+            # Check that the repo path exists
+            require pgBackRest::Protocol::Storage::Helper;
+            pgBackRest::Protocol::Storage::Helper->import();
+
+            if (isRepoLocal() && !cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3) && !storageRepo()->pathExists(''))
             {
-                confess &log(ERROR, 'backup and expire commands must be run on the repository host', ERROR_HOST_INVALID);
+                confess &log(ERROR,
+                    cfgOptionName(CFGOPT_REPO_PATH) . ' \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist',
+                    ERROR_PATH_MISSING);
             }
 
-            ########################################################################################################################
-            # BACKUP
-            ########################################################################################################################
-            if (cfgCommandTest(CFGCMD_BACKUP))
+            # Process info command
+            # ----------------------------------------------------------------------------------------------------------------------
+            if (cfgCommandTest(CFGCMD_INFO))
             {
                 # Load module dynamically
-                require pgBackRest::Backup::Backup;
-                pgBackRest::Backup::Backup->import();
+                require pgBackRest::Info;
+                pgBackRest::Info->import();
 
-                new pgBackRest::Backup::Backup()->process();
-
-                cfgCommandSet(CFGCMD_EXPIRE);
+                new pgBackRest::Info()->process();
             }
-
-            ########################################################################################################################
-            # EXPIRE
-            ########################################################################################################################
-            if (cfgCommandTest(CFGCMD_EXPIRE))
+            else
             {
-                # Load module dynamically
-                require pgBackRest::Expire;
-                pgBackRest::Expire->import();
+                # Open log file
+                require pgBackRest::Storage::Helper;
+                pgBackRest::Storage::Helper->import();
 
-                new pgBackRest::Expire()->process();
+                logFileSet(
+                    storageLocal(),
+                    cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())));
+
+                # Process delete command
+                # --------------------------------------------------------------------------------------------------------------
+                if (cfgCommandTest(CFGCMD_STANZA_DELETE))
+                {
+                    # Load module dynamically
+                    require pgBackRest::Stanza;
+                    pgBackRest::Stanza->import();
+
+                    new pgBackRest::Stanza()->process();
+                }
+                # Process restore command
+                # ------------------------------------------------------------------------------------------------------------------
+                elsif (cfgCommandTest(CFGCMD_RESTORE))
+                {
+                    # Check locality
+                    if (!isDbLocal())
+                    {
+                        confess &log(ERROR,
+                            cfgCommandName(cfgCommandGet()) . ' command must be run on the PostgreSQL host', ERROR_HOST_INVALID);
+                    }
+
+                    # Load module dynamically
+                    require pgBackRest::Restore;
+                    pgBackRest::Restore->import();
+
+                    # Do the restore
+                    new pgBackRest::Restore()->process();
+                }
+                else
+                {
+                    # Check if processes have been stopped
+                    lockStopTest();
+
+                    # Check locality
+                    if (!isRepoLocal())
+                    {
+                        confess &log(ERROR,
+                            cfgCommandName(cfgCommandGet()) . ' command must be run on the repository host', ERROR_HOST_INVALID);
+                    }
+
+                    # Process stanza-create and stanza-upgrade commands
+                    # --------------------------------------------------------------------------------------------------------------
+                    if (cfgCommandTest(CFGCMD_STANZA_CREATE) || cfgCommandTest(CFGCMD_STANZA_UPGRADE))
+                    {
+                        # Load module dynamically
+                        require pgBackRest::Stanza;
+                        pgBackRest::Stanza->import();
+
+                        $result = new pgBackRest::Stanza()->process();
+                    }
+
+                    # Process backup command
+                    # --------------------------------------------------------------------------------------------------------------
+                    elsif (cfgCommandTest(CFGCMD_BACKUP))
+                    {
+                        # Load module dynamically
+                        require pgBackRest::Backup::Backup;
+                        pgBackRest::Backup::Backup->import();
+
+                        new pgBackRest::Backup::Backup()->process();
+                    }
+
+                    # Process expire command
+                    # --------------------------------------------------------------------------------------------------------------
+                    elsif (cfgCommandTest(CFGCMD_EXPIRE))
+                    {
+                        # Load module dynamically
+                        require pgBackRest::Expire;
+                        pgBackRest::Expire->import();
+
+                        new pgBackRest::Expire()->process();
+                    }
+                }
             }
         }
 
-        # Exit with success
-        exitSafe(0);
-
-        # uncoverable statement - exit should happen above
-        &log(ASSERT, 'execution reached invalid location in ' . __FILE__ . ', line ' . __LINE__);
-        exit ERROR_ASSERT;                                              # uncoverable statement
+        return 1;
     }
 
-    ################################################################################################################################
     # Check for errors
-    ################################################################################################################################
+    # ------------------------------------------------------------------------------------------------------------------------------
     or do
     {
         # Perl 5.10 seems to have a problem propogating errors up through a large call stack, so in the case that the error arrives
         # blank just use the last logged error instead.  Don't do this in all cases because newer Perls seem to work fine and there
         # are other errors that could be arriving in $EVAL_ERROR.
-        exitSafe(undef, defined($EVAL_ERROR) && length($EVAL_ERROR) > 0 ? $EVAL_ERROR : logErrorLast());
+        my $oException = defined($EVAL_ERROR) && length($EVAL_ERROR) > 0 ? $EVAL_ERROR : logErrorLast();
+
+        # If a backrest exception then only return the code since the message has already been logged
+        if (isException(\$oException))
+        {
+            $result = $oException->code();
+        }
+        # Else a regular Perl exception
+        else
+        {
+            $result = ERROR_UNHANDLED;
+            $message =
+                'process terminated due to an unhandled exception' .
+                (defined($oException) ? ":\n${oException}" : ': [exception not defined]');
+        }
     };
 
-    # uncoverable statement - errors should be handled in the do block above
-    &log(ASSERT, 'execution reached invalid location in ' . __FILE__ . ', line ' . __LINE__);
-    exit ERROR_ASSERT;                                                  # uncoverable statement
+    # Return result and error message if the result is an error
+    return $result, $message;
+}
+
+####################################################################################################################################
+# Do any cleanup required when the perl process is about to be shut down
+####################################################################################################################################
+sub mainCleanup
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $iExitCode,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::mainCleanup', \@_,
+            {name => 'iExitCode', required => false},
+        );
+
+    # Don't fail if the remote can't be closed
+    eval
+    {
+        protocolDestroy(undef, undef, defined($iExitCode) && ($iExitCode == 0 || $iExitCode == 1));
+        return true;
+    }
+    # this eval exists only to suppress protocol shutdown errors so original error will not be lost
+    or do {};
+
+    # Don't fail if the lock can't be released (it will be freed by the system though the file will remain)
+    eval
+    {
+        lockRelease(false);
+        return true;
+    }
+    # this eval exists only to suppress lock errors so original error will not be lost
+    or do {};
+
+    # Log return values if any
+    return logDebugReturn($strOperation);
 }
 
 1;

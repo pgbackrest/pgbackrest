@@ -66,6 +66,7 @@ perlOptionJson()
                     case cfgDefOptTypeBoolean:
                     case cfgDefOptTypeFloat:
                     case cfgDefOptTypeInteger:
+                    case cfgDefOptTypeSize:
                     {
                         strCat(result, strPtr(varStrForce(cfgOption(optionId))));
                         break;

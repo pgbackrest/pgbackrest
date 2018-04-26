@@ -24,9 +24,35 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add support for additional <backrest/> configuration files in the directory specified by the <br-option>--config-include-path</br-option> option. Add <br-option>--config-path</br-option> option for overriding the default base path of the <br-option>--config</br-option> and <br-option>--config-include-path</br-option> option.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p>Make backup directory sync more efficient.  Scanning the entire backup directory can be very expensive if there are a lot of small tables.  The backup manifest contains the backup directory list so use it to perform syncs instead of scanning the backup directory.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Update the <br-option>archive-push-queue-max</br-option>, <br-option>manifest-save-threshold</br-option>, and <br-option>buffer-size</br-option> options to accept values in <id>KB</id>, <id>MB</id>, <id>GB</id>, <id>TB</id>, or <id>PB</id> where the multiplier is a power of <id>1024</id>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Show command parameters as well as command options in initial info message.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Rename <br-option>archive-queue-max</br-option> option to <br-option>archive-push-queue-max</br-option> to avoid confusion with the <br-option>archive-get-queue-max</br-option> option.  The old option name will continue to be accepted.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -36,11 +62,35 @@
                     </release-item>
 
                     <release-item>
+                        <p>Move async forking and more error handling to C. The Perl process was exiting directly when called but that interfered with proper locking for the forked async process.  Now Perl returns results to the C process which handles all errors, including signals.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improved lock implementation written in C.  Now only two types of locks can be taken: <id>archive</id> and <id>backup</id>.  Most commands use one or the other but the <cmd>stanza-*</cmd> commands acquire both locks.  This provides better protection than the old command-based locking scheme.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageExists()</code>, <code>storagePathCreate()</code>, and <code>storageRemove()</code>.  Add <code>StorageFile</code> object and <code>storageOpenRead()</code>/<code>storageOpenWrite()</code>.  Abstract Posix driver code into a separate module.  Add <code>storagePathRemove()</code> and use it in the Perl Posix driver.</p>
+                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageCopy()</code>, <code>storageExists()</code>, <code>storageMove()</code>, <code>storageNewRead()</code>/<code>storageNewWrite()</code>, <code>storagePathCreate()</code>, <code>storagePathRemove()</code>, <code>storagePathSync()</code>, and <code>storageRemove()</code>.  Add <code>StorageFileRead</code> and <code>StorageFileWrite</code> objects.  Abstract Posix driver code into a separate module. Call <code>storagePathCreate()</code> from the Perl Posix driver.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>String object improvements.  Add <code>strUpper</code>, <code>strLower</code>, <code>strChr</code>, and <code>strTrunc</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>bufEq</code> and <code>bufCat</code> to <code>Buffer</code> object.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>THROWP_</code>* macro variants for error handling.  These macros allow an <code>ErrorType</code> pointer to be passed and are required for functions that may return different errors based on a parameter.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Split <code>cfgLoad()</code> into multiple functions to make testing easier.  Mainly this helps with unit tests that need to do log expect testing.</p>
                     </release-item>
 
                     <release-item>
@@ -64,6 +114,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Don't copy <id>CFGDEF_NAME_ALT</id> or <id>CFGDEF_INHERIT</id> when processing config option inheritance.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Split debug and assert code into separate headers.  Assert can be used earlier because it only depends on the error-handler and not logging.  Add <code>ASSERT()</code> that is preserved in production builds.</p>
                     </release-item>
 
@@ -80,11 +134,28 @@
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="faherty.brian"/>
+                        </release-item-contributor-list>
+
+                        <p>Add monitoring examples using <postgres/> and <proper>jq</proper>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove documentation describing <code>info --output=json</code> as experimental.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Update out-of-date description for the <br-option>spool-path</br-option> option.</p>
                     </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
+                    <release-item>
+                        <p>Add logic to find the real oid of the <id>test1</id> database during restore testing.</p>
+                    </release-item>
+
                     <release-item>
                         <p>Document build improvements.  Perform <code>apt-get update</code> to ensure packages are up to date before installing.  Add <id>-p</id> to the repository <file>mkdir</file> so it won't fail if the directory already exists, handy for testing packages.</p>
                     </release-item>
@@ -112,6 +183,18 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>harnessCfgLoad()</code> test function, which allows a new config to be loaded for unit testing without resetting log functions, opening a log file, or taking locks.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>TEST_ERROR_FMT</code> macro to simplify testing of formatted error messages.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Generate code counts for all source files.  The source files are also classified by type and purpose.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Include VM type in <id>gcov</id> path to avoid conflicts between VMs with different architectures.</p>
                     </release-item>
 
@@ -120,7 +203,23 @@
                     </release-item>
 
                     <release-item>
+                        <p>Use <proper>pip 9.03</proper> in test VMs.  <proper>pip 10</proper> drops support for <proper>Python 2.6</proper> which is still used by the older test VMs.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow <code>-DDEBUG_UNIT</code> to be suppressed to test how debug macros behave.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Rename Perl tests so they don't conflict with their C counterparts.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Divide tests into three types (<id>unit</id>, <id>integration</id>, <id>performance</id>).  Many options that were set per test can instead be inferred from the types, i.e. <id>container</id>, <id>c</id>, <id>expect</id>, and <id>individual</id>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Try tweaking time sync settings to prevent clock drift rather than restarting <id>VBoxService</id> on every test run.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
@@ -4350,6 +4449,11 @@
         <contributor id="didovicher.dmitry">
             <contributor-name-display>Dmitry Didovicher</contributor-name-display>
             <contributor-id type="github">anarazel</contributor-id>
+        </contributor>
+
+        <contributor id="faherty.brian">
+            <contributor-name-display>Brian Faherty</contributor-name-display>
+            <contributor-id type="github">scrummyin</contributor-id>
         </contributor>
 
         <contributor id="fiske.keith">

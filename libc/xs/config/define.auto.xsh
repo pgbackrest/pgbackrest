@@ -14,6 +14,7 @@ Option type constants
 #define CFGDEF_TYPE_HASH                                            cfgDefOptTypeHash
 #define CFGDEF_TYPE_INTEGER                                         cfgDefOptTypeInteger
 #define CFGDEF_TYPE_LIST                                            cfgDefOptTypeList
+#define CFGDEF_TYPE_SIZE                                            cfgDefOptTypeSize
 #define CFGDEF_TYPE_STRING                                          cfgDefOptTypeString
 
 #endif

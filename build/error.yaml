@@ -80,6 +80,9 @@ memory: 94
 cipher: 95
 param-invalid: 96
 
+# Unable to close a path
+path-close: 97
+
 # This error should not be thrown directly -- it serves as a parent for the C errors
 runtime: 122
 

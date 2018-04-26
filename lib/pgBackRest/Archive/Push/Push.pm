@@ -89,10 +89,10 @@ sub process
         # Drop file if queue max has been exceeded
         $self->{strWalPath} = $strWalPath;
 
-        if (cfgOptionTest(CFGOPT_ARCHIVE_QUEUE_MAX) && @{$self->dropList($self->readyList())} > 0)
+        if (cfgOptionTest(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX) && @{$self->dropList($self->readyList())} > 0)
         {
             &log(WARN,
-                "dropped WAL file ${strWalFile} because archive queue exceeded " . cfgOption(CFGOPT_ARCHIVE_QUEUE_MAX) . ' bytes');
+                "dropped WAL file ${strWalFile} because archive queue exceeded " . cfgOption(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX) . ' bytes');
         }
         # Else push the WAL file
         else
@@ -103,11 +103,7 @@ sub process
     }
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'iResult', value => 0, trace => true}
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -201,7 +197,7 @@ sub dropList
     my $stryDropFile = [];
 
     # Determine if there are any to be dropped
-    if (@{$stryReadyFile} > int(cfgOption(CFGOPT_ARCHIVE_QUEUE_MAX) / PG_WAL_SIZE))
+    if (@{$stryReadyFile} > int(cfgOption(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX) / PG_WAL_SIZE))
     {
         $stryDropFile = $stryReadyFile;
     }

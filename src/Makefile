@@ -57,6 +57,7 @@ SRCS = \
 	command/archive/push/push.c \
 	command/help/help.c \
 	command/command.c \
+	common/fork.c \
 	common/error.c \
 	common/exit.c \
 	common/io/handle.c \
@@ -80,8 +81,12 @@ SRCS = \
 	config/parse.c \
 	perl/config.c \
 	perl/exec.c \
-	storage/driver/posix.c \
-	storage/file.c \
+	storage/driver/posix/driver.c \
+	storage/driver/posix/driverFile.c \
+	storage/driver/posix/driverRead.c \
+	storage/driver/posix/driverWrite.c \
+	storage/fileRead.c \
+	storage/fileWrite.c \
 	storage/helper.c \
 	storage/storage.c \
 	main.c

@@ -235,8 +235,6 @@ sub process
         # Else unexpected Perl exception
         confess &log(ERROR, 'unknown error: ' . $oException, ERROR_UNKNOWN);
     };
-
-    return 0;
 }
 
 ####################################################################################################################################

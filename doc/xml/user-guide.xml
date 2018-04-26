@@ -42,7 +42,9 @@
         <variable key="br-home-path">/home/{[br-user]}</variable>
 
         <variable key="postgres-cluster-demo">demo</variable>
-        <variable key="backrest-config-demo">/etc/{[project-exe]}.conf</variable>
+        <variable key="backrest-config-path">/etc/{[project-exe]}</variable>
+        <variable key="backrest-config-include-path">{[backrest-config-path]}/conf.d</variable>
+        <variable key="backrest-config-demo">{[backrest-config-path]}/{[project-exe]}.conf</variable>
 
         <variable key="pg-path-default" keyword="default">/var/lib/postgresql/[version]/[cluster]</variable>
         <variable key="pg-path-default" keyword="co6">/var/lib/pgsql/[version]/data</variable>
@@ -282,6 +284,12 @@
                 <exe-cmd>chown {[br-install-user]}:{[br-install-group]} /var/log/pgbackrest</exe-cmd>
             </execute>
             <execute user="root">
+                <exe-cmd>mkdir {[backrest-config-path]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>mkdir {[backrest-config-include-path]}</exe-cmd>
+            </execute>
+            <execute user="root">
                 <exe-cmd>touch {[backrest-config-demo]}</exe-cmd>
             </execute>
             <execute user="root">
@@ -416,9 +424,11 @@
             <list>
                 <list-item>The deprecated <br-option>thread-max</br-option> option is no longer valid.  Use <br-option>process-max</br-option> instead.</list-item>
 
-                <list-item>The deprecated <br-option>archive-max-mb</br-option> option is no longer valid.  This has been replaced with the <br-option>archive-queue-max</br-option> option which has different semantics.</list-item>
+                <list-item>The deprecated <br-option>archive-max-mb</br-option> option is no longer valid.  This has been replaced with the <br-option>archive-push-queue-max</br-option> option which has different semantics.</list-item>
 
                 <list-item>The default for the <br-option>backup-user</br-option> option has changed from <id>backrest</id> to <id>pgbackrest</id>.</list-item>
+
+                <list-item>In <proper>v2.02</proper> the default location of the <backrest/> configuration file has changed from <file>/etc/pgbackrest.conf</file> to <file>/etc/pgbackrest/pgbackrest.conf</file>. If <file>/etc/pgbackrest/pgbackrest.conf</file> does not exist, the <file>/etc/pgbackrest.conf</file> file will be loaded instead, if it exists.</list-item>
             </list>
 
             <p>Many option names have changed to improve consistency although the old names from <proper>v1</proper> are still accepted.  In general, <id>db-*</id> options have been renamed to <id>pg-*</id> and <id>backup-*</id>/<id>retention-*</id> options have been renamed to <id>repo-*</id> when appropriate.</p>
@@ -555,6 +565,26 @@
             </backrest-config>
 
             <p><backrest/> configuration files follow the Windows INI convention.  Sections are denoted by text in brackets and key/value pairs are contained in each section.  Lines beginning with <id>#</id> are ignored and can be used as comments.</p>
+
+            <p>There are multiple ways the <backrest/> configuration files can be loaded:</p>
+            <list>
+                <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are default: the default config file will be loaded, if it exists, and <file>*.conf</file> files in the default config include path will be appended, if they exist.</list-item>
+                <list-item><br-option>config</br-option> option is specified: only the specified config file will be loaded and is expected to exist.</list-item>
+                <list-item><br-option>config-include-path</br-option> is specified: <file>*.conf</file> files in the config include path will be loaded and the path is required to exist. The default config file will be be loaded if it exists. If it is desireable to load only the files in the specified config include path, then the <br-option>--no-config</br-option> option can also be passed.</list-item>
+                <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are specified: using the user-specified values, the config file will be loaded and <file>*.conf</file> files in the config include path will be appended. The files are expected to exist.</list-item>
+                <list-item><br-option>config-path</br-option> is specified: this setting will override the base path for the default location of the config file and/or the base path of the default config-include-path setting unless the config and/or config-incude-path option is explicitly set.</list-item>
+            </list>
+
+            <p>The files are concatenated as if they were one big file; order doesn't matter, but there is precedence based on sections. The precedence (highest to lowest) is:</p>
+
+            <list>
+                <list-item>[<i>stanza</i>:<i>command</i>]</list-item>
+                <list-item>[<i>stanza</i>]</list-item>
+                <list-item>[global:<i>command</i>]</list-item>
+                <list-item>[global]</list-item>
+            </list>
+
+            <p><b>Note:</b> <br-option>--config</br-option>, <br-option>--config-include-path</br-option> and <br-option>--config-path</br-option> are command-line only options.</p>
         </section>
 
         <!-- SECTION => QUICKSTART - CREATE REPOSITORY -->
@@ -964,6 +994,111 @@
         </section>
     </section>
 
+    <!-- *********************************************************************************************************************** -->
+    <section id="monitor" depend="/quickstart/perform-backup">
+        <title>Monitoring</title>
+
+        <p>Monitoring is an important part of any production system.  There are many tools available and <backrest/> can be monitored on any of them with a little work.</p>
+
+        <p><backrest/> can output information about the repository in JSON format which includes a list of all backups for each stanza and WAL archive info.  A script is needed to extract information in a format that the monitoring system can understand.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Get <backrest/> info in JSON format</title>
+
+            <execute show="y">
+                <exe-cmd>pgbackrest --output=json info</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <section id="postgresql">
+            <title>In <postgres/></title>
+
+            <p>The <postgres/> <id>COPY</id> command allows <backrest/> info to be loaded into a table.  The following example wraps that logic in a function that can be used to perform real-time queries.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Load <backrest/> info function for <postgres/></title>
+
+                <execute user="postgres" show="n">
+                    <exe-cmd>mkdir -p /home/postgres/pgbackrest/doc/example</exe-cmd>
+                </execute>
+
+                <execute user="postgres" show="n">
+                    <exe-cmd>cp -r /backrest/doc/example/*
+                        /home/postgres/pgbackrest/doc/example</exe-cmd>
+                </execute>
+
+                <execute output="y">
+                    <exe-cmd>cat
+                        /home/postgres/pgbackrest/doc/example/pgsql-pgbackrest-info.sql</exe-cmd>
+                </execute>
+
+                <execute>
+                    <exe-cmd>psql -f
+                        /home/postgres/pgbackrest/doc/example/pgsql-pgbackrest-info.sql</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>Now the <code>monitor.pgbackrest_info()</code> function can be used to determine the last successful backup time and archived WAL for a stanza.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Query last successful backup time and archived WAL</title>
+
+                <execute output="y">
+                    <exe-cmd>cat
+                        /home/postgres/pgbackrest/doc/example/pgsql-pgbackrest-query.sql</exe-cmd>
+                </execute>
+
+                <execute output="y">
+                    <exe-cmd>psql -f
+                        /home/postgres/pgbackrest/doc/example/pgsql-pgbackrest-query.sql</exe-cmd>
+                </execute>
+            </execute-list>
+        </section>
+
+        <section keyword="default" id="jq">
+            <title>Using <proper>jq</proper></title>
+
+            <p><proper>jq</proper> is a command-line utility that can easily extract data from JSON.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Install <proper>jq</proper> utility</title>
+
+                <execute user="root">
+                    <exe-cmd>apt-get install jq</exe-cmd>
+                    <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+                </execute>
+            </execute-list>
+
+            <p>Now <proper>jq</proper> can be used to query the last successful backup time for a stanza.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Query last successful backup time</title>
+
+                <execute output="y">
+                    <exe-cmd>
+                      pgbackrest --output=json --stanza=demo info |
+                          jq '.[0] | .backup[-1] | .timestamp.stop'
+                    </exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>Or the last archived WAL.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Query last archived WAL</title>
+
+                <execute output="y">
+                    <exe-cmd>
+                      pgbackrest --output=json --stanza=demo info |
+                          jq '.[0] | .archive[-1] | .max'
+                    </exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>Note that this syntax requires <proper>jq v1.5</proper>.</p>
+        </section>
+    </section>
+
     <!-- SECTION => RETENTION -->
     <section id="retention" depend="quickstart/perform-backup">
         <title>Retention</title>
@@ -1203,9 +1338,15 @@
             <execute-list host="{[host-pg1]}">
                 <title>Show space used by test1 database</title>
 
+                <execute show="n" variable-key="database-test1-oid">
+                    <exe-cmd>
+                        psql -Atc "select oid from pg_database where datname = 'test1'"
+                    </exe-cmd>
+                </execute>
+
                 <execute output="y" filter="n">
                     <exe-cmd>
-                        du -sh {[pg-path]}/base/16384
+                        du -sh {[pg-path]}/base/{[database-test1-oid]}
                     </exe-cmd>
                 </execute>
             </execute-list>
@@ -1267,7 +1408,7 @@
 
                 <execute output="y" filter="n">
                     <exe-cmd>
-                        du -sh {[pg-path]}/base/16384
+                        du -sh {[pg-path]}/base/{[database-test1-oid]}
                     </exe-cmd>
                 </execute>
             </execute-list>
@@ -1851,13 +1992,13 @@
                 <backrest-config-option section="global:archive-push" key="process-max">2</backrest-config-option>
             </backrest-config>
 
-            <p>The <file>archive-async.log</file> file can be used to monitor the activity of the asynchronous process.  A good way to test this is to quickly push a number of WAL segments.</p>
+            <p>The <file>[stanza]-archive-push-async.log</file> file can be used to monitor the activity of the asynchronous process.  A good way to test this is to quickly push a number of WAL segments.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Test parallel asynchronous archiving</title>
 
                 <execute output="n" show="n">
-                    <exe-cmd>rm -f /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
+                    <exe-cmd>rm -f /var/log/pgbackrest/demo-archive-push-async.log</exe-cmd>
                 </execute>
 
                 <execute output="n">
@@ -1883,7 +2024,7 @@
                 <title>Check results in the log</title>
 
                 <execute output="y">
-                    <exe-cmd>cat /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
+                    <exe-cmd>cat /var/log/pgbackrest/demo-archive-push-async.log</exe-cmd>
                     <exe-highlight> WAL file\(s\) to archive|pushed WAL file 0000000</exe-highlight>
                 </execute>
             </execute-list>

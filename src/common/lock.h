@@ -21,6 +21,7 @@ typedef enum
 Functions
 ***********************************************************************************************************************************/
 bool lockAcquire(const String *lockPath, const String *stanza, LockType lockType, double lockTimeout, bool failOnNoLock);
+bool lockClear(bool failOnNoLock);
 bool lockRelease(bool failOnNoLock);
 
 #endif

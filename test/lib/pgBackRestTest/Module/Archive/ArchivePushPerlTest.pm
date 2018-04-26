@@ -294,7 +294,7 @@ sub run
     if ($self->begin("ArchivePush->dropList()"))
     {
         my $oPushAsync = new pgBackRest::Archive::Push::Async($self->{strWalPath}, $self->{strSpoolPath});
-        $self->optionTestSet(CFGOPT_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 4);
+        $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, PG_WAL_SIZE * 4);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         my $iWalTimeline = 1;
@@ -311,7 +311,7 @@ sub run
             'WAL files not dropped');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionTestSet(CFGOPT_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 2);
+        $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, PG_WAL_SIZE * 2);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $self->testResult(
@@ -319,7 +319,7 @@ sub run
             '(000000010000000100000001, 000000010000000100000002, 000000010000000100000003)', 'WAL files that exceed queue max');
 
         # Reset queue max
-        $self->optionTestClear(CFGOPT_ARCHIVE_QUEUE_MAX);
+        $self->optionTestClear(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
     }
 
@@ -513,7 +513,7 @@ sub run
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionTestSet(CFGOPT_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 2);
+        $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, PG_WAL_SIZE * 2);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         # Generate WAL to test queue limits
@@ -541,14 +541,14 @@ sub run
             $self->testResult(
                 sub {${storageSpool()->get("$self->{strSpoolPath}/${strSegment}.ok")}},
                 $strSegment eq $strySegment[0] ? undef :
-                    "0\ndropped WAL file ${strSegment} because archive queue exceeded " . cfgOption(CFGOPT_ARCHIVE_QUEUE_MAX) .
+                    "0\ndropped WAL file ${strSegment} because archive queue exceeded " . cfgOption(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX) .
                         ' bytes',
                 "verify ${strSegment} status");
 
             $self->walRemove($self->{strWalPath}, $strSegment);
         }
 
-        $self->optionTestClear(CFGOPT_ARCHIVE_QUEUE_MAX);
+        $self->optionTestClear(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -590,7 +590,7 @@ sub run
         my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
-        $self->testResult(sub {$oPush->process("pg_xlog/${strSegment}")}, 0, "${strSegment} WAL pushed (with relative path)");
+        $self->testResult(sub {$oPush->process("pg_xlog/${strSegment}")}, undef, "${strSegment} WAL pushed (with relative path)");
 
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment)}, "${strSegment}-$self->{strWalHash}",
@@ -600,22 +600,22 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Set unrealistic queue max to make synchronous push drop a WAL
-        $self->optionTestSet(CFGOPT_ARCHIVE_QUEUE_MAX, 0);
+        $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, 0);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
-        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "${strSegment} WAL dropped");
+        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, undef, "${strSegment} WAL dropped");
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment)}, '[undef]',
             "${strSegment} WAL in archive");
 
         # Set more realistic queue max and allow segment to push
-        $self->optionTestSet(CFGOPT_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 4);
+        $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, PG_WAL_SIZE * 4);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "${strSegment} WAL pushed");
+        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, undef, "${strSegment} WAL pushed");
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment)}, "${strSegment}-$self->{strWalHash}",
             "${strSegment} WAL in archive");
@@ -623,7 +623,7 @@ sub run
         $self->walRemove($self->{strWalPath}, $strSegment);
 
         # Reset queue max
-        $self->optionTestClear(CFGOPT_ARCHIVE_QUEUE_MAX);
+        $self->optionTestClear(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -634,18 +634,7 @@ sub run
 
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
-        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "${strSegment} WAL pushed async");
-        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "hit lock - already running");
-
-        # Wait for child process to exit
-        if ($iProcessId == $PID)
-        {
-            waitpid(-1, 0);
-        }
-        else
-        {
-            exit 0;
-        }
+        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, undef, "${strSegment} WAL pushed async");
 
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment, 5)}, "${strSegment}-$self->{strWalHash}",
@@ -662,28 +651,10 @@ sub run
         $self->optionTestSet(CFGOPT_ARCHIVE_TIMEOUT, 5);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-
-        # Wait for error file to appear
-        my $oWait = waitInit(10);
-        my $strErrorFile = STORAGE_SPOOL_ARCHIVE_OUT . "/${strSegment}.error";
-
-        do
-        {
-            $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, 'process connect error');
-
-            # Wait for child process to exit
-            if ($iProcessId == $PID)
-            {
-                waitpid(-1, 0);
-            }
-            else
-            {
-                exit 0;
-            }
-        }
-        while (!storageSpool()->exists($strErrorFile) && waitMore($oWait));
+        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, undef, 'process connect error');
 
         # Check contents of error file
+        my $strErrorFile = STORAGE_SPOOL_ARCHIVE_OUT . "/${strSegment}.error";
         my $strErrorFileContents = ${storageSpool()->get($strErrorFile)};
 
         $self->testResult(

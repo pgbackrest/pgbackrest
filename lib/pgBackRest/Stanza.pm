@@ -87,12 +87,12 @@ sub process
     # Process stanza upgrade
     elsif (cfgCommandTest(CFGCMD_STANZA_UPGRADE))
     {
-        $iResult = $self->stanzaUpgrade();
+        $self->stanzaUpgrade();
     }
     # Process stanza delete
     elsif (cfgCommandTest(CFGCMD_STANZA_DELETE))
     {
-        $iResult = $self->stanzaDelete();
+        $self->stanzaDelete();
     }
     # Else error if any other command is found
     else
@@ -284,10 +284,7 @@ sub stanzaUpgrade
 
     # Return from function and log return values if any
     return logDebugReturn
-    (
-        $strOperation,
-        {name => 'iResult', value => 0, trace => true}
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -359,11 +356,7 @@ sub stanzaDelete
     }
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'iResult', value => 0, trace => true}
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################

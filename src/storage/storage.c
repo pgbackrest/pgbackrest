@@ -6,7 +6,7 @@ Storage Manager
 #include "common/assert.h"
 #include "common/memContext.h"
 #include "common/wait.h"
-#include "storage/driver/posix.h"
+#include "storage/driver/posix/driver.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -60,12 +60,42 @@ storageNew(const String *path, StorageNewParam param)
 }
 
 /***********************************************************************************************************************************
-Get storage buffer size
+Copy a file
 ***********************************************************************************************************************************/
-size_t
-storageBufferSize(const Storage *this)
+bool
+storageCopy(StorageFileRead *source, StorageFileWrite *destination)
 {
-    return this->bufferSize;
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Open source file
+        if (storageFileReadOpen(source))
+        {
+            // Open the destination file now that we know the source file exists and is readable
+            storageFileWriteOpen(destination);
+
+            // Copy data from source to destination
+            Buffer *read = NULL;
+
+            do
+            {
+                read = storageFileRead(source);
+                storageFileWrite(destination, read);
+            }
+            while (read != NULL);
+
+            // Close the source and destination files
+            storageFileReadClose(source);
+            storageFileWriteClose(destination);
+
+            // Set result to indicate that the file was copied
+            result = true;
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -104,13 +134,37 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
 Read from storage into a buffer
 ***********************************************************************************************************************************/
 Buffer *
-storageGet(const StorageFile *file)
+storageGet(StorageFileRead *file)
 {
     Buffer *result = NULL;
 
-    // Call driver function if a file was passed
-    if (file != NULL)
-        result = storageDriverPosixGet(file);
+    ASSERT_DEBUG(file != NULL);
+
+    // If the file exists
+    if (storageFileReadOpen(file))
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            result = bufNew(0);
+            Buffer *read = NULL;
+
+            do
+            {
+                // Read data
+                read = storageFileRead(file);
+
+                // Add to result and free read buffer
+                bufCat(result, read);
+                bufFree(read);
+            }
+            while (read != NULL);
+
+            bufMove(result, MEM_CONTEXT_OLD());
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        storageFileReadClose(file);
+    }
 
     return result;
 }
@@ -136,25 +190,48 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
     return result;
 }
 
+/***********************************************************************************************************************************
+Move a file
+***********************************************************************************************************************************/
+void
+storageMove(StorageFileRead *source, StorageFileWrite *destination)
+{
+    ASSERT_DEBUG(!storageFileReadIgnoreMissing(source));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If the file can't be moved it will need to be copied
+        if (!storageDriverPosixMove(storageFileReadFileDriver(source), storageFileWriteFileDriver(destination)))
+        {
+            // Perform the copy
+            storageCopyNP(source, destination);
+
+            // Remove the source file
+            storageDriverPosixRemove(storageFileReadName(source), false);
+
+            // Sync source path if the destination path was synced.  We know the source and destination paths are different because
+            // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented.
+            if (storageFileWriteSyncPath(destination))
+                storageDriverPosixPathSync(strPath(storageFileReadName(source)), false);
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+}
 
 /***********************************************************************************************************************************
 Open a file for reading
 ***********************************************************************************************************************************/
-StorageFile *
-storageOpenRead(const Storage *this, const String *fileExp, StorageOpenReadParam param)
+StorageFileRead *
+storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param)
 {
-    StorageFile *result = NULL;
+    StorageFileRead *result = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageFile")
+    MEM_CONTEXT_NEW_BEGIN("StorageFileRead")
     {
         String *fileName = storagePathNP(this, fileExp);
 
-        // Call driver function
-        void *data = storageDriverPosixOpenRead(fileName, param.ignoreMissing);
-
-        // Free mem contexts if missing files are ignored
-        if (data != NULL)
-            result = storageFileNew(this, fileName, storageFileTypeRead, data);
+        // Create the file
+        result = storageFileReadMove(storageFileReadNew(fileName, param.ignoreMissing, this->bufferSize), MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_NEW_END();
 
@@ -164,23 +241,26 @@ storageOpenRead(const Storage *this, const String *fileExp, StorageOpenReadParam
 /***********************************************************************************************************************************
 Open a file for writing
 ***********************************************************************************************************************************/
-StorageFile *
-storageOpenWrite(const Storage *this, const String *fileExp, StorageOpenWriteParam param)
+StorageFileWrite *
+storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param)
 {
+    StorageFileWrite *result = NULL;
+
     ASSERT_STORAGE_ALLOWS_WRITE();
 
-    StorageFile *result = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("StorageFile")
+    MEM_CONTEXT_TEMP_BEGIN()
     {
         String *fileName = storagePathNP(this, fileExp);
 
-        // Call driver function
-        result = storageFileNew(
-            this, fileName, storageFileTypeWrite,
-            storageDriverPosixOpenWrite(fileName, param.mode != 0 ? param.mode : this->modeFile));
+        // Create the file
+        result = storageFileWriteMove(
+            storageFileWriteNew(
+                fileName, param.modeFile != 0 ? param.modeFile : this->modeFile,
+                param.modePath != 0 ? param.modePath : this->modePath, param.noCreatePath, param.noSyncFile, param.noSyncPath,
+                param.noAtomic),
+            MEM_CONTEXT_OLD());
     }
-    MEM_CONTEXT_NEW_END();
+    MEM_CONTEXT_TEMP_END();
 
     return result;
 }
@@ -324,14 +404,32 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
 }
 
 /***********************************************************************************************************************************
+Sync a path
+***********************************************************************************************************************************/
+void storagePathSync(const Storage *this, const String *pathExp, StoragePathSyncParam param)
+{
+    ASSERT_STORAGE_ALLOWS_WRITE();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Build the path
+        String *path = storagePathNP(this, pathExp);
+
+        // Call driver function
+        storageDriverPosixPathSync(path, param.ignoreMissing);
+    }
+    MEM_CONTEXT_TEMP_END();
+}
+
+/***********************************************************************************************************************************
 Write a buffer to storage
 ***********************************************************************************************************************************/
 void
-storagePut(const StorageFile *file, const Buffer *buffer)
+storagePut(StorageFileWrite *file, const Buffer *buffer)
 {
-    // Write data if buffer is not null.  Otherwise, an empty file is expected.
-    if (buffer != NULL)
-        storageDriverPosixPut(file, buffer);
+    storageFileWriteOpen(file);
+    storageFileWrite(file, buffer);
+    storageFileWriteClose(file);
 }
 
 /***********************************************************************************************************************************

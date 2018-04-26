@@ -167,6 +167,8 @@ sub protocolParam
     # Return the remote when required
     my $iOptionIdCmd = CFGOPT_REPO_HOST_CMD;
     my $iOptionIdConfig = CFGOPT_REPO_HOST_CONFIG;
+    my $iOptionIdConfigIncludePath = CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH;
+    my $iOptionIdConfigPath = CFGOPT_REPO_HOST_CONFIG_PATH;
     my $iOptionIdHost = CFGOPT_REPO_HOST;
     my $iOptionIdUser = CFGOPT_REPO_HOST_USER;
     my $strOptionDbPath = undef;
@@ -178,6 +180,8 @@ sub protocolParam
     {
         $iOptionIdCmd = cfgOptionIdFromIndex(CFGOPT_PG_HOST_CMD, $iRemoteIdx);
         $iOptionIdConfig = cfgOptionIdFromIndex(CFGOPT_PG_HOST_CONFIG, $iRemoteIdx);
+        $iOptionIdConfigIncludePath = cfgOptionIdFromIndex(CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH, $iRemoteIdx);
+        $iOptionIdConfigPath = cfgOptionIdFromIndex(CFGOPT_PG_HOST_CONFIG_PATH, $iRemoteIdx);
         $iOptionIdHost = cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iRemoteIdx);
         $iOptionIdUser = cfgOptionIdFromIndex(CFGOPT_PG_HOST_USER, $iRemoteIdx);
         $strOptionSshPort = cfgOptionIdFromIndex(CFGOPT_PG_HOST_PORT, $iRemoteIdx);
@@ -215,6 +219,13 @@ sub protocolParam
         &CFGOPT_CONFIG =>
             {value => cfgOptionValid($iOptionIdConfig) && cfgOptionSource($iOptionIdConfig) eq CFGDEF_SOURCE_DEFAULT ?
                 undef : cfgOption($iOptionIdConfig)},
+        &CFGOPT_CONFIG_INCLUDE_PATH =>
+            {value => cfgOptionValid($iOptionIdConfigIncludePath) &&
+                cfgOptionSource($iOptionIdConfigIncludePath) eq CFGDEF_SOURCE_DEFAULT ?
+                    undef : cfgOption($iOptionIdConfigIncludePath)},
+        &CFGOPT_CONFIG_PATH =>
+            {value => cfgOptionValid($iOptionIdConfigPath) && cfgOptionSource($iOptionIdConfigPath) eq CFGDEF_SOURCE_DEFAULT ?
+                undef : cfgOption($iOptionIdConfigPath)},
         &CFGOPT_TYPE => {value => $strRemoteType},
         &CFGOPT_LOG_PATH => {},
         &CFGOPT_LOCK_PATH => {},
@@ -241,6 +252,8 @@ sub protocolParam
         if ($iOptionIdx != 1)
         {
             $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_PG_HOST_CONFIG, $iOptionIdx)} = {};
+            $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH, $iOptionIdx)} = {};
+            $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_PG_HOST_CONFIG_PATH, $iOptionIdx)} = {};
             $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iOptionIdx)} = {};
             $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iOptionIdx)} = {};
             $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_PG_PORT, $iOptionIdx)} = {};

@@ -12,6 +12,7 @@ Execute Perl for Legacy Functionality
 #include "common/memContext.h"
 #include "config/config.h"
 #include "perl/config.h"
+#include "perl/exec.h"
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 &&  __GNUC_MINOR__ >= 8)
     #define WARNING_PEDANTIC 1
@@ -41,7 +42,13 @@ Constants used to build perl options
 ***********************************************************************************************************************************/
 #define PGBACKREST_MODULE                                           PGBACKREST_NAME "::Main"
 #define PGBACKREST_MAIN                                             PGBACKREST_MODULE "::main"
-#define PGBACKREST_CONFIG_SET                                       PGBACKREST_MODULE "::configSet"
+
+/***********************************************************************************************************************************
+Perl interpreter
+
+This is a silly name but Perl prefers it.
+***********************************************************************************************************************************/
+static PerlInterpreter *my_perl = NULL;
 
 /***********************************************************************************************************************************
 Build list of parameters to use for perl main
@@ -57,7 +64,7 @@ perlMain()
 
     // Construct Perl main call
     String *mainCall = strNewFmt(
-        PGBACKREST_MAIN "('%s','%s'%s)", strPtr(cfgExe()), cfgCommandName(cfgCommand()), strPtr(commandParam));
+        "($result, $message) = " PGBACKREST_MAIN "('%s'%s)", cfgCommandName(cfgCommand()), strPtr(commandParam));
 
     return mainCall;
 }
@@ -78,33 +85,76 @@ static void xs_init(pTHX)
 }
 
 /***********************************************************************************************************************************
+Evaluate a perl statement
+***********************************************************************************************************************************/
+static void
+perlEval(const String *statement)
+{
+    eval_pv(strPtr(statement), TRUE);
+}
+
+/***********************************************************************************************************************************
+Initialize Perl
+***********************************************************************************************************************************/
+static void
+perlInit()
+{
+    if (!my_perl)
+    {
+        // Initialize Perl with dummy args and environment
+        int argc = 1;
+        const char *argv[1] = {strPtr(cfgExe())};
+        const char *env[1] = {NULL};
+        PERL_SYS_INIT3(&argc, (char ***)&argv, (char ***)&env);
+
+        // Create the interpreter
+        const char *embedding[] = {"", "-M"PGBACKREST_MODULE, "-e", "0"};
+        my_perl = perl_alloc();
+        perl_construct(my_perl);
+
+        // Don't let $0 assignment update the proctitle or embedding[0]
+        PL_origalen = 1;
+
+        // Start the interpreter
+        perl_parse(my_perl, xs_init, 3, (char **)embedding, NULL);
+        PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+        perl_run(my_perl);
+
+        // Set config data -- this is done separately to avoid it being included in stack traces
+        perlEval(strNewFmt(PGBACKREST_MAIN "ConfigSet('%s', '%s')", strPtr(cfgExe()), strPtr(perlOptionJson())));
+    }
+}
+
+/***********************************************************************************************************************************
 Execute main function in Perl
 ***********************************************************************************************************************************/
-void
+int
 perlExec()
 {
-    // Initialize Perl with dummy args and environment
-    int argc = 1;
-    const char *argv[1] = {strPtr(cfgExe())};
-    const char *env[1] = {NULL};
-    PERL_SYS_INIT3(&argc, (char ***)&argv, (char ***)&env);
-
-    // Create the interpreter
-    const char *embedding[] = {"", "-M"PGBACKREST_MODULE, "-e", "0"};
-    PerlInterpreter *my_perl = perl_alloc();
-    perl_construct(my_perl);
-
-    // Don't let $0 assignment update the proctitle or embedding[0]
-    PL_origalen = 1;
-
-    // Start the interpreter
-    perl_parse(my_perl, xs_init, 3, (char **)embedding, NULL);
-    PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
-    perl_run(my_perl);
-
-    // Set config data -- this is done separately to avoid it being included in stack traces
-    eval_pv(strPtr(strNewFmt(PGBACKREST_CONFIG_SET "('%s')", strPtr(perlOptionJson()))), TRUE);
+    // Initialize Perl
+    perlInit();
 
     // Run perl main function
-    eval_pv(strPtr(perlMain()), TRUE);
-}                                                                   // {uncoverable - perlExec() does not return}
+    perlEval(perlMain());
+
+    // Return result code
+    int code = (int)SvIV(get_sv("result", 0));
+    char *message = SvPV_nolen(get_sv("message", 0));                               // {uncovered - internal Perl macro branch}
+
+    if (code >= errorTypeCode(&AssertError))                                        // {uncovered - success tested in integration}
+        THROW_CODE(code, strlen(message) == 0 ? PERL_EMBED_ERROR : message);        // {+uncovered}
+
+    return code;                                                                    // {+uncovered}
+}
+
+/***********************************************************************************************************************************
+Free Perl objects
+
+Don't bother freeing Perl itself since we are about to exit.
+***********************************************************************************************************************************/
+void
+perlFree(int result)
+{
+    if (my_perl != NULL)
+        perlEval(strNewFmt(PGBACKREST_MAIN "Cleanup(%d)", result));
+}

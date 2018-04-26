@@ -80,6 +80,7 @@ ERROR_DECLARE(FileExistsError);
 ERROR_DECLARE(MemoryError);
 ERROR_DECLARE(CipherError);
 ERROR_DECLARE(ParamInvalidError);
+ERROR_DECLARE(PathCloseError);
 ERROR_DECLARE(RuntimeError);
 ERROR_DECLARE(InvalidError);
 ERROR_DECLARE(UnhandledError);

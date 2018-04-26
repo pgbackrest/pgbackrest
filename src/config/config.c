@@ -390,6 +390,7 @@ cfgOptionDefault(ConfigOption optionId)
                         }
 
                         case cfgDefOptTypeInteger:
+                        case cfgDefOptTypeSize:
                         {
                             configOptionValue[optionId].defaultValue = varNewInt64(varInt64Force(defaultValue));
                             break;
@@ -673,6 +674,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                 }
 
                 case cfgDefOptTypeInteger:
+                case cfgDefOptTypeSize:
                 {
                     if (varType(value) == varTypeInt64)
                         configOptionValue[optionId].value = varDup(value);
@@ -732,7 +734,7 @@ cfgOptionSource(ConfigOption optionId)
 }
 
 /***********************************************************************************************************************************
-Is the option set?
+Is the option valid for the command and set?
 ***********************************************************************************************************************************/
 bool
 cfgOptionTest(ConfigOption optionId)

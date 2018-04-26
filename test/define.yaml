@@ -9,33 +9,34 @@
 #
 # Most options can be set for modules and tests (test option will override module option if both are set):
 #     * db - determines if the test will be run against multiple db versions
-#     * container - determines if the test will be run in a container or will create containers itself
 #     * coverage - determines coverage for the test
 #           full - the module/test provides full coverage for the code module
 #           partial - the module/test provides partial coverage for the code module
 #           noCode - the code module should not contain any coverable code.  If it does an error will be thrown.
-#     * expect - should expect log tests be run?
-#     * c - is this a C test (instead of Perl)?
-#     * cDef - defines for C testing
+#     * define - defines for C testing
 #     * debugUnitSuppress - don't define DEBUG_UNIT for unit tests -- this is used to test unit test debugging macros
-#     * individual - determines if each run in a test will be run in a new container
 #     * perlReq - is Perl required for this C test?
 #
 # Some options are unique to tests:
 #     * total - total runs in the test
 #     * vm - VMs that the test will be run on
 # **********************************************************************************************************************************
-module:
+
+# **********************************************************************************************************************************
+# Unit tests
+#
+# Unit tests are assumed to be C tests unless they end in "-perl".
+# **********************************************************************************************************************************
+unit:
+
   # ********************************************************************************************************************************
   - name: common
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: time
         total: 2
-        c: true
-        cDef: -DNO_ERROR -DNO_LOG
+        define: -DNO_ERROR -DNO_LOG
 
         coverage:
           common/time: full
@@ -43,8 +44,7 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: error
         total: 6
-        c: true
-        cDef: -DNO_ERROR -DNO_LOG
+        define: -DNO_ERROR -DNO_LOG
 
         coverage:
           common/error: full
@@ -53,8 +53,7 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-on
         total: 2
-        c: true
-        cDef: -DNO_LOG
+        define: -DNO_LOG
 
         coverage:
           common/assert: noCode
@@ -62,18 +61,24 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-off
         total: 2
-        c: true
-        cDef: -DNDEBUG -DNO_LOG
+        define: -DNDEBUG -DNO_LOG
         debugUnitSuppress: true
 
         coverage:
           common/assert: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: fork
+        total: 1
+        define: -DNO_LOG
+
+        coverage:
+          common/fork: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: mem-context
         total: 7
-        c: true
-        cDef: -DNO_MEM_CONTEXT -DNO_LOG
+        define: -DNO_MEM_CONTEXT -DNO_LOG
 
         coverage:
           common/memContext: full
@@ -81,8 +86,7 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: log
         total: 4
-        c: true
-        cDef: -DNO_LOG
+        define: -DNO_LOG
 
         coverage:
           common/log: full
@@ -90,7 +94,6 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: debug-on
         total: 2
-        c: true
 
         coverage:
           common/debug: noCode
@@ -98,8 +101,7 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: debug-off
         total: 2
-        c: true
-        cDef: -DNDEBUG -DNO_LOG
+        define: -DNDEBUG -DNO_LOG
         debugUnitSuppress: true
 
         coverage:
@@ -108,7 +110,6 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: lock
         total: 2
-        c: true
 
         coverage:
           common/lock: full
@@ -116,15 +117,13 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-handle
         total: 1
-        c: true
 
         coverage:
           common/io/handle: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exit
-        total: 1
-        c: true
+        total: 3
 
         coverage:
           common/exit: full
@@ -132,7 +131,6 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: wait
         total: 1
-        c: true
 
         coverage:
           common/wait: full
@@ -140,15 +138,13 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-list
         total: 3
-        c: true
 
         coverage:
           common/type/list: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string
-        total: 9
-        c: true
+        total: 10
 
         coverage:
           common/type/string: full
@@ -156,15 +152,13 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string-list
         total: 7
-        c: true
 
         coverage:
           common/type/stringList: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-buffer
-        total: 2
-        c: true
+        total: 4
 
         coverage:
           common/type/buffer: full
@@ -172,7 +166,6 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-variant
         total: 7
-        c: true
 
         coverage:
           common/type/variant: full
@@ -180,7 +173,6 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-variant-list
         total: 3
-        c: true
 
         coverage:
           common/type/variantList: full
@@ -188,7 +180,6 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-key-value
         total: 2
-        c: true
 
         coverage:
           common/type/keyValue: full
@@ -196,7 +187,6 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: encode
         total: 1
-        c: true
 
         coverage:
           common/encode: full
@@ -207,7 +197,7 @@ module:
         total: 1
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: http-client
+      - name: http-client-perl
         total: 2
 
         coverage:
@@ -216,7 +206,6 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: reg-exp
         total: 2
-        c: true
 
         coverage:
           common/regExp: full
@@ -224,7 +213,6 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: ini
         total: 3
-        c: true
 
         coverage:
           common/ini: full
@@ -244,14 +232,14 @@ module:
           Common/Io/Handle: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: io-buffered
+      - name: io-buffered-perl
         total: 3
 
         coverage:
           Common/Io/Buffered: partial
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: io-process
+      - name: io-process-perl
         total: 3
 
         coverage:
@@ -266,13 +254,11 @@ module:
 
   # ********************************************************************************************************************************
   - name: cipher
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: random
         total: 1
-        c: true
 
         coverage:
           cipher/random: full
@@ -280,33 +266,28 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: block
         total: 2
-        c: true
 
         coverage:
           cipher/block: full
 
   # ********************************************************************************************************************************
   - name: postgres
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: page-checksum
         total: 3
-        c: true
 
         coverage:
           postgres/pageChecksum: full
 
   # ********************************************************************************************************************************
   - name: perl
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: config
         total: 1
-        c: true
 
         coverage:
           perl/config: full
@@ -314,7 +295,6 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exec
         total: 2
-        c: true
         perlReq: true
 
         coverage:
@@ -322,26 +302,22 @@ module:
 
   # ********************************************************************************************************************************
   - name: help
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: help
         total: 4
-        c: true
 
         coverage:
           command/help/help: full
 
   # ********************************************************************************************************************************
   - name: config
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: define
         total: 2
-        c: true
 
         coverage:
           config/define: full
@@ -350,7 +326,6 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: config
         total: 3
-        c: true
 
         coverage:
           config/config: full
@@ -358,8 +333,7 @@ module:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: parse
-        total: 2
-        c: true
+        total: 4
 
         coverage:
           config/parse: full
@@ -368,39 +342,37 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: load
         total: 1
-        c: true
 
         coverage:
           config/load: full
 
   # ********************************************************************************************************************************
   - name: storage
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: filter-cipher-block
+      - name: filter-cipher-block-perl
         total: 2
 
         coverage:
           Storage/Filter/CipherBlock: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: filter-gzip
+      - name: filter-gzip-perl
         total: 3
 
         coverage:
           Storage/Filter/Gzip: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: filter-sha
+      - name: filter-sha-perl
         total: 2
 
         coverage:
           Storage/Filter/Sha: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: posix
+      - name: posix-perl
         total: 9
 
         coverage:
@@ -409,25 +381,25 @@ module:
           Storage/Posix/FileWrite: partial
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: s3-auth
+      - name: s3-auth-perl
         total: 5
 
         coverage:
           Storage/S3/Auth: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: s3-cert
+      - name: s3-cert-perl
         total: 1
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: s3-request
+      - name: s3-request-perl
         total: 2
 
         coverage:
           Storage/S3/Request: partial
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: s3
+      - name: s3-perl
         total: 7
 
         coverage:
@@ -442,7 +414,7 @@ module:
           - d8
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: local
+      - name: local-perl
         total: 10
 
         coverage:
@@ -457,43 +429,43 @@ module:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: file
-        total: 1
-        c: true
+        total: 3
 
         coverage:
-          storage/file: full
+          storage/driver/posix/driverFile: full
+          storage/driver/posix/driverRead: full
+          storage/driver/posix/driverWrite: full
+          storage/fileRead: full
+          storage/fileWrite: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: storage
-        total: 10
-        c: true
+        total: 13
 
         coverage:
-          storage/driver/posix: full
+          storage/driver/posix/driver: full
           storage/storage: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: helper
         total: 3
-        c: true
 
         coverage:
           storage/helper: full
 
   # ********************************************************************************************************************************
   - name: protocol
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common-minion
+      - name: common-minion-perl
         total: 1
 
         coverage:
           Protocol/Base/Minion: partial
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: helper
+      - name: helper-perl
         total: 2
 
         coverage:
@@ -501,11 +473,10 @@ module:
 
   # ********************************************************************************************************************************
   - name: info
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: unit
+      - name: unit-perl
         total: 2
 
         coverage:
@@ -513,24 +484,21 @@ module:
 
   # ********************************************************************************************************************************
   - name: command
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: command
         total: 1
-        c: true
 
         coverage:
           command/command: full
 
   # ********************************************************************************************************************************
   - name: archive
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common
+      - name: common-perl
         total: 4
 
         coverage:
@@ -541,7 +509,7 @@ module:
         total: 8
 
         coverage:
-          Archive/Push/Async: partial
+          Archive/Push/Async: full
           Archive/Push/File: partial
           Archive/Push/Push: full
           Protocol/Local/Master: full
@@ -549,21 +517,20 @@ module:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: push
         total: 2
-        c: true
         perlReq: true
 
         coverage:
           command/archive/push/push: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: info-unit
+      - name: info-unit-perl
         total: 4
 
         coverage:
           Archive/Info: partial
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: get
+      - name: get-perl
         total: 2
 
         coverage:
@@ -572,18 +539,17 @@ module:
 
   # ********************************************************************************************************************************
   - name: backup
-    container: true
 
     coverage:
       Backup/Common: full
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: unit
+      - name: unit-perl
         total: 3
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: info-unit
+      - name: info-unit-perl
         total: 3
 
         coverage:
@@ -591,11 +557,10 @@ module:
 
   # ********************************************************************************************************************************
   - name: manifest
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: all
+      - name: all-perl
         total: 9
 
         coverage:
@@ -603,20 +568,25 @@ module:
 
   # ********************************************************************************************************************************
   - name: stanza
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: all
+      - name: all-perl
         total: 9
 
         coverage:
           Stanza: full
 
+# **********************************************************************************************************************************
+# Integration tests
+#
+# Integration tests are not run in a container.  They are expected to create their own containers since most integration runs will
+# create more than one.  For this reason each run is executed individually.
+# **********************************************************************************************************************************
+integration:
+
   # ********************************************************************************************************************************
   - name: mock
-    individual: true
-    expect: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
@@ -641,8 +611,6 @@ module:
 
   # ********************************************************************************************************************************
   - name: real
-    individual: true
-    expect: true
     db: true
 
     test:
@@ -650,9 +618,16 @@ module:
       - name: all
         total: 6
 
+# **********************************************************************************************************************************
+# Performance tests
+#
+# Performance tests run in a single container but are more like integration tests than unit tests since they call the pgbackrest
+# executable directly.
+# **********************************************************************************************************************************
+performance:
+
   # ********************************************************************************************************************************
   - name: performance
-    container: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------

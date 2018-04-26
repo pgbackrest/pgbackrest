@@ -152,8 +152,9 @@ testRun()
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceDefault, "compress source is set");
         TEST_ERROR(cfgOptionBool(cfgOptCompressLevel), AssertError, "option 'compress-level' is not type 'bool'");
 
-        TEST_RESULT_VOID(cfgOptionSet(cfgOptArchiveQueueMax, cfgSourceParam, varNewInt64(999999999999)), "set archive-queue-max");
-        TEST_RESULT_INT(cfgOptionInt64(cfgOptArchiveQueueMax), 999999999999, "archive-queue-max is set");
+        TEST_RESULT_VOID(
+            cfgOptionSet(cfgOptArchivePushQueueMax, cfgSourceParam, varNewInt64(999999999999)), "set archive-push-queue-max");
+        TEST_RESULT_INT(cfgOptionInt64(cfgOptArchivePushQueueMax), 999999999999, "archive-push-queue-max is set");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(1.1)), "set protocol-timeout");
         TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 1.1, "protocol-timeout is set");

@@ -22,7 +22,7 @@ testRun()
 
         TEST_RESULT_STR(strPtr(storagePathNP(storage, NULL)), "/", "check base path");
 
-        TEST_ERROR(storageOpenWriteNP(storage, writeFile), AssertError, "assertion 'this->write == true' failed");
+        TEST_ERROR(storageNewWriteNP(storage, writeFile), AssertError, "assertion 'this->write == true' failed");
     }
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("storageLocalWrite()"))
@@ -36,7 +36,7 @@ testRun()
 
         TEST_RESULT_STR(strPtr(storagePathNP(storage, NULL)), "/", "check base path");
 
-        TEST_RESULT_VOID(storageOpenWriteNP(storage, writeFile), "writes are allowed");
+        TEST_RESULT_VOID(storageNewWriteNP(storage, writeFile), "writes are allowed");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -65,6 +65,6 @@ testRun()
 
         TEST_ERROR(storagePathNP(storage, strNew("<" BOGUS_STR ">")), AssertError, "invalid expression '<BOGUS>'");
 
-        TEST_RESULT_VOID(storageOpenWriteNP(storage, writeFile), "writes are allowed");
+        TEST_RESULT_VOID(storageNewWriteNP(storage, writeFile), "writes are allowed");
     }
 }

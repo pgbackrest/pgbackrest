@@ -216,11 +216,13 @@ sub run
         if ($self->{oTest}->{&TEST_C})
         {
             $strCommand =
-                'docker exec -i -u ' . TEST_USER . " ${strImage}" .
+                'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
+                "cd $self->{strGCovPath} && " .
+                "make -s 2>&1 && " .
                 ($self->{oTest}->{&TEST_VM} ne VM_CO6 ?
                     " valgrind -q --gen-suppressions=all --suppressions=$self->{strBackRestBase}/test/src/valgrind.suppress" .
                     " --leak-check=full --leak-resolution=high" : '') .
-                " $self->{strGCovPath}/test";
+                " ./test 2>&1'";
         }
         else
         {
@@ -369,17 +371,10 @@ sub run
 	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) -O2 -c \$< -o \$@\n";
 
                 $self->{oStorageTest}->put($self->{strGCovPath} . "/Makefile", $strMakefile);
-
-                # Run the Makefile
-                executeTest(
-                    'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
-                    "cd $self->{strGCovPath} && " .
-                    "make'");
             }
 
             my $oExec = new pgBackRestTest::Common::ExecuteTest(
-                $strCommand,
-                {bSuppressError => !$self->{oTest}->{&TEST_C}, bShowOutputAsync => $self->{bShowOutputAsync}});
+                $strCommand, {bSuppressError => true, bShowOutputAsync => $self->{bShowOutputAsync}});
 
             $oExec->begin();
 
