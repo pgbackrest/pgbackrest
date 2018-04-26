@@ -8,7 +8,7 @@ InfoArchive Handler for archive information
 #include "common/memContext.h"
 #include "common/ini.h"
 #include "info/infoArchive.h"
-#include "info/infoDb.h"
+#include "info/infoPg.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -21,7 +21,7 @@ Contains information about the archive info
 struct InfoArchive
 {
     MemContext *memContext;                                         // Context that contains the InfoArchive
-    InfoDb *infoDb;                                                 // Contents of the DB data
+    InfoPg *infoPg;                                                 // Contents of the DB data
 };
 
 /***********************************************************************************************************************************
@@ -38,7 +38,7 @@ infoArchiveNew(String *fileName, const bool loadFile, const bool ignoreMissing)
         this = memNew(sizeof(InfoArchive));
         this->memContext = MEM_CONTEXT_NEW();
 
-        this->infoDb = infoDbNew(fileName, loadFile, ignoreMissing, infoDbArchive);
+        this->infoPg = infoPgNew(fileName, loadFile, ignoreMissing, infoPgArchive);
     }
     MEM_CONTEXT_NEW_END();
 

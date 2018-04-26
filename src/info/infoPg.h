@@ -1,43 +1,43 @@
 /***********************************************************************************************************************************
-InfoDb Handler for pgbackrest information
+InfoPg Handler for pgbackrest information
 ***********************************************************************************************************************************/
-#ifndef INFO_INFODB_H
-#define INFO_INFODB_H
+#ifndef INFO_INFOPG_H
+#define INFO_INFOPG_H
 
 #include <stdint.h>
 
 /***********************************************************************************************************************************
-InfoDb object
+InfoPg object
 ***********************************************************************************************************************************/
-typedef struct InfoDb InfoDb;
+typedef struct InfoPg InfoPg;
 
 /***********************************************************************************************************************************
-InfoDb Postgres data object
+InfoPg Postgres data object
 ***********************************************************************************************************************************/
-typedef struct InfoDbData
+typedef struct InfoPgData
 {
     unsigned int dbId;
     unsigned int dbCatalogVersion;
     unsigned int dbControlVersion;
     uint64_t dbSystemId;
     unsigned char *dbVersion;
-} InfoDbData;
+} InfoPgData;
 
 /***********************************************************************************************************************************
 Info types for determining data in DB section
 ***********************************************************************************************************************************/
 typedef enum
 {
-    infoDbArchive,                                                  // archive info file
-    infoDbBackup,                                                   // backup info file
-    infoDbManifest,                                                 // manifest file
-} InfoDbType;
+    infoPgArchive,                                                  // archive info file
+    infoPgBackup,                                                   // backup info file
+    infoPgManifest,                                                 // manifest file
+} InfoPgType;
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-InfoDb *infoDbNew(String *fileName, const bool loadFile, const bool ignoreMissing, InfoDbType type);
+InfoPg *infoPgNew(String *fileName, const bool loadFile, const bool ignoreMissing, InfoPgType type);
 
-void infoDbFree(InfoDb *this);
+void infoPgFree(InfoPg *this);
 
 #endif

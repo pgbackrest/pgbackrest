@@ -14,10 +14,11 @@ Info Handler for pgbackrest information
 /***********************************************************************************************************************************
 Internal constants
 ***********************************************************************************************************************************/
-#define INI_COPY_EXT                                       ".copy"
-#define INI_SECTION_BACKREST                               "backrest"
-#define INI_KEY_FORMAT                                     "backrest-format"
-#define INI_KEY_VERSION                                    "backrest-version"
+#define INI_COPY_EXT                                                ".copy"
+#define INI_SECTION_BACKREST                                        "backrest"
+#define INI_KEY_FORMAT                                              "backrest-format"
+#define INI_KEY_VERSION                                             "backrest-version"
+#define INI_KEY_CHECKSUM                                            "backrest-checksum"
 
 /***********************************************************************************************************************************
 Contains information about the info
@@ -25,6 +26,10 @@ Contains information about the info
 struct Info
 {
     MemContext *memContext;                                         // Context that contains the info
+    String *backrestChecksum;                                       // pgBackRest checksum
+// CSHANG This should be an unsigned int but need to create varIntUnsignedForce and such
+    int backrestFormat;                                             // pgBackRest format number
+    String *backrestVersion;                                        // pgBackRest Vresion
     // bool modified;   CSHANG may need later                       // Has the data been modified since last load/save?
     Ini *ini;                                                       // Parsed file contents
 };
@@ -41,13 +46,13 @@ infoValidInternal(Ini *ini, const bool ignoreError)
     // CSHANG Need to add in checksum validation as first check
 
     // Make sure that the format is current, otherwise error
-    if (varInt(iniGet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT))) != PGBACKREST_FORMAT)
+    if (varIntForce(iniGet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT))) != PGBACKREST_FORMAT)
     {
         if (!ignoreError)
         {
             THROW(
                 FormatError, "invalid format in '%s', expected %d but found %d",
-                strPtr(iniFileName(ini)), PGBACKREST_FORMAT, varInt(iniGet(ini, strNew(INI_SECTION_BACKREST),
+                strPtr(iniFileName(ini)), PGBACKREST_FORMAT, varIntForce(iniGet(ini, strNew(INI_SECTION_BACKREST),
                 strNew(INI_KEY_FORMAT))));
         }
         else
@@ -102,6 +107,11 @@ infoNew(String *fileName, const bool loadFile, const bool ignoreMissing)
                             strPtr(strCat(strDup(fileName), INI_COPY_EXT)));
             }
 
+            // Set the data for external use (e.g. backup:current)
+            this->backrestVersion = varStr(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION)));
+            this->backrestChecksum = varStr(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_CHECKSUM)));
+            this->backrestFormat = varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT)));
+
             // CSHANG Do we need to check the two files against each other? We don't now - we just pick the first that appears valid
             // give the header and the checksum
         }
@@ -109,8 +119,13 @@ infoNew(String *fileName, const bool loadFile, const bool ignoreMissing)
         // If there is no content to load then initialize the data
         if (!iniFileExists(this->ini))
         {
+            // CSHANG How will we be storing this? Do we need to set both the ini AND the this->backrestVersion, etc?
             iniSet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION), varNewStrZ(PGBACKREST_VERSION));
             iniSet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT), varNewInt(PGBACKREST_FORMAT));
+
+            // Set the data for external use (e.g. backup:current)
+            this->backrestVersion = varStr(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION)));
+            this->backrestFormat = varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT)));
         }
     }
     MEM_CONTEXT_NEW_END();
@@ -124,7 +139,6 @@ infoIni(const Info *this)
 {
     return this->ini;
 }
-
 
 /***********************************************************************************************************************************
 Internal function to initialize the header information

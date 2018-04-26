@@ -31,8 +31,8 @@ static const char *variantTypeName[] =
     "int64",                                                        // varTypeInt64
     "KeyValue",                                                     // varTypeKeyValue
     "String",                                                       // varTypeString
-    "uint64",                                                       // varTypeUint64
     "VariantList",                                                  // varTypeVariantList
+    "uint64",                                                       // varTypeUint64
 };
 
 /***********************************************************************************************************************************
@@ -101,6 +101,12 @@ varDup(const Variant *this)
                 break;
             }
 
+            case varTypeUint64:
+            {
+                result = varNewUint64(varUint64(this));
+                break;
+            }
+
             case varTypeKeyValue:
             {
                 KeyValue *data = kvDup(varKv(this));
@@ -162,6 +168,12 @@ varEq(const Variant *this1, const Variant *this2)
                 case varTypeInt64:
                 {
                     result = varInt64(this1) == varInt64(this2);
+                    break;
+                }
+
+                case varTypeUint64:
+                {
+                    result = varUint64(this1) == varUint64(this2);
                     break;
                 }
 
@@ -236,6 +248,10 @@ varBoolForce(const Variant *this)
 
         case varTypeInt64:
             result = varInt64(this) != 0;
+            break;
+
+        case varTypeUint64:
+            result = varUint64(this) != 0;
             break;
 
         case varTypeString:
@@ -329,6 +345,13 @@ varDblForce(const Variant *this)
             break;
         }
 
+        case varTypeUint64:
+        {
+// CSHANG Not sure if this is correct. If a double is a negative value then forcing to an uint64 could cause a problem. Would it be safe to say if result >=0 and not a fraction?
+            result = (double)varUint64(this);
+            break;
+        }
+
         case varTypeString:
         {
             sscanf(strPtr(varStr(this)), "%lf", &result);
@@ -408,6 +431,19 @@ varIntForce(const Variant *this)
             break;
         }
 
+        case varTypeUint64:
+        {
+            uint64_t resultTest = varUint64(this);
+
+            if (resultTest > 2147483647)
+                THROW(
+                    AssertError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeInt]);
+
+            result = (int)resultTest;
+            break;
+        }
+
         case varTypeString:
         {
             result = atoi(strPtr(varStr(this)));
@@ -440,7 +476,7 @@ Return int64
 int64_t
 varInt64(const Variant *this)
 {
-    // Only valid for int
+    // Only valid for int64
     if (this->type != varTypeInt64)
         THROW(AssertError, "variant type is not %s", variantTypeName[varTypeInt64]);
 
@@ -476,6 +512,19 @@ varInt64Force(const Variant *this)
             break;
         }
 
+        case varTypeUint64:
+        {
+            uint64_t resultTest = varUint64(this);
+
+            if (resultTest > 9223372036854775807)
+                THROW(
+                    AssertError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeInt64]);
+
+            result = (int)resultTest;
+            break;
+        }
+
         case varTypeString:
         {
             result = atoll(strPtr(varStr(this)));
@@ -497,85 +546,85 @@ varInt64Force(const Variant *this)
 
     return result;
 }
-//
-// /***********************************************************************************************************************************
-// New uint64 variant
-// ***********************************************************************************************************************************/
-// Variant *
-// varNewUint64(uint64_t data)
-// {
-//     return varNewInternal(varTypeUint64, (void *)&data, sizeof(data));
-// }
-//
-// /***********************************************************************************************************************************
-// Return int64
-// ***********************************************************************************************************************************/
-// uint64_t
-// varUint64(const Variant *this)
-// {
-//     // Only valid for int
-//     if (this->type != varTypeUint64)
-//         THROW(AssertError, "variant type is not %s", variantTypeName[varTypeUint64]);
-//
-//     // Get the int
-//     return *((uint64_t *)varData(this));
-// }
-//
-// /***********************************************************************************************************************************
-// Return int64 regardless of variant type
-// ***********************************************************************************************************************************/
-// uint64_t
-// varUint64Force(const Variant *this)
-// {
-//     uint64_t result = 0;
-//
-//     switch (this->type)
-//     {
-//         case varTypeBool:
-//         {
-//             result = varBool(this);
-//             break;
-//         }
-//
-//         case varTypeInt:
-//         {
-//             result = (uint64_t)varInt(this);
-//             break;
-//         }
-//
-//         case varTypeInt64:
-//         {
-//             result = (uint64_t)varInt64(this);
-//             break;
-//         }
-//
-//         case varTypeUint64:
-//         {
-//             result = varUint64(this);
-//             break;
-//         }
-//
-//         case varTypeString:
-//         {
-//             result = atoll(strPtr(varStr(this)));
-//
-//             char buffer[32];
-//             snprintf(buffer, sizeof(buffer), "%" PRIu64, result);
-//
-//             if (strcmp(strPtr(varStr(this)), buffer) != 0)
-//                 THROW(
-//                     FormatError, "unable to convert %s '%s' to %s", variantTypeName[varTypeString], strPtr(varStr(this)),
-//                     variantTypeName[varTypeUint64]);
-//
-//             break;
-//         }
-//
-//         default:
-//             THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUint64]);
-//     }
-//
-//     return result;
-// }
+
+/***********************************************************************************************************************************
+New uint64 variant
+***********************************************************************************************************************************/
+Variant *
+varNewUint64(uint64_t data)
+{
+    return varNewInternal(varTypeUint64, (void *)&data, sizeof(data));
+}
+
+/***********************************************************************************************************************************
+Return int64
+***********************************************************************************************************************************/
+uint64_t
+varUint64(const Variant *this)
+{
+    // Only valid for uint64
+    if (this->type != varTypeUint64)
+        THROW(AssertError, "variant type is not %s", variantTypeName[varTypeUint64]);
+
+    // Get the int
+    return *((uint64_t *)varData(this));
+}
+
+/***********************************************************************************************************************************
+Return uint64 regardless of variant type
+***********************************************************************************************************************************/
+uint64_t
+varUint64Force(const Variant *this)
+{
+    uint64_t result = 0;
+// CSHANG NEEDS TO BE UPDATED TO FIX SIGNED VS UNSIGNED
+    switch (this->type)
+    {
+        case varTypeBool:
+        {
+            result = varBool(this);
+            break;
+        }
+
+        case varTypeInt:
+        {
+            result = (uint64_t)varInt(this);
+            break;
+        }
+
+        case varTypeInt64:
+        {
+            result = (uint64_t)varInt64(this);
+            break;
+        }
+
+        case varTypeUint64:
+        {
+            result = varUint64(this);
+            break;
+        }
+
+        case varTypeString:
+        {
+            result = atoll(strPtr(varStr(this)));
+
+            char buffer[32];
+            snprintf(buffer, sizeof(buffer), "%" PRIu64, result);
+
+            if (strcmp(strPtr(varStr(this)), buffer) != 0)
+                THROW(
+                    FormatError, "unable to convert %s '%s' to %s", variantTypeName[varTypeString], strPtr(varStr(this)),
+                    variantTypeName[varTypeUint64]);
+
+            break;
+        }
+
+        default:
+            THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUint64]);
+    }
+
+    return result;
+}
 
 /***********************************************************************************************************************************
 New key/value variant
@@ -723,6 +772,12 @@ varStrForce(const Variant *this)
             break;
         }
 
+        case varTypeUint64:
+        {
+            result = strNewFmt("%" PRIu64, varUint64(this));
+            break;
+        }
+
         case varTypeString:
         {
             result = strDup(varStr(this));
@@ -815,6 +870,7 @@ varFree(Variant *this)
                 case varTypeDouble:
                 case varTypeInt:
                 case varTypeInt64:
+                case varTypeUint64:
                     break;
             }
 

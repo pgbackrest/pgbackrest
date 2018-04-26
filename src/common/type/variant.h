@@ -22,8 +22,8 @@ typedef enum
     varTypeInt64,
     varTypeKeyValue,
     varTypeString,
-    // varTypeUint64,  CSHANG
     varTypeVariantList,
+    varTypeUint64,
 } VariantType;
 
 #include "common/type/keyValue.h"
@@ -57,10 +57,9 @@ Variant *varNewStrZ(const char *data);
 String *varStr(const Variant *this);
 String *varStrForce(const Variant *this);
 
-// CSHANG
-// Variant *varNewUint64(uint64_t data);
-// uint64_t varUint64(const Variant *this);
-// uint64_t varUint64Force(const Variant *this);
+Variant *varNewUint64(uint64_t data);
+uint64_t varUint64(const Variant *this);
+uint64_t varUint64Force(const Variant *this);
 
 Variant *varNewVarLst(const VariantList *data);
 Variant *varNewVarLstEmpty();

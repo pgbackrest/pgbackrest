@@ -255,7 +255,7 @@ Accessor functions
 String *
 iniFileName(const Ini *this)
 {
-    return this->filename;
+    return this->fileName;
 }
 
 bool
