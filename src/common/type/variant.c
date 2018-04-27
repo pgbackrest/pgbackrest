@@ -1,7 +1,9 @@
 /***********************************************************************************************************************************
 Variant Data Type
 ***********************************************************************************************************************************/
+#include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -347,8 +349,17 @@ varDblForce(const Variant *this)
 
         case varTypeUint64:
         {
-// CSHANG Not sure if this is correct. If a double is a negative value then forcing to an uint64 could cause a problem. Would it be safe to say if result >=0 and not a fraction?
-            result = (double)varUint64(this);
+            uint64_t resultTest = varUint64(this);
+
+            if (resultTest <= LLONG_MAX)
+                result = (double)resultTest;
+            else
+            {
+                THROW(
+                    AssertError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeDouble]);
+            }
+
             break;
         }
 
@@ -421,12 +432,12 @@ varIntForce(const Variant *this)
         case varTypeInt64:
         {
             int64_t resultTest = varInt64(this);
-
+// CSHANG Why are we using hardcoded values instead of the limits.h INT_MIN/INT_MAX macros?
             if (resultTest > 2147483647 || resultTest < -2147483648)
                 THROW(
                     AssertError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeInt]);
-
+// CSHANG Why is this an Assert error but the string a format error?
             result = (int)resultTest;
             break;
         }
@@ -435,7 +446,7 @@ varIntForce(const Variant *this)
         {
             uint64_t resultTest = varUint64(this);
 
-            if (resultTest > 2147483647)
+            if (resultTest > INT_MAX)
                 THROW(
                     AssertError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeInt]);
@@ -516,12 +527,16 @@ varInt64Force(const Variant *this)
         {
             uint64_t resultTest = varUint64(this);
 
-            if (resultTest > 9223372036854775807)
+            // If max number of unsigned 64-bit integer is greater than max 64-bit signed integer can hold, then error
+            if (resultTest <= LLONG_MAX)
+                result = (int64_t)resultTest;
+            else
+            {
                 THROW(
                     AssertError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeInt64]);
+            }
 
-            result = (int)resultTest;
             break;
         }
 
@@ -577,7 +592,7 @@ uint64_t
 varUint64Force(const Variant *this)
 {
     uint64_t result = 0;
-// CSHANG NEEDS TO BE UPDATED TO FIX SIGNED VS UNSIGNED
+
     switch (this->type)
     {
         case varTypeBool:
@@ -588,13 +603,35 @@ varUint64Force(const Variant *this)
 
         case varTypeInt:
         {
-            result = (uint64_t)varInt(this);
+            int resultTest = varInt(this);
+
+            // If integer is a negative number, throw an error since the resulting conversion would be out of bounds
+            if (resultTest >= 0)
+                result = (uint64_t)resultTest;
+            else
+            {
+                THROW(
+                    AssertError, "unable to convert %s '%d' to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeUint64]);
+            }
+
             break;
         }
 
         case varTypeInt64:
         {
-            result = (uint64_t)varInt64(this);
+            int64_t resultTest = varInt64(this);
+
+            // If integer is a negative number, throw an error since the resulting conversion would be out of bounds
+            if (resultTest >= 0)
+                result = (uint64_t)resultTest;
+            else
+            {
+                THROW(
+                    AssertError, "unable to convert %s '%d' to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeUint64]);
+            }
+
             break;
         }
 
@@ -606,7 +643,11 @@ varUint64Force(const Variant *this)
 
         case varTypeString:
         {
-            result = atoll(strPtr(varStr(this)));
+            // Attempt to convert the string to base-10 64-bit unsigned int. The conversion will be up to the first
+            // character that cannot be converted (except leading whitespace is ignored - which will still cause an error since
+            // the final buffer for strcmp will then not be equal).
+            char *endPtr;
+            result = strtoull(strPtr(varStr(this)), &endPtr, (int)10);
 
             char buffer[32];
             snprintf(buffer, sizeof(buffer), "%" PRIu64, result);
