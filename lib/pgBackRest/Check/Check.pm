@@ -9,7 +9,7 @@ use Carp qw(confess);
 use English '-no_match_vars';
 
 use pgBackRest::Archive::Common;
-use pgBackRest::Archive::Get::Get;
+use pgBackRest::Archive::Get::File;
 use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
@@ -150,7 +150,7 @@ sub process
             eval
             {
                 # Check that the archive info file is written and is valid for the current database of the stanza
-                ($strArchiveId) = new pgBackRest::Archive::Get::Get()->getCheck();
+                ($strArchiveId) = archiveGetCheck();
                 return true;
             }
             or do

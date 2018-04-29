@@ -45,6 +45,14 @@ use constant PG_WAL_SEGMENT_SIZE                                    => 16777216;
     push @EXPORT, qw(PG_WAL_SEGMENT_SIZE);
 
 ####################################################################################################################################
+# WAL status constants
+####################################################################################################################################
+use constant WAL_STATUS_ERROR                                       => 'error';
+    push @EXPORT, qw(WAL_STATUS_ERROR);
+use constant WAL_STATUS_OK                                          => 'ok';
+    push @EXPORT, qw(WAL_STATUS_OK);
+
+####################################################################################################################################
 # PostgreSQL WAL magic
 ####################################################################################################################################
 my $oWalMagicHash =
@@ -424,5 +432,62 @@ sub walIsPartial
 }
 
 push @EXPORT, qw(walIsPartial);
+
+####################################################################################################################################
+# archiveAsyncStatusWrite
+#
+# Write out a status file to the spool path with information about the success or failure of an archive push.
+####################################################################################################################################
+sub archiveAsyncStatusWrite
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strType,
+        $strSpoolPath,
+        $strWalFile,
+        $iCode,
+        $strMessage,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::archiveAsyncStatusWrite', \@_,
+            {name => 'strType'},
+            {name => 'strSpoolPath'},
+            {name => 'strWalFile'},
+            {name => 'iCode', required => false},
+            {name => 'strMessage', required => false},
+        );
+
+    # Remove any error file exists unless a new one will be written
+    if ($strType ne WAL_STATUS_ERROR)
+    {
+        # Remove the error file, if any
+        storageLocal()->remove("${strSpoolPath}/${strWalFile}.error", {bIgnoreMissing => true});
+    }
+
+    # Write the status file
+    my $strStatus;
+
+    if (defined($iCode))
+    {
+        if (!defined($strMessage))
+        {
+            confess &log(ASSERT, 'strMessage must be set when iCode is set');
+        }
+
+        $strStatus = "${iCode}\n${strMessage}";
+    }
+    elsif ($strType eq WAL_STATUS_ERROR)
+    {
+        confess &log(ASSERT, 'error status must have iCode and strMessage set');
+    }
+
+    storageLocal()->put(
+        storageLocal()->openWrite("${strSpoolPath}/${strWalFile}.${strType}", {bAtomic => true}), $strStatus);
+}
+
+push @EXPORT, qw(archiveAsyncStatusWrite);
 
 1;
