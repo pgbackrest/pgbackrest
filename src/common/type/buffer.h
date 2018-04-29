@@ -16,6 +16,7 @@ typedef struct Buffer Buffer;
 Functions
 ***********************************************************************************************************************************/
 Buffer *bufNew(size_t size);
+Buffer *bufNewC(size_t size, const void *buffer);
 Buffer *bufNewStr(const String *string);
 Buffer *bufCat(Buffer *this, const Buffer *cat);
 bool bufEq(const Buffer *this, const Buffer *compare);

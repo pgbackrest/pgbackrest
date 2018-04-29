@@ -83,7 +83,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <code>bufEq</code> and <code>bufCat</code> to <code>Buffer</code> object.</p>
+                        <p>Improve <code>Buffer</code> object.  Add <code>bufNewC()</code>, <code>bufEq()</code> and <code>bufCat()</code>.  Only reallocate buffer when the size has changed.</p>
                     </release-item>
 
                     <release-item>
