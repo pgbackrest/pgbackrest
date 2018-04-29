@@ -81,6 +81,7 @@ ERROR_DECLARE(MemoryError);
 ERROR_DECLARE(CipherError);
 ERROR_DECLARE(ParamInvalidError);
 ERROR_DECLARE(PathCloseError);
+ERROR_DECLARE(FileInfoError);
 ERROR_DECLARE(RuntimeError);
 ERROR_DECLARE(InvalidError);
 ERROR_DECLARE(UnhandledError);

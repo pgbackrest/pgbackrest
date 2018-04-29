@@ -33,6 +33,7 @@ Getters
 StorageFileReadPosix *storageFileReadFileDriver(const StorageFileRead *this);
 bool storageFileReadIgnoreMissing(const StorageFileRead *this);
 const String *storageFileReadName(const StorageFileRead *this);
+size_t storageFileReadSize(const StorageFileRead *this);
 
 /***********************************************************************************************************************************
 Destructor

@@ -15,6 +15,7 @@ typedef struct Storage Storage;
 #include "common/type/stringList.h"
 #include "storage/fileRead.h"
 #include "storage/fileWrite.h"
+#include "storage/info.h"
 
 /***********************************************************************************************************************************
 Default buffer size
@@ -84,6 +85,21 @@ storageGet
     storageGet(file)
 
 Buffer *storageGet(StorageFileRead *file);
+
+/***********************************************************************************************************************************
+storageInfo
+***********************************************************************************************************************************/
+typedef struct StorageInfoParam
+{
+    bool ignoreMissing;
+} StorageInfoParam;
+
+#define storageInfoP(this, fileExp, ...)                                                                                           \
+    storageInfo(this, fileExp, (StorageInfoParam){__VA_ARGS__})
+#define storageInfoNP(this, fileExp)                                                                                               \
+    storageInfo(this, fileExp, (StorageInfoParam){0})
+
+StorageInfo storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param);
 
 /***********************************************************************************************************************************
 storageList
