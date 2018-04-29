@@ -87,6 +87,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>pgControlInfo()</code> to read <file>pg_control</file> and determine the <postgres/> version.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>THROWP_</code>* macro variants for error handling.  These macros allow an <code>ErrorType</code> pointer to be passed and are required for functions that may return different errors based on a parameter.</p>
                     </release-item>
 
