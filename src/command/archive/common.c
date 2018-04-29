@@ -1,12 +1,16 @@
 /***********************************************************************************************************************************
 Archive Push Command
 ***********************************************************************************************************************************/
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "command/archive/common.h"
+#include "common/assert.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/wait.h"
+#include "postgres/version.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -89,6 +93,85 @@ archiveAsyncStatus(const String *walSegment, bool confessOnError)
                 THROW_CODE(code, strPtr(message));
             }
         }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
+}
+
+/***********************************************************************************************************************************
+Get the next WAL segment given a WAL segment and WAL segment size
+***********************************************************************************************************************************/
+String *
+walSegmentNext(const String *walSegment, size_t walSegmentSize, uint pgVersion)
+{
+    ASSERT_DEBUG(walSegment != NULL);
+    ASSERT_DEBUG(strSize(walSegment) == 24);
+    ASSERT_DEBUG(UINT32_MAX % walSegmentSize == walSegmentSize - 1);
+    ASSERT_DEBUG(pgVersion >= PG_VERSION_11 || walSegmentSize == 16 * 1024 * 1024);
+
+    // Extract WAL parts
+    uint32_t timeline = 0;
+    uint32_t major = 0;
+    uint32_t minor = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        timeline = (uint32_t)strtol(strPtr(strSubN(walSegment, 0, 8)), NULL, 16);
+        major = (uint32_t)strtol(strPtr(strSubN(walSegment, 8, 8)), NULL, 16);
+        minor = (uint32_t)strtol(strPtr(strSubN(walSegment, 16, 8)), NULL, 16);
+
+        // Increment minor and adjust major dir on overflow
+        minor++;
+
+        if (minor > UINT32_MAX / walSegmentSize)
+        {
+            major++;
+            minor = 0;
+        }
+
+        // Special hack for PostgreSQL < 9.3 which skipped minor FF
+        if (minor == 0xFF && pgVersion < PG_VERSION_93)
+        {
+            major++;
+            minor = 0;
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return strNewFmt("%08X%08X%08X", timeline, major, minor);
+}
+
+/***********************************************************************************************************************************
+Build a list of WAL segments based on a beginning WAL and number of WAL in the range (inclusive)
+***********************************************************************************************************************************/
+StringList *
+walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, uint pgVersion, uint range)
+{
+    ASSERT_DEBUG(range > 0);
+
+    StringList *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = strLstAdd(strLstNew(), walSegmentBegin);
+
+        if (range > 1)
+        {
+            String *current = strDup(walSegmentBegin);
+
+            for (uint rangeIdx = 0; rangeIdx < range - 1; rangeIdx++)
+            {
+                String *next = walSegmentNext(current, walSegmentSize, pgVersion);
+
+                strLstAdd(result, next);
+
+                strFree(current);
+                current = next;
+            }
+        }
+
+        strLstMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
