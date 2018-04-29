@@ -76,9 +76,10 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="steele.david"/>
                         </release-item-contributor-list>
 
-                        <p>String object improvements.  Add <code>strUpper</code>, <code>strLower</code>, <code>strChr</code>, and <code>strTrunc</code>.</p>
+                        <p>Improve <code>String</code> and <code>StringList</code> objects.  Add <code>strUpper()</code>, <code>strLower()</code>, <code>strLstExists()</code>, <code>strLstExistsZ()</code>, <code>strChr()</code>, <code>strSub()</code>, <code>strSubN()</code>, and <code>strTrunc()</code>.</p>
                     </release-item>
 
                     <release-item>

@@ -141,6 +141,13 @@ testRun()
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("strSub() and strSubN()"))
+    {
+        TEST_RESULT_STR(strPtr(strSub(strNew("ABCD"), 2)), "CD", "sub string");
+        TEST_RESULT_STR(strPtr(strSubN(strNew("ABCD"), 1, 2)), "BC", "sub string with length");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("strTrim()"))
     {
         TEST_RESULT_STR(strPtr(strTrim(strNew(""))), "", "trim empty");

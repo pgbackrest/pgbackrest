@@ -124,6 +124,19 @@ testRun()
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("strLstExists() and strLstExistsZ()"))
+    {
+        StringList *list = strLstNew();
+        strLstAddZ(list, "A");
+        strLstAddZ(list, "C");
+
+        TEST_RESULT_BOOL(strLstExists(list, strNew("B")), false, "string does not exist");
+        TEST_RESULT_BOOL(strLstExists(list, strNew("C")), true, "string exists");
+        TEST_RESULT_BOOL(strLstExistsZ(list, "B"), false, "string does not exist");
+        TEST_RESULT_BOOL(strLstExistsZ(list, "C"), true, "string exists");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("strLstJoin()"))
     {
         StringList *list = strLstNew();
