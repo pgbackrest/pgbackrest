@@ -169,8 +169,9 @@ sub processQueue
                     # If error then write out an error file
                     if (defined($hJob->{oException}))
                     {
-                        $self->walStatusWrite(
-                            WAL_STATUS_ERROR, $strWalFile, $hJob->{oException}->code(), $hJob->{oException}->message());
+                        archiveAsyncStatusWrite(
+                            WAL_STATUS_ERROR, $self->{strSpoolPath}, $strWalFile, $hJob->{oException}->code(),
+                            $hJob->{oException}->message());
 
                         $iErrorTotal++;
 
@@ -181,8 +182,8 @@ sub processQueue
                     # Else write success
                     else
                     {
-                        $self->walStatusWrite(
-                            WAL_STATUS_OK, $strWalFile, defined($strWarning) ? 0 : undef,
+                        archiveAsyncStatusWrite(
+                            WAL_STATUS_OK, $self->{strSpoolPath}, $strWalFile, defined($strWarning) ? 0 : undef,
                             defined($strWarning) ? $strWarning : undef);
 
                         $iOkTotal++;
@@ -200,8 +201,8 @@ sub processQueue
                     {
                         foreach my $strDropFile (@{$stryDropList})
                         {
-                            $self->walStatusWrite(
-                                WAL_STATUS_OK, $strDropFile, 0,
+                            archiveAsyncStatusWrite(
+                                WAL_STATUS_OK, $self->{strSpoolPath}, $strDropFile, 0,
                                 "dropped WAL file ${strDropFile} because archive queue exceeded " .
                                     cfgOption(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX) . ' bytes');
 
@@ -224,8 +225,8 @@ sub processQueue
             # Error all queued jobs
             foreach my $strWalFile (@{$stryWalFile})
             {
-                $self->walStatusWrite(
-                    WAL_STATUS_ERROR, $strWalFile, $iCode, $strMessage);
+                archiveAsyncStatusWrite(
+                    WAL_STATUS_ERROR, $self->{strSpoolPath}, $strWalFile, $iCode, $strMessage);
             }
         }
     }
@@ -238,61 +239,6 @@ sub processQueue
         {name => 'iOkTotal', value => $iOkTotal},
         {name => 'iErrorTotal', value => $iErrorTotal}
     );
-}
-
-####################################################################################################################################
-# walStatusWrite
-#
-# Write out a status file to the spool path with information about the success or failure of an archive push.
-####################################################################################################################################
-sub walStatusWrite
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strType,
-        $strWalFile,
-        $iCode,
-        $strMessage,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->writeStatus', \@_,
-            {name => 'strType'},
-            {name => 'strWalFile'},
-            {name => 'iCode', required => false},
-            {name => 'strMessage', required => false},
-        );
-
-    # Remove any error file exists unless a new one will be written
-    if ($strType ne WAL_STATUS_ERROR)
-    {
-        # Remove the error file, if any
-        storageSpool()->remove("$self->{strSpoolPath}/${strWalFile}.error", {bIgnoreMissing => true});
-    }
-
-    # Write the status file
-    my $strStatus;
-
-    if (defined($iCode))
-    {
-        if (!defined($strMessage))
-        {
-            confess &log(ASSERT, 'strMessage must be set when iCode is set');
-        }
-
-        $strStatus = "${iCode}\n${strMessage}";
-    }
-    elsif ($strType eq WAL_STATUS_ERROR)
-    {
-        confess &log(ASSERT, 'error status must have iCode and strMessage set');
-    }
-
-    storageSpool()->put(
-        storageSpool()->openWrite("$self->{strSpoolPath}/${strWalFile}.${strType}", {bAtomic => true}), $strStatus);
 }
 
 1;

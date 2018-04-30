@@ -10,11 +10,13 @@ Storage Driver Posix
 #include "common/type/stringList.h"
 #include "storage/driver/posix/driverRead.h"
 #include "storage/driver/posix/driverWrite.h"
+#include "storage/info.h"
 
 /***********************************************************************************************************************************
 Function
 ***********************************************************************************************************************************/
 bool storageDriverPosixExists(const String *path);
+StorageInfo storageDriverPosixInfo(const String *file, bool ignoreMissing);
 StringList *storageDriverPosixList(const String *path, bool errorOnMissing, const String *expression);
 bool storageDriverPosixMove(StorageFileReadPosix *source, StorageFileWritePosix *destination);
 void storageDriverPosixPathCreate(const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);

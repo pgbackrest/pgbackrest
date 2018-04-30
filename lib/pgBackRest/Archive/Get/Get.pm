@@ -19,6 +19,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Archive::Common;
+use pgBackRest::Archive::Get::File;
 use pgBackRest::Archive::Info;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
@@ -77,109 +78,7 @@ sub process
     return logDebugReturn
     (
         $strOperation,
-        {name => 'iResult', value => $self->get($strSourceArchive, $strDestinationFile), trace => true}
-    );
-}
-
-####################################################################################################################################
-# get
-####################################################################################################################################
-sub get
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strSourceArchive,
-        $strDestinationFile
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->get', \@_,
-            {name => 'strSourceArchive'},
-            {name => 'strDestinationFile'}
-        );
-
-    lockStopTest();
-
-    # Get the repo storage
-    my $oStorageRepo = storageRepo();
-
-    # Construct absolute path to the WAL file when it is relative
-    $strDestinationFile = walPath($strDestinationFile, cfgOption(CFGOPT_PG_PATH, false), cfgCommandName(cfgCommandGet()));
-
-    # Get the wal segment filename
-    my ($strArchiveId, $strArchiveFile, $strCipherPass) = $self->getCheck(undef, undef, $strSourceArchive, false);
-
-    # If there are no matching archive files then there are two possibilities:
-    # 1) The end of the archive stream has been reached, this is normal and a 1 will be returned
-    # 2) There is a hole in the archive stream and a hard error should be returned.  However, holes are possible due to async
-    #    archiving - so when to report a hole?  Since a hard error will cause PG to terminate, for now treat as case #1.
-    my $iResult = 0;
-
-    if (!defined($strArchiveFile))
-    {
-        &log(INFO, "unable to find ${strSourceArchive} in the archive");
-
-        $iResult = 1;
-    }
-    else
-    {
-        # Determine if the source file is already compressed
-        my $bSourceCompressed = $strArchiveFile =~ ('^.*\.' . COMPRESS_EXT . '$') ? true : false;
-
-        # Copy the archive file to the requested location
-        # If the file is encrypted, then the passphrase from the info file is required to open the archive file in the repo
-        $oStorageRepo->copy(
-            $oStorageRepo->openRead(
-                STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}", {bProtocolCompress => !$bSourceCompressed,
-                strCipherPass => defined($strCipherPass) ? $strCipherPass : undef}),
-            storageDb()->openWrite(
-                $strDestinationFile,
-                {rhyFilter => $bSourceCompressed ?
-                    [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef}));
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'iResult', value => $iResult}
-    );
-}
-
-####################################################################################################################################
-# getArchiveId
-#
-# CAUTION: Only to be used by commands where the DB Version and DB System ID are not important such that the pg-path is not valid
-# for the command  (i.e. expire command). Since this function will not check validity of the database version call getCheck()
-# instead.
-####################################################################################################################################
-sub getArchiveId
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->getArchiveId');
-
-    my $strArchiveId;
-
-    if (!isRepoLocal())
-    {
-        $strArchiveId = protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(OP_ARCHIVE_GET_ARCHIVE_ID, undef, true);
-    }
-    else
-    {
-        $strArchiveId = (new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true))->archiveId();
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strArchiveId', value => $strArchiveId, trace => true}
+        {name => 'iResult', value => archiveGetFile($strSourceArchive, $strDestinationFile), trace => true},
     );
 }
 

@@ -23,8 +23,6 @@ use constant OP_BACKUP_FILE                                          => 'backupF
     push @EXPORT, qw(OP_BACKUP_FILE);
 
 # Archive Module
-use constant OP_ARCHIVE_GET_ARCHIVE_ID                              => 'archiveId';
-    push @EXPORT, qw(OP_ARCHIVE_GET_ARCHIVE_ID);
 use constant OP_ARCHIVE_GET_CHECK                                   => 'archiveCheck';
     push @EXPORT, qw(OP_ARCHIVE_GET_CHECK);
 use constant OP_ARCHIVE_PUSH_CHECK                                  => 'archivePushCheck';

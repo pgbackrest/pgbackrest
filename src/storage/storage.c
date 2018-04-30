@@ -170,6 +170,27 @@ storageGet(StorageFileRead *file)
 }
 
 /***********************************************************************************************************************************
+File/path info
+***********************************************************************************************************************************/
+StorageInfo
+storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
+{
+    StorageInfo result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Build the path
+        String *file = storagePathNP(this, fileExp);
+
+        // Call driver function
+        result = storageDriverPosixInfo(file, param.ignoreMissing);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
+}
+
+/***********************************************************************************************************************************
 Get a list of files from a directory
 ***********************************************************************************************************************************/
 StringList *

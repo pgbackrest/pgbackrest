@@ -9,7 +9,7 @@ void
 testRun()
 {
     // *****************************************************************************************************************************
-    if (testBegin("bufNew(), bufNewStr(), bufMove(), bufSize(), bufPtr(), and bufFree()"))
+    if (testBegin("bufNew(), bugNewC, bufNewStr(), bufMove(), bufSize(), bufPtr(), and bufFree()"))
     {
         Buffer *buffer = NULL;
 
@@ -31,6 +31,12 @@ testRun()
         TEST_RESULT_VOID(bufFree(NULL), "free null buffer");
 
         TEST_RESULT_VOID(bufMove(NULL, NULL), "move null buffer");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        char cBuffer[] = "ABCD";
+
+        TEST_ASSIGN(buffer, bufNewC(sizeof(cBuffer), cBuffer), "create from c buffer");
+        TEST_RESULT_BOOL(memcmp(bufPtr(buffer), cBuffer, sizeof(cBuffer)) == 0, true, "check buffer");
     }
 
     // *****************************************************************************************************************************
@@ -52,6 +58,7 @@ testRun()
 
         // Increase buffer size
         TEST_ASSIGN(bufferPtr, bufPtr(bufResize(buffer, 512)), "increase buffer size");
+        TEST_ASSIGN(bufferPtr, bufPtr(bufResize(buffer, 512)), "set to same size");
         TEST_RESULT_INT(bufSize(buffer), 512, "check size");
 
         // Test that no bytes have changed in the original data

@@ -41,6 +41,21 @@ bufNew(size_t size)
 }
 
 /***********************************************************************************************************************************
+Create a new buffer from a C buffer
+***********************************************************************************************************************************/
+Buffer *
+bufNewC(size_t size, const void *buffer)
+{
+    // Create object
+    Buffer *this = bufNew(size);
+
+    // Copy the data
+    memcpy(this->buffer, buffer, this->size);
+
+    return this;
+}
+
+/***********************************************************************************************************************************
 Create a new buffer from a string
 ***********************************************************************************************************************************/
 Buffer *
@@ -118,34 +133,38 @@ Resize the buffer
 Buffer *
 bufResize(Buffer *this, size_t size)
 {
-    // If new size is zero then free memory if allocated
-    if (size == 0)
+    // Only resize if it the new size is different
+    if (this->size != size)
     {
-        if (this->buffer != NULL)
+        // If new size is zero then free memory if allocated
+        if (size == 0)
         {
+            // When setting size down to 0 the buffer should always be allocated
+            ASSERT_DEBUG(this->buffer != NULL);
+
             MEM_CONTEXT_BEGIN(this->memContext)
             {
                 memFree(this->buffer);
             }
             MEM_CONTEXT_END();
-        }
 
-        this->buffer = NULL;
-        this->size = 0;
-    }
-    // Else allocate or resize
-    else
-    {
-        MEM_CONTEXT_BEGIN(this->memContext)
+            this->buffer = NULL;
+            this->size = 0;
+        }
+        // Else allocate or resize
+        else
         {
-            if (this->buffer == NULL)
-                this->buffer = memNew(size);
-            else
-                this->buffer = memGrowRaw(this->buffer, size);
-        }
-        MEM_CONTEXT_END();
+            MEM_CONTEXT_BEGIN(this->memContext)
+            {
+                if (this->buffer == NULL)
+                    this->buffer = memNew(size);
+                else
+                    this->buffer = memGrowRaw(this->buffer, size);
+            }
+            MEM_CONTEXT_END();
 
-        this->size = size;
+            this->size = size;
+        }
     }
 
     return this;

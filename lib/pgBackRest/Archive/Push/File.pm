@@ -26,8 +26,8 @@ use pgBackRest::Storage::Helper;
 ####################################################################################################################################
 # archivePushCheck
 #
-# Check that a WAL segment does not already exist in the archive be pushing.  Files that are not segments (e.g. .history, .backup)
-# will always be reported as not present and will be overwritten by archivePushFile().
+# Check that a WAL segment does not already exist in the archive before pushing.  Files that are not segments (e.g. .history,
+# .backup) will always be reported as not present and will be overwritten by archivePushFile().
 ####################################################################################################################################
 sub archivePushCheck
 {

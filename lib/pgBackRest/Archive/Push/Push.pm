@@ -25,14 +25,6 @@ use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
-# WAL status constants
-####################################################################################################################################
-use constant WAL_STATUS_ERROR                                       => 'error';
-    push @EXPORT, qw(WAL_STATUS_ERROR);
-use constant WAL_STATUS_OK                                          => 'ok';
-    push @EXPORT, qw(WAL_STATUS_OK);
-
-####################################################################################################################################
 # process
 #
 # Push a WAL segment.  The WAL can be pushed in sync or async mode.

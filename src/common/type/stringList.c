@@ -179,6 +179,43 @@ strLstDup(const StringList *sourceList)
 }
 
 /***********************************************************************************************************************************
+Does the specified string exist in the list?
+***********************************************************************************************************************************/
+bool
+strLstExists(const StringList *this, const String *string)
+{
+    bool result = false;
+
+    for (unsigned int listIdx = 0; listIdx < strLstSize(this); listIdx++)
+    {
+        if (strEq(strLstGet(this, listIdx), string))
+        {
+            result = true;
+            break;
+        }
+    }
+
+    return result;
+}
+
+bool
+strLstExistsZ(const StringList *this, const char *cstring)
+{
+    bool result = false;
+
+    for (unsigned int listIdx = 0; listIdx < strLstSize(this); listIdx++)
+    {
+        if (strEqZ(strLstGet(this, listIdx), cstring))
+        {
+            result = true;
+            break;
+        }
+    }
+
+    return result;
+}
+
+/***********************************************************************************************************************************
 Wrapper for lstAdd()
 ***********************************************************************************************************************************/
 StringList *

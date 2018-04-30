@@ -14,7 +14,7 @@ use pgBackRest::Backup::File;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Io::Buffered;
 use pgBackRest::Common::Wait;
-use pgBackRest::Archive::Get::Get;
+use pgBackRest::Archive::Get::File;
 use pgBackRest::Archive::Push::File;
 use pgBackRest::Check::Check;
 use pgBackRest::Config::Config;
@@ -70,7 +70,6 @@ sub init
     # Create objects
     my $oStorage = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_DB) ? storageDb() : storageRepo();
 
-    my $oArchiveGet = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) ? new pgBackRest::Archive::Get::Get() : undef;
     my $oCheck = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) ? new pgBackRest::Check::Check() : undef;
     my $oInfo = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) ? new pgBackRest::Info() : undef;
     my $oDb = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_DB) ? new pgBackRest::Db() : undef;
@@ -79,8 +78,7 @@ sub init
     my $hCommandMap =
     {
         # ArchiveGet commands
-        &OP_ARCHIVE_GET_ARCHIVE_ID => sub {$oArchiveGet->getArchiveId()},
-        &OP_ARCHIVE_GET_CHECK => sub {$oArchiveGet->getCheck(@{shift()})},
+        &OP_ARCHIVE_GET_CHECK => sub {archiveGetCheck(@{shift()})},
 
         # ArchivePush commands
         &OP_ARCHIVE_PUSH_CHECK => sub {archivePushCheck(@{shift()})},

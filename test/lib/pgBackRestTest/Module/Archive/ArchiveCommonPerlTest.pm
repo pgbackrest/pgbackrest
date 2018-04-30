@@ -156,6 +156,46 @@ sub run
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $strArchiveId, $strWalSegment)}, $strWalSegmentHash, "${strWalSegment} WAL found");
     }
+
+    ################################################################################################################################
+    if ($self->begin("archiveAsyncStatusWrite()"))
+    {
+        my $iWalTimeline = 1;
+        my $iWalMajor = 1;
+        my $iWalMinor = 1;
+
+        # Create the spool path
+        my $strSpoolPath = $self->testPath() . "/spool/out";
+        $self->storageTest()->pathCreate($strSpoolPath, {bIgnoreExists => true, bCreateParent => true});
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
+
+        # Generate a normal ok
+        archiveAsyncStatusWrite(WAL_STATUS_OK, $strSpoolPath, $strSegment);
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Generate a valid warning ok
+        archiveAsyncStatusWrite(WAL_STATUS_OK, $strSpoolPath, $strSegment, 0, 'Test Warning');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Generate an invalid error
+        $self->testException(
+            sub {archiveAsyncStatusWrite(WAL_STATUS_ERROR, $strSpoolPath, $strSegment)}, ERROR_ASSERT,
+            "error status must have iCode and strMessage set");
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Generate an invalid error
+        $self->testException(
+            sub {archiveAsyncStatusWrite(WAL_STATUS_ERROR, $strSpoolPath, $strSegment, ERROR_ASSERT)},
+            ERROR_ASSERT, "strMessage must be set when iCode is set");
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Generate a valid error
+        archiveAsyncStatusWrite(
+            WAL_STATUS_ERROR, $strSpoolPath, $strSegment, ERROR_ARCHIVE_DUPLICATE,
+            "WAL segment ${strSegment} already exists in the archive");
+    }
 }
 
 1;

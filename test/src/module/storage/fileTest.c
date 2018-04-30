@@ -4,21 +4,6 @@ Test Storage File
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
-Get the mode of a file on local storage
-***********************************************************************************************************************************/
-mode_t
-storageStatMode(const String *path)
-{
-    // Attempt to stat the file
-    struct stat statFile;
-
-    if (stat(strPtr(path), &statFile) == -1)                                                // {uncovered - error should not happen}
-        THROW_SYS_ERROR(FileOpenError, "unable to stat '%s'", strPtr(path));                // {uncovered+}
-
-    return statFile.st_mode & 0777;
-}
-
-/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -138,21 +123,25 @@ testRun()
 
         TEST_RESULT_BOOL(storageFileReadOpen(file), true, "   open file");
         TEST_RESULT_STR(strPtr(storageFileReadName(file)), strPtr(fileName), "    check file name");
+        TEST_RESULT_INT(storageFileReadSize(file), 0, "    check size");
 
         TEST_RESULT_VOID(bufCat(buffer, storageFileRead(file)), "    load data");
         TEST_RESULT_VOID(bufCat(buffer, storageFileRead(file)), "    load data");
         TEST_RESULT_VOID(bufCat(buffer, storageFileRead(file)), "    load data");
         TEST_RESULT_VOID(bufCat(buffer, storageFileRead(file)), "    load data");
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), false, "    check file contents (not all loaded yet)");
+        TEST_RESULT_INT(storageFileReadSize(file), 8, "    check size");
 
         TEST_RESULT_VOID(bufCat(buffer, storageFileRead(file)), "    load data");
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents (all loaded)");
+        TEST_RESULT_INT(storageFileReadSize(file), 9, "    check size");
 
         TEST_RESULT_PTR(storageFileRead(file), NULL, "    eof");
         TEST_RESULT_PTR(storageFileRead(file), NULL, "    still eof");
 
         TEST_RESULT_VOID(storageFileReadClose(file), "    close file");
         TEST_RESULT_VOID(storageFileReadClose(file), "    close again");
+        TEST_RESULT_INT(storageFileReadSize(file), 9, "    check size");
 
         TEST_RESULT_VOID(storageFileReadFree(file), "   free file");
         TEST_RESULT_VOID(storageFileReadFree(NULL), "   free null file");
@@ -261,8 +250,8 @@ testRun()
 
         Buffer *expectedBuffer = storageGetNP(storageNewReadNP(storageTest, fileName));
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents");
-        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, strPath(fileName))), 0750, "    check path mode");
-        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, fileName)), 0640, "    check file mode");
+        TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
+        TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0640, "    check file mode");
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 
@@ -281,8 +270,8 @@ testRun()
 
         expectedBuffer = storageGetNP(storageNewReadNP(storageTest, fileName));
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents");
-        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, strPath(fileName))), 0700, "    check path mode");
-        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, fileName)), 0600, "    check file mode");
+        TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0700, "    check path mode");
+        TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0600, "    check file mode");
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
     }

@@ -7,6 +7,7 @@ String Handler
 #include <stdlib.h>
 #include <string.h>
 
+#include "common/assert.h"
 #include "common/memContext.h"
 #include "common/type/string.h"
 
@@ -345,6 +346,27 @@ strPtr(const String *this)
         result = (const char *)this->buffer;
 
     return result;
+}
+
+/***********************************************************************************************************************************
+Return a substring given only the start position
+***********************************************************************************************************************************/
+String *
+strSub(const String *this, size_t start)
+{
+    return strSubN(this, start, this->size - start);
+}
+
+/***********************************************************************************************************************************
+Return a substring given the start position and size
+***********************************************************************************************************************************/
+String *
+strSubN(const String *this, size_t start, size_t size)
+{
+    ASSERT(start < this->size);
+    ASSERT(start + size <= this->size);
+
+    return strNewN(this->buffer + start, size);
 }
 
 /***********************************************************************************************************************************

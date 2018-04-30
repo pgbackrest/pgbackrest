@@ -54,6 +54,7 @@ DESTDIR =
 # List of required source files.  main.c should always be listed last and the rest in alpha order.
 ####################################################################################################################################
 SRCS = \
+	command/archive/common.c \
 	command/archive/push/push.c \
 	command/help/help.c \
 	command/command.c \

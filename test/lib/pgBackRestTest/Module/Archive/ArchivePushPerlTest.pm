@@ -324,47 +324,6 @@ sub run
     }
 
     ################################################################################################################################
-    if ($self->begin("ArchivePushAsync->walStatusWrite()"))
-    {
-        my $oPush = new pgBackRest::Archive::Push::Push();
-
-        my $oPushAsync = new pgBackRest::Archive::Push::Async($self->{strWalPath}, $self->{strSpoolPath});
-        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
-        $oPushAsync->initServer();
-
-        my $iWalTimeline = 1;
-        my $iWalMajor = 1;
-        my $iWalMinor = 1;
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-
-        # Generate a normal ok
-        $oPushAsync->walStatusWrite(WAL_STATUS_OK, $strSegment);
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Generate a valid warning ok
-        $oPushAsync->walStatusWrite(WAL_STATUS_OK, $strSegment, 0, 'Test Warning');
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Generate an invalid error
-        $self->testException(
-            sub {$oPushAsync->walStatusWrite(WAL_STATUS_ERROR, $strSegment)}, ERROR_ASSERT,
-            "error status must have iCode and strMessage set");
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Generate an invalid error
-        $self->testException(
-            sub {$oPushAsync->walStatusWrite(WAL_STATUS_ERROR, $strSegment, ERROR_ASSERT)}, ERROR_ASSERT,
-            "strMessage must be set when iCode is set");
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Generate a valid error
-        $oPushAsync->walStatusWrite(
-            WAL_STATUS_ERROR, $strSegment, ERROR_ARCHIVE_DUPLICATE, "WAL segment ${strSegment} already exists in the archive");
-    }
-
-    ################################################################################################################################
     if ($self->begin("ArchivePushAsync->process()"))
     {
         my $oPushAsync = new pgBackRest::Archive::Push::Async(
@@ -668,6 +627,7 @@ sub run
         $self->optionTestClear(CFGOPT_SPOOL_PATH);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
     }
+
     ################################################################################################################################
     if ($self->begin("ArchivePushFile::archivePushFile - encryption"))
     {

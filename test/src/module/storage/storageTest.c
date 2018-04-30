@@ -6,21 +6,6 @@ Test Storage Manager
 #include "storage/fileWrite.h"
 
 /***********************************************************************************************************************************
-Get the mode of a file on local storage
-***********************************************************************************************************************************/
-mode_t
-storageStatMode(const String *path)
-{
-    // Attempt to stat the file
-    struct stat statFile;
-
-    if (stat(strPtr(path), &statFile) == -1)                                                // {uncovered - error should not happen}
-        THROW_SYS_ERROR(FileOpenError, "unable to stat '%s'", strPtr(path));                // {uncovered+}
-
-    return statFile.st_mode & 0777;
-}
-
-/***********************************************************************************************************************************
 Test function for path expression
 ***********************************************************************************************************************************/
 String *
@@ -117,6 +102,65 @@ testRun()
 
         TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 1), true, "file exists after wait");
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm %s", strPtr(fileExists)))), 0, "remove exists file");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageInfo()"))
+    {
+        TEST_ERROR_FMT(
+            storageInfoNP(storageTest, fileNoPerm), FileOpenError,
+            "unable to get info for '%s': [13] Permission denied", strPtr(fileNoPerm));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        String *fileName = strNewFmt("%s/fileinfo", testPath());
+
+        TEST_ERROR_FMT(
+            storageInfoNP(storageTest, fileName), FileOpenError,
+            "unable to get info for '%s': [2] No such file or directory", strPtr(fileName));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        StorageInfo info = {0};
+        TEST_ASSIGN(info, storageInfoP(storageTest, fileName, .ignoreMissing = true), "get file info (missing)");
+        TEST_RESULT_BOOL(info.exists, false, "    check not exists");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(info, storageInfoNP(storageTest, strNew(testPath())), "get path info");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_INT(info.type, storageTypePath, "    check type");
+        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_INT(info.mode, 0770, "    check mode");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        Buffer *buffer = bufNewStr(strNew("TESTFILE"));
+        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, fileName), buffer), "put test file");
+
+        TEST_ASSIGN(info, storageInfoNP(storageTest, fileName), "get file info");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
+        TEST_RESULT_INT(info.size, 8, "    check size");
+        TEST_RESULT_INT(info.mode, 0640, "    check mode");
+
+        storageRemoveP(storageTest, fileName, .errorOnMissing = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        String *linkName = strNewFmt("%s/testlink", testPath());
+        TEST_RESULT_INT(system(strPtr(strNewFmt("ln -s /tmp %s", strPtr(linkName)))), 0, "create link");
+
+        TEST_ASSIGN(info, storageInfoNP(storageTest, linkName), "get link info");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_INT(info.type, storageTypeLink, "    check type");
+        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_INT(info.mode, 0777, "    check mode");
+
+        storageRemoveP(storageTest, linkName, .errorOnMissing = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        String *pipeName = strNewFmt("%s/testpipe", testPath());
+        TEST_RESULT_INT(system(strPtr(strNewFmt("mkfifo %s", strPtr(pipeName)))), 0, "create pipe");
+
+        TEST_ERROR_FMT(storageInfoNP(storageTest, pipeName), FileInfoError, "invalid type for '%s'", strPtr(pipeName));
+
+        storageRemoveP(storageTest, pipeName, .errorOnMissing = true);
     }
 
     // *****************************************************************************************************************************
@@ -314,14 +358,14 @@ testRun()
     if (testBegin("storagePathCreate()"))
     {
         TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNew("sub1")), "create sub1");
-        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, strNew("sub1"))), 0750, "check sub1 dir mode");
+        TEST_RESULT_INT(storageInfoNP(storageTest, strNew("sub1")).mode, 0750, "check sub1 dir mode");
         TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNew("sub1")), "create sub1 again");
         TEST_ERROR_FMT(
             storagePathCreateP(storageTest, strNew("sub1"), .errorOnExists = true), PathCreateError,
             "unable to create path '%s/sub1': [17] File exists", testPath());
 
         TEST_RESULT_VOID(storagePathCreateP(storageTest, strNew("sub2"), .mode = 0777), "create sub2 with custom mode");
-        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, strNew("sub2"))), 0777, "check sub2 dir mode");
+        TEST_RESULT_INT(storageInfoNP(storageTest, strNew("sub2")).mode, 0777, "check sub2 dir mode");
 
         TEST_ERROR_FMT(
             storagePathCreateP(storageTest, strNew("sub3/sub4"), .noParentCreate = true), PathCreateError,
@@ -446,8 +490,8 @@ testRun()
         TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(storageFileWriteOpen(file), "    open file");
         TEST_RESULT_VOID(storageFileWriteClose(file), "   close file");
-        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, strPath(fileName))), 0750, "    check path mode");
-        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, fileName)), 0640, "    check file mode");
+        TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
+        TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0640, "    check file mode");
 
         // -------------------------------------------------------------------------------------------------------------------------
         fileName = strNewFmt("%s/sub2/testfile", testPath());
@@ -456,8 +500,8 @@ testRun()
             file, storageNewWriteP(storageTest, fileName, .modePath = 0700, .modeFile = 0600), "new write file (set mode)");
         TEST_RESULT_VOID(storageFileWriteOpen(file), "    open file");
         TEST_RESULT_VOID(storageFileWriteClose(file), "   close file");
-        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, strPath(fileName))), 0700, "    check path mode");
-        TEST_RESULT_INT(storageStatMode(storagePath(storageTest, fileName)), 0600, "    check file mode");
+        TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0700, "    check path mode");
+        TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0600, "    check file mode");
     }
 
     // *****************************************************************************************************************************
@@ -478,7 +522,7 @@ testRun()
         Buffer *buffer = bufNewStr(strNew("TESTFILE\n"));
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/test.txt", testPath())), buffer), "put text file");
+            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/test.txt", testPath())), buffer), "put test file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(

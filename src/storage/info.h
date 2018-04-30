@@ -1,29 +1,30 @@
 /***********************************************************************************************************************************
-Buffer Handler
+Storage Info
 ***********************************************************************************************************************************/
-#ifndef COMMON_TYPE_BUFFER_H
-#define COMMON_TYPE_BUFFER_H
+#ifndef STORAGE_INFO_H
+#define STORAGE_INFO_H
+
+#include <sys/types.h>
 
 /***********************************************************************************************************************************
-Buffer object
+Storage type
 ***********************************************************************************************************************************/
-typedef struct Buffer Buffer;
-
-#include "common/memContext.h"
-#include "common/type/string.h"
+typedef enum
+{
+    storageTypeFile,
+    storageTypePath,
+    storageTypeLink,
+} StorageType;
 
 /***********************************************************************************************************************************
-Functions
+Storage info
 ***********************************************************************************************************************************/
-Buffer *bufNew(size_t size);
-Buffer *bufNewC(size_t size, const void *buffer);
-Buffer *bufNewStr(const String *string);
-Buffer *bufCat(Buffer *this, const Buffer *cat);
-bool bufEq(const Buffer *this, const Buffer *compare);
-Buffer *bufMove(Buffer *this, MemContext *parentNew);
-Buffer *bufResize(Buffer *this, size_t size);
-size_t bufSize(const Buffer *this);
-unsigned char *bufPtr(const Buffer *this);
-void bufFree(Buffer *this);
+typedef struct StorageInfo
+{
+    bool exists;                                                    // Does the path/file/link exist?
+    StorageType type;                                               // Type file/path/link)
+    size_t size;                                                    // Size (path/link is 0)
+    mode_t mode;                                                    // Mode of path/file/link
+} StorageInfo;
 
 #endif

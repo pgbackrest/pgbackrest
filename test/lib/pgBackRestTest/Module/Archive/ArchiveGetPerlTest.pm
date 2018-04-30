@@ -15,6 +15,7 @@ use Storable qw(dclone);
 use Digest::SHA qw(sha1_hex);
 
 use pgBackRest::Archive::Common;
+use pgBackRest::Archive::Get::File;
 use pgBackRest::Archive::Get::Get;
 use pgBackRest::Archive::Info;
 use pgBackRest::Common::Exception;
@@ -91,8 +92,6 @@ sub run
     ################################################################################################################################
     if ($self->begin("Archive::Base::getCheck()"))
     {
-        my $oArchiveBase = new pgBackRest::Archive::Base();
-
         # Create and save archive.info file
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
             {bLoad => false, bIgnoreMissing => true});
@@ -104,39 +103,39 @@ sub run
 
         # db-version, db-sys-id passed but combination doesn't exist in archive.info history
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {$oArchiveBase->getCheck(
+        $self->testException(sub {archiveGetCheck(
             PG_VERSION_95, $self->dbSysId(PG_VERSION_94), undef, false)}, ERROR_UNKNOWN,
             "unable to retrieve the archive id for database version '" . PG_VERSION_95 . "' and system-id '" .
             $self->dbSysId(PG_VERSION_94) . "'");
 
         # db-version, db-sys-id and wal passed all undefined
         #---------------------------------------------------------------------------------------------------------------------------
-        my ($strArchiveId, $strArchiveFile, $strCipherPass) = $oArchiveBase->getCheck(undef, undef, undef, false);
+        my ($strArchiveId, $strArchiveFile, $strCipherPass) = archiveGetCheck(undef, undef, undef, false);
         $self->testResult(sub {($strArchiveId eq PG_VERSION_94 . '-13') && !defined($strArchiveFile) && !defined($strCipherPass)},
             true, 'undef db-version, db-sys-id and wal returns only current db archive-id');
 
         # db-version defined, db-sys-id and wal undefined
         #---------------------------------------------------------------------------------------------------------------------------
-        ($strArchiveId, $strArchiveFile, $strCipherPass) = $oArchiveBase->getCheck(PG_VERSION_92, undef, undef, false);
+        ($strArchiveId, $strArchiveFile, $strCipherPass) = archiveGetCheck(PG_VERSION_92, undef, undef, false);
         $self->testResult(sub {($strArchiveId eq PG_VERSION_94 . '-13') && !defined($strArchiveFile) && !defined($strCipherPass)},
             true, 'old db-version, db-sys-id and wal undefined returns only current db archive-id');
 
         # db-version undefined, db-sys-id defined and wal undefined
         #---------------------------------------------------------------------------------------------------------------------------
-        ($strArchiveId, $strArchiveFile, $strCipherPass) = $oArchiveBase->getCheck(
+        ($strArchiveId, $strArchiveFile, $strCipherPass) = archiveGetCheck(
             undef, $self->dbSysId(PG_VERSION_93), undef, false);
         $self->testResult(sub {($strArchiveId eq PG_VERSION_94 . '-13') && !defined($strArchiveFile) && !defined($strCipherPass)},
             true, 'undef db-version, old db-sys-id and wal undef returns only current db archive-id');
 
         # old db-version, db-sys-id and wal undefined, check = true (default)
         #---------------------------------------------------------------------------------------------------------------------------
-        ($strArchiveId, $strArchiveFile, $strCipherPass) = $oArchiveBase->getCheck(PG_VERSION_92, undef, undef);
+        ($strArchiveId, $strArchiveFile, $strCipherPass) = archiveGetCheck(PG_VERSION_92, undef, undef);
         $self->testResult(sub {($strArchiveId eq PG_VERSION_94 . '-13') && !defined($strArchiveFile) && !defined($strCipherPass)},
             true, 'old db-version, db-sys-id and wal undefined, check = true returns only current db archive-id');
 
         # old db-version, old db-sys-id and wal undefined, check = true (default)
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {$oArchiveBase->getCheck(
+        $self->testException(sub {archiveGetCheck(
             PG_VERSION_93, $self->dbSysId(PG_VERSION_93), undef)}, ERROR_ARCHIVE_MISMATCH,
             "WAL segment version " . PG_VERSION_93 . " does not match archive version " . PG_VERSION_94 . "\n" .
             "WAL segment system-id " . $self->dbSysId(PG_VERSION_93) . " does not match archive system-id " .
@@ -151,7 +150,7 @@ sub run
         storageRepo()->pathCreate($strWalMajorPath, {bCreateParent => true});
         storageRepo()->put("${strWalMajorPath}/${strWalSegmentName}");
 
-        ($strArchiveId, $strArchiveFile, $strCipherPass) = $oArchiveBase->getCheck(undef, undef, $strWalSegment, false);
+        ($strArchiveId, $strArchiveFile, $strCipherPass) = archiveGetCheck(undef, undef, $strWalSegment, false);
 
         $self->testResult(sub {($strArchiveId eq PG_VERSION_94 . '-13') && !defined($strArchiveFile) && !defined($strCipherPass)},
             true, 'undef db-version, db-sys-id with a requested wal not in current db archive returns only current db archive-id');
@@ -159,7 +158,7 @@ sub run
         # Pass db-version and db-sys-id where WAL is actually located
         #---------------------------------------------------------------------------------------------------------------------------
         ($strArchiveId, $strArchiveFile, $strCipherPass) =
-            $oArchiveBase->getCheck(PG_VERSION_92, $self->dbSysId(PG_VERSION_92), $strWalSegment, false);
+            archiveGetCheck(PG_VERSION_92, $self->dbSysId(PG_VERSION_92), $strWalSegment, false);
 
         $self->testResult(
             sub {($strArchiveId eq PG_VERSION_92 . '-1') && ($strArchiveFile eq $strWalSegmentName) && !defined($strCipherPass)},
@@ -176,7 +175,7 @@ sub run
         storageRepo()->put("${strWalMajorPath}/${strWalSegmentName}", $strFileContent);
 
         ($strArchiveId, $strArchiveFile, $strCipherPass) =
-            $oArchiveBase->getCheck(PG_VERSION_92, $self->dbSysId(PG_VERSION_92), $strWalSegment, false);
+            archiveGetCheck(PG_VERSION_92, $self->dbSysId(PG_VERSION_92), $strWalSegment, false);
 
         # Using the returned values, confirm the correct file is read
         $self->testResult(sub {sha1_hex(${storageRepo()->get($self->{strArchivePath} . "/" . $strArchiveId . "/" .
@@ -189,7 +188,7 @@ sub run
     {
         # archive.info missing
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {new pgBackRest::Archive::Get::Get()->get($strWalSegment, $strDestinationFile)},
+        $self->testException(sub {archiveGetFile($strWalSegment, $strDestinationFile)},
             ERROR_FILE_MISSING,
             ARCHIVE_INFO_FILE . " does not exist but is required to push/get WAL segments\n" .
             "HINT: is archive_command configured in postgresql.conf?\n" .
@@ -206,7 +205,7 @@ sub run
 
         # file not found
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(sub {new pgBackRest::Archive::Get::Get()->get($strWalSegment, $strDestinationFile)}, 1,
+        $self->testResult(sub {archiveGetFile($strWalSegment, $strDestinationFile)}, 1,
             "unable to find ${strWalSegment} in the archive");
 
         # file found but is not a WAL segment
@@ -220,7 +219,7 @@ sub run
         # Create path to copy file
         storageRepo()->pathCreate($strDestinationPath);
 
-        $self->testResult(sub {new pgBackRest::Archive::Get::Get()->get(BOGUS, $strDestinationFile)}, 0,
+        $self->testResult(sub {archiveGetFile(BOGUS, $strDestinationFile)}, 0,
             "non-WAL segment copied");
 
         # Confirm the correct file is copied
@@ -245,14 +244,14 @@ sub run
         storageRepo()->pathCreate($strWalMajorPath, {bCreateParent => true});
         storageRepo()->put("${strWalMajorPath}/${strWalSegmentName}", $strFileContent);
 
-        $self->testResult(sub {new pgBackRest::Archive::Get::Get()->get($strWalSegmentName, $strDestinationFile)}, 0,
+        $self->testResult(sub {archiveGetFile($strWalSegmentName, $strDestinationFile)}, 0,
             "WAL segment copied");
 
         # Confirm the correct file is copied
         $self->testResult(sub {sha1_hex(${storageRepo()->get($strDestinationFile)})}, $strFileHash,
             '    check correct WAL copied when in multiple locations');
 
-        # get files from an older DB version to simulate restoring from an old backup set to a database that is of that same version
+        # Get files from an older DB version to simulate restoring from an old backup set to a database that is of that same version
         #---------------------------------------------------------------------------------------------------------------------------
         # Create same WAL name in older DB archive but with different data to ensure it is copied
         $strArchivePath = $self->{strArchivePath} . "/" . PG_VERSION_93 . "-2/";
@@ -272,7 +271,7 @@ sub run
         # Overwrite current pg_control file with older version
         $self->controlGenerate($self->{strDbPath}, PG_VERSION_93);
 
-        $self->testResult(sub {new pgBackRest::Archive::Get::Get()->get($strWalSegmentName, $strDestinationFile)}, 0,
+        $self->testResult(sub {archiveGetFile($strWalSegmentName, $strDestinationFile)}, 0,
             "WAL segment copied from older db backupset to same version older db");
 
         # Confirm the correct file is copied

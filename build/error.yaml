@@ -83,6 +83,9 @@ param-invalid: 96
 # Unable to close a path
 path-close: 97
 
+# Unable to get info for a file
+file-info: 98
+
 # This error should not be thrown directly -- it serves as a parent for the C errors
 runtime: 122
 

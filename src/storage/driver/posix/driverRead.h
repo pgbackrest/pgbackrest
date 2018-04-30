@@ -29,6 +29,7 @@ Getters
 ***********************************************************************************************************************************/
 bool storageFileReadPosixIgnoreMissing(StorageFileReadPosix *this);
 const String *storageFileReadPosixName(StorageFileReadPosix *this);
+size_t storageFileReadPosixSize(StorageFileReadPosix *this);
 
 /***********************************************************************************************************************************
 Destructor

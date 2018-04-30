@@ -22,6 +22,7 @@ struct StorageFileReadPosix
 
     int handle;
     bool eof;
+    size_t size;
 };
 
 /***********************************************************************************************************************************
@@ -105,7 +106,10 @@ storageFileReadPosix(StorageFileReadPosix *this)
             result = NULL;
         }
         else
+        {
             bufResize(result, (size_t)actualBytes);
+            this->size += (size_t)actualBytes;
+        }
     }
 
     return result;
@@ -149,6 +153,17 @@ storageFileReadPosixName(StorageFileReadPosix *this)
     ASSERT_DEBUG(this != NULL);
 
     return this->name;
+}
+
+/***********************************************************************************************************************************
+File size
+***********************************************************************************************************************************/
+size_t
+storageFileReadPosixSize(StorageFileReadPosix *this)
+{
+    ASSERT_DEBUG(this != NULL);
+
+    return this->size;
 }
 
 /***********************************************************************************************************************************

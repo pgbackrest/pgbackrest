@@ -1,29 +1,28 @@
 /***********************************************************************************************************************************
-Buffer Handler
+PostgreSQL Info
 ***********************************************************************************************************************************/
-#ifndef COMMON_TYPE_BUFFER_H
-#define COMMON_TYPE_BUFFER_H
+#ifndef POSTGRES_INFO_H
+#define POSTGRES_INFO_H
+
+#include <stdint.h>
+#include <sys/types.h>
 
 /***********************************************************************************************************************************
-Buffer object
+PostgreSQL Control File Info
 ***********************************************************************************************************************************/
-typedef struct Buffer Buffer;
+typedef struct PgControlInfo
+{
+    uint64_t systemId;
+    uint32_t controlVersion;
+    uint32_t catalogVersion;
+    uint version;
+} PgControlInfo;
 
-#include "common/memContext.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-Buffer *bufNew(size_t size);
-Buffer *bufNewC(size_t size, const void *buffer);
-Buffer *bufNewStr(const String *string);
-Buffer *bufCat(Buffer *this, const Buffer *cat);
-bool bufEq(const Buffer *this, const Buffer *compare);
-Buffer *bufMove(Buffer *this, MemContext *parentNew);
-Buffer *bufResize(Buffer *this, size_t size);
-size_t bufSize(const Buffer *this);
-unsigned char *bufPtr(const Buffer *this);
-void bufFree(Buffer *this);
+PgControlInfo pgControlInfo(const String *pgPath);
 
 #endif

@@ -1,6 +1,11 @@
 /***********************************************************************************************************************************
 Storage Driver Posix
 ***********************************************************************************************************************************/
+// So lstat() will work on older glib versions
+#ifndef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 200112L
+#endif
+
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -34,6 +39,45 @@ storageDriverPosixExists(const String *path)
     // Else found
     else
         result = !S_ISDIR(statFile.st_mode);
+
+    return result;
+}
+
+/***********************************************************************************************************************************
+File/path info
+***********************************************************************************************************************************/
+StorageInfo
+storageDriverPosixInfo(const String *file, bool ignoreMissing)
+{
+    StorageInfo result = {0};
+
+    // Attempt to stat the file
+    struct stat statFile;
+
+    if (lstat(strPtr(file), &statFile) == -1)
+    {
+        if (errno != ENOENT || !ignoreMissing)
+            THROW_SYS_ERROR(FileOpenError, "unable to get info for '%s'", strPtr(file));
+    }
+    // On success load info into a structure
+    else
+    {
+        result.exists = true;
+
+        if (S_ISREG(statFile.st_mode))
+        {
+            result.type = storageTypeFile;
+            result.size = (size_t)statFile.st_size;
+        }
+        else if (S_ISDIR(statFile.st_mode))
+            result.type = storageTypePath;
+        else if (S_ISLNK(statFile.st_mode))
+            result.type = storageTypeLink;
+        else
+            THROW(FileInfoError, "invalid type for '%s'", strPtr(file));
+
+        result.mode = statFile.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+    }
 
     return result;
 }

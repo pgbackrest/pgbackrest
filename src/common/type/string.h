@@ -38,6 +38,8 @@ String *strLower(String *this);
 String *strPath(const String *this);
 const char *strPtr(const String *this);
 size_t strSize(const String *this);
+String *strSub(const String *this, size_t start);
+String *strSubN(const String *this, size_t start, size_t size);
 String *strTrim(String *this);
 int strChr(const String *this, char chr);
 String *strTrunc(String *this, int idx);
