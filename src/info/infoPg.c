@@ -72,7 +72,7 @@ infoPgNew(String *fileName, const bool loadFile, const bool ignoreMissing, InfoP
             {
                 case infoPgArchive:
                 {
-                    infoPgData.dbSystemId = varUint64Force(iniGet(infoPgIni, strNew(INFO_SECTION_DB), strNew(INFO_KEY_DB_SYSTEM_ID)));
+                    infoPgData.dbSystemId = varUInt64Force(iniGet(infoPgIni, strNew(INFO_SECTION_DB), strNew(INFO_KEY_DB_SYSTEM_ID)));
                     break;
                 }
 

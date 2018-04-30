@@ -34,7 +34,7 @@ static const char *variantTypeName[] =
     "KeyValue",                                                     // varTypeKeyValue
     "String",                                                       // varTypeString
     "VariantList",                                                  // varTypeVariantList
-    "uint64",                                                       // varTypeUint64
+    "uint64",                                                       // varTypeUInt64
 };
 
 /***********************************************************************************************************************************
@@ -103,9 +103,9 @@ varDup(const Variant *this)
                 break;
             }
 
-            case varTypeUint64:
+            case varTypeUInt64:
             {
-                result = varNewUint64(varUint64(this));
+                result = varNewUInt64(varUInt64(this));
                 break;
             }
 
@@ -173,9 +173,9 @@ varEq(const Variant *this1, const Variant *this2)
                     break;
                 }
 
-                case varTypeUint64:
+                case varTypeUInt64:
                 {
-                    result = varUint64(this1) == varUint64(this2);
+                    result = varUInt64(this1) == varUInt64(this2);
                     break;
                 }
 
@@ -252,8 +252,8 @@ varBoolForce(const Variant *this)
             result = varInt64(this) != 0;
             break;
 
-        case varTypeUint64:
-            result = varUint64(this) != 0;
+        case varTypeUInt64:
+            result = varUInt64(this) != 0;
             break;
 
         case varTypeString:
@@ -347,9 +347,9 @@ varDblForce(const Variant *this)
             break;
         }
 
-        case varTypeUint64:
+        case varTypeUInt64:
         {
-            uint64_t resultTest = varUint64(this);
+            uint64_t resultTest = varUInt64(this);
 
             if (resultTest <= LLONG_MAX)
                 result = (double)resultTest;
@@ -444,9 +444,9 @@ varIntForce(const Variant *this)
             break;
         }
 
-        case varTypeUint64:
+        case varTypeUInt64:
         {
-            uint64_t resultTest = varUint64(this);
+            uint64_t resultTest = varUInt64(this);
 
             if (resultTest > 2147483647)
                 THROW(
@@ -525,9 +525,9 @@ varInt64Force(const Variant *this)
             break;
         }
 
-        case varTypeUint64:
+        case varTypeUInt64:
         {
-            uint64_t resultTest = varUint64(this);
+            uint64_t resultTest = varUInt64(this);
 
             // If max number of unsigned 64-bit integer is greater than max 64-bit signed integer can hold, then error
             if (resultTest <= LLONG_MAX)
@@ -568,20 +568,20 @@ varInt64Force(const Variant *this)
 New uint64 variant
 ***********************************************************************************************************************************/
 Variant *
-varNewUint64(uint64_t data)
+varNewUInt64(uint64_t data)
 {
-    return varNewInternal(varTypeUint64, (void *)&data, sizeof(data));
+    return varNewInternal(varTypeUInt64, (void *)&data, sizeof(data));
 }
 
 /***********************************************************************************************************************************
 Return int64
 ***********************************************************************************************************************************/
 uint64_t
-varUint64(const Variant *this)
+varUInt64(const Variant *this)
 {
     // Only valid for uint64
-    if (this->type != varTypeUint64)
-        THROW(AssertError, "variant type is not %s", variantTypeName[varTypeUint64]);
+    if (this->type != varTypeUInt64)
+        THROW(AssertError, "variant type is not %s", variantTypeName[varTypeUInt64]);
 
     // Get the int
     return *((uint64_t *)varData(this));
@@ -591,7 +591,7 @@ varUint64(const Variant *this)
 Return uint64 regardless of variant type
 ***********************************************************************************************************************************/
 uint64_t
-varUint64Force(const Variant *this)
+varUInt64Force(const Variant *this)
 {
     uint64_t result = 0;
 
@@ -614,7 +614,7 @@ varUint64Force(const Variant *this)
             {
                 THROW(
                     FormatError, "unable to convert %s '%d' to %s", variantTypeName[this->type], resultTest,
-                    variantTypeName[varTypeUint64]);
+                    variantTypeName[varTypeUInt64]);
             }
 
             break;
@@ -631,15 +631,15 @@ varUint64Force(const Variant *this)
             {
                 THROW(
                     FormatError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
-                    variantTypeName[varTypeUint64]);
+                    variantTypeName[varTypeUInt64]);
             }
 
             break;
         }
 
-        case varTypeUint64:
+        case varTypeUInt64:
         {
-            result = varUint64(this);
+            result = varUInt64(this);
             break;
         }
 
@@ -657,13 +657,13 @@ varUint64Force(const Variant *this)
             if (strcmp(strPtr(varStr(this)), buffer) != 0)
                 THROW(
                     FormatError, "unable to convert %s '%s' to %s", variantTypeName[varTypeString], strPtr(varStr(this)),
-                    variantTypeName[varTypeUint64]);
+                    variantTypeName[varTypeUInt64]);
 
             break;
         }
 
         default:
-            THROW(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUint64]);
+            THROW(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUInt64]);
     }
 
     return result;
@@ -815,9 +815,9 @@ varStrForce(const Variant *this)
             break;
         }
 
-        case varTypeUint64:
+        case varTypeUInt64:
         {
-            result = strNewFmt("%" PRIu64, varUint64(this));
+            result = strNewFmt("%" PRIu64, varUInt64(this));
             break;
         }
 
@@ -912,7 +912,7 @@ varFree(Variant *this)
                 case varTypeDouble:
                 case varTypeInt:
                 case varTypeInt64:
-                case varTypeUint64:
+                case varTypeUInt64:
                     break;
             }
 
