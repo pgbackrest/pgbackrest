@@ -27,7 +27,6 @@ struct Info
 {
     MemContext *memContext;                                         // Context that contains the info
     String *backrestChecksum;                                       // pgBackRest checksum
-// CSHANG This should be an unsigned int but need to create varIntUnsignedForce and such
     int backrestFormat;                                             // pgBackRest format number
     String *backrestVersion;                                        // pgBackRest Version
     // bool modified;   CSHANG may need later                       // Has the data been modified since last load/save?
@@ -93,7 +92,7 @@ infoNew(String *fileName, const bool loadFile, const bool ignoreMissing)
         if (loadFile)
         {
             // CSHANG iniLoad should take an "ignore missing"  and should set the exists flag since if doesn't exist, then don't
-            // cal/ infoValidInternal
+            // call infoValidInternal
             iniLoad(this->ini, fileName);
 
             // If the main file does not exist and ignore missing is set, or if the main is in valid, try the copy file
@@ -113,7 +112,7 @@ infoNew(String *fileName, const bool loadFile, const bool ignoreMissing)
             this->backrestFormat = varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT)));
 
             // CSHANG Do we need to check the two files against each other? We don't now - we just pick the first that appears valid
-            // give the header and the checksum
+            // given the header and the checksum
         }
 
         // If there is no content to load then initialize the data

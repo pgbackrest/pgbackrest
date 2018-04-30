@@ -22,6 +22,7 @@ struct InfoArchive
 {
     MemContext *memContext;                                         // Context that contains the InfoArchive
     InfoPg *infoPg;                                                 // Contents of the DB data
+    String *archiveIdCurrent;                                       // Current archive id
 };
 
 /***********************************************************************************************************************************
@@ -39,12 +40,24 @@ infoArchiveNew(String *fileName, const bool loadFile, const bool ignoreMissing)
         this->memContext = MEM_CONTEXT_NEW();
 
         this->infoPg = infoPgNew(fileName, loadFile, ignoreMissing, infoPgArchive);
+        // get the archive id from here     // convert the version from an int to a string
+        // InfoPgData currentPg = infoPgDataCurrent(this->infoPg);
     }
     MEM_CONTEXT_NEW_END();
 
     // Return buffer
     return this;
 }
+
+/***********************************************************************************************************************************
+Return the current archive id
+***********************************************************************************************************************************/
+String *
+infoArchiveArchiveIdCurrent(const InfoArchive *this)
+{
+    return this->archiveIdCurrent;
+}
+
 
 /***********************************************************************************************************************************
 Free the info

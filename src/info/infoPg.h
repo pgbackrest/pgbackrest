@@ -16,11 +16,11 @@ InfoPg Postgres data object
 ***********************************************************************************************************************************/
 typedef struct InfoPgData
 {
-    unsigned int dbId;
-    unsigned int dbCatalogVersion;
-    unsigned int dbControlVersion;
-    uint64_t dbSystemId;
-    unsigned char *dbVersion;
+    unsigned int id;
+    unsigned int catalogVersion;
+    unsigned int controlVersion;
+    uint64_t systemId;
+    unsigned int version;
 } InfoPgData;
 
 /***********************************************************************************************************************************
@@ -37,6 +37,8 @@ typedef enum
 Functions
 ***********************************************************************************************************************************/
 InfoPg *infoPgNew(String *fileName, const bool loadFile, const bool ignoreMissing, InfoPgType type);
+
+InfoPgData infoPgDataCurrent(InfoPg *this);
 
 void infoPgFree(InfoPg *this);
 

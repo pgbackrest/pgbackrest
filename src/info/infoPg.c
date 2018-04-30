@@ -7,9 +7,12 @@ InfoPg Handler for postgres database information
 
 #include "common/memContext.h"
 #include "common/ini.h"
+#include "common/memContext.h"
+#include "common/regExp.h"
 #include "common/type/list.h"
 #include "info/info.h"
 #include "info/infoPg.h"
+#include "postgres/version.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -36,6 +39,40 @@ struct InfoPg
     Info *info;                                                     // Info contents
 };
 
+
+/***********************************************************************************************************************************
+Return the PostgreSQL version constant given a string
+***********************************************************************************************************************************/
+unsigned int
+infoPgVersionToUInt(const String *version)
+{
+    unsigned int result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If format is not number.number (9.4) or number only (10) then error
+        if (!regExpMatchOne(strNew("^[0-9]+[.]*[0-9]+$"), version))
+            THROW(FormatError, "version %s format is invalid", strPtr(version));
+
+        size_t idxStart = (size_t)(strChr(version, '.'));
+        int minor = 0;
+        int major;
+
+        // If there is a dot, then set the major and minor versions, else just the major
+        if ((int)idxStart != -1)
+            minor = atoi(strPtr(strSub(version, idxStart + 1)));
+        else
+            idxStart = strSize(version);
+
+        major = atoi(strPtr(strSubN(version, 0, idxStart)));
+
+        result = (unsigned int)((major * 10000) + (minor * 100));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
+}
+
 /***********************************************************************************************************************************
 Create a new InfoPg object
 ***********************************************************************************************************************************/
@@ -55,56 +92,47 @@ infoPgNew(String *fileName, const bool loadFile, const bool ignoreMissing, InfoP
         this->memContext = MEM_CONTEXT_NEW();
 
         this->info = infoNew(fileName, loadFile, ignoreMissing);
-// CSHANG Uncommenting the getting of the ini portion and the testing for existence results in the following - why? What does pgData
-// have to do with this?
-// info/infoPg.c:67:24: error: variable 'infoPgData' set but not used
+
         Ini *infoPgIni = infoIni(this->info);
         //
         // // If the file exists, then get the data into the structure
         // if (iniFileExists(infoPgIni))
         // {
-            // CSHANG Somehow we need to get the history list from the file...for now just dummy code for more than the current
+            // CSHANG Somehow we need to get the history list from the file...for now just getting current
             this->history = lstNew(sizeof(InfoPgData));
 
             InfoPgData infoPgData = {0};
 
-            switch (type)
+            MEM_CONTEXT_TEMP_BEGIN()
             {
-                case infoPgArchive:
-                {
-                    infoPgData.dbSystemId = varUInt64Force(iniGet(infoPgIni, strNew(INFO_SECTION_DB), strNew(INFO_KEY_DB_SYSTEM_ID)));
-                    break;
-                }
+                String *dbSection = strNew(INFO_SECTION_DB);
+                infoPgData.systemId = varUInt64Force(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_SYSTEM_ID)));
+                infoPgData.id = (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_ID)));
 
-                case infoPgBackup:
-                {
-                    // infoPgData.dbCatalogVersion =
-                    //     varInt(iniGet(infoPgIni, strNew(INFO_SECTION_DB), strNew(INFO_KEY_DB_CATALOG_VERSION)));
-                // infoPgData.dbCatalogVersion = 201409291;
-                // infoPgData.dbControlVersion = 942;
-                    infoPgData.dbSystemId = 6365925855997464783;
-                // infoPgData.dbVersion = "9.4";
-                // infoPgData.dbId = 1;
-                    break;
-                }
+                infoPgData.version =
+                    infoPgVersionToUInt(varStrForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_VERSION))));
 
-                case infoPgManifest:
+                if ((type == infoPgBackup) || (type == infoPgManifest))
                 {
-                    infoPgData.dbSystemId = 6365925855997464783;
-                    break;
+                    infoPgData.catalogVersion =
+                        (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_CATALOG_VERSION)));
+                    infoPgData.controlVersion =
+                        (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_CONTROL_VERSION)));
                 }
             }
+            MEM_CONTEXT_TEMP_END();
+
+            lstAdd(this->history, &infoPgData);
+            this->indexCurrent = lstSize(this->history) - 1;
         //
         // }
         // // If the file doesn't exist, then initialize the data
         // else
         // {
         //     this->history = lstNew(sizeof(InfoPgData));  // CSHANG Need to set this somehow - maybe internal function?
-        //     // CSHANG WARNING the archive.info and backup.info history sections differ because the archive.info uses db-id instead of
+        //     // CSHANG the archive.info and backup.info history sections differ because the archive.info uses db-id instead of
         //     // the correct label db-system-id.
-        //     // CSHANG the following is just pseudo code
         //     // Get db->info
-        //     // ....
         //     // Fill db section
         //     // CSHANG create a string - but do we need to free it or create temp mem context?
         //     String *dbSection = (type == infoPgManifest) ? strNew(INFO_SECTION_DB_MANIFEST) : strNew(INFO_SECTION_DB);
@@ -114,17 +142,40 @@ infoPgNew(String *fileName, const bool loadFile, const bool ignoreMissing, InfoP
         //     // iniSet(ini, dbSection, strNew(INI_KEY_DB_VERSION), someversion);
         //
         //     // If type == 'backup' or 'manifest then add catalog and control version to DB section
-        //     // If type= 'backup' add catalog and control version to DB History
+        //     // If type == 'backup' (only) add catalog and control version to DB History
         // }
 
-        lstAdd(this->history, &infoPgData);
-        this->indexCurrent = lstSize(this->history) - 1;
     }
     MEM_CONTEXT_NEW_END();
 
     // Return buffer
     return this;
 }
+
+/***********************************************************************************************************************************
+Return a structure of the current Postgres data
+***********************************************************************************************************************************/
+InfoPgData
+infoPgDataCurrent(InfoPg *this)
+{
+    return *((InfoPgData *)lstGet(this->history, this->indexCurrent));
+}
+
+
+/***********************************************************************************************************************************
+Return a string representation of the PostgreSQL version
+***********************************************************************************************************************************/
+// String *
+// infoPgVersionToString(String *version)
+// {
+//     return (unsigned int)((atoi(strPtr(strSub(version, strChr(version, '.') + 1))) * 100)
+//         + (atoi(strPtr(strTrunc(version, strChr(version, '.')))) * 10000));
+//     // int idxDot = strChr(version, '.');
+//     // int minor = atoi(strPtr(strSub(version, idxDot + 1)));
+//     // int major = atoi(strPtr(strTrunc(version, idxDot)));
+//     //
+//     // return (unsigned int)((major * 10000) + (minor * 100));
+// }
 
 /***********************************************************************************************************************************
 Free the info
