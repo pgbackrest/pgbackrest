@@ -42,7 +42,7 @@ testRun()
         Info *info = NULL;
 
         TEST_ASSIGN(info, infoNew(fileName, true, false), "new info - load file");
-
+// CSHANG MUST USE TRIM AND PUT A NOTE THAT IT WILL NEED TO BE REMOVED WHEN WE HAVE PROPER JSON CONVERTING
         TEST_RESULT_STR(strPtr(info->backrestChecksum), "\"18a65555903b0e2a3250d141825de809409eb1cf\"", "get checksum");
     }
 }

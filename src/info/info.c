@@ -29,7 +29,7 @@ struct Info
     String *backrestChecksum;                                       // pgBackRest checksum
 // CSHANG This should be an unsigned int but need to create varIntUnsignedForce and such
     int backrestFormat;                                             // pgBackRest format number
-    String *backrestVersion;                                        // pgBackRest Vresion
+    String *backrestVersion;                                        // pgBackRest Version
     // bool modified;   CSHANG may need later                       // Has the data been modified since last load/save?
     Ini *ini;                                                       // Parsed file contents
 };

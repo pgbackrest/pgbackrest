@@ -432,12 +432,14 @@ varIntForce(const Variant *this)
         case varTypeInt64:
         {
             int64_t resultTest = varInt64(this);
-// CSHANG Why are we using hardcoded values instead of the limits.h INT_MIN/INT_MAX macros?
+
+            // Not using INT_MIN/INT_MAX because the value can change depending on the system and we always want "int" to be a
+            // 32-bit value
             if (resultTest > 2147483647 || resultTest < -2147483648)
                 THROW(
                     AssertError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeInt]);
-// CSHANG Why is this an Assert error but the string a format error?
+
             result = (int)resultTest;
             break;
         }
@@ -446,7 +448,7 @@ varIntForce(const Variant *this)
         {
             uint64_t resultTest = varUint64(this);
 
-            if (resultTest > INT_MAX)
+            if (resultTest > 2147483647)
                 THROW(
                     AssertError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeInt]);
@@ -605,13 +607,13 @@ varUint64Force(const Variant *this)
         {
             int resultTest = varInt(this);
 
-            // If integer is a negative number, throw an error since the resulting conversion would be out of bounds
+            // If integer is a negative number, throw an error since the resulting conversion would be a different number
             if (resultTest >= 0)
                 result = (uint64_t)resultTest;
             else
             {
                 THROW(
-                    AssertError, "unable to convert %s '%d' to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s '%d' to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeUint64]);
             }
 
@@ -628,7 +630,7 @@ varUint64Force(const Variant *this)
             else
             {
                 THROW(
-                    AssertError, "unable to convert %s '%d' to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeUint64]);
             }
 
@@ -661,7 +663,7 @@ varUint64Force(const Variant *this)
         }
 
         default:
-            THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUint64]);
+            THROW(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUint64]);
     }
 
     return result;
