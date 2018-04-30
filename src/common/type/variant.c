@@ -284,7 +284,7 @@ varBoolForce(const Variant *this)
         }
 
         default:
-            THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeBool]);
+            THROW(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeBool]);
     }
 
     return result;
@@ -356,7 +356,7 @@ varDblForce(const Variant *this)
             else
             {
                 THROW(
-                    AssertError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeDouble]);
             }
 
@@ -370,7 +370,7 @@ varDblForce(const Variant *this)
             if (result == 0 && strcmp(strPtr(varStr(this)), "0") != 0)
             {
                 THROW(
-                    FormatError, "unable to force %s '%s' to %s", variantTypeName[this->type], strPtr(varStr(this)),
+                    FormatError, "unable to convert %s '%s' to %s", variantTypeName[this->type], strPtr(varStr(this)),
                     variantTypeName[varTypeDouble]);
             }
 
@@ -378,7 +378,7 @@ varDblForce(const Variant *this)
         }
 
         default:
-            THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeDouble]);
+            THROW(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeDouble]);
     }
 
     return result;
@@ -437,7 +437,7 @@ varIntForce(const Variant *this)
             // 32-bit value
             if (resultTest > 2147483647 || resultTest < -2147483648)
                 THROW(
-                    AssertError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeInt]);
 
             result = (int)resultTest;
@@ -450,7 +450,7 @@ varIntForce(const Variant *this)
 
             if (resultTest > 2147483647)
                 THROW(
-                    AssertError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeInt]);
 
             result = (int)resultTest;
@@ -468,7 +468,7 @@ varIntForce(const Variant *this)
         }
 
         default:
-            THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt]);
+            THROW(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt]);
     }
 
     return result;
@@ -535,7 +535,7 @@ varInt64Force(const Variant *this)
             else
             {
                 THROW(
-                    AssertError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeInt64]);
             }
 
@@ -558,7 +558,7 @@ varInt64Force(const Variant *this)
         }
 
         default:
-            THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt64]);
+            THROW(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt64]);
     }
 
     return result;
@@ -760,7 +760,7 @@ varStrForce(const Variant *this)
 {
     String *result = NULL;
 
-    switch (varType(this))
+    switch (this->type)
     {
         case varTypeBool:
         {
@@ -827,9 +827,8 @@ varStrForce(const Variant *this)
             break;
         }
 
-        case varTypeKeyValue:
-        case varTypeVariantList:
-            THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeString]);
+        default:
+            THROW(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeString]);
     }
 
     return result;
