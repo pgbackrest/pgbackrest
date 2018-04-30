@@ -86,7 +86,7 @@ sub main
             require pgBackRest::Archive::Get::Get;
             pgBackRest::Archive::Get::Get->import();
 
-            $result = new pgBackRest::Archive::Get::Get()->process($stryCommandArg[0], $stryCommandArg[1]);
+            $result = new pgBackRest::Archive::Get::Get()->process(\@stryCommandArg);
         }
 
         # Process remote command
@@ -279,10 +279,16 @@ sub main
         # are other errors that could be arriving in $EVAL_ERROR.
         my $oException = defined($EVAL_ERROR) && length($EVAL_ERROR) > 0 ? $EVAL_ERROR : logErrorLast();
 
-        # If a backrest exception then only return the code since the message has already been logged
+        # If a backrest exception
         if (isException(\$oException))
         {
             $result = $oException->code();
+
+            # Only return message if we are in an async process since this will not be logged to the console
+            if (!$bConfigLoaded && cfgOption(CFGOPT_ARCHIVE_ASYNC))
+            {
+                $message = $oException->message();
+            }
         }
         # Else a regular Perl exception
         else

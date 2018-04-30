@@ -177,9 +177,15 @@
                     <config-key id="spool-path" name="Spool Path">
                         <summary>Path where transient data is stored.</summary>
 
-                        <text>This path is used to store acknowledgements from the asynchronous <cmd>archive-push</cmd> process.  These files are generally very small (zero to a few hundred bytes) so not much space is required.
+                        <text>This path is used to store data for the asynchronous <cmd>archive-push</cmd> and <cmd>archive-get</cmd> command.
 
-                        The data stored in the spool path is not strictly temporary since it can and should survive a reboot.  However, loss of the data in the spool path is not a problem.  <backrest/> will simply recheck each WAL segment to ensure it is safely archived.</text>
+                        The asynchronous <cmd>archive-push</cmd> command writes acknowledgements into the spool path when it has successfully stored WAL in the archive (and errors on failure) so the foreground process can quickly notify <postgres/>. Acknowledgement files are very small (zero on success and a few hundred bytes on error).
+
+                        The asynchronous <cmd>archive-push</cmd> process queues WAL in the spool path so it can be provided very quickly when <postgres/> requests it.  Moving files to <postgres/> is most efficient when the spool path is on the same filesystem as <path>pg_xlog</path>/<path>pg_wal</path>.
+
+                        The data stored in the spool path is not strictly temporary since it can and should survive a reboot.  However, loss of the data in the spool path is not a problem.  <backrest/> will simply recheck each WAL segment to ensure it is safely archived for <cmd>archive-push</cmd> and rebuild the queue for <cmd>archive-get</cmd>.
+
+                        The spool path is intended to be located on a local Posix-compatible filesystem, not a remote filesystem such as <proper>NFS</proper> or <proper>CIFS</proper>.</text>
 
                         <example>/backup/db/spool</example>
                     </config-key>
@@ -514,7 +520,7 @@
                     <config-key id="manifest-save-threshold" name="Manifest Save Threshold">
                         <summary>Manifest save threshold during backup.</summary>
 
-                        <text>Defines how often the manifest will be saved during a backup (in bytes).  Saving the manifest is important because it stores the checksums and allows the resume function to work efficiently.  The actual threshold used is 1% of the backup size or <setting>manifest-save-threshold</setting>, whichever is greater.
+                        <text>Defines how often the manifest will be saved during a backup.  Saving the manifest is important because it stores the checksums and allows the resume function to work efficiently.  The actual threshold used is 1% of the backup size or <setting>manifest-save-threshold</setting>, whichever is greater.
 
                         Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024.</text>
 
@@ -558,21 +564,34 @@
 
             <!-- CONFIG - ARCHIVE -->
             <config-section id="archive" name="Archive">
-                <text>The <setting>archive</setting> section defines parameters when doing async archiving.  This means that the archive files will be stored locally, then a background process will pick them and move them to the backup.</text>
+                <text>The <setting>archive</setting> section defines options for the <cmd>archive-push</cmd> and <cmd>archive-get</cmd> commands.</text>
 
                 <config-key-list>
                     <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-ASYNC KEY -->
                     <config-key id="archive-async" name="Asynchronous Archiving">
-                        <summary>Archive WAL segments asynchronously.</summary>
+                        <summary>Push/get WAL segments asynchronously.</summary>
 
-                        <text>WAL segments will be copied to the local repo, then a process will be forked to compress the segment and transfer it to the remote repo if configured.  Control will be returned to <postgres/> as soon as the WAL segment is copied locally.</text>
+                        <text>Enables asynchronous operation for the <cmd>archive-push</cmd> and <cmd>archive-get</cmd> commands.
+
+                        Asynchronous operation is more efficient because it can reuse connections and take advantage of parallelism.  See the <br-option>spool-path</br-option>, <br-option>archive-get-queue-max</br-option>, and <br-option>archive-push-queue-max</br-option> options for more information.</text>
 
                         <example>y</example>
                     </config-key>
 
+                    <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-GET-QUEUE-MAX KEY -->
+                    <config-key id="archive-get-queue-max" name="Maximum Archive Get Queue Size">
+                        <summary>Maximum size of the <backrest/> archive-get queue.</summary>
+
+                        <text>Specifies the maximum size of the <cmd>archive-get</cmd> queue when <br-option>archive-async</br-option> is enabled.  The queue is stored in the <br-option>spool-path</br-option> and is used to speed providing WAL to <postgres/>.
+
+                        Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024.</text>
+
+                        <example>1073741824</example>
+                    </config-key>
+
                     <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-QUEUE-MAX KEY -->
                     <config-key id="archive-push-queue-max" name="Maximum Archive Push Queue Size">
-                        <summary>Limit size (in bytes) of the <postgres/> archive queue.</summary>
+                        <summary>Maximum size of the <postgres/> archive queue.</summary>
 
                         <text>After the limit is reached, the following will happen:
                         <ol>

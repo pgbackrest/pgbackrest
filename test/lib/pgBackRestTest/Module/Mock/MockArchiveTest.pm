@@ -159,11 +159,11 @@ sub run
         # Test that the WAL was pushed
         $self->archiveCheck($strSourceFile, $strArchiveChecksum, false);
 
+        # Remove WAL
+        storageTest()->remove("${strWalPath}/${strSourceFile}", {bIgnoreMissing => false});
+
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    get first WAL');
-
-        # Remove WAL so it can be recovered
-        storageTest()->remove("${strWalPath}/${strSourceFile}", {bIgnoreMissing => false});
 
         $oHostDbMaster->executeSimple(
             $strCommandGet . " ${strLogDebug} ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
@@ -325,6 +325,8 @@ sub run
 
         $oHostDbMaster->start({strStanza => $oHostDbMaster->stanza()});
 
+        storageTest->remove("${strWalPath}/RECOVERYXLOG", {bIgnoreMissing => false});
+
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    WAL duplicate ok');
 
@@ -339,14 +341,15 @@ sub run
             $strCommandPush . " ${strWalPath}/${strSourceFile}",
             {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $self->expect()});
 
-        #---------------------------------------------------------------------------------------------------------------------------
-        &log(INFO, '    get second WAL');
-
-        # Remove WAL so it can be recovered
+        # Remove WAL
         storageTest()->remove("${strWalPath}/${strSourceFile}", {bIgnoreMissing => false});
 
+        #---------------------------------------------------------------------------------------------------------------------------
+        &log(INFO, "    get second WAL (${strSourceFile})");
+
         $oHostDbMaster->executeSimple(
-            $strCommandGet . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
+            $strCommandGet . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
+                " --archive-async --archive-timeout=5 ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
             {oLogTest => $self->expect()});
 
         # Check that the destination file exists

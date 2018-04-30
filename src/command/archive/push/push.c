@@ -45,7 +45,7 @@ cmdArchivePush()
             {
                 // Check if the WAL segment has been pushed.  Errors will not be confessed on the first try to allow the async
                 // process a chance to fix them.
-                pushed = archiveAsyncStatus(walSegment, confessOnError);
+                pushed = archiveAsyncStatus(archiveModePush, walSegment, confessOnError);
 
                 // If the WAL segment has not already been pushed then start the async process to push it.  There's no point in
                 // forking the async process off more than once so track that as well.  Use an archive lock to prevent more than

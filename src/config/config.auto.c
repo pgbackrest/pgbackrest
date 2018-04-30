@@ -17,7 +17,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
-        CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_LOCK_TYPE(lockTypeArchive)
     )
 
     CONFIG_COMMAND
@@ -213,6 +213,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME("archive-copy")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveCopy)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("archive-get-queue-max")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveGetQueueMax)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

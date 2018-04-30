@@ -43,15 +43,15 @@ sub process
     my
     (
         $strOperation,
-        $strSourceArchive,
-        $strDestinationFile
+        $rstryCommandArg,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->process', \@_,
-            {name => 'strSourceArchive'},
-            {name => 'strDestinationFile'}
+            {name => 'rstryCommandArg'},
         );
+
+    my $iResult = 0;
 
     # Make sure the command happens on the db side
     if (!isDbLocal())
@@ -59,26 +59,44 @@ sub process
         confess &log(ERROR, cfgCommandName(CFGCMD_ARCHIVE_GET) . ' operation must run on db host', ERROR_HOST_INVALID);
     }
 
-    # Make sure the archive file is defined
-    if (!defined($strSourceArchive))
+    # Start the async process and wait for WAL to complete
+    if (cfgOption(CFGOPT_ARCHIVE_ASYNC))
     {
-        confess &log(ERROR, 'WAL segment not provided', ERROR_PARAM_REQUIRED);
+        # Load module dynamically
+        require pgBackRest::Archive::Get::Async;
+        (new pgBackRest::Archive::Get::Async(
+            storageSpool()->pathGet(STORAGE_SPOOL_ARCHIVE_IN), $self->{strBackRestBin}, $rstryCommandArg))->process();
     }
-
-    # Make sure the destination file is defined
-    if (!defined($strDestinationFile))
+    # Else push synchronously
+    else
     {
-        confess &log(ERROR, 'WAL segment destination not provided', ERROR_PARAM_REQUIRED);
-    }
+        # Make sure the archive file is defined
+        my $strSourceArchive = ${$rstryCommandArg}[0];
 
-    # Info for the Postgres log
-    &log(INFO, 'get WAL segment ' . $strSourceArchive);
+        if (!defined($strSourceArchive))
+        {
+            confess &log(ERROR, 'WAL segment not provided', ERROR_PARAM_REQUIRED);
+        }
+
+        # Make sure the destination file is defined
+        my $strDestinationFile = ${$rstryCommandArg}[1];
+
+        if (!defined($strDestinationFile))
+        {
+            confess &log(ERROR, 'WAL segment destination not provided', ERROR_PARAM_REQUIRED);
+        }
+
+        $iResult = archiveGetFile($strSourceArchive, $strDestinationFile, false);
+
+        # Info for the Postgres log
+        &log(INFO, 'got WAL segment ' . $strSourceArchive);
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'iResult', value => archiveGetFile($strSourceArchive, $strDestinationFile), trace => true},
+        {name => 'iResult', value => $iResult, trace => true},
     );
 }
 

@@ -263,7 +263,6 @@ cfgCommandParamSet(const StringList *param)
         paramList = strLstDup(param);
     }
     MEM_CONTEXT_END();
-
 }
 
 /***********************************************************************************************************************************

@@ -15,6 +15,7 @@ use Storable qw(dclone);
 use Digest::SHA qw(sha1_hex);
 
 use pgBackRest::Archive::Common;
+use pgBackRest::Archive::Get::Async;
 use pgBackRest::Archive::Get::File;
 use pgBackRest::Archive::Get::Get;
 use pgBackRest::Archive::Info;
@@ -24,6 +25,7 @@ use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -37,9 +39,11 @@ sub initModule
     my $self = shift;
 
     $self->{strDbPath} = $self->testPath() . '/db';
+    $self->{strLockPath} = $self->testPath() . '/lock';
     $self->{strRepoPath} = $self->testPath() . '/repo';
     $self->{strArchivePath} = "$self->{strRepoPath}/archive/" . $self->stanza();
     $self->{strBackupPath} = "$self->{strRepoPath}/backup/" . $self->stanza();
+    $self->{strSpoolPath} = "$self->{strArchivePath}/in";
 }
 
 ####################################################################################################################################
@@ -57,6 +61,8 @@ sub initTest
     $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
     $self->optionTestSet(CFGOPT_REPO_PATH, $self->testPath() . '/repo');
     $self->optionTestSet(CFGOPT_PG_PATH, $self->{strDbPath});
+    $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
+    $self->optionTestSet(CFGOPT_LOCK_PATH, $self->{strLockPath});
     $self->configTestLoad(CFGCMD_ARCHIVE_GET);
 
     # Create archive info path
@@ -64,6 +70,9 @@ sub initTest
 
     # Create backup info path
     storageTest()->pathCreate($self->{strBackupPath}, {bIgnoreExists => true, bCreateParent => true});
+
+    # Create spool path
+    storageTest()->pathCreate($self->{strSpoolPath}, {bIgnoreExists => true, bCreateParent => true});
 
     # Create pg_control path
     storageTest()->pathCreate($self->{strDbPath} . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
@@ -90,7 +99,7 @@ sub run
     my $strArchivePath;
 
     ################################################################################################################################
-    if ($self->begin("Archive::Base::getCheck()"))
+    if ($self->begin("Archive::Common::archiveGetCheck()"))
     {
         # Create and save archive.info file
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
@@ -184,11 +193,11 @@ sub run
     }
 
     ################################################################################################################################
-    if ($self->begin("Archive::Get::Get::get()"))
+    if ($self->begin("Archive::Get::Get::get() sync"))
     {
         # archive.info missing
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {archiveGetFile($strWalSegment, $strDestinationFile)},
+        $self->testException(sub {archiveGetFile($strWalSegment, $strDestinationFile, false)},
             ERROR_FILE_MISSING,
             ARCHIVE_INFO_FILE . " does not exist but is required to push/get WAL segments\n" .
             "HINT: is archive_command configured in postgresql.conf?\n" .
@@ -205,7 +214,7 @@ sub run
 
         # file not found
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(sub {archiveGetFile($strWalSegment, $strDestinationFile)}, 1,
+        $self->testResult(sub {archiveGetFile($strWalSegment, $strDestinationFile, false)}, 1,
             "unable to find ${strWalSegment} in the archive");
 
         # file found but is not a WAL segment
@@ -219,14 +228,14 @@ sub run
         # Create path to copy file
         storageRepo()->pathCreate($strDestinationPath);
 
-        $self->testResult(sub {archiveGetFile(BOGUS, $strDestinationFile)}, 0,
+        $self->testResult(sub {archiveGetFile(BOGUS, $strDestinationFile, false)}, 0,
             "non-WAL segment copied");
 
         # Confirm the correct file is copied
         $self->testResult(sub {sha1_hex(${storageRepo()->get($strDestinationFile)})}, $strBogusHash,
             '   check correct non-WAL copied from older archiveId');
 
-        # create same WAL segment in same DB but different archives and different has values. Confirm latest one copied.
+        # create same WAL segment in same DB but different archives and different hash values. Confirm latest one copied.
         #---------------------------------------------------------------------------------------------------------------------------
         my $strWalMajorPath = "${strArchivePath}/" . substr($strWalSegment, 0, 16);
         my $strWalSegmentName = "${strWalSegment}-${strFileHash}";
@@ -244,7 +253,7 @@ sub run
         storageRepo()->pathCreate($strWalMajorPath, {bCreateParent => true});
         storageRepo()->put("${strWalMajorPath}/${strWalSegmentName}", $strFileContent);
 
-        $self->testResult(sub {archiveGetFile($strWalSegmentName, $strDestinationFile)}, 0,
+        $self->testResult(sub {archiveGetFile($strWalSegmentName, $strDestinationFile, false)}, 0,
             "WAL segment copied");
 
         # Confirm the correct file is copied
@@ -271,12 +280,101 @@ sub run
         # Overwrite current pg_control file with older version
         $self->controlGenerate($self->{strDbPath}, PG_VERSION_93);
 
-        $self->testResult(sub {archiveGetFile($strWalSegmentName, $strDestinationFile)}, 0,
+        $self->testResult(sub {archiveGetFile($strWalSegmentName, $strDestinationFile, false)}, 0,
             "WAL segment copied from older db backupset to same version older db");
 
         # Confirm the correct file is copied
         $self->testResult(sub {sha1_hex(${storageRepo()->get($strDestinationFile)})}, $strWalHash,
             '    check correct WAL copied from older db');
+    }
+
+    ################################################################################################################################
+    if ($self->begin("Archive::Get::Get::get() async"))
+    {
+        # Test error in local process when stanza has not been created
+        #---------------------------------------------------------------------------------------------------------------------------
+        my @stryWal = ('000000010000000A0000000A', '000000010000000A0000000B');
+
+        my $oGetAsync = new pgBackRest::Archive::Get::Async(
+            $self->{strSpoolPath}, $self->backrestExe(), \@stryWal);
+
+        $self->optionTestSetBool(CFGOPT_ARCHIVE_ASYNC, true);
+        $self->optionTestSet(CFGOPT_SPOOL_PATH, $self->{strRepoPath});
+        $self->configTestLoad(CFGCMD_ARCHIVE_GET);
+
+        $oGetAsync->process();
+
+        my $strErrorMessage =
+            "55\n" .
+            "raised from local-1 process: archive.info does not exist but is required to push/get WAL segments\n" .
+            "HINT: is archive_command configured in postgresql.conf?\n" .
+            "HINT: has a stanza-create been performed?\n" .
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.";
+
+        $self->testResult(
+            sub {storageSpool()->list(STORAGE_SPOOL_ARCHIVE_IN)},
+            "(000000010000000A0000000A.error, 000000010000000A0000000B.error)", 'error files created');
+
+        $self->testResult(
+            ${storageSpool()->get(STORAGE_SPOOL_ARCHIVE_IN . "/000000010000000A0000000A.error")}, $strErrorMessage,
+            "check error file contents");
+        storageSpool()->remove(STORAGE_SPOOL_ARCHIVE_IN . "/000000010000000A0000000A.error");
+        $self->testResult(
+            ${storageSpool()->get(STORAGE_SPOOL_ARCHIVE_IN . "/000000010000000A0000000B.error")}, $strErrorMessage,
+            "check error file contents");
+        storageSpool()->remove(STORAGE_SPOOL_ARCHIVE_IN . "/000000010000000A0000000B.error");
+
+        # Create archive info file
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true});
+        $oArchiveInfo->create(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), true);
+
+        my $strArchiveId = $oArchiveInfo->archiveId();
+
+        # Transfer first file
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $strWalPath = "$self->{strRepoPath}/archive/db/${strArchiveId}/000000010000000A";
+        storageRepo()->pathCreate($strWalPath, {bCreateParent => true});
+
+        $self->walGenerate($strWalPath, PG_VERSION_94, 1, "000000010000000A0000000A", false, true, false);
+        $oGetAsync->processQueue();
+
+        $self->testResult(
+            sub {storageSpool()->list(STORAGE_SPOOL_ARCHIVE_IN)},
+            "(000000010000000A0000000A, 000000010000000A0000000B.ok)", 'WAL and OK file');
+
+        # Transfer second file
+        #---------------------------------------------------------------------------------------------------------------------------
+        @stryWal = ('000000010000000A0000000B');
+
+        storageSpool()->remove(STORAGE_SPOOL_ARCHIVE_IN . "/000000010000000A0000000B.ok");
+
+        $self->walGenerate($strWalPath, PG_VERSION_94, 1, "000000010000000A0000000B", false, true, false);
+        $oGetAsync->processQueue();
+
+        $self->testResult(
+            sub {storageSpool()->list(STORAGE_SPOOL_ARCHIVE_IN)},
+            "(000000010000000A0000000A, 000000010000000A0000000B)", 'WAL files');
+
+        # Error on main process
+        #---------------------------------------------------------------------------------------------------------------------------
+        @stryWal = ('000000010000000A0000000C');
+
+        storageTest()->put(storageTest()->openWrite($self->{strLockPath} . "/db.stop", {bPathCreate => true}), undef);
+
+        $oGetAsync->processQueue();
+
+        $self->testResult(
+            sub {storageSpool()->list(STORAGE_SPOOL_ARCHIVE_IN)},
+            "(000000010000000A0000000A, 000000010000000A0000000B, 000000010000000A0000000C.error)", 'WAL files and error file');
+
+        # Set protocol timeout low
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 30);
+        $self->optionTestSet(CFGOPT_DB_TIMEOUT, 29);
+        $self->configTestLoad(CFGCMD_ARCHIVE_GET);
+
+        $oGetAsync->process();
     }
 }
 

@@ -16,6 +16,6 @@ void
 harnessCfgLoad(unsigned int argListSize, const char *argList[])
 {
     configParse(argListSize, argList);
-    logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+    logInit(logLevelInfo, logLevelOff, logLevelDebug, false);
     cfgLoadUpdateOption();
 }

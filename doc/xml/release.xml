@@ -26,6 +26,10 @@
 
                 <release-feature-list>
                     <release-item>
+                        <p>Add asynchronous, parallel <cmd>archive-get</cmd>.  This feature maintains a queue of WAL segments to help reduce latency when <postgres/> requests a WAL segment with <pg-option>restore_command</pg-option>.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>

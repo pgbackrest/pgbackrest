@@ -28,11 +28,9 @@ use constant OP_ARCHIVE_GET_CHECK                                   => 'archiveC
 use constant OP_ARCHIVE_PUSH_CHECK                                  => 'archivePushCheck';
     push @EXPORT, qw(OP_ARCHIVE_PUSH_CHECK);
 
-# Archive Push Async Module
-use constant OP_ARCHIVE_PUSH_ASYNC                                  => 'archivePushAsync';
-    push @EXPORT, qw(OP_ARCHIVE_PUSH_ASYNC);
-
 # Archive File Module
+use constant OP_ARCHIVE_GET_FILE                                    => 'archiveGetFile';
+    push @EXPORT, qw(OP_ARCHIVE_GET_FILE);
 use constant OP_ARCHIVE_PUSH_FILE                                   => 'archivePushFile';
     push @EXPORT, qw(OP_ARCHIVE_PUSH_FILE);
 

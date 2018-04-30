@@ -1970,75 +1970,6 @@
                 </execute>
             </execute-list>
         </section>
-
-        <!-- SECTION => REPOSITORY HOST - ASYNCHRONOUS ARCHIVING -->
-        <section id="async-archiving" depend="config">
-            <title>Asynchronous Archiving</title>
-
-            <p>The <br-option>archive-async</br-option> option offloads WAL archiving to a separate process (or processes) to improve throughput.  It works by <quote>looking ahead</quote> to see which WAL segments are ready to be archived beyond the request that <postgres/> is currently making via the <code>archive_command</code>. WAL segments are transferred to the archive directly from the <path>pg_xlog</path>/<path>pg_wal</path> directory and success is only returned by the <code>archive_command</code> when the WAL segment has been safely stored in the archive.</p>
-
-            <p>The spool directory is created to hold the current status of WAL archiving.  Status files written into the spool directory are typically zero length and should consume a minimal amount of space (a few MB at most) and very little IO.  All the information in this directory can be recreated so it is not necessary to preserve the spool directory if the cluster is moved to new hardware.</p>
-
-            <p><b>NOTE:</b> In the original implementation of asynchronous archiving, WAL segments were copied to the spool directory before compression and transfer.  The new implementation copies WAL directly from the <path>pg_xlog</path> directory.  If asynchronous archiving was utilized in <proper>v1.12</proper> or prior, read the <proper>v1.13</proper> release notes carefully before upgrading.</p>
-
-            <execute-list host="{[host-pg1]}">
-                <title>Create the spool directory</title>
-
-                <execute user="root">
-                    <exe-cmd>mkdir -m 750 {[spool-path]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>chown postgres:postgres {[spool-path]}</exe-cmd>
-                </execute>
-            </execute-list>
-
-            <p>The spool path must be configured and asynchronous archiving enabled.  Asynchronous archiving automatically confers some benefit by reducing the number of ssh connections made to the backup server, but setting <br-option>process-max</br-option> can drastically improve performance.  Be sure not to set <br-option>process-max</br-option> so high that it affects normal database operations.</p>
-
-            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
-                <title>Configure the spool path and asynchronous archiving</title>
-
-                <backrest-config-option section="global" key="spool-path">{[spool-path]}</backrest-config-option>
-                <backrest-config-option section="global" key="archive-async">y</backrest-config-option>
-                <backrest-config-option section="global:archive-push" key="process-max">2</backrest-config-option>
-            </backrest-config>
-
-            <p>The <file>[stanza]-archive-push-async.log</file> file can be used to monitor the activity of the asynchronous process.  A good way to test this is to quickly push a number of WAL segments.</p>
-
-            <execute-list host="{[host-pg1]}">
-                <title>Test parallel asynchronous archiving</title>
-
-                <execute output="n" show="n">
-                    <exe-cmd>rm -f /var/log/pgbackrest/demo-archive-push-async.log</exe-cmd>
-                </execute>
-
-                <execute output="n">
-                    <exe-cmd>
-                        psql -c "
-                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
-                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
-                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
-                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
-                            select pg_create_restore_point('test async push'); select pg_switch_xlog();"
-                    </exe-cmd>
-                </execute>
-
-                <execute>
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
-                    <exe-highlight>WAL segment</exe-highlight>
-                </execute>
-            </execute-list>
-
-            <p>Now the log file will contain parallel, asynchronous activity.</p>
-
-            <execute-list host="{[host-pg1]}">
-                <title>Check results in the log</title>
-
-                <execute output="y">
-                    <exe-cmd>cat /var/log/pgbackrest/demo-archive-push-async.log</exe-cmd>
-                    <exe-highlight> WAL file\(s\) to archive|pushed WAL file 0000000</exe-highlight>
-                </execute>
-            </execute-list>
-        </section>
     </section>
 
     <!-- SECTION => PARALLEL BACKUP-RESTORE -->
@@ -2221,6 +2152,8 @@
                 <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
 
                 <backrest-config-option section="demo" key="recovery-option">standby_mode=on</backrest-config-option>
+
+                <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
@@ -2516,6 +2449,158 @@
                 </execute>
             </execute-list>
         </section>
+    </section>
+
+    <!-- SECTION => ASYNCHRONOUS ARCHIVING -->
+    <section id="async-archiving" depend="/replication">
+        <title>Asynchronous Archiving</title>
+
+        <p>Asynchronous archiving is enabled with the <br-option>archive-async</br-option> option.  This option enables asynchronous operation for both the <cmd>archive-push</cmd> and <cmd>archive-get</cmd> commands.</p>
+
+        <p>A spool path is required.  The commands will store transient data here but each command works quite a bit differently so spool path usage is described in detail in each section.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Create the spool directory</title>
+
+            <execute user="root">
+                <exe-cmd>mkdir -m 750 {[spool-path]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chown postgres:postgres {[spool-path]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-pg2]}">
+            <title>Create the spool directory</title>
+
+            <execute user="root">
+                <exe-cmd>mkdir -m 750 {[spool-path]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chown postgres:postgres {[spool-path]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>The spool path must be configured and asynchronous archiving enabled.  Asynchronous archiving automatically confers some benefit by reducing the number of connections made to remote storage, but setting <br-option>process-max</br-option> can drastically improve performance by parallelizing operations.  Be sure not to set <br-option>process-max</br-option> so high that it affects normal database operations.</p>
+
+        <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
+            <title>Configure the spool path and asynchronous archiving</title>
+
+            <backrest-config-option section="global" key="spool-path">{[spool-path]}</backrest-config-option>
+            <backrest-config-option section="global" key="archive-async">y</backrest-config-option>
+            <backrest-config-option section="global:archive-push" key="process-max">2</backrest-config-option>
+            <backrest-config-option section="global:archive-get" key="process-max">2</backrest-config-option>
+        </backrest-config>
+
+        <backrest-config host="{[host-pg2]}" file="{[backrest-config-demo]}">
+            <title>Configure the spool path and asynchronous archiving</title>
+
+            <backrest-config-option section="global" key="spool-path">{[spool-path]}</backrest-config-option>
+            <backrest-config-option section="global" key="archive-async">y</backrest-config-option>
+            <backrest-config-option section="global:archive-push" key="process-max">2</backrest-config-option>
+            <backrest-config-option section="global:archive-get" key="process-max">2</backrest-config-option>
+        </backrest-config>
+
+        <p>Note that <br-option>process-max</br-option> is configured using command sections so that the option is not used by backup and restore.  This also allows different values for <cmd>archive-push</cmd> and <cmd>archive-get</cmd>.</p>
+
+        <p>For demonstration purposes streaming replication will be broken to force <postgres/> to get WAL using the <pg-option>restore_command</pg-option>.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Break streaming replication by changing the replication password</title>
+
+            <execute output="y" filter="n">
+                <exe-cmd>
+                    psql -c "alter user replicator password 'bogus'"
+                </exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-pg2]}">
+            <title>Restart standby to break connection</title>
+
+            <execute user="root">
+                <exe-cmd>{[pg-cluster-restart]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <section id="async-archive-push">
+            <title>Archive Push</title>
+
+            <p>The asynchronous <cmd>archive-push</cmd> command offloads WAL archiving to a separate process (or processes) to improve throughput.  It works by <quote>looking ahead</quote> to see which WAL segments are ready to be archived beyond the request that <postgres/> is currently making via the <code>archive_command</code>. WAL segments are transferred to the archive directly from the <path>pg_xlog</path>/<path>pg_wal</path> directory and success is only returned by the <code>archive_command</code> when the WAL segment has been safely stored in the archive.</p>
+
+            <p>The spool path holds the current status of WAL archiving.  Status files written into the spool directory are typically zero length and should consume a minimal amount of space (a few MB at most) and very little IO.  All the information in this directory can be recreated so it is not necessary to preserve the spool directory if the cluster is moved to new hardware.</p>
+
+            <p><b>NOTE:</b> In the original implementation of asynchronous archiving, WAL segments were copied to the spool directory before compression and transfer.  The new implementation copies WAL directly from the <path>pg_xlog</path> directory.  If asynchronous archiving was utilized in <proper>v1.12</proper> or prior, read the <proper>v1.13</proper> release notes carefully before upgrading.</p>
+
+            <p>The <file>[stanza]-archive-push-async.log</file> file can be used to monitor the activity of the asynchronous process.  A good way to test this is to quickly push a number of WAL segments.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Test parallel asynchronous archiving</title>
+
+                <execute output="n" show="n">
+                    <exe-cmd>rm -f /var/log/pgbackrest/demo-archive-push-async.log</exe-cmd>
+                </execute>
+
+                <execute output="n">
+                    <exe-cmd>
+                        psql -c "
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();"
+                    </exe-cmd>
+                </execute>
+
+                <execute>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
+                    <exe-highlight>WAL segment</exe-highlight>
+                </execute>
+            </execute-list>
+
+            <p>Now the log file will contain parallel, asynchronous activity.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Check results in the log</title>
+
+                <execute output="y">
+                    <exe-cmd>cat /var/log/pgbackrest/demo-archive-push-async.log</exe-cmd>
+                    <exe-highlight> WAL file\(s\) to archive|pushed WAL file 0000000</exe-highlight>
+                </execute>
+            </execute-list>
+        </section>
+
+        <section id="async-archive-get">
+            <title>Archive Get</title>
+
+            <p>The asynchronous <cmd>archive-get</cmd> command maintains a local queue of WAL to improve throughput.  If a WAL segment is not found in the queue it is fetched from the repository along with enough consecutive WAL to fill the queue.  The maximum size of the queue is defined by <br-option>archive-get-queue-max</br-option>.  Whenever the queue is less than half full more WAL will be fetched to fill it.</p>
+
+            <p>Asynchronous operation is most useful in environments that generate a lot of WAL or have a high latency connection to the repository storage (i.e., <proper>S3</proper>).  In the case of a high latency connection it may be a good idea to increase <br-option>process-max</br-option>.</p>
+
+            <p>The <file>[stanza]-archive-get-async.log</file> file can be used to monitor the activity of the asynchronous process.</p>
+
+            <execute-list host="{[host-pg2]}">
+                <title>Check results in the log</title>
+
+                <execute show="n">
+                    <exe-cmd>sleep 5</exe-cmd>
+                </execute>
+                <execute output="y">
+                    <exe-cmd>cat /var/log/pgbackrest/demo-archive-get-async.log</exe-cmd>
+                    <exe-highlight>got WAL file [0-F]{24} from archive</exe-highlight>
+                </execute>
+            </execute-list>
+        </section>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Fix streaming replication by changing the replication password</title>
+
+            <execute output="y" filter="n">
+                <exe-cmd>
+                    psql -c "alter user replicator password 'jw8s0F4'"
+                </exe-cmd>
+            </execute>
+        </execute-list>
     </section>
 
     <!-- SECTION => STANDBY-BACKUP -->

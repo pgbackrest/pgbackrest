@@ -17,14 +17,16 @@ Archive Push Command
 Check for ok/error status files in the spool in/out directory
 ***********************************************************************************************************************************/
 bool
-archiveAsyncStatus(const String *walSegment, bool confessOnError)
+archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confessOnError)
 {
     bool result = false;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        String *spoolQueue = strNew(archiveMode == archiveModeGet ? STORAGE_SPOOL_ARCHIVE_IN : STORAGE_SPOOL_ARCHIVE_OUT);
+
         StringList *fileList = storageListP(
-            storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT), .expression = strNewFmt("^%s\\.(ok|error)$", strPtr(walSegment)));
+            storageSpool(), spoolQueue, .expression = strNewFmt("^%s\\.(ok|error)$", strPtr(walSegment)));
 
         if (fileList != NULL && strLstSize(fileList) > 0)
         {
@@ -33,14 +35,14 @@ archiveAsyncStatus(const String *walSegment, bool confessOnError)
             {
                 THROW(
                     AssertError, "multiple status files found in '%s' for WAL segment '%s'",
-                    strPtr(storagePathNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT))), strPtr(walSegment));
+                    strPtr(storagePath(storageSpool(), spoolQueue)), strPtr(walSegment));
             }
 
             // Get the status file content
             const String *statusFile = strLstGet(fileList, 0);
 
             String *content = strNewBuf(
-                storageGetNP(storageNewReadNP(storageSpool(), strNewFmt("%s/%s", STORAGE_SPOOL_ARCHIVE_OUT, strPtr(statusFile)))));
+                storageGetNP(storageNewReadNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(statusFile)))));
 
             // Get the code and message if the file has content
             int code = 0;

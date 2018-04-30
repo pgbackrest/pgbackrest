@@ -4,6 +4,7 @@ Main
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "command/archive/get/get.h"
 #include "command/archive/push/push.h"
 #include "command/help/help.h"
 #include "command/command.h"
@@ -42,6 +43,13 @@ main(int argListSize, const char *argList[])
         {
             printf(PGBACKREST_NAME " " PGBACKREST_VERSION "\n");
             fflush(stdout);
+        }
+
+        // Archive get command
+        // -------------------------------------------------------------------------------------------------------------------------
+        else if (cfgCommand() == cfgCmdArchiveGet)
+        {
+            result = cmdArchiveGet();
         }
 
         // Archive push command.  Currently only implements local operations of async archive push.

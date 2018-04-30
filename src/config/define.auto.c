@@ -228,16 +228,18 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Archive WAL segments asynchronously.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Push/get WAL segments asynchronously.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "WAL segments will be copied to the local repo, then a process will be forked to compress the segment and transfer it "
-                "to the remote repo if configured. Control will be returned to PostgreSQL as soon as the WAL segment is copied "
-                "locally."
+            "Enables asynchronous operation for the archive-push and archive-get commands.\n"
+            "\n"
+            "Asynchronous operation is more efficient because it can reuse connections and take advantage of parallelism. See the "
+                "spool-path, archive-get-queue-max, and archive-push-queue-max options for more information."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
         )
 
@@ -338,6 +340,40 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("archive-get-queue-max")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("archive")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Maximum size of the pgBackRest archive-get queue.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Specifies the maximum size of the archive-get queue when archive-async is enabled. The queue is stored in the "
+                "spool-path and is used to speed providing WAL to PostgreSQL.\n"
+            "\n"
+            "Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 4503599627370496)
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("134217728")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("archive-push-queue-max")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
@@ -348,7 +384,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Limit size (in bytes) of the PostgreSQL archive queue.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Maximum size of the PostgreSQL archive queue.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "After the limit is reached, the following will happen:\n"
@@ -403,6 +439,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
@@ -1483,9 +1520,9 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Manifest save threshold during backup.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Defines how often the manifest will be saved during a backup (in bytes). Saving the manifest is important because it "
-                "stores the checksums and allows the resume function to work efficiently. The actual threshold used is 1% of the "
-                "backup size or manifest-save-threshold, whichever is greater.\n"
+            "Defines how often the manifest will be saved during a backup. Saving the manifest is important because it stores the "
+                "checksums and allows the resume function to work efficiently. The actual threshold used is 1% of the backup size "
+                "or manifest-save-threshold, whichever is greater.\n"
             "\n"
             "Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024."
         )
@@ -2223,6 +2260,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
@@ -3576,16 +3614,27 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Path where transient data is stored.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "This path is used to store acknowledgements from the asynchronous archive-push process. These files are generally "
-                "very small (zero to a few hundred bytes) so not much space is required.\n"
+            "This path is used to store data for the asynchronous archive-push and archive-get command.\n"
+            "\n"
+            "The asynchronous archive-push command writes acknowledgements into the spool path when it has successfully stored WAL "
+                "in the archive (and errors on failure) so the foreground process can quickly notify PostgreSQL. Acknowledgement "
+                "files are very small (zero on success and a few hundred bytes on error).\n"
+            "\n"
+            "The asynchronous archive-push process queues WAL in the spool path so it can be provided very quickly when PostgreSQL "
+                "requests it. Moving files to PostgreSQL is most efficient when the spool path is on the same filesystem as "
+                "pg_xlog/pg_wal.\n"
             "\n"
             "The data stored in the spool path is not strictly temporary since it can and should survive a reboot. However, loss "
                 "of the data in the spool path is not a problem. pgBackRest will simply recheck each WAL segment to ensure it is "
-                "safely archived."
+                "safely archived for archive-push and rebuild the queue for archive-get.\n"
+            "\n"
+            "The spool path is intended to be located on a local Posix-compatible filesystem, not a remote filesystem such as NFS "
+                "or CIFS."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
         )
 

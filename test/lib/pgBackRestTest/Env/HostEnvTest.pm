@@ -457,13 +457,21 @@ sub walGenerate
     my $iSourceNo = shift;
     my $strWalSegment = shift;
     my $bPartial = shift;
+    my $bChecksum = shift;
+    my $bReady = shift;
 
-    my $strWalFile = "${strWalPath}/${strWalSegment}" . (defined($bPartial) && $bPartial ? '.partial' : '');
     my $rtWalContent = $self->walGenerateContent($strPgVersion, {iSourceNo => $iSourceNo});
+    my $strWalFile =
+        "${strWalPath}/${strWalSegment}" . ($bChecksum ? '-' . sha1_hex($rtWalContent) : '') .
+            (defined($bPartial) && $bPartial ? '.partial' : '');
 
     # Put the WAL segment and the ready file
     storageTest()->put($strWalFile, $rtWalContent);
-    storageTest()->put("${strWalPath}/archive_status/${strWalSegment}.ready");
+
+    if (!defined($bReady) || $bReady)
+    {
+        storageTest()->put("${strWalPath}/archive_status/${strWalSegment}.ready");
+    }
 
     return $strWalFile;
 }

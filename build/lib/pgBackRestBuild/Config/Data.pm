@@ -281,6 +281,8 @@ use constant CFGOPT_REPO_S3_VERIFY_SSL                              => CFGDEF_RE
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_ARCHIVE_ASYNC                                   => 'archive-async';
     push @EXPORT, qw(CFGOPT_ARCHIVE_ASYNC);
+use constant CFGOPT_ARCHIVE_GET_QUEUE_MAX                           => 'archive-get-queue-max';
+    push @EXPORT, qw(CFGOPT_ARCHIVE_GET_QUEUE_MAX);
 use constant CFGOPT_ARCHIVE_PUSH_QUEUE_MAX                          => 'archive-push-queue-max';
     push @EXPORT, qw(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX);
 
@@ -558,6 +560,7 @@ my $rhCommandDefine =
     &CFGCMD_ARCHIVE_GET =>
     {
         &CFGDEF_LOG_FILE => false,
+        &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
     },
 
     &CFGCMD_ARCHIVE_PUSH =>
@@ -1048,6 +1051,7 @@ my %hConfigDefine =
         &CFGDEF_ALLOW_RANGE => [WAIT_TIME_MINIMUM, 86400],
         &CFGDEF_COMMAND =>
         {
+            &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
@@ -1756,6 +1760,7 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => '/var/spool/' . BACKREST_EXE,
         &CFGDEF_COMMAND =>
         {
+            &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
         },
         &CFGDEF_DEPEND =>
@@ -1773,6 +1778,7 @@ my %hConfigDefine =
         &CFGDEF_ALLOW_RANGE => [1, 96],
         &CFGDEF_COMMAND =>
         {
+            &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_RESTORE => {},
@@ -1864,6 +1870,7 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
         {
+            &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
         }
     },
@@ -1881,6 +1888,18 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
+        },
+    },
+
+    &CFGOPT_ARCHIVE_GET_QUEUE_MAX =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_DEFAULT => 128 * 1024 * 1024, # 128MB
+        &CFGDEF_ALLOW_RANGE => [0, 4 * 1024 * 1024 * 1024 * 1024 * 1024], # 0-4PB
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
         },
     },
 

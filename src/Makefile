@@ -55,6 +55,7 @@ DESTDIR =
 ####################################################################################################################################
 SRCS = \
 	command/archive/common.c \
+	command/archive/get/get.c \
 	command/archive/push/push.c \
 	command/help/help.c \
 	command/command.c \
@@ -82,6 +83,7 @@ SRCS = \
 	config/parse.c \
 	perl/config.c \
 	perl/exec.c \
+	postgres/info.c \
 	storage/driver/posix/driver.c \
 	storage/driver/posix/driverFile.c \
 	storage/driver/posix/driverRead.c \

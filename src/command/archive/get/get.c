@@ -1,0 +1,274 @@
+/***********************************************************************************************************************************
+Archive Get Command
+***********************************************************************************************************************************/
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "command/archive/common.h"
+#include "command/command.h"
+#include "common/fork.h"
+#include "common/log.h"
+#include "common/memContext.h"
+#include "common/regExp.h"
+#include "common/wait.h"
+#include "config/config.h"
+#include "config/load.h"
+#include "perl/exec.h"
+#include "postgres/info.h"
+#include "storage/helper.h"
+
+/***********************************************************************************************************************************
+Clean the queue and prepare a list of WAL segments that the async process should get
+***********************************************************************************************************************************/
+static StringList *
+queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegmentSize, uint pgVersion)
+{
+    StringList *result = strLstNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Determine the first WAL segment for the async process to get.  If the WAL segment requested by
+        // PostgreSQL was not found then use that.  If the segment was found but the queue is not full then
+        // start with the next segment.
+        const String *walSegmentFirst =
+            found ? walSegmentNext(walSegment, walSegmentSize, pgVersion) : walSegment;
+
+        // Determine how many WAL segments should be in the queue.  The queue total must be at least 2 or it doesn't make sense to
+        // have async turned on at all.
+        uint walSegmentQueueTotal = (uint)(queueSize / walSegmentSize);
+
+        if (walSegmentQueueTotal < 2)
+            walSegmentQueueTotal = 2;
+
+        // Build the ideal queue -- the WAL segments we want in the queue after the async process has run
+        StringList *idealQueue = walSegmentRange(walSegmentFirst, walSegmentSize, pgVersion, walSegmentQueueTotal);
+
+        // Get the list of files actually in the queue
+        StringList *actualQueue = strLstSort(
+            storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN), .errorOnMissing = true), sortOrderAsc);
+
+        // Only preserve files that match the ideal queue. '.error'/'.ok' files are deleted so the async process can try again.
+        RegExp *regExpPreserve = regExpNew(strNewFmt("^(%s)$", strPtr(strLstJoin(idealQueue, "|"))));
+
+        // Build a list of WAL segments that are being kept so we can later make a list of what is needed
+        StringList *keepQueue = strLstNew();
+
+        for (uint actualQueueIdx = 0; actualQueueIdx < strLstSize(actualQueue); actualQueueIdx++)
+        {
+            // Get file from actual queue
+            const String *file = strLstGet(actualQueue, actualQueueIdx);
+
+            // Does this match a file we want to preserve?
+            if (regExpMatch(regExpPreserve, file))
+                strLstAdd(keepQueue, file);
+
+            // Else delete it
+            else
+                storageRemoveNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(file)));
+        }
+
+        // Generate a list of the WAL that are needed by removing kept WAL from the ideal queue
+        for (uint idealQueueIdx = 0; idealQueueIdx < strLstSize(idealQueue); idealQueueIdx++)
+        {
+            if (!strLstExists(keepQueue, strLstGet(idealQueue, idealQueueIdx)))
+                strLstAdd(result, strLstGet(idealQueue, idealQueueIdx));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
+}
+
+/***********************************************************************************************************************************
+Push a WAL segment to the repository
+***********************************************************************************************************************************/
+int
+cmdArchiveGet()
+{
+    int result = 1;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Check the parameters
+        const StringList *commandParam = cfgCommandParam();
+
+        if (strLstSize(commandParam) != 2)
+        {
+            if (strLstSize(commandParam) == 0)
+                THROW(ParamRequiredError, "WAL segment to get required");
+
+            if (strLstSize(commandParam) == 1)
+                THROW(ParamRequiredError, "Path to copy WAL segment required");
+
+            THROW(ParamRequiredError, "extra parameters found");
+        }
+
+        // Get the segment name
+        String *walSegment = strBase(strLstGet(commandParam, 0));
+
+        // Destination is wherever we were told to move the WAL segment.  In some cases the path that PostgreSQL passes will not be
+        // absolute so prefix pg-path.
+        const String *walDestination = strLstGet(commandParam, 1);
+
+        if (!strBeginsWithZ(walDestination, "/"))
+            walDestination = strNewFmt("%s/%s", strPtr(cfgOptionStr(cfgOptPgPath)), strPtr(walDestination));
+
+        // Async get can only be performed on WAL segments, history or other files must use synchronous mode
+        if (cfgOptionBool(cfgOptArchiveAsync) && regExpMatchOne(strNew(WAL_SEGMENT_REGEXP), walSegment))
+        {
+            bool found = false;                                         // Has the WAL segment been found yet?
+            bool queueFull = false;                                     // Is the queue half or more full?
+            bool forked = false;                                        // Has the async process been forked yet?
+            bool confessOnError = false;                                // Should we confess errors?
+
+            // Loop and wait for the WAL segment to be pushed
+            Wait *wait = waitNew(cfgOptionDbl(cfgOptArchiveTimeout));
+
+            do
+            {
+                // Check for errors or missing files.  For archive-get '.ok' indicates that the process succeeded but there is no
+                // WAL file to download.
+                if (archiveAsyncStatus(archiveModeGet, walSegment, confessOnError))
+                {
+                    storageRemoveP(
+                        storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment)), .errorOnMissing = true);
+
+                    LOG_INFO("unable to find WAL segment %s", strPtr(walSegment));
+                    break;
+                }
+
+                // Check if the WAL segment is already in the queue
+                found = storageExistsNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment)));
+
+                // If found then move the WAL segment to the destination directory
+                if (found)
+                {
+                    // Source is the WAL segment in the spool queue
+                    StorageFileRead *source = storageNewReadNP(
+                        storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment)));
+
+                    // A move will be attempted but if the spool queue and the WAL path are on different file systems then a copy
+                    // will be performed instead.
+                    //
+                    // It looks scary that we are disabling syncs and atomicity (in case we need to copy intead of move) but this
+                    // is safe because if the system crashes Postgres will not try to reuse a restored WAL segment but will instead
+                    // request it again using the restore_command. In the case of a move this hardly matters since path syncs are
+                    // cheap but if a copy is required we could save a lot of writes.
+                    StorageFileWrite *destination = storageNewWriteP(
+                        storageLocalWrite(), walDestination, .noCreatePath = true, .noSyncFile = true, .noSyncPath = true,
+                        .noAtomic = true);
+
+                    // Move (or copy if required) the file
+                    storageMoveNP(source, destination);
+
+                    // Log success
+                    LOG_INFO("got WAL segment %s asynchronously", strPtr(walSegment));
+                    result = 0;
+
+                    // Get a list of WAL segments left in the queue
+                    StringList *queue = storageListP(
+                        storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN), .expression = strNew(WAL_SEGMENT_REGEXP));
+
+                    if (strLstSize(queue) > 0)
+                    {
+                        // Get size of the WAL segment
+                        size_t walSegmentSize = storageInfoNP(storageLocal(), walDestination).size;
+
+                        // Use WAL segment size to estimate queue size and determine if the async process should be launched
+                        queueFull =
+                            strLstSize(queue) * walSegmentSize > (size_t)cfgOptionInt64(cfgOptArchiveGetQueueMax) / 2;
+                    }
+                }
+
+                // If the WAL segment has not already been found then start the async process to get it.  There's no point in
+                // forking the async process off more than once so track that as well.  Use an archive lock to prevent more than
+                // one async process being launched.
+                if (!forked && (!found || !queueFull)  &&
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
+                {
+                    // Fork off the async process
+                    if (fork() == 0)
+                    {
+                        // Async process returns 0 unless there is an error
+                        result = 0;
+
+                        // Execute async process and catch exceptions
+                        TRY_BEGIN()
+                        {
+                            // Get the version of PostgreSQL
+                            uint pgVersion = pgControlInfo(cfgOptionStr(cfgOptPgPath)).version;
+
+                            // Determine WAL segment size -- for now this is the default but for PG11 it will be configurable
+                            uint walSegmentSize = WAL_SEGMENT_DEFAULT_SIZE;
+
+                            // Create the queue
+                            storagePathCreateNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
+
+                            // Clean the current queue using the list of WAL that we ideally want in the queue.  queueNeed()
+                            // will return the list of WAL needed to fill the queue and this will be passed to the async process.
+                            cfgCommandParamSet(
+                                queueNeed(
+                                    walSegment, found, (size_t)cfgOptionInt64(cfgOptArchiveGetQueueMax), walSegmentSize,
+                                    pgVersion));
+
+                            // The async process should not output on the console at all
+                            cfgOptionSet(cfgOptLogLevelConsole, cfgSourceParam, varNewStrZ("off"));
+                            cfgOptionSet(cfgOptLogLevelStderr, cfgSourceParam, varNewStrZ("off"));
+                            cfgLoadLogSetting();
+
+                            // Open the log file
+                            logFileSet(
+                                strPtr(strNewFmt("%s/%s-%s-async.log", strPtr(cfgOptionStr(cfgOptLogPath)),
+                                strPtr(cfgOptionStr(cfgOptStanza)), cfgCommandName(cfgCommand()))));
+
+                            // Log command info since we are starting a new log
+                            cmdBegin(true);
+
+                            // Detach from parent process
+                            forkDetach();
+
+                            perlExec();
+                        }
+                        CATCH_ANY()
+                        {
+                            RETHROW();
+                        }
+                        FINALLY()
+                        {
+                            // Release the lock (mostly here for testing since it would be freed in exitSafe() anyway)
+                            lockRelease(true);
+                        }
+                        TRY_END();
+
+                        break;
+                    }
+                    // Else mark async process as forked
+                    else
+                    {
+                        lockClear(true);
+                        forked = true;
+                    }
+                }
+
+                // Exit loop if WAL was found
+                if (found)
+                    break;
+
+                // Now that the async process has been launched, confess any errors that are found
+                confessOnError = true;
+            }
+            while (waitMore(wait));
+        }
+        else
+        {
+            // Disable async if it was enabled
+            cfgOptionSet(cfgOptArchiveAsync, cfgOptionSource(cfgOptArchiveAsync), varNewBool(false));
+
+            // Call synchronous get
+            result = perlExec();
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
+}

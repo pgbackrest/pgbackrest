@@ -61,7 +61,14 @@ testRun()
             "check spool out path");
         TEST_RESULT_STR(
             strPtr(storagePathNP(storage, strNewFmt("%s/%s", STORAGE_SPOOL_ARCHIVE_OUT, "file.ext"))),
-            strPtr(strNewFmt("%s/archive/db/out/file.ext", testPath())), "check spool out path");
+            strPtr(strNewFmt("%s/archive/db/out/file.ext", testPath())), "check spool out file");
+
+        TEST_RESULT_STR(
+            strPtr(storagePathNP(storage, strNew(STORAGE_SPOOL_ARCHIVE_IN))), strPtr(strNewFmt("%s/archive/db/in", testPath())),
+            "check spool in path");
+        TEST_RESULT_STR(
+            strPtr(storagePathNP(storage, strNewFmt("%s/%s", STORAGE_SPOOL_ARCHIVE_IN, "file.ext"))),
+            strPtr(strNewFmt("%s/archive/db/in/file.ext", testPath())), "check spool in file");
 
         TEST_ERROR(storagePathNP(storage, strNew("<" BOGUS_STR ">")), AssertError, "invalid expression '<BOGUS>'");
 

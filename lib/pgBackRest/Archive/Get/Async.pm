@@ -1,8 +1,8 @@
 ####################################################################################################################################
-# ARCHIVE PUSH ASYNC MODULE
+# ARCHIVE GET ASYNC MODULE
 ####################################################################################################################################
-package pgBackRest::Archive::Push::Async;
-use parent 'pgBackRest::Archive::Push::Push';
+package pgBackRest::Archive::Get::Async;
+use parent 'pgBackRest::Archive::Get::Get';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -14,7 +14,6 @@ use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Archive::Common;
 use pgBackRest::Archive::Info;
-use pgBackRest::Archive::Push::Push;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
@@ -40,16 +39,16 @@ sub new
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
-        $self->{strWalPath},
         $self->{strSpoolPath},
         $self->{strBackRestBin},
+        $self->{rstryWal},
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'strWalPath'},
             {name => 'strSpoolPath'},
             {name => 'strBackRestBin', default => backrestBin()},
+            {name => 'rstryWal'},
         );
 
     # Return from function and log return values if any
@@ -61,8 +60,6 @@ sub new
 }
 
 ####################################################################################################################################
-# initServer
-#
 # Create the spool directory and initialize the archive process.
 ####################################################################################################################################
 sub initServer
@@ -71,9 +68,6 @@ sub initServer
 
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->initServer');
-
-    # Create the spool path
-    storageSpool()->pathCreate($self->{strSpoolPath}, {bIgnoreExists => true, bCreateParent => true});
 
     # Initialize the archive process
     $self->{oArchiveProcess} = new pgBackRest::Protocol::Local::Process(
@@ -86,8 +80,6 @@ sub initServer
 }
 
 ####################################################################################################################################
-# process
-#
 # Setup the server and process the queue.  This function is separate from processQueue() for testing purposes.
 ####################################################################################################################################
 sub process
@@ -98,7 +90,7 @@ sub process
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
     # Open the log file
-    logFileSet(storageLocal(), cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-archive-push-async');
+    logFileSet(storageLocal(), cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-archive-get-async');
 
     # There is no loop here because it seems wise to let the async process exit periodically.  As the queue grows each async
     # execution will naturally run longer.  This behavior is also far easier to test.
@@ -110,9 +102,7 @@ sub process
 }
 
 ####################################################################################################################################
-# processQueue
-#
-# Push WAL to the archive.
+# Get WAL from archive
 ####################################################################################################################################
 sub processQueue
 {
@@ -121,117 +111,87 @@ sub processQueue
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->processQueue');
 
-    # Get jobs to process
-    my $stryWalFile = $self->readyList();
-
     # Queue the jobs
-    foreach my $strWalFile (@{$stryWalFile})
+    foreach my $strWalFile (@{$self->{rstryWal}})
     {
         $self->{oArchiveProcess}->queueJob(
-            1, 'default', $strWalFile, OP_ARCHIVE_PUSH_FILE,
-            [$self->{strWalPath}, $strWalFile, cfgOption(CFGOPT_COMPRESS), cfgOption(CFGOPT_COMPRESS_LEVEL)]);
+            1, 'default', $strWalFile, OP_ARCHIVE_GET_FILE, [$strWalFile, "$self->{strSpoolPath}/${strWalFile}", true]);
     }
 
-    # Process jobs if there are any
-    my $iOkTotal = 0;
+    # Process jobs
+    my $iFoundTotal = 0;
+    my $iMissingTotal = 0;
     my $iErrorTotal = 0;
-    my $iDropTotal = 0;
 
-    if ($self->{oArchiveProcess}->jobTotal() > 0)
+    &log(INFO,
+        'get ' . @{$self->{rstryWal}} . ' WAL file(s) from archive: ' .
+            ${$self->{rstryWal}}[0] . (@{$self->{rstryWal}} > 1 ? "...${$self->{rstryWal}}[-1]" : ''));
+
+    eval
     {
-        &log(INFO,
-            'push ' . @{$stryWalFile} . ' WAL file(s) to archive: ' .
-                ${$stryWalFile}[0] . (@{$stryWalFile} > 1 ? "...${$stryWalFile}[-1]" : ''));
+        # Check for a stop lock
+        lockStopTest();
 
-        eval
+        while (my $hyJob = $self->{oArchiveProcess}->process())
         {
-            # Check for a stop lock
-            lockStopTest();
-
-            # Hold a lock when the repo is remote to be sure no other process is pushing WAL
-            !isRepoLocal() && protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP);
-
-            while (my $hyJob = $self->{oArchiveProcess}->process())
+            foreach my $hJob (@{$hyJob})
             {
-                # Send keep alives to protocol
-                protocolKeepAlive();
+                my $strWalFile = @{$hJob->{rParam}}[0];
+                my $iResult = @{$hJob->{rResult}}[0];
 
-                foreach my $hJob (@{$hyJob})
+                # If error then write out an error file
+                if (defined($hJob->{oException}))
                 {
-                    my $strWalFile = @{$hJob->{rParam}}[1];
-                    my $strWarning = @{$hJob->{rResult}}[0];
+                    archiveAsyncStatusWrite(
+                        WAL_STATUS_ERROR, $self->{strSpoolPath}, $strWalFile, $hJob->{oException}->code(),
+                        $hJob->{oException}->message());
 
-                    # If error then write out an error file
-                    if (defined($hJob->{oException}))
-                    {
-                        archiveAsyncStatusWrite(
-                            WAL_STATUS_ERROR, $self->{strSpoolPath}, $strWalFile, $hJob->{oException}->code(),
-                            $hJob->{oException}->message());
+                    $iErrorTotal++;
 
-                        $iErrorTotal++;
-
-                        &log(WARN,
-                            "could not push WAL file ${strWalFile} to archive (will be retried): [" .
-                                $hJob->{oException}->code() . "] " . $hJob->{oException}->message());
-                    }
-                    # Else write success
-                    else
-                    {
-                        archiveAsyncStatusWrite(
-                            WAL_STATUS_OK, $self->{strSpoolPath}, $strWalFile, defined($strWarning) ? 0 : undef,
-                            defined($strWarning) ? $strWarning : undef);
-
-                        $iOkTotal++;
-
-                        &log(DETAIL, "pushed WAL file ${strWalFile} to archive", undef, undef, undef, $hJob->{iProcessId});
-                    }
+                    &log(WARN,
+                        "could not get WAL file ${strWalFile} from archive (will be retried): [" .
+                            $hJob->{oException}->code() . "] " . $hJob->{oException}->message());
                 }
-
-                # Drop any jobs that exceed the queue max
-                if (cfgOptionTest(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX))
+                # Else write a '.ok' file to indicate that the WAL was not found but there was no error
+                elsif ($iResult == 1)
                 {
-                    my $stryDropList = $self->dropList($self->readyList());
+                    archiveAsyncStatusWrite(WAL_STATUS_OK, $self->{strSpoolPath}, $strWalFile);
 
-                    if (@{$stryDropList} > 0)
-                    {
-                        foreach my $strDropFile (@{$stryDropList})
-                        {
-                            archiveAsyncStatusWrite(
-                                WAL_STATUS_OK, $self->{strSpoolPath}, $strDropFile, 0,
-                                "dropped WAL file ${strDropFile} because archive queue exceeded " .
-                                    cfgOption(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX) . ' bytes');
+                    $iMissingTotal++;
 
-                            $iDropTotal++;
-                        }
+                    &log(DETAIL, "WAL file ${strWalFile} not found in archive", undef, undef, undef, $hJob->{iProcessId});
+                }
+                # Else success so just output a log message
+                else
+                {
+                    $iFoundTotal++;
 
-                        $self->{oArchiveProcess}->dequeueJobs(1, 'default');
-                    }
+                    &log(DETAIL, "got WAL file ${strWalFile} from archive", undef, undef, undef, $hJob->{iProcessId});
                 }
             }
-
-            return 1;
         }
-        or do
-        {
-            # Get error info
-            my $iCode = exceptionCode($EVAL_ERROR);
-            my $strMessage = exceptionMessage($EVAL_ERROR);
 
-            # Error all queued jobs
-            foreach my $strWalFile (@{$stryWalFile})
-            {
-                archiveAsyncStatusWrite(
-                    WAL_STATUS_ERROR, $self->{strSpoolPath}, $strWalFile, $iCode, $strMessage);
-            }
-        }
+        return 1;
     }
+    or do
+    {
+        # Get error info
+        my $iCode = exceptionCode($EVAL_ERROR);
+        my $strMessage = exceptionMessage($EVAL_ERROR);
+
+        # Error all queued jobs
+        foreach my $strWalFile (@{$self->{rstryWal}})
+        {
+            archiveAsyncStatusWrite(WAL_STATUS_ERROR, $self->{strSpoolPath}, $strWalFile, $iCode, $strMessage);
+        }
+    };
 
     return logDebugReturn
     (
         $strOperation,
-        {name => 'iNewTotal', value => scalar(@{$stryWalFile})},
-        {name => 'iDropTotal', value => $iDropTotal},
-        {name => 'iOkTotal', value => $iOkTotal},
+        {name => 'iNewTotal', value => scalar(@{$self->{rstryWal}})},
+        {name => 'iFoundTotal', value => $iFoundTotal},
+        {name => 'iMissingTotal', value => $iMissingTotal},
         {name => 'iErrorTotal', value => $iErrorTotal}
     );
 }
