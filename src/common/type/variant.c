@@ -351,7 +351,7 @@ varDblForce(const Variant *this)
         {
             uint64_t resultTest = varUInt64(this);
 
-            if (resultTest <= LLONG_MAX)
+            if (resultTest <= 9223372036854775807)
                 result = (double)resultTest;
             else
             {
@@ -530,7 +530,7 @@ varInt64Force(const Variant *this)
             uint64_t resultTest = varUInt64(this);
 
             // If max number of unsigned 64-bit integer is greater than max 64-bit signed integer can hold, then error
-            if (resultTest <= LLONG_MAX)
+            if (resultTest <= 9223372036854775807)
                 result = (int64_t)resultTest;
             else
             {

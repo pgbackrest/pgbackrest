@@ -14,6 +14,8 @@ Functions
 ***********************************************************************************************************************************/
 InfoArchive *infoArchiveNew(String *fileName, const bool loadFile, const bool ignoreMissing);
 
+String *infoArchiveArchiveIdCurrent(const InfoArchive *this);
+
 void infoArchiveFree(InfoArchive *this);
 
 #endif

@@ -44,7 +44,7 @@ struct InfoPg
 Return the PostgreSQL version constant given a string
 ***********************************************************************************************************************************/
 unsigned int
-infoPgVersionToUInt(const String *version)
+infoPgVersionToUIntInternal(const String *version)
 {
     unsigned int result = 0;
 
@@ -79,10 +79,6 @@ Create a new InfoPg object
 InfoPg *
 infoPgNew(String *fileName, const bool loadFile, const bool ignoreMissing, InfoPgType type)
 {
-// CSHANG the archive.info is missing catalog and control number in DB and History and manifest section name has prefix "backup:"
-// and no history section so type here is for determining if we need to add stuff or not. But, could we to modify the files to fix
-// up the discrepancies and still be backwards compatible? Or maybe not worry about type here and instead pass type on Save and
-// store only things relevant to the type?
     InfoPg *this = NULL;
 
     MEM_CONTEXT_NEW_BEGIN("infoPg")
@@ -109,8 +105,10 @@ infoPgNew(String *fileName, const bool loadFile, const bool ignoreMissing, InfoP
                 infoPgData.systemId = varUInt64Force(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_SYSTEM_ID)));
                 infoPgData.id = (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_ID)));
 
-                infoPgData.version =
-                    infoPgVersionToUInt(varStrForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_VERSION))));
+                String *pgVersion = varStrForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_VERSION)));
+
+                // CSHANG Temporary hack for removing the leading and trailing quotes from pgVersion until can get json parser
+                infoPgData.version = infoPgVersionToUIntInternal(strSubN(pgVersion, 1, strSize(pgVersion) - 2));
 
                 if ((type == infoPgBackup) || (type == infoPgManifest))
                 {
@@ -134,7 +132,6 @@ infoPgNew(String *fileName, const bool loadFile, const bool ignoreMissing, InfoP
         //     // the correct label db-system-id.
         //     // Get db->info
         //     // Fill db section
-        //     // CSHANG create a string - but do we need to free it or create temp mem context?
         //     String *dbSection = (type == infoPgManifest) ? strNew(INFO_SECTION_DB_MANIFEST) : strNew(INFO_SECTION_DB);
         //
         //     iniSet(infoPgIni, dbSection, strNew(INFO_KEY_DB_ID), 1);
@@ -165,17 +162,12 @@ infoPgDataCurrent(InfoPg *this)
 /***********************************************************************************************************************************
 Return a string representation of the PostgreSQL version
 ***********************************************************************************************************************************/
-// String *
-// infoPgVersionToString(String *version)
-// {
-//     return (unsigned int)((atoi(strPtr(strSub(version, strChr(version, '.') + 1))) * 100)
-//         + (atoi(strPtr(strTrunc(version, strChr(version, '.')))) * 10000));
-//     // int idxDot = strChr(version, '.');
-//     // int minor = atoi(strPtr(strSub(version, idxDot + 1)));
-//     // int major = atoi(strPtr(strTrunc(version, idxDot)));
-//     //
-//     // return (unsigned int)((major * 10000) + (minor * 100));
-// }
+String *
+infoPgVersionToString(unsigned int version)
+{
+// CSHANG Should this be enhanced to check to make sure it is one of the defined constants?
+    return strNewFmt("%d.%d", ((unsigned int)(version/10000)), ((version%10000)/100));
+}
 
 /***********************************************************************************************************************************
 Free the info

@@ -22,7 +22,7 @@ struct InfoArchive
 {
     MemContext *memContext;                                         // Context that contains the InfoArchive
     InfoPg *infoPg;                                                 // Contents of the DB data
-    String *archiveIdCurrent;                                       // Current archive id
+    String *archiveIdCurrent;                                       // Archive id for the current PG version
 };
 
 /***********************************************************************************************************************************
@@ -40,8 +40,10 @@ infoArchiveNew(String *fileName, const bool loadFile, const bool ignoreMissing)
         this->memContext = MEM_CONTEXT_NEW();
 
         this->infoPg = infoPgNew(fileName, loadFile, ignoreMissing, infoPgArchive);
-        // get the archive id from here     // convert the version from an int to a string
-        // InfoPgData currentPg = infoPgDataCurrent(this->infoPg);
+
+        // Store the archiveId for the current PG db-version.db-id
+        InfoPgData currentPg = infoPgDataCurrent(this->infoPg);
+        this->archiveIdCurrent = infoPgVersionToString(currentPg.version);
     }
     MEM_CONTEXT_NEW_END();
 

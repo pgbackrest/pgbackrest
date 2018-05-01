@@ -39,6 +39,7 @@ Functions
 InfoPg *infoPgNew(String *fileName, const bool loadFile, const bool ignoreMissing, InfoPgType type);
 
 InfoPgData infoPgDataCurrent(InfoPg *this);
+String *infoPgVersionToString(unsigned int version);
 
 void infoPgFree(InfoPg *this);
 

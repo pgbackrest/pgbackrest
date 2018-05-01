@@ -5,6 +5,8 @@ Info Handler for pgbackrest information
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdio.h> // CSHANG - remove - needed for running info-pg test else implicit declaration of printf
+
 #include "common/memContext.h"
 #include "info/info.h"
 #include "common/ini.h"
@@ -61,9 +63,11 @@ infoValidInternal(Ini *ini, const bool ignoreError)
     }
 
     // Check if the version has changed - update it if different so we know which version of backrest is saving the file
-    if (strEqZ(varStr(iniGet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION))), PGBACKREST_VERSION))
+    if (!strEqZ(varStr(iniGet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION))), PGBACKREST_VERSION))
     {
+printf("CALLING INISET\n"); fflush(stdout); // CSHANG - remove
         iniSet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION), varNewStrZ(PGBACKREST_VERSION));
+printf("VERSION VARTYPE ADDED %d\n", varType(iniGet(ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION))));fflush(stdout); // CSHANG - remove
     }
 
     return result;
@@ -107,7 +111,10 @@ infoNew(String *fileName, const bool loadFile, const bool ignoreMissing)
             }
 
             // Set the data for external use (e.g. backup:current)
-            this->backrestVersion = varStr(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION)));
+            // this->backrestVersion = varStr(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION)));
+printf("VERSION VARTYPE %d\n", varType(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_VERSION))));fflush(stdout); // CSHANG - remove
+// VARTYPE IS 6 == varTypeKeyValue so  error with 'variant type is not string' so iniSet calls kvAdd which is changing it from 5 to 6
+printf("chkVARTYPE %d\n", varType(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_CHECKSUM))));fflush(stdout); // CSHANG - remove
             this->backrestChecksum = varStr(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_CHECKSUM)));
             this->backrestFormat = varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT)));
 
