@@ -40,7 +40,7 @@
 
                 <release-improvement-list>
                     <release-item>
-                        <p>Make backup directory sync more efficient.  Scanning the entire backup directory can be very expensive if there are a lot of small tables.  The backup manifest contains the backup directory list so use it to perform syncs instead of scanning the backup directory.</p>
+                        <p>Make backup/restore path sync more efficient.  Scanning the entire directory can be very expensive if there are a lot of small tables.  The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path.  Remove recursive path sync functionality since it is no longer used.</p>
                     </release-item>
 
                     <release-item>

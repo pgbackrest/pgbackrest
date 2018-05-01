@@ -962,9 +962,6 @@ sub process
 
     &log(INFO, "new backup label = ${strBackupLabel}");
 
-    # Check if the backup history path exists.  This will change which path we sync below.
-    my $bHistoryExists = $oStorageRepo->pathExists(STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY);
-
     # Copy a compressed version of the manifest to history. If the repo is encrypted then the passphrase to open the manifest is
     # required.
     my $strHistoryPath = $oStorageRepo->pathGet(
@@ -982,16 +979,8 @@ sub process
     # Sync history path if supported
     if ($oStorageRepo->driver()->capability(STORAGE_CAPABILITY_PATH_SYNC))
     {
-        # Sync entire history path if it did not already exist
-        if (!$bHistoryExists)
-        {
-            $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY, {bRecurse => true});
-        }
-        # Else sync only the history year path
-        else
-        {
-            $oStorageRepo->pathSync($strHistoryPath);
-        }
+        $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY);
+        $oStorageRepo->pathSync($strHistoryPath);
     }
 
     # Create a link to the most recent backup

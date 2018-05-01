@@ -1302,8 +1302,26 @@ sub process
     # Create recovery.conf file
     $self->recovery($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION));
 
-    # Sync db cluster path
-    $oStorageDb->pathSync($self->{strDbClusterPath}, {bRecurse => true});
+    # Sync db cluster paths
+    foreach my $strPath ($oManifest->keys(MANIFEST_SECTION_TARGET_PATH))
+    {
+        # This is already synced as a subpath of pg_data
+        next if $strPath eq MANIFEST_TARGET_PGTBLSPC;
+
+        $oStorageDb->pathSync($oManifest->dbPathGet($self->{strDbClusterPath}, $strPath));
+    }
+
+    # Sync targets that don't have paths above
+    foreach my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
+    {
+        # Already synced
+        next if $strTarget eq MANIFEST_TARGET_PGDATA;
+
+        $oStorageDb->pathSync(
+            $oStorageDb->pathAbsolute(
+                $self->{strDbClusterPath} . ($strTarget =~ ('^' . MANIFEST_TARGET_PGTBLSPC) ? '/' . MANIFEST_TARGET_PGTBLSPC : ''),
+                $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_VALUE_PATH)));
+    }
 
     # Move pg_control last
     &log(INFO,
