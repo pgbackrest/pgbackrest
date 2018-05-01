@@ -2,6 +2,7 @@
 Help Command
 ***********************************************************************************************************************************/
 #include <string.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "common/io/handle.h"
@@ -72,6 +73,37 @@ helpRenderValue(const Variant *value)
                 result = strNew("y");
             else
                 result = strNew("n");
+        }
+        else if (varType(value) == varTypeKeyValue)
+        {
+            result = strNew("");
+
+            const KeyValue *optionKv = varKv(value);
+            const VariantList *keyList = kvKeyList(optionKv);
+
+            for (uint keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+            {
+                if (keyIdx != 0)
+                    strCat(result, ", ");
+
+                strCatFmt(
+                    result, "%s=%s", strPtr(varStr(varLstGet(keyList, keyIdx))),
+                    strPtr(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
+            }
+        }
+        else if (varType(value) == varTypeVariantList)
+        {
+            result = strNew("");
+
+            const VariantList *list = varVarLst(value);
+
+            for (uint listIdx = 0; listIdx < varLstSize(list); listIdx++)
+            {
+                if (listIdx != 0)
+                    strCat(result, ", ");
+
+                strCatFmt(result, "%s", strPtr(varStr(varLstGet(list, listIdx))));
+            }
         }
         else
             result = varStrForce(value);

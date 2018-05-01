@@ -106,10 +106,12 @@ testRun()
             "Command Options:\n"
             "\n"
             "  --db-include                     restore only specified databases\n"
+            "                                   [current=db1, db2]\n"
             "  --delta                          restore using delta [default=n]\n"
             "  --force                          force a restore [default=n]\n"
             "  --link-all                       restore all symlinks [default=n]\n"
             "  --link-map                       modify the destination of a symlink\n"
+            "                                   [current=/link1=/dest1, /link2=/dest2]\n"
             "  --recovery-option                set an option in recovery.conf\n"
             "  --set                            backup set to restore [default=latest]\n"
             "  --tablespace-map                 restore a tablespace into the specified\n"
@@ -201,6 +203,10 @@ testRun()
         strLstAddZ(argList, "restore");
         strLstAddZ(argList, "--buffer-size=32768");
         strLstAddZ(argList, "--repo1-host=backup.example.net");
+        strLstAddZ(argList, "--link-map=/link1=/dest1");
+        strLstAddZ(argList, "--link-map=/link2=/dest2");
+        strLstAddZ(argList, "--db-include=db1");
+        strLstAddZ(argList, "--db-include=db2");
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for restore command");
         TEST_RESULT_STR(strPtr(helpRender()), commandHelp, "    check text");
 

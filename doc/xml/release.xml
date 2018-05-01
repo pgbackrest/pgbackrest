@@ -31,6 +31,14 @@
 
                         <p>Fix <br-option>archive-copy</br-option> throwing <quote>path not found</quote> error for incr/diff backups.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="adams.clinton"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix rendering of key/value and list options in help.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
