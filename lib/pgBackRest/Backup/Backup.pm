@@ -920,7 +920,7 @@ sub process
                         {strCipherPass => $oArchiveInfo->cipherPassSub()}),
                     $oStorageRepo->openWrite(STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . MANIFEST_TARGET_PGDATA . qw{/} .
                         $oBackupManifest->walPath() . "/${strArchive}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
-                        {strCipherPass => $strCipherPassBackupSet})
+                        {bPathCreate => true, strCipherPass => $strCipherPassBackupSet})
                     );
 
                 # Add the archive file to the manifest so it can be part of the restore and checked in validation

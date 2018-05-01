@@ -22,6 +22,15 @@
 
                         <p>Fix directory syncs running recursively when only the specified directory should be synced.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="yummyliu"/>
+                            <release-item-ideator id="kukharik.vitaliy"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix <br-option>archive-copy</br-option> throwing <quote>path not found</quote> error for incr/diff backups.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -4544,6 +4553,11 @@
             <contributor-id type="github">cjames53</contributor-id>
         </contributor>
 
+        <contributor id="kukharik.vitaliy">
+            <contributor-name-display>Vitaliy Kukharik</contributor-name-display>
+            <contributor-id type="github">vitabaks</contributor-id>
+        </contributor>
+
         <contributor id="kulkarni.nikhilchandra">
             <contributor-name-display>Nikhilchandra Kulkarni</contributor-name-display>
             <contributor-id type="github">nikhilchandra-kulkarni</contributor-id>
@@ -4684,6 +4698,11 @@
         <contributor id="youatt.david">
             <contributor-name-display>David Youatt</contributor-name-display>
             <contributor-id type="github">youattd</contributor-id>
+        </contributor>
+
+        <contributor id="yummyliu">
+            <contributor-name-display>yummyliu</contributor-name-display>
+            <contributor-id type="github">yummyliu</contributor-id>
         </contributor>
     </contributor-list>
 </doc>
