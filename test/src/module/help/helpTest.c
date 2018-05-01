@@ -96,19 +96,33 @@ testRun()
         const char *commandHelp = strPtr(strNewFmt(
             "%s%s%s",
             helpVersion,
-            " - 'archive-push' command help\n"
+            " - 'restore' command help\n"
             "\n"
-            "Push a WAL segment to the archive.\n"
+            "Restore a database cluster.\n"
             "\n"
-            "The WAL segment may be pushed immediately to the archive or stored locally\n"
-            "depending on the value of archive-async\n"
+            "This command is generally run manually, but there are instances where it might\n"
+            "be automated.\n"
             "\n"
             "Command Options:\n"
             "\n"
-            "  --archive-async                  push/get WAL segments asynchronously\n"
-            "                                   [default=n]\n"
-            "  --archive-push-queue-max         maximum size of the PostgreSQL archive queue\n"
-            "  --archive-timeout                archive timeout [default=60]\n"
+            "  --db-include                     restore only specified databases\n"
+            "  --delta                          restore using delta [default=n]\n"
+            "  --force                          force a restore [default=n]\n"
+            "  --link-all                       restore all symlinks [default=n]\n"
+            "  --link-map                       modify the destination of a symlink\n"
+            "  --recovery-option                set an option in recovery.conf\n"
+            "  --set                            backup set to restore [default=latest]\n"
+            "  --tablespace-map                 restore a tablespace into the specified\n"
+            "                                   directory\n"
+            "  --tablespace-map-all             restore all tablespaces into the specified\n"
+            "                                   directory\n"
+            "  --target                         recovery target\n"
+            "  --target-action                  action to take when recovery target is\n"
+            "                                   reached [default=pause]\n"
+            "  --target-exclusive               stop just before the recovery target is\n"
+            "                                   reached [default=n]\n"
+            "  --target-timeline                recover along a timeline\n"
+            "  --type                           recovery type [default=default]\n"
             "\n"
             "General Options:\n"
             "\n"
@@ -126,15 +140,12 @@ testRun()
             "                                   files [default=/etc/pgbackrest/conf.d]\n"
             "  --config-path                    base path of pgBackRest configuration files\n"
             "                                   [default=/etc/pgbackrest]\n"
-            "  --db-timeout                     database query timeout [default=1800]\n"
             "  --lock-path                      path where lock files are stored\n"
             "                                   [default=/tmp/pgbackrest]\n"
             "  --neutral-umask                  use a neutral umask [default=y]\n"
             "  --process-max                    max processes to use for compress/transfer\n"
             "                                   [default=1]\n"
             "  --protocol-timeout               protocol timeout [default=1830]\n"
-            "  --spool-path                     path where transient data is stored\n"
-            "                                   [default=/var/spool/pgbackrest]\n"
             "  --stanza                         defines the stanza\n"
             "\n"
             "Log Options:\n"
@@ -145,8 +156,8 @@ testRun()
             "  --log-path                       path where log files are stored\n"
             "                                   [default=/var/log/pgbackrest]\n"
             "  --log-timestamp                  enable timestamp in logging [default=y]\n"
-            "\n"
-            "Repository Options:\n",
+            "\n",
+            "Repository Options:\n"
             "\n"
             "  --repo-cipher-pass               repository cipher passphrase\n"
             "  --repo-cipher-type               cipher used to encrypt the repository\n"
@@ -182,15 +193,15 @@ testRun()
             "\n"
             "  --pg-path                        postgreSQL data directory\n"
             "\n"
-            "Use 'pgbackrest help archive-push [option]' for more information.\n"));
+            "Use 'pgbackrest help restore [option]' for more information.\n"));
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "help");
-        strLstAddZ(argList, "archive-push");
+        strLstAddZ(argList, "restore");
         strLstAddZ(argList, "--buffer-size=32768");
         strLstAddZ(argList, "--repo1-host=backup.example.net");
-        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for archive-push command");
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for restore command");
         TEST_RESULT_STR(strPtr(helpRender()), commandHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
