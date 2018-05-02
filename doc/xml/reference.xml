@@ -363,6 +363,15 @@
                         <example>wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</example>
                     </config-key>
 
+                    <!-- CONFIG - REPO SECTION - REPO-S3-TOKEN KEY -->
+                    <config-key id="repo-s3-token" name="S3 Repository Security Token">
+                        <summary>S3 repository security token.</summary>
+
+                        <text>AWS security token used with temporary credentials.</text>
+
+                        <example>AQoDYXdzEPT//////////wEXAMPLEtc764bNrC9SAPBSM22 ...</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-S3-BUCKET KEY -->
                     <config-key id="repo-s3-bucket" name="S3 Repository Bucket">
                         <summary>S3 repository bucket.</summary>

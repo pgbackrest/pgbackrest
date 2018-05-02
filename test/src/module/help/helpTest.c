@@ -187,6 +187,7 @@ testRun()
             "  --repo-s3-key                    s3 repository access key\n"
             "  --repo-s3-key-secret             s3 repository secret access key\n"
             "  --repo-s3-region                 s3 repository region\n"
+            "  --repo-s3-token                  s3 repository security token\n"
             "  --repo-s3-verify-ssl             verify S3 server certificate [default=y]\n"
             "  --repo-type                      type of storage used for the repository\n"
             "                                   [default=posix]\n"

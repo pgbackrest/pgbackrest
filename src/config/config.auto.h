@@ -14,7 +14,7 @@ Command constants
 /***********************************************************************************************************************************
 Option constants
 ***********************************************************************************************************************************/
-#define CFG_OPTION_TOTAL                                            160
+#define CFG_OPTION_TOTAL                                            161
 
 /***********************************************************************************************************************************
 Command enum
@@ -117,6 +117,7 @@ typedef enum
     cfgOptRepoS3Key,
     cfgOptRepoS3KeySecret,
     cfgOptRepoS3Region,
+    cfgOptRepoS3Token,
     cfgOptRepoS3VerifySsl,
     cfgOptRepoType,
     cfgOptResume,

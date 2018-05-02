@@ -274,6 +274,8 @@ use constant CFGOPT_REPO_S3_HOST                                    => CFGDEF_RE
     push @EXPORT, qw(CFGOPT_REPO_S3_HOST);
 use constant CFGOPT_REPO_S3_REGION                                  => CFGDEF_REPO_S3 . '-region';
     push @EXPORT, qw(CFGOPT_REPO_S3_REGION);
+use constant CFGOPT_REPO_S3_TOKEN                                   => CFGDEF_REPO_S3 . '-token';
+    push @EXPORT, qw(CFGOPT_REPO_S3_TOKEN);
 use constant CFGOPT_REPO_S3_VERIFY_SSL                              => CFGDEF_REPO_S3 . '-verify-ssl';
     push @EXPORT, qw(CFGOPT_REPO_S3_VERIFY_SSL);
 
@@ -1700,6 +1702,11 @@ my %hConfigDefine =
         {
             'repo-s3-region' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
+    },
+
+    &CFGOPT_REPO_S3_TOKEN =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_S3_KEY,
     },
 
     &CFGOPT_REPO_S3_VERIFY_SSL =>

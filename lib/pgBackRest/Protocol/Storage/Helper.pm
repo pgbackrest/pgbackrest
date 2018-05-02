@@ -195,7 +195,8 @@ sub storageRepo
                     cfgOption(CFGOPT_REPO_S3_KEY), cfgOption(CFGOPT_REPO_S3_KEY_SECRET),
                     {strHost => cfgOption(CFGOPT_REPO_S3_HOST, false), bVerifySsl => cfgOption(CFGOPT_REPO_S3_VERIFY_SSL, false),
                         strCaPath => cfgOption(CFGOPT_REPO_S3_CA_PATH, false),
-                        strCaFile => cfgOption(CFGOPT_REPO_S3_CA_FILE, false), lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
+                        strCaFile => cfgOption(CFGOPT_REPO_S3_CA_FILE, false), lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE),
+                        strSecurityToken => cfgOption(CFGOPT_REPO_S3_TOKEN, false)});
             }
             elsif (cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_CIFS))
             {

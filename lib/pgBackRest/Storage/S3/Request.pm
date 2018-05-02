@@ -72,6 +72,7 @@ sub new
         $self->{strRegion},
         $self->{strAccessKeyId},
         $self->{strSecretAccessKey},
+        $self->{strSecurityToken},
         $self->{strHost},
         $self->{iPort},
         $self->{bVerifySsl},
@@ -87,6 +88,7 @@ sub new
             {name => 'strRegion'},
             {name => 'strAccessKeyId', redact => true},
             {name => 'strSecretAccessKey', redact => true},
+            {name => 'strSecurityToken', optional => true, redact => true},
             {name => 'strHost', optional => true},
             {name => 'iPort', optional => true},
             {name => 'bVerifySsl', optional => true, default => true},
@@ -156,7 +158,8 @@ sub request
         # Generate authorization header
         ($hHeader, my $strCanonicalRequest, my $strSignedHeaders, my $strStringToSign) = s3AuthorizationHeader(
             $self->{strRegion}, "$self->{strBucket}.$self->{strEndPoint}", $strVerb, $strUri, httpQuery($hQuery), s3DateTime(),
-            $hHeader, $self->{strAccessKeyId}, $self->{strSecretAccessKey}, $hHeader->{&S3_HEADER_CONTENT_SHA256});
+            $hHeader, $self->{strAccessKeyId}, $self->{strSecretAccessKey}, $self->{strSecurityToken},
+            $hHeader->{&S3_HEADER_CONTENT_SHA256});
 
         # Send the request
         my $oHttpClient = new pgBackRest::Common::Http::Client(

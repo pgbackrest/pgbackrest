@@ -34,6 +34,8 @@ use constant S3_HEADER_CONTENT_SHA256                               => 'x-amz-co
     push @EXPORT, qw(S3_HEADER_CONTENT_SHA256);
 use constant S3_HEADER_HOST                                         => 'host';
     push @EXPORT, qw(S3_HEADER_HOST);
+use constant S3_HEADER_TOKEN                                        => 'x-amz-security-token';
+    push @EXPORT, qw(S3_HEADER_TOKEN);
 
 use constant PAYLOAD_DEFAULT_HASH                                   => sha256_hex('');
     push @EXPORT, qw(PAYLOAD_DEFAULT_HASH);
@@ -220,6 +222,7 @@ sub s3AuthorizationHeader
         $hHeader,
         $strAccessKeyId,
         $strSecretAccessKey,
+        $strSecurityToken,
         $strPayloadHash,
     ) =
         logDebugParam
@@ -234,6 +237,7 @@ sub s3AuthorizationHeader
             {name => 'hHeader', required => false, trace => true},
             {name => 'strAccessKeyId', redact => true, trace => true},
             {name => 'strSecretAccessKey', redact => true, trace => true},
+            {name => 'strSecurityToken', required => false, redact => true, trace => true},
             {name => 'strPayloadHash', trace => true},
         );
 
@@ -244,6 +248,12 @@ sub s3AuthorizationHeader
     $hHeader->{&S3_HEADER_HOST} = $strHost;
     $hHeader->{&S3_HEADER_CONTENT_SHA256} = $strPayloadHash;
     $hHeader->{&S3_HEADER_DATE} = $strDateTime;
+
+    # Add security token if defined
+    if (defined($strSecurityToken))
+    {
+        $hHeader->{&S3_HEADER_TOKEN} = $strSecurityToken;
+    }
 
     # Create authorization string
     my ($strCanonicalRequest, $strSignedHeaders) = s3CanonicalRequest($strVerb, $strUri, $strQuery, $hHeader, $strPayloadHash);

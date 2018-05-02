@@ -1975,6 +1975,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoS3Region,
     },
 
+    // repo-s3-token option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo1-s3-token",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoS3Token,
+    },
+    {
+        .name = "reset-repo1-s3-token",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3Token,
+    },
+
     // repo-s3-verify-ssl option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {

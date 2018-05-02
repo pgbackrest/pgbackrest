@@ -101,6 +101,7 @@ Option constants
 #define CFGOPT_REPO_S3_KEY                                          cfgOptRepoS3Key
 #define CFGOPT_REPO_S3_KEY_SECRET                                   cfgOptRepoS3KeySecret
 #define CFGOPT_REPO_S3_REGION                                       cfgOptRepoS3Region
+#define CFGOPT_REPO_S3_TOKEN                                        cfgOptRepoS3Token
 #define CFGOPT_REPO_S3_VERIFY_SSL                                   cfgOptRepoS3VerifySsl
 #define CFGOPT_REPO_TYPE                                            cfgOptRepoType
 #define CFGOPT_RESUME                                               cfgOptResume

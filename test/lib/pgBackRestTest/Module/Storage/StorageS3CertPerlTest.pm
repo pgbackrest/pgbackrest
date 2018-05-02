@@ -41,6 +41,7 @@ sub run
     $self->optionTestSet(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3);
     $self->optionTestSet(CFGOPT_REPO_S3_KEY, BOGUS);
     $self->optionTestSet(CFGOPT_REPO_S3_KEY_SECRET, BOGUS);
+    $self->optionTestSet(CFGOPT_REPO_S3_TOKEN, BOGUS);
     $self->optionTestSet(CFGOPT_REPO_S3_BUCKET, $strBucket);
     $self->optionTestSet(CFGOPT_REPO_S3_ENDPOINT, $strEndpoint);
     $self->optionTestSet(CFGOPT_REPO_S3_REGION, $strRegion);

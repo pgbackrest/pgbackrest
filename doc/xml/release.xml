@@ -65,6 +65,14 @@
 
                         <p>Add support for additional <backrest/> configuration files in the directory specified by the <br-option>--config-include-path</br-option> option. Add <br-option>--config-path</br-option> option for overriding the default base path of the <br-option>--config</br-option> and <br-option>--config-include-path</br-option> option.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="sharma.yogesh"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>repo-s3-token</br-option> option to allow temporary credentials tokens to be configured.  <backrest/> currently has no way to request new credentials so the entire command (e.g. <cmd>backup</cmd>, <cmd>restore</cmd>) must complete before the credentials expire.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
