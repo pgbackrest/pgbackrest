@@ -33,6 +33,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="kukharik.vitaliy"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix failure in manifest build when two or more files in <id>PGDATA</id> are linked to the same directory.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Fix delta restore failing when a linked file was missing.</p>
                     </release-item>
 

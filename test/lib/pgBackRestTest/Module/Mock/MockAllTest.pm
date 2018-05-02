@@ -295,7 +295,7 @@ sub run
         # Create the archive info file
         $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
-        # Create a file link
+        # Create a link to postgresql.conf
         storageTest()->pathCreate($oHostDbMaster->dbPath() . '/pg_config', {strMode => '0700', bCreateParent => true});
         testFileCreate(
             $oHostDbMaster->dbPath() . '/pg_config/postgresql.conf', "listen_addresses = *\n", $lTime - 100);
@@ -303,6 +303,14 @@ sub run
 
         $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf',
                                               '../pg_config/postgresql.conf', true);
+
+        # Create a link to pg_hba.conf
+        testFileCreate(
+            $oHostDbMaster->dbPath() . '/pg_config/pg_hba.conf', "CONTENTS\n", $lTime - 100);
+        testLinkCreate($oHostDbMaster->dbPath() . '/pg_config/pg_hba.conf.link', './pg_hba.conf');
+
+        $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_hba.conf',
+                                              '../pg_config/pg_hba.conf', true);
 
         # This link will cause errors because it points to the same location as above
         $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_config_bad',
@@ -613,7 +621,8 @@ sub run
                 'restore all links by mapping', $strFullBackup,
                 {rhExpectedManifest => \%oManifest, bDelta => true,
                     strOptionalParam =>
-                        $strLogReduced . ' --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf'});
+                        $strLogReduced . ' --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf' .
+                            ' --link-map=pg_hba.conf=../pg_config/pg_hba.conf'});
 
             # Error when links overlap
             $oHostDbMaster->restore(
@@ -627,16 +636,18 @@ sub run
             executeTest('rm -rf ' . $oHostDbMaster->dbBasePath() . "/*");
 
             $oHostDbMaster->restore(
+                'error on existing linked file', $strFullBackup,
+                {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY,
+                    strOptionalParam => '--log-level-console=warn --link-all'});
+
+            executeTest('rm ' . $oHostDbMaster->dbPath() . '/pg_config/pg_hba.conf');
+
+            $oHostDbMaster->restore(
                 'error on existing linked path', $strFullBackup,
                 {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY,
                     strOptionalParam => '--log-level-console=warn --link-all'});
 
             executeTest('rm -rf ' . $oHostDbMaster->dbPath() . "/pg_stat/*");
-
-            $oHostDbMaster->restore(
-                'error on existing linked file', $strFullBackup,
-                {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY,
-                    strOptionalParam => '--log-level-console=warn --link-all'});
 
             # Error when postmaster.pid is present
             executeTest('touch ' . $oHostDbMaster->dbBasePath() . qw(/) . DB_FILE_POSTMASTERPID);
@@ -649,10 +660,13 @@ sub run
             executeTest('rm ' . $oHostDbMaster->dbBasePath() . qw(/) . DB_FILE_POSTMASTERPID);
 
             # Now a combination of remapping
+            # testFileCreate(
+            #     $oHostDbMaster->dbPath() . '/pg_config/pg_hba.conf', "CONTENTS2\n", $lTime - 100);
+
             $oHostDbMaster->restore(
                 'restore all links --link-all and mapping', $strFullBackup,
                 {rhExpectedManifest => \%oManifest, bDelta => true,
-                    strOptionalParam => "${strLogReduced} --link-map=pg_stat=../pg_stat  --link-all"});
+                    strOptionalParam => "${strLogReduced} --link-map=pg_stat=../pg_stat --link-all"});
         }
 
         # Restore - test errors when $PGDATA cannot be verified
@@ -679,11 +693,15 @@ sub run
         # Restore succeeds
         $oHostDbMaster->manifestLinkMap(\%oManifest, MANIFEST_TARGET_PGDATA . '/pg_stat');
         $oHostDbMaster->manifestLinkMap(\%oManifest, MANIFEST_TARGET_PGDATA . '/postgresql.conf');
+        $oHostDbMaster->manifestLinkMap(\%oManifest, MANIFEST_TARGET_PGDATA . '/pg_hba.conf');
 
         $oHostDbMaster->restore(
             'restore succeeds with backup.manifest file', $strFullBackup,
             {rhExpectedManifest => \%oManifest, bDelta => true, bForce => true,
                 strOptionalParam => $strLogReduced});
+
+        # No longer need pg_hba.conf since it is no longer a link and doesn't provide additional coverage
+        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_hba.conf');
 
         # Various broken info tests
         #---------------------------------------------------------------------------------------------------------------------------
