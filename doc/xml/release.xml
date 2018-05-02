@@ -33,6 +33,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Fix delta restore failing when a linked file was missing.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="adams.clinton"/>
                         </release-item-contributor-list>
