@@ -22,14 +22,15 @@ struct InfoArchive
 {
     MemContext *memContext;                                         // Context that contains the InfoArchive
     InfoPg *infoPg;                                                 // Contents of the DB data
-    String *archiveIdCurrent;                                       // Archive id for the current PG version
+    String *archiveId;                                              // Archive id for the current PG version
 };
 
 /***********************************************************************************************************************************
 Create a new InfoArchive object
+// CSHANG Need loadFile
 ***********************************************************************************************************************************/
 InfoArchive *
-infoArchiveNew(String *fileName, const bool loadFile, const bool ignoreMissing)
+infoArchiveNew(String *fileName, const bool fileRequired, const bool ignoreMissing)
 {
     InfoArchive *this = NULL;
 
@@ -39,11 +40,11 @@ infoArchiveNew(String *fileName, const bool loadFile, const bool ignoreMissing)
         this = memNew(sizeof(InfoArchive));
         this->memContext = MEM_CONTEXT_NEW();
 
-        this->infoPg = infoPgNew(fileName, loadFile, ignoreMissing, infoPgArchive);
+        this->infoPg = infoPgNew(fileName, fileRequired, ignoreMissing, infoPgArchive);
 
         // Store the archiveId for the current PG db-version.db-id
         InfoPgData currentPg = infoPgDataCurrent(this->infoPg);
-        this->archiveIdCurrent = infoPgVersionToString(currentPg.version);
+        strCatFmt(this->archiveId, "%s-%s", infoPgVersionToString(currentPg.version), varStrForce(varNewUInt64(currentPg.systemId)));
     }
     MEM_CONTEXT_NEW_END();
 
@@ -54,12 +55,14 @@ infoArchiveNew(String *fileName, const bool loadFile, const bool ignoreMissing)
 /***********************************************************************************************************************************
 Return the current archive id
 ***********************************************************************************************************************************/
-String *
-infoArchiveArchiveIdCurrent(const InfoArchive *this)
+const String *
+infoArchiveId(const InfoArchive *this)
 {
-    return this->archiveIdCurrent;
+    return this->archiveId;
 }
 
+// CSHANG Name of 'check' function is a bit misleading - maybe checkPg - but then that would be in infoPg and then the caller would
+// just check the Db
 
 /***********************************************************************************************************************************
 Free the info

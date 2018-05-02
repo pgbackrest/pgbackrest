@@ -54,6 +54,8 @@ infoPgVersionToUIntInternal(const String *version)
         if (!regExpMatchOne(strNew("^[0-9]+[.]*[0-9]+$"), version))
             THROW(FormatError, "version %s format is invalid", strPtr(version));
 
+        // CSHANG Should we consider doing some additional validation to ensure the pgversion is one of the defined constants?
+
         size_t idxStart = (size_t)(strChr(version, '.'));
         int minor = 0;
         int major;
@@ -75,9 +77,12 @@ infoPgVersionToUIntInternal(const String *version)
 
 /***********************************************************************************************************************************
 Create a new InfoPg object
+CSHANG Need to consider adding the following parameters in order to throw errors
+        $bLoad,                                     # Should the file attempt to be loaded?
+        $strCipherPassSub,                          # Passphrase to encrypt the subsequent archive files if repo is encrypted
 ***********************************************************************************************************************************/
 InfoPg *
-infoPgNew(String *fileName, const bool loadFile, const bool ignoreMissing, InfoPgType type)
+infoPgNew(String *fileName, const bool fileRequired, const bool ignoreMissing, InfoPgType type)
 {
     InfoPg *this = NULL;
 
@@ -87,61 +92,39 @@ infoPgNew(String *fileName, const bool loadFile, const bool ignoreMissing, InfoP
         this = memNew(sizeof(InfoPg));
         this->memContext = MEM_CONTEXT_NEW();
 
-        this->info = infoNew(fileName, loadFile, ignoreMissing);
+        this->info = infoNew(fileName, fileRequired, ignoreMissing);
 
         Ini *infoPgIni = infoIni(this->info);
-        //
-        // // If the file exists, then get the data into the structure
-        // if (iniFileExists(infoPgIni))
-        // {
-            // CSHANG Somehow we need to get the history list from the file...for now just getting current
-            this->history = lstNew(sizeof(InfoPgData));
 
-            InfoPgData infoPgData = {0};
+        // CSHANG Somehow we need to get the history list from the file...for now just getting current
+        this->history = lstNew(sizeof(InfoPgData));
 
-            MEM_CONTEXT_TEMP_BEGIN()
+        InfoPgData infoPgData = {0};
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            String *dbSection = strNew(INFO_SECTION_DB);
+            infoPgData.systemId = varUInt64Force(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_SYSTEM_ID)));
+            infoPgData.id = (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_ID)));
+
+            String *pgVersion = varStrForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_VERSION)));
+
+            // CSHANG Temporary hack for removing the leading and trailing quotes from pgVersion until can get json parser
+            infoPgData.version = infoPgVersionToUIntInternal(strSubN(pgVersion, 1, strSize(pgVersion) - 2));
+
+            if ((type == infoPgBackup) || (type == infoPgManifest))
             {
-                String *dbSection = strNew(INFO_SECTION_DB);
-                infoPgData.systemId = varUInt64Force(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_SYSTEM_ID)));
-                infoPgData.id = (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_ID)));
-
-                String *pgVersion = varStrForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_VERSION)));
-
-                // CSHANG Temporary hack for removing the leading and trailing quotes from pgVersion until can get json parser
-                infoPgData.version = infoPgVersionToUIntInternal(strSubN(pgVersion, 1, strSize(pgVersion) - 2));
-
-                if ((type == infoPgBackup) || (type == infoPgManifest))
-                {
-                    infoPgData.catalogVersion =
-                        (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_CATALOG_VERSION)));
-                    infoPgData.controlVersion =
-                        (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_CONTROL_VERSION)));
-                }
+                infoPgData.catalogVersion =
+                    (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_CATALOG_VERSION)));
+                infoPgData.controlVersion =
+                    (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_CONTROL_VERSION)));
             }
-            MEM_CONTEXT_TEMP_END();
+        }
+        MEM_CONTEXT_TEMP_END();
 
             lstAdd(this->history, &infoPgData);
             this->indexCurrent = lstSize(this->history) - 1;
-        //
-        // }
-        // // If the file doesn't exist, then initialize the data
-        // else
-        // {
-        //     this->history = lstNew(sizeof(InfoPgData));  // CSHANG Need to set this somehow - maybe internal function?
-        //     // CSHANG the archive.info and backup.info history sections differ because the archive.info uses db-id instead of
-        //     // the correct label db-system-id.
-        //     // Get db->info
-        //     // Fill db section
-        //     String *dbSection = (type == infoPgManifest) ? strNew(INFO_SECTION_DB_MANIFEST) : strNew(INFO_SECTION_DB);
-        //
-        //     iniSet(infoPgIni, dbSection, strNew(INFO_KEY_DB_ID), 1);
-        //     // iniSet(ini, dbSection, strNew(INI_KEY_DB_SYSTEM_ID), someuullnumber);
-        //     // iniSet(ini, dbSection, strNew(INI_KEY_DB_VERSION), someversion);
-        //
-        //     // If type == 'backup' or 'manifest then add catalog and control version to DB section
-        //     // If type == 'backup' (only) add catalog and control version to DB History
-        // }
-
+        }
     }
     MEM_CONTEXT_NEW_END();
 
@@ -165,7 +148,6 @@ Return a string representation of the PostgreSQL version
 String *
 infoPgVersionToString(unsigned int version)
 {
-// CSHANG Should this be enhanced to check to make sure it is one of the defined constants?
     return strNewFmt("%d.%d", ((unsigned int)(version/10000)), ((version%10000)/100));
 }
 

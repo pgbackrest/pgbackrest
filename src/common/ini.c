@@ -18,7 +18,6 @@ struct Ini
     MemContext *memContext;                                         // Context that contains the ini
     KeyValue *store;                                                // Key value store that contains the ini data
     String *fileName;                                               // File name (if one has been set)
-    bool exists;                                                    // Does the file exist?
 };
 
 /***********************************************************************************************************************************
@@ -214,7 +213,6 @@ iniLoad(Ini *this, const String *fileName)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             iniParse(this, strNewBuf(storageGetNP(storageNewReadNP(storageLocal(), this->fileName))));
-            this->exists = true;
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -256,10 +254,4 @@ String *
 iniFileName(const Ini *this)
 {
     return this->fileName;
-}
-
-bool
-iniFileExists(const Ini *this)
-{
-    return this->exists;
 }
