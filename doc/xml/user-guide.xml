@@ -652,6 +652,16 @@
             </execute-list>
 
             <p>When archiving a WAL segment is expected to take more than 60 seconds (the default) to reach the <backrest/> repository, then the <backrest/> <br-option>archive-timeout</br-option> option should be increased. Note that this option is not the same as the <postgres/> <pg-option>archive_timeout</pg-option> option which is used to force a WAL segment switch; useful for databases where there are long periods of inactivity. For more information on the <postgres/> <pg-option>archive_timeout</pg-option> option, see <postgres/> <link url="https://www.postgresql.org/docs/current/static/runtime-config-wal.html">Write Ahead Log</link>.</p>
+
+            <p>The <cmd>archive-push</cmd> command can be configured with its own options.  For example, a lower compression level may be set to speed archiving without affecting the compression used for backups.</p>
+
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
+                <title>Config <cmd>archive-push</cmd> to use a lower compression level</title>
+
+                <backrest-config-option section="global:archive-push" key="compress-level">3</backrest-config-option>
+            </backrest-config>
+
+            <p>This configuration technique can be used for any command and can even target a specific stanza, e.g. <code>demo:archive-push</code>.</p>
         </section>
 
         <!-- SECTION => QUICKSTART - RETENTION -->

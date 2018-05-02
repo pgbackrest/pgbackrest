@@ -183,6 +183,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="courtois.christophe"/>
+                        </release-item-contributor-list>
+
+                        <p>Add example of command section usage to archiving configuration.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove documentation describing <code>info --output=json</code> as experimental.</p>
                     </release-item>
 
@@ -4479,6 +4487,11 @@
         <contributor id="brusselback.adam">
             <contributor-name-display>Adam Brusselback</contributor-name-display>
             <contributor-id type="github">Tostino</contributor-id>
+        </contributor>
+
+        <contributor id="courtois.christophe">
+            <contributor-name-display>Christophe Courtois</contributor-name-display>
+            <contributor-id type="github">Krysztophe</contributor-id>
         </contributor>
 
         <contributor id="cox.william">
