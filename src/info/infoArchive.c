@@ -30,7 +30,7 @@ Create a new InfoArchive object
 // CSHANG Need loadFile
 ***********************************************************************************************************************************/
 InfoArchive *
-infoArchiveNew(String *fileName, const bool fileRequired, const bool ignoreMissing)
+infoArchiveNew(String *fileName, const bool ignoreMissing)
 {
     InfoArchive *this = NULL;
 
@@ -40,11 +40,12 @@ infoArchiveNew(String *fileName, const bool fileRequired, const bool ignoreMissi
         this = memNew(sizeof(InfoArchive));
         this->memContext = MEM_CONTEXT_NEW();
 
-        this->infoPg = infoPgNew(fileName, fileRequired, ignoreMissing, infoPgArchive);
+        this->infoPg = infoPgNew(fileName, ignoreMissing, infoPgArchive);
 
         // Store the archiveId for the current PG db-version.db-id
         InfoPgData currentPg = infoPgDataCurrent(this->infoPg);
-        strCatFmt(this->archiveId, "%s-%s", infoPgVersionToString(currentPg.version), varStrForce(varNewUInt64(currentPg.systemId)));
+        strCatFmt(this->archiveId, "%s-%s", strPtr(infoPgVersionToString(currentPg.version)),
+            strPtr(varStrForce(varNewUInt64(currentPg.systemId))));
     }
     MEM_CONTEXT_NEW_END();
 

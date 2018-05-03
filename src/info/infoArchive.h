@@ -12,7 +12,7 @@ typedef struct InfoArchive InfoArchive;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-InfoArchive *infoArchiveNew(String *fileName, const bool loadFile, const bool ignoreMissing);
+InfoArchive *infoArchiveNew(String *fileName, const bool ignoreMissing);
 
 String *infoArchiveArchiveIdCurrent(const InfoArchive *this);
 

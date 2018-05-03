@@ -3,8 +3,6 @@ Key Value Handler
 ***********************************************************************************************************************************/
 #include <limits.h>
 
-#include <stdio.h> // CSHANG - remove
-
 #include "common/memContext.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
@@ -176,7 +174,6 @@ Add value to key -- if the key does not exist then this works the same as kvPut(
 KeyValue *
 kvAdd(KeyValue *this, const Variant *key, const Variant *value)
 {
-    printf("KVADD: %d\n", varType(value)); fflush(stdout); // CSHANG - remove
     MEM_CONTEXT_BEGIN(this->memContext)
     {
         // Find the key
@@ -196,12 +193,10 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
                 pair->value = varDup(value);
             else if (varType(pair->value) != varTypeVariantList)
             {
-    printf("PAIR->VALUE TYPE NOT VARLIST. PAIR->VALUE TYPE BEFORE=%d\n", varType(pair->value)); fflush(stdout); // CSHANG - remove
                 Variant *valueList = varNewVarLstEmpty();
                 varLstAdd(varVarLst(valueList), pair->value);
                 varLstAdd(varVarLst(valueList), varDup(value));
                 pair->value = valueList;
-    printf("PAIR->VALUE TYPE NOT VARLIST. PAIR->VALUE TYPE AFTER=%d\n", varType(pair->value)); fflush(stdout); // CSHANG - remove
             }
             else
                 varLstAdd(varVarLst(pair->value), varDup(value));

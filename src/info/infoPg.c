@@ -82,7 +82,7 @@ CSHANG Need to consider adding the following parameters in order to throw errors
         $strCipherPassSub,                          # Passphrase to encrypt the subsequent archive files if repo is encrypted
 ***********************************************************************************************************************************/
 InfoPg *
-infoPgNew(String *fileName, const bool fileRequired, const bool ignoreMissing, InfoPgType type)
+infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
 {
     InfoPg *this = NULL;
 
@@ -92,7 +92,7 @@ infoPgNew(String *fileName, const bool fileRequired, const bool ignoreMissing, I
         this = memNew(sizeof(InfoPg));
         this->memContext = MEM_CONTEXT_NEW();
 
-        this->info = infoNew(fileName, fileRequired, ignoreMissing);
+        this->info = infoNew(fileName, ignoreMissing);
 
         Ini *infoPgIni = infoIni(this->info);
 
@@ -109,7 +109,7 @@ infoPgNew(String *fileName, const bool fileRequired, const bool ignoreMissing, I
 
             String *pgVersion = varStrForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_VERSION)));
 
-            // CSHANG Temporary hack for removing the leading and trailing quotes from pgVersion until can get json parser
+            // ??? Temporary hack for removing the leading and trailing quotes from pgVersion until can get json parser
             infoPgData.version = infoPgVersionToUIntInternal(strSubN(pgVersion, 1, strSize(pgVersion) - 2));
 
             if ((type == infoPgBackup) || (type == infoPgManifest))
@@ -122,9 +122,8 @@ infoPgNew(String *fileName, const bool fileRequired, const bool ignoreMissing, I
         }
         MEM_CONTEXT_TEMP_END();
 
-            lstAdd(this->history, &infoPgData);
-            this->indexCurrent = lstSize(this->history) - 1;
-        }
+        lstAdd(this->history, &infoPgData);
+        this->indexCurrent = lstSize(this->history) - 1;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -148,7 +147,7 @@ Return a string representation of the PostgreSQL version
 String *
 infoPgVersionToString(unsigned int version)
 {
-    return strNewFmt("%d.%d", ((unsigned int)(version/10000)), ((version%10000)/100));
+    return strNewFmt("%u.%u", ((unsigned int)(version/10000)), ((version%10000)/100));
 }
 
 /***********************************************************************************************************************************

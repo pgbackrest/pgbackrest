@@ -14,9 +14,11 @@ typedef struct Info Info;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-Info *infoNew(const String *fileName, const bool fileRequired, const bool ignoreMissing);
+Info *infoNew(const String *fileName, const bool ignoreMissing);
 
 Ini *infoIni(const Info *this);
+String * infoFileName(const Info *this);
+bool infoExists(const Info *this);
 
 void infoFree(Info *this);
 
