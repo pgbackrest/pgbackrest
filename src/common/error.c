@@ -105,7 +105,7 @@ errorTypeFromCode(int code)
 
     // Error if type was not found
     if (result == NULL)
-        THROW(AssertError, "could not find error type for code '%d'", code);
+        THROW_FMT(AssertError, "could not find error type for code '%d'", code);
 
     return result;
 }
@@ -261,7 +261,7 @@ errorInternalTry(const char *fileName, int fileLine)
 {
     // If try total has been exceeded then throw an error
     if (errorContext.tryTotal >= ERROR_TRY_MAX)
-        errorInternalThrow(&AssertError, fileName, fileLine, "too many nested try blocks");
+        errorInternalThrowFmt(&AssertError, fileName, fileLine, "too many nested try blocks");
 
     // Increment try total
     errorContext.tryTotal++;
@@ -341,18 +341,46 @@ errorInternalProcess(bool catch)
 Throw an error
 ***********************************************************************************************************************************/
 void
-errorInternalThrow(const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
+errorInternalThrow(const ErrorType *errorType, const char *fileName, int fileLine, const char *message)
 {
     // Setup error data
     errorContext.error.errorType = errorType;
     errorContext.error.fileName = fileName;
     errorContext.error.fileLine = fileLine;
 
-    // Create message
+    // Assign message to the error
+    strcpy(messageBuffer, message);
+    errorContext.error.message = (const char *)messageBuffer;
+
+    // Propogate the error
+    errorInternalPropagate();
+}
+
+void
+errorInternalThrowFmt(const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
+{
+    // Format message
     va_list argument;
     va_start(argument, format);
     vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, format, argument);
     va_end(argument);
+
+    errorInternalThrow(errorType, fileName, fileLine, messageBufferTemp);
+}
+
+/***********************************************************************************************************************************
+Throw a system error
+***********************************************************************************************************************************/
+void
+errorInternalThrowSys(int errNo, const ErrorType *errorType, const char *fileName, int fileLine, const char *message)
+{
+    // Setup error data
+    errorContext.error.errorType = errorType;
+    errorContext.error.fileName = fileName;
+    errorContext.error.fileLine = fileLine;
+
+    // Append the system message
+    snprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, "%s: [%d] %s", message, errNo, strerror(errNo));
 
     // Assign message to the error
     strcpy(messageBuffer, messageBufferTemp);
@@ -362,18 +390,15 @@ errorInternalThrow(const ErrorType *errorType, const char *fileName, int fileLin
     errorInternalPropagate();
 }
 
-/***********************************************************************************************************************************
-Throw an error
-***********************************************************************************************************************************/
 void
-errorInternalThrowSys(int errNo, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
+errorInternalThrowSysFmt(int errNo, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
 {
     // Setup error data
     errorContext.error.errorType = errorType;
     errorContext.error.fileName = fileName;
     errorContext.error.fileLine = fileLine;
 
-    // Create message
+    // Format message
     va_list argument;
     va_start(argument, format);
     size_t messageSize = (size_t)vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, format, argument);

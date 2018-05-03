@@ -105,7 +105,7 @@ storageSpoolPathExpression(const String *expression, const String *path)
             result = strNewFmt("archive/%s/out/%s", strPtr(storageSpoolStanza), strPtr(path));
     }
     else
-        THROW(AssertError, "invalid expression '%s'", strPtr(expression));
+        THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));
 
     return result;
 }

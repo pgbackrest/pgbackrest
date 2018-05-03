@@ -210,7 +210,7 @@ pageChecksumBufferTest(
 {
     // If the buffer does not represent an even number of pages then error
     if (pageBufferSize % pageSize != 0 || pageBufferSize / pageSize == 0)
-        THROW(AssertError, "buffer size %d, page size %d are not divisible", pageBufferSize, pageSize);
+        THROW_FMT(AssertError, "buffer size %u, page size %u are not divisible", pageBufferSize, pageSize);
 
     // Loop through all pages in the buffer
     for (unsigned int pageIdx = 0; pageIdx < pageBufferSize / pageSize; pageIdx++)

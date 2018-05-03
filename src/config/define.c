@@ -259,14 +259,14 @@ void
 cfgDefCommandCheck(ConfigDefineCommand commandDefId)
 {
     if (commandDefId >= cfgDefCommandTotal())
-        THROW(AssertError, "command def id %d invalid - must be >= 0 and < %d", commandDefId, cfgDefCommandTotal());
+        THROW_FMT(AssertError, "command def id %u invalid - must be >= 0 and < %u", commandDefId, cfgDefCommandTotal());
 }
 
 void
 cfgDefOptionCheck(ConfigDefineOption optionDefId)
 {
     if (optionDefId >= cfgDefOptionTotal())
-        THROW(AssertError, "option def id %d invalid - must be >= 0 and < %d", optionDefId, cfgDefOptionTotal());
+        THROW_FMT(AssertError, "option def id %u invalid - must be >= 0 and < %u", optionDefId, cfgDefOptionTotal());
 }
 
 static void
@@ -317,7 +317,7 @@ cfgDefOptionAllowListValue(ConfigDefineCommand commandDefId, ConfigDefineOption 
     CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeAllowList);
 
     if (valueId < 0 || valueId >= dataDefListSize)
-        THROW(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
+        THROW_FMT(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
 
     return (char *)dataDefList[valueId];
 }
@@ -426,7 +426,7 @@ cfgDefOptionDependValue(ConfigDefineCommand commandDefId, ConfigDefineOption opt
     CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeDepend);
 
     if (valueId < 0 || valueId >= dataDefListSize)
-        THROW(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
+        THROW_FMT(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
 
     return (char *)dataDefList[valueId];
 }
@@ -492,7 +492,7 @@ cfgDefOptionHelpNameAltValue(ConfigDefineOption optionDefId, int valueId)
     CONFIG_DEFINE_DATA_FIND(-1, optionDefId, configDefDataTypeHelpNameAlt);
 
     if (valueId < 0 || valueId >= dataDefListSize)
-        THROW(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
+        THROW_FMT(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
 
     return (char *)dataDefList[valueId];
 }

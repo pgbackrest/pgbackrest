@@ -165,7 +165,7 @@ decodeToBinValidateBase64(const char *source)
     size_t sourceSize = strlen(source);
 
     if (sourceSize % 4 != 0)
-        THROW(FormatError, "base64 size %d is not evenly divisible by 4", sourceSize);
+        THROW_FMT(FormatError, "base64 size %zu is not evenly divisible by 4", sourceSize);
 
     // Check all characters
     for (unsigned int sourceIdx = 0; sourceIdx < sourceSize; sourceIdx++)
@@ -185,7 +185,7 @@ decodeToBinValidateBase64(const char *source)
         {
             // Error on any invalid characters
             if (decodeBase64Lookup[(int)source[sourceIdx]] == -1)
-                THROW(FormatError, "base64 invalid character found at position %d", sourceIdx);
+                THROW_FMT(FormatError, "base64 invalid character found at position %u", sourceIdx);
         }
     }
 }

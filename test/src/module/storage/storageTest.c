@@ -16,7 +16,7 @@ storageTestPathExpression(const String *expression, const String *path)
     if (strcmp(strPtr(expression), "<TEST>") == 0)
         result = strNewFmt("test%s", path == NULL ? "" : strPtr(strNewFmt("/%s", strPtr(path))));
     else if (strcmp(strPtr(expression), "<NULL>") != 0)
-        THROW(AssertError, "invalid expression '%s'", strPtr(expression));
+        THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));
 
     return result;
 }

@@ -76,7 +76,7 @@ iniGet(const Ini *this, const String *section, const String *key)
 
     // If value is null replace it with default
     if (result == NULL)
-        THROW(FormatError, "section '%s', key '%s' does not exist", strPtr(section), strPtr(key));
+        THROW_FMT(FormatError, "section '%s', key '%s' does not exist", strPtr(section), strPtr(key));
 
     return result;
 }
@@ -161,7 +161,7 @@ iniParse(Ini *this, const String *content)
                         {
                             // Make sure the section ends with ]
                             if (linePtr[strSize(line) - 1] != ']')
-                                THROW(FormatError, "ini section should end with ] at line %d: %s", lineIdx + 1, linePtr);
+                                THROW_FMT(FormatError, "ini section should end with ] at line %u: %s", lineIdx + 1, linePtr);
 
                             // Assign section
                             section = strNewN(linePtr + 1, strSize(line) - 2);
@@ -170,19 +170,19 @@ iniParse(Ini *this, const String *content)
                         else
                         {
                             if (section == NULL)
-                                THROW(FormatError, "key/value found outside of section at line %d: %s", lineIdx + 1, linePtr);
+                                THROW_FMT(FormatError, "key/value found outside of section at line %u: %s", lineIdx + 1, linePtr);
 
                             // Find the =
                             const char *lineEqual = strstr(linePtr, "=");
 
                             if (lineEqual == NULL)
-                                THROW(FormatError, "missing '=' in key/value at line %d: %s", lineIdx + 1, linePtr);
+                                THROW_FMT(FormatError, "missing '=' in key/value at line %u: %s", lineIdx + 1, linePtr);
 
                             // Extract the key
                             String *key = strTrim(strNewN(linePtr, (size_t)(lineEqual - linePtr)));
 
                             if (strSize(key) == 0)
-                                THROW(FormatError, "key is zero-length at line %d: %s", lineIdx++, linePtr);
+                                THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx++, linePtr);
 
                             // Extract the value
                             Variant *value = varNewStr(strTrim(strNew(lineEqual + 1)));

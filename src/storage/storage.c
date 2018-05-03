@@ -310,7 +310,7 @@ storagePath(const Storage *this, const String *pathExp)
                 if (!strBeginsWith(pathExp, this->path) ||
                     !(strSize(pathExp) == strSize(this->path) || *(strPtr(pathExp) + strSize(this->path)) == '/'))
                 {
-                    THROW(AssertError, "absolute path '%s' is not in base path '%s'", strPtr(pathExp), strPtr(this->path));
+                    THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strPtr(pathExp), strPtr(this->path));
                 }
             }
 
@@ -326,14 +326,14 @@ storagePath(const Storage *this, const String *pathExp)
             if ((strPtr(pathExp))[0] == '<')
             {
                 if (this->pathExpressionFunction == NULL)
-                    THROW(AssertError, "expression '%s' not valid without callback function", strPtr(pathExp));
+                    THROW_FMT(AssertError, "expression '%s' not valid without callback function", strPtr(pathExp));
 
                 // Get position of the expression end
                 char *end = strchr(strPtr(pathExp), '>');
 
                 // Error if end is not found
                 if (end == NULL)
-                    THROW(AssertError, "end > not found in path expression '%s'", strPtr(pathExp));
+                    THROW_FMT(AssertError, "end > not found in path expression '%s'", strPtr(pathExp));
 
                 // Create a string from the expression
                 String *expression = strNewN(strPtr(pathExp), (size_t)(end - strPtr(pathExp) + 1));
@@ -345,11 +345,11 @@ storagePath(const Storage *this, const String *pathExp)
                 {
                     // Error if path separator is not found
                     if (end[1] != '/')
-                        THROW(AssertError, "'/' should separate expression and path '%s'", strPtr(pathExp));
+                        THROW_FMT(AssertError, "'/' should separate expression and path '%s'", strPtr(pathExp));
 
                     // Only create path if there is something after the path separator
                     if (end[2] == 0)
-                        THROW(AssertError, "path '%s' should not end in '/'", strPtr(pathExp));
+                        THROW_FMT(AssertError, "path '%s' should not end in '/'", strPtr(pathExp));
 
                     path = strNew(end + 2);
                 }
@@ -359,7 +359,7 @@ storagePath(const Storage *this, const String *pathExp)
 
                 // Evaluated path cannot be NULL
                 if (pathEvaluated == NULL)
-                    THROW(AssertError, "evaluated path '%s' cannot be null", strPtr(pathExp));
+                    THROW_FMT(AssertError, "evaluated path '%s' cannot be null", strPtr(pathExp));
 
                 // Assign evaluated path to path
                 pathExp = pathEvaluated;

@@ -86,8 +86,8 @@ testRun()
         TEST_RESULT_INT(destinationDecode[1], 0xFF, "check for overrun");
         TEST_RESULT_INT(decodeToBinSize(encodeBase64, decode), 1, "check size");
 
-        TEST_ERROR(decodeToBin(-1, decode, destinationDecode), AssertError, "invalid encode type -1");
-        TEST_ERROR(decodeToBinSize(-1, decode), AssertError, "invalid encode type -1");
+        TEST_ERROR(decodeToBin(9999, decode, destinationDecode), AssertError, "invalid encode type 9999");
+        TEST_ERROR(decodeToBinSize(9999, decode), AssertError, "invalid encode type 9999");
         TEST_ERROR(decodeToBin(encodeBase64, "cc$=", destinationDecode), FormatError, "base64 invalid character found at position 2");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -103,6 +103,6 @@ testRun()
         TEST_RESULT_BOOL(decodeToBinValid(encodeBase64, "CCCCCCCCCCC"), false, "base64 string not valid");
         TEST_RESULT_BOOL(decodeToBinValid(encodeBase64, "CCCCCCCCCCCC"), true, "base64 string valid");
 
-        TEST_ERROR(decodeToBinValid(-999, "CCCCCCCCCCCC"), AssertError, "invalid encode type -999");
+        TEST_ERROR(decodeToBinValid(9999, "CCCCCCCCCCCC"), AssertError, "invalid encode type 9999");
     }
 }

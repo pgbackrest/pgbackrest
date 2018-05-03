@@ -79,7 +79,7 @@ logLevelEnum(const char *logLevel)
 
     // If the log level was not found
     if (result == LOG_LEVEL_TOTAL)
-        THROW(AssertError, "log level '%s' not found", logLevel);
+        THROW_FMT(AssertError, "log level '%s' not found", logLevel);
 
     return result;
 }
@@ -88,7 +88,7 @@ const char *
 logLevelStr(LogLevel logLevel)
 {
     if (logLevel >= LOG_LEVEL_TOTAL)
-        THROW(AssertError, "invalid log level '%d'", logLevel);
+        THROW_FMT(AssertError, "invalid log level '%u'", logLevel);
 
     return logLevelList[logLevel];
 }

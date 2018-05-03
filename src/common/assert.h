@@ -12,7 +12,7 @@ For very important asserts that are shipped with the production code
 #define ASSERT(condition)                                                                                                          \
 {                                                                                                                                  \
     if (!(condition))                                                                                                              \
-        THROW(AssertError, "assertion '%s' failed", #condition);                                                                   \
+        THROW_FMT(AssertError, "assertion '%s' failed", #condition);                                                               \
 }
 
 /***********************************************************************************************************************************
@@ -23,7 +23,7 @@ be too expensive to ship with the production code.
     #define ASSERT_DEBUG(condition)                                                                                                \
     {                                                                                                                              \
         if (!(condition))                                                                                                          \
-            THROW(AssertError, "debug assertion '%s' failed", #condition);                                                         \
+            THROW_FMT(AssertError, "debug assertion '%s' failed", #condition);                                                     \
     }
 #else
     #define ASSERT_DEBUG(condition)

@@ -12,7 +12,7 @@ Binary to String Encode/Decode
 Macro to handle invalid encode type errors
 ***********************************************************************************************************************************/
 #define ENCODE_TYPE_INVALID_ERROR(encodeType)                                                                                      \
-    THROW(AssertError, "invalid encode type %d", encodeType);
+    THROW_FMT(AssertError, "invalid encode type %u", encodeType);
 
 /***********************************************************************************************************************************
 Encode binary data to a printable string

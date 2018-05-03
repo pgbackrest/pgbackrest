@@ -33,7 +33,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
             // If more than one status file was found then assert - this could be a bug in the async process
             if (strLstSize(fileList) != 1)
             {
-                THROW(
+                THROW_FMT(
                     AssertError, "multiple status files found in '%s' for WAL segment '%s'",
                     strPtr(storagePath(storageSpool(), spoolQueue)), strPtr(walSegment));
             }
@@ -55,11 +55,11 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
 
                 // Error if linefeed not found
                 if (linefeedPtr == NULL)
-                    THROW(FormatError, "%s content must have at least two lines", strPtr(statusFile));
+                    THROW_FMT(FormatError, "%s content must have at least two lines", strPtr(statusFile));
 
                 // Error if message is zero-length
                 if (strlen(linefeedPtr + 1) == 0)
-                    THROW(FormatError, "%s message must be > 0", strPtr(statusFile));
+                    THROW_FMT(FormatError, "%s message must be > 0", strPtr(statusFile));
 
                 // Get contents
                 code = varIntForce(varNewStr(strNewN(strPtr(content), (size_t)(linefeedPtr - strPtr(content)))));
@@ -89,7 +89,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
             {
                 // Error status files must have content
                 if (strSize(content) == 0)
-                    THROW(AssertError, "status file '%s' has no content", strPtr(statusFile));
+                    THROW_FMT(AssertError, "status file '%s' has no content", strPtr(statusFile));
 
                 // Throw error using the code passed in the file
                 THROW_CODE(code, strPtr(message));

@@ -25,20 +25,10 @@ testRun()
             optionIdInvalidHighError, sizeof(optionIdInvalidHighError), "option id %d invalid - must be >= 0 and < %d",
             CFG_OPTION_TOTAL, CFG_OPTION_TOTAL);
 
-        char optionIdInvalidLowError[256];
-        snprintf(
-            optionIdInvalidLowError, sizeof(optionIdInvalidLowError), "option id -1 invalid - must be >= 0 and < %d",
-            CFG_OPTION_TOTAL);
-
         char commandIdInvalidHighError[256];
         snprintf(
             commandIdInvalidHighError, sizeof(commandIdInvalidHighError), "command id %d invalid - must be >= 0 and < %d",
             CFG_COMMAND_TOTAL, CFG_COMMAND_TOTAL);
-
-        char commandIdInvalidLowError[256];
-        snprintf(
-            commandIdInvalidLowError, sizeof(commandIdInvalidLowError), "command id -1 invalid - must be >= 0 and < %d",
-            CFG_COMMAND_TOTAL);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(cfgCommandId(BOGUS_STR), AssertError, "invalid command 'BOGUS'");
@@ -47,7 +37,6 @@ testRun()
         TEST_ERROR(cfgCommandDefIdFromId(CFG_COMMAND_TOTAL), AssertError, commandIdInvalidHighError);
         TEST_RESULT_INT(cfgCommandDefIdFromId(cfgCmdBackup), cfgDefCmdBackup, "command id to def id");
 
-        TEST_ERROR(cfgCommandName(-1), AssertError, commandIdInvalidLowError);
         TEST_RESULT_STR(cfgCommandName(cfgCmdBackup), "backup", "command name from id");
 
         TEST_RESULT_INT(cfgOptionDefIdFromId(cfgOptPgHost + 6), cfgDefOptPgHost, "option id to def id");
@@ -65,7 +54,6 @@ testRun()
         TEST_RESULT_INT(cfgOptionIndexTotal(cfgOptPgPath), 8, "option index total");
         TEST_RESULT_INT(cfgOptionIndexTotal(cfgOptLogLevelConsole), 1, "option index total");
 
-        TEST_ERROR(cfgOptionName(-1), AssertError, optionIdInvalidLowError);
         TEST_RESULT_STR(cfgOptionName(cfgOptBackupStandby), "backup-standby", "option id from name");
     }
 

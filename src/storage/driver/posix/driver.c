@@ -34,7 +34,7 @@ storageDriverPosixExists(const String *path)
     if (stat(strPtr(path), &statFile) == -1)
     {
         if (errno != ENOENT)
-            THROW_SYS_ERROR(FileOpenError, "unable to stat '%s'", strPtr(path));
+            THROW_SYS_ERROR_FMT(FileOpenError, "unable to stat '%s'", strPtr(path));
     }
     // Else found
     else
@@ -57,7 +57,7 @@ storageDriverPosixInfo(const String *file, bool ignoreMissing)
     if (lstat(strPtr(file), &statFile) == -1)
     {
         if (errno != ENOENT || !ignoreMissing)
-            THROW_SYS_ERROR(FileOpenError, "unable to get info for '%s'", strPtr(file));
+            THROW_SYS_ERROR_FMT(FileOpenError, "unable to get info for '%s'", strPtr(file));
     }
     // On success load info into a structure
     else
@@ -74,7 +74,7 @@ storageDriverPosixInfo(const String *file, bool ignoreMissing)
         else if (S_ISLNK(statFile.st_mode))
             result.type = storageTypeLink;
         else
-            THROW(FileInfoError, "invalid type for '%s'", strPtr(file));
+            THROW_FMT(FileInfoError, "invalid type for '%s'", strPtr(file));
 
         result.mode = statFile.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
     }
@@ -100,7 +100,7 @@ storageDriverPosixList(const String *path, bool errorOnMissing, const String *ex
         if (!dir)
         {
             if (errorOnMissing || errno != ENOENT)
-                THROW_SYS_ERROR(PathOpenError, "unable to open path '%s' for read", strPtr(path));
+                THROW_SYS_ERROR_FMT(PathOpenError, "unable to open path '%s' for read", strPtr(path));
         }
         else
         {
@@ -165,11 +165,11 @@ storageDriverPosixMove(StorageFileReadPosix *source, StorageFileWritePosix *dest
             if (errno == ENOENT)
             {
                 if (!storageDriverPosixExists(sourceFile))
-                    THROW_SYS_ERROR(FileMissingError, "unable to move missing file '%s'", strPtr(sourceFile));
+                    THROW_SYS_ERROR_FMT(FileMissingError, "unable to move missing file '%s'", strPtr(sourceFile));
 
                 if (!storageFileWritePosixCreatePath(destination))
                 {
-                    THROW_SYS_ERROR(
+                    THROW_SYS_ERROR_FMT(
                         PathMissingError, "unable to move '%s' to missing path '%s'", strPtr(sourceFile), strPtr(destinationPath));
                 }
 
@@ -182,7 +182,7 @@ storageDriverPosixMove(StorageFileReadPosix *source, StorageFileWritePosix *dest
                 result = false;
             }
             else
-                THROW_SYS_ERROR(FileMoveError, "unable to move '%s' to '%s'", strPtr(sourceFile), strPtr(destinationFile));
+                THROW_SYS_ERROR_FMT(FileMoveError, "unable to move '%s' to '%s'", strPtr(sourceFile), strPtr(destinationFile));
         }
         // Sync paths on success
         else
@@ -219,7 +219,7 @@ storageDriverPosixPathCreate(const String *path, bool errorOnExists, bool noPare
         }
         // Ignore path exists if allowed
         else if (errno != EEXIST || errorOnExists)
-            THROW_SYS_ERROR(PathCreateError, "unable to create path '%s'", strPtr(path));
+            THROW_SYS_ERROR_FMT(PathCreateError, "unable to create path '%s'", strPtr(path));
     }
 }
 
@@ -253,7 +253,7 @@ storageDriverPosixPathRemove(const String *path, bool errorOnMissing, bool recur
                             storageDriverPosixPathRemove(file, false, true);
                         // Else error
                         else
-                            THROW_SYS_ERROR(PathRemoveError, "unable to remove path/file '%s'", strPtr(file));
+                            THROW_SYS_ERROR_FMT(PathRemoveError, "unable to remove path/file '%s'", strPtr(file));
                     }
                 }
             }
@@ -263,7 +263,7 @@ storageDriverPosixPathRemove(const String *path, bool errorOnMissing, bool recur
         if (rmdir(strPtr(path)) == -1)
         {
             if (errorOnMissing || errno != ENOENT)
-                THROW_SYS_ERROR(PathRemoveError, "unable to remove path '%s'", strPtr(path));
+                THROW_SYS_ERROR_FMT(PathRemoveError, "unable to remove path '%s'", strPtr(path));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -299,6 +299,6 @@ storageDriverPosixRemove(const String *file, bool errorOnMissing)
     if (unlink(strPtr(file)) == -1)
     {
         if (errorOnMissing || errno != ENOENT)
-            THROW_SYS_ERROR(FileRemoveError, "unable to remove '%s'", strPtr(file));
+            THROW_SYS_ERROR_FMT(FileRemoveError, "unable to remove '%s'", strPtr(file));
     }
 }

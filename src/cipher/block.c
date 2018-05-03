@@ -54,7 +54,7 @@ cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pas
     const EVP_CIPHER *cipher = EVP_get_cipherbyname(cipherName);
 
     if (!cipher)
-        THROW(AssertError, "unable to load cipher '%s'", cipherName);
+        THROW_FMT(AssertError, "unable to load cipher '%s'", cipherName);
 
     // Lookup digest.  If not defined it will be set to sha1.
     const EVP_MD *digest = NULL;
@@ -65,7 +65,7 @@ cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pas
         digest = EVP_sha1();
 
     if (!digest)
-        THROW(AssertError, "unable to load digest '%s'", digestName);
+        THROW_FMT(AssertError, "unable to load digest '%s'", digestName);
 
     // Allocate memory to hold process state
     CipherBlock *this = NULL;

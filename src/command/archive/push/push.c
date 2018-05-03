@@ -110,7 +110,7 @@ cmdArchivePush()
                 // If the WAL segment was not pushed then error
                 if (!pushed)
                 {
-                    THROW(
+                    THROW_FMT(
                         ArchiveTimeoutError, "unable to push WAL segment '%s' asynchronously after %lg second(s)",
                         strPtr(walSegment), cfgOptionDbl(cfgOptArchiveTimeout));
                 }

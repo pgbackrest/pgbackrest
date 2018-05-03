@@ -178,7 +178,7 @@ testRun()
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("THROW_CODE()"))
+    if (testBegin("THROW_CODE() and THROW_CODE_FMT()"))
     {
         TRY_BEGIN()
         {
@@ -188,6 +188,18 @@ testRun()
         {
             assert(errorCode() == 25);
             assert(strcmp(errorMessage(), "message") == 0);
+        }
+        TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TRY_BEGIN()
+        {
+            THROW_CODE_FMT(122, "message %d", 1);
+        }
+        CATCH_ANY()
+        {
+            assert(errorCode() == 122);
+            assert(strcmp(errorMessage(), "message 1") == 0);
         }
         TRY_END();
 
@@ -205,7 +217,7 @@ testRun()
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("THROW_SYS_ERROR()"))
+    if (testBegin("THROW_SYS_ERROR() and THROW_SYS_ERROR_FMT()"))
     {
         TRY_BEGIN()
         {
@@ -217,6 +229,20 @@ testRun()
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
             assert(strcmp(errorMessage(), "message: [7] Argument list too long") == 0);
+        }
+        TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TRY_BEGIN()
+        {
+            errno = EIO;
+            THROW_SYS_ERROR_FMT(AssertError, "message %d", 1);
+        }
+        CATCH_ANY()
+        {
+            printf("%s\n", errorMessage());
+            assert(errorCode() == AssertError.code);
+            assert(strcmp(errorMessage(), "message 1: [5] Input/output error") == 0);
         }
         TRY_END();
     }

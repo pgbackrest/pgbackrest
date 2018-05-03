@@ -37,7 +37,7 @@ pgVersionMap(uint32_t controlVersion, uint32_t catalogVersion)
         result = PG_VERSION_83;
     else
     {
-        THROW(
+        THROW_FMT(
             VersionNotSupportedError,
             "unexpected control version = %u and catalog version = %u\n"
                 "HINT: is this version of PostgreSQL supported?",

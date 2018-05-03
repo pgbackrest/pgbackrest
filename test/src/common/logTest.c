@@ -53,7 +53,7 @@ testLogResult(const char *expected)
     String *actual = strTrim(strNewBuf(storageGetNP(storageNewReadNP(storageLocal(), stdoutFile))));
 
     if (!strEqZ(actual, expected))
-        THROW(AssertError, "\n\nexpected log:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expected, strPtr(actual));
+        THROW_FMT(AssertError, "\n\nexpected log:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expected, strPtr(actual));
 
     close(logHandleStdOut);
     logHandleStdOut = open(strPtr(stdoutFile), O_WRONLY | O_CREAT | O_TRUNC, 0640);
@@ -70,7 +70,7 @@ testLogErrResult(const char *expected)
     String *actual = strTrim(strNewBuf(storageGetNP(storageNewReadNP(storageLocal(), stderrFile))));
 
     if (!strEqZ(actual, expected))
-        THROW(AssertError, "\n\nexpected error log:\n\n%s\n\nbut actual error log was:\n\n%s\n\n", expected, strPtr(actual));
+        THROW_FMT(AssertError, "\n\nexpected error log:\n\n%s\n\nbut actual error log was:\n\n%s\n\n", expected, strPtr(actual));
 
     close(logHandleStdErr);
     logHandleStdErr = open(strPtr(stderrFile), O_WRONLY | O_CREAT | O_TRUNC, 0640);
@@ -85,12 +85,12 @@ testLogFinal()
     String *actual = strTrim(strNewBuf(storageGetNP(storageNewReadNP(storageLocal(), stdoutFile))));
 
     if (!strEqZ(actual, ""))
-        THROW(AssertError, "\n\nexpected log to be empty but actual log was:\n\n%s\n\n", strPtr(actual));
+        THROW_FMT(AssertError, "\n\nexpected log to be empty but actual log was:\n\n%s\n\n", strPtr(actual));
 
     actual = strTrim(strNewBuf(storageGetNP(storageNewReadNP(storageLocal(), stderrFile))));
 
     if (!strEqZ(actual, ""))
-        THROW(AssertError, "\n\nexpected error log to be empty but actual error log was:\n\n%s\n\n", strPtr(actual));
+        THROW_FMT(AssertError, "\n\nexpected error log to be empty but actual error log was:\n\n%s\n\n", strPtr(actual));
 }
 
 #endif

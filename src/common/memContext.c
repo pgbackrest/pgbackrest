@@ -69,7 +69,7 @@ memAllocInternal(size_t size, bool zero)
 
     // Error when malloc fails
     if (buffer == NULL)
-        THROW(MemoryError, "unable to allocate %lu bytes", size);
+        THROW_FMT(MemoryError, "unable to allocate %zu bytes", size);
 
     // Zero the memory when requested
     if (zero)
@@ -90,7 +90,7 @@ memReAllocInternal(void *bufferOld, size_t sizeOld, size_t sizeNew, bool zeroNew
 
     // Error when realloc fails
     if (bufferNew == NULL)
-        THROW(MemoryError, "unable to reallocate %lu bytes", sizeNew);
+        THROW_FMT(MemoryError, "unable to reallocate %zu bytes", sizeNew);
 
     // Zero the new memory when requested - old memory is left untouched else why bother with a realloc?
     if (zeroNew)
@@ -171,7 +171,7 @@ memContextNew(const char *name)
 {
     // Check context name length
     if (strlen(name) == 0 || strlen(name) > MEM_CONTEXT_NAME_SIZE)
-        THROW(AssertError, "context name length must be > 0 and <= %d", MEM_CONTEXT_NAME_SIZE);
+        THROW_FMT(AssertError, "context name length must be > 0 and <= %d", MEM_CONTEXT_NAME_SIZE);
 
     // Find space for the new context
     unsigned int contextIdx = memContextNewIndex(memContextCurrent(), true);
@@ -216,7 +216,7 @@ memContextCallback(MemContext *this, void (*callbackFunction)(void *), void *cal
 
     // Error if callback has already been set - there may be valid use cases for this but error until one is found
     if (this->callbackFunction)
-        THROW(AssertError, "callback is already set for context '%s'", this->name);
+        THROW_FMT(AssertError, "callback is already set for context '%s'", this->name);
 
     // Set callback function and argument
     this->callbackFunction = callbackFunction;
@@ -443,7 +443,7 @@ memContextFree(MemContext *this)
 
     // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
     if (this == memContextCurrent() && this != memContextTop())
-        THROW(AssertError, "cannot free current context '%s'", this->name);
+        THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
 
     // Error if context is not active
     if (this->state != memContextStateActive)

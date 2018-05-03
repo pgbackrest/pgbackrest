@@ -136,7 +136,7 @@ testRun()
                 THROW_SYS_ERROR(AssertError, "unable to find child process");               // {uncoverable+}
 
             if (WEXITSTATUS(processStatus) != 0)
-                THROW(AssertError, "perl exited with error %d", WEXITSTATUS(processStatus));
+                THROW_FMT(AssertError, "perl exited with error %d", WEXITSTATUS(processStatus));
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -162,7 +162,7 @@ testRun()
                 THROW_SYS_ERROR(AssertError, "unable to find child process");               // {uncoverable+}
 
             if (WEXITSTATUS(processStatus) != 0)
-                THROW(AssertError, "perl exited with error %d", WEXITSTATUS(processStatus));
+                THROW_FMT(AssertError, "perl exited with error %d", WEXITSTATUS(processStatus));
         }
 
         // Make sure the process times out when there is nothing to get

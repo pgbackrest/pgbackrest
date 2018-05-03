@@ -77,7 +77,7 @@ cfgLoadUpdateOption()
             cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, varNewDbl(cfgOptionDbl(cfgOptDbTimeout) + 30));
         else
         {
-            THROW(OptionInvalidValueError,
+            THROW_FMT(OptionInvalidValueError,
                 "'%f' is not valid for '%s' option\nHINT '%s' option (%f) should be greater than '%s' option (%f).",
                 cfgOptionDbl(cfgOptProtocolTimeout), cfgOptionName(cfgOptProtocolTimeout),
                 cfgOptionName(cfgOptProtocolTimeout), cfgOptionDbl(cfgOptProtocolTimeout), cfgOptionName(cfgOptDbTimeout),
@@ -105,7 +105,7 @@ cfgLoadUpdateOption()
             for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptRepoHost); optionIdx++)
             {
                 if (cfgOptionTest(cfgOptRepoHost + optionIdx))
-                    THROW(ConfigError, "pg and repo hosts cannot both be configured as remote");
+                    THROW_FMT(ConfigError, "pg and repo hosts cannot both be configured as remote");
             }
         }
     }

@@ -20,24 +20,13 @@ testRun()
             optionIdInvalidHighError, sizeof(optionIdInvalidHighError), "option def id %u invalid - must be >= 0 and < %u",
             cfgDefOptionTotal(), cfgDefOptionTotal());
 
-        char optionIdInvalidLowError[256];
-        snprintf(
-            optionIdInvalidLowError, sizeof(optionIdInvalidLowError), "option def id -1 invalid - must be >= 0 and < %u",
-            cfgDefOptionTotal());
-
         char commandIdInvalidHighError[256];
         snprintf(
             commandIdInvalidHighError, sizeof(commandIdInvalidHighError), "command def id %u invalid - must be >= 0 and < %u",
             cfgDefCommandTotal(), cfgDefCommandTotal());
 
-        char commandIdInvalidLowError[256];
-        snprintf(
-            commandIdInvalidLowError, sizeof(commandIdInvalidLowError), "command def id -1 invalid - must be >= 0 and < %u",
-            cfgDefCommandTotal());
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(cfgDefOptionName(cfgDefOptConfig), "config", "option name");
-        TEST_ERROR(cfgDefOptionName(-1), AssertError, optionIdInvalidLowError);
 
         TEST_RESULT_INT(cfgDefOptionId("repo-host"), cfgDefOptRepoHost, "define id");
         TEST_RESULT_INT(cfgDefOptionId(BOGUS_STR), -1, "invalid define id");
@@ -69,7 +58,7 @@ testRun()
         TEST_RESULT_DOUBLE(
             cfgDefOptionAllowRangeMax(cfgDefCmdArchivePush, cfgDefOptArchivePushQueueMax), 4503599627370496, "range max");
 
-        TEST_ERROR(cfgDefOptionDefault(-1, cfgDefOptCompressLevel), AssertError, commandIdInvalidLowError);
+        TEST_ERROR(cfgDefOptionDefault(cfgDefCommandTotal(), cfgDefOptCompressLevel), AssertError, commandIdInvalidHighError);
         TEST_ERROR(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptionTotal()), AssertError, optionIdInvalidHighError);
         TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptCompressLevel), "6", "option default exists");
         TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptType), "default", "command default exists");
@@ -114,11 +103,9 @@ testRun()
         TEST_RESULT_INT(cfgDefOptionSection(cfgDefOptPgPath), cfgDefSectionStanza, "stanza section");
         TEST_RESULT_INT(cfgDefOptionSection(cfgDefOptType), cfgDefSectionCommandLine, "command line only");
 
-        TEST_ERROR(cfgDefOptionSecure(-1), AssertError, optionIdInvalidLowError);
         TEST_RESULT_BOOL(cfgDefOptionSecure(cfgDefOptRepoS3Key), true, "option secure");
         TEST_RESULT_BOOL(cfgDefOptionSecure(cfgDefOptRepoHost), false, "option not secure");
 
-        TEST_ERROR(cfgDefOptionType(-1), AssertError, optionIdInvalidLowError);
         TEST_RESULT_INT(cfgDefOptionType(cfgDefOptType), cfgDefOptTypeString, "string type");
         TEST_RESULT_INT(cfgDefOptionType(cfgDefOptCompress), cfgDefOptTypeBoolean, "boolean type");
 

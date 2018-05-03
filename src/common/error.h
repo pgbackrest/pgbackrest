@@ -117,26 +117,40 @@ error information to stderr.
 
 The seldom used "THROWP" variants allow an error to be thrown with a pointer to the error type.
 ***********************************************************************************************************************************/
-#define THROW(errorType, ...)                                                                                                      \
-    errorInternalThrow(&errorType, __FILE__, __LINE__, __VA_ARGS__)
-#define THROWP(errorType, ...)                                                                                                     \
-    errorInternalThrow(errorType, __FILE__, __LINE__, __VA_ARGS__)
+#define THROW(errorType, message)                                                                                                  \
+    errorInternalThrow(&errorType, __FILE__, __LINE__, message)
+#define THROW_FMT(errorType, ...)                                                                                                  \
+    errorInternalThrowFmt(&errorType, __FILE__, __LINE__, __VA_ARGS__)
+#define THROWP(errorType, message)                                                                                                 \
+    errorInternalThrow(errorType, __FILE__, __LINE__, message)
+#define THROWP_FMT(errorType, ...)                                                                                                 \
+    errorInternalThrowFmt(errorType, __FILE__, __LINE__, __VA_ARGS__)
 
-#define THROW_CODE(errorCode, ...)                                                                                                 \
-    errorInternalThrow(errorTypeFromCode(errorCode), __FILE__, __LINE__, __VA_ARGS__)
+#define THROW_CODE(errorCode, message)                                                                                             \
+    errorInternalThrow(errorTypeFromCode(errorCode), __FILE__, __LINE__, message)
+#define THROW_CODE_FMT(errorCode, ...)                                                                                             \
+    errorInternalThrowFmt(errorTypeFromCode(errorCode), __FILE__, __LINE__, __VA_ARGS__)
 
 /***********************************************************************************************************************************
 Throw an error when a system call fails
 ***********************************************************************************************************************************/
-#define THROW_SYS_ERROR(errorType, ...)                                                                                            \
-    errorInternalThrowSys(errno, &errorType, __FILE__, __LINE__, __VA_ARGS__)
-#define THROWP_SYS_ERROR(errorType, ...)                                                                                           \
-    errorInternalThrowSys(errno, errorType, __FILE__, __LINE__, __VA_ARGS__)
+#define THROW_SYS_ERROR(errorType, message)                                                                                        \
+    errorInternalThrowSys(errno, &errorType, __FILE__, __LINE__, message)
+#define THROW_SYS_ERROR_FMT(errorType, ...)                                                                                        \
+    errorInternalThrowSysFmt(errno, &errorType, __FILE__, __LINE__, __VA_ARGS__)
+#define THROWP_SYS_ERROR(errorType, message)                                                                                       \
+    errorInternalThrowSys(errno, errorType, __FILE__, __LINE__, message)
+#define THROWP_SYS_ERROR_FMT(errorType, ...)                                                                                       \
+    errorInternalThrowSysFmt(errno, errorType, __FILE__, __LINE__, __VA_ARGS__)
 
-#define THROW_SYS_ERROR_CODE(errNo, errorType, ...)                                                                                \
-    errorInternalThrowSys(errNo, &errorType, __FILE__, __LINE__, __VA_ARGS__)
-#define THROWP_SYS_ERROR_CODE(errNo, errorType, ...)                                                                               \
-    errorInternalThrowSys(errNo, errorType, __FILE__, __LINE__, __VA_ARGS__)
+#define THROW_SYS_ERROR_CODE(errNo, errorType, message)                                                                            \
+    errorInternalThrowSys(errNo, &errorType, __FILE__, __LINE__, message)
+#define THROW_SYS_ERROR_CODE_FMT(errNo, errorType, ...)                                                                            \
+    errorInternalThrowSysFmt(errNo, &errorType, __FILE__, __LINE__, __VA_ARGS__)
+#define THROWP_SYS_ERROR_CODE(errNo, errorType, message)                                                                           \
+    errorInternalThrowSys(errNo, errorType, __FILE__, __LINE__, message)
+#define THROWP_SYS_ERROR_CODE_FMT(errNo, errorType, ...)                                                                           \
+    errorInternalThrowSysFmt(errNo, errorType, __FILE__, __LINE__, __VA_ARGS__)
 
 /***********************************************************************************************************************************
 Rethrow the current error
@@ -157,7 +171,14 @@ bool errorInternalStateFinal();
 bool errorInternalProcess(bool catch);
 void errorInternalPropagate() __attribute__((__noreturn__));
 void errorInternalThrow(
-    const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...) __attribute__((__noreturn__));
-void errorInternalThrowSys(int errNo, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...);
+    const ErrorType *errorType, const char *fileName, int fileLine, const char *message) __attribute__((__noreturn__));
+void errorInternalThrowFmt(
+    const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
+    __attribute__((__noreturn__)) __attribute__((format(printf, 4, 5)));
+void errorInternalThrowSys(
+    int errNo, const ErrorType *errorType, const char *fileName, int fileLine, const char *message);
+void errorInternalThrowSysFmt(
+    int errNo, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
+    __attribute__((format(printf, 5, 6)));
 
 #endif

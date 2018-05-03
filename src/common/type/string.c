@@ -449,7 +449,7 @@ strTrunc(String *this, int idx)
 {
     // If the index position is outside the array boundaries then error
     if (idx < 0 || (size_t)idx > this->size)
-        THROW(AssertError, "index passed is outside the string boundaries");
+        THROW_FMT(AssertError, "index passed is outside the string boundaries");
 
     if (this->size > 0)
     {

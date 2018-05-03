@@ -99,7 +99,7 @@ lockAcquireFile(const String *lockFile, double lockTimeout, bool failOnNoLock)
                         strPtr(lockFile));
                 }
 
-                THROW(
+                THROW_FMT(
                     LockAcquireError, "unable to acquire lock on file '%s': %s%s",
                     strPtr(lockFile), strerror(errNo), errorHint == NULL ? "" : strPtr(errorHint));
             }

@@ -82,7 +82,7 @@ lstGet(const List *this, unsigned int listIdx)
 {
     // Ensure list index is in range
     if (listIdx >= this->listSize)
-        THROW(AssertError, "cannot get index %d from list with %d value(s)", listIdx, this->listSize);
+        THROW_FMT(AssertError, "cannot get index %u from list with %u value(s)", listIdx, this->listSize);
 
     // Return pointer to list item
     return this->list + (listIdx * this->itemSize);

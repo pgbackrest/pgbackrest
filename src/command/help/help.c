@@ -294,7 +294,7 @@ helpRender()
                     if (cfgDefOptionId(optionName) != -1)
                         optionId = cfgOptionIdFromDefId(cfgDefOptionId(optionName), 0);
                     else
-                        THROW(OptionInvalidError, "option '%s' is not valid for command '%s'", optionName, commandName);
+                        THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", optionName, commandName);
                 }
 
                 // Output option summary and description

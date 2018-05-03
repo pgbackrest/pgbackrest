@@ -96,7 +96,7 @@ storageFileReadPosix(StorageFileReadPosix *this)
 
         // Error occurred during write
         if (actualBytes == -1)
-            THROW_SYS_ERROR(FileReadError, "unable to read '%s'", strPtr(this->name));
+            THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strPtr(this->name));
 
         // If no data was read then free the buffer and mark the file as EOF
         if (actualBytes == 0)

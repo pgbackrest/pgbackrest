@@ -28,7 +28,7 @@ storageFilePosixOpen(
     if (result == -1)
     {
         if (errno != ENOENT || !ignoreMissing)
-            THROWP_SYS_ERROR(errorType, "unable to open '%s' for %s", strPtr(name), purpose);
+            THROWP_SYS_ERROR_FMT(errorType, "unable to open '%s' for %s", strPtr(name), purpose);
     }
 
     return result;
@@ -48,7 +48,7 @@ storageFilePosixSync(int handle, const String *name, const ErrorType *errorType,
         if (closeOnError)
             close(handle);
 
-        THROWP_SYS_ERROR_CODE(errNo, errorType, "unable to sync '%s'", strPtr(name));
+        THROWP_SYS_ERROR_CODE_FMT(errNo, errorType, "unable to sync '%s'", strPtr(name));
     }
 }
 
@@ -59,5 +59,5 @@ void
 storageFilePosixClose(int handle, const String *name, const ErrorType *errorType)
 {
     if (close(handle) == -1)
-        THROWP_SYS_ERROR(errorType, "unable to close '%s'", strPtr(name));
+        THROWP_SYS_ERROR_FMT(errorType, "unable to close '%s'", strPtr(name));
 }

@@ -114,7 +114,7 @@ storageFileWritePosix(StorageFileWritePosix *this, const Buffer *buffer)
 
     // Write the data
     if (write(this->handle, bufPtr(buffer), bufSize(buffer)) != (ssize_t)bufSize(buffer))
-        THROW_SYS_ERROR(FileWriteError, "unable to write '%s'", strPtr(this->name));
+        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strPtr(this->name));
 }
 
 /***********************************************************************************************************************************
@@ -139,7 +139,7 @@ storageFileWritePosixClose(StorageFileWritePosix *this)
         if (!this->noAtomic)
         {
             if (rename(strPtr(this->nameTmp), strPtr(this->name)) == -1)
-                THROW_SYS_ERROR(FileMoveError, "unable to move '%s' to '%s'", strPtr(this->nameTmp), strPtr(this->name));
+                THROW_SYS_ERROR_FMT(FileMoveError, "unable to move '%s' to '%s'", strPtr(this->nameTmp), strPtr(this->name));
         }
 
         // Sync the path

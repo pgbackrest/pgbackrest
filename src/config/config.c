@@ -178,7 +178,7 @@ void
 cfgCommandCheck(ConfigCommand commandId)
 {
     if (commandId >= CFG_COMMAND_TOTAL)
-        THROW(AssertError, "command id %d invalid - must be >= 0 and < %d", commandId, CFG_COMMAND_TOTAL);
+        THROW_FMT(AssertError, "command id %u invalid - must be >= 0 and < %d", commandId, CFG_COMMAND_TOTAL);
 }
 
 /***********************************************************************************************************************************
@@ -222,7 +222,7 @@ cfgCommandId(const char *commandName)
             break;
 
     if (commandId == cfgCmdNone)
-        THROW(AssertError, "invalid command '%s'", commandName);
+        THROW_FMT(AssertError, "invalid command '%s'", commandName);
 
     return commandId;
 }
@@ -341,7 +341,7 @@ void
 cfgOptionCheck(ConfigOption optionId)
 {
     if (optionId >= CFG_OPTION_TOTAL)
-        THROW(AssertError, "option id %d invalid - must be >= 0 and < %d", optionId, CFG_OPTION_TOTAL);
+        THROW_FMT(AssertError, "option id %u invalid - must be >= 0 and < %d", optionId, CFG_OPTION_TOTAL);
 }
 
 /***********************************************************************************************************************************
@@ -400,7 +400,7 @@ cfgOptionDefault(ConfigOption optionId)
                             break;
 
                         default:
-                            THROW(                                  // {uncoverable - others types do not have defaults yet}
+                            THROW_FMT(                              // {uncoverable - others types do not have defaults yet}
                                 AssertError, "type for option '%s' does not support defaults", cfgOptionName(optionId));
                     }
                 }
@@ -548,7 +548,7 @@ cfgOptionBool(ConfigOption optionId)
     cfgOptionCheck(optionId);
 
     if (varType(configOptionValue[optionId].value) != varTypeBool)
-        THROW(AssertError, "option '%s' is not type 'bool'", cfgOptionName(optionId));
+        THROW_FMT(AssertError, "option '%s' is not type 'bool'", cfgOptionName(optionId));
 
     return varBool(configOptionValue[optionId].value);
 }
@@ -559,7 +559,7 @@ cfgOptionDbl(ConfigOption optionId)
     cfgOptionCheck(optionId);
 
     if (varType(configOptionValue[optionId].value) != varTypeDouble)
-        THROW(AssertError, "option '%s' is not type 'double'", cfgOptionName(optionId));
+        THROW_FMT(AssertError, "option '%s' is not type 'double'", cfgOptionName(optionId));
 
     return varDbl(configOptionValue[optionId].value);
 }
@@ -570,7 +570,7 @@ cfgOptionInt(ConfigOption optionId)
     cfgOptionCheck(optionId);
 
     if (varType(configOptionValue[optionId].value) != varTypeInt64)
-        THROW(AssertError, "option '%s' is not type 'int64'", cfgOptionName(optionId));
+        THROW_FMT(AssertError, "option '%s' is not type 'int64'", cfgOptionName(optionId));
 
     return varIntForce(configOptionValue[optionId].value);
 }
@@ -581,7 +581,7 @@ cfgOptionInt64(ConfigOption optionId)
     cfgOptionCheck(optionId);
 
     if (varType(configOptionValue[optionId].value) != varTypeInt64)
-        THROW(AssertError, "option '%s' is not type 'int64'", cfgOptionName(optionId));
+        THROW_FMT(AssertError, "option '%s' is not type 'int64'", cfgOptionName(optionId));
 
     return varInt64(configOptionValue[optionId].value);
 }
@@ -592,7 +592,7 @@ cfgOptionKv(ConfigOption optionId)
     cfgOptionCheck(optionId);
 
     if (varType(configOptionValue[optionId].value) != varTypeKeyValue)
-        THROW(AssertError, "option '%s' is not type 'KeyValue'", cfgOptionName(optionId));
+        THROW_FMT(AssertError, "option '%s' is not type 'KeyValue'", cfgOptionName(optionId));
 
     return varKv(configOptionValue[optionId].value);
 }
@@ -611,7 +611,7 @@ cfgOptionLst(ConfigOption optionId)
         MEM_CONTEXT_END();
     }
     else if (varType(configOptionValue[optionId].value) != varTypeVariantList)
-        THROW(AssertError, "option '%s' is not type 'VariantList'", cfgOptionName(optionId));
+        THROW_FMT(AssertError, "option '%s' is not type 'VariantList'", cfgOptionName(optionId));
 
     return varVarLst(configOptionValue[optionId].value);
 }
@@ -626,7 +626,7 @@ cfgOptionStr(ConfigOption optionId)
     if (configOptionValue[optionId].value != NULL)
     {
         if (varType(configOptionValue[optionId].value) != varTypeString)
-            THROW(AssertError, "option '%s' is not type 'String'", cfgOptionName(optionId));
+            THROW_FMT(AssertError, "option '%s' is not type 'String'", cfgOptionName(optionId));
 
         result = varStr(configOptionValue[optionId].value);
     }
@@ -688,7 +688,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                     if (varType(value) == varTypeKeyValue)
                         configOptionValue[optionId].value = varDup(value);
                     else
-                        THROW(AssertError, "option '%s' must be set with KeyValue variant", cfgOptionName(optionId));
+                        THROW_FMT(AssertError, "option '%s' must be set with KeyValue variant", cfgOptionName(optionId));
 
                     break;
                 }
@@ -698,7 +698,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                     if (varType(value) == varTypeVariantList)
                         configOptionValue[optionId].value = varDup(value);
                     else
-                        THROW(AssertError, "option '%s' must be set with VariantList variant", cfgOptionName(optionId));
+                        THROW_FMT(AssertError, "option '%s' must be set with VariantList variant", cfgOptionName(optionId));
 
                     break;
                 }
@@ -707,7 +707,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                     if (varType(value) == varTypeString)
                         configOptionValue[optionId].value = varDup(value);
                     else
-                        THROW(AssertError, "option '%s' must be set with String variant", cfgOptionName(optionId));
+                        THROW_FMT(AssertError, "option '%s' must be set with String variant", cfgOptionName(optionId));
 
                     break;
             }
