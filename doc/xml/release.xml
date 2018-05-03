@@ -58,6 +58,14 @@
 
                 <release-development-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Partial conversion of Archive Info functionality to c.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Make <path>backup.history</path> sync more efficient.  Only the <path>backup.history/[year]</path> directory was being synced, so check if the <path>backup.history</path> is newly created and sync it as well.</p>
                     </release-item>
 
