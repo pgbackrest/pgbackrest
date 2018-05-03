@@ -52,9 +52,7 @@ infoPgVersionToUIntInternal(const String *version)
     {
         // If format is not number.number (9.4) or number only (10) then error
         if (!regExpMatchOne(strNew("^[0-9]+[.]*[0-9]+$"), version))
-            THROW(FormatError, "version %s format is invalid", strPtr(version));
-
-        // CSHANG Should we consider doing some additional validation to ensure the pgversion is one of the defined constants?
+            THROW(AssertError, "version %s format is invalid", strPtr(version));
 
         size_t idxStart = (size_t)(strChr(version, '.'));
         int minor = 0;
@@ -69,6 +67,28 @@ infoPgVersionToUIntInternal(const String *version)
         major = atoi(strPtr(strSubN(version, 0, idxStart)));
 
         result = (unsigned int)((major * 10000) + (minor * 100));
+
+        // ??? This will be hard to maintain so we should deal with it later
+        switch (result)
+        {
+            case PG_VERSION_83:
+            case PG_VERSION_84:
+            case PG_VERSION_90:
+            case PG_VERSION_91:
+            case PG_VERSION_92:
+            case PG_VERSION_93:
+            case PG_VERSION_94:
+            case PG_VERSION_95:
+            case PG_VERSION_96:
+            case PG_VERSION_10:
+            case PG_VERSION_11:
+            {
+                break;
+            }
+
+            default:
+                THROW(AssertError, "version %s is not a valid PostgreSQl version", strPtr(version));
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -77,7 +97,8 @@ infoPgVersionToUIntInternal(const String *version)
 
 /***********************************************************************************************************************************
 Create a new InfoPg object
-CSHANG Need to consider adding the following parameters in order to throw errors
+??? Need to consider adding the following parameters in order to throw errors
+        $bRequired,                                 # Is archive info required?  --- may not need this if ignoreMissing is enough
         $bLoad,                                     # Should the file attempt to be loaded?
         $strCipherPassSub,                          # Passphrase to encrypt the subsequent archive files if repo is encrypted
 ***********************************************************************************************************************************/
@@ -119,6 +140,8 @@ infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
                 infoPgData.controlVersion =
                     (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_CONTROL_VERSION)));
             }
+            else if (type != infoPgArchive)
+                THROW(AssertError, "invalid InfoPg type %d", type);
         }
         MEM_CONTEXT_TEMP_END();
 
