@@ -17,10 +17,10 @@ InfoPg Postgres data object
 typedef struct InfoPgData
 {
     unsigned int id;
-    unsigned int catalogVersion;
-    unsigned int controlVersion;
+    uint32_t catalogVersion;
+    uint32_t controlVersion;
     uint64_t systemId;
-    unsigned int version;
+    uint version;
 } InfoPgData;
 
 /***********************************************************************************************************************************

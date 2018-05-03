@@ -117,7 +117,7 @@ infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
 
         Ini *infoPgIni = infoIni(this->info);
 
-        // CSHANG Somehow we need to get the history list from the file...for now just getting current
+        // ??? need to get the history list from the file...for now just getting current
         this->history = lstNew(sizeof(InfoPgData));
 
         InfoPgData infoPgData = {0};

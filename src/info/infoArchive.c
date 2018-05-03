@@ -27,7 +27,7 @@ struct InfoArchive
 
 /***********************************************************************************************************************************
 Create a new InfoArchive object
-// CSHANG Need loadFile
+// ??? Need loadFile parameter
 ***********************************************************************************************************************************/
 InfoArchive *
 infoArchiveNew(String *fileName, const bool ignoreMissing)
@@ -44,8 +44,9 @@ infoArchiveNew(String *fileName, const bool ignoreMissing)
 
         // Store the archiveId for the current PG db-version.db-id
         InfoPgData currentPg = infoPgDataCurrent(this->infoPg);
-        strCatFmt(this->archiveId, "%s-%s", strPtr(infoPgVersionToString(currentPg.version)),
-            strPtr(varStrForce(varNewUInt64(currentPg.systemId))));
+
+        this->archiveId = strNew("");
+        strCatFmt(this->archiveId, "%s-%u", strPtr(infoPgVersionToString(currentPg.version)), currentPg.id);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -62,8 +63,34 @@ infoArchiveId(const InfoArchive *this)
     return this->archiveId;
 }
 
-// CSHANG Name of 'check' function is a bit misleading - maybe checkPg - but then that would be in infoPg and then the caller would
-// just check the Db
+/***********************************************************************************************************************************
+Checks the archive info file's DB section against the PG version and system id passed in
+// ??? Should we still check that the file exists if it is required?
+***********************************************************************************************************************************/
+void
+infoArchiveCheckPg(const InfoArchive *this, const uint pgVersion, uint64_t pgSystemId)
+{
+    String *errorMsg = NULL;
+
+    InfoPgData archivePg = infoPgDataCurrent(this->infoPg);
+
+    if (archivePg.version != pgVersion)
+        errorMsg = strNewFmt("WAL segment version %u does not match archive version %u", pgVersion, archivePg.version);
+
+    if (archivePg.systemId != pgSystemId)
+    {
+        errorMsg = errorMsg != NULL ? strCat(errorMsg, "\n") : strNew("");
+        strCatFmt(errorMsg,
+                "WAL segment system-id %" PRIu64 " does not match archive system-id %" PRIu64,
+                pgSystemId, archivePg.systemId);
+    }
+
+    if (errorMsg != NULL)
+    {
+        errorMsg = strCatFmt(errorMsg, "\nHINT: are you archiving to the correct stanza?");
+        THROW(ArchiveMismatchError, strPtr(errorMsg));
+    }
+}
 
 /***********************************************************************************************************************************
 Free the info

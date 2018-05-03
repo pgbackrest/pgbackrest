@@ -14,7 +14,8 @@ Functions
 ***********************************************************************************************************************************/
 InfoArchive *infoArchiveNew(String *fileName, const bool ignoreMissing);
 
-String *infoArchiveArchiveIdCurrent(const InfoArchive *this);
+const String *infoArchiveId(const InfoArchive *this);
+void infoArchiveCheckPg(const InfoArchive *this, const uint pgVersion, uint64_t pgSystemId);
 
 void infoArchiveFree(InfoArchive *this);
 
