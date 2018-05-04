@@ -4,6 +4,7 @@ InfoArchive Handler for archive information
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "common/memContext.h"
 #include "common/ini.h"
