@@ -178,17 +178,17 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t source
                 this->cipher, this->digest, salt, (unsigned char *)this->pass, (int)this->passSize, 1, key, initVector);
 
             // Create context to track cipher
-            if (!(this->cipherContext = EVP_CIPHER_CTX_new()))
-                THROW(MemoryError, "unable to create context");               // {uncoverable - no failure path known}
+            if (!(this->cipherContext = EVP_CIPHER_CTX_new()))                  // {uncoverable - no failure condition known}
+                THROW(MemoryError, "unable to create context");                 // {+uncoverable}
 
             // Set free callback to ensure cipher context is freed
             memContextCallback(this->memContext, (MemContextCallback)cipherBlockFree, this);
 
             // Initialize cipher
-            if (EVP_CipherInit_ex(
-                this->cipherContext, this->cipher, NULL, key, initVector, this->mode == cipherModeEncrypt) != 1)
+            if (EVP_CipherInit_ex(                                              // {uncoverable - no failure condition known}
+                    this->cipherContext, this->cipher, NULL, key, initVector, this->mode == cipherModeEncrypt) != 1)
             {
-                THROW(MemoryError, "unable to initialize cipher");            // {uncoverable - no failure path known}
+                THROW(MemoryError, "unable to initialize cipher");              // {+uncoverable}
             }
 
             this->saltDone = true;
@@ -201,8 +201,9 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t source
         // Process the data
         size_t destinationUpdateSize = 0;
 
-        if (!EVP_CipherUpdate(this->cipherContext, destination, (int *)&destinationUpdateSize, source, (int)sourceSize))
-            THROW(CipherError, "unable to process");                           // {uncoverable - no failure path known}
+        if (!EVP_CipherUpdate(                                                  // {uncoverable - no failure condition known}
+                this->cipherContext, destination, (int *)&destinationUpdateSize, source, (int)sourceSize))
+            THROW(CipherError, "unable to process");                            // {+uncoverable}
 
         destinationSize += destinationUpdateSize;
 

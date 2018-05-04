@@ -57,6 +57,8 @@ testRun()
         cfgOptionValidSet(cfgOptRepoS3Key, true);
         cfgOptionSet(cfgOptRepoS3Key, cfgSourceConfig, varNewStr(strNew("SECRET-STUFF")));
 
+        cfgOptionValidSet(cfgOptCompress, true);
+
         cfgOptionValidSet(cfgOptDbInclude, true);
         StringList *list = strLstNew();
         strLstAddZ(list, "db1");
@@ -80,6 +82,16 @@ testRun()
         TEST_RESULT_VOID(cmdBegin(false), "command begin no option logging");
         testLogResult(
             "P00   INFO: archive-get command begin");
+
+        // Nothing should be logged for command begin when the log level is too low
+        // -------------------------------------------------------------------------------------------------------------------------
+        logInit(logLevelWarn, logLevelOff, logLevelOff, false);
+        TEST_RESULT_VOID(cmdBegin(true), "command begin no logging");
+
+        // Nothing should be logged for command end when the log level is too low
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(cmdEnd(0, NULL), "command end no logging");
+        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");

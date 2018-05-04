@@ -64,8 +64,10 @@ minimize register spilling. For less sophisticated compilers it might be benefic
 ***********************************************************************************************************************************/
 #include <string.h>
 
+#include "common/assert.h"
 #include "common/error.h"
 #include "postgres/pageChecksum.h"
+#include "postgres/type.h"
 
 /***********************************************************************************************************************************
 For historical reasons, the 64-bit LSN value is stored as two 32-bit values.
@@ -132,10 +134,13 @@ do { \
 } while (0)
 
 static uint32_t
-pageChecksumBlock(const unsigned char *data, uint32_t size)
+pageChecksumBlock(const unsigned char *page, uint32_t pageSize)
 {
+    ASSERT_DEBUG(page != NULL);
+    ASSERT_DEBUG(pageSize == PG_PAGE_SIZE);
+
     uint32_t sums[N_SUMS];
-    uint32_t (*dataArray)[N_SUMS] = (uint32_t (*)[N_SUMS])data;
+    uint32_t (*dataArray)[N_SUMS] = (uint32_t (*)[N_SUMS])page;
     uint32_t result = 0;
     uint32_t i, j;
 
@@ -143,7 +148,7 @@ pageChecksumBlock(const unsigned char *data, uint32_t size)
     memcpy(sums, checksumBaseOffsets, sizeof(checksumBaseOffsets));
 
     /* main checksum calculation */
-    for (i = 0; i < size / sizeof(uint32_t) / N_SUMS; i++)
+    for (i = 0; i < pageSize / sizeof(uint32_t) / N_SUMS; i++)
         for (j = 0; j < N_SUMS; j++)
             CHECKSUM_COMP(sums[j], dataArray[i][j]);
 
@@ -168,6 +173,8 @@ The checksum includes the block number (to detect the case where a page is someh
 uint16_t
 pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageSize)
 {
+    ASSERT_DEBUG(page != NULL);
+
     // Save pd_checksum and temporarily set it to zero, so that the checksum calculation isn't affected by the old checksum stored
     // on the page. Restore it after, because actually updating the checksum is NOT part of the API of this function.
     PageHeader pageHeader = (PageHeader)page;
@@ -191,6 +198,8 @@ bool
 pageChecksumTest(
     const unsigned char *page, unsigned int blockNo, unsigned int pageSize, uint32_t ignoreWalId, uint32_t ignoreWalOffset)
 {
+    ASSERT_DEBUG(page != NULL);
+
     return
         // This is a new page so don't test checksum
         ((PageHeader)page)->pd_upper == 0 ||
@@ -208,8 +217,12 @@ pageChecksumBufferTest(
     const unsigned char *pageBuffer, unsigned int pageBufferSize, unsigned int blockNoBegin, unsigned int pageSize,
     uint32_t ignoreWalId, uint32_t ignoreWalOffset)
 {
+    ASSERT_DEBUG(pageBuffer != NULL);
+    ASSERT_DEBUG(pageBufferSize > 0);
+    ASSERT_DEBUG(pageSize == PG_PAGE_SIZE);
+
     // If the buffer does not represent an even number of pages then error
-    if (pageBufferSize % pageSize != 0 || pageBufferSize / pageSize == 0)
+    if (pageBufferSize % pageSize != 0)
         THROW_FMT(AssertError, "buffer size %u, page size %u are not divisible", pageBufferSize, pageSize);
 
     // Loop through all pages in the buffer

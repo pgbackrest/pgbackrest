@@ -63,6 +63,8 @@ testRun()
         TEST_RESULT_BOOL(
             pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 0x8888, 0x8888), true, "bad checksum past ignore limit");
         TEST_RESULT_BOOL(
+            pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 0x8888, 0x8889), false, "bad checksum before ignore limit");
+        TEST_RESULT_BOOL(
             pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 0x8889, 0x8889), false, "bad checksum before ignore limit");
     }
 
