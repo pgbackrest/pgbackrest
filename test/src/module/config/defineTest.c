@@ -35,6 +35,8 @@ testRun()
         TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgDefCmdBackup, cfgDefOptPgHost), false, "allow list not valid");
         TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgDefCmdBackup, cfgDefOptType), true, "command allow list valid");
 
+        TEST_RESULT_INT(cfgDefOptionAllowListValueTotal(cfgDefCmdBackup, cfgDefOptChecksumPage), 0, "allow list total = 0");
+
         TEST_RESULT_INT(cfgDefOptionAllowListValueTotal(cfgDefCmdBackup, cfgDefOptType), 3, "allow list total");
 
         TEST_RESULT_STR(cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 0), "full", "allow list value 0");

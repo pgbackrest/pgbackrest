@@ -5,6 +5,7 @@ Command and Option Configuration Definition
 #include <stdint.h>
 #include <string.h>
 
+#include "common/assert.h"
 #include "common/error.h"
 #include "config/define.h"
 
@@ -177,7 +178,7 @@ Find optional data for a command and option.
 static void
 cfgDefDataFind(
     ConfigDefineDataType typeFind, ConfigDefineCommand commandDefId, const void **dataList, bool *dataDefFound, int *dataDef,
-    const void ***dataDefList, int *dataDefListSize)
+    const void ***dataDefList, unsigned int *dataDefListSize)
 {
     *dataDefFound = false;
 
@@ -185,8 +186,8 @@ cfgDefDataFind(
     if (dataList != NULL)
     {
         ConfigDefineDataType type;
-        int offset = 0;
-        int size;
+        unsigned int offset = 0;
+        unsigned int size;
         int data;
         unsigned int commandCurrent = UINT_MAX;
 
@@ -231,7 +232,7 @@ cfgDefDataFind(
 #define CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, type)                                                                   \
     bool dataDefFound = false;                                                                                                     \
     int dataDef = 0;                                                                                                               \
-    int dataDefListSize = 0;                                                                                                       \
+    unsigned int dataDefListSize = 0;                                                                                              \
     const void **dataDefList = NULL;                                                                                               \
                                                                                                                                    \
     cfgDefDataFind(                                                                                                                \
@@ -310,19 +311,19 @@ cfgDefOptionAllowList(ConfigDefineCommand commandDefId, ConfigDefineOption optio
 }
 
 const char *
-cfgDefOptionAllowListValue(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, int valueId)
+cfgDefOptionAllowListValue(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, unsigned int valueId)
 {
     cfgDefCommandOptionCheck(commandDefId, optionDefId);
 
     CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeAllowList);
 
-    if (valueId < 0 || valueId >= dataDefListSize)
-        THROW_FMT(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
+    if (valueId >= dataDefListSize)
+        THROW_FMT(AssertError, "value id %u invalid - must be >= 0 and < %u", valueId, dataDefListSize);
 
     return (char *)dataDefList[valueId];
 }
 
-int
+unsigned int
 cfgDefOptionAllowListValueTotal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
 {
     cfgDefCommandOptionCheck(commandDefId, optionDefId);
@@ -336,12 +337,11 @@ cfgDefOptionAllowListValueTotal(ConfigDefineCommand commandDefId, ConfigDefineOp
 bool
 cfgDefOptionAllowListValueValid(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, const char *value)
 {
-    if (value != NULL)
-    {
-        for (int valueIdx = 0; valueIdx < cfgDefOptionAllowListValueTotal(commandDefId, optionDefId); valueIdx++)
-            if (strcmp(value, cfgDefOptionAllowListValue(commandDefId, optionDefId, valueIdx)) == 0)
-                return true;
-    }
+    ASSERT_DEBUG(value != NULL);
+
+    for (unsigned int valueIdx = 0; valueIdx < cfgDefOptionAllowListValueTotal(commandDefId, optionDefId); valueIdx++)
+        if (strcmp(value, cfgDefOptionAllowListValue(commandDefId, optionDefId, valueIdx)) == 0)
+            return true;
 
     return false;
 }
@@ -419,19 +419,19 @@ cfgDefOptionDependOption(ConfigDefineCommand commandDefId, ConfigDefineOption op
 }
 
 const char *
-cfgDefOptionDependValue(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, int valueId)
+cfgDefOptionDependValue(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, unsigned int valueId)
 {
     cfgDefCommandOptionCheck(commandDefId, optionDefId);
 
     CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeDepend);
 
-    if (valueId < 0 || valueId >= dataDefListSize)
-        THROW_FMT(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
+    if (valueId >= dataDefListSize)
+        THROW_FMT(AssertError, "value id %u invalid - must be >= 0 and < %u", valueId, dataDefListSize);
 
     return (char *)dataDefList[valueId];
 }
 
-int
+unsigned int
 cfgDefOptionDependValueTotal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
 {
     cfgDefCommandOptionCheck(commandDefId, optionDefId);
@@ -445,12 +445,11 @@ cfgDefOptionDependValueTotal(ConfigDefineCommand commandDefId, ConfigDefineOptio
 bool
 cfgDefOptionDependValueValid(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, const char *value)
 {
-    if (value != NULL)
-    {
-        for (int valueIdx = 0; valueIdx < cfgDefOptionDependValueTotal(commandDefId, optionDefId); valueIdx++)
-            if (strcmp(value, cfgDefOptionDependValue(commandDefId, optionDefId, valueIdx)) == 0)
-                return true;
-    }
+    ASSERT_DEBUG(value != NULL);
+
+    for (unsigned int valueIdx = 0; valueIdx < cfgDefOptionDependValueTotal(commandDefId, optionDefId); valueIdx++)
+        if (strcmp(value, cfgDefOptionDependValue(commandDefId, optionDefId, valueIdx)) == 0)
+            return true;
 
     return false;
 }
@@ -485,19 +484,19 @@ cfgDefOptionHelpNameAlt(ConfigDefineOption optionDefId)
 }
 
 const char *
-cfgDefOptionHelpNameAltValue(ConfigDefineOption optionDefId, int valueId)
+cfgDefOptionHelpNameAltValue(ConfigDefineOption optionDefId, unsigned int valueId)
 {
     cfgDefOptionCheck(optionDefId);
 
     CONFIG_DEFINE_DATA_FIND(-1, optionDefId, configDefDataTypeHelpNameAlt);
 
-    if (valueId < 0 || valueId >= dataDefListSize)
-        THROW_FMT(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
+    if (valueId >= dataDefListSize)
+        THROW_FMT(AssertError, "value id %u invalid - must be >= 0 and < %u", valueId, dataDefListSize);
 
     return (char *)dataDefList[valueId];
 }
 
-int
+unsigned int
 cfgDefOptionHelpNameAltValueTotal(ConfigDefineOption optionDefId)
 {
     cfgDefOptionCheck(optionDefId);

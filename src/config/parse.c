@@ -784,7 +784,8 @@ configParse(unsigned int argListSize, const char *argList[])
                                 // Build the list of possible depend values
                                 StringList *dependValueList = strLstNew();
 
-                                for (int listIdx = 0; listIdx < cfgDefOptionDependValueTotal(commandDefId, optionDefId); listIdx++)
+                                for (unsigned int listIdx = 0;
+                                        listIdx < cfgDefOptionDependValueTotal(commandDefId, optionDefId); listIdx++)
                                 {
                                     const char *dependValue = cfgDefOptionDependValue(commandDefId, optionDefId, listIdx);
 

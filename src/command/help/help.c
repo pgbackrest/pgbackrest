@@ -339,7 +339,7 @@ helpRender()
 
                     strCat(result, ": ");
 
-                    for (int nameAltIdx = 0; nameAltIdx < cfgDefOptionHelpNameAltValueTotal(optionDefId); nameAltIdx++)
+                    for (uint nameAltIdx = 0; nameAltIdx < cfgDefOptionHelpNameAltValueTotal(optionDefId); nameAltIdx++)
                     {
                         if (nameAltIdx != 0)
                             strCat(result, ", ");                   // {uncovered - no option has more than one alt name}

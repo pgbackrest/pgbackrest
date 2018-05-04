@@ -33,7 +33,7 @@ DEBUG_UNIT_EXTERN int logHandleFile = -1;
 static bool logFileBanner = false;
 
 // Is the timestamp printed in the log?
-static bool logTimestamp = false;
+DEBUG_UNIT_EXTERN bool logTimestamp = false;
 
 /***********************************************************************************************************************************
 Debug Asserts

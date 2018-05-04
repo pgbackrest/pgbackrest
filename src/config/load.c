@@ -52,11 +52,8 @@ void
 cfgLoadUpdateOption()
 {
     // Set default for repo-host-cmd
-    if (cfgOptionValid(cfgOptRepoHost) && cfgOptionTest(cfgOptRepoHost) &&
-        cfgOptionSource(cfgOptRepoHostCmd) == cfgSourceDefault)
-    {
+    if (cfgOptionTest(cfgOptRepoHost) && cfgOptionSource(cfgOptRepoHostCmd) == cfgSourceDefault)
         cfgOptionDefaultSet(cfgOptRepoHostCmd, varNewStr(cfgExe()));
-    }
 
     // Set default for pg-host-cmd
     if (cfgOptionValid(cfgOptPgHostCmd))
@@ -78,10 +75,10 @@ cfgLoadUpdateOption()
         else
         {
             THROW_FMT(OptionInvalidValueError,
-                "'%f' is not valid for '%s' option\nHINT '%s' option (%f) should be greater than '%s' option (%f).",
-                cfgOptionDbl(cfgOptProtocolTimeout), cfgOptionName(cfgOptProtocolTimeout),
-                cfgOptionName(cfgOptProtocolTimeout), cfgOptionDbl(cfgOptProtocolTimeout), cfgOptionName(cfgOptDbTimeout),
-                cfgOptionDbl(cfgOptDbTimeout));
+                "'%s' is not valid for '%s' option\nHINT '%s' option (%s) should be greater than '%s' option (%s).",
+                strPtr(varStrForce(cfgOption(cfgOptProtocolTimeout))), cfgOptionName(cfgOptProtocolTimeout),
+                cfgOptionName(cfgOptProtocolTimeout), strPtr(varStrForce(cfgOption(cfgOptProtocolTimeout))),
+                cfgOptionName(cfgOptDbTimeout), strPtr(varStrForce(cfgOption(cfgOptDbTimeout))));
         }
     }
 
@@ -138,7 +135,6 @@ cfgLoadUpdateOption()
                 cfgOptionName(cfgOptRepoRetentionArchiveType), strPtr(archiveRetentionType));
 
             // If the archive retention is not explicitly set then determine what it should be defaulted to
-            // to.
             if (!cfgOptionTest(cfgOptRepoRetentionArchive + optionIdx))
             {
                 // If repo-retention-archive-type is default, then if repo-retention-full is set, set the repo-retention-archive

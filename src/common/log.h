@@ -33,6 +33,8 @@ Expose internal data for unit testing/debugging
     extern int logHandleStdOut;
     extern int logHandleStdErr;
     extern int logHandleFile;
+
+    extern bool logTimestamp;
 #endif
 
 /***********************************************************************************************************************************
