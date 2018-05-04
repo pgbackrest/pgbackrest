@@ -613,7 +613,7 @@ varUInt64Force(const Variant *this)
             else
             {
                 THROW(
-                    FormatError, "unable to convert %s '%d' to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %d to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeUInt64]);
             }
 
