@@ -437,11 +437,12 @@ sub end
 
             foreach my $strModule (sort(keys(%{$hTestCoverage})))
             {
-                # Skip modules that have no code
-                next if ($hTestCoverage->{$strModule} eq TESTDEF_COVERAGE_NOCODE);
-
-                push (@stryCoveredModule, testRunName(basename($strModule), false) . ".c.gcov");
+                push (@stryCoveredModule, $strModule);
             }
+
+            push(
+                @stryCoveredModule,
+                "module/$self->{oTest}->{&TEST_MODULE}/" . testRunName($self->{oTest}->{&TEST_NAME}, false) . 'Test');
 
             # Generate coverage reports for the modules
             my $strLCovExe = "lcov --config-file=$self->{strBackRestBase}/test/src/lcov.conf";
@@ -452,7 +453,7 @@ sub end
                 "${strLCovExe} --capture --directory=$self->{strGCovPath} --o=${strLCovOut}");
 
             # Generate coverage report for each module
-            foreach my $strModule (sort(keys(%{$hTestCoverage})))
+            foreach my $strModule (@stryCoveredModule)
             {
                 my $strModuleName = testRunName($strModule, false);
                 my $strModuleOutName = $strModuleName;
@@ -478,7 +479,7 @@ sub end
 
                 if (defined($strCoverage))
                 {
-                    if ($hTestCoverage->{$strModule} eq TESTDEF_COVERAGE_NOCODE)
+                    if (!$bTest && $hTestCoverage->{$strModule} eq TESTDEF_COVERAGE_NOCODE)
                     {
                         confess &log(ERROR, "module '${strModule}' is marked 'no code' but has code");
                     }
@@ -490,8 +491,11 @@ sub end
                     my $iTotalBranches = 0;
                     my $iCoveredBranches = 0;
 
-                    if ($strCoverage =~ /^BRF\:$/mg && $strCoverage =~ /^BRH\:$/mg)
+                    if ($strCoverage =~ /^BRF\:/mg && $strCoverage =~ /^BRH\:/mg)
                     {
+                        # If this isn't here the statements below fail -- huh?
+                        my @match = $strCoverage =~ m/^BRF\:.*$/mg;
+
                         $iTotalBranches = (split(':', ($strCoverage =~ m/^BRF:.*$/mg)[0]))[1] + 0;
                         $iCoveredBranches = (split(':', ($strCoverage =~ m/^BRH:.*$/mg)[0]))[1] + 0;
                     }

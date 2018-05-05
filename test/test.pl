@@ -1109,16 +1109,10 @@ eval
                     }
                 }
 
-                if (keys(%{$hCoverageActual}) > 0)
-                {
-                    &log(INFO, 'test coverage for: ' . join(', ', sort(keys(%{$hCoverageActual}))));
-                }
-                else
+                if (keys(%{$hCoverageActual}) == 0)
                 {
                     &log(INFO, 'no code modules had all tests run required for coverage');
                 }
-
-                my $strPartialCoverage;
 
                 foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
                 {
@@ -1191,18 +1185,7 @@ eval
                             &log(ERROR, "perl module ${strCodeModule} has 100% coverage but is not marked fully covered");
                             $iUncoveredCodeModuleTotal++;
                         }
-                        else
-                        {
-                            $strPartialCoverage .=
-                                (defined($strPartialCoverage) ? ', ' : '') . "${strCodeModule} (${iCoveragePercent}%)";
-                        }
                     }
-                }
-
-                # If any modules had partial coverage then display them
-                if (defined($strPartialCoverage))
-                {
-                    &log(INFO, "perl module (expected) partial coverage: ${strPartialCoverage}");
                 }
 
                 # Generate C coverage with lcov
@@ -1233,12 +1216,37 @@ eval
 
                         if (defined($strCoverage) && defined($$strCoverage))
                         {
-                            my $iTotalLines = (split(':', ($$strCoverage =~ m/^LF:.*$/mg)[0]))[1] + 0;
-                            my $iCoveredLines = (split(':', ($$strCoverage =~ m/^LH:.*$/mg)[0]))[1] + 0;
+                            my $iTotalLines = (split(':', ($$strCoverage =~ m/^LF\:.*$/mg)[0]))[1] + 0;
+                            my $iCoveredLines = (split(':', ($$strCoverage =~ m/^LH\:.*$/mg)[0]))[1] + 0;
+
+                            my $iTotalBranches = 0;
+                            my $iCoveredBranches = 0;
+
+                            if ($$strCoverage =~ /^BRF\:/mg && $$strCoverage =~ /^BRH\:/mg)
+                            {
+                                # If this isn't here the statements below fail -- huh?
+                                my @match = $$strCoverage =~ m/^BRF\:.*$/mg;
+
+                                $iTotalBranches = (split(':', ($$strCoverage =~ m/^BRF\:.*$/mg)[0]))[1] + 0;
+                                $iCoveredBranches = (split(':', ($$strCoverage =~ m/^BRH\:.*$/mg)[0]))[1] + 0;
+                            }
+
+                            # Generate detail if there is missing coverage
+                            my $strDetail = undef;
 
                             if ($iCoveredLines != $iTotalLines)
                             {
-                                &log(ERROR, "c module ${strCodeModule} is not fully covered ($iCoveredLines/$iTotalLines)");
+                                $strDetail .= "$iCoveredLines/$iTotalLines lines";
+                            }
+
+                            if ($iTotalBranches != $iCoveredBranches)
+                            {
+                                $strDetail .= (defined($strDetail) ? ', ' : '') . "$iCoveredBranches/$iTotalBranches branches";
+                            }
+
+                            if (defined($strDetail))
+                            {
+                                &log(ERROR, "c module ${strCodeModule} is not fully covered ($strDetail)");
                                 $iUncoveredCodeModuleTotal++;
                             }
                         }

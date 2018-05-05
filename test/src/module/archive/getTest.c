@@ -135,8 +135,9 @@ testRun()
             if (waitpid(processId, &processStatus, 0) != processId)                         // {uncoverable - fork() does not fail}
                 THROW_SYS_ERROR(AssertError, "unable to find child process");               // {uncoverable+}
 
-            if (WEXITSTATUS(processStatus) != 0)
-                THROW_FMT(AssertError, "perl exited with error %d", WEXITSTATUS(processStatus));
+            if (WEXITSTATUS(processStatus) != 0)                                            // {uncoverable - correct error code}
+                THROW_FMT(                                                                  // {uncoverable+}
+                    AssertError, "perl exited with error %d", WEXITSTATUS(processStatus));
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -161,8 +162,9 @@ testRun()
             if (waitpid(processId, &processStatus, 0) != processId)                         // {uncoverable - fork() does not fail}
                 THROW_SYS_ERROR(AssertError, "unable to find child process");               // {uncoverable+}
 
-            if (WEXITSTATUS(processStatus) != 0)
-                THROW_FMT(AssertError, "perl exited with error %d", WEXITSTATUS(processStatus));
+            if (WEXITSTATUS(processStatus) != 0)                                            // {uncoverable - correct error code}
+                THROW_FMT(                                                                  // {uncoverable+}
+                    AssertError, "perl exited with error %d", WEXITSTATUS(processStatus));
         }
 
         // Make sure the process times out when there is nothing to get
