@@ -91,9 +91,26 @@ testRun()
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help from help command");
         TEST_RESULT_STR(strPtr(helpRender()), generalHelp, "    check text");
 
-        // This test is broken up into multiple strings because C99 does not require compilers to support const strings > 4095 bytes
         // -------------------------------------------------------------------------------------------------------------------------
         const char *commandHelp = strPtr(strNewFmt(
+            "%s%s",
+            helpVersion,
+            " - 'version' command help\n"
+            "\n"
+            "Get version.\n"
+            "\n"
+            "Displays installed pgBackRest version.\n"));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "version");
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for version command");
+        TEST_RESULT_STR(strPtr(helpRender()), commandHelp, "    check text");
+
+        // This test is broken up into multiple strings because C99 does not require compilers to support const strings > 4095 bytes
+        // -------------------------------------------------------------------------------------------------------------------------
+        commandHelp = strPtr(strNewFmt(
             "%s%s%s",
             helpVersion,
             " - 'restore' command help\n"
@@ -251,11 +268,6 @@ testRun()
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, buffer-size option");
         TEST_RESULT_STR(strPtr(helpRender()), strPtr(strNewFmt("%s\ndefault: 4194304\n", optionHelp)), "    check text");
 
-        argList = strLstNew();
-        strLstAddZ(argList, "/path/to/pgbackrest");
-        strLstAddZ(argList, "help");
-        strLstAddZ(argList, "archive-push");
-        strLstAddZ(argList, "buffer-size");
         strLstAddZ(argList, "--buffer-size=32768");
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, buffer-size option");
         TEST_RESULT_STR(
@@ -278,6 +290,13 @@ testRun()
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, repo1-s3-host option");
         TEST_RESULT_STR(strPtr(helpRender()), optionHelp, "    check text");
+
+        strLstAddZ(argList, "--repo1-type=s3");
+        strLstAddZ(argList, "--repo1-s3-host=s3-host");
+        TEST_RESULT_VOID(
+            configParse(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, repo1-s3-host option");
+        TEST_RESULT_STR(
+            strPtr(helpRender()), strPtr(strNewFmt("%s\ncurrent: s3-host\n", optionHelp)), "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         optionHelp = strPtr(strNewFmt(

@@ -72,9 +72,22 @@ testRun()
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("logWrite()"))
+    {
+        // Just test the error here -- success is well tested elsewhere
+        TEST_ERROR(
+            logWrite(-1, "message", 7, "invalid handle"), FileWriteError,
+            "unable to write invalid handle: [9] Bad file descriptor");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("logInternal()"))
     {
+        TEST_RESULT_VOID(logInit(logLevelOff, logLevelOff, logLevelOff, false), "init logging to off");
+        TEST_RESULT_VOID(logInternal(logLevelWarn, NULL, NULL, 0, "format"), "message not logged anywhere");
+
         TEST_RESULT_VOID(logInit(logLevelWarn, logLevelOff, logLevelOff, true), "init logging to warn (timestamp on)");
+        TEST_RESULT_VOID(logFileSet(BOGUS_STR), "ignore bogus filename because file logging is off");
         TEST_RESULT_VOID(logInternal(logLevelWarn, NULL, NULL, 0, "TEST"), "log timestamp");
 
         String *logTime = strNewN(logBuffer, 23);
@@ -120,6 +133,8 @@ testRun()
         logBuffer[0] = 0;
         TEST_RESULT_VOID(logInternal(logLevelInfo, "test.c", "test_func", 0, "info message"), "log info");
         TEST_RESULT_STR(logBuffer, "P00   INFO: info message\n", "    check log");
+        TEST_RESULT_VOID(logInternal(logLevelInfo, "test.c", "test_func", 0, "info message 2"), "log info");
+        TEST_RESULT_STR(logBuffer, "P00   INFO: info message 2\n", "    check log");
 
         // Reopen invalid log file
         logFileSet("/" BOGUS_STR);
@@ -140,6 +155,7 @@ testRun()
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stderrFile)))),
             "DEBUG: test.c:test_func(): message\n"
             "INFO: info message\n"
+            "INFO: info message 2\n"
             "WARN: unable to open log file '/BOGUS': Permission denied\n"
             "NOTE: process will continue without log file.\n",
             "checkout stderr output");
@@ -151,7 +167,8 @@ testRun()
             "P00  DEBUG: test.c:test_func(): message\n"
             "\n"
             "-------------------PROCESS START-------------------\n"
-            "P00   INFO: info message\n",
+            "P00   INFO: info message\n"
+            "P00   INFO: info message 2\n",
             "checkout file output");
     }
 }

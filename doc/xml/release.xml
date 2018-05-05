@@ -148,7 +148,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve branch coverage in C code.</p>
+                        <p>Full branch coverage in C code.</p>
                     </release-item>
 
                     <release-item>

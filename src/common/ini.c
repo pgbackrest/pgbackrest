@@ -132,9 +132,7 @@ iniParse(Ini *this, const String *content)
 {
     MEM_CONTEXT_BEGIN(this->memContext)
     {
-        if (this->store != NULL)
-            kvFree(this->store);
-
+        kvFree(this->store);
         this->store = kvNew();
 
         if (content != NULL)

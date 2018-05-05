@@ -169,6 +169,16 @@ logWill(LogLevel logLevel)
 }
 
 /***********************************************************************************************************************************
+Internal write function that handles errors
+***********************************************************************************************************************************/
+static void
+logWrite(int handle, const char *message, size_t messageSize, const char *errorDetail)
+{
+    if ((size_t)write(handle, message, messageSize) != messageSize)
+        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write %s", errorDetail);
+}
+
+/***********************************************************************************************************************************
 General log function
 ***********************************************************************************************************************************/
 void
@@ -251,18 +261,9 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
 
     // Determine where to log the message based on log-level-stderr
     if (logWillStdErr(logLevel))
-    {
-        if (write(
-            logHandleStdErr, logBuffer + messageStdErrPos, bufferPos - messageStdErrPos) != (int)(bufferPos - messageStdErrPos))
-        {
-            THROW_SYS_ERROR(FileWriteError, "unable to write log to stderr");
-        }
-    }
+        logWrite(logHandleStdErr, logBuffer + messageStdErrPos, bufferPos - messageStdErrPos, "log to stderr");
     else if (logWillStdOut(logLevel))
-    {
-        if (write(logHandleStdOut, logBuffer, bufferPos) != (int)bufferPos)                     // {uncovered - write does not fail}
-            THROW_SYS_ERROR(FileWriteError, "unable to write log to stdout");                   // {uncovered+}
-    }
+        logWrite(logHandleStdOut, logBuffer, bufferPos, "log to stdout");
 
     // Log to file
     if (logWillFile(logLevel))
@@ -272,22 +273,17 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
         {
             // Add a blank line if the file already has content
             if (lseek(logHandleFile, 0, SEEK_END) > 0)
-            {
-                if (write(logHandleFile, "\n", 1) != 1)                                         // {uncovered - write does not fail}
-                    THROW_SYS_ERROR(FileWriteError, "unable to write banner spacing to file");  // {uncovered +}
-            }
+                logWrite(logHandleFile, "\n", 1, "banner spacing to file");
 
             // Write process start banner
             const char *banner = "-------------------PROCESS START-------------------\n";
 
-            if (write(logHandleFile, banner, strlen(banner)) != (int)strlen(banner))            // {uncovered - write does not fail}
-                THROW_SYS_ERROR(FileWriteError, "unable to write banner to file");              // {uncovered+}
+            logWrite(logHandleFile, banner, strlen(banner), "banner to file");
 
             // Mark banner as written
             logFileBanner = true;
         }
 
-        if (write(logHandleFile, logBuffer, bufferPos) != (int)bufferPos)                       // {uncovered - write does not fail}
-            THROW_SYS_ERROR(FileWriteError, "unable to write log to file");                     // {uncovered+}
+        logWrite(logHandleFile, logBuffer, bufferPos, "log to file");
     }
 }

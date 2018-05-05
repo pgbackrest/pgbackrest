@@ -134,12 +134,17 @@ Does the child error type extend the parent error type?
 bool
 errorTypeExtends(const ErrorType *child, const ErrorType *parent)
 {
-    // Search for the parent
-    for (; child && errorTypeParent(child) != child; child = (ErrorType *)errorTypeParent(child))
+    const ErrorType *find = child;
+
+    do
     {
-        if (errorTypeParent(child) == parent)
+        find = errorTypeParent(find);
+
+        // Parent was found
+        if (find == parent)
             return true;
     }
+    while (find != errorTypeParent(find));
 
     // Parent was not found
     return false;
@@ -232,7 +237,10 @@ True when in catch state and the expected error matches
 bool
 errorInternalStateCatch(const ErrorType *errorTypeCatch)
 {
-    return errorInternalState() == errorStateCatch && errorInstanceOf(errorTypeCatch) && errorInternalProcess(true);
+    if (errorInternalState() == errorStateCatch && errorInstanceOf(errorTypeCatch))
+        return errorInternalProcess(true);
+
+    return false;
 }
 
 /***********************************************************************************************************************************
@@ -288,15 +296,11 @@ errorInternalPropagate()
         longjmp(errorContext.jumpList[errorContext.tryTotal - 1], 1);
 
     // If there was no try to catch this error then output to stderr
-    if (fprintf(                                                    // {uncovered - output to stderr is a problem for test harness}
-            stderr, "\nUncaught %s: %s\n    thrown at %s:%d\n\n",
-            errorName(), errorMessage(), errorFileName(), errorFileLine()) > 0)
-    {
-        fflush(stderr);                                                                                             // {+uncovered}
-    }
+    fprintf(stderr, "\nUncaught %s: %s\n    thrown at %s:%d\n\n", errorName(), errorMessage(), errorFileName(), errorFileLine());
+    fflush(stderr);
 
     // Exit with failure
-    exit(EXIT_FAILURE);                                             // {uncovered - exit failure is a problem for test harness}
+    exit(UnhandledError.code);
 }
 
 /***********************************************************************************************************************************

@@ -2,6 +2,19 @@
 Test Error Handling
 ***********************************************************************************************************************************/
 #include <assert.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+/***********************************************************************************************************************************
+Declare some error locally because real errors won't work for some tests -- they could also break as errors change
+***********************************************************************************************************************************/
+ERROR_DECLARE(TestParent1Error);
+ERROR_DECLARE(TestParent2Error);
+ERROR_DECLARE(TestChildError);
+
+ERROR_DEFINE(101, TestParent1Error, TestParent1Error);
+ERROR_DEFINE(102, TestParent2Error, TestParent1Error);
+ERROR_DEFINE(200, TestChildError, TestParent2Error);
 
 /***********************************************************************************************************************************
 testTryRecurse - test to blow up try stack
@@ -37,13 +50,22 @@ Test Run
 void
 testRun()
 {
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("check that try stack is initialized correctly"))
     {
         assert(errorContext.tryTotal == 0);
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
+    if (testBegin("errorTypeExtends"))
+    {
+        assert(errorTypeExtends(&TestParent1Error, &TestParent1Error));
+        assert(errorTypeExtends(&TestChildError, &TestParent1Error));
+        assert(errorTypeExtends(&TestChildError, &TestParent2Error));
+        assert(!errorTypeExtends(&TestChildError, &TestChildError));
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("TRY with no errors"))
     {
         volatile bool tryDone = false;
@@ -72,7 +94,7 @@ testRun()
         assert(errorContext.tryTotal == 0);
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("TRY with multiple catches"))
     {
         volatile bool tryDone = false;
@@ -136,7 +158,7 @@ testRun()
         assert(errorContext.tryTotal == 0);
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("too deep recursive TRY_ERROR()"))
     {
         volatile bool tryDone = false;
@@ -177,7 +199,7 @@ testRun()
         assert(testTryRecurseFinally);
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("THROW_CODE() and THROW_CODE_FMT()"))
     {
         TRY_BEGIN()
@@ -216,7 +238,7 @@ testRun()
         TRY_END();
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("THROW_SYS_ERROR() and THROW_SYS_ERROR_FMT()"))
     {
         TRY_BEGIN()
@@ -245,5 +267,27 @@ testRun()
             assert(strcmp(errorMessage(), "message 1: [5] Input/output error") == 0);
         }
         TRY_END();
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("Uncaught error"))
+    {
+        int processId = fork();
+
+        // Test in a fork so the process does not actually exit
+        if (processId == 0)
+        {
+            THROW(TestChildError, "does not get caught!");
+        }
+        else
+        {
+            int processStatus;
+
+            if (waitpid(processId, &processStatus, 0) != processId)                         // {uncoverable - fork() does not fail}
+                THROW_SYS_ERROR(AssertError, "unable to find child process");               // {uncoverable+}
+
+            if (WEXITSTATUS(processStatus) != UnhandledError.code)
+                THROW_FMT(AssertError, "fork exited with error %d", WEXITSTATUS(processStatus));
+        }
     }
 }

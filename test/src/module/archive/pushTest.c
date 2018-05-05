@@ -9,6 +9,9 @@ Test Run
 void
 testRun()
 {
+    // Create default storage object for testing
+    Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
+
     // *****************************************************************************************************************************
     if (testBegin("cmdArchivePush()"))
     {
@@ -29,10 +32,12 @@ testRun()
 
         // Make sure the process times out when there is nothing to archive
         // -------------------------------------------------------------------------------------------------------------------------
+        storagePathCreateNP(storageTest, strNewFmt("%s/db/archive_status", testPath()));
+
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAddZ(argList, "--archive-async");
-        strLstAddZ(argList, "--log-level-console=off");
-        strLstAddZ(argList, "--log-level-stderr=off");
+        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAdd(argList, strNewFmt("--log-level-file=debug"));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -40,28 +45,21 @@ testRun()
             cmdArchivePush(), ArchiveTimeoutError,
             "unable to push WAL segment '000000010000000100000001' asynchronously after 1 second(s)");
 
-        // Make sure the process times out when there is nothing to archive and it can't get a lock
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(
-            lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30, true), "acquire lock");
-        TEST_RESULT_VOID(lockClear(true), "clear lock");
-
-        TEST_ERROR(
-            cmdArchivePush(), ArchiveTimeoutError,
-            "unable to push WAL segment '000000010000000100000001' asynchronously after 1 second(s)");
+        // Wait for the lock to release
+        lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30, true);
+        lockRelease(true);
 
         // Write out a bogus .error file to make sure it is ignored on the first loop
         // -------------------------------------------------------------------------------------------------------------------------
-        String *errorFile = storagePathNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error"));
+        // Remove the archive status path so async will error and not overwrite the bogus error file
+        storagePathRemoveNP(storageTest, strNewFmt("%s/db/archive_status", testPath()));
 
-        mkdir(strPtr(strNewFmt("%s/archive", testPath())), 0750);
-        mkdir(strPtr(strNewFmt("%s/archive/db", testPath())), 0750);
-        mkdir(strPtr(strNewFmt("%s/archive/db/out", testPath())), 0750);
+        String *errorFile = storagePathNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error"));
         storagePutNP(storageNewWriteNP(storageSpool(), errorFile), bufNewStr(strNew("25\n" BOGUS_STR)));
 
         TEST_ERROR(cmdArchivePush(), AssertError, BOGUS_STR);
 
-        unlink(strPtr(errorFile));
+        storageRemoveP(storageTest, errorFile, .errorOnMissing = true);
 
         // Write out a valid ok file and test for success
         // -------------------------------------------------------------------------------------------------------------------------
@@ -71,5 +69,18 @@ testRun()
 
         TEST_RESULT_VOID(cmdArchivePush(), "successful push");
         testLogResult("P00   INFO: pushed WAL segment 000000010000000100000001 asynchronously");
+
+        storageRemoveP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok"), .errorOnMissing = true);
+
+        // Make sure the process times out when there is nothing to archive and it can't get a lock.  This test MUST go last since
+        // the lock is lost and cannot be closed by the main process.
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(
+            lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30, true), "acquire lock");
+        TEST_RESULT_VOID(lockClear(true), "clear lock");
+
+        TEST_ERROR(
+            cmdArchivePush(), ArchiveTimeoutError,
+            "unable to push WAL segment '000000010000000100000001' asynchronously after 1 second(s)");
     }
 }
