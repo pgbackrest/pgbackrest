@@ -12,7 +12,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.02dev" title="UNDER DEVELOPMENT">
+        <release date="2018-05-06" version="2.02" title="Parallel Asynchronous Archive Get and Configuration Includes">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -41,7 +41,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Fix delta restore failing when a linked file was missing.</p>
+                        <p>Fix delta restore failing when a linked file is missing.</p>
                     </release-item>
 
                     <release-item>
@@ -77,10 +77,6 @@
 
                 <release-improvement-list>
                     <release-item>
-                        <p>Make backup/restore path sync more efficient.  Scanning the entire directory can be very expensive if there are a lot of small tables.  The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path.  Remove recursive path sync functionality since it is no longer used.</p>
-                    </release-item>
-
-                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
@@ -89,11 +85,15 @@
                     </release-item>
 
                     <release-item>
-                        <p>Show command parameters as well as command options in initial info message.</p>
+                        <p>Make backup/restore path sync more efficient.  Scanning the entire directory can be very expensive if there are a lot of small tables.  The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Rename <br-option>archive-queue-max</br-option> option to <br-option>archive-push-queue-max</br-option> to avoid confusion with the <br-option>archive-get-queue-max</br-option> option.  The old option name will continue to be accepted.</p>
+                        <p>Show command parameters as well as command options in initial info log message.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Rename <br-option>archive-queue-max</br-option> option to <br-option>archive-push-queue-max</br-option> to avoid confusion with the new <br-option>archive-get-queue-max</br-option> option.  The old option name will continue to be accepted.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -111,7 +111,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageCopy()</code>, <code>storageExists()</code>, <code>storageMove()</code>, <code>storageNewRead()</code>/<code>storageNewWrite()</code>, <code>storagePathCreate()</code>, <code>storagePathRemove()</code>, <code>storagePathSync()</code>, and <code>storageRemove()</code>.  Add <code>StorageFileRead</code> and <code>StorageFileWrite</code> objects.  Abstract Posix driver code into a separate module. Call <code>storagePathCreate()</code> from the Perl Posix driver.</p>
+                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageCopy()</code>, <code>storageExists()</code>, <code>storageMove()</code>, <code>storageNewRead()</code>/<code>storageNewWrite()</code>, <code>storagePathCreate()</code>, <code>storagePathRemove()</code>, <code>storagePathSync()</code>, and <code>storageRemove()</code>.  Add <code>StorageFileRead</code> and <code>StorageFileWrite</code> objects.  Abstract Posix driver code into a separate module. Call <code>storagePathRemove()</code> from the Perl Posix driver.</p>
                     </release-item>
 
                     <release-item>
@@ -168,7 +168,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Split debug and assert code into separate headers.  Assert can be used earlier because it only depends on the error-handler and not logging.  Add <code>ASSERT()</code> that is preserved in production builds.</p>
+                        <p>Split debug and assert code into separate headers.  Assert can be used earlier because it only depends on the error-handler and not logging.  Add <code>ASSERT()</code> macro which is preserved in production builds.</p>
                     </release-item>
 
                     <release-item>
@@ -255,7 +255,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <code>HARNESS_FORK</code> for tests that require fork().  A standard pattern for tests makes fork() easier to use and should help prevent some common mistakes.</p>
+                        <p>Add <code>HARNESS_FORK</code> macros for tests that require fork().  A standard pattern for tests makes fork() easier to use and should help prevent some common mistakes.</p>
                     </release-item>
 
                     <release-item>
