@@ -255,6 +255,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>HARNESS_FORK</code> for tests that require fork().  A standard pattern for tests makes fork() easier to use and should help prevent some common mistakes.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>TEST_ERROR_FMT</code> macro to simplify testing of formatted error messages.</p>
                     </release-item>
 

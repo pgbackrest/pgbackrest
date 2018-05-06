@@ -1,11 +1,10 @@
 /***********************************************************************************************************************************
 Test Exit Routines
 ***********************************************************************************************************************************/
-#include <sys/wait.h>
-#include <unistd.h>
-
 #include "common/error.h"
 #include "config/config.h"
+
+#include "common/harnessFork.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -25,23 +24,17 @@ testRun()
     // *****************************************************************************************************************************
     if (testBegin("exitInit() and exitOnSignal()"))
     {
-        int processId = fork();
-
-        // If this is the fork
-        if (processId == 0)
+        HARNESS_FORK_BEGIN()
         {
-            exitInit();
-            raise(SIGTERM);
-        }
-        else
-        {
-            int processStatus;
+            HARNESS_FORK_CHILD()
+            {
+                exitInit();
+                raise(SIGTERM);
+            }
 
-            if (waitpid(processId, &processStatus, 0) != processId)                         // {uncoverable - fork() does not fail}
-                THROW_SYS_ERROR(AssertError, "unable to find child process");               // {uncoverable+}
-
-            TEST_RESULT_INT(WEXITSTATUS(processStatus), errorTypeCode(&TermError), "test error result");
+            HARNESS_FORK_CHILD_EXPECTED_EXIT_STATUS_SET(errorTypeCode(&TermError));
         }
+        HARNESS_FORK_END();
     }
 
     // *****************************************************************************************************************************

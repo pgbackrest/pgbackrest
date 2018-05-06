@@ -1,11 +1,11 @@
 /***********************************************************************************************************************************
 Test Archive Get Command
 ***********************************************************************************************************************************/
-#include <sys/wait.h>
-
-#include "common/harnessConfig.h"
 #include "postgres/type.h"
 #include "postgres/version.h"
+
+#include "common/harnessConfig.h"
+#include "common/harnessFork.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -120,25 +120,15 @@ testRun()
         strLstAdd(argListTemp, strNewFmt("--pg1-path=%s/db", testPath()));
         harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
 
-        int processId = fork();
-
         // Test this in a fork so we can use different Perl options in later tests
-        if (processId == 0)
+        HARNESS_FORK_BEGIN()
         {
-            TEST_ERROR(cmdArchiveGet(), FileMissingError, "!!!EMBEDDEDPERLERROR!!!");
-            exit(0);
+            HARNESS_FORK_CHILD()
+            {
+                TEST_ERROR(cmdArchiveGet(), FileMissingError, "!!!EMBEDDEDPERLERROR!!!");
+            }
         }
-        else
-        {
-            int processStatus;
-
-            if (waitpid(processId, &processStatus, 0) != processId)                         // {uncoverable - fork() does not fail}
-                THROW_SYS_ERROR(AssertError, "unable to find child process");               // {uncoverable+}
-
-            if (WEXITSTATUS(processStatus) != 0)                                            // {uncoverable - correct error code}
-                THROW_FMT(                                                                  // {uncoverable+}
-                    AssertError, "perl exited with error %d", WEXITSTATUS(processStatus));
-        }
+        HARNESS_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         argListTemp = strLstDup(argList);
@@ -147,25 +137,16 @@ testRun()
         strLstAdd(argListTemp, walFile);
         strLstAddZ(argListTemp, "--archive-async");
         harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
-        processId = fork();
 
         // Test this in a fork so we can use different Perl options in later tests
-        if (processId == 0)
+        HARNESS_FORK_BEGIN()
         {
-            TEST_ERROR(cmdArchiveGet(), FileMissingError, "!!!EMBEDDEDPERLERROR!!!");
-            exit(0);
+            HARNESS_FORK_CHILD()
+            {
+                TEST_ERROR(cmdArchiveGet(), FileMissingError, "!!!EMBEDDEDPERLERROR!!!");
+            }
         }
-        else
-        {
-            int processStatus;
-
-            if (waitpid(processId, &processStatus, 0) != processId)                         // {uncoverable - fork() does not fail}
-                THROW_SYS_ERROR(AssertError, "unable to find child process");               // {uncoverable+}
-
-            if (WEXITSTATUS(processStatus) != 0)                                            // {uncoverable - correct error code}
-                THROW_FMT(                                                                  // {uncoverable+}
-                    AssertError, "perl exited with error %d", WEXITSTATUS(processStatus));
-        }
+        HARNESS_FORK_END();
 
         // Make sure the process times out when there is nothing to get
         // -------------------------------------------------------------------------------------------------------------------------

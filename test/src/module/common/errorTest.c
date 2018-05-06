@@ -2,8 +2,8 @@
 Test Error Handling
 ***********************************************************************************************************************************/
 #include <assert.h>
-#include <sys/wait.h>
-#include <unistd.h>
+
+#include "common/harnessFork.h"
 
 /***********************************************************************************************************************************
 Declare some error locally because real errors won't work for some tests -- they could also break as errors change
@@ -272,22 +272,16 @@ testRun()
     // *****************************************************************************************************************************
     if (testBegin("Uncaught error"))
     {
-        int processId = fork();
-
         // Test in a fork so the process does not actually exit
-        if (processId == 0)
+        HARNESS_FORK_BEGIN()
         {
-            THROW(TestChildError, "does not get caught!");
-        }
-        else
-        {
-            int processStatus;
+            HARNESS_FORK_CHILD()
+            {
+                THROW(TestChildError, "does not get caught!");
+            }
 
-            if (waitpid(processId, &processStatus, 0) != processId)                         // {uncoverable - fork() does not fail}
-                THROW_SYS_ERROR(AssertError, "unable to find child process");               // {uncoverable+}
-
-            if (WEXITSTATUS(processStatus) != UnhandledError.code)
-                THROW_FMT(AssertError, "fork exited with error %d", WEXITSTATUS(processStatus));
+            HARNESS_FORK_CHILD_EXPECTED_EXIT_STATUS_SET(UnhandledError.code);
         }
+        HARNESS_FORK_END();
     }
 }

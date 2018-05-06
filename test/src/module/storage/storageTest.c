@@ -5,6 +5,8 @@ Test Storage Manager
 #include "storage/fileRead.h"
 #include "storage/fileWrite.h"
 
+#include "common/harnessFork.h"
+
 /***********************************************************************************************************************************
 Test function for path expression
 ***********************************************************************************************************************************/
@@ -93,14 +95,21 @@ testRun()
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm %s", strPtr(fileExists)))), 0, "remove exists file");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        if (fork() == 0)
+        HARNESS_FORK_BEGIN()
         {
-            sleepMSec(250);
-            TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileExists)))), 0, "create exists file");
-            exit(0);
-        }
+            HARNESS_FORK_CHILD()
+            {
+                sleepMSec(250);
+                TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileExists)))), 0, "create exists file");
+            }
 
-        TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 1), true, "file exists after wait");
+            HARNESS_FORK_PARENT()
+            {
+                TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 1), true, "file exists after wait");
+            }
+        }
+        HARNESS_FORK_END();
+
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm %s", strPtr(fileExists)))), 0, "remove exists file");
     }
 
