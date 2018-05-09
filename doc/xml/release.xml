@@ -12,6 +12,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.03dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2018-05-06" version="2.02" title="Parallel Asynchronous Archive Get and Configuration Includes">
             <release-core-list>
                 <release-bug-list>
