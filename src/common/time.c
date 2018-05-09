@@ -29,7 +29,7 @@ void
 sleepMSec(TimeMSec sleepMSec)
 {
     struct timeval delay;
-    delay.tv_sec = (__time_t)(sleepMSec / MSEC_PER_SEC);
-    delay.tv_usec = (__time_t)(sleepMSec % MSEC_PER_SEC * 1000);
+    delay.tv_sec = (time_t)(sleepMSec / MSEC_PER_SEC);
+    delay.tv_usec = (time_t)(sleepMSec % MSEC_PER_SEC * 1000);
     select(0, NULL, NULL, NULL, &delay);
 }

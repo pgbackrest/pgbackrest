@@ -13,6 +13,17 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.03dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="floersch.nick"/>
+                        </release-item-contributor-list>
+
+                        <p>Use <code>time_t</code> instead of <code>__time_t</code> for better portability.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-core-list>
         </release>
 
         <release date="2018-05-06" version="2.02" title="Parallel Asynchronous Archive Get and Configuration Includes">
@@ -4544,6 +4555,11 @@
         <contributor id="flatley.thomas">
             <contributor-name-display>Thomas Flatley</contributor-name-display>
             <contributor-id type="github">seadba</contributor-id>
+        </contributor>
+
+        <contributor id="floersch.nick">
+            <contributor-name-display>Nick Floersch</contributor-name-display>
+            <contributor-id type="github">seinick</contributor-id>
         </contributor>
 
         <contributor id="fort.chris">
