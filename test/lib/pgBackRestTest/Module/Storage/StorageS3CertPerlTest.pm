@@ -62,10 +62,10 @@ sub run
             if ($self->vm() eq VM_CO7)
             {
                 # Tests fails on co7 because by default certs cannot be located.  This logic may need to be changed in the future if
-                # this bug gets fixed by Red Hat.
+                # this bug gets fixed by Red Hat.  UPDATE: The behavior changed here but it does not seems to be fixed.
                 $self->testException(
                     sub {storageRepo({strStanza => 'test1'})->list('/')}, ERROR_HOST_CONNECT,
-                    'IO::Socket::IP configuration failed SSL connect attempt failed.*certificate verify failed',
+                    'IO::Socket::IP configuration failed error.*shutdown while in init',
                     'cert verify fails on ' . VM_CO7);
 
                 # It should work when verification is disabled

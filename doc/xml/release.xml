@@ -24,6 +24,14 @@
                     </release-item>
                 </release-improvement-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Update SSL error message test on CentOS 7.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2018-05-06" version="2.02" title="Parallel Asynchronous Archive Get and Configuration Includes">
