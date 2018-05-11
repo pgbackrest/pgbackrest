@@ -30,6 +30,10 @@
                     <release-item>
                         <p>Update SSL error message test on CentOS 7.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Set <br-option>log-timestamp=n</br-option> for integration tests.  This means less filtering of logs needs to be done and new timestamps can be added without adding new filters.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
