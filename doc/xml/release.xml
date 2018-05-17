@@ -23,6 +23,12 @@
                         <p>Use <code>time_t</code> instead of <code>__time_t</code> for better portability.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Build <path>libc</path> using links rather than referencing the C files in <path>src</path> directly.  The C library builds with different options which should not be reused for the C binary or vice versa.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
 
             <release-test-list>

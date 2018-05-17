@@ -13,7 +13,6 @@ $SIG{__DIE__} = sub { Carp::confess @_ };
 use Cwd qw(abs_path);
 use ExtUtils::MakeMaker;
 use File::Basename qw(dirname);
-use File::Copy qw(copy);
 
 use lib dirname($0) . '/lib';
 use pgBackRest::LibCAuto;
@@ -112,10 +111,28 @@ my @stryCFile =
     'storage/storage.c',
 );
 
-# Add ../src for files that are outside libc
+# Link source files to build the C library.  The library has different build options and we don't want the bin build to reuse any of
+# them.  Also, this makes the output of the __FILE__ macro prettier.
 for (my $iFileIdx = 1; $iFileIdx < @stryCFile; $iFileIdx++)
 {
-    $stryCFile[$iFileIdx] = '../src/' . $stryCFile[$iFileIdx];
+    # Make directory
+    system("mkdir -p " . dirname($stryCFile[$iFileIdx])) == 0
+        or die('unable to mkdir ' . dirname($stryCFile[$iFileIdx]));
+
+    # Link the file to the source directory
+    my @stryLink = split('/', $stryCFile[$iFileIdx]);
+    my $strLink;
+
+    for (my $iLinkIdx = 0; $iLinkIdx < @stryLink; $iLinkIdx++)
+    {
+        $strLink .= (defined($strLink) ? '/' : '') . '..';
+    }
+
+    if (!-l $stryCFile[$iFileIdx])
+    {
+        system("ln -s ${strLink}/src/$stryCFile[$iFileIdx] $stryCFile[$iFileIdx]") == 0
+            or die("unable to link ../src/$stryCFile[$iFileIdx] to $stryCFile[$iFileIdx]");
+    }
 }
 
 # Write the makefile
