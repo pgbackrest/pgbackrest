@@ -18,6 +18,8 @@ testRun()
     // *****************************************************************************************************************************
     if (testBegin("cmdBegin() and cmdEnd()"))
     {
+        cmdInit();
+
         // -------------------------------------------------------------------------------------------------------------------------
         cfgInit();
         cfgCommandSet(cfgCmdArchiveGet);
@@ -96,12 +98,25 @@ testRun()
         logInit(logLevelInfo, logLevelOff, logLevelOff, false);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(cmdEnd(25, strNew("aborted with exception [025]")), "command end with error");
+        testLogResult("P00   INFO: archive-get command end: aborted with exception [025]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");
         testLogResult("P00   INFO: archive-get command end: completed successfully");
 
+        // Make sure time output is covered but don't do expect testing since the output is variable
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(cmdEnd(25, strNew("aborted with exception [025]")), "command end with error");
-        testLogResult("P00   INFO: archive-get command end: aborted with exception [025]");
+        cfgOptionValidSet(cfgOptLogTimestamp, true);
+        cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, varNewBool(false));
+
+        TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");
+        testLogResult("P00   INFO: archive-get command end: completed successfully");
+
+        cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, varNewBool(true));
+
+        TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");
+        testLogResultRegExp("P00   INFO\\: archive-get command end: completed successfully \\([0-9]+ms\\)");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

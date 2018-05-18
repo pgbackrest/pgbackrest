@@ -22,6 +22,10 @@
 
                         <p>Use <code>time_t</code> instead of <code>__time_t</code> for better portability.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Print total runtime in milliseconds at command end.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>

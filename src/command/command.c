@@ -1,14 +1,34 @@
 /***********************************************************************************************************************************
 Common Command Routines
 ***********************************************************************************************************************************/
+#include <inttypes.h>
 #include <string.h>
 
 #include "common/assert.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/time.h"
 #include "config/config.h"
 #include "version.h"
+
+/***********************************************************************************************************************************
+Track time command started
+***********************************************************************************************************************************/
+static TimeMSec timeBegin;
+
+/***********************************************************************************************************************************
+Capture time at the very start of main so total time is more accurate
+***********************************************************************************************************************************/
+void
+cmdInit()
+{
+    FUNCTION_DEBUG_VOID(logLevelTrace);
+
+    timeBegin = timeMSec();
+
+    FUNCTION_DEBUG_RESULT_VOID();
+}
 
 /***********************************************************************************************************************************
 Begin the command
@@ -163,7 +183,12 @@ cmdEnd(int code, const String *errorMessage)
             String *info = strNewFmt("%s command end: ", cfgCommandName(cfgCommand()));
 
             if (code == 0)
+            {
                 strCat(info, "completed successfully");
+
+                if (cfgOptionValid(cfgOptLogTimestamp) && cfgOptionBool(cfgOptLogTimestamp))
+                    strCatFmt(info, " (%" PRIu64 "ms)", timeMSec() - timeBegin);
+            }
             else
                 strCat(info, strPtr(errorMessage));
 
@@ -171,6 +196,9 @@ cmdEnd(int code, const String *errorMessage)
         }
         MEM_CONTEXT_TEMP_END();
     }
+
+    // Reset timeBegin in case there is another command following this one
+    timeBegin = timeMSec();
 
     FUNCTION_DEBUG_RESULT_VOID();
 }

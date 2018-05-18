@@ -28,6 +28,9 @@ main(int argListSize, const char *argList[])
         FUNCTION_DEBUG_PARAM(CHARPY, argList);
     FUNCTION_DEBUG_END();
 
+    // Initialize command with the start time
+    cmdInit();
+
     volatile bool result = 0;
     volatile bool error = false;
 
