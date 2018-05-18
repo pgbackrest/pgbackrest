@@ -20,4 +20,12 @@ void regExpFree(RegExp *this);
 
 bool regExpMatchOne(const String *expression, const String *string);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_REGEXP_TYPE                                                                                                 \
+    RegExp *
+#define FUNCTION_DEBUG_REGEXP_FORMAT(value, buffer, bufferSize)                                                                    \
+    objToLog(value, "RegExp", buffer, bufferSize)
+
 #endif

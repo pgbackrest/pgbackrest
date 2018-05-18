@@ -24,4 +24,12 @@ void iniSet(Ini *this, const String *section, const String *key, const Variant *
 
 void iniFree(Ini *this);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_INI_TYPE                                                                                                    \
+    Ini *
+#define FUNCTION_DEBUG_INI_FORMAT(value, buffer, bufferSize)                                                                       \
+    objToLog(value, "Ini", buffer, bufferSize)
+
 #endif

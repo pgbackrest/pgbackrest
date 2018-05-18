@@ -7,6 +7,7 @@ Error Handler
 #include <string.h>
 
 #include "common/error.h"
+#include "common/stackTrace.h"
 
 /***********************************************************************************************************************************
 Represents an error type
@@ -38,7 +39,7 @@ typedef enum {errorStateBegin, errorStateTry, errorStateCatch, errorStateFinal, 
 /***********************************************************************************************************************************
 Track error handling
 ***********************************************************************************************************************************/
-struct
+static struct
 {
     // Array of jump buffers
     jmp_buf jumpList[ERROR_TRY_MAX];
@@ -57,8 +58,10 @@ struct
     {
         const ErrorType *errorType;                                     // Error type
         const char *fileName;                                           // Source file where the error occurred
+        const char *functionName;                                       // Function where the error occurred
         int fileLine;                                                   // Source file line where the error occurred
         const char *message;                                            // Description of the error
+        const char *stackTrace;                                         // Stack trace
     } error;
 } errorContext;
 
@@ -75,6 +78,7 @@ The temp buffer is required because the error message being passed might be the 
 
 static char messageBuffer[ERROR_MESSAGE_BUFFER_SIZE];
 static char messageBufferTemp[ERROR_MESSAGE_BUFFER_SIZE];
+static char stackTraceBuffer[ERROR_MESSAGE_BUFFER_SIZE];
 
 /***********************************************************************************************************************************
 Error type code
@@ -129,6 +133,14 @@ errorTypeParent(const ErrorType *errorType)
 }
 
 /***********************************************************************************************************************************
+Get the depth of the current try statement (0 if none)
+***********************************************************************************************************************************/
+unsigned int errorTryDepth()
+{
+    return (unsigned int)errorContext.tryTotal;
+}
+
+/***********************************************************************************************************************************
 Does the child error type extend the parent error type?
 ***********************************************************************************************************************************/
 bool
@@ -178,6 +190,15 @@ errorFileName()
 }
 
 /***********************************************************************************************************************************
+Error function name
+***********************************************************************************************************************************/
+const char *
+errorFunctionName()
+{
+    return errorContext.error.functionName;
+}
+
+/***********************************************************************************************************************************
 Error file line number
 ***********************************************************************************************************************************/
 int
@@ -202,6 +223,15 @@ const char *
 errorName()
 {
     return errorTypeName(errorType());
+}
+
+/***********************************************************************************************************************************
+Error stack trace
+***********************************************************************************************************************************/
+const char *
+errorStackTrace()
+{
+    return errorContext.error.stackTrace;
 }
 
 /***********************************************************************************************************************************
@@ -265,11 +295,11 @@ errorInternalJump()
 Begin the try block
 ***********************************************************************************************************************************/
 bool
-errorInternalTry(const char *fileName, int fileLine)
+errorInternalTry(const char *fileName, const char *functionName, int fileLine)
 {
     // If try total has been exceeded then throw an error
     if (errorContext.tryTotal >= ERROR_TRY_MAX)
-        errorInternalThrowFmt(&AssertError, fileName, fileLine, "too many nested try blocks");
+        errorInternalThrowFmt(&AssertError, fileName, functionName, fileLine, "too many nested try blocks");
 
     // Increment try total
     errorContext.tryTotal++;
@@ -315,6 +345,9 @@ errorInternalProcess(bool catch)
         errorContext.tryList[errorContext.tryTotal].uncaught = false;
         return true;
     }
+    // Else if just entering error state clean up the stack
+    else if (errorContext.tryList[errorContext.tryTotal].state == errorStateTry)
+        stackTraceClean(errorTryDepth());
 
     // Increment the state
     errorContext.tryList[errorContext.tryTotal].state++;
@@ -345,23 +378,34 @@ errorInternalProcess(bool catch)
 Throw an error
 ***********************************************************************************************************************************/
 void
-errorInternalThrow(const ErrorType *errorType, const char *fileName, int fileLine, const char *message)
+errorInternalThrow(const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
 {
     // Setup error data
     errorContext.error.errorType = errorType;
     errorContext.error.fileName = fileName;
+    errorContext.error.functionName = functionName;
     errorContext.error.fileLine = fileLine;
 
     // Assign message to the error
     strcpy(messageBuffer, message);
     errorContext.error.message = (const char *)messageBuffer;
 
+    // Generate the stack trace for the error
+    if (stackTraceToZ(
+            stackTraceBuffer, sizeof(stackTraceBuffer), fileName, functionName, (unsigned int)fileLine) >= sizeof(stackTraceBuffer))
+    {
+        // Indicate that the stack trace was truncated
+    }
+
+    errorContext.error.stackTrace = (const char *)stackTraceBuffer;
+
     // Propogate the error
     errorInternalPropagate();
 }
 
 void
-errorInternalThrowFmt(const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
+errorInternalThrowFmt(
+    const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
 {
     // Format message
     va_list argument;
@@ -369,39 +413,26 @@ errorInternalThrowFmt(const ErrorType *errorType, const char *fileName, int file
     vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, format, argument);
     va_end(argument);
 
-    errorInternalThrow(errorType, fileName, fileLine, messageBufferTemp);
+    errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp);
 }
 
 /***********************************************************************************************************************************
 Throw a system error
 ***********************************************************************************************************************************/
 void
-errorInternalThrowSys(int errNo, const ErrorType *errorType, const char *fileName, int fileLine, const char *message)
+errorInternalThrowSys(
+    int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
 {
-    // Setup error data
-    errorContext.error.errorType = errorType;
-    errorContext.error.fileName = fileName;
-    errorContext.error.fileLine = fileLine;
-
-    // Append the system message
+    // Format message with system message appended
     snprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, "%s: [%d] %s", message, errNo, strerror(errNo));
 
-    // Assign message to the error
-    strcpy(messageBuffer, messageBufferTemp);
-    errorContext.error.message = (const char *)messageBuffer;
-
-    // Propogate the error
-    errorInternalPropagate();
+    errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp);
 }
 
 void
-errorInternalThrowSysFmt(int errNo, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
+errorInternalThrowSysFmt(
+    int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
 {
-    // Setup error data
-    errorContext.error.errorType = errorType;
-    errorContext.error.fileName = fileName;
-    errorContext.error.fileLine = fileLine;
-
     // Format message
     va_list argument;
     va_start(argument, format);
@@ -411,10 +442,5 @@ errorInternalThrowSysFmt(int errNo, const ErrorType *errorType, const char *file
     // Append the system message
     snprintf(messageBufferTemp + messageSize, ERROR_MESSAGE_BUFFER_SIZE - 1 - messageSize, ": [%d] %s", errNo, strerror(errNo));
 
-    // Assign message to the error
-    strcpy(messageBuffer, messageBufferTemp);
-    errorContext.error.message = (const char *)messageBuffer;
-
-    // Propogate the error
-    errorInternalPropagate();
+    errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp);
 }

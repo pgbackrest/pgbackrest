@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Wait Handler
 ***********************************************************************************************************************************/
+#include "common/debug.h"
 #include "common/memContext.h"
 #include "common/time.h"
 #include "common/wait.h"
@@ -23,9 +24,11 @@ New wait handler
 Wait *
 waitNew(double waitTime)
 {
-    // Make sure wait time is valid
-    if (waitTime < 0.1 || waitTime > 999999.0)
-        THROW(AssertError, "waitTime must be >= 0.1 and <= 999999.0");
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(DOUBLE, waitTime);
+
+        FUNCTION_DEBUG_ASSERT(waitTime >= 0.1 && waitTime <= 999999.0);
+    FUNCTION_DEBUG_END();
 
     // Allocate wait object
     Wait *this = NULL;
@@ -51,7 +54,7 @@ waitNew(double waitTime)
     }
     MEM_CONTEXT_NEW_END();
 
-    return this;
+    FUNCTION_DEBUG_RESULT(WAIT, this);
 }
 
 /***********************************************************************************************************************************
@@ -60,6 +63,12 @@ Wait and return whether the caller has more time left
 bool
 waitMore(Wait *this)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(WAIT, this);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
     bool result = false;
 
     // If sleep is 0 then the wait time has already ended
@@ -93,7 +102,7 @@ waitMore(Wait *this)
         result = true;
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -102,6 +111,12 @@ Free the wait
 void
 waitFree(Wait *this)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(WAIT, this);
+    FUNCTION_DEBUG_END();
+
     if (this != NULL)
         memContextFree(this->memContext);
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

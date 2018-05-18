@@ -8,6 +8,7 @@ Execute Perl for Legacy Functionality
 #include <unistd.h>
 
 #include "version.h"
+#include "common/debug.h"
 #include "common/error.h"
 #include "common/memContext.h"
 #include "config/config.h"
@@ -56,6 +57,8 @@ Build list of parameters to use for perl main
 String *
 perlMain()
 {
+    FUNCTION_TEST_VOID();
+
     // Add command arguments to pass to main
     String *commandParam = strNew("");
 
@@ -66,22 +69,23 @@ perlMain()
     String *mainCall = strNewFmt(
         "($result, $message) = " PGBACKREST_MAIN "('%s'%s)", cfgCommandName(cfgCommand()), strPtr(commandParam));
 
-    return mainCall;
+    FUNCTION_TEST_RESULT(STRING, mainCall);
 }
 
 /***********************************************************************************************************************************
 Init the dynaloader so other C modules can be loaded
+
+There are no FUNCTION_TEST* calls because this is a callback from Perl and it doesn't seem wise to mix our stack stuff up in it.
 ***********************************************************************************************************************************/
 EXTERN_C void boot_DynaLoader (pTHX_ CV* cv);
 
 static void xs_init(pTHX)
 {
-    const char *file = __FILE__;
     dXSUB_SYS;
     PERL_UNUSED_CONTEXT;
 
     /* DynaLoader is a special case */
-    newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
+    newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, __FILE__);
 }
 
 /***********************************************************************************************************************************
@@ -90,7 +94,13 @@ Evaluate a perl statement
 static void
 perlEval(const String *statement)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, statement);
+    FUNCTION_TEST_END();
+
     eval_pv(strPtr(statement), TRUE);
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -99,6 +109,8 @@ Initialize Perl
 static void
 perlInit()
 {
+    FUNCTION_TEST_VOID();
+
     if (!my_perl)
     {
         // Initialize Perl with dummy args and environment
@@ -123,6 +135,8 @@ perlInit()
         // Set config data -- this is done separately to avoid it being included in stack traces
         perlEval(strNewFmt(PGBACKREST_MAIN "ConfigSet('%s', '%s')", strPtr(cfgExe()), strPtr(perlOptionJson())));
     }
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -131,6 +145,8 @@ Execute main function in Perl
 int
 perlExec()
 {
+    FUNCTION_DEBUG_VOID(logLevelDebug);
+
     // Initialize Perl
     perlInit();
 
@@ -144,7 +160,7 @@ perlExec()
     if (code >= errorTypeCode(&AssertError))                                        // {uncovered - success tested in integration}
         THROW_CODE(code, strlen(message) == 0 ? PERL_EMBED_ERROR : message);        // {+uncovered}
 
-    return code;                                                                    // {+uncovered}
+    FUNCTION_DEBUG_RESULT(INT, code);                                               // {+uncovered}
 }
 
 /***********************************************************************************************************************************
@@ -155,6 +171,12 @@ Don't bother freeing Perl itself since we are about to exit.
 void
 perlFree(int result)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, result);
+    FUNCTION_TEST_END();
+
     if (my_perl != NULL)
         perlEval(strNewFmt(PGBACKREST_MAIN "Cleanup(%d)", result));
+
+    FUNCTION_TEST_RESULT_VOID();
 }

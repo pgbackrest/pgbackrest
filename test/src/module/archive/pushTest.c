@@ -9,6 +9,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // Create default storage object for testing
     Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
 
@@ -83,4 +85,6 @@ testRun()
             cmdArchivePush(), ArchiveTimeoutError,
             "unable to push WAL segment '000000010000000100000001' asynchronously after 1 second(s)");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

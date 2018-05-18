@@ -11,6 +11,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // Create default storage object for testing
     Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
 
@@ -176,4 +178,6 @@ testRun()
         TEST_RESULT_BOOL(storageExistsNP(storageTest, archiveLockFile), true, "archive lock file still exists");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, backupLockFile), true, "backup lock file still exists");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

@@ -8,6 +8,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     String *writeFile = strNewFmt("%s/writefile", testPath());
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -22,7 +24,7 @@ testRun()
 
         TEST_RESULT_STR(strPtr(storagePathNP(storage, NULL)), "/", "check base path");
 
-        TEST_ERROR(storageNewWriteNP(storage, writeFile), AssertError, "assertion 'this->write == true' failed");
+        TEST_ERROR(storageNewWriteNP(storage, writeFile), AssertError, "function debug assertion 'this->write' failed");
     }
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("storageLocalWrite()"))
@@ -74,4 +76,6 @@ testRun()
 
         TEST_RESULT_VOID(storageNewWriteNP(storage, writeFile), "writes are allowed");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

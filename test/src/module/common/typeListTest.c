@@ -26,6 +26,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("lstNew(), lstMemContext(), and lstFree()"))
     {
@@ -71,7 +73,7 @@ testRun()
         }
 
         TEST_ERROR(lstGet(list, lstSize(list)), AssertError, "cannot get index 9 from list with 9 value(s)");
-        TEST_RESULT_VOID(lstMove(NULL, NULL), "move null list");
+        TEST_RESULT_VOID(lstMove(NULL, memContextTop()), "move null list");
     }
 
     // *****************************************************************************************************************************
@@ -92,4 +94,6 @@ testRun()
         TEST_RESULT_INT(*((int *)lstGet(list, 2)), 3, "sort value 2");
         TEST_RESULT_INT(*((int *)lstGet(list, 3)), 5, "sort value 3");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

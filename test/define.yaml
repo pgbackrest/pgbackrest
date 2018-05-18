@@ -34,17 +34,9 @@ unit:
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: time
-        total: 2
-        define: -DNO_ERROR -DNO_LOG
-
-        coverage:
-          common/time: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: error
         total: 8
-        define: -DNO_ERROR -DNO_LOG
+        define: -DNO_ERROR -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
 
         coverage:
           common/error: full
@@ -53,7 +45,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-on
         total: 2
-        define: -DNO_LOG
+        define: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
 
         coverage:
           common/assert: noCode
@@ -61,19 +53,19 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-off
         total: 2
-        define: -DNDEBUG -DNO_LOG
+        define: -DNDEBUG -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
         debugUnitSuppress: true
 
         coverage:
           common/assert: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: fork
-        total: 1
-        define: -DNO_LOG
+      - name: stack-trace
+        total: 4
+        define: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
 
         coverage:
-          common/fork: full
+          common/stackTrace: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: mem-context
@@ -84,19 +76,35 @@ unit:
           common/memContext: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: time
+        total: 2
+        define: -DNO_ERROR -DNO_LOG
+
+        coverage:
+          common/time: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: fork
+        total: 1
+        define: -DNO_LOG
+
+        coverage:
+          common/fork: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: log
         total: 5
-        define: -DNO_LOG
+        define: -DIN_LOG
 
         coverage:
           common/log: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: debug-on
-        total: 2
+        total: 4
 
         coverage:
-          common/debug: noCode
+          common/debug: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: debug-off
@@ -105,7 +113,7 @@ unit:
         debugUnitSuppress: true
 
         coverage:
-          common/debug: noCode
+          common/debug: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: lock
@@ -136,6 +144,13 @@ unit:
           common/wait: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: type-convert
+        total: 8
+
+        coverage:
+          common/type/convert: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-list
         total: 3
 
@@ -144,14 +159,14 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string
-        total: 11
+        total: 13
 
         coverage:
           common/type/string: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string-list
-        total: 8
+        total: 9
 
         coverage:
           common/type/stringList: full
@@ -165,7 +180,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-variant
-        total: 7
+        total: 8
 
         coverage:
           common/type/variant: full

@@ -8,6 +8,7 @@ Main
 #include "command/archive/push/push.h"
 #include "command/help/help.h"
 #include "command/command.h"
+#include "common/debug.h"
 #include "common/error.h"
 #include "common/exit.h"
 #include "config/config.h"
@@ -18,6 +19,15 @@ Main
 int
 main(int argListSize, const char *argList[])
 {
+#ifdef WITH_BACKTRACE
+    stackTraceInit(argList[0]);
+#endif
+
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(INT, argListSize);
+        FUNCTION_DEBUG_PARAM(CHARPY, argList);
+    FUNCTION_DEBUG_END();
+
     volatile bool result = 0;
     volatile bool error = false;
 
@@ -88,5 +98,5 @@ main(int argListSize, const char *argList[])
     }
     TRY_END();
 
-    return exitSafe(result, error, 0);
+    FUNCTION_DEBUG_RESULT(INT, exitSafe(result, error, 0));
 }

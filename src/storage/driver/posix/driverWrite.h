@@ -44,4 +44,12 @@ Destructor
 ***********************************************************************************************************************************/
 void storageFileWritePosixFree(StorageFileWritePosix *this);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_STORAGE_FILE_WRITE_POSIX_TYPE                                                                               \
+    StorageFileWritePosix *
+#define FUNCTION_DEBUG_STORAGE_FILE_WRITE_POSIX_FORMAT(value, buffer, bufferSize)                                                  \
+    objToLog(value, "StorageFileWritePosix", buffer, bufferSize)
+
 #endif

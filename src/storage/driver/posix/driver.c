@@ -13,6 +13,7 @@ Storage Driver Posix
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "common/debug.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "storage/driver/posix/driver.h"
@@ -25,6 +26,12 @@ Does a file/path exist?
 bool
 storageDriverPosixExists(const String *path)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, path);
+
+        FUNCTION_DEBUG_ASSERT(path != NULL);
+    FUNCTION_DEBUG_END();
+
     bool result = false;
 
     // Attempt to stat the file to determine if it exists
@@ -40,7 +47,7 @@ storageDriverPosixExists(const String *path)
     else
         result = !S_ISDIR(statFile.st_mode);
 
-    return result;
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -49,6 +56,13 @@ File/path info
 StorageInfo
 storageDriverPosixInfo(const String *file, bool ignoreMissing)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, file);
+        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+
+        FUNCTION_DEBUG_ASSERT(file != NULL);
+    FUNCTION_DEBUG_END();
+
     StorageInfo result = {0};
 
     // Attempt to stat the file
@@ -79,7 +93,7 @@ storageDriverPosixInfo(const String *file, bool ignoreMissing)
         result.mode = statFile.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(STORAGE_INFO, result);
 }
 
 /***********************************************************************************************************************************
@@ -88,6 +102,14 @@ Get a list of files from a directory
 StringList *
 storageDriverPosixList(const String *path, bool errorOnMissing, const String *expression)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, path);
+        FUNCTION_DEBUG_PARAM(BOOL, errorOnMissing);
+        FUNCTION_DEBUG_PARAM(STRING, expression);
+
+        FUNCTION_DEBUG_ASSERT(path != NULL);
+    FUNCTION_DEBUG_END();
+
     StringList *result = NULL;
     DIR *dir = NULL;
 
@@ -141,7 +163,7 @@ storageDriverPosixList(const String *path, bool errorOnMissing, const String *ex
     }
     TRY_END();
 
-    return result;
+    FUNCTION_DEBUG_RESULT(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -150,6 +172,14 @@ Move a file
 bool
 storageDriverPosixMove(StorageFileReadPosix *source, StorageFileWritePosix *destination)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ_POSIX, source);
+        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE_POSIX, destination);
+
+        FUNCTION_TEST_ASSERT(source != NULL);
+        FUNCTION_TEST_ASSERT(destination != NULL);
+    FUNCTION_DEBUG_END();
+
     bool result = true;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -199,7 +229,7 @@ storageDriverPosixMove(StorageFileReadPosix *source, StorageFileWritePosix *dest
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -208,6 +238,15 @@ Create a path
 void
 storageDriverPosixPathCreate(const String *path, bool errorOnExists, bool noParentCreate, mode_t mode)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, path);
+        FUNCTION_DEBUG_PARAM(BOOL, errorOnExists);
+        FUNCTION_DEBUG_PARAM(BOOL, noParentCreate);
+        FUNCTION_DEBUG_PARAM(MODE, mode);
+
+        FUNCTION_DEBUG_ASSERT(path != NULL);
+    FUNCTION_DEBUG_END();
+
     // Attempt to create the directory
     if (mkdir(strPtr(path), mode) == -1)
     {
@@ -221,6 +260,8 @@ storageDriverPosixPathCreate(const String *path, bool errorOnExists, bool noPare
         else if (errno != EEXIST || errorOnExists)
             THROW_SYS_ERROR_FMT(PathCreateError, "unable to create path '%s'", strPtr(path));
     }
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -229,6 +270,14 @@ Remove a path
 void
 storageDriverPosixPathRemove(const String *path, bool errorOnMissing, bool recurse)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, path);
+        FUNCTION_DEBUG_PARAM(BOOL, errorOnMissing);
+        FUNCTION_DEBUG_PARAM(BOOL, recurse);
+
+        FUNCTION_DEBUG_ASSERT(path != NULL);
+    FUNCTION_DEBUG_END();
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Recurse if requested
@@ -267,6 +316,8 @@ storageDriverPosixPathRemove(const String *path, bool errorOnMissing, bool recur
         }
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -275,6 +326,13 @@ Sync a path
 void
 storageDriverPosixPathSync(const String *path, bool ignoreMissing)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, path);
+        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+
+        FUNCTION_DEBUG_ASSERT(path != NULL);
+    FUNCTION_DEBUG_END();
+
     // Open directory and handle errors
     int handle = storageFilePosixOpen(path, O_RDONLY, 0, ignoreMissing, &PathOpenError, "sync");
 
@@ -287,6 +345,8 @@ storageDriverPosixPathSync(const String *path, bool ignoreMissing)
         // Close the directory
         storageFilePosixClose(handle, path, &PathCloseError);
     }
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -295,10 +355,19 @@ Remove a file
 void
 storageDriverPosixRemove(const String *file, bool errorOnMissing)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, file);
+        FUNCTION_DEBUG_PARAM(BOOL, errorOnMissing);
+
+        FUNCTION_DEBUG_ASSERT(file != NULL);
+    FUNCTION_DEBUG_END();
+
     // Attempt to unlink the file
     if (unlink(strPtr(file)) == -1)
     {
         if (errorOnMissing || errno != ENOENT)
             THROW_SYS_ERROR_FMT(FileRemoveError, "unable to remove '%s'", strPtr(file));
     }
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

@@ -2,6 +2,7 @@
 Test Exit Routines
 ***********************************************************************************************************************************/
 #include "common/error.h"
+#include "common/log.h"
 #include "config/config.h"
 
 #include "common/harnessFork.h"
@@ -12,6 +13,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("exitSignalName()"))
     {
@@ -67,6 +70,42 @@ testRun()
         TRY_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
+        logInit(logLevelDebug, logLevelOff, logLevelOff, false);
+
+        TRY_BEGIN()
+        {
+            THROW(RuntimeError, "test debug error message");
+        }
+        CATCH_ANY()
+        {
+            exitSafe(0, true, signalTypeNone);
+            testLogResultRegExp(
+                "P00  ERROR\\: \\[122\\]\\: test debug error message\n"
+                "            STACK TRACE\\:\n"
+                "            module\\/common\\/exitTest\\:testRun\\:.*\n"
+                "            test\\:main\\:.*\n");
+        }
+        TRY_END();
+
+        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TRY_BEGIN()
+        {
+            THROW(AssertError, "test assert message");
+        }
+        CATCH_ANY()
+        {
+            exitSafe(0, true, signalTypeNone);
+            testLogResultRegExp(
+                "P00 ASSERT\\: \\[025\\]\\: test assert message\n"
+                "            STACK TRACE\\:\n"
+                "            module/common/exitTest\\:testRun\\:.*\n"
+                "            test\\:main\\:.*\n");
+        }
+        TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TRY_BEGIN()
         {
             THROW(RuntimeError, PERL_EMBED_ERROR);
@@ -89,4 +128,6 @@ testRun()
             exitSafe(errorTypeCode(&TermError), false, signalTypeTerm), errorTypeCode(&TermError), "exit on term with SIGTERM");
         testLogResult("P00   INFO: archive-push command end: terminated on signal [SIGTERM]");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

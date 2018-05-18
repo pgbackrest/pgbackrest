@@ -10,6 +10,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("perlMain()"))
     {
@@ -51,4 +53,6 @@ testRun()
         TEST_ERROR(perlExec(), ParamRequiredError, PERL_EMBED_ERROR);
         TEST_RESULT_VOID(perlFree(0), "free Perl");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

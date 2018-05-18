@@ -8,6 +8,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("varLstNew(), varLstAdd(), varLstSize(), varLstGet(), and varListFree()"))
     {
@@ -24,6 +26,7 @@ testRun()
         TEST_RESULT_STR(strPtr(varStr(varLstGet(list, 1))), "test-str", "check string");
 
         TEST_RESULT_VOID(varLstFree(list), "free list");
+        TEST_RESULT_VOID(varLstFree(NULL), "free null list");
     }
 
     // *****************************************************************************************************************************
@@ -55,4 +58,6 @@ testRun()
 
         TEST_RESULT_PTR(varLstNewStrLst(NULL), NULL, "variant list from null string list");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

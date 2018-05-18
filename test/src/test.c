@@ -9,9 +9,11 @@ This wrapper runs the the C unit tests.
 #include <sys/stat.h>
 
 #ifndef NO_ERROR
+    #include "common/debug.h"
     #include "common/error.h"
 #endif
 
+#include "common/harnessDebug.h"
 #include "common/harnessTest.h"
 
 #ifndef NO_LOG
@@ -36,15 +38,39 @@ The test code is included directly so it can freely interact with the included C
 {[C_TEST_INCLUDE]}
 
 /***********************************************************************************************************************************
+Include assert.h here since it is not generally used by tests
+***********************************************************************************************************************************/
+#include <assert.h>
+
+/***********************************************************************************************************************************
 main - run the tests
 ***********************************************************************************************************************************/
 int
-main(void)
+main(int argListSize, const char *argList[])
 {
+    // Basic sanity test on input parameters
+    if (argListSize == 0 || argList[0] == NULL)
+    {
+        fprintf(stderr, "at least one argument expected");
+        fflush(stderr);
+        exit(25);
+    }
+
+    // Initialize stack trace for the harness
+    FUNCTION_HARNESS_INIT(argList[0]);
+
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, argListSize);
+        FUNCTION_HARNESS_PARAM(CHARPY, argList);
+    FUNCTION_HARNESS_END();
+
+    int result = 0;
+
     // Set neutral umask for testing
     umask(0000);
 
     // Set globals
+    testExeSet(argList[0]);
     testPathSet("{[C_TEST_PATH]}");
 
     // Initialize tests
@@ -67,9 +93,17 @@ main(void)
     }
     CATCH_ANY()
     {
-        fprintf(stderr, "TEST FAILED WITH %s, \"%s\" at %s:%d\n", errorName(), errorMessage(), errorFileName(), errorFileLine());
+        fprintf(
+            stderr,
+            "\nTEST FAILED WITH %s:\n\n"
+                "--------------------------------------------------------------------------------\n"
+                "%s\n"
+                "--------------------------------------------------------------------------------\n"
+                "\nTHROWN AT:\n%s\n",
+            errorName(), errorMessage(), errorStackTrace());
+
         fflush(stderr);
-        exit(errorCode());
+        result = errorCode();
     }
 #ifndef NO_MEM_CONTEXT
     FINALLY()
@@ -79,4 +113,6 @@ main(void)
 #endif
     TRY_END();
 #endif
+
+    FUNCTION_HARNESS_RESULT(INT, result);
 }

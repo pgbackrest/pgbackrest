@@ -5,6 +5,8 @@ Help Command
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "common/assert.h"
+#include "common/debug.h"
 #include "common/io/handle.h"
 #include "common/memContext.h"
 #include "config/config.h"
@@ -22,6 +24,16 @@ Helper function for helpRender() to make output look good on a console
 static String *
 helpRenderText(const String *text, size_t indent, bool indentFirst, size_t length)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, text);
+        FUNCTION_DEBUG_PARAM(SIZE, indent);
+        FUNCTION_DEBUG_PARAM(BOOL, indentFirst);
+        FUNCTION_DEBUG_PARAM(SIZE, length);
+
+        FUNCTION_DEBUG_ASSERT(text != NULL);
+        FUNCTION_DEBUG_ASSERT(length > 0);
+    FUNCTION_DEBUG_END();
+
     String *result = strNew("");
 
     // Split the text into paragraphs
@@ -54,7 +66,7 @@ helpRenderText(const String *text, size_t indent, bool indentFirst, size_t lengt
         }
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -63,6 +75,10 @@ Helper function for helpRender() to output values as strings
 static String *
 helpRenderValue(const Variant *value)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(VARIANT, value);
+    FUNCTION_DEBUG_END();
+
     String *result = NULL;
 
     if (value != NULL)
@@ -109,7 +125,7 @@ helpRenderValue(const Variant *value)
             result = varStrForce(value);
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -118,6 +134,8 @@ Render help to a string
 static String *
 helpRender()
 {
+    FUNCTION_DEBUG_VOID(logLevelDebug);
+
     String *result = strNew(PGBACKREST_NAME " " PGBACKREST_VERSION);
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -358,7 +376,7 @@ helpRender()
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_DEBUG_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -367,9 +385,13 @@ Render help and output to stdout
 void
 cmdHelp()
 {
+    FUNCTION_DEBUG_VOID(logLevelDebug);
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ioHandleWriteOneStr(STDOUT_FILENO, helpRender());
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

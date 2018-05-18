@@ -13,6 +13,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("cmdBegin() and cmdEnd()"))
     {
@@ -101,4 +103,6 @@ testRun()
         TEST_RESULT_VOID(cmdEnd(25, strNew("aborted with exception [025]")), "command end with error");
         testLogResult("P00   INFO: archive-get command end: aborted with exception [025]");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

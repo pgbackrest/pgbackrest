@@ -92,6 +92,7 @@ test.pl [options]
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
    --no-optimize        don't do compile optimization for C (saves compile time)
+   --backtrace          enable backtrace when available (adds stack trace line numbers -- very slow)
    --profile            generate profile info
    --no-debug           don't generate a debug build
 
@@ -148,6 +149,7 @@ my $bNoPackage = false;
 my $bNoCiConfig = false;
 my $bDev = false;
 my $bDevTest = false;
+my $bBackTrace = false;
 my $bProfile = false;
 my $bExpect = false;
 my $bNoValgrind = false;
@@ -187,6 +189,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'smart' => \$bSmart,
             'dev' => \$bDev,
             'dev-test' => \$bDevTest,
+            'backtrace' => \$bBackTrace,
             'profile' => \$bProfile,
             'expect' => \$bExpect,
             'no-valgrind' => \$bNoValgrind,
@@ -411,6 +414,10 @@ eval
         #
         # Use statements are put here so this will be easy to get rid of someday.
         #---------------------------------------------------------------------------------------------------------------------------
+        use lib dirname(dirname($0)) . '/libc/build/lib';
+        use pgBackRestLibC::Build;                                      ## no critic (Modules::ProhibitConditionalUseStatements)
+        use pgBackRestLibC::BuildParam;                                 ## no critic (Modules::ProhibitConditionalUseStatements)
+
         # Get last mod for Perl build files
         my $lLastPerlBuildMod = buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc/build']);
 
@@ -424,8 +431,6 @@ eval
             $lLastBuildMod > buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc', 'lib'], '(\.auto\.xs|Auto\.pm)$'))
         {
             &log(INFO, "    autogenerate Perl code");
-            use lib dirname(dirname($0)) . '/libc/build/lib';
-            use pgBackRestLibC::Build;                                      ## no critic (Modules::ProhibitConditionalUseStatements)
 
             buildXsAll("${strBackRestBase}/libc");
         }
@@ -627,12 +632,15 @@ eval
                         &log(INFO, "    clang static analyzer ${strBuildVM} (${strBuildPath})");
                     }
 
-                    my $strCDebug = vmDebugIntegration($strVm) ? 'CDEBUG=' : '';
+                    my $strCExtra =
+                        "'-g" . (vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace ? ' -DWITH_BACKTRACE' : '') . "'";
+                    my $strLdExtra = vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace  ? '-lbacktrace' : '';
+                    my $strCDebug = vmDebugIntegration($strBuildVM) ? 'CDEBUG=' : '';
 
                     executeTest(
                         'docker exec -i test-build' .
                         (vmCoverage($strVm) && !$bNoLint ? ' scan-build-5.0' : '') .
-                        " make --silent --directory ${strBuildPath} CEXTRA=-g ${strCDebug}",
+                        " make --silent --directory ${strBuildPath} CEXTRA=${strCExtra} LDEXTRA=${strLdExtra} ${strCDebug}",
                         {bShowOutputAsync => $bLogDetail});
 
                     executeTest(
@@ -695,7 +703,7 @@ eval
 
                     # It's very expensive to rebuild the Makefile so make sure it has actually changed
                     my $bMakeRebuild =
-                        !$oStorageBackRest->exists("${strBuildPath}/Makefile.PL") ||
+                        !$oStorageBackRest->exists("${strBuildPath}/Makefile") ||
                         ($oStorageBackRest->info("${strBackRestBase}/libc/Makefile.PL")->mtime >
                          $oStorageBackRest->info("${strBuildPath}/Makefile.PL")->mtime);
 
@@ -717,9 +725,12 @@ eval
 
                     if ($bMakeRebuild)
                     {
+                        my $strCCFlags = vmDebugIntegration($strBuildVM) ? ' CCFLAGS="' . join(' ', buildParamCCDebug()) . '"' : '';
+                        $strCCFlags =~ s/\$/\\\$/;
+
                         executeTest(
                             ($bContainerExists ? "docker exec -i test-build bash -c '" : '') .
-                            "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
+                            "cd ${strBuildPath} && perl Makefile.PL${strCCFlags} INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
                             ($bContainerExists ? "'" : ''),
                             {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
                     }
@@ -1061,7 +1072,7 @@ eval
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut,
                         $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry,
-                        !$bNoValgrind, !$bNoCoverage, !$bNoOptimize, $bProfile, !$bNoDebug);
+                        !$bNoValgrind, !$bNoCoverage, !$bNoOptimize, $bBackTrace, $bProfile, !$bNoDebug);
                     $iTestIdx++;
 
                     if ($oJob->run())

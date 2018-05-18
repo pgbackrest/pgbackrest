@@ -29,6 +29,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // Create default storage object for testing
     Storage *storageTest = storageNewP(strNew(testPath()), .write = true, .bufferSize = 3);
     Storage *storageTmp = storageNewP(strNew("/tmp"), .write = true);
@@ -48,7 +50,7 @@ testRun()
     {
         Storage *storageTest = NULL;
 
-        TEST_ERROR(storageNewNP(NULL), AssertError, "storage base path cannot be null");
+        TEST_ERROR(storageNewNP(NULL), AssertError, "function debug assertion 'path != NULL' failed");
 
         TEST_ASSIGN(storageTest, storageNewNP(strNew("/")), "new storage (defaults)");
         TEST_RESULT_STR(strPtr(storageTest->path), "/", "    check path");
@@ -576,4 +578,6 @@ testRun()
             storageRemoveNP(storageTest, fileNoPerm), FileRemoveError,
             "unable to remove '%s': [13] Permission denied", strPtr(fileNoPerm));
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

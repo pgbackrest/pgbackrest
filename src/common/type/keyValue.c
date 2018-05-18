@@ -3,6 +3,7 @@ Key Value Handler
 ***********************************************************************************************************************************/
 #include <limits.h>
 
+#include "common/debug.h"
 #include "common/memContext.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
@@ -38,9 +39,11 @@ Create a new key/value store
 KeyValue *
 kvNew()
 {
+    FUNCTION_TEST_VOID();
+
     KeyValue *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("keyValue")
+    MEM_CONTEXT_NEW_BEGIN("KeyValue")
     {
         // Allocate state and set context
         this = memNew(sizeof(KeyValue));
@@ -52,7 +55,7 @@ kvNew()
     }
     MEM_CONTEXT_NEW_END();
 
-    return this;
+    FUNCTION_TEST_RESULT(KEY_VALUE, this);
 }
 
 /***********************************************************************************************************************************
@@ -61,6 +64,12 @@ Duplicate key/value store
 KeyValue *
 kvDup(const KeyValue *source)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, source);
+
+        FUNCTION_TEST_ASSERT(source != NULL);
+    FUNCTION_TEST_END();
+
     KeyValue *this = kvNew();
 
     // Duplicate all key/values
@@ -79,7 +88,7 @@ kvDup(const KeyValue *source)
 
     this->keyList = varLstDup(source->keyList);
 
-    return this;
+    FUNCTION_TEST_RESULT(KEY_VALUE, this);
 }
 
 /***********************************************************************************************************************************
@@ -88,23 +97,30 @@ Get key index if it exists
 static unsigned int
 kvGetIdx(const KeyValue *this, const Variant *key)
 {
-    // Search for the key
-    unsigned int listIdx = 0;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+        FUNCTION_TEST_PARAM(VARIANT, key);
 
-    for (; listIdx < lstSize(this->list); listIdx++)
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+    FUNCTION_TEST_END();
+
+    // Search for the key
+    unsigned int result = KEY_NOT_FOUND;
+
+    for (unsigned int listIdx = 0; listIdx < lstSize(this->list); listIdx++)
     {
         const KeyValuePair *pair = (const KeyValuePair *)lstGet(this->list, listIdx);
 
         // Break if the key matches
         if (varEq(key, pair->key))
+        {
+            result = listIdx;
             break;
+        }
     }
 
-    // If key was not found
-    if (listIdx == lstSize(this->list))
-        return KEY_NOT_FOUND;
-
-    return listIdx;
+    FUNCTION_TEST_RESULT(UINT, result);
 }
 
 /***********************************************************************************************************************************
@@ -113,7 +129,13 @@ Get list of keys
 const VariantList *
 kvKeyList(const KeyValue *this)
 {
-    return this->keyList;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(VARIANT_LIST, this->keyList);
 }
 
 /***********************************************************************************************************************************
@@ -124,6 +146,15 @@ Handles the common logic for the external put functions. The correct mem context
 static void
 kvPutInternal(KeyValue *this, const Variant *key, Variant *value)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+        FUNCTION_TEST_PARAM(VARIANT, key);
+        FUNCTION_TEST_PARAM(VARIANT, value);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+    FUNCTION_TEST_END();
+
     // Find the key
     unsigned int listIdx = kvGetIdx(this, key);
 
@@ -151,6 +182,8 @@ kvPutInternal(KeyValue *this, const Variant *key, Variant *value)
 
         pair->value = value;
     }
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -159,13 +192,22 @@ Put key/value pair
 KeyValue *
 kvPut(KeyValue *this, const Variant *key, const Variant *value)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+        FUNCTION_TEST_PARAM(VARIANT, key);
+        FUNCTION_TEST_PARAM(VARIANT, value);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+    FUNCTION_TEST_END();
+
     MEM_CONTEXT_BEGIN(this->memContext)
     {
         kvPutInternal(this, key, varDup(value));
     }
     MEM_CONTEXT_END();
 
-    return this;
+    FUNCTION_TEST_RESULT(KEY_VALUE, this);
 }
 
 /***********************************************************************************************************************************
@@ -174,6 +216,15 @@ Add value to key -- if the key does not exist then this works the same as kvPut(
 KeyValue *
 kvAdd(KeyValue *this, const Variant *key, const Variant *value)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+        FUNCTION_TEST_PARAM(VARIANT, key);
+        FUNCTION_TEST_PARAM(VARIANT, value);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+    FUNCTION_TEST_END();
+
     MEM_CONTEXT_BEGIN(this->memContext)
     {
         // Find the key
@@ -193,7 +244,7 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
                 pair->value = varDup(value);
             else if (varType(pair->value) != varTypeVariantList)
             {
-                Variant *valueList = varNewVarLstEmpty();
+                Variant *valueList = varNewVarLst(varLstNew());
                 varLstAdd(varVarLst(valueList), pair->value);
                 varLstAdd(varVarLst(valueList), varDup(value));
                 pair->value = valueList;
@@ -204,7 +255,7 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
     }
     MEM_CONTEXT_END();
 
-    return this;
+    FUNCTION_TEST_RESULT(KEY_VALUE, this);
 }
 
 /***********************************************************************************************************************************
@@ -216,6 +267,14 @@ key/value store.
 KeyValue *
 kvPutKv(KeyValue *this, const Variant *key)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+        FUNCTION_TEST_PARAM(VARIANT, key);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+    FUNCTION_TEST_END();
+
     KeyValue *result = NULL;
 
     MEM_CONTEXT_BEGIN(this->memContext)
@@ -227,7 +286,7 @@ kvPutKv(KeyValue *this, const Variant *key)
     }
     MEM_CONTEXT_END();
 
-    return result;
+    FUNCTION_TEST_RESULT(KEY_VALUE, result);
 }
 
 /***********************************************************************************************************************************
@@ -236,6 +295,14 @@ Get a value using the key
 const Variant *
 kvGet(const KeyValue *this, const Variant *key)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+        FUNCTION_TEST_PARAM(VARIANT, key);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+    FUNCTION_TEST_END();
+
     Variant *result = NULL;
 
     // Find the key
@@ -244,7 +311,7 @@ kvGet(const KeyValue *this, const Variant *key)
     if (listIdx != KEY_NOT_FOUND)
         result = ((KeyValuePair *)lstGet(this->list, listIdx))->value;
 
-    return result;
+    FUNCTION_TEST_RESULT(VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -253,6 +320,14 @@ Get a value as a list (even if there is only one value) using the key
 VariantList *
 kvGetList(const KeyValue *this, const Variant *key)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+        FUNCTION_TEST_PARAM(VARIANT, key);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+    FUNCTION_TEST_END();
+
     VariantList *result = NULL;
 
     // Get the value
@@ -264,7 +339,7 @@ kvGetList(const KeyValue *this, const Variant *key)
     else
         result = varLstAdd(varLstNew(), varDup(value));
 
-    return result;
+    FUNCTION_TEST_RESULT(VARIANT_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -273,5 +348,12 @@ Free the string
 void
 kvFree(KeyValue *this)
 {
-    memContextFree(this->memContext);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+    FUNCTION_TEST_END();
+
+    if (this != NULL)
+        memContextFree(this->memContext);
+
+    FUNCTION_TEST_RESULT_VOID();
 }

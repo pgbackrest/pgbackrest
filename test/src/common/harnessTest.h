@@ -16,8 +16,11 @@ void testAdd(int run, bool selected);
 bool testBegin(const char *name);
 void testComplete();
 
+const char *testExe();
+void testExeSet(const char *testExe);
+
 const char *testPath();
-void testPathSet(const char *testPathParam);
+void testPathSet(const char *testPath);
 
 /***********************************************************************************************************************************
 Convert a macro to a string -- handy for testing debug macros
@@ -53,8 +56,8 @@ Test that an expected error is actually thrown and error when it isn't
                                                                                                                                    \
         if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                                \
             THROW_FMT(                                                                                                             \
-                AssertError, "expected error %s, '%s' but got %s, '%s'", errorTypeName(&errorTypeExpected), errorMessageExpected,  \
-                errorName(), errorMessage());                                                                                      \
+                AssertError, "EXECTED %s: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),              \
+                errorMessageExpected, errorName(), errorMessage(), errorStackTrace());                                             \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
                                                                                                                                    \
@@ -153,8 +156,8 @@ parameters.
     {                                                                                                                              \
         /* No errors were expected so error */                                                                                     \
         THROW_FMT(                                                                                                                 \
-            AssertError, "statement '%s' threw error %s, '%s' but result <%s> expected",                                           \
-            #statement, errorName(), errorMessage(), TEST_RESULT_resultExpectedStr);                                               \
+            AssertError, "STATEMENT: %s\n\nTHREW %s: %s\n\nTHROWN AT:\n%s\n\nBUT EXPECTED RESULT:\n%s",                            \
+            #statement, errorName(), errorMessage(), errorStackTrace(), TEST_RESULT_resultExpectedStr);                            \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
                                                                                                                                    \

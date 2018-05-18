@@ -4,17 +4,11 @@ Common Command Routines
 #include <string.h>
 
 #include "common/assert.h"
+#include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
 #include "version.h"
-
-/***********************************************************************************************************************************
-Debug Asserts
-***********************************************************************************************************************************/
-// The command must be set
-#define ASSERT_DEBUG_COMMAND_SET()                                                                                                 \
-    ASSERT_DEBUG(cfgCommand() != cfgCmdNone)
 
 /***********************************************************************************************************************************
 Begin the command
@@ -22,7 +16,11 @@ Begin the command
 void
 cmdBegin(bool logOption)
 {
-    ASSERT_DEBUG_COMMAND_SET();
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(BOOL, logOption);
+
+        FUNCTION_DEBUG_ASSERT(cfgCommand() != cfgCmdNone);
+    FUNCTION_DEBUG_END();
 
     // This is fairly expensive log message to generate so skip it if it won't be output
     if (logWill(cfgLogLevelDefault()))
@@ -134,10 +132,12 @@ cmdBegin(bool logOption)
                 }
             }
 
-            LOG_ANY(cfgLogLevelDefault(), 0, strPtr(info));
+            LOG(cfgLogLevelDefault(), 0, strPtr(info));
         }
         MEM_CONTEXT_TEMP_END();
     }
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -146,8 +146,13 @@ End the command
 void
 cmdEnd(int code, const String *errorMessage)
 {
-    ASSERT_DEBUG_COMMAND_SET();
-    ASSERT_DEBUG(code == 0 || errorMessage != NULL);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INT, code);
+        FUNCTION_DEBUG_PARAM(STRING, errorMessage);
+
+        FUNCTION_DEBUG_ASSERT(cfgCommand() != cfgCmdNone);
+        FUNCTION_DEBUG_ASSERT(code == 0 || errorMessage != NULL);
+    FUNCTION_DEBUG_END();
 
     // Skip this log message if it won't be output.  It's not too expensive but since we skipped cmdBegin(), may as well.
     if (logWill(cfgLogLevelDefault()))
@@ -162,8 +167,10 @@ cmdEnd(int code, const String *errorMessage)
             else
                 strCat(info, strPtr(errorMessage));
 
-            LOG_ANY(cfgLogLevelDefault(), 0, strPtr(info));
+            LOG(cfgLogLevelDefault(), 0, strPtr(info));
         }
         MEM_CONTEXT_TEMP_END();
     }
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

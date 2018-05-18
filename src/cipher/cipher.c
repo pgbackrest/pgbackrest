@@ -6,6 +6,7 @@ Cipher General Init and Free
 #include <openssl/err.h>
 
 #include "cipher/cipher.h"
+#include "common/debug.h"
 
 /***********************************************************************************************************************************
 Flag to indicate if OpenSSL has already been initialized
@@ -18,6 +19,8 @@ Initialize ciphers
 void
 cipherInit()
 {
+    FUNCTION_DEBUG_VOID(logLevelTrace);
+
     if (!cipherInitDone)
     {
         ERR_load_crypto_strings();
@@ -25,6 +28,8 @@ cipherInit()
 
         cipherInitDone = true;
     }
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -33,23 +38,6 @@ Have the ciphers been initialized?
 bool
 cipherIsInit()
 {
-    return cipherInitDone;
-}
-
-/***********************************************************************************************************************************
-Free ciphers
-***********************************************************************************************************************************/
-void
-cipherFree()
-{
-    if (cipherInitDone)
-    {
-        FIPS_mode_set(0);
-        EVP_cleanup();
-        CRYPTO_cleanup_all_ex_data();
-        ERR_remove_thread_state(NULL);
-        ERR_free_strings();
-
-        cipherInitDone = false;
-    }
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RESULT(BOOL, cipherInitDone);
 }

@@ -26,6 +26,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Add stack trace macros to all functions.  Low-level functions only include stack trace in test builds while higher-level functions ship with stack trace built-in.  Stack traces include all parameters passed to the function but production builds only create the parameter list when the log level is set high enough, i.e. <id>debug</id> or <id>trace</id> depending on the function.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Build <path>libc</path> using links rather than referencing the C files in <path>src</path> directly.  The C library builds with different options which should not be reused for the C binary or vice versa.</p>
                     </release-item>
                 </release-development-list>

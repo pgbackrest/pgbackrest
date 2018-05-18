@@ -11,6 +11,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // Program name a version are used multiple times
     const char *helpVersion = PGBACKREST_NAME " " PGBACKREST_VERSION;
 
@@ -346,4 +348,6 @@ testRun()
         Storage *storage = storageNewNP(strNew(testPath()));
         TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))), generalHelp, "    check text");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

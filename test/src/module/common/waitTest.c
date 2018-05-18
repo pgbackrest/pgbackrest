@@ -8,13 +8,15 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("waitNew(), waitMore, and waitFree()"))
     {
         Wait *wait = NULL;
 
-        TEST_ERROR(waitNew(0.01), AssertError, "waitTime must be >= 0.1 and <= 999999.0");
-        TEST_ERROR(waitNew(9999999), AssertError, "waitTime must be >= 0.1 and <= 999999.0");
+        TEST_ERROR(waitNew(0.01), AssertError, "function debug assertion 'waitTime >= 0.1 && waitTime <= 999999.0' failed");
+        TEST_ERROR(waitNew(9999999), AssertError, "function debug assertion 'waitTime >= 0.1 && waitTime <= 999999.0' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TimeMSec begin = timeMSec();
@@ -53,4 +55,6 @@ testRun()
         TEST_RESULT_VOID(waitFree(wait), "    free wait");
         TEST_RESULT_VOID(waitFree(NULL), "    free null wait");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

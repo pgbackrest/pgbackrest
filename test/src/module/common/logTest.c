@@ -7,12 +7,17 @@ Test Log Handler
 #include <common/regExp.h>
 #include <storage/storage.h>
 
+void harnessLogLoad(const char *logFile);
+extern char harnessLogBuffer[];
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("logLevelEnum() and logLevelStr()"))
     {
@@ -21,7 +26,7 @@ testRun()
         TEST_RESULT_INT(logLevelEnum("info"), logLevelInfo, "log level 'info' found");
         TEST_RESULT_INT(logLevelEnum("TRACE"), logLevelTrace, "log level 'TRACE' found");
 
-        TEST_ERROR(logLevelStr(999), AssertError, "invalid log level '999'");
+        TEST_ERROR(logLevelStr(999), AssertError, "function test assertion 'logLevel <= LOG_LEVEL_MAX' failed");
         TEST_RESULT_STR(logLevelStr(logLevelOff), "OFF", "log level 'OFF' found");
         TEST_RESULT_STR(logLevelStr(logLevelInfo), "INFO", "log level 'INFO' found");
         TEST_RESULT_STR(logLevelStr(logLevelTrace), "TRACE", "log level 'TRACE' found");
@@ -76,7 +81,7 @@ testRun()
     {
         // Just test the error here -- success is well tested elsewhere
         TEST_ERROR(
-            logWrite(-1, "message", 7, "invalid handle"), FileWriteError,
+            logWrite(-999, "message", 7, "invalid handle"), FileWriteError,
             "unable to write invalid handle: [9] Bad file descriptor");
     }
 
@@ -84,11 +89,13 @@ testRun()
     if (testBegin("logInternal()"))
     {
         TEST_RESULT_VOID(logInit(logLevelOff, logLevelOff, logLevelOff, false), "init logging to off");
-        TEST_RESULT_VOID(logInternal(logLevelWarn, NULL, NULL, 0, "format"), "message not logged anywhere");
+        TEST_RESULT_VOID(
+            logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "file", "function", 0, "format"),
+            "message not logged anywhere");
 
         TEST_RESULT_VOID(logInit(logLevelWarn, logLevelOff, logLevelOff, true), "init logging to warn (timestamp on)");
         TEST_RESULT_VOID(logFileSet(BOGUS_STR), "ignore bogus filename because file logging is off");
-        TEST_RESULT_VOID(logInternal(logLevelWarn, NULL, NULL, 0, "TEST"), "log timestamp");
+        TEST_RESULT_VOID(logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "file", "function", 0, "TEST"), "log timestamp");
 
         String *logTime = strNewN(logBuffer, 23);
         TEST_RESULT_BOOL(
@@ -97,78 +104,92 @@ testRun()
             true, "check timestamp format: %s", strPtr(logTime));
 
         // Redirect output to files
+        testLogInit();
         TEST_RESULT_VOID(logInit(logLevelWarn, logLevelOff, logLevelOff, false), "init logging to warn (timestamp off)");
 
-        String *stdoutFile = strNewFmt("%s/stdout.log", testPath());
-        String *stderrFile = strNewFmt("%s/stderr.log", testPath());
-        String *fileFile = strNewFmt("%s/file.log", testPath());
-
-        logHandleStdOut = open(strPtr(stdoutFile), O_WRONLY | O_CREAT | O_TRUNC, 0640);
-        logHandleStdErr = open(strPtr(stderrFile), O_WRONLY | O_CREAT | O_TRUNC, 0640);
-
         logBuffer[0] = 0;
-        TEST_RESULT_VOID(logInternal(logLevelWarn, NULL, NULL, 0, "format %d", 99), "log warn");
+        TEST_RESULT_VOID(
+            logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "file", "function", 0, "format %d", 99), "log warn");
         TEST_RESULT_STR(logBuffer, "P00   WARN: format 99\n", "    check log");
 
+        // This won't be logged due to the range
+        TEST_RESULT_VOID(
+            logInternal(logLevelWarn, logLevelError, logLevelError, "file", "function", 0, "NOT OUTPUT"), "out of range");
+
         logBuffer[0] = 0;
-        TEST_RESULT_VOID(logInternal(logLevelError, NULL, NULL, 26, "message"), "log error");
+        TEST_RESULT_VOID(logInternal(logLevelError, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "file", "function", 26, "message"), "log error");
         TEST_RESULT_STR(logBuffer, "P00  ERROR: [026]: message\n", "    check log");
 
         logBuffer[0] = 0;
-        TEST_RESULT_VOID(logInternal(logLevelError, NULL, NULL, 26, "message1\nmessage2"), "log error with multiple lines");
-        TEST_RESULT_STR(logBuffer, "P00  ERROR: [026]: message1\n            message2\n", "    check log");
+        TEST_RESULT_VOID(
+            logInternal(logLevelError, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "file", "function", 26, "message1\nmessage2"),
+            "log error with multiple lines");
+        TEST_RESULT_STR(logBuffer, "P00  ERROR: [026]: message1\nmessage2\n", "    check log");
 
         TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false), "init logging to debug");
 
         // Log to file
+        String *fileFile = strNewFmt("%s/file.log", testPath());
         logFileSet(strPtr(fileFile));
 
         logBuffer[0] = 0;
-        TEST_RESULT_VOID(logInternal(logLevelDebug, "test.c", "test_func", 0, "message"), "log debug");
-        TEST_RESULT_STR(logBuffer, "P00  DEBUG: test.c:test_func(): message\n", "    check log");
+        TEST_RESULT_VOID(
+            logInternal(logLevelDebug, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "test.c", "test_func", 0, "message\nmessage2"), "log debug");
+        TEST_RESULT_STR(logBuffer, "P00  DEBUG:     test::test_func: message\nmessage2\n", "    check log");
+
+        // This won't be logged due to the range
+        TEST_RESULT_VOID(
+            logInternal(logLevelDebug, logLevelTrace, logLevelTrace, "test.c", "test_func", 0, "NOT OUTPUT"), "out of range");
+
+        logBuffer[0] = 0;
+        TEST_RESULT_VOID(
+            logInternal(logLevelTrace, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "test.c", "test_func", 0, "message"), "log debug");
+        TEST_RESULT_STR(logBuffer, "P00  TRACE:         test::test_func: message\n", "    check log");
 
         // Reopen the log file
         logFileSet(strPtr(fileFile));
 
         logBuffer[0] = 0;
-        TEST_RESULT_VOID(logInternal(logLevelInfo, "test.c", "test_func", 0, "info message"), "log info");
+        TEST_RESULT_VOID(
+            logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "test.c", "test_func", 0, "info message"), "log info");
         TEST_RESULT_STR(logBuffer, "P00   INFO: info message\n", "    check log");
-        TEST_RESULT_VOID(logInternal(logLevelInfo, "test.c", "test_func", 0, "info message 2"), "log info");
+        TEST_RESULT_VOID(
+            logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "test.c", "test_func", 0, "info message 2"), "log info");
         TEST_RESULT_STR(logBuffer, "P00   INFO: info message 2\n", "    check log");
 
         // Reopen invalid log file
         logFileSet("/" BOGUS_STR);
 
         // Check stdout
-        Storage *storage = storageNewNP(strNew(testPath()));
-
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))),
+        testLogResult(
             "P00   WARN: format 99\n"
             "P00  ERROR: [026]: message\n"
             "P00  ERROR: [026]: message1\n"
-            "            message2\n",
-            "checkout stdout output");
+            "            message2");
 
         // Check stderr
-        TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stderrFile)))),
-            "DEBUG: test.c:test_func(): message\n"
+        testLogErrResult(
+            "DEBUG:     test::test_func: message\n"
+            "           message2\n"
             "INFO: info message\n"
             "INFO: info message 2\n"
             "WARN: unable to open log file '/BOGUS': Permission denied\n"
-            "NOTE: process will continue without log file.\n",
-            "checkout stderr output");
+            "      NOTE: process will continue without log file.");
 
         // Check file
+        harnessLogLoad(strPtr(fileFile));
+
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, fileFile)))),
+            harnessLogBuffer,
             "-------------------PROCESS START-------------------\n"
-            "P00  DEBUG: test.c:test_func(): message\n"
+            "P00  DEBUG:     test::test_func: message\n"
+            "                message2\n"
             "\n"
             "-------------------PROCESS START-------------------\n"
             "P00   INFO: info message\n"
-            "P00   INFO: info message 2\n",
+            "P00   INFO: info message 2",
             "checkout file output");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

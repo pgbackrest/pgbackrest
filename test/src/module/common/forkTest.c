@@ -9,6 +9,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("forkAndDetach()"))
     {
@@ -31,4 +33,6 @@ testRun()
         }
         HARNESS_FORK_END();
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

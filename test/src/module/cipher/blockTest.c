@@ -21,6 +21,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("blockCipherNew() and blockCipherFree()"))
     {
@@ -30,9 +32,6 @@ testRun()
             cipherBlockNew(
                 cipherModeEncrypt, BOGUS_STR, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL), AssertError,
                 "unable to load cipher 'BOGUS'");
-        TEST_ERROR(
-            cipherBlockNew(cipherModeEncrypt, NULL, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL), AssertError,
-            "unable to load cipher '(null)'");
         TEST_ERROR(
             cipherBlockNew(
                 cipherModeEncrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, BOGUS_STR), AssertError,
@@ -159,7 +158,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         blockEncrypt = cipherBlockNew(cipherModeEncrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
-        TEST_RESULT_INT(cipherBlockProcess(blockEncrypt, NULL, 0, encryptBuffer), 16, "process header");
+        TEST_RESULT_INT(cipherBlockProcess(blockEncrypt, decryptBuffer, 0, encryptBuffer), 16, "process header");
         TEST_RESULT_INT(cipherBlockFlush(blockEncrypt, encryptBuffer + 16), 16, "flush remaining bytes");
 
         cipherBlockFree(blockEncrypt);
@@ -200,7 +199,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
-        TEST_RESULT_INT(cipherBlockProcess(blockDecrypt, NULL, 0, decryptBuffer), 0, "no header processed");
+        TEST_RESULT_INT(cipherBlockProcess(blockDecrypt, encryptBuffer, 0, decryptBuffer), 0, "no header processed");
         TEST_ERROR(cipherBlockFlush(blockDecrypt, decryptBuffer), CipherError, "cipher header missing");
 
         cipherBlockFree(blockDecrypt);
@@ -217,5 +216,5 @@ testRun()
         cipherBlockFree(blockDecrypt);
     }
 
-    cipherFree();
+    FUNCTION_HARNESS_RESULT_VOID();
 }

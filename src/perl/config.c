@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Perl Configuration
 ***********************************************************************************************************************************/
+#include "common/debug.h"
 #include "common/memContext.h"
 #include "config/config.h"
 
@@ -10,6 +11,8 @@ Build JSON output from options
 String *
 perlOptionJson()
 {
+    FUNCTION_TEST_VOID();
+
     String *result = strNew("{");
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -128,5 +131,5 @@ perlOptionJson()
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_TEST_RESULT(STRING, result);
 }

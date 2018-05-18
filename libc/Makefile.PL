@@ -15,7 +15,10 @@ use ExtUtils::MakeMaker;
 use File::Basename qw(dirname);
 
 use lib dirname($0) . '/lib';
+use lib dirname($0) . '/build/lib';
+
 use pgBackRest::LibCAuto;
+use pgBackRestLibC::BuildParam;
 
 ####################################################################################################################################
 # Storage object to use for all file operations
@@ -77,6 +80,7 @@ my @stryCFile =
     'cipher/cipher.c',
     'cipher/random.c',
     'command/command.c',
+    'common/debug.c',
     'common/encode.c',
     'common/encode/base64.c',
     'common/error.c',
@@ -86,7 +90,9 @@ my @stryCFile =
     'common/log.c',
     'common/memContext.c',
     'common/regExp.c',
+    'common/stackTrace.c',
     'common/time.c',
+    'common/type/convert.c',
     'common/type/buffer.c',
     'common/type/keyValue.c',
     'common/type/list.c',
@@ -142,15 +148,7 @@ WriteMakefile
     VERSION_FROM => 'lib/' . BACKREST_NAME . '/LibC.pm',
     AUTHOR => 'David Steele <david@pgbackrest.org>',
 
-    CCFLAGS => join(' ', qw(
-        -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wno-missing-field-initializers
-        -o $@
-        -std=c99
-        -D_FILE_OFFSET_BITS=64
-        -funroll-loops
-        -ftree-vectorize
-        $(CFLAGS)
-    )),
+    CCFLAGS => join(' ', buildParamCCAll()),
 
     INC => join(' ', qw(
         -I.

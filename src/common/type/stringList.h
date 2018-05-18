@@ -39,11 +39,22 @@ bool strLstExists(const StringList *this, const String *string);
 bool strLstExistsZ(const StringList *this, const char *cstring);
 String *strLstGet(const StringList *this, unsigned int listIdx);
 String *strLstJoin(const StringList *this, const char *separator);
+String *strLstJoinQuote(const StringList *this, const char *separator, const char *quote);
 StringList * strLstMove(StringList *this, MemContext *parentNew);
 const char **strLstPtr(const StringList *this);
 unsigned int strLstSize(const StringList *this);
 StringList *strLstSort(StringList *this, SortOrder sortOrder);
 
 void strLstFree(StringList *this);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+size_t strLstToLog(const StringList *this, char *buffer, size_t bufferSize);
+
+#define FUNCTION_DEBUG_STRING_LIST_TYPE                                                                                            \
+    StringList *
+#define FUNCTION_DEBUG_STRING_LIST_FORMAT(value, buffer, bufferSize)                                                               \
+    strLstToLog(value, buffer, bufferSize)
 
 #endif

@@ -21,4 +21,12 @@ size_t cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t
 size_t cipherBlockFlush(CipherBlock *this, unsigned char *destination);
 void cipherBlockFree(CipherBlock *this);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_CIPHER_BLOCK_TYPE                                                                                           \
+    CipherBlock *
+#define FUNCTION_DEBUG_CIPHER_BLOCK_FORMAT(value, buffer, bufferSize)                                                              \
+    objToLog(value, "CipherBlock", buffer, bufferSize)
+
 #endif

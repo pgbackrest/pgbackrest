@@ -27,4 +27,12 @@ typedef struct StorageInfo
     mode_t mode;                                                    // Mode of path/file/link
 } StorageInfo;
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_STORAGE_INFO_TYPE                                                                                           \
+    StorageInfo
+#define FUNCTION_DEBUG_STORAGE_INFO_FORMAT(value, buffer, bufferSize)                                                              \
+    objToLog(&value, "StorageInfo", buffer, bufferSize)
+
 #endif

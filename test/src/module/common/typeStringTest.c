@@ -9,6 +9,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("strNew(), strNewBuf(), strNewN(), strPtr(), and strFree()"))
     {
@@ -141,6 +143,12 @@ testRun()
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("strQuote()"))
+    {
+        TEST_RESULT_STR(strPtr(strQuote(strNew("abcd"), strNew("'"))), "'abcd'", "quote string");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("strSub() and strSubN()"))
     {
         TEST_RESULT_STR(strPtr(strSub(strNew("ABCD"), 2)), "CD", "sub string");
@@ -161,7 +169,7 @@ testRun()
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strChr(), strTrunc()"))
+    if (testBegin("strChr() and strTrunc()"))
     {
         TEST_RESULT_INT(strChr(strNew("abcd"), 'c'), 2, "c found");
         TEST_RESULT_INT(strChr(strNew("abcd"), 'C'), -1, "capital C not found");
@@ -169,8 +177,10 @@ testRun()
         TEST_RESULT_INT(strChr(strNew(""), 'x'), -1, "empty string - x not found");
 
         String *val = strNew("abcdef");
-        TEST_ERROR(strTrunc(val, (int)(strSize(val) + 1)), AssertError, "index passed is outside the string boundaries");
-        TEST_ERROR(strTrunc(val, -1), AssertError, "index passed is outside the string boundaries");
+        TEST_ERROR(
+            strTrunc(val, (int)(strSize(val) + 1)), AssertError,
+            "function test assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
+        TEST_ERROR(strTrunc(val, -1), AssertError, "function test assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
 
         TEST_RESULT_STR(strPtr(strTrunc(val, strChr(val, 'd'))), "abc", "simple string truncated");
         strCat(val, "\r\n to end");
@@ -180,4 +190,21 @@ testRun()
         TEST_RESULT_INT(strSize(val), 0, "0 size");
         TEST_RESULT_STR(strPtr(strTrunc(val, 0)), "", "test coverage of empty string - no error thrown for index 0");
     }
+
+    // *****************************************************************************************************************************
+    if (testBegin("strToLog()"))
+    {
+        char buffer[STACK_TRACE_PARAM_MAX];
+
+        TEST_RESULT_INT(strToLog(NULL, buffer, 4), 4, "format null string with too small buffer");
+        TEST_RESULT_STR(buffer, "nul", "    check format");
+
+        TEST_RESULT_INT(strToLog(NULL, buffer, STACK_TRACE_PARAM_MAX), 4, "format null string");
+        TEST_RESULT_STR(buffer, "null", "    check format");
+
+        TEST_RESULT_INT(strToLog(strNew("test"), buffer, STACK_TRACE_PARAM_MAX), 8, "format string");
+        TEST_RESULT_STR(buffer, "{\"test\"}", "    check format");
+    }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

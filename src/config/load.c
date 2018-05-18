@@ -6,6 +6,7 @@ Configuration Load
 
 #include "command/command.h"
 #include "common/memContext.h"
+#include "common/debug.h"
 #include "common/lock.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -18,6 +19,8 @@ Load log settings
 void
 cfgLoadLogSetting()
 {
+    FUNCTION_DEBUG_VOID(logLevelTrace);
+
     // Initialize logging
     LogLevel logLevelConsole = logLevelOff;
     LogLevel logLevelStdErr = logLevelOff;
@@ -43,6 +46,8 @@ cfgLoadLogSetting()
         logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
 
     logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp);
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -51,6 +56,8 @@ Update options that have complex rules
 void
 cfgLoadUpdateOption()
 {
+    FUNCTION_DEBUG_VOID(logLevelTrace);
+
     // Set default for repo-host-cmd
     if (cfgOptionTest(cfgOptRepoHost) && cfgOptionSource(cfgOptRepoHostCmd) == cfgSourceDefault)
         cfgOptionDefaultSet(cfgOptRepoHostCmd, varNewStr(cfgExe()));
@@ -186,6 +193,8 @@ cfgLoadUpdateOption()
             }
         }
     }
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -194,6 +203,11 @@ Load the configuration
 void
 cfgLoad(unsigned int argListSize, const char *argList[])
 {
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(UINT, argListSize);
+        FUNCTION_DEBUG_PARAM(CHARPY, argList);
+    FUNCTION_DEBUG_END();
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Parse config from command line and config file
@@ -209,12 +223,8 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         // If a command is set
         if (cfgCommand() != cfgCmdNone)
         {
-            // Acquire a lock if required
-            if (cfgLockRequired())
-                lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
-
             // Open the log file if this command logs to a file
-            if (cfgLogFile())
+            if (cfgLogFile() && !cfgCommandHelp())
             {
                 logFileSet(
                     strPtr(strNewFmt("%s/%s-%s.log", strPtr(cfgOptionStr(cfgOptLogPath)), strPtr(cfgOptionStr(cfgOptStanza)),
@@ -224,9 +234,15 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             // Begin the command
             cmdBegin(true);
 
+            // Open the log file if this command logs to a file
+            if (cfgLockRequired() && !cfgCommandHelp())
+                lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
+
             // Update options that have complex rules
             cfgLoadUpdateOption();
         }
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

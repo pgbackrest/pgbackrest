@@ -8,6 +8,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("kvNew() and kvFree()"))
     {
@@ -18,7 +20,8 @@ testRun()
         TEST_RESULT_PTR_NE(store->list, NULL, "list set");
         TEST_RESULT_INT(lstSize(store->list), 0, "list empty");
 
-        TEST_RESULT_VOID(kvFree(store), "free store");
+        TEST_RESULT_VOID(kvFree(store), "free kv");
+        TEST_RESULT_VOID(kvFree(NULL), "free null kv");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -94,4 +97,6 @@ testRun()
         TEST_RESULT_VOID(kvFree(storeDup), "free dup store");
         TEST_RESULT_VOID(kvFree(store), "free store");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

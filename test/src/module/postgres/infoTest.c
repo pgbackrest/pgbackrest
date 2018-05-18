@@ -8,6 +8,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -54,4 +56,6 @@ testRun()
         TEST_RESULT_INT(info.catalogVersion, 200711281, "   check catalog version");
         TEST_RESULT_INT(info.version, PG_VERSION_83, "   check version");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

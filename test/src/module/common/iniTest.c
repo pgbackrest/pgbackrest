@@ -8,6 +8,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("iniNew() and iniFree()"))
     {
@@ -17,6 +19,7 @@ testRun()
         TEST_RESULT_PTR_NE(ini->memContext, NULL, "mem context is set");
         TEST_RESULT_PTR_NE(ini->store, NULL, "store is set");
         TEST_RESULT_VOID(iniFree(ini), "free ini");
+        TEST_RESULT_VOID(iniFree(NULL), "free null ini");
     }
 
     // *****************************************************************************************************************************
@@ -96,4 +99,6 @@ testRun()
         TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("global"), strNew("compress")))), "y", "get compress");
         TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("db"), strNew("pg1-path")))), "/path/to/pg", "get pg1-path");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

@@ -8,6 +8,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("base64"))
     {
@@ -105,4 +107,6 @@ testRun()
 
         TEST_ERROR(decodeToBinValid(9999, "CCCCCCCCCCCC"), AssertError, "invalid encode type 9999");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

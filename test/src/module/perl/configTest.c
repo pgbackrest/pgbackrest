@@ -9,6 +9,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("perlOptionJson()"))
     {
@@ -104,4 +106,6 @@ testRun()
             "}",
             "complex options");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

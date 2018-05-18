@@ -5,6 +5,7 @@ Storage File Read Driver For Posix
 #include <unistd.h>
 
 #include "common/assert.h"
+#include "common/debug.h"
 #include "common/memContext.h"
 #include "storage/driver/posix/driverFile.h"
 #include "storage/driver/posix/driverRead.h"
@@ -31,10 +32,16 @@ Create a new file
 StorageFileReadPosix *
 storageFileReadPosixNew(const String *name, bool ignoreMissing, size_t bufferSize)
 {
-    StorageFileReadPosix *this = NULL;
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, name);
+        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_DEBUG_PARAM(BOOL, bufferSize);
 
-    ASSERT_DEBUG(name != NULL);
-    ASSERT_DEBUG(bufferSize > 0);
+        FUNCTION_TEST_ASSERT(name != NULL);
+        FUNCTION_TEST_ASSERT(bufferSize > 0);
+    FUNCTION_DEBUG_END();
+
+    StorageFileReadPosix *this = NULL;
 
     // Create the file object
     MEM_CONTEXT_NEW_BEGIN("StorageFileReadPosix")
@@ -49,7 +56,7 @@ storageFileReadPosixNew(const String *name, bool ignoreMissing, size_t bufferSiz
     }
     MEM_CONTEXT_NEW_END();
 
-    return this;
+    FUNCTION_DEBUG_RESULT(STORAGE_FILE_READ_POSIX, this);
 }
 
 /***********************************************************************************************************************************
@@ -58,10 +65,14 @@ Open the file
 bool
 storageFileReadPosixOpen(StorageFileReadPosix *this)
 {
-    bool result = false;
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ_POSIX, this);
 
-    ASSERT_DEBUG(this != NULL);
-    ASSERT_DEBUG(this->handle == -1);
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(this->handle == -1);
+    FUNCTION_DEBUG_END();
+
+    bool result = false;
 
     // Open the file and handle errors
     this->handle = storageFilePosixOpen(this->name, O_RDONLY, 0, this->ignoreMissing, &FileOpenError, "read");
@@ -73,7 +84,7 @@ storageFileReadPosixOpen(StorageFileReadPosix *this)
         result = true;
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -82,6 +93,13 @@ Read from a file
 Buffer *
 storageFileReadPosix(StorageFileReadPosix *this)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ_POSIX, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(this->handle != -1);
+    FUNCTION_DEBUG_END();
+
     Buffer *result = NULL;
 
     ASSERT_DEBUG(this != NULL);
@@ -112,7 +130,7 @@ storageFileReadPosix(StorageFileReadPosix *this)
         }
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(BUFFER, result);
 }
 
 /***********************************************************************************************************************************
@@ -121,7 +139,11 @@ Close the file
 void
 storageFileReadPosixClose(StorageFileReadPosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ_POSIX, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
 
     // Close if the file has not already been closed
     if (this->handle != -1)
@@ -131,6 +153,8 @@ storageFileReadPosixClose(StorageFileReadPosix *this)
 
         this->handle = -1;
     }
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -139,9 +163,13 @@ Should a missing file be ignored?
 bool
 storageFileReadPosixIgnoreMissing(StorageFileReadPosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_READ_POSIX, this);
 
-    return this->ignoreMissing;
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, this->ignoreMissing);
 }
 
 /***********************************************************************************************************************************
@@ -150,9 +178,13 @@ File name
 const String *
 storageFileReadPosixName(StorageFileReadPosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_READ_POSIX, this);
 
-    return this->name;
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(CONST_STRING, this->name);
 }
 
 /***********************************************************************************************************************************
@@ -161,9 +193,13 @@ File size
 size_t
 storageFileReadPosixSize(StorageFileReadPosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_READ_POSIX, this);
 
-    return this->size;
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(SIZE, this->size);
 }
 
 /***********************************************************************************************************************************
@@ -172,9 +208,15 @@ Free the file
 void
 storageFileReadPosixFree(StorageFileReadPosix *this)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ_POSIX, this);
+    FUNCTION_DEBUG_END();
+
     if (this != NULL)
     {
         storageFileReadPosixClose(this);
         memContextFree(this->memContext);
     }
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

@@ -54,4 +54,12 @@ Destructor
 ***********************************************************************************************************************************/
 void storageFileWriteFree(const StorageFileWrite *this);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_STORAGE_FILE_WRITE_TYPE                                                                                     \
+    StorageFileWrite *
+#define FUNCTION_DEBUG_STORAGE_FILE_WRITE_FORMAT(value, buffer, bufferSize)                                                        \
+    objToLog(value, "StorageFileWrite", buffer, bufferSize)
+
 #endif

@@ -57,7 +57,6 @@ String *varStr(const Variant *this);
 String *varStrForce(const Variant *this);
 
 Variant *varNewVarLst(const VariantList *data);
-Variant *varNewVarLstEmpty();
 VariantList *varVarLst(const Variant *this);
 
 Variant *varDup(const Variant *this);
@@ -65,5 +64,20 @@ bool varEq(const Variant *this1, const Variant *this2);
 VariantType varType(const Variant *this);
 
 void varFree(Variant *this);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+size_t varToLog(const Variant *this, char *buffer, size_t bufferSize);
+
+#define FUNCTION_DEBUG_CONST_VARIANT_TYPE                                                                                          \
+    const FUNCTION_DEBUG_VARIANT_TYPE
+#define FUNCTION_DEBUG_CONST_VARIANT_FORMAT(value, buffer, bufferSize)                                                             \
+    FUNCTION_DEBUG_VARIANT_FORMAT(value, buffer, bufferSize)
+
+#define FUNCTION_DEBUG_VARIANT_TYPE                                                                                                \
+    Variant *
+#define FUNCTION_DEBUG_VARIANT_FORMAT(value, buffer, bufferSize)                                                                   \
+    varToLog(value, buffer, bufferSize)
 
 #endif

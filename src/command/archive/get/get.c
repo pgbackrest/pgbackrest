@@ -6,6 +6,8 @@ Archive Get Command
 
 #include "command/archive/common.h"
 #include "command/command.h"
+#include "common/assert.h"
+#include "common/debug.h"
 #include "common/fork.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -23,6 +25,16 @@ Clean the queue and prepare a list of WAL segments that the async process should
 static StringList *
 queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegmentSize, uint pgVersion)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(STRING, walSegment);
+        FUNCTION_DEBUG_PARAM(BOOL, found);
+        FUNCTION_DEBUG_PARAM(SIZE, queueSize);
+        FUNCTION_DEBUG_PARAM(SIZE, walSegmentSize);
+        FUNCTION_DEBUG_PARAM(UINT, pgVersion);
+
+        FUNCTION_DEBUG_ASSERT(walSegment != NULL);
+    FUNCTION_DEBUG_END();
+
     StringList *result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -76,7 +88,7 @@ queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegm
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_DEBUG_RESULT(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -85,6 +97,8 @@ Push a WAL segment to the repository
 int
 cmdArchiveGet()
 {
+    FUNCTION_DEBUG_VOID(logLevelDebug);
+
     int result = 1;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -98,9 +112,9 @@ cmdArchiveGet()
                 THROW(ParamRequiredError, "WAL segment to get required");
 
             if (strLstSize(commandParam) == 1)
-                THROW(ParamRequiredError, "Path to copy WAL segment required");
+                THROW(ParamRequiredError, "path to copy WAL segment required");
 
-            THROW(ParamRequiredError, "extra parameters found");
+            THROW(ParamInvalidError, "extra parameters found");
         }
 
         // Get the segment name
@@ -270,5 +284,5 @@ cmdArchiveGet()
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_DEBUG_RESULT(INT, result);
 }

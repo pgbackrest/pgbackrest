@@ -8,6 +8,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("regExpNew(), regExpMatch(), and regExpFree()"))
     {
@@ -29,4 +31,6 @@ testRun()
         TEST_RESULT_BOOL(regExpMatchOne(strNew("^abc"), strNew("abcdef")), true, "match regexp");
         TEST_RESULT_BOOL(regExpMatchOne(strNew("^abc"), strNew("bcdef")), false, "no match regexp");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

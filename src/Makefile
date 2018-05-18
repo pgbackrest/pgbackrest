@@ -59,17 +59,20 @@ SRCS = \
 	command/archive/push/push.c \
 	command/help/help.c \
 	command/command.c \
-	common/fork.c \
+	common/debug.c \
 	common/error.c \
 	common/exit.c \
+	common/fork.c \
 	common/io/handle.c \
 	common/ini.c \
 	common/lock.c \
 	common/log.c \
 	common/memContext.c \
 	common/regExp.c \
+	common/stackTrace.c \
 	common/time.c \
 	common/type/buffer.c \
+	common/type/convert.c \
 	common/type/keyValue.c \
 	common/type/list.c \
 	common/type/string.c \

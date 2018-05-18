@@ -12,6 +12,8 @@ Test run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("cfgLoadLogSetting()"))
     {
@@ -266,6 +268,16 @@ testRun()
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "no command");
 
+        // Help command
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("help"));
+        strLstAdd(argList, strNew("backup"));
+        strLstAdd(argList, strNew("--repo1-retention-full=2"));
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command");
+
         // Command takes lock and opens log file
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -278,4 +290,6 @@ testRun()
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

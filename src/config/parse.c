@@ -6,6 +6,7 @@ Command and Option Parse
 #include <strings.h>
 
 #include "common/assert.h"
+#include "common/debug.h"
 #include "common/error.h"
 #include "common/ini.h"
 #include "common/log.h"
@@ -86,6 +87,13 @@ Convert the value passed into bytes and update valueDbl for range checking
 void
 convertToByte(String **value, double *valueDbl)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRINGP, value);
+        FUNCTION_DEBUG_PARAM(DOUBLEP, valueDbl);
+
+        FUNCTION_DEBUG_ASSERT(valueDbl != NULL);
+    FUNCTION_DEBUG_END();
+
     // Make a copy of the value so it is not updated until we know the conversion will succeed
     String *result = strLower(strDup(*value));
 
@@ -161,6 +169,8 @@ convertToByte(String **value, double *valueDbl)
     }
     else
         THROW_FMT(FormatError, "value '%s' is not valid", strPtr(*value));
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -198,6 +208,18 @@ cfgFileLoad(                                                        // NOTE: Pas
     const String *optConfigIncludePathDefault,                      // Current default for --config-include-path option
     const String *origConfigDefault)                                // Original --config option default (/etc/pgbackrest.conf)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM_PTR("ParseOption *", optionList);
+        FUNCTION_DEBUG_PARAM(STRING, optConfigDefault);
+        FUNCTION_DEBUG_PARAM(STRING, optConfigIncludePathDefault);
+        FUNCTION_DEBUG_PARAM(STRING, origConfigDefault);
+
+        FUNCTION_TEST_ASSERT(optionList != NULL);
+        FUNCTION_TEST_ASSERT(optConfigDefault != NULL);
+        FUNCTION_TEST_ASSERT(optConfigIncludePathDefault != NULL);
+        FUNCTION_TEST_ASSERT(origConfigDefault != NULL);
+    FUNCTION_DEBUG_END();
+
     bool loadConfig = true;
     bool loadConfigInclude = true;
 
@@ -324,7 +346,7 @@ cfgFileLoad(                                                        // NOTE: Pas
         }
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -336,6 +358,11 @@ logic to this critical path code.
 void
 configParse(unsigned int argListSize, const char *argList[])
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(UINT, argListSize);
+        FUNCTION_DEBUG_PARAM(CHARPY, argList);
+    FUNCTION_DEBUG_END();
+
     // Initialize configuration
     cfgInit();
 
@@ -406,17 +433,11 @@ configParse(unsigned int argListSize, const char *argList[])
 
                 // If the option is unknown then error
                 case '?':
-                {
                     THROW_FMT(OptionInvalidError, "invalid option '%s'", argList[optind - 1]);
-                    break;
-                }
 
                 // If the option is missing an argument then error
                 case ':':
-                {
                     THROW_FMT(OptionInvalidError, "option '%s' requires argument", argList[optind - 1]);
-                    break;
-                }
 
                 // Parse valid option
                 default:
@@ -964,4 +985,6 @@ configParse(unsigned int argListSize, const char *argList[])
         }
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

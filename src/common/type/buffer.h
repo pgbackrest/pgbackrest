@@ -26,4 +26,14 @@ size_t bufSize(const Buffer *this);
 unsigned char *bufPtr(const Buffer *this);
 void bufFree(Buffer *this);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+size_t bufToLog(const Buffer *this, char *buffer, size_t bufferSize);
+
+#define FUNCTION_DEBUG_BUFFER_TYPE                                                                                                 \
+    Buffer *
+#define FUNCTION_DEBUG_BUFFER_FORMAT(value, buffer, bufferSize)                                                                    \
+    bufToLog(value, buffer, bufferSize)
+
 #endif

@@ -11,6 +11,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("archiveAsyncStatus()"))
     {
@@ -53,7 +55,7 @@ testRun()
         storagePutNP(
             storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewStr(strNew(BOGUS_STR "\nmessage")));
-        TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, false), FormatError, "unable to convert str 'BOGUS' to int");
+        TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, false), FormatError, "unable to convert string 'BOGUS' to int");
 
         storagePutNP(storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))), NULL);
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "ok file");
@@ -143,4 +145,6 @@ testRun()
             "000000070000000700000FFE|000000070000000700000FFF|000000070000000800000000|000000070000000800000001",
             "get range >= 11/1MB");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

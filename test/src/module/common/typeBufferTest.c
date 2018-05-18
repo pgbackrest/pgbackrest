@@ -8,6 +8,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("bufNew(), bugNewC, bufNewStr(), bufMove(), bufSize(), bufPtr(), and bufFree()"))
     {
@@ -30,7 +32,7 @@ testRun()
         TEST_RESULT_VOID(bufFree(bufNew(0)), "free empty buffer");
         TEST_RESULT_VOID(bufFree(NULL), "free null buffer");
 
-        TEST_RESULT_VOID(bufMove(NULL, NULL), "move null buffer");
+        TEST_RESULT_VOID(bufMove(NULL, memContextTop()), "move null buffer");
 
         // -------------------------------------------------------------------------------------------------------------------------
         char cBuffer[] = "ABCD";
@@ -103,4 +105,6 @@ testRun()
         TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewStr(strNew("123")), bufNew(0)))), "123", "cat empty buffer");
         TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewStr(strNew("123")), bufNewStr(strNew("ABC"))))), "123ABC", "cat buffer");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

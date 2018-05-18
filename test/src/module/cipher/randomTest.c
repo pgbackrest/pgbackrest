@@ -8,6 +8,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("randomBytes()"))
     {
@@ -24,9 +26,11 @@ testRun()
         int nonZeroTotal = 0;
 
         for (unsigned int charIdx = 0; charIdx < bufferSize; charIdx++)
-            if (buffer[charIdx] != 0)
+            if (buffer[charIdx] != 0)                               // {uncovered - ok if there are no zeros}
                 nonZeroTotal++;
 
         TEST_RESULT_INT_NE(nonZeroTotal, 0, "check that there are non-zero values in the buffer");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

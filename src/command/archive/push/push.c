@@ -5,6 +5,7 @@ Archive Push Command
 
 #include "command/archive/common.h"
 #include "command/command.h"
+#include "common/debug.h"
 #include "common/fork.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -20,6 +21,8 @@ Push a WAL segment to the repository
 void
 cmdArchivePush()
 {
+    FUNCTION_DEBUG_VOID(logLevelDebug);
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Make sure there is a parameter to retrieve the WAL segment from
@@ -123,4 +126,6 @@ cmdArchivePush()
             THROW(AssertError, "archive-push in C does not support synchronous mode");
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

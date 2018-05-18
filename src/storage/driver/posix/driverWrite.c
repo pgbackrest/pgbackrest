@@ -6,6 +6,7 @@ Storage File Write Driver For Posix
 #include <unistd.h>
 
 #include "common/assert.h"
+#include "common/debug.h"
 #include "common/memContext.h"
 #include "storage/driver/posix/driverFile.h"
 #include "storage/driver/posix/driverWrite.h"
@@ -48,6 +49,18 @@ StorageFileWritePosix *
 storageFileWritePosixNew(
     const String *name, mode_t modeFile, mode_t modePath, bool noCreatePath, bool noSyncFile, bool noSyncPath, bool noAtomic)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, name);
+        FUNCTION_DEBUG_PARAM(MODE, modeFile);
+        FUNCTION_DEBUG_PARAM(MODE, modePath);
+        FUNCTION_DEBUG_PARAM(BOOL, noCreatePath);
+        FUNCTION_DEBUG_PARAM(BOOL, noSyncFile);
+        FUNCTION_DEBUG_PARAM(BOOL, noSyncPath);
+        FUNCTION_DEBUG_PARAM(BOOL, noAtomic);
+
+        FUNCTION_TEST_ASSERT(name != NULL);
+    FUNCTION_DEBUG_END();
+
     StorageFileWritePosix *this = NULL;
 
     ASSERT_DEBUG(name != NULL);
@@ -71,7 +84,7 @@ storageFileWritePosixNew(
     }
     MEM_CONTEXT_NEW_END();
 
-    return this;
+    FUNCTION_DEBUG_RESULT(STORAGE_FILE_WRITE_POSIX, this);
 }
 
 /***********************************************************************************************************************************
@@ -80,8 +93,12 @@ Open the file
 void
 storageFileWritePosixOpen(StorageFileWritePosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
-    ASSERT_DEBUG(this->handle == -1);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE_POSIX, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(this->handle == -1);
+    FUNCTION_DEBUG_END();
 
     // Open the file and handle errors
     this->handle = storageFilePosixOpen(
@@ -100,6 +117,8 @@ storageFileWritePosixOpen(StorageFileWritePosix *this)
     // On success set free callback to ensure file handle is freed
     else
         memContextCallback(this->memContext, (MemContextCallback)storageFileWritePosixFree, this);
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -108,13 +127,20 @@ Write to a file
 void
 storageFileWritePosix(StorageFileWritePosix *this, const Buffer *buffer)
 {
-    ASSERT_DEBUG(this != NULL);
-    ASSERT_DEBUG(buffer != NULL);
-    ASSERT_DEBUG(this->handle != -1);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE_POSIX, this);
+        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(buffer != NULL);
+        FUNCTION_TEST_ASSERT(this->handle != -1);
+    FUNCTION_DEBUG_END();
 
     // Write the data
     if (write(this->handle, bufPtr(buffer), bufSize(buffer)) != (ssize_t)bufSize(buffer))
         THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strPtr(this->name));
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -123,7 +149,11 @@ Close the file
 void
 storageFileWritePosixClose(StorageFileWritePosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE_POSIX, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
 
     // Close if the file has not already been closed
     if (this->handle != -1)
@@ -149,6 +179,8 @@ storageFileWritePosixClose(StorageFileWritePosix *this)
         // This marks the file as closed
         this->handle = -1;
     }
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -159,9 +191,13 @@ For the posix driver this means writing to a temp file first and then renaming o
 bool
 storageFileWritePosixAtomic(StorageFileWritePosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE_POSIX, this);
 
-    return !this->noAtomic;
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, !this->noAtomic);
 }
 
 /***********************************************************************************************************************************
@@ -170,9 +206,13 @@ Will the path be created for the file if it does not exist?
 bool
 storageFileWritePosixCreatePath(StorageFileWritePosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE_POSIX, this);
 
-    return !this->noCreatePath;
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, !this->noCreatePath);
 }
 
 /***********************************************************************************************************************************
@@ -181,9 +221,13 @@ Mode for the file to be created
 mode_t
 storageFileWritePosixModeFile(StorageFileWritePosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE_POSIX, this);
 
-    return this->modeFile;
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(MODE, this->modeFile);
 }
 
 /***********************************************************************************************************************************
@@ -192,9 +236,13 @@ Mode for any paths that are created while writing the file
 mode_t
 storageFileWritePosixModePath(StorageFileWritePosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE_POSIX, this);
 
-    return this->modePath;
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(MODE, this->modePath);
 }
 
 /***********************************************************************************************************************************
@@ -203,9 +251,13 @@ File name
 const String *
 storageFileWritePosixName(StorageFileWritePosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE_POSIX, this);
 
-    return this->name;
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(CONST_STRING, this->name);
 }
 
 /***********************************************************************************************************************************
@@ -214,9 +266,13 @@ File path
 const String *
 storageFileWritePosixPath(StorageFileWritePosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE_POSIX, this);
 
-    return this->path;
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(CONST_STRING, this->path);
 }
 
 /***********************************************************************************************************************************
@@ -225,9 +281,13 @@ Will the file be synced after it is closed?
 bool
 storageFileWritePosixSyncFile(StorageFileWritePosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE_POSIX, this);
 
-    return !this->noSyncFile;
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, !this->noSyncFile);
 }
 
 /***********************************************************************************************************************************
@@ -236,9 +296,13 @@ Will the directory be synced to disk after the write is completed?
 bool
 storageFileWritePosixSyncPath(StorageFileWritePosix *this)
 {
-    ASSERT_DEBUG(this != NULL);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE_POSIX, this);
 
-    return !this->noSyncPath;
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, !this->noSyncPath);
 }
 
 /***********************************************************************************************************************************
@@ -247,9 +311,15 @@ Free the file
 void
 storageFileWritePosixFree(StorageFileWritePosix *this)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE_POSIX, this);
+    FUNCTION_DEBUG_END();
+
     if (this != NULL)
     {
         storageFileWritePosixClose(this);
         memContextFree(this->memContext);
     }
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

@@ -7,11 +7,10 @@ Log Test Harness
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-#ifndef NO_LOG
 void testLogInit();
 void testLogResult(const char *expected);
+void testLogResultRegExp(const char *expression);
 void testLogErrResult(const char *expected);
 void testLogFinal();
-#endif
 
 #endif

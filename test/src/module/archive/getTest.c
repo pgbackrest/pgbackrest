@@ -13,6 +13,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
 
     // *****************************************************************************************************************************
@@ -48,12 +50,15 @@ testRun()
             "000000010000000100000001|000000010000000100000002|000000010000000100000003", "empty queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        Buffer *walSegmentBuffer = bufNew(walSegmentSize);
+        memset(bufPtr(walSegmentBuffer), 0, walSegmentSize);
+
         storagePutNP(
             storageNewWriteNP(
-                storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE")), bufNew(walSegmentSize));
+                storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE")), walSegmentBuffer);
         storagePutNP(
             storageNewWriteNP(
-                storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF")), bufNew(walSegmentSize));
+                storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF")), walSegmentBuffer);
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(queueNeed(strNew("0000000100000001000000FE"), false, queueSize, walSegmentSize, PG_VERSION_92), "|")),
@@ -67,13 +72,13 @@ testRun()
         walSegmentSize = 1024 * 1024;
         queueSize = walSegmentSize * 5;
 
-        storagePutNP(storageNewWriteNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/junk")), bufNew(16));
+        storagePutNP(storageNewWriteNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/junk")), bufNewStr(strNew("JUNK")));
         storagePutNP(
             storageNewWriteNP(
-                storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFE")), bufNew(walSegmentSize));
+                storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFE")), walSegmentBuffer);
         storagePutNP(
             storageNewWriteNP(
-                storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFF")), bufNew(walSegmentSize));
+                storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFF")), walSegmentBuffer);
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(queueNeed(strNew("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11), "|")),
@@ -106,7 +111,7 @@ testRun()
         strLstAdd(argListTemp, walSegment);
         harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
 
-        TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "Path to copy WAL segment required");
+        TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "path to copy WAL segment required");
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *controlFile = strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
@@ -240,6 +245,8 @@ testRun()
         strLstAddZ(argList, BOGUS_STR);
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "extra parameters found");
+        TEST_ERROR(cmdArchiveGet(), ParamInvalidError, "extra parameters found");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

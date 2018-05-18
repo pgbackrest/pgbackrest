@@ -8,6 +8,7 @@ Lock Handler
 #include <unistd.h>
 
 #include "common/assert.h"
+#include "common/debug.h"
 #include "common/io/handle.h"
 #include "common/lock.h"
 #include "common/memContext.h"
@@ -38,6 +39,12 @@ Acquire a lock using a file on the local filesystem
 static int
 lockAcquireFile(const String *lockFile, double lockTimeout, bool failOnNoLock)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, lockFile);
+        FUNCTION_DEBUG_PARAM(DOUBLE, lockTimeout);
+        FUNCTION_DEBUG_PARAM(BOOL, failOnNoLock);
+    FUNCTION_DEBUG_END();
+
     int result = -1;
 
     // Timeout can't be negative
@@ -112,7 +119,7 @@ lockAcquireFile(const String *lockFile, double lockTimeout, bool failOnNoLock)
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_DEBUG_RESULT(INT, result);
 }
 
 /***********************************************************************************************************************************
@@ -121,6 +128,11 @@ Release the current lock
 static void
 lockReleaseFile(int lockHandle, const String *lockFile)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INT, lockHandle);
+        FUNCTION_DEBUG_PARAM(STRING, lockFile);
+    FUNCTION_DEBUG_END();
+
     // Can't release lock if there isn't one
     ASSERT_DEBUG(lockHandle != -1);
 
@@ -128,6 +140,8 @@ lockReleaseFile(int lockHandle, const String *lockFile)
     // right before the delete which means the file locked by the other process will get deleted.
     storageRemoveNP(storageLocalWrite(), lockFile);
     close(lockHandle);
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -139,6 +153,14 @@ backup), but the stanza commands all need to lock both.
 bool
 lockAcquire(const String *lockPath, const String *stanza, LockType lockType, double lockTimeout, bool failOnNoLock)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(STRING, lockPath);
+        FUNCTION_DEBUG_PARAM(STRING, stanza);
+        FUNCTION_DEBUG_PARAM(ENUM, lockType);
+        FUNCTION_DEBUG_PARAM(DOUBLE, lockTimeout);
+        FUNCTION_DEBUG_PARAM(BOOL, failOnNoLock);
+    FUNCTION_DEBUG_END();
+
     bool result = false;
 
     // Don't allow failures when locking more than one file.  This makes cleanup difficult and there are no known use cases.
@@ -186,7 +208,7 @@ lockAcquire(const String *lockPath, const String *stanza, LockType lockType, dou
     }
     MEM_CONTEXT_END();
 
-    return result;
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -196,6 +218,10 @@ and the master process won't try to free it.
 bool
 lockClear(bool failOnNoLock)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(BOOL, failOnNoLock);
+    FUNCTION_DEBUG_END();
+
     bool result = false;
 
     if (lockTypeHeld == lockTypeNone)
@@ -216,7 +242,7 @@ lockClear(bool failOnNoLock)
         result = true;
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -225,6 +251,10 @@ Release a lock type
 bool
 lockRelease(bool failOnNoLock)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(BOOL, failOnNoLock);
+    FUNCTION_DEBUG_END();
+
     bool result = false;
 
     if (lockTypeHeld == lockTypeNone)
@@ -248,5 +278,5 @@ lockRelease(bool failOnNoLock)
         result = true;
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }

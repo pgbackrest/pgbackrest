@@ -29,4 +29,14 @@ unsigned int lstSize(const List *this);
 List *lstSort(List *this, int (*comparator)(const void *, const void*));
 void lstFree(List *this);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+size_t lstToLog(const List *this, char *buffer, size_t bufferSize);
+
+#define FUNCTION_DEBUG_LIST_TYPE                                                                                                   \
+    List *
+#define FUNCTION_DEBUG_LIST_FORMAT(value, buffer, bufferSize)                                                                      \
+    lstToLog(value, buffer, bufferSize)
+
 #endif

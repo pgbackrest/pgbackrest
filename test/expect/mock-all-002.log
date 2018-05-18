@@ -71,8 +71,12 @@ full backup - create pg_stat link, pg_clog dir (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --manifest-save-threshold=3 --protocol-timeout=2 --db-timeout=1 --cmd-ssh=/usr/bin/ssh --pg1-port=9999 --pg1-socket-path =/test_socket_path --buffer-size=16384 --checksum-page --process-max=1 --repo1-type=cifs --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=16384 --checksum-page --cmd-ssh=/usr/bin/ssh --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=1 --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --manifest-save-threshold=3 --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --pg1-port=9999 --pg1-socket-path==/test_socket_path --process-max=1 --protocol-timeout=2 --repo1-path=[TEST_PATH]/backup/repo --repo1-type=cifs --stanza=db --start-fast --type=full
+P00  DEBUG:     common/lock::lockAcquire: (lockPath: {"[TEST_PATH]/backup/lock"}, stanza: {"db"}, lockType: 1, lockTimeout: 0, failOnNoLock: true)
+P00  DEBUG:     common/lock::lockAcquire: => true
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 16384, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/backup/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
@@ -284,8 +288,10 @@ P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <f
 P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/backup/repo/backup/db
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/backup/repo/backup/db/backup.info.copy
 P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/backup/repo/backup/db
+P00  DEBUG:     perl/exec::perlExec: => 0
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/backup/log
@@ -316,10 +322,16 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ([BACKUP-FULL-1])
 P00  DEBUG:     Backup::Info->current(): strBackup = [BACKUP-FULL-1]
 P00  DEBUG:     Backup::Info->current=>: bTest = true
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
+P00  DEBUG:     perl/exec::perlExec: => 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: expire command end: completed successfully
+P00  DEBUG:     common/exit::exitSafe: => 0
+P00  DEBUG:     main::main: => 0
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
@@ -482,21 +494,33 @@ stop all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --force stop
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-log-timestamp --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-2]
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = [undef], oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/lock
 P00   INFO: sent term signal to process [PROCESS-ID]
+P00  DEBUG:     perl/exec::perlExec: => 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: stop command end: completed successfully
+P00  DEBUG:     common/exit::exitSafe: => 0
+P00  DEBUG:     main::main: => 0
 
 full backup - abort backup - local (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --type=full --stanza=db backup --test --test-delay=5 --test-point=backup-start=y
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --test --test-delay=5 --test-point=backup-start=y --type=full
+P00  DEBUG:     common/lock::lockAcquire: (lockPath: {"[TEST_PATH]/backup/lock"}, stanza: {"db"}, lockType: 1, lockTimeout: 0, failOnNoLock: true)
+P00  DEBUG:     common/lock::lockAcquire: => true
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/backup/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
@@ -589,18 +613,27 @@ P00   TEST:         PgBaCkReStTeSt-BACKUP-START-PgBaCkReStTeSt
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = <backup>, strRemoteType = db
 P00  DEBUG:     Protocol::Helper::protocolGet: found cached protocol
 P00  ERROR: [063]: remote process on 'db-master' terminated unexpectedly [063]
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: true, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 63
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: backup command end: terminated on signal from child process
+P00  DEBUG:     common/exit::exitSafe: => 63
+P00  DEBUG:     main::main: => 63
 
 full backup - global stop (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --type=full
+P00  DEBUG:     common/lock::lockAcquire: (lockPath: {"[TEST_PATH]/backup/lock"}, stanza: {"db"}, lockType: 1, lockTimeout: 0, failOnNoLock: true)
+P00  DEBUG:     common/lock::lockAcquire: => true
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/backup/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
@@ -642,42 +675,67 @@ P00  DEBUG:     Protocol::Remote::Master->new(): iBufferMax = 4194304, iCompress
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 60, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no [USER-1]@db-master '[BACKREST-BIN] --buffer-size=4194304 --command=backup --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote', strId = remote process on 'db-master', strName = remote
 P00  ERROR: [062]: raised from remote process on 'db-master': stop file exists for all stanzas
 P00  DEBUG:     Protocol::Command::Master->close=>: iExitStatus = 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: true, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 62
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: backup command end: aborted with exception [062]
+P00  DEBUG:     common/exit::exitSafe: => 62
+P00  DEBUG:     main::main: => 62
 
 stop db stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db stop
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-log-timestamp --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-2] --stanza=db
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = [undef], oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/lock
+P00  DEBUG:     perl/exec::perlExec: => 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: stop command end: completed successfully
+P00  DEBUG:     common/exit::exitSafe: => 0
+P00  DEBUG:     main::main: => 0
 
 stop db stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db stop
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-log-timestamp --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-2] --stanza=db
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = [undef], oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/lock
 P00   WARN: stop file already exists for stanza db
+P00  DEBUG:     perl/exec::perlExec: => 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: stop command end: completed successfully
+P00  DEBUG:     common/exit::exitSafe: => 0
+P00  DEBUG:     main::main: => 0
 
 full backup - stanza stop (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --type=full
+P00  DEBUG:     common/lock::lockAcquire: (lockPath: {"[TEST_PATH]/backup/lock"}, stanza: {"db"}, lockType: 1, lockTimeout: 0, failOnNoLock: true)
+P00  DEBUG:     common/lock::lockAcquire: => true
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/backup/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
@@ -719,58 +777,99 @@ P00  DEBUG:     Protocol::Remote::Master->new(): iBufferMax = 4194304, iCompress
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 60, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no [USER-1]@db-master '[BACKREST-BIN] --buffer-size=4194304 --command=backup --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote', strId = remote process on 'db-master', strName = remote
 P00  ERROR: [062]: raised from remote process on 'db-master': stop file exists for stanza db
 P00  DEBUG:     Protocol::Command::Master->close=>: iExitStatus = 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: true, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 62
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: backup command end: aborted with exception [062]
+P00  DEBUG:     common/exit::exitSafe: => 62
+P00  DEBUG:     main::main: => 62
 
 start db stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db start
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: start command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-log-timestamp --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-2] --stanza=db
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
+P00  DEBUG:     perl/exec::perlExec: => 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: start command end: completed successfully
+P00  DEBUG:     common/exit::exitSafe: => 0
+P00  DEBUG:     main::main: => 0
 
 start all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf start
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: start command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-log-timestamp --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-2]
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
+P00  DEBUG:     perl/exec::perlExec: => 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: start command end: completed successfully
+P00  DEBUG:     common/exit::exitSafe: => 0
+P00  DEBUG:     main::main: => 0
 
 start all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf start
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: start command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-log-timestamp --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-2]
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00   WARN: stop file does not exist
+P00  DEBUG:     perl/exec::perlExec: => 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: start command end: completed successfully
+P00  DEBUG:     common/exit::exitSafe: => 0
+P00  DEBUG:     main::main: => 0
 
 stop all stanzas (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --force stop
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --force --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --repo1-path=[TEST_PATH]/backup/repo
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = [undef], oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/backup/lock
 P00   INFO: sent term signal to process [PROCESS-ID]
+P00  DEBUG:     perl/exec::perlExec: => 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: stop command end: completed successfully
+P00  DEBUG:     common/exit::exitSafe: => 0
+P00  DEBUG:     main::main: => 0
 
 full backup - abort backup - remote (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --type=full --stanza=db backup --test --test-delay=5 --test-point=backup-start=y
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --test --test-delay=5 --test-point=backup-start=y --type=full
+P00  DEBUG:     common/lock::lockAcquire: (lockPath: {"[TEST_PATH]/backup/lock"}, stanza: {"db"}, lockType: 1, lockTimeout: 0, failOnNoLock: true)
+P00  DEBUG:     common/lock::lockAcquire: => true
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/backup/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
@@ -871,8 +970,12 @@ full backup - global stop (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --type=full
+P00  DEBUG:     common/lock::lockAcquire: (lockPath: {"[TEST_PATH]/backup/lock"}, stanza: {"db"}, lockType: 1, lockTimeout: 0, failOnNoLock: true)
+P00  DEBUG:     common/lock::lockAcquire: => true
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/backup/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
@@ -882,26 +985,43 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/backup/log
 P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
 P00  ERROR: [062]: stop file exists for all stanzas
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: true, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 62
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: backup command end: aborted with exception [062]
+P00  DEBUG:     common/exit::exitSafe: => 62
+P00  DEBUG:     main::main: => 62
 
 start all stanzas (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf start
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: start command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --repo1-path=[TEST_PATH]/backup/repo
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
+P00  DEBUG:     perl/exec::perlExec: => 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: start command end: completed successfully
+P00  DEBUG:     common/exit::exitSafe: => 0
+P00  DEBUG:     main::main: => 0
 
 full backup - resume (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --force --checksum-page --type=full --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --checksum-page --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --force --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y --type=full
+P00  DEBUG:     common/lock::lockAcquire: (lockPath: {"[TEST_PATH]/backup/lock"}, stanza: {"db"}, lockType: 1, lockTimeout: 0, failOnNoLock: true)
+P00  DEBUG:     common/lock::lockAcquire: => true
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/backup/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
@@ -1102,8 +1222,10 @@ P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/backup/repo
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/backup/repo/backup/db/backup.info.copy
 P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/backup/repo/backup/db
 P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>
+P00  DEBUG:     perl/exec::perlExec: => 0
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/backup/log
@@ -1134,10 +1256,16 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ([BACKUP-FULL-2])
 P00  DEBUG:     Backup::Info->current(): strBackup = [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Info->current=>: bTest = true
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
+P00  DEBUG:     perl/exec::perlExec: => 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: expire command end: completed successfully
+P00  DEBUG:     common/exit::exitSafe: => 0
+P00  DEBUG:     main::main: => 0
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
@@ -1304,6 +1432,8 @@ restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all --cmd-ssh=/usr/bin/ssh  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --cmd-ssh=/usr/bin/ssh --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --link-all --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-2] --set=[BACKUP-FULL-2] --stanza=db
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/db-master/log
@@ -1539,12 +1669,18 @@ P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/d
 P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, xstryPathFileExp = [TEST_PATH]/db-master/db/base/backup.manifest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     perl/exec::perlExec: => 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::Command::Master->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: restore command end: completed successfully
+P00  DEBUG:     common/exit::exitSafe: => 0
+P00  DEBUG:     main::main: => 0
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
@@ -1757,8 +1893,12 @@ incr backup - add tablespace 1 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --test --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --test
+P00  DEBUG:     common/lock::lockAcquire: (lockPath: {"[TEST_PATH]/backup/lock"}, stanza: {"db"}, lockType: 1, lockTimeout: 0, failOnNoLock: true)
+P00  DEBUG:     common/lock::lockAcquire: => true
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/backup/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
@@ -1936,8 +2076,10 @@ P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/backup/repo
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/backup/repo/backup/db/backup.info.copy
 P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/backup/repo/backup/db
 P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>
+P00  DEBUG:     perl/exec::perlExec: => 0
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/backup/log
@@ -1976,10 +2118,16 @@ P00  DEBUG:     Backup::Info->current=>: bTest = true
 P00  DEBUG:     Backup::Info->current(): strBackup = [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Info->current=>: bTest = true
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
+P00  DEBUG:     perl/exec::perlExec: => 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: expire command end: completed successfully
+P00  DEBUG:     common/exit::exitSafe: => 0
+P00  DEBUG:     main::main: => 0
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
@@ -2140,8 +2288,12 @@ incr backup - resume and add tablespace 2 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y
+P00  DEBUG:     common/lock::lockAcquire: (lockPath: {"[TEST_PATH]/backup/lock"}, stanza: {"db"}, lockType: 1, lockTimeout: 0, failOnNoLock: true)
+P00  DEBUG:     common/lock::lockAcquire: => true
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
+P00  DEBUG:     config/load::cfgLoad: => void
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/backup/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
@@ -2363,8 +2515,10 @@ P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/backup/repo
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/backup/repo/backup/db/backup.info.copy
 P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/backup/repo/backup/db
 P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>
+P00  DEBUG:     perl/exec::perlExec: => 0
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin
+P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/backup/log
@@ -2403,10 +2557,16 @@ P00  DEBUG:     Backup::Info->current=>: bTest = true
 P00  DEBUG:     Backup::Info->current(): strBackup = [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Info->current=>: bTest = true
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
+P00  DEBUG:     perl/exec::perlExec: => 0
+P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: expire command end: completed successfully
+P00  DEBUG:     common/exit::exitSafe: => 0
+P00  DEBUG:     main::main: => 0
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------

@@ -6,6 +6,7 @@ Block Cipher
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
+#include "common/debug.h"
 #include "common/memContext.h"
 #include "cipher/block.h"
 #include "cipher/random.h"
@@ -45,6 +46,18 @@ New block encrypt/decrypt object
 CipherBlock *
 cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pass, size_t passSize, const char *digestName)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(ENUM, mode);
+        FUNCTION_DEBUG_PARAM(STRINGZ, cipherName);
+        FUNCTION_DEBUG_PARAM(UCHARP, pass);
+        FUNCTION_DEBUG_PARAM(SIZE, passSize);
+        FUNCTION_DEBUG_PARAM(STRINGZ, digestName);
+
+        FUNCTION_DEBUG_ASSERT(cipherName != NULL);
+        FUNCTION_DEBUG_ASSERT(pass != NULL);
+        FUNCTION_DEBUG_ASSERT(passSize > 0);
+    FUNCTION_DEBUG_END();
+
     // Only need to init once.
     if (!cipherIsInit())
         cipherInit();
@@ -90,7 +103,7 @@ cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pas
     }
     MEM_CONTEXT_NEW_END();
 
-    return this;
+    FUNCTION_DEBUG_RESULT(CIPHER_BLOCK, this);
 }
 
 /***********************************************************************************************************************************
@@ -99,6 +112,13 @@ Determine how large the destination buffer should be
 size_t
 cipherBlockProcessSize(CipherBlock *this, size_t sourceSize)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(CIPHER_BLOCK, this);
+        FUNCTION_DEBUG_PARAM(SIZE, sourceSize);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
     // Destination size is source size plus one extra block
     size_t destinationSize = sourceSize + EVP_MAX_BLOCK_LENGTH;
 
@@ -106,7 +126,7 @@ cipherBlockProcessSize(CipherBlock *this, size_t sourceSize)
     if (this->mode == cipherModeEncrypt && !this->saltDone)
         destinationSize += CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN;
 
-    return destinationSize;
+    FUNCTION_DEBUG_RESULT(SIZE, destinationSize);
 }
 
 /***********************************************************************************************************************************
@@ -115,6 +135,17 @@ Encrypt/decrypt data
 size_t
 cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t sourceSize, unsigned char *destination)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(CIPHER_BLOCK, this);
+        FUNCTION_DEBUG_PARAM(UCHARP, source);
+        FUNCTION_DEBUG_PARAM(SIZE, sourceSize);
+        FUNCTION_DEBUG_PARAM(UCHARP, destination);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+        FUNCTION_DEBUG_ASSERT(source != NULL);
+        FUNCTION_DEBUG_ASSERT(destination != NULL);
+    FUNCTION_DEBUG_END();
+
     // Actual destination size
     size_t destinationSize = 0;
 
@@ -212,7 +243,7 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t source
     }
 
     // Return actual destination size
-    return destinationSize;
+    FUNCTION_DEBUG_RESULT(SIZE, destinationSize);
 }
 
 /***********************************************************************************************************************************
@@ -221,6 +252,14 @@ Flush the remaining data
 size_t
 cipherBlockFlush(CipherBlock *this, unsigned char *destination)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(CIPHER_BLOCK, this);
+        FUNCTION_DEBUG_PARAM(UCHARP, destination);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+        FUNCTION_DEBUG_ASSERT(destination != NULL);
+    FUNCTION_DEBUG_END();
+
     // Actual destination size
     size_t destinationSize = 0;
 
@@ -233,7 +272,7 @@ cipherBlockFlush(CipherBlock *this, unsigned char *destination)
         THROW(CipherError, "unable to flush");
 
     // Return actual destination size
-    return destinationSize;
+    FUNCTION_DEBUG_RESULT(SIZE, destinationSize);
 }
 
 /***********************************************************************************************************************************
@@ -242,10 +281,18 @@ Free memory
 void
 cipherBlockFree(CipherBlock *this)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(CIPHER_BLOCK, this);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
     // Free cipher context
     if (this->cipherContext)
         EVP_CIPHER_CTX_cleanup(this->cipherContext);
 
     // Free mem context
     memContextFree(this->memContext);
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

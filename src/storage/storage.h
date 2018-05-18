@@ -247,4 +247,14 @@ storageFree
 
 void storageFree(const Storage *this);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+size_t storageToLog(const Storage *this, char *buffer, size_t bufferSize);
+
+#define FUNCTION_DEBUG_STORAGE_TYPE                                                                                                \
+    Storage *
+#define FUNCTION_DEBUG_STORAGE_FORMAT(value, buffer, bufferSize)                                                                   \
+    (size_t)storageToLog(value, buffer, bufferSize)
+
 #endif

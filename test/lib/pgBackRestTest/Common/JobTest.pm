@@ -69,6 +69,7 @@ sub new
         $self->{bValgrindUnit},
         $self->{bCoverageUnit},
         $self->{bOptimize},
+        $self->{bBackTrace},
         $self->{bProfile},
         $self->{bDebug},
     ) =
@@ -94,6 +95,7 @@ sub new
             {name => 'bValgrindUnit'},
             {name => 'bCoverageUnit'},
             {name => 'bOptimize'},
+            {name => 'bBackTrace'},
             {name => 'bProfile'},
             {name => 'bDebug'},
         );
@@ -360,8 +362,10 @@ sub run
                     "       -Wformat=2 -Wformat-nonliteral \\\n" .
                     "       `perl -MExtUtils::Embed -e ccopts`\n" .
                     "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
+                        (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -lbacktrace' : '') .
                         " `perl -MExtUtils::Embed -e ldopts`\n" .
                     'TESTFLAGS=' . ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : "-DDEBUG_UNIT") .
+                        (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
                         ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
                         ($self->{bDebug} ? '' : " -DNDEBUG") .
                     "\n" .

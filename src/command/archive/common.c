@@ -7,6 +7,7 @@ Archive Push Command
 
 #include "command/archive/common.h"
 #include "common/assert.h"
+#include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/wait.h"
@@ -19,6 +20,12 @@ Check for ok/error status files in the spool in/out directory
 bool
 archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confessOnError)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(ENUM, archiveMode);
+        FUNCTION_DEBUG_PARAM(STRING, walSegment);
+        FUNCTION_DEBUG_PARAM(BOOL, confessOnError);
+    FUNCTION_DEBUG_END();
+
     bool result = false;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -98,7 +105,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -107,10 +114,16 @@ Get the next WAL segment given a WAL segment and WAL segment size
 String *
 walSegmentNext(const String *walSegment, size_t walSegmentSize, uint pgVersion)
 {
-    ASSERT_DEBUG(walSegment != NULL);
-    ASSERT_DEBUG(strSize(walSegment) == 24);
-    ASSERT_DEBUG(UINT32_MAX % walSegmentSize == walSegmentSize - 1);
-    ASSERT_DEBUG(pgVersion >= PG_VERSION_11 || walSegmentSize == 16 * 1024 * 1024);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, walSegment);
+        FUNCTION_DEBUG_PARAM(SIZE, walSegmentSize);
+        FUNCTION_DEBUG_PARAM(UINT, pgVersion);
+
+        FUNCTION_DEBUG_ASSERT(walSegment != NULL);
+        FUNCTION_DEBUG_ASSERT(strSize(walSegment) == 24);
+        FUNCTION_DEBUG_ASSERT(UINT32_MAX % walSegmentSize == walSegmentSize - 1);
+        FUNCTION_DEBUG_ASSERT(pgVersion >= PG_VERSION_11 || walSegmentSize == 16 * 1024 * 1024);
+    FUNCTION_DEBUG_END();
 
     // Extract WAL parts
     uint32_t timeline = 0;
@@ -141,7 +154,7 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, uint pgVersion)
     }
     MEM_CONTEXT_TEMP_END();
 
-    return strNewFmt("%08X%08X%08X", timeline, major, minor);
+    FUNCTION_DEBUG_RESULT(STRING, strNewFmt("%08X%08X%08X", timeline, major, minor));
 }
 
 /***********************************************************************************************************************************
@@ -150,7 +163,13 @@ Build a list of WAL segments based on a beginning WAL and number of WAL in the r
 StringList *
 walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, uint pgVersion, uint range)
 {
-    ASSERT_DEBUG(range > 0);
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(STRING, walSegmentBegin);
+        FUNCTION_DEBUG_PARAM(SIZE, walSegmentSize);
+        FUNCTION_DEBUG_PARAM(UINT, pgVersion);
+
+        FUNCTION_DEBUG_ASSERT(range > 0);
+    FUNCTION_DEBUG_END();
 
     StringList *result = NULL;
 
@@ -177,5 +196,5 @@ walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, uint pgVer
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_DEBUG_RESULT(STRING_LIST, result);
 }

@@ -50,6 +50,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("check that try stack is initialized correctly"))
     {
@@ -101,21 +103,23 @@ testRun()
         volatile bool catchDone = false;
         volatile bool finallyDone = false;
 
+        assert(errorTryDepth() == 0);
+
         TRY_BEGIN()
         {
-            assert(errorContext.tryTotal == 1);
+            assert(errorTryDepth() == 1);
 
             TRY_BEGIN()
             {
-                assert(errorContext.tryTotal == 2);
+                assert(errorTryDepth() == 2);
 
                 TRY_BEGIN()
                 {
-                    assert(errorContext.tryTotal == 3);
+                    assert(errorTryDepth() == 3);
 
                     TRY_BEGIN()
                     {
-                        assert(errorContext.tryTotal == 4);
+                        assert(errorTryDepth() == 4);
                         tryDone = true;
 
                         THROW(AssertError, BOGUS_STR);
@@ -145,12 +149,14 @@ testRun()
         }
         CATCH(RuntimeError)
         {
-            assert(errorContext.tryTotal == 1);
+            assert(errorTryDepth() == 1);
             assert(errorContext.tryList[1].state == errorStateCatch);
 
             catchDone = true;
         }
         TRY_END();
+
+        assert(errorTryDepth() == 0);
 
         assert(tryDone);
         assert(catchDone);
@@ -173,13 +179,17 @@ testRun()
         CATCH(AssertError)
         {
             assert(errorCode() == AssertError.code);
-            assert(errorFileName() != NULL);
-            assert(errorFileLine() >= 1);
+            assert(strcmp(errorFileName(), "module/common/errorTest.c") == 0);
+            assert(strcmp(errorFunctionName(), "testTryRecurse") == 0);
+            assert(errorFileLine() == 29);
+            assert(
+                strcmp(errorStackTrace(), "module/common/errorTest:testTryRecurse:29:(test build required for parameters)") == 0);
             assert(strcmp(errorMessage(), "too many nested try blocks") == 0);
             assert(strcmp(errorName(), AssertError.name) == 0);
             assert(errorType() == &AssertError);
             assert(errorTypeCode(errorType()) == AssertError.code);
             assert(strcmp(errorTypeName(errorType()), AssertError.name) == 0);
+
             catchDone = true;
         }
         FINALLY()
@@ -284,4 +294,6 @@ testRun()
         }
         HARNESS_FORK_END();
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }
