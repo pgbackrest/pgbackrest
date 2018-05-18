@@ -34,6 +34,10 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>Test harness improvements.  Allow more than one test to provide coverage for the same module.  Add option to disable valgrind.  Add option to disabled coverage.  Add option to disable debug build.  Add option to disable compiler optimization.  Add <id>--dev-test</id> mode.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Update SSL error message test on CentOS 7.</p>
                     </release-item>
 

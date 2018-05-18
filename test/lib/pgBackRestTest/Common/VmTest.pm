@@ -25,6 +25,8 @@ use constant VM_DB                                                  => 'db';
     push @EXPORT, qw(VM_DB);
 use constant VM_DB_TEST                                             => 'db-test';
     push @EXPORT, qw(VM_DB_TEST);
+use constant VMDEF_DEBUG_INTEGRATION                                => 'debug-integration';
+    push @EXPORT, qw(VMDEF_DEBUG_INTEGRATION);
 use constant VM_CONTROL_MASTER                                      => 'control-master';
     push @EXPORT, qw(VM_CONTROL_MASTER);
 use constant VM_DEPRECATED                                          => 'deprecated';
@@ -41,6 +43,8 @@ use constant VMDEF_PGSQL_BIN                                        => 'pgsql-bi
     push @EXPORT, qw(VMDEF_PGSQL_BIN);
 use constant VMDEF_PERL_ARCH_PATH                                   => 'perl-arch-path';
     push @EXPORT, qw(VMDEF_PERL_ARCH_PATH);
+use constant VMDEF_WITH_BACKTRACE                                   => 'with-backtrace';
+    push @EXPORT, qw(VMDEF_WITH_BACKTRACE);
 
 ####################################################################################################################################
 # Valid OS base List
@@ -142,6 +146,8 @@ my $oyVm =
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
 
+        &VMDEF_DEBUG_INTEGRATION => false,
+
         &VM_DB =>
         [
             PG_VERSION_96,
@@ -229,6 +235,8 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.22.1',
+
+        &VMDEF_WITH_BACKTRACE => true,
 
         &VM_DB =>
         [
@@ -344,5 +352,29 @@ sub vmArchBits
 }
 
 push @EXPORT, qw(vmArchBits);
+
+####################################################################################################################################
+# Does the VM support libbacktrace?
+####################################################################################################################################
+sub vmWithBackTrace
+{
+    my $strVm = shift;
+
+    return ($oyVm->{$strVm}{&VMDEF_WITH_BACKTRACE} ? true : false);
+}
+
+push @EXPORT, qw(vmWithBackTrace);
+
+####################################################################################################################################
+# Will integration tests be run in debug mode?
+####################################################################################################################################
+sub vmDebugIntegration
+{
+    my $strVm = shift;
+
+    return (defined($oyVm->{$strVm}{&VMDEF_DEBUG_INTEGRATION}) ? $oyVm->{$strVm}{&VMDEF_DEBUG_INTEGRATION} : true);
+}
+
+push @EXPORT, qw(vmDebugIntegration);
 
 1;

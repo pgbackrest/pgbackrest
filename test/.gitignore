@@ -1,6 +1,6 @@
-test
 .vagrant
 nytprof*
 scratch.txt
 coverage*
 ubuntu-xenial-16.04-cloudimg-console.log
+profile

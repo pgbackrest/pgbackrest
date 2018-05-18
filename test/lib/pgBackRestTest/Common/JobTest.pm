@@ -66,6 +66,11 @@ sub new
         $self->{bShowOutputAsync},
         $self->{bNoCleanup},
         $self->{iRetry},
+        $self->{bValgrindUnit},
+        $self->{bCoverageUnit},
+        $self->{bOptimize},
+        $self->{bProfile},
+        $self->{bDebug},
     ) =
         logDebugParam
         (
@@ -86,6 +91,11 @@ sub new
             {name => 'bShowOutputAsync'},
             {name => 'bNoCleanup'},
             {name => 'iRetry'},
+            {name => 'bValgrindUnit'},
+            {name => 'bCoverageUnit'},
+            {name => 'bOptimize'},
+            {name => 'bProfile'},
+            {name => 'bDebug'},
         );
 
     # Set try to 0
@@ -179,16 +189,16 @@ sub run
                 # If testing C code copy source files to the test directory
                 if ($self->{oTest}->{&TEST_C})
                 {
-                    if (!$bGCovExists)
-                    {
-                        executeTest("cp -r $self->{strBackRestBase}/src/*  $self->{strGCovPath}");
-                    }
-
-                    if (!$bGCovExists || defined($rhBuildFlags->{$self->{iVmIdx}}) != defined($self->{oTest}->{&TEST_CDEF}) ||
+                    # If any of the build flags have changed then we'll need to rebuild from scratch
+                    my $bFlagsChanged =
+                        defined($rhBuildFlags->{$self->{iVmIdx}}) != defined($self->{oTest}->{&TEST_CDEF}) ||
                         defined($rhBuildFlags->{$self->{iVmIdx}}) &&
-                        $rhBuildFlags->{$self->{iVmIdx}} ne $self->{oTest}->{&TEST_CDEF})
+                        $rhBuildFlags->{$self->{iVmIdx}} ne $self->{oTest}->{&TEST_CDEF};
+
+                    if (!$bGCovExists || $bFlagsChanged)
                     {
-                        executeTest("cp -r $self->{strBackRestBase}/test/src/*  $self->{strGCovPath}");
+                        executeTest("rsync -rt --delete $self->{strBackRestBase}/src/ $self->{strGCovPath}");
+                        executeTest("rsync -rt $self->{strBackRestBase}/test/src/ $self->{strGCovPath}");
                     }
 
                     $rhBuildFlags->{$self->{iVmIdx}} = $self->{oTest}->{&TEST_CDEF};
@@ -245,8 +255,6 @@ sub run
                 ($self->{bDryRun} ? ' --vm-out' : '') .
                 ($self->{bNoCleanup} ? " --no-cleanup" : '');
         }
-
-        &log(DETAIL, $strCommand);
 
         if (!$self->{bDryRun} || $self->{bVmOut})
         {
@@ -341,7 +349,7 @@ sub run
                 # Build the Makefile
                 my $strMakefile =
                     "CC=gcc\n" .
-                    "CFLAGS=-I. -std=c99 -fPIC -g \\\n" .
+                    "CFLAGS=-I. -std=c99 -fPIC -g" . ($self->{bProfile} ? " -pg" : '') . "\\\n" .
                     "       -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wswitch-enum -Wconversion \\\n" .
                     ($self->{oTest}->{&TEST_VM} eq VM_U16 ? "       -Wformat-signedness \\\n" : '') .
                     # This warning appears to be broken on U12 even though the functionality is fine
@@ -351,24 +359,26 @@ sub run
                         "       -Wpedantic \\\n" : '') .
                     "       -Wformat=2 -Wformat-nonliteral \\\n" .
                     "       `perl -MExtUtils::Embed -e ccopts`\n" .
-                    "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) ? " -lgcov" : '') .
+                    "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
                         " `perl -MExtUtils::Embed -e ldopts`\n" .
-                    'TESTFLAGS=' . ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : "-DDEBUG_UNIT ") .
-                        ($self->{oTest}->{&TEST_CDEF} ? "$self->{oTest}->{&TEST_CDEF}" : '') .
+                    'TESTFLAGS=' . ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : "-DDEBUG_UNIT") .
+                        ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
+                        ($self->{bDebug} ? '' : " -DNDEBUG") .
                     "\n" .
                     "\nSRCS=" . join(' ', @stryCFile) . "\n" .
                     "OBJS=\$(SRCS:.c=.o)\n" .
                     "\n" .
                     "test: \$(OBJS) test.o\n" .
-                    "\t\$(CC) -o test \$(OBJS) test.o \$(LDFLAGS)\n" .
+                    "\t\$(CC) -o test \$(OBJS) test.o"  . ($self->{bProfile} ? " -pg" : '') . " \$(LDFLAGS)\n" .
                     "\n" .
                     "test.o: test.c\n" .
-	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) " .
-                        (vmCoverage($self->{oTest}->{&TEST_VM}) ? '-fprofile-arcs -ftest-coverage -O0' : '-O2') .
+	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) -O0" .
+                        (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
+                            ' -fprofile-arcs -ftest-coverage' : '') .
                         " -c test.c\n" .
                     "\n" .
                     ".c.o:\n" .
-	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) -O2 -c \$< -o \$@\n";
+	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) " . ($self->{bOptimize} ? '-O2' : '-O0') . " -c \$< -o \$@\n";
 
                 $self->{oStorageTest}->put($self->{strGCovPath} . "/Makefile", $strMakefile);
             }
@@ -426,8 +436,20 @@ sub end
             syswrite(*STDOUT, "\n");
         }
 
-        # If C library generate coverage info
-        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverage($self->{oTest}->{&TEST_VM}))
+        # If C code generate profile info
+        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && $self->{bProfile})
+        {
+            executeTest(
+                'docker exec -i -u ' . TEST_USER . " ${strImage} " .
+                "gprof --flat-profile $self->{strGCovPath}/test $self->{strGCovPath}/gmon.out > $self->{strGCovPath}/gprof.flat.txt");
+
+            $self->{oStorageTest}->pathCreate("$self->{strBackRestBase}/test/profile", {strMode => '0750', bIgnoreExists => true});
+            $self->{oStorageTest}->copy(
+                "$self->{strGCovPath}/gprof.flat.txt", "$self->{strBackRestBase}/test/profile/gprof.flat.txt");
+        }
+
+        # If C code generate coverage info
+        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit})
         {
             # Generate a list of files to cover
             my $hTestCoverage =
@@ -447,6 +469,7 @@ sub end
             # Generate coverage reports for the modules
             my $strLCovExe = "lcov --config-file=$self->{strBackRestBase}/test/src/lcov.conf";
             my $strLCovOut = $self->{strGCovPath} . '/test.lcov';
+            my $strLCovOutTmp = $self->{strGCovPath} . '/test.tmp.lcov';
 
             executeTest(
                 'docker exec -i -u ' . TEST_USER . " ${strImage} " .
@@ -472,10 +495,18 @@ sub end
 
                 executeTest(
                     'docker exec -i -u ' . TEST_USER . " ${strImage} " .
-                    "${strLCovExe} --extract=${strLCovOut} */${strModuleName}.c --o=${strLCovFile}");
+                    "${strLCovExe} --extract=${strLCovOut} */${strModuleName}.c --o=${strLCovOutTmp}");
+
+                # Combine with prior run if there was one
+                if ($self->{oStorageTest}->exists($strLCovFile))
+                {
+                    executeTest(
+                        'docker exec -i -u ' . TEST_USER . " ${strImage} " .
+                        "${strLCovExe} --add-tracefile=${strLCovOutTmp} --add-tracefile=${strLCovFile} --o=${strLCovOutTmp}");
+                }
 
                 # Update source file
-                my $strCoverage = ${$self->{oStorageTest}->get($strLCovFile)};
+                my $strCoverage = ${$self->{oStorageTest}->get($strLCovOutTmp)};
 
                 if (defined($strCoverage))
                 {
@@ -506,10 +537,9 @@ sub end
                         # Fix source file name
                         $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
 
-                        # Save coverage file
                         $self->{oStorageTest}->put($strLCovFile, $strCoverage);
 
-                        if ($self->{oStorageTest}->exists(${strLCovTotal}))
+                        if ($self->{oStorageTest}->exists($strLCovTotal))
                         {
                             executeTest(
                                 'docker exec -i -u ' . TEST_USER . " ${strImage} " .

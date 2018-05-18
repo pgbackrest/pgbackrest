@@ -86,8 +86,14 @@ test.pl [options]
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
-   --dev                --no-lint --smart --no-package
-   --expect             --no-lint --smart --no-package --vm=co7 --db=9.6 --log-force
+   --dev                --no-lint --smart --no-package --no-optimize
+   --dev-test           --no-lint --no-package
+   --expect             --no-lint --no-package --vm=co7 --db=9.6 --log-force
+   --no-valgrind        don't run valgrind on C unit tests (saves time)
+   --no-coverage        don't run coverage on C unit tests (saves time)
+   --no-optimize        don't do compile optimization for C (saves compile time)
+   --profile            generate profile info
+   --no-debug           don't generate a debug build
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -133,6 +139,7 @@ my $bVmForce = false;
 my $bNoLint = false;
 my $bBuildOnly = false;
 my $bCoverageOnly = false;
+my $bNoCoverage = false;
 my $bCOnly = false;
 my $bGenOnly = false;
 my $bCodeCount = false;
@@ -140,7 +147,12 @@ my $bSmart = false;
 my $bNoPackage = false;
 my $bNoCiConfig = false;
 my $bDev = false;
+my $bDevTest = false;
+my $bProfile = false;
 my $bExpect = false;
+my $bNoValgrind = false;
+my $bNoOptimize = false;
+my $bNoDebug = false;
 my $iRetry = 0;
 
 GetOptions ('q|quiet' => \$bQuiet,
@@ -168,12 +180,18 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-package' => \$bNoPackage,
             'no-ci-config' => \$bNoCiConfig,
             'coverage-only' => \$bCoverageOnly,
+            'no-coverage' => \$bNoCoverage,
             'c-only' => \$bCOnly,
             'gen-only' => \$bGenOnly,
             'code-count' => \$bCodeCount,
             'smart' => \$bSmart,
             'dev' => \$bDev,
+            'dev-test' => \$bDevTest,
+            'profile' => \$bProfile,
             'expect' => \$bExpect,
+            'no-valgrind' => \$bNoValgrind,
+            'no-optimize' => \$bNoOptimize,
+            'no-debug', => \$bNoDebug,
             'retry=s' => \$iRetry)
     or pod2usage(2);
 
@@ -206,13 +224,34 @@ eval
     }
 
     ################################################################################################################################
-    # Update options for --dev
+    # Update options for --dev and --dev-fast and --dev-test
     ################################################################################################################################
+    if ($bDev && $bDevTest)
+    {
+        confess "cannot combine --dev and --dev-test";
+    }
+
     if ($bDev)
     {
         $bNoLint = true;
         $bSmart = true;
         $bNoPackage = true;
+        $bNoOptimize = true;
+    }
+
+    if ($bDevTest)
+    {
+        $bNoPackage = true;
+        $bNoLint = true;
+    }
+
+    ################################################################################################################################
+    # Update options for --profile
+    ################################################################################################################################
+    if ($bProfile)
+    {
+        $bNoValgrind = true;
+        $bNoCoverage = true;
     }
 
     ################################################################################################################################
@@ -588,10 +627,12 @@ eval
                         &log(INFO, "    clang static analyzer ${strBuildVM} (${strBuildPath})");
                     }
 
+                    my $strCDebug = vmDebugIntegration($strVm) ? 'CDEBUG=' : '';
+
                     executeTest(
                         'docker exec -i test-build' .
                         (vmCoverage($strVm) && !$bNoLint ? ' scan-build-5.0' : '') .
-                        " make --silent --directory ${strBuildPath} CEXTRA=-g CDEBUG=",
+                        " make --silent --directory ${strBuildPath} CEXTRA=-g ${strCDebug}",
                         {bShowOutputAsync => $bLogDetail});
 
                     executeTest(
@@ -1019,7 +1060,8 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut,
-                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry);
+                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry,
+                        !$bNoValgrind, !$bNoCoverage, !$bNoOptimize, $bProfile, !$bNoDebug);
                     $iTestIdx++;
 
                     if ($oJob->run())
@@ -1037,7 +1079,7 @@ eval
         #---------------------------------------------------------------------------------------------------------------------------
         my $iUncoveredCodeModuleTotal = 0;
 
-        if (vmCoverage($strVm) && !$bDryRun)
+        if (vmCoverage($strVm) && !$bNoCoverage && !$bDryRun)
         {
             &log(INFO, 'writing coverage report');
             executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
