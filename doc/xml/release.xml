@@ -22,6 +22,14 @@
 
                         <p>Fix potential buffer overrun in error message handling.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="uspen"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix archive write lock being taken for the synchronous <cmd>archive-get</cmd> command.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>

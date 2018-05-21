@@ -21,7 +21,7 @@ CODE:
         cfgCommandSet(cfgCommandId(command));
 
         // Attempt to acquire the lock
-        if (cfgLockType() != lockTypeNone)
+        if (cfgLockRequired())
             RETVAL = lockAcquire(strNew(lockPath), strNew(stanza), cfgLockType(), lockTimeout, failOnNoLock);
     }
     MEM_CONTEXT_XS_TEMP_END();

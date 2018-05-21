@@ -19,6 +19,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Io::Buffered;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Base::Minion;
 use pgBackRest::Version;
 
@@ -103,7 +104,9 @@ sub run
             my $oIoHandle = shift;
 
             my $oMinion = new pgBackRest::Protocol::Base::Minion('test', new pgBackRest::Common::Io::Buffered($oIoHandle, 5, 4096));
-            $oMinion->process();
+
+            # Use bogus lock path to ensure a lock is not taken for the archive-get command
+            $oMinion->process($self->testPath(), cfgCommandName(CFGCMD_ARCHIVE_GET), "test");
         });
 
         #---------------------------------------------------------------------------------------------------------------------------

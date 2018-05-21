@@ -149,8 +149,8 @@ sub process
     # Loop until the exit command is received
     eval
     {
-        # Aquire a lock if required (this will be determined by lockAcquire()).  This is done here so any errors will be transmitted
-        # through the protocol layer and cause a graceful shutdown rather than a remote abort.
+        # Acquire a lock if required (this will be determined by lockAcquire()).  This is done here so any errors will be
+        # transmitted through the protocol layer and cause a graceful shutdown rather than a remote abort.
         if (defined($strLockPath) && defined($strLockStanza))
         {
             eval
