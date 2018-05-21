@@ -387,7 +387,9 @@ errorInternalThrow(const ErrorType *errorType, const char *fileName, const char 
     errorContext.error.fileLine = fileLine;
 
     // Assign message to the error
-    strcpy(messageBuffer, message);
+    strncpy(messageBuffer, message, sizeof(messageBuffer));
+    messageBuffer[sizeof(messageBuffer) - 1] = 0;
+
     errorContext.error.message = (const char *)messageBuffer;
 
     // Generate the stack trace for the error

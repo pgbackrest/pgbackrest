@@ -122,7 +122,10 @@ testRun()
                         assert(errorTryDepth() == 4);
                         tryDone = true;
 
-                        THROW(AssertError, BOGUS_STR);
+                        char bigMessage[sizeof(messageBuffer) * 32];
+                        memset(bigMessage, 'A', sizeof(bigMessage));
+
+                        THROW(AssertError, bigMessage);
                     }
                     TRY_END();
                 }
@@ -151,6 +154,7 @@ testRun()
         {
             assert(errorTryDepth() == 1);
             assert(errorContext.tryList[1].state == errorStateCatch);
+            assert(strlen(errorMessage()) == sizeof(messageBuffer) - 1);
 
             catchDone = true;
         }
