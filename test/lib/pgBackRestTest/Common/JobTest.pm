@@ -200,6 +200,8 @@ sub run
                     if (!$bGCovExists || $bFlagsChanged)
                     {
                         executeTest("rsync -rt --delete $self->{strBackRestBase}/src/ $self->{strGCovPath}");
+                        executeTest("rsync -t $self->{strBackRestBase}/libc/LibC.h $self->{strGCovPath}");
+                        executeTest("rsync -rt $self->{strBackRestBase}/libc/xs/ $self->{strGCovPath}/xs");
                         executeTest("rsync -rt $self->{strBackRestBase}/test/src/ $self->{strGCovPath}");
                     }
 
@@ -209,7 +211,9 @@ sub run
                 # If testing Perl code (or C code that calls Perl code) install bin and Perl C Library
                 if (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_PERL_REQ})
                 {
-                    jobInstallC($self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage);
+                    jobInstallC(
+                        $self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage,
+                        !$self->{oTest}->{&TEST_C} && !$self->{oTest}->{&TEST_INTEGRATION});
                 }
             }
         }
@@ -357,8 +361,9 @@ sub run
                     # This warning appears to be broken on U12 even though the functionality is fine
                     ($self->{oTest}->{&TEST_VM} eq VM_U12 || $self->{oTest}->{&TEST_VM} eq VM_CO6 ?
                         "       -Wno-missing-field-initializers \\\n" : '') .
-                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ?
-                        "       -Wpedantic \\\n" : '') .
+                    # ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 &&
+                    #     $self->{oTest}->{&TEST_MODULE} ne 'perl' && $self->{oTest}->{&TEST_NAME} ne 'exec' ?
+                    #         "       -Wpedantic \\\n" : '') .
                     "       -Wformat=2 -Wformat-nonliteral \\\n" .
                     "       `perl -MExtUtils::Embed -e ccopts`\n" .
                     "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
@@ -616,6 +621,7 @@ sub jobInstallC
     my $strBasePath = shift;
     my $strVm = shift;
     my $strImage = shift;
+    my $bCopyLibC = shift;
 
     # Install Perl C Library
     my $oVm = vmGet();
@@ -623,20 +629,14 @@ sub jobInstallC
     my $strBuildLibCPath = "$strBuildPath/libc/${strVm}/libc";
     my $strBuildBinPath = "$strBuildPath/bin/${strVm}/src";
     my $strPerlAutoPath = $oVm->{$strVm}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
-    my $strPerlModulePath = $oVm->{$strVm}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest';
 
     executeTest(
         "docker exec -i -u root ${strImage} bash -c '" .
-        "mkdir -p -m 755 ${strPerlAutoPath} && " .
-        # "cp ${strBuildLibCPath}/blib/arch/auto/pgBackRest/LibC/LibC.bs ${strPerlAutoPath} && " .
-        "cp ${strBuildLibCPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
-        "cp ${strBuildLibCPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
-        "mkdir -p -m 755 ${strPerlModulePath} && " .
-        "cp ${strBuildLibCPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath} && " .
-        "cp ${strBuildLibCPath}/blib/lib/pgBackRest/LibCAuto.pm ${strPerlModulePath} && " .
+        (defined($bCopyLibC) && $bCopyLibC ?
+            "mkdir -p -m 755 ${strPerlAutoPath} && " .
+            "cp ${strBuildLibCPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " : '') .
         "cp ${strBuildBinPath}/" . BACKREST_EXE . ' /usr/bin/' . BACKREST_EXE . ' && ' .
-        'chmod 755 /usr/bin/' . BACKREST_EXE . ' && ' .
-        "ln -s ${strBasePath}/lib/pgBackRest /usr/share/perl5/pgBackRest'");
+        'chmod 755 /usr/bin/' . BACKREST_EXE . "'");
 }
 
 push(@EXPORT, qw(jobInstallC));

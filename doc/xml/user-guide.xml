@@ -205,33 +205,6 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="br-install">
-        <p keyword="default"><backrest/> is written in Perl which is included with {[user-guide-os]} by default.  Some additional modules must also be installed but they are available as standard packages.</p>
-
-        <execute-list host="{[br-install-host]}" keyword="default">
-            <title>Install required Perl packages</title>
-
-            <execute user="root">
-                <exe-cmd>apt-get update</exe-cmd>
-            </execute>
-
-            <execute user="root">
-                <exe-cmd>apt-get install libdbd-pg-perl libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-        </execute-list>
-
-        <p keyword="co6"><backrest/> is written in Perl which is not included with {[user-guide-os]} by default, however all required modules are available as standard packages.</p>
-
-        <execute-list host="{[br-install-host]}" keyword="co6">
-            <title>Install required Perl packages</title>
-
-            <execute user="root">
-                <exe-cmd>yum install perl perl-Time-HiRes perl-parent perl-JSON
-                    perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-        </execute-list>
-
         <p keyword="default">{[user-guide-os]} packages for <backrest/> are available at <link url="https://www.postgresql.org/download/linux/ubuntu/">apt.postgresql.org</link>.  If they are not provided for your distribution/version it is easy to download the source and install manually.</p>
 
         <p keyword="co6">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
@@ -251,12 +224,6 @@
                 <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r /backrest/build /root/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-            <execute user="root" show="n">
-                <exe-cmd>cp -r /backrest/lib /root/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-            <execute user="root" show="n">
                 <exe-cmd>cp -r /backrest/libc /root/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
@@ -264,62 +231,8 @@
             </execute>
         </execute-list>
 
-        <execute-list host="{[br-install-host]}">
-            <title>Install <backrest/></title>
-
-            <execute user="root">
-                <exe-cmd>cp -r /root/pgbackrest-release-{[version]}/lib/pgBackRest
-                    {[perl-lib-path]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>find {[perl-lib-path]}/pgBackRest -type f -exec chmod 644 {} +</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>find {[perl-lib-path]}/pgBackRest -type d -exec chmod 755 {} +</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>mkdir -m 770 /var/log/pgbackrest</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>chown {[br-install-user]}:{[br-install-group]} /var/log/pgbackrest</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>mkdir {[backrest-config-path]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>mkdir {[backrest-config-include-path]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>touch {[backrest-config-demo]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>chmod 640 {[backrest-config-demo]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>chown {[br-install-user]}:{[br-install-group]} {[backrest-config-demo]}</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <!-- LibC installation -->
-        <p><backrest/> requires a companion C library that enhances performance and enables the `checksum-page` option and encryption.  Pre-built packages are generally a better option than building the C library manually but the steps required are given below for completeness.  Depending on the distribution a number of packages may be required which will not be enumerated here.</p>
-
-        <execute-list host="{[br-install-host]}">
-            <title>Build and Install C Library</title>
-
-            <execute user="root">
-                <exe-cmd>sh -c 'cd /root/pgbackrest-release-{[version]}/libc &amp;&amp;
-                    perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'</exe-cmd>
-            </execute>
-            <execute user="root" err-suppress="y">
-                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc test</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc install</exe-cmd>
-            </execute>
-        </execute-list>
-
         <!-- Bin installation -->
-        <p>Although most of <backrest/> is written in Perl, the main executable is written in C.  This allows certain time-critical commands (like async <cmd>archive-push</cmd>) to run more quickly.</p>
+        <p>The <backrest/> executable is written in C.  This allows certain time-critical commands (like async <cmd>archive-push</cmd>/<cmd>archive-get</cmd>) to run more quickly.</p>
 
         <execute-list host="{[br-install-host]}">
             <title>Build and Install Binary</title>
@@ -329,6 +242,62 @@
             </execute>
             <execute user="root">
                 <exe-cmd>make -C /root/pgbackrest-release-{[version]}/src install</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <!-- Perl installation -->
+        <p keyword="default"><backrest/> contains embedded Perl which requires some additional modules.</p>
+
+        <execute-list host="{[br-install-host]}" keyword="default">
+            <title>Install required Perl packages</title>
+
+            <execute user="root">
+                <exe-cmd>apt-get update</exe-cmd>
+            </execute>
+
+            <execute user="root">
+                <exe-cmd>apt-get install libdbd-pg-perl libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+        </execute-list>
+
+        <p keyword="co6"><backrest/> contains embedded Perl.  All required Perl modules are available as standard packages.</p>
+
+        <execute-list host="{[br-install-host]}" keyword="co6">
+            <title>Install required Perl packages</title>
+
+            <execute user="root">
+                <exe-cmd>yum install perl perl-Time-HiRes perl-parent perl-JSON
+                    perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+        </execute-list>
+
+        <p>Finally, <backrest/> requires log and configuration directories and a configuration file.</p>
+
+        <execute-list host="{[br-install-host]}">
+            <title>Create <backrest/> configuration file and directories</title>
+
+            <execute user="root">
+                <exe-cmd>mkdir -p -m 770 /var/log/pgbackrest</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chown {[br-install-user]}:{[br-install-group]} /var/log/pgbackrest</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>mkdir -p {[backrest-config-path]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>mkdir -p {[backrest-config-include-path]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                    <exe-cmd>touch {[backrest-config-demo]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chmod 640 {[backrest-config-demo]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chown {[br-install-user]}:{[br-install-group]} {[backrest-config-demo]}</exe-cmd>
             </execute>
         </execute-list>
     </block-define>
@@ -455,31 +424,6 @@
 
             <execute output="y">
                 <exe-cmd>perl -V | grep USE_64_BIT_INT</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <p>If <backrest/> has been installed before it's best to be sure that no prior copies of it are still installed.  Depending on how old the version of pgBackRest is it may have been installed in a few different locations.  The following commands will remove all prior versions of pgBackRest.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Remove prior <backrest/> installations</title>
-
-            <execute user="root">
-                <exe-cmd>rm -f /usr/bin/pgbackrest</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>rm -f /usr/bin/pg_backrest</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>rm -rf /usr/lib/perl5/BackRest</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>rm -rf {[perl-lib-path]}/BackRest</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>rm -rf /usr/lib/perl5/pgBackRest</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>rm -rf {[perl-lib-path]}/pgBackRest</exe-cmd>
             </execute>
         </execute-list>
 
@@ -2473,7 +2417,7 @@
             <title>Create the spool directory</title>
 
             <execute user="root">
-                <exe-cmd>mkdir -m 750 {[spool-path]}</exe-cmd>
+                <exe-cmd>mkdir -p -m 750 {[spool-path]}</exe-cmd>
             </execute>
             <execute user="root">
                 <exe-cmd>chown postgres:postgres {[spool-path]}</exe-cmd>
@@ -2484,7 +2428,7 @@
             <title>Create the spool directory</title>
 
             <execute user="root">
-                <exe-cmd>mkdir -m 750 {[spool-path]}</exe-cmd>
+                <exe-cmd>mkdir -p -m 750 {[spool-path]}</exe-cmd>
             </execute>
             <execute user="root">
                 <exe-cmd>chown postgres:postgres {[spool-path]}</exe-cmd>

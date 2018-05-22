@@ -134,6 +134,7 @@ sub testDefLoad
                 # Set module type variables
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_C} =
                     $strModuleType eq TESTDEF_UNIT && $strTest !~ /\-perl$/ ? true : false;
+                $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INTEGRATION} = $strModuleType eq TESTDEF_INTEGRATION ? true : false;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_EXPECT} = $bExpect;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_CONTAINER} = $bContainer;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INDIVIDUAL} = $bIndividual;

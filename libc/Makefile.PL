@@ -17,54 +17,12 @@ use File::Basename qw(dirname);
 use lib dirname($0) . '/lib';
 use lib dirname($0) . '/build/lib';
 
-use pgBackRest::LibCAuto;
-use pgBackRestLibC::BuildParam;
-
 ####################################################################################################################################
 # Storage object to use for all file operations
 ####################################################################################################################################
 use constant BACKREST_NAME                                          => 'pgBackRest';
 use constant LIB_NAME                                               => 'LibC';
 use constant LIB_AUTO_NAME                                          => LIB_NAME . 'Auto';
-
-####################################################################################################################################
-# Build list of constants to export from C and add them to the constant array
-####################################################################################################################################
-{
-    # Build constants
-    my $rhExport = pgBackRest::LibCAuto::libcAutoExportTag();
-    my @stryConstant;
-
-    foreach my $strSection (sort(keys(%{$rhExport})))
-    {
-        # Search exports for constants
-        foreach my $strExport (@{$rhExport->{$strSection}})
-        {
-            # Constants will be upper-case
-            if (uc($strExport) eq $strExport)
-            {
-                push(@stryConstant, $strExport);
-            }
-        }
-    }
-
-    # Build constant C code
-    if  (eval {require ExtUtils::Constant; 1})
-    {
-        ExtUtils::Constant::WriteConstants
-        (
-            NAME            => BACKREST_NAME . '::' . LIB_NAME,
-            NAMES           => \@stryConstant,
-            DEFAULT_TYPE    => 'IV',
-            C_FILE          => 'const-c.inc',
-            XS_FILE         => 'const-xs.inc',
-        );
-    }
-    else
-    {
-        die "ExtUtils::Constant is required to build constants!";
-    }
-}
 
 ####################################################################################################################################
 # Create C Makefile
@@ -145,21 +103,20 @@ for (my $iFileIdx = 1; $iFileIdx < @stryCFile; $iFileIdx++)
 WriteMakefile
 (
     NAME => BACKREST_NAME . '::LibC',
-    VERSION_FROM => 'lib/' . BACKREST_NAME . '/LibC.pm',
+    VERSION => '999',
     AUTHOR => 'David Steele <david@pgbackrest.org>',
 
-    CCFLAGS => join(' ', buildParamCCAll()),
+    CCFLAGS => join(' ', qw)
+        -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wno-missing-field-initializers
+        -o $@
+        -std=c99
+        -D_FILE_OFFSET_BITS=64
+    )),
 
     INC => join(' ', qw(
         -I.
         -I../src
     )),
-
-    PM =>
-    {
-        ('lib/' . BACKREST_NAME . '/' . LIB_NAME . '.pm') => ('$(INST_LIB)/' . BACKREST_NAME . '/' . LIB_NAME . '.pm'),
-        ('lib/' . BACKREST_NAME . '/' . LIB_AUTO_NAME . '.pm') => ('$(INST_LIB)/' . BACKREST_NAME . '/' . LIB_AUTO_NAME . '.pm'),
-    },
 
     C => \@stryCFile,
 

@@ -34,6 +34,10 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <p>Embed exported C functions and Perl modules directly into the <backrest/> executable.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="floersch.nick"/>
                         </release-item-contributor-list>

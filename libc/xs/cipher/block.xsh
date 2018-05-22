@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
 Block Cipher XS Header
 ***********************************************************************************************************************************/
-#include "../src/common/memContext.h"
-#include "../src/cipher/block.h"
+#include "common/memContext.h"
+#include "cipher/block.h"
 
 // Encrypt/decrypt modes
 #define CIPHER_MODE_ENCRYPT                                         ((int)cipherModeEncrypt)

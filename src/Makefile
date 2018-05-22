@@ -14,7 +14,7 @@ CSTD = -std=c99
 COPT = -O2
 
 # Locations of header files
-CINCLUDE = -I.
+CINCLUDE = -I. -I../libc
 
 # Compile warnings
 CWARN = -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2 -Wformat-nonliteral \
@@ -42,7 +42,7 @@ LDPERL = `perl -MExtUtils::Embed -e ldopts`
 LDEXTRA =
 
 # Concatenate options for easy usage
-LDFLAGS = $(LDPERL) $(LDEXTRA)
+LDFLAGS = -lcrypto $(LDPERL) $(LDEXTRA)
 
 ####################################################################################################################################
 # Install options
@@ -54,12 +54,17 @@ DESTDIR =
 # List of required source files.  main.c should always be listed last and the rest in alpha order.
 ####################################################################################################################################
 SRCS = \
+	cipher/block.c \
+	cipher/cipher.c \
+	cipher/random.c \
 	command/archive/common.c \
 	command/archive/get/get.c \
 	command/archive/push/push.c \
 	command/help/help.c \
 	command/command.c \
 	common/debug.c \
+	common/encode.c \
+	common/encode/base64.c \
 	common/error.c \
 	common/exit.c \
 	common/fork.c \
@@ -87,6 +92,7 @@ SRCS = \
 	perl/config.c \
 	perl/exec.c \
 	postgres/info.c \
+	postgres/pageChecksum.c \
 	storage/driver/posix/driver.c \
 	storage/driver/posix/driverFile.c \
 	storage/driver/posix/driverRead.c \
@@ -105,6 +111,9 @@ OBJS=$(SRCS:.c=.o)
 ####################################################################################################################################
 pgbackrest: $(OBJS)
 	$(CC) -o pgbackrest $(OBJS) $(LDFLAGS)
+
+postgres/pageChecksum.o:
+	$(CC) $(CFLAGS) -funroll-loops -ftree-vectorize -c postgres/pageChecksum.c -o postgres/pageChecksum.o
 
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@

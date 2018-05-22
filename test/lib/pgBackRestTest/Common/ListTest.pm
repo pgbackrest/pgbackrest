@@ -42,6 +42,8 @@ use constant TEST_PERL_REQ                                          => 'perl-req
     push @EXPORT, qw(TEST_PERL_REQ);
 use constant TEST_PGSQL_BIN                                         => 'pgsql-bin';
     push @EXPORT, qw(TEST_PGSQL_BIN);
+use constant TEST_INTEGRATION                                       => 'integration';
+    push @EXPORT, qw(TEST_INTEGRATION);
 use constant TEST_RUN                                               => 'run';
     push @EXPORT, qw(TEST_RUN);
 use constant TEST_VM                                                => 'os';
@@ -155,6 +157,7 @@ sub testListGet
                                         &TEST_PGSQL_BIN => $strPgSqlBin,
                                         &TEST_PERL_ARCH_PATH => $$oyVm{$strTestOS}{&VMDEF_PERL_ARCH_PATH},
                                         &TEST_PERL_REQ => $hTest->{&TESTDEF_PERL_REQ},
+                                        &TEST_INTEGRATION => $hTest->{&TESTDEF_INTEGRATION},
                                         &TEST_MODULE => $strModule,
                                         &TEST_NAME => $strModuleTest,
                                         &TEST_RUN =>

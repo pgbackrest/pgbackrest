@@ -28,9 +28,6 @@ use pgBackRestBuild::Build;
 use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Error::Data;
 
-use pgBackRestLibC::Config::Build;
-use pgBackRestLibC::Config::BuildDefine;
-
 ####################################################################################################################################
 # Perl function and constant exports
 ####################################################################################################################################
@@ -87,12 +84,8 @@ my $rhExport =
 
     'debug' =>
     {
-        &BLD_EXPORTTYPE_CONSTANT => [qw(
-            UVSIZE
-        )],
-
         &BLD_EXPORTTYPE_SUB => [qw(
-            libcVersion
+            libcUvSize
         )],
     },
 
@@ -145,36 +138,9 @@ sub buildXsAll
 {
     my $strBuildPath = shift;
 
-    my $rhBuild =
-    {
-        'config' =>
-        {
-            &BLD_DATA => buildXsConfig(),
-            &BLD_PATH => 'xs/config',
-        },
-
-        'configDefine' =>
-        {
-            &BLD_DATA => buildXsConfigDefine(),
-            &BLD_PATH => 'xs/config',
-        },
-    };
-
-    buildAll($strBuildPath, $rhBuild, 'xs');
-
     # Storage
     my $oStorage = new pgBackRest::Storage::Local(
         $strBuildPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
-
-    # Get current version
-    my $strVersion = BACKREST_VERSION;
-    my $bDev = false;
-
-    if ($strVersion =~ /dev$/)
-    {
-        $strVersion = substr($strVersion, 0, length($strVersion) - 3) . '.999';
-        $bDev = true;
-    }
 
     # Build interface file
     my $strContent =
@@ -183,11 +149,8 @@ sub buildXsAll
         ('#' x 132) . "\n" .
         "package pgBackRest::LibCAuto;\n" .
         "\n" .
-        "# Library version (.999 indicates development version)\n" .
-        "sub libcAutoVersion\n" .
-        "{\n" .
-        "    return '${strVersion}';\n" .
-        "}\n";
+        "use strict;\n" .
+        "use warnings;\n";
 
     # Generate constants for options that have a list of strings as allowed values
     my $rhConfigDefine = cfgDefine();
@@ -234,6 +197,73 @@ sub buildXsAll
         }
     }
 
+    # Generate command constants
+    $strConstantBlock .= defined($strConstantBlock) ? "\n" : '';
+    my $iIndex = 0;
+
+    foreach my $strCommand (cfgDefineCommandList())
+    {
+        my $strConstant = "CFGCMD_" . uc($strCommand);
+        $strConstant =~ s/\-/\_/g;
+
+        $strConstantBlock .=
+            "        ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> $iIndex,\n";
+        push(@{$rhExport->{'config'}{&BLD_EXPORTTYPE_CONSTANT}}, $strConstant);
+
+        $iIndex++;
+    }
+
+    # Generate option constants
+    $strConstantBlock .= defined($strConstantBlock) ? "\n" : '';
+    $iIndex = 0;
+
+    foreach my $strOption (sort(keys(%{$rhConfigDefine})))
+    {
+        # Build Perl constant
+        my $strConstant = "CFGOPT_" . uc($strOption);
+        $strConstant =~ s/\-/\_/g;
+
+        $strConstantBlock .=
+            "        ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> $iIndex,\n";
+        push(@{$rhExport->{'config'}{&BLD_EXPORTTYPE_CONSTANT}}, $strConstant);
+
+        $iIndex += $rhConfigDefine->{$strOption}{&CFGDEF_INDEX_TOTAL};
+    }
+
+    # Generate option type constants
+    $strConstantBlock .= defined($strConstantBlock) ? "\n" : '';
+    $iIndex = 0;
+
+    foreach my $strOptionType (cfgDefineOptionTypeList())
+    {
+        # Build Perl constant
+        my $strConstant = "CFGDEF_TYPE_" . uc($strOptionType);
+        $strConstant =~ s/\-/\_/g;
+
+        $strConstantBlock .=
+            "        ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> $iIndex,\n";
+        push(@{$rhExport->{'configDefine'}{&BLD_EXPORTTYPE_CONSTANT}}, $strConstant);
+
+        $iIndex++;
+    };
+
+    # Generate encode type constants
+    $strConstantBlock .= defined($strConstantBlock) ? "\n" : '';
+
+    my $strConstant = "ENCODE_TYPE_BASE64";
+    $strConstantBlock .=
+        "        ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> 0,\n";
+
+    # Generate cipher type constants
+    $strConstantBlock .= defined($strConstantBlock) ? "\n" : '';
+
+    $strConstant = "CIPHER_MODE_ENCRYPT";
+    $strConstantBlock .=
+        "        ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> 0,\n";
+    $strConstant = "CIPHER_MODE_DECRYPT";
+    $strConstantBlock .=
+        "        ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> 1,\n";
+
     $strContent .=
         "\n" .
         "# Configuration option value constants\n" .
@@ -244,29 +274,6 @@ sub buildXsAll
         "        " . trim($strConstantBlock) . "\n" .
         "    }\n" .
         "}\n";
-
-    foreach my $strBuild (sort(keys(%{$rhBuild})))
-    {
-        foreach my $strFile (sort(keys(%{$rhBuild->{$strBuild}{&BLD_DATA}{&BLD_FILE}})))
-        {
-            my $rhFileConstant = $rhBuild->{$strBuild}{&BLD_DATA}{&BLD_FILE}{$strFile}{&BLD_CONSTANT_GROUP};
-
-            foreach my $strConstantGroup (sort(keys(%{$rhFileConstant})))
-            {
-                my $rhConstantGroup = $rhFileConstant->{$strConstantGroup};
-
-                foreach my $strConstant (sort(keys(%{$rhConstantGroup->{&BLD_CONSTANT}})))
-                {
-                    my $rhConstant = $rhConstantGroup->{&BLD_CONSTANT}{$strConstant};
-
-                    if ($rhConstant->{&BLD_CONSTANT_EXPORT})
-                    {
-                        push(@{$rhExport->{$strBuild}{&BLD_EXPORTTYPE_CONSTANT}}, $strConstant);
-                    }
-                }
-            }
-        }
-    }
 
     # Generate export tags
     my $strExportTags;
@@ -313,7 +320,7 @@ sub buildXsAll
         "1;\n";
 
     # Save the file
-    $oStorage->put('lib/' . BACKREST_NAME . '/' . LIB_AUTO_NAME . '.pm', $strContent);
+    $oStorage->put('../lib/' . BACKREST_NAME . '/' . LIB_AUTO_NAME . '.pm', $strContent);
 
     # Build error file
     #-------------------------------------------------------------------------------------------------------------------------------
