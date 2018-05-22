@@ -694,7 +694,7 @@ eval
                 }
                 else
                 {
-                    @stryBuildVm  = $bLibCVmRequired ? ($strVmHost, $strVm) : ($strVmHost);
+                    @stryBuildVm  = $bLibCVmRequired && $strVmHost ne $strVm ? ($strVmHost, $strVm) : ($strVmHost);
                 }
 
                 foreach my $strBuildVM (@stryBuildVm)

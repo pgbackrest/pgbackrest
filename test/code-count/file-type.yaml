@@ -27,6 +27,10 @@ build/lib/pgBackRestBuild/Config/Data.pm:
   class: build
   type: perl
 
+build/lib/pgBackRestBuild/Embed/Build.pm:
+  class: build
+  type: perl
+
 build/lib/pgBackRestBuild/Error/Build.pm:
   class: build
   type: perl
@@ -291,6 +295,14 @@ lib/pgBackRest/InfoCommon.pm:
   class: core
   type: perl
 
+lib/pgBackRest/LibC.pm:
+  class: core
+  type: perl
+
+lib/pgBackRest/LibCAuto.pm:
+  class: core/auto
+  type: perl
+
 lib/pgBackRest/Main.pm:
   class: core
   type: perl
@@ -447,22 +459,6 @@ libc/build/lib/pgBackRestLibC/Build.pm:
   class: build
   type: perl
 
-libc/build/lib/pgBackRestLibC/Config/Build.pm:
-  class: build
-  type: perl
-
-libc/build/lib/pgBackRestLibC/Config/BuildDefine.pm:
-  class: build
-  type: perl
-
-libc/lib/pgBackRest/LibC.pm:
-  class: core
-  type: perl
-
-libc/lib/pgBackRest/LibCAuto.pm:
-  class: core/auto
-  type: perl
-
 libc/t/sanity.t:
   class: test/module
   type: perl
@@ -491,10 +487,6 @@ libc/xs/common/lock.xs:
   class: core
   type: xs
 
-libc/xs/config/config.auto.xsh:
-  class: core
-  type: c/h
-
 libc/xs/config/config.xs:
   class: core
   type: xs
@@ -502,10 +494,6 @@ libc/xs/config/config.xs:
 libc/xs/config/configTest.xs:
   class: core
   type: xs
-
-libc/xs/config/define.auto.xsh:
-  class: core
-  type: c/h
 
 libc/xs/config/define.xs:
   class: core
@@ -590,6 +578,10 @@ src/command/help/help.h:
 src/common/assert.h:
   class: core
   type: c/h
+
+src/common/debug.c:
+  class: core
+  type: c
 
 src/common/debug.h:
   class: core
@@ -691,6 +683,14 @@ src/common/regExp.h:
   class: core
   type: c/h
 
+src/common/stackTrace.c:
+  class: core
+  type: c
+
+src/common/stackTrace.h:
+  class: core
+  type: c/h
+
 src/common/time.c:
   class: core
   type: c
@@ -704,6 +704,14 @@ src/common/type/buffer.c:
   type: c
 
 src/common/type/buffer.h:
+  class: core
+  type: c/h
+
+src/common/type/convert.c:
+  class: core
+  type: c
+
+src/common/type/convert.h:
   class: core
   type: c/h
 
@@ -827,6 +835,10 @@ src/perl/config.h:
   class: core
   type: c/h
 
+src/perl/embed.auto.c:
+  class: core/auto
+  type: c
+
 src/perl/exec.c:
   class: core
   type: c
@@ -834,6 +846,10 @@ src/perl/exec.c:
 src/perl/exec.h:
   class: core
   type: c/h
+
+src/perl/libc.auto.c:
+  class: core/auto
+  type: c
 
 src/postgres/info.c:
   class: core
@@ -1183,6 +1199,10 @@ test/src/common/harnessConfig.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessDebug.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessFork.h:
   class: test/harness
   type: c/h
@@ -1283,11 +1303,19 @@ test/src/module/common/regExpTest.c:
   class: test/module
   type: c
 
+test/src/module/common/stackTraceTest.c:
+  class: test/module
+  type: c
+
 test/src/module/common/timeTest.c:
   class: test/module
   type: c
 
 test/src/module/common/typeBufferTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typeConvertTest.c:
   class: test/module
   type: c
 
