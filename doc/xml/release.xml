@@ -12,6 +12,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.04dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2018-05-22" version="2.03" title="Single Executable to Deploy">
             <release-core-list>
                 <release-bug-list>

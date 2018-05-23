@@ -25097,7 +25097,7 @@ static const EmbeddedModule embeddedModule[] =
             "\n"
             "\n"
             "\n"
-            "use constant BACKREST_VERSION => '2.03';\n"
+            "use constant BACKREST_VERSION => '2.04dev';\n"
             "push @EXPORT, qw(BACKREST_VERSION);\n"
             "\n"
             "\n"
