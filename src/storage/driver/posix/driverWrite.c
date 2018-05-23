@@ -7,6 +7,7 @@ Storage File Write Driver For Posix
 
 #include "common/assert.h"
 #include "common/debug.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "storage/driver/posix/driverFile.h"
 #include "storage/driver/posix/driverWrite.h"

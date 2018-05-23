@@ -1,28 +1,26 @@
 /***********************************************************************************************************************************
-Cipher
+Log Levels
 ***********************************************************************************************************************************/
-#include <openssl/rand.h>
-
-#include "cipher/random.h"
-#include "common/debug.h"
-#include "common/error.h"
-#include "common/log.h"
+#ifndef COMMON_LOGLEVEL_H
+#define COMMON_LOGLEVEL_H
 
 /***********************************************************************************************************************************
-Generate random bytes
+Log types
 ***********************************************************************************************************************************/
-void
-randomBytes(unsigned char *buffer, size_t size)
+typedef enum
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(UCHARP, buffer);
-        FUNCTION_DEBUG_PARAM(SIZE, size);
+    logLevelOff,
+    logLevelAssert,
+    logLevelError,
+    logLevelProtocol,
+    logLevelWarn,
+    logLevelInfo,
+    logLevelDetail,
+    logLevelDebug,
+    logLevelTrace,
+} LogLevel;
 
-        FUNCTION_DEBUG_ASSERT(buffer != NULL);
-        FUNCTION_DEBUG_ASSERT(size > 0);
-    FUNCTION_DEBUG_END();
+#define LOG_LEVEL_MIN                                               logLevelAssert
+#define LOG_LEVEL_MAX                                               logLevelTrace
 
-    RAND_bytes(buffer, (int)size);
-
-    FUNCTION_DEBUG_RESULT_VOID();
-}
+#endif

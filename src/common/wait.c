@@ -2,6 +2,7 @@
 Wait Handler
 ***********************************************************************************************************************************/
 #include "common/debug.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "common/time.h"
 #include "common/wait.h"

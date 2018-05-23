@@ -2,6 +2,7 @@
 PostgreSQL Info
 ***********************************************************************************************************************************/
 #include "common/debug.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "postgres/info.h"
 #include "postgres/type.h"

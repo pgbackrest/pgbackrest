@@ -5,6 +5,7 @@ Fork Handler
 
 #include "common/debug.h"
 #include "common/error.h"
+#include "common/log.h"
 
 /***********************************************************************************************************************************
 Fork a new process and detach it so it can continue running after the parent process has exited.  This is not a typical daemon

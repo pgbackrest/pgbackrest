@@ -7,6 +7,7 @@ Block Cipher
 #include <openssl/err.h>
 
 #include "common/debug.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "cipher/block.h"
 #include "cipher/random.h"

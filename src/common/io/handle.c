@@ -6,6 +6,7 @@ Handle IO
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/io/handle.h"
+#include "common/log.h"
 
 /***********************************************************************************************************************************
 Write a string to the specified handle

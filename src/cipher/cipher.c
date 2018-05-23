@@ -7,6 +7,7 @@ Cipher General Init and Free
 
 #include "cipher/cipher.h"
 #include "common/debug.h"
+#include "common/log.h"
 
 /***********************************************************************************************************************************
 Flag to indicate if OpenSSL has already been initialized

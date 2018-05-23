@@ -13,6 +13,13 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.04dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Split log levels into separate header file.  Many modules that use <code>debug.h</code> do not need to do logging so this reduces dependencies for those modules.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
         </release>
 
         <release date="2018-05-22" version="2.03" title="Single Executable to Deploy">

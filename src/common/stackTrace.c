@@ -12,7 +12,6 @@ Stack Trace Handler
 
 #include "common/assert.h"
 #include "common/error.h"
-#include "common/log.h"
 #include "common/stackTrace.h"
 
 /***********************************************************************************************************************************

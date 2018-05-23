@@ -11,6 +11,7 @@ Lock Handler
 #include "common/debug.h"
 #include "common/io/handle.h"
 #include "common/lock.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "common/wait.h"
 #include "storage/helper.h"

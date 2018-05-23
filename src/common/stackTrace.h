@@ -4,9 +4,10 @@ Stack Trace Handler
 #ifndef COMMON_STACKTRACE_H
 #define COMMON_STACKTRACE_H
 
+#include <stdbool.h>
 #include <sys/types.h>
 
-#include "common/log.h"
+#include "common/logLevel.h"
 
 /***********************************************************************************************************************************
 Maximum size of a single parameter (including NULL terminator)

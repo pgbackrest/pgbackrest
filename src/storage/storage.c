@@ -6,6 +6,7 @@ Storage Manager
 
 #include "common/assert.h"
 #include "common/debug.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "common/wait.h"
 #include "storage/driver/posix/driver.h"

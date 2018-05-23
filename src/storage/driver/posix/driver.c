@@ -14,6 +14,7 @@ Storage Driver Posix
 #include <unistd.h>
 
 #include "common/debug.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "storage/driver/posix/driver.h"

@@ -6,31 +6,14 @@ Log Handler
 
 #include <stdbool.h>
 
+#include "common/logLevel.h"
+
 /***********************************************************************************************************************************
 Max size allowed for a single log message including header
 ***********************************************************************************************************************************/
 #ifndef LOG_BUFFER_SIZE
     #define LOG_BUFFER_SIZE                                         ((size_t)(32 * 1024))
 #endif
-
-/***********************************************************************************************************************************
-Log types
-***********************************************************************************************************************************/
-typedef enum
-{
-    logLevelOff,
-    logLevelAssert,
-    logLevelError,
-    logLevelProtocol,
-    logLevelWarn,
-    logLevelInfo,
-    logLevelDetail,
-    logLevelDebug,
-    logLevelTrace,
-} LogLevel;
-
-#define LOG_LEVEL_MIN                                               logLevelAssert
-#define LOG_LEVEL_MAX                                               logLevelTrace
 
 /***********************************************************************************************************************************
 Expose internal data for unit testing/debugging

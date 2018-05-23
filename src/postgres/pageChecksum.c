@@ -67,6 +67,7 @@ minimize register spilling. For less sophisticated compilers it might be benefic
 #include "common/assert.h"
 #include "common/debug.h"
 #include "common/error.h"
+#include "common/log.h"
 #include "postgres/pageChecksum.h"
 #include "postgres/type.h"
 

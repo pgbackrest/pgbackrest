@@ -3,6 +3,7 @@ Storage File Read
 ***********************************************************************************************************************************/
 #include "common/assert.h"
 #include "common/debug.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "storage/fileRead.h"
 
