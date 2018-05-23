@@ -466,6 +466,21 @@ eval
                 buildAll("${strBackRestBase}/src", $rhBuild);
             }
 
+            # Auto-generate C Makefile
+            #-----------------------------------------------------------------------------------------------------------------------
+            if (!$bSmart || buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc', 'src']) >
+                buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['src'], 'Makefile'))
+            {
+                &log(INFO, "    autogenerate C Makefile");
+
+                $oStorageBackRest->put(
+                    "src/Makefile",
+                    buildMakefile(
+                        $oStorageBackRest,
+                        ${$oStorageBackRest->get("src/Makefile")},
+                        {rhOption => {'postgres/pageChecksum.o' => '-funroll-loops -ftree-vectorize'}}));
+            }
+
             if ($bGenOnly)
             {
                 exit 0;
@@ -786,27 +801,10 @@ eval
             if ($bBinRequired)
             {
                 my $strBinPath = "${strVagrantPath}/bin";
-                my $strBinSmart = "${strBinPath}/build.timestamp";
-                my $bRebuild = !$bSmart;
                 my @stryBinSrcPath = ('src', 'libc');
 
                 # Find the lastest modified time for dirs that affect the bin build
                 $lTimestampLast = buildLastModTime($oStorageBackRest, $strBackRestBase, \@stryBinSrcPath);
-
-                # Rebuild if the modification time of the smart file does equal the last changes in source paths
-                if ($bSmart)
-                {
-                    if (!$oStorageBackRest->exists($strBinSmart) || $oStorageBackRest->info($strBinSmart)->mtime < $lTimestampLast)
-                    {
-                        &log(INFO, '    bin dependencies have changed, rebuilding...');
-
-                        $bRebuild = true;
-                    }
-                }
-                else
-                {
-                    executeTest("sudo rm -rf ${strBinPath}");
-                }
 
                 # Loop through VMs to do the C bin builds
                 my $bLogDetail = $strLogLevel eq 'detail';
@@ -815,6 +813,21 @@ eval
                 foreach my $strBuildVM (@stryBuildVm)
                 {
                     my $strBuildPath = "${strBinPath}/${strBuildVM}/src";
+                    my $bRebuild = !$bSmart;
+
+                    # Rebuild if the modification time of the smart file does equal the last changes in source paths
+                    if ($bSmart)
+                    {
+                        my $strBinSmart = "${strBuildPath}/pgbackrest";
+
+                        if (!$oStorageBackRest->exists($strBinSmart) ||
+                            $oStorageBackRest->info($strBinSmart)->mtime < $lTimestampLast)
+                        {
+                            &log(INFO, "    bin dependencies have changed for ${strBuildVM}, rebuilding...");
+
+                            $bRebuild = true;
+                        }
+                    }
 
                     if ($bRebuild)
                     {
@@ -829,9 +842,12 @@ eval
                         {
                             $oStorageBackRest->pathCreate(
                                 "${strBinPath}/${strBuildVM}/${strBinSrcPath}", {bIgnoreExists => true, bCreateParent => true});
-                            executeTest(
-                                "rsync -rt ${strBackRestBase}/${strBinSrcPath}/* ${strBinPath}/${strBuildVM}/${strBinSrcPath}");
                         }
+
+                        executeTest(
+                            "rsync -rt" . (!$bSmart ? " --delete-excluded" : '') .
+                            " --include=" . join('/*** --include=', @stryBinSrcPath) . '/*** --exclude=*' .
+                            " ${strBackRestBase}/ ${strBinPath}/${strBuildVM}");
 
                         if (vmCoverage($strVm) && !$bNoLint)
                         {
@@ -852,11 +868,6 @@ eval
                         executeTest("docker rm -f test-build");
                     }
                 }
-
-                # Write files to indicate the last time a build was successful
-                $oStorageBackRest->put($strBinSmart);
-                utime($lTimestampLast, $lTimestampLast, $strBinSmart) or
-                    confess "unable to set time for ${strBinSmart}" . (defined($!) ? ":$!" : '');
             }
 
             # Build the package

@@ -18,6 +18,10 @@
                     <release-item>
                         <p>Split log levels into separate header file.  Many modules that use <code>debug.h</code> do not need to do logging so this reduces dependencies for those modules.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Auto-generate Makefile with dependencies.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>
