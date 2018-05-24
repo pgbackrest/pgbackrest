@@ -28,6 +28,10 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>Improve efficiency of C library builds now that they are used only for testing.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove RHEL package patch since it has been committed upstream.</p>
                     </release-item>
                 </release-development-list>

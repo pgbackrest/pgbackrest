@@ -625,9 +625,9 @@ sub jobInstallC
 
     # Install Perl C Library
     my $oVm = vmGet();
-    my $strBuildPath = "${strBasePath}/test/.vagrant";
-    my $strBuildLibCPath = "$strBuildPath/libc/${strVm}/libc";
-    my $strBuildBinPath = "$strBuildPath/bin/${strVm}/src";
+    my $strBuildPath = "${strBasePath}/test/.vagrant/bin/${strVm}";
+    my $strBuildLibCPath = "${strBuildPath}/libc";
+    my $strBuildBinPath = "${strBuildPath}/src";
     my $strPerlAutoPath = $oVm->{$strVm}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
 
     executeTest(

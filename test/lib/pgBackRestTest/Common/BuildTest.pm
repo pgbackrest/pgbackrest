@@ -222,4 +222,27 @@ sub buildMakefile
 
 push @EXPORT, qw(buildMakefile);
 
+####################################################################################################################################
+# Update a Makefile with object compile rules
+####################################################################################################################################
+sub buildLoadLibC
+{
+    # Load the module dynamically
+    require pgBackRest::LibC;
+    pgBackRest::LibC->import(qw(:debug));
+
+    # Load shared object
+    require XSLoader;
+    XSLoader::load('pgBackRest::LibC', '999');
+
+    # Do a basic test to make sure it installed correctly
+    if (libcUvSize() != 8)
+    {
+        confess &log(ERROR, 'UVSIZE in test library does not equal 8');
+    }
+}
+
+push @EXPORT, qw(buildLoadLibC);
+
+
 1;

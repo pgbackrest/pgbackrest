@@ -15,14 +15,11 @@ use ExtUtils::MakeMaker;
 use File::Basename qw(dirname);
 
 use lib dirname($0) . '/lib';
-use lib dirname($0) . '/build/lib';
 
 ####################################################################################################################################
 # Storage object to use for all file operations
 ####################################################################################################################################
 use constant BACKREST_NAME                                          => 'pgBackRest';
-use constant LIB_NAME                                               => 'LibC';
-use constant LIB_AUTO_NAME                                          => LIB_NAME . 'Auto';
 
 ####################################################################################################################################
 # Create C Makefile
@@ -75,28 +72,10 @@ my @stryCFile =
     'storage/storage.c',
 );
 
-# Link source files to build the C library.  The library has different build options and we don't want the bin build to reuse any of
-# them.  Also, this makes the output of the __FILE__ macro prettier.
+# Add ../src for files that are outside libc
 for (my $iFileIdx = 1; $iFileIdx < @stryCFile; $iFileIdx++)
 {
-    # Make directory
-    system("mkdir -p " . dirname($stryCFile[$iFileIdx])) == 0
-        or die('unable to mkdir ' . dirname($stryCFile[$iFileIdx]));
-
-    # Link the file to the source directory
-    my @stryLink = split('/', $stryCFile[$iFileIdx]);
-    my $strLink;
-
-    for (my $iLinkIdx = 0; $iLinkIdx < @stryLink; $iLinkIdx++)
-    {
-        $strLink .= (defined($strLink) ? '/' : '') . '..';
-    }
-
-    if (!-l $stryCFile[$iFileIdx])
-    {
-        system("ln -s ${strLink}/src/$stryCFile[$iFileIdx] $stryCFile[$iFileIdx]") == 0
-            or die("unable to link ../src/$stryCFile[$iFileIdx] to $stryCFile[$iFileIdx]");
-    }
+    $stryCFile[$iFileIdx] = '../src/' . $stryCFile[$iFileIdx];
 }
 
 # Write the makefile

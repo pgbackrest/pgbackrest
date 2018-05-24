@@ -663,146 +663,14 @@ eval
             my $oVm = vmGet();
             my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
             my $lTimestampLast;
-
-            # Build the C Library
-            #-----------------------------------------------------------------------------------------------------------------------
-            if ($bLibCHostRequired || $bLibCVmRequired)
-            {
-                my $strLibCPath = "${strVagrantPath}/libc";
-                my $strLibCSmart = "${strLibCPath}/build.timestamp";
-                my $bRebuild = !$bSmart;
-                my @stryLibCSrcPath = $bLibCHostRequired || $bLibCVmRequired ? ('libc', 'src') : ('libc');
-
-                # Find the lastest modified time for dirs that affect the libc build
-                $lTimestampLast = buildLastModTime($oStorageBackRest, $strBackRestBase, \@stryLibCSrcPath);
-
-                # Rebuild if the modification time of the smart file does equal the last changes in source paths
-                if ($bSmart)
-                {
-                    if (!$oStorageBackRest->exists($strLibCSmart) ||
-                        $oStorageBackRest->info($strLibCSmart)->mtime < $lTimestampLast)
-                    {
-                        &log(INFO, '    libc dependencies have changed, rebuilding...');
-
-                        $bRebuild = true;
-                    }
-                }
-                else
-                {
-                    executeTest("sudo rm -rf ${strLibCPath}");
-                }
-
-                # Delete old libc files from the host
-                if ($bRebuild)
-                {
-                    executeTest('sudo rm -rf ' . $oVm->{$strVmHost}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC');
-                    executeTest('sudo rm -rf ' . $oVm->{$strVmHost}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest');
-                }
-
-                # Loop through VMs to do the C Library builds
-                my $bLogDetail = $strLogLevel eq 'detail';
-                my @stryBuildVm = ();
-
-                if ($strVm eq VM_ALL)
-                {
-                    @stryBuildVm  = $bLibCVmRequired ? VM_LIST : ($strVmHost);
-                }
-                else
-                {
-                    @stryBuildVm  = $bLibCVmRequired && $strVmHost ne $strVm ? ($strVmHost, $strVm) : ($strVmHost);
-                }
-
-                foreach my $strBuildVM (@stryBuildVm)
-                {
-                    my $strBuildPath = "${strLibCPath}/${strBuildVM}/libc";
-                    my $bContainerExists = $strBuildVM ne $strVmHost;
-
-                    if ($bRebuild)
-                    {
-                        &log(INFO, "    build test library for ${strBuildVM} (${strBuildPath})");
-
-                        # It's very expensive to rebuild the Makefile so make sure it has actually changed
-                        my $bMakeRebuild =
-                            !$oStorageBackRest->exists("${strBuildPath}/Makefile") ||
-                            ($oStorageBackRest->info("${strBackRestBase}/libc/Makefile.PL")->mtime >
-                             $oStorageBackRest->info("${strBuildPath}/Makefile.PL")->mtime);
-
-                        if ($bContainerExists)
-                        {
-                            executeTest(
-                                "docker run -itd -h test-build --name=test-build" .
-                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
-                                {bSuppressStdErr => true});
-                        }
-
-                        foreach my $strLibCSrcPath ('lib', 'libc', 'src')
-                        {
-                            $oStorageBackRest->pathCreate(
-                                "${strLibCPath}/${strBuildVM}/${strLibCSrcPath}", {bIgnoreExists => true, bCreateParent => true});
-                            executeTest(
-                                "rsync -rt ${strBackRestBase}/${strLibCSrcPath}/* ${strLibCPath}/${strBuildVM}/${strLibCSrcPath}");
-                        }
-
-                        if ($bMakeRebuild)
-                        {
-                            executeTest(
-                                ($bContainerExists ? "docker exec -i test-build bash -c '" : '') .
-                                "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
-                                ($bContainerExists ? "'" : ''),
-                                {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
-                        }
-
-                        executeTest(
-                            ($bContainerExists ? 'docker exec -i test-build ' : '') .
-                                "make --silent --directory ${strBuildPath}",
-                            {bShowOutputAsync => $bLogDetail});
-                        executeTest(
-                            ($bContainerExists ? 'docker exec -i test-build ' : '') .
-                                "make --silent --directory ${strBuildPath} test",
-                            {bShowOutputAsync => $bLogDetail});
-                        executeTest(
-                            ($bContainerExists ? 'docker exec -i test-build ' : 'sudo ') .
-                                "make --silent --directory ${strBuildPath} install",
-                            {bShowOutputAsync => $bLogDetail});
-
-                        if ($bContainerExists)
-                        {
-                            executeTest("docker rm -f test-build");
-                        }
-
-                        if ($strBuildVM eq $strVmHost)
-                        {
-                            executeTest("sudo make -C ${strBuildPath} install", {bSuppressStdErr => true});
-
-                            # Load the module dynamically
-                            require pgBackRest::LibC;
-                            pgBackRest::LibC->import(qw(:debug));
-
-                            require XSLoader;
-                            XSLoader::load('pgBackRest::LibC', '999');
-
-                            # Do a basic test to make sure it installed correctly
-                            if (libcUvSize() != 8)
-                            {
-                                confess &log(ERROR, 'UVSIZE in test library does not equal 8');
-                            }
-                        }
-                    }
-                }
-
-                # Write files to indicate the last time a build was successful
-                $oStorageBackRest->put($strLibCSmart);
-                utime($lTimestampLast, $lTimestampLast, $strLibCSmart) or
-                    confess "unable to set time for ${strLibCSmart}" . (defined($!) ? ":$!" : '');
-            }
+            my @stryBinSrcPath = ('src', 'libc');
+            my $strBinPath = "${strVagrantPath}/bin";
+            my $rhBinBuild = {};
 
             # Build the binary
             #-----------------------------------------------------------------------------------------------------------------------
             if ($bBinRequired)
             {
-                my $strBinPath = "${strVagrantPath}/bin";
-                my @stryBinSrcPath = ('src', 'libc');
-
                 # Find the lastest modified time for dirs that affect the bin build
                 $lTimestampLast = buildLastModTime($oStorageBackRest, $strBackRestBase, \@stryBinSrcPath);
 
@@ -814,6 +682,7 @@ eval
                 {
                     my $strBuildPath = "${strBinPath}/${strBuildVM}/src";
                     my $bRebuild = !$bSmart;
+                    $rhBinBuild->{$strBuildVM} = true;
 
                     # Rebuild if the modification time of the smart file does equal the last changes in source paths
                     if ($bSmart)
@@ -855,7 +724,8 @@ eval
                         }
 
                         my $strCExtra =
-                            "'-g" . (vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace ? ' -DWITH_BACKTRACE' : '') . "'";
+                            "'-g -fPIC -D_FILE_OFFSET_BITS=64" .
+                            (vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace ? ' -DWITH_BACKTRACE' : '') . "'";
                         my $strLdExtra = vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace  ? '-lbacktrace' : '';
                         my $strCDebug = vmDebugIntegration($strBuildVM) ? 'CDEBUG=' : '';
 
@@ -866,6 +736,117 @@ eval
                             {bShowOutputAsync => $bLogDetail});
 
                         executeTest("docker rm -f test-build");
+                    }
+                }
+            }
+
+            # Build the C Library
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($bLibCHostRequired || $bLibCVmRequired)
+            {
+                my $strLibCPath = "${strVagrantPath}/bin";
+
+                # Loop through VMs to do the C Library builds
+                my $bLogDetail = $strLogLevel eq 'detail';
+                my @stryBuildVm = ();
+
+                if ($strVm eq VM_ALL)
+                {
+                    @stryBuildVm  = $bLibCVmRequired ? VM_LIST : ($strVmHost);
+                }
+                else
+                {
+                    @stryBuildVm  = $bLibCVmRequired && $strVmHost ne $strVm ? ($strVmHost, $strVm) : ($strVmHost);
+                }
+
+                foreach my $strBuildVM (@stryBuildVm)
+                {
+                    my $strBuildPath = "${strLibCPath}/${strBuildVM}/libc";
+                    my $bContainerExists = $strBuildVM ne $strVmHost;
+
+                    my $strLibCSmart = "${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so";
+                    my $bRebuild = !$bSmart;
+
+                    # Rebuild if the modification time of the smart file does equal the last changes in source paths
+                    if ($bSmart)
+                    {
+                        if (!$oStorageBackRest->exists($strLibCSmart) ||
+                            $oStorageBackRest->info($strLibCSmart)->mtime < $lTimestampLast)
+                        {
+                            &log(INFO, '    libc dependencies have changed for ${strBuildVM}, rebuilding...');
+
+                            $bRebuild = true;
+                        }
+                    }
+
+                    # Delete old libc files from the host
+                    if ($bRebuild)
+                    {
+                        executeTest('sudo rm -rf ' . $oVm->{$strBuildVM}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC');
+                    }
+
+                    if ($bRebuild)
+                    {
+                        &log(INFO, "    build test library for ${strBuildVM} (${strBuildPath})");
+
+                        if (!$rhBinBuild->{$strBuildVM})
+                        {
+                            foreach my $strBinSrcPath (@stryBinSrcPath)
+                            {
+                                $oStorageBackRest->pathCreate(
+                                    "${strBinPath}/${strBuildVM}/${strBinSrcPath}", {bIgnoreExists => true, bCreateParent => true});
+                            }
+
+                            executeTest(
+                                "rsync -rt" . (!$bSmart ? " --delete-excluded" : '') .
+                                " --include=" . join('/*** --include=', @stryBinSrcPath) . '/*** --exclude=*' .
+                                " ${strBackRestBase}/ ${strBinPath}/${strBuildVM}");
+                        }
+
+                        # Can't reuse any object files in the libc dir because it does not have proper dependencies
+                        executeTest(
+                            "rsync -rt --exclude=Makefile --delete ${strBackRestBase}/libc/ ${strLibCPath}/${strBuildVM}/libc");
+
+                        # It's very expensive to rebuild the Makefile so make sure it has actually changed
+                        my $bMakeRebuild =
+                            !$oStorageBackRest->exists("${strBuildPath}/Makefile") ||
+                            ($oStorageBackRest->info("${strBackRestBase}/libc/Makefile.PL")->mtime >
+                             $oStorageBackRest->info("${strBuildPath}/Makefile.PL")->mtime);
+
+                        if ($bContainerExists)
+                        {
+                            executeTest(
+                                "docker run -itd -h test-build --name=test-build" .
+                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                                {bSuppressStdErr => true});
+                        }
+
+                        if ($bMakeRebuild)
+                        {
+                            &log(INFO, "    rebuild test library Makefile for ${strBuildVM}");
+
+                            executeTest(
+                                ($bContainerExists ? "docker exec -i test-build bash -c '" : '') .
+                                "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
+                                ($bContainerExists ? "'" : ''),
+                                {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+                        }
+
+                        executeTest(
+                            ($bContainerExists ? 'docker exec -i test-build ' : '') .
+                                "make --silent --directory ${strBuildPath}",
+                            {bShowOutputAsync => $bLogDetail});
+
+                        if ($bContainerExists)
+                        {
+                            executeTest("docker rm -f test-build");
+                        }
+
+                        if ($strBuildVM eq $strVmHost)
+                        {
+                            executeTest("sudo make -C ${strBuildPath} install", {bSuppressStdErr => true});
+                            buildLoadLibC();
+                        }
                     }
                 }
             }
@@ -1409,17 +1390,11 @@ eval
         exit 0;
     }
 
-    # Load the module dynamically
-    require pgBackRest::LibCAuto;
-    require pgBackRest::LibC;
-    pgBackRest::LibC->import(qw(:debug));
-
-    require XSLoader;
-    XSLoader::load('pgBackRest::LibC', '999');
-
     ################################################################################################################################
     # Runs tests
     ################################################################################################################################
+    buildLoadLibC();
+
     my $iRun = 0;
 
     # Create host group for containers
