@@ -24,6 +24,14 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Remove RHEL package patch since it has been committed upstream.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2018-05-22" version="2.03" title="Single Executable to Deploy">
