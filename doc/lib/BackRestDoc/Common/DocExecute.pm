@@ -831,10 +831,17 @@ sub hostKey
         $$hCacheKey{option} = $self->{oManifest}->variableReplace($oHost->paramGet('option'));
     }
 
+    if (defined($oHost->paramGet('param', false)))
+    {
+        $$hCacheKey{param} = $self->{oManifest}->variableReplace($oHost->paramGet('param'));
+    }
+
     if (defined($oHost->paramGet('os', false)))
     {
         $$hCacheKey{os} = $self->{oManifest}->variableReplace($oHost->paramGet('os'));
     }
+
+    $$hCacheKey{'update-hosts'} = $oHost->paramTest('update-hosts', 'n') ? JSON::PP::false : JSON::PP::true;
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -1023,7 +1030,7 @@ sub sectionChildProcess
                     $self->{oManifest}->variableReplace($oChild->paramGet('user')), $$hCacheKey{os},
                     defined($oChild->paramGet('mount', false)) ?
                         [$self->{oManifest}->variableReplace($oChild->paramGet('mount'))] : undef,
-                    $$hCacheKey{option});
+                    $$hCacheKey{option}, $$hCacheKey{param});
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;
                 $self->{oManifest}->variableSet('host-' . $hCacheKey->{id} . '-ip', $oHost->{strIP}, true);
@@ -1031,7 +1038,7 @@ sub sectionChildProcess
 
                 # Add to the host group
                 my $oHostGroup = hostGroupGet();
-                $oHostGroup->hostAdd($oHost);
+                $oHostGroup->hostAdd($oHost, {bUpdateHosts => $$hCacheKey{'update-hosts'}});
 
                 # Execute initialize commands
                 foreach my $oExecute ($oChild->nodeList('execute', false))

@@ -25,6 +25,14 @@
                 </release-development-list>
             </release-core-list>
 
+            <release-doc-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Document generator improvements.  Allow parameters to be passed when a container is created.  Allow <file>/etc/hosts</file> update to be skipped (for containers without bash).</p>
+                    </release-item>
+                </release-development-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-development-list>
                     <release-item>

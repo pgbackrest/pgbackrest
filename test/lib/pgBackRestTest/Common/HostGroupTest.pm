@@ -59,18 +59,23 @@ sub hostAdd
         $strOperation,
         $oHost,
         $rstryHostName,
+        $bUpdateHosts,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->hostAdd', \@_,
             {name => 'oHost'},
             {name => 'rstryHostName', optional => true},
+            {name => 'bUpdateHosts', default => true, optional => true},
         );
 
     $self->{host}{$oHost->{strName}} = $oHost;
 
-    $oHost->executeSimple("echo \"\" >> /etc/hosts", undef, 'root');
-    $oHost->executeSimple("echo \"# Test Hosts\" >> /etc/hosts", undef, 'root');
+    if ($bUpdateHosts)
+    {
+        $oHost->executeSimple("echo \"\" >> /etc/hosts", undef, 'root');
+        $oHost->executeSimple("echo \"# Test Hosts\" >> /etc/hosts", undef, 'root');
+    }
 
     my $strHostList = $oHost->{strName} . (defined($rstryHostName) ? ' ' . join(' ', @{$rstryHostName}) : '');
 
@@ -85,7 +90,10 @@ sub hostAdd
             $oOtherHost->executeSimple("echo \"$oHost->{strIP} ${strHostList}\" >> /etc/hosts", undef, 'root');
 
             # Add all other host IPs to this host
-            $oHost->executeSimple("echo \"$oOtherHost->{strIP} ${strOtherHostName}\" >> /etc/hosts", undef, 'root');
+            if ($bUpdateHosts)
+            {
+                $oHost->executeSimple("echo \"$oOtherHost->{strIP} ${strOtherHostName}\" >> /etc/hosts", undef, 'root');
+            }
         }
     }
 
