@@ -14,6 +14,12 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.04dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <p><postgres/> 11 Beta 1 support.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Split log levels into separate header file.  Many modules that use <code>debug.h</code> do not need to do logging so this reduces dependencies for those modules.</p>

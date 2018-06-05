@@ -22,7 +22,9 @@ pgVersionMap(uint32_t controlVersion, uint32_t catalogVersion)
 
     uint result = 0;
 
-    if (controlVersion == 1002 && catalogVersion == 201707211)
+    if (controlVersion == 1100 && catalogVersion == 201804191)
+        result = PG_VERSION_11;
+    else if (controlVersion == 1002 && catalogVersion == 201707211)
         result = PG_VERSION_10;
     else if (controlVersion == 960 && catalogVersion == 201608131)
         result = PG_VERSION_96;
