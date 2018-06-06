@@ -42,6 +42,10 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>Update primary test environment (Vagrant and Docker) to Ubuntu 18.04.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improve efficiency of C library builds now that they are used only for testing.</p>
                     </release-item>
 

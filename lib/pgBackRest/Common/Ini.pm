@@ -830,7 +830,8 @@ sub test
         # Is there a value to test against?
         if (defined($strTest))
         {
-            return $strResult eq $strTest ? true : false;
+            # Make sure these are explicit strings or Devel::Cover thinks they are equal if one side is a boolean
+            return ($strResult . '') eq ($strTest . '') ? true : false;
         }
 
         return true;

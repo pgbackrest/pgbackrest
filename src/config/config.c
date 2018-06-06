@@ -449,8 +449,8 @@ cfgOptionDefault(ConfigOption optionId)
                             configOptionValue[optionId].defaultValue = varDup(defaultValue);
                             break;
 
-                        default:
-                            THROW_FMT(                              // {uncoverable - others types do not have defaults yet}
+                        default:                                    // {uncoverable - other types do not have defaults yet}
+                            THROW_FMT(                              // {+uncoverable}
                                 AssertError, "type for option '%s' does not support defaults", cfgOptionName(optionId));
                     }
                 }

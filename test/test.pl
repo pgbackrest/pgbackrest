@@ -433,7 +433,7 @@ eval
 
                 my $strLibC = executeTest(
                     "cd ${strBackRestBase}/libc && " .
-                    "perl /usr/share/perl/5.22/ExtUtils/xsubpp -typemap /usr/share/perl/5.22/ExtUtils/typemap" .
+                    "perl /usr/share/perl/5.26/ExtUtils/xsubpp -typemap /usr/share/perl/5.26/ExtUtils/typemap" .
                         " -typemap typemap LibC.xs");
 
                 # Trim off any trailing LFs
@@ -731,7 +731,7 @@ eval
 
                         executeTest(
                             'docker exec -i test-build' .
-                            (vmCoverage($strVm) && !$bNoLint ? ' scan-build-5.0' : '') .
+                            (vmCoverage($strVm) && !$bNoLint ? ' scan-build-6.0' : '') .
                             " make --silent --directory ${strBuildPath} CEXTRA=${strCExtra} LDEXTRA=${strLdExtra} ${strCDebug}",
                             {bShowOutputAsync => $bLogDetail});
 
@@ -913,7 +913,7 @@ eval
                         # Patch files in debian package builds
                         #
                         # Use these commands to create a new patch (may need to modify first line):
-                        # BRDIR=/backrest;BRVM=u16;BRPATCHFILE=${BRDIR?}/test/patch/debian-package.patch
+                        # BRDIR=/backrest;BRVM=u18;BRPATCHFILE=${BRDIR?}/test/patch/debian-package.patch
                         # DBDIR=${BRDIR?}/test/.vagrant/package/${BRVM}/src/debian
                         # diff -Naur ${DBDIR?}.old ${DBDIR}.new > ${BRPATCHFILE?}
                         my $strDebianPackagePatch = "${strBackRestBase}/test/patch/debian-package.patch";

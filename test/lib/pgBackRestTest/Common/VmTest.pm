@@ -88,6 +88,8 @@ use constant VM_U14                                                 => 'u14';
     push @EXPORT, qw(VM_U14);
 use constant VM_U16                                                 => 'u16';
     push @EXPORT, qw(VM_U16);
+use constant VM_U18                                                 => 'u18';
+    push @EXPORT, qw(VM_U18);
 use constant VM_D8                                                  => 'd8';
     push @EXPORT, qw(VM_D8);
 use constant VM_D9                                                  => 'd9';
@@ -98,14 +100,14 @@ use constant VM_EXPECT                                              => VM_CO7;
     push @EXPORT, qw(VM_EXPECT);
 
 # Defines the host VM (the VM that the containers run in)
-use constant VM_HOST_DEFAULT                                        => VM_U16;
+use constant VM_HOST_DEFAULT                                        => VM_U18;
     push @EXPORT, qw(VM_HOST_DEFAULT);
 
 # Defines the VM that will do coverage testing
-use constant VM_COVERAGE                                            => VM_U16;
+use constant VM_COVERAGE                                            => VM_U18;
 
 # Lists valid VMs
-use constant VM_LIST                                                => (VM_U16, VM_CO6, VM_CO7, VM_U12);
+use constant VM_LIST                                                => (VM_U18, VM_CO6, VM_CO7, VM_U12);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -235,6 +237,32 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.22.1',
+
+        &VMDEF_WITH_BACKTRACE => true,
+
+        &VM_DB =>
+        [
+            PG_VERSION_94,
+            PG_VERSION_95,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_94,
+            PG_VERSION_95,
+        ],
+    },
+
+    # Ubuntu 18.04
+    &VM_U18 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
+        &VM_OS => VM_OS_UBUNTU,
+        &VM_OS_REPO => 'bionic',
+        &VM_IMAGE => 'ubuntu:18.04',
+        &VM_ARCH => VM_ARCH_AMD64,
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.26.1',
 
         &VMDEF_WITH_BACKTRACE => true,
 

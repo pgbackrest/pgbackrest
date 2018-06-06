@@ -4,8 +4,8 @@ Vagrant.configure(2) do |config|
         vb.cpus = 8
     end
 
-    config.vm.box = "ubuntu/xenial64"
-    config.vm.box_version = "20180126.0.0"
+    config.vm.box = "ubuntu/bionic64"
+    config.vm.box_version = "20180531.0.0"
 
     # vagrant plugin install vagrant-disksize
     # config.disksize.size = '64GB'
@@ -73,15 +73,11 @@ Vagrant.configure(2) do |config|
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Devel::Cover' && date
-        dpkg -i /backrest/test/package/u16-libdevel-cover-perl_1.23-2_amd64.deb
+        dpkg -i /backrest/test/package/u18-libdevel-cover-perl_1.29-2_amd64.deb
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Docker' && date
-        apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-        add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-        apt-get update
-        apt-get install -y docker-ce
+        curl -fsSL test.docker.com | sh
         sudo usermod -aG docker vagrant
 
         #---------------------------------------------------------------------------------------------------------------------------

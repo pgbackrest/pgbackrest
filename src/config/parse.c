@@ -149,8 +149,8 @@ convertToByte(String **value, double *valueDbl)
                         multiplier = 1024LL * 1024LL * 1024LL * 1024LL * 1024LL;
                         break;
 
-                    default:
-                        THROW_FMT(                                  // {uncoverable - regex covers all cases but default required}
+                    default:                                        // {uncoverable - regex covers all cases but default required}
+                        THROW_FMT(                                  // {+uncoverable}
                             AssertError, "character %c is not a valid type", strArray[chrPos]);
                 }
             }
@@ -830,13 +830,13 @@ configParse(unsigned int argListSize, const char *argList[])
                                         }
 
                                         // Other types are output plain
-                                        case cfgDefOptTypeFloat:
+                                        case cfgDefOptTypeFloat:                        // {uncovered - no depends of other types}
                                         case cfgDefOptTypeHash:
                                         case cfgDefOptTypeInteger:
                                         case cfgDefOptTypeList:
                                         case cfgDefOptTypeSize:
                                         {
-                                            strLstAddZ(dependValueList, dependValue);   // {uncovered - no depends of other types}
+                                            strLstAddZ(dependValueList, dependValue);   // {+uncovered}
                                             break;                                      // {+uncovered}
                                         }
                                     }

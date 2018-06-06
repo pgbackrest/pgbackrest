@@ -105,6 +105,10 @@ bufCat(Buffer *this, const Buffer *cat)
         size_t sizeOld = this->size;
 
         bufResize(this, sizeOld + cat->size);
+
+        // Just here to silence nonnull warnings from clang static analyzer
+        ASSERT_DEBUG(this->buffer != NULL);
+
         memcpy(this->buffer + sizeOld, cat->buffer, cat->size);
     }
 
