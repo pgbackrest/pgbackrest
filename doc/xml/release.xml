@@ -28,6 +28,10 @@
                     <release-item>
                         <p>Auto-generate Makefile with dependencies.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Update Debian package to add debug symbols to <backrest/> executable.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

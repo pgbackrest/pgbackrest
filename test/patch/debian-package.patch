@@ -1,17 +1,44 @@
+--- control
++++ control
+@@ -20,9 +20,10 @@
+ Depends: libdbd-pg-perl,
+          postgresql-common,
+          ${misc:Depends},
+-         ${perl:Depends},
+          ${shlibs:Depends}
+-Suggests: pgbackrest-doc
++Suggests: pgbackrest-doc,
++          libio-socket-ssl-perl,
++          libxml-libxml-perl
+ Description: Reliable PostgreSQL Backup & Restore
+  pgBackRest is a simple, reliable backup and restore system for PostgreSQL
+  that can seamlessly scale up to the largest databases and workloads.
 --- pgbackrest.install
-++++ pgbackrest.install
++++ pgbackrest.install
 @@ -1,2 +1 @@
  debian/pgbackrest.conf etc/
 -lib/pgBackRest usr/share/perl5/
+diff -Naur /backrest/test/.vagrant/package/u18/src/debian.old/rules /backrest/test/.vagrant/package/u18/src/debian.new/rules
 --- rules
 +++ rules
-@@ -20,22 +20,16 @@
+@@ -3,8 +3,7 @@
+ MANTEMPLATE="${CURDIR}/doc/output/man/pgbackrest.1.txt"
+ 
+ #export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+-#DPKG_EXPORT_BUILDFLAGS = 1
+-#include /usr/share/dpkg/buildflags.mk
++include /usr/share/dpkg/buildflags.mk
+ 
+ #export DH_VERBOSE = 1
+ 
+@@ -20,22 +19,16 @@
  	  -t pgbackrest \
  	  -s 1 \
  	  ${MANTEMPLATE} > ${CURDIR}/doc/output/man/pgbackrest.1
 -	cd $(CURDIR)/libc; perl Makefile.PL INSTALLDIRS=vendor NO_PACKLIST=1
 -	make -C $(CURDIR)/libc/
- 	make -C $(CURDIR)/src/
+-	make -C $(CURDIR)/src/
++	make -C $(CURDIR)/src CEXTRA="$(CFLAGS)"
  	dh_auto_build
  
  override_dh_auto_test:
