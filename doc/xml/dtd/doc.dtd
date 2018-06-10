@@ -63,6 +63,9 @@
     <!ATTLIST execute user CDATA "">
     <!ATTLIST execute filter CDATA "">
     <!ATTLIST execute filter-context CDATA "">
+    <!ATTLIST execute user-force CDATA "">
+    <!ATTLIST execute bash-wrap CDATA "">
+    <!ATTLIST execute load-env CDATA "">
     <!ATTLIST execute skip CDATA "">
     <!ATTLIST execute show CDATA "">
     <!ATTLIST execute output CDATA "">

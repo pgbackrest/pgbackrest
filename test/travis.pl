@@ -118,14 +118,6 @@ eval
         executeTest('sudo apt-get install -y texlive-font-utils latex-xcolor', {bSuppressStdErr => true});
         processEnd();
 
-        processBegin(VM_CO6 . ' build');
-        executeTest("${strTestExe} --vm-build --vm=" . VM_CO6, {bShowOutputAsync => true});
-        processEnd();
-
-        processBegin(VM_U16 . ' build');
-        executeTest("${strTestExe} --vm-build --vm=" . VM_U16, {bShowOutputAsync => true});
-        processEnd();
-
         processBegin('release documentation doc');
         executeTest("${strReleaseExe} --build", {bShowOutputAsync => true});
         processEnd();

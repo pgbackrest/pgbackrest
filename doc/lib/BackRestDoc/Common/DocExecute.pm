@@ -154,9 +154,10 @@ sub executeKey
         );
 
     # Add user to command
+    my $bUserForce = $oCommand->paramTest('user-force', 'y') ? true : false;
     my $strCommand = $self->{oManifest}->variableReplace(trim($oCommand->fieldGet('exe-cmd')));
-    my $strUser = $self->{oManifest}->variableReplace($oCommand->paramGet('user', false, 'postgres'));
-    $strCommand = ($strUser eq DOC_USER ? '' : ('sudo ' . ($strUser eq 'root' ? '' : "-u $strUser "))) . $strCommand;
+    my $strUser = $self->{oManifest}->variableReplace($oCommand->paramGet('user', false, DOC_USER));
+    $strCommand = ($strUser eq DOC_USER || $bUserForce ? '' : ('sudo ' . ($strUser eq 'root' ? '' : "-u $strUser "))) . $strCommand;
 
     # Format and split command
     $strCommand =~ s/[ ]*\n[ ]*/ \\\n    /smg;
@@ -169,6 +170,8 @@ sub executeKey
         cmd => \@stryCommand,
         output => JSON::PP::false,
     };
+
+    $$hCacheKey{'run-as-user'} = $bUserForce ? $strUser : undef;
 
     if (defined($oCommand->fieldGet('exe-cmd-extra', false)))
     {
@@ -184,6 +187,9 @@ sub executeKey
     {
         $$hCacheKey{'output'} = JSON::PP::true;
     }
+
+    $$hCacheKey{'load-env'} = $oCommand->paramTest('load-env', 'n') ? JSON::PP::false : JSON::PP::true;
+    $$hCacheKey{'bash-wrap'} = $oCommand->paramTest('bash-wrap', 'n') ? JSON::PP::false : JSON::PP::true;
 
     if (defined($oCommand->fieldGet('exe-highlight', false)))
     {
@@ -276,7 +282,8 @@ sub execute
                     $strCommand . (defined($$hCacheKey{'cmd-extra'}) ? ' ' . $$hCacheKey{'cmd-extra'} : ''),
                     {iExpectedExitStatus => $$hCacheKey{'err-expect'},
                      bSuppressError => $oCommand->paramTest('err-suppress', 'y'),
-                     iRetrySeconds => $oCommand->paramGet('retry', false)});
+                     iRetrySeconds => $oCommand->paramGet('retry', false)}, $hCacheKey->{'run-as-user'},
+                     {bLoadEnv => $hCacheKey->{'load-env'}, bBashWrap => $hCacheKey->{'bash-wrap'}});
                 $oExec->begin();
                 $oExec->end();
 

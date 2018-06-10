@@ -73,8 +73,8 @@ sub hostAdd
 
     if ($bUpdateHosts)
     {
-        $oHost->executeSimple("echo \"\" >> /etc/hosts", undef, 'root');
-        $oHost->executeSimple("echo \"# Test Hosts\" >> /etc/hosts", undef, 'root');
+        $oHost->executeSimple("echo \"\" >> /etc/hosts", undef, 'root', {bLoadEnv => false});
+        $oHost->executeSimple("echo \"# Test Hosts\" >> /etc/hosts", undef, 'root', {bLoadEnv => false});
     }
 
     my $strHostList = $oHost->{strName} . (defined($rstryHostName) ? ' ' . join(' ', @{$rstryHostName}) : '');
@@ -87,12 +87,13 @@ sub hostAdd
         if ($strOtherHostName ne $oHost->{strName})
         {
             # Add this host IP to all hosts
-            $oOtherHost->executeSimple("echo \"$oHost->{strIP} ${strHostList}\" >> /etc/hosts", undef, 'root');
+            $oOtherHost->executeSimple("echo \"$oHost->{strIP} ${strHostList}\" >> /etc/hosts", undef, 'root', {bLoadEnv => false});
 
             # Add all other host IPs to this host
             if ($bUpdateHosts)
             {
-                $oHost->executeSimple("echo \"$oOtherHost->{strIP} ${strOtherHostName}\" >> /etc/hosts", undef, 'root');
+                $oHost->executeSimple(
+                    "echo \"$oOtherHost->{strIP} ${strOtherHostName}\" >> /etc/hosts", undef, 'root', {bLoadEnv => false});
             }
         }
     }

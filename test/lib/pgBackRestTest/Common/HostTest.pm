@@ -109,14 +109,18 @@ sub execute
         $strOperation,
         $strCommand,
         $oParam,
-        $strUser
+        $strUser,
+        $bLoadEnv,
+        $bBashWrap,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->execute', \@_,
             {name => 'strCommand'},
-            {name => 'oParam', required=> false},
-            {name => 'strUser', required => false}
+            {name => 'oParam', required => false},
+            {name => 'strUser', required => false},
+            {name => 'bLoadEnv', optional => true, default => true},
+            {name => 'bBashWrap', optional => true, default => true},
         );
 
     # Set the user
@@ -128,7 +132,8 @@ sub execute
     $strCommand =~ s/'/'\\''/g;
 
     my $oExec = new pgBackRestTest::Common::ExecuteTest(
-        "docker exec -u ${strUser} $self->{strContainer} bash -l -c '${strCommand}'" , $oParam);
+        "docker exec -u ${strUser} $self->{strContainer}" .
+        ($bBashWrap ? " bash" . ($bLoadEnv ? ' -l' : '') . " -c '${strCommand}'" : " ${strCommand}"), $oParam);
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -151,17 +156,21 @@ sub executeSimple
         $strOperation,
         $strCommand,
         $oParam,
-        $strUser
+        $strUser,
+        $bLoadEnv,
+        $bBashWrap,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->executeSimple', \@_,
             {name => 'strCommand', trace => true},
             {name => 'oParam', required=> false, trace => true},
-            {name => 'strUser', required => false, trace => true}
+            {name => 'strUser', required => false, trace => true},
+            {name => 'bLoadEnv', optional => true, default => true, trace => true},
+            {name => 'bBashWrap', optional => true, default => true},
         );
 
-    my $oExec = $self->execute($strCommand, $oParam, $strUser);
+    my $oExec = $self->execute($strCommand, $oParam, $strUser, {bLoadEnv => $bLoadEnv});
     $oExec->begin();
     $oExec->end();
 
