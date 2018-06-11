@@ -30,6 +30,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Rename <code>cipher</code> module to the more general <code>crypto</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Update Debian package to add debug symbols to <backrest/> executable.</p>
                     </release-item>
                 </release-development-list>

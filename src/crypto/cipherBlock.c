@@ -9,8 +9,9 @@ Block Cipher
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "cipher/block.h"
-#include "cipher/random.h"
+#include "crypto/cipherBlock.h"
+#include "crypto/crypto.h"
+#include "crypto/random.h"
 
 /***********************************************************************************************************************************
 Header constants and sizes
@@ -60,8 +61,8 @@ cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pas
     FUNCTION_DEBUG_END();
 
     // Only need to init once.
-    if (!cipherIsInit())
-        cipherInit();
+    if (!cryptoIsInit())
+        cryptoInit();
 
     // Lookup cipher by name.  This means the ciphers passed in must exactly match a name expected by OpenSSL.  This is a good
     // thing since the name required by the openssl command-line tool will match what is used by pgBackRest.

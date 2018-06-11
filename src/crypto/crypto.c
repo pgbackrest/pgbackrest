@@ -1,33 +1,33 @@
 /***********************************************************************************************************************************
-Cipher General Init and Free
+Crypto Common
 ***********************************************************************************************************************************/
 #include <openssl/conf.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-#include "cipher/cipher.h"
 #include "common/debug.h"
 #include "common/log.h"
+#include "crypto/crypto.h"
 
 /***********************************************************************************************************************************
 Flag to indicate if OpenSSL has already been initialized
 ***********************************************************************************************************************************/
-static bool cipherInitDone = false;
+static bool cryptoInitDone = false;
 
 /***********************************************************************************************************************************
 Initialize ciphers
 ***********************************************************************************************************************************/
 void
-cipherInit()
+cryptoInit()
 {
     FUNCTION_DEBUG_VOID(logLevelTrace);
 
-    if (!cipherInitDone)
+    if (!cryptoInitDone)
     {
         ERR_load_crypto_strings();
         OpenSSL_add_all_algorithms();
 
-        cipherInitDone = true;
+        cryptoInitDone = true;
     }
 
     FUNCTION_DEBUG_RESULT_VOID();
@@ -37,8 +37,8 @@ cipherInit()
 Have the ciphers been initialized?
 ***********************************************************************************************************************************/
 bool
-cipherIsInit()
+cryptoIsInit()
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RESULT(BOOL, cipherInitDone);
+    FUNCTION_TEST_RESULT(BOOL, cryptoInitDone);
 }

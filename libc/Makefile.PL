@@ -31,9 +31,6 @@ my @stryCFile =
 (
     'LibC.c',
 
-    'cipher/block.c',
-    'cipher/cipher.c',
-    'cipher/random.c',
     'command/command.c',
     'common/debug.c',
     'common/encode.c',
@@ -60,6 +57,9 @@ my @stryCFile =
     'config/define.c',
     'config/load.c',
     'config/parse.c',
+    'crypto/cipherBlock.c',
+    'crypto/crypto.c',
+    'crypto/random.c',
     'perl/config.c',
     'postgres/pageChecksum.c',
     'storage/driver/posix/driver.c',
