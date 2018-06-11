@@ -8,18 +8,16 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
-use Digest::SHA;
 use Exporter qw(import);
     our @EXPORT = qw();
-use Fcntl qw(:mode O_WRONLY O_CREAT O_TRUNC);
-use File::Basename qw(dirname basename);
-use IO::Handle;
+use File::Basename qw(dirname);
 use JSON::PP;
 use Storable qw(dclone);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
+use pgBackRest::LibC qw(:crypto);
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -550,13 +548,9 @@ sub hash
     # Remove the old checksum
     delete($self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM});
 
-    # Calculate the checksum
-    my $oSHA = Digest::SHA->new('sha1');
-    my $oJSON = JSON::PP->new()->canonical()->allow_nonref();
-    $oSHA->add($oJSON->encode($self->{oContent}));
-
     # Set the new checksum
-    $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = $oSHA->hexdigest();
+    $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} =
+        cryptoHashOne('sha1', JSON::PP->new()->canonical()->allow_nonref()->encode($self->{oContent}));
 
     return $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM};
 }

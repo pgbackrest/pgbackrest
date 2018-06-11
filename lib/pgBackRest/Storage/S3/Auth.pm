@@ -11,12 +11,13 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
-use Digest::SHA qw(hmac_sha256 hmac_sha256_hex sha256_hex);
+use Digest::SHA qw(hmac_sha256 hmac_sha256_hex);
 use Exporter qw(import);
     our @EXPORT = qw();
 use POSIX qw(strftime);
 
 use pgBackRest::Common::Log;
+use pgBackRest::LibC qw(:crypto);
 
 ####################################################################################################################################
 # Constants
@@ -37,7 +38,7 @@ use constant S3_HEADER_HOST                                         => 'host';
 use constant S3_HEADER_TOKEN                                        => 'x-amz-security-token';
     push @EXPORT, qw(S3_HEADER_TOKEN);
 
-use constant PAYLOAD_DEFAULT_HASH                                   => sha256_hex('');
+use constant PAYLOAD_DEFAULT_HASH                                   => cryptoHashOne('sha256', '');
     push @EXPORT, qw(PAYLOAD_DEFAULT_HASH);
 
 ####################################################################################################################################
@@ -257,7 +258,7 @@ sub s3AuthorizationHeader
 
     # Create authorization string
     my ($strCanonicalRequest, $strSignedHeaders) = s3CanonicalRequest($strVerb, $strUri, $strQuery, $hHeader, $strPayloadHash);
-    my $strStringToSign = s3StringToSign($strDateTime, $strRegion, sha256_hex($strCanonicalRequest));
+    my $strStringToSign = s3StringToSign($strDateTime, $strRegion, cryptoHashOne('sha256', $strCanonicalRequest));
 
     $hHeader->{&S3_HEADER_AUTHORIZATION} =
         AWS4_HMAC_SHA256 . " Credential=${strAccessKeyId}/" . substr($strDateTime, 0, 8) . "/${strRegion}/" . S3 . qw(/) .

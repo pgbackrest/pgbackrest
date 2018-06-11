@@ -76,6 +76,7 @@ XSH includes
 These includes define data structures that are required for the C to Perl interface but are not part of the regular C source.
 ***********************************************************************************************************************************/
 #include "xs/crypto/cipherBlock.xsh"
+#include "xs/crypto/hash.xsh"
 #include "xs/common/encode.xsh"
 
 /***********************************************************************************************************************************
@@ -259,7 +260,10 @@ XS_EUPXS(XS_pgBackRest__LibC_libcUvSize)
 /* INCLUDE:  Including 'xs/crypto/cipherBlock.xs' from 'xs/config/define.xs' */
 
 
-/* INCLUDE:  Including 'xs/crypto/random.xs' from 'xs/crypto/cipherBlock.xs' */
+/* INCLUDE:  Including 'xs/crypto/hash.xs' from 'xs/crypto/cipherBlock.xs' */
+
+
+/* INCLUDE:  Including 'xs/crypto/random.xs' from 'xs/crypto/hash.xs' */
 
 
 /* INCLUDE:  Including 'xs/postgres/pageChecksum.xs' from 'xs/crypto/random.xs' */
@@ -415,7 +419,174 @@ XS_EUPXS(XS_pgBackRest__LibC_randomBytes)
 }
 
 
-/* INCLUDE: Returning to 'xs/crypto/cipherBlock.xs' from 'xs/crypto/random.xs' */
+/* INCLUDE: Returning to 'xs/crypto/hash.xs' from 'xs/crypto/random.xs' */
+
+
+XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_new); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_new)
+{
+    dVAR; dXSARGS;
+    if (items != 2)
+       croak_xs_usage(cv,  "class, type");
+    {
+	const char *	class = (const char *)SvPV_nolen(ST(0))
+;
+	const char *	type = (const char *)SvPV_nolen(ST(1))
+;
+	pgBackRest__LibC__Crypto__Hash	RETVAL;
+    RETVAL = NULL;
+
+    // Don't warn when class param is used
+    (void)class;
+
+    MEM_CONTEXT_XS_NEW_BEGIN("cryptoHashXs")
+    {
+        RETVAL = memNew(sizeof(CryptoHashXs));
+        RETVAL->memContext = MEM_COMTEXT_XS();
+        RETVAL->pxPayload = cryptoHashNew(strNew(type));
+    }
+    MEM_CONTEXT_XS_NEW_END();
+	{
+	    SV * RETVALSV;
+	    RETVALSV = sv_newmortal();
+	    sv_setref_pv(RETVALSV, "pgBackRest::LibC::Crypto::Hash", (void*)RETVAL);
+	    ST(0) = RETVALSV;
+	}
+    }
+    XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_process); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_process)
+{
+    dVAR; dXSARGS;
+    if (items != 2)
+       croak_xs_usage(cv,  "self, message");
+    {
+	pgBackRest__LibC__Crypto__Hash	self;
+	SV *	message = ST(1)
+;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Crypto::Hash")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__Crypto__Hash,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::Crypto::Hash::process",
+			"self", "pgBackRest::LibC::Crypto::Hash")
+;
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+        STRLEN messageSize;
+        const unsigned char *messagePtr = (const unsigned char *)SvPV(message, messageSize);
+
+        cryptoHashProcessC(self->pxPayload, messagePtr, messageSize);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN_EMPTY;
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_result); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_result)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+	pgBackRest__LibC__Crypto__Hash	self;
+	SV *	RETVAL;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Crypto::Hash")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__Crypto__Hash,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::Crypto::Hash::result",
+			"self", "pgBackRest::LibC::Crypto::Hash")
+;
+    RETVAL = NULL;
+
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+        String *hash = cryptoHashHex(self->pxPayload);
+
+        RETVAL = newSV(strSize(hash));
+        SvPOK_only(RETVAL);
+        strcpy((char *)SvPV_nolen(RETVAL), strPtr(hash));
+        SvCUR_set(RETVAL, strSize(hash));
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+	RETVAL = sv_2mortal(RETVAL);
+	ST(0) = RETVAL;
+    }
+    XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_DESTROY); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Crypto__Hash_DESTROY)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+	pgBackRest__LibC__Crypto__Hash	self;
+
+	if (SvROK(ST(0))) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__Crypto__Hash,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not a reference",
+			"pgBackRest::LibC::Crypto::Hash::DESTROY",
+			"self")
+;
+    MEM_CONTEXT_XS_DESTROY(self->memContext);
+    }
+    XSRETURN_EMPTY;
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC_cryptoHashOne); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC_cryptoHashOne)
+{
+    dVAR; dXSARGS;
+    if (items != 2)
+       croak_xs_usage(cv,  "type, message");
+    {
+	const char *	type = (const char *)SvPV_nolen(ST(0))
+;
+	SV *	message = ST(1)
+;
+	SV *	RETVAL;
+    RETVAL = NULL;
+
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+        STRLEN messageSize;
+        const unsigned char *messagePtr = (const unsigned char *)SvPV(message, messageSize);
+
+        String *hash = cryptoHashOneC(strNew(type), messagePtr, messageSize);
+
+        RETVAL = newSV(strSize(hash));
+        SvPOK_only(RETVAL);
+        strcpy((char *)SvPV_nolen(RETVAL), strPtr(hash));
+        SvCUR_set(RETVAL, strSize(hash));
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+	RETVAL = sv_2mortal(RETVAL);
+	ST(0) = RETVAL;
+    }
+    XSRETURN(1);
+}
+
+
+/* INCLUDE: Returning to 'xs/crypto/cipherBlock.xs' from 'xs/crypto/hash.xs' */
 
 
 XS_EUPXS(XS_pgBackRest__LibC__Cipher__Block_new); /* prototype to pass -Wmissing-prototypes */
@@ -1047,6 +1218,11 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::pageChecksumTest", XS_pgBackRest__LibC_pageChecksumTest);
         newXS_deffile("pgBackRest::LibC::pageChecksumBufferTest", XS_pgBackRest__LibC_pageChecksumBufferTest);
         newXS_deffile("pgBackRest::LibC::randomBytes", XS_pgBackRest__LibC_randomBytes);
+        newXS_deffile("pgBackRest::LibC::Crypto::Hash::new", XS_pgBackRest__LibC__Crypto__Hash_new);
+        newXS_deffile("pgBackRest::LibC::Crypto::Hash::process", XS_pgBackRest__LibC__Crypto__Hash_process);
+        newXS_deffile("pgBackRest::LibC::Crypto::Hash::result", XS_pgBackRest__LibC__Crypto__Hash_result);
+        newXS_deffile("pgBackRest::LibC::Crypto::Hash::DESTROY", XS_pgBackRest__LibC__Crypto__Hash_DESTROY);
+        newXS_deffile("pgBackRest::LibC::cryptoHashOne", XS_pgBackRest__LibC_cryptoHashOne);
         newXS_deffile("pgBackRest::LibC::Cipher::Block::new", XS_pgBackRest__LibC__Cipher__Block_new);
         newXS_deffile("pgBackRest::LibC::Cipher::Block::process", XS_pgBackRest__LibC__Cipher__Block_process);
         newXS_deffile("pgBackRest::LibC::Cipher::Block::flush", XS_pgBackRest__LibC__Cipher__Block_flush);

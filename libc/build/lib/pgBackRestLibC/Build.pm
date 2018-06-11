@@ -50,14 +50,6 @@ my $rhExport =
         )],
     },
 
-    'cipher' =>
-    {
-        &BLD_EXPORTTYPE_SUB => [qw(
-            CIPHER_MODE_ENCRYPT
-            CIPHER_MODE_DECRYPT
-        )],
-    },
-
     'config' =>
     {
         &BLD_EXPORTTYPE_SUB => [qw(
@@ -79,6 +71,15 @@ my $rhExport =
             cfgDefOptionValid
             cfgOptionId
             cfgOptionTotal
+        )],
+    },
+
+    'crypto' =>
+    {
+        &BLD_EXPORTTYPE_SUB => [qw(
+            CIPHER_MODE_ENCRYPT
+            CIPHER_MODE_DECRYPT
+            cryptoHashOne
         )],
     },
 

@@ -773,7 +773,7 @@ eval
                         if (!$oStorageBackRest->exists($strLibCSmart) ||
                             $oStorageBackRest->info($strLibCSmart)->mtime < $lTimestampLast)
                         {
-                            &log(INFO, '    libc dependencies have changed for ${strBuildVM}, rebuilding...');
+                            &log(INFO, "    libc dependencies have changed for ${strBuildVM}, rebuilding...");
 
                             $bRebuild = true;
                         }

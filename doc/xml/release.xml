@@ -22,6 +22,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Move cryptographic hash functions to C using <proper>OpenSSL</proper>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Split log levels into separate header file.  Many modules that use <code>debug.h</code> do not need to do logging so this reduces dependencies for those modules.</p>
                     </release-item>
 

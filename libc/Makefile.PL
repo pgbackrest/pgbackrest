@@ -59,6 +59,7 @@ my @stryCFile =
     'config/parse.c',
     'crypto/cipherBlock.c',
     'crypto/crypto.c',
+    'crypto/hash.c',
     'crypto/random.c',
     'perl/config.c',
     'postgres/pageChecksum.c',

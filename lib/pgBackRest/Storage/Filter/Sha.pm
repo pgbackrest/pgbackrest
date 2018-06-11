@@ -50,7 +50,7 @@ sub new
     $self->{strAlgorithm} = $strAlgorithm;
 
     # Create SHA object
-    $self->{oSha} = Digest::SHA->new($self->{strAlgorithm});
+    $self->{oSha} = new pgBackRest::LibC::Crypto::Hash($self->{strAlgorithm});
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -76,7 +76,7 @@ sub read
     # Calculate sha for the returned buffer
     if ($iActualSize > 0)
     {
-        $self->{oSha}->add($tShaBuffer);
+        $self->{oSha}->process($tShaBuffer);
         $$rtBuffer .= $tShaBuffer;
     }
 
@@ -93,7 +93,7 @@ sub write
     my $rtBuffer = shift;
 
     # Calculate sha for the buffer
-    $self->{oSha}->add($$rtBuffer);
+    $self->{oSha}->process($$rtBuffer);
 
     # Call the io method
     return $self->parent()->write($rtBuffer);
@@ -109,7 +109,7 @@ sub close
     if (defined($self->{oSha}))
     {
         # Set result
-        $self->resultSet(STORAGE_FILTER_SHA, $self->{oSha}->hexdigest());
+        $self->resultSet(STORAGE_FILTER_SHA, $self->{oSha}->result());
 
         # Delete the sha object
         delete($self->{oSha});

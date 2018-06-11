@@ -11,7 +11,6 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname basename);
-use Digest::SHA;
 use Time::Local qw(timelocal);
 
 use pgBackRest::DbVersion;

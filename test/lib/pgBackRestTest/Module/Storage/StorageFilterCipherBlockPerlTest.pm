@@ -13,11 +13,10 @@ use Carp qw(confess);
 use English '-no_match_vars';
 
 use Fcntl qw(O_RDONLY);
-use Digest::SHA qw(sha1_hex);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
-use pgBackRest::LibC qw(:random);
+use pgBackRest::LibC qw(:random :crypto);
 use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::CipherBlock;
 use pgBackRest::Storage::Posix::Driver;
@@ -153,7 +152,7 @@ sub run
 
         executeTest('cp ' . $self->dataPath() . "/filecopy.archive2.bin ${strFileBin}");
         $self->testResult(
-            sub {sha1_hex(${storageTest()->get($strFileBin)})}, $strFileBinHash, 'bin test - check sha1');
+            sub {cryptoHashOne('sha1', ${storageTest()->get($strFileBin)})}, $strFileBinHash, 'bin test - check sha1');
 
         $tContent = ${storageTest()->get($strFileBin)};
 
@@ -165,7 +164,8 @@ sub run
         $self->testResult(sub {$oEncryptFileIo->write(\$tContent)}, length($tContent), '    write encrypted');
         $self->testResult(sub {$oEncryptFileIo->close()}, true, '    close');
         $self->testResult(
-            sub {sha1_hex(${storageTest()->get($strFileBinEncrypt)}) ne $strFileBinHash}, true, '    check sha1 different');
+            sub {cryptoHashOne('sha1', ${storageTest()->get($strFileBinEncrypt)}) ne $strFileBinHash}, true,
+            '    check sha1 different');
 
         my $oEncryptBinFileIo = $self->testResult(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
@@ -174,7 +174,7 @@ sub run
             '[object]', 'new read encrypted bin file');
 
         $self->testResult(sub {$oEncryptBinFileIo->read(\$tBuffer, 16777216)}, 16777216, '    read 16777216 bytes');
-        $self->testResult(sub {sha1_hex($tBuffer)}, $strFileBinHash, '    check sha1 same as original');
+        $self->testResult(sub {cryptoHashOne('sha1', $tBuffer)}, $strFileBinHash, '    check sha1 same as original');
         $self->testResult(sub {$oEncryptBinFileIo->close()}, true, '    close');
 
         # Try to read the file with the wrong passphrase
@@ -188,7 +188,7 @@ sub run
             '[object]', 'new read Encrypted bin file with wrong passphrase');
 
         $self->testResult(sub {$oEncryptBinFileIo->read(\$tBuffer, 16777216)}, 16777216, '    read all bytes');
-        $self->testResult(sub {sha1_hex($tBuffer) ne $strFileBinHash}, true, '    check sha1 NOT same as original');
+        $self->testResult(sub {cryptoHashOne('sha1', $tBuffer) ne $strFileBinHash}, true, '    check sha1 NOT same as original');
 
         # Test file against openssl to make sure they are compatible
         #---------------------------------------------------------------------------------------------------------------------------

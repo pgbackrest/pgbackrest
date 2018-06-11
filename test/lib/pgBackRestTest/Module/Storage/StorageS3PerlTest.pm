@@ -12,10 +12,9 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
-use Digest::SHA qw(sha1_hex);
-
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
+use pgBackRest::LibC qw(:crypto);
 use pgBackRest::Storage::S3::Driver;
 
 use pgBackRestTest::Common::ExecuteTest;
@@ -172,7 +171,7 @@ sub run
         $self->testResult(sub {$oFileRead->read(\$tBuffer, 524288)}, 524288, '    read half');
         $self->testResult(sub {$oFileRead->read(\$tBuffer, 512)}, 0, '    read 0');
         $self->testResult(length($tBuffer), 1048576, '    check length');
-        $self->testResult(sha1_hex($tBuffer), sha1_hex($strRandom), '    check hash');
+        $self->testResult(cryptoHashOne('sha1', $tBuffer), cryptoHashOne('sha1', $strRandom), '    check hash');
     }
 
     ################################################################################################################################

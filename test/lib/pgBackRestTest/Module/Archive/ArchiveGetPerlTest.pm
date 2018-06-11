@@ -12,7 +12,6 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Storable qw(dclone);
-use Digest::SHA qw(sha1_hex);
 
 use pgBackRest::Archive::Common;
 use pgBackRest::Archive::Get::Async;
@@ -24,6 +23,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
+use pgBackRest::LibC qw(:crypto);
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 
@@ -90,7 +90,7 @@ sub run
 
     # Define test file
     my $strFileContent = 'TESTDATA';
-    my $strFileHash = sha1_hex($strFileContent);
+    my $strFileHash = cryptoHashOne('sha1', $strFileContent);
     my $iFileSize = length($strFileContent);
 
     my $strDestinationPath = $self->{strDbPath} . "/pg_xlog";
@@ -187,7 +187,7 @@ sub run
             archiveGetCheck(PG_VERSION_92, $self->dbSysId(PG_VERSION_92), $strWalSegment, false);
 
         # Using the returned values, confirm the correct file is read
-        $self->testResult(sub {sha1_hex(${storageRepo()->get($self->{strArchivePath} . "/" . $strArchiveId . "/" .
+        $self->testResult(sub {cryptoHashOne('sha1', ${storageRepo()->get($self->{strArchivePath} . "/" . $strArchiveId . "/" .
             substr($strWalSegment, 0, 16) . "/" . $strArchiveFile)})}, $strFileHash,
             'check correct WAL archiveID when in multiple locations');
     }
@@ -223,7 +223,7 @@ sub run
 
         storageRepo()->pathCreate($strArchivePath);
         storageRepo()->put($strArchivePath . BOGUS, BOGUS);
-        my $strBogusHash = sha1_hex(BOGUS);
+        my $strBogusHash = cryptoHashOne('sha1', BOGUS);
 
         # Create path to copy file
         storageRepo()->pathCreate($strDestinationPath);
@@ -232,7 +232,7 @@ sub run
             "non-WAL segment copied");
 
         # Confirm the correct file is copied
-        $self->testResult(sub {sha1_hex(${storageRepo()->get($strDestinationFile)})}, $strBogusHash,
+        $self->testResult(sub {cryptoHashOne('sha1', ${storageRepo()->get($strDestinationFile)})}, $strBogusHash,
             '   check correct non-WAL copied from older archiveId');
 
         # create same WAL segment in same DB but different archives and different hash values. Confirm latest one copied.
@@ -257,7 +257,7 @@ sub run
             "WAL segment copied");
 
         # Confirm the correct file is copied
-        $self->testResult(sub {sha1_hex(${storageRepo()->get($strDestinationFile)})}, $strFileHash,
+        $self->testResult(sub {cryptoHashOne('sha1', ${storageRepo()->get($strDestinationFile)})}, $strFileHash,
             '    check correct WAL copied when in multiple locations');
 
         # Get files from an older DB version to simulate restoring from an old backup set to a database that is of that same version
@@ -268,7 +268,7 @@ sub run
         $strWalSegmentName = "${strWalSegment}-${strFileHash}";
 
         my $strWalContent = 'WALTESTDATA';
-        my $strWalHash = sha1_hex($strWalContent);
+        my $strWalHash = cryptoHashOne('sha1', $strWalContent);
 
         # Store with actual data that will match the hash check
         storageRepo()->pathCreate($strWalMajorPath, {bCreateParent => true});
@@ -284,7 +284,7 @@ sub run
             "WAL segment copied from older db backupset to same version older db");
 
         # Confirm the correct file is copied
-        $self->testResult(sub {sha1_hex(${storageRepo()->get($strDestinationFile)})}, $strWalHash,
+        $self->testResult(sub {cryptoHashOne('sha1', ${storageRepo()->get($strDestinationFile)})}, $strWalHash,
             '    check correct WAL copied from older db');
     }
 

@@ -87,6 +87,7 @@ SRCS = \
 	config/load.c \
 	config/parse.c \
 	crypto/cipherBlock.c \
+	crypto/hash.c \
 	crypto/crypto.c \
 	crypto/random.c \
 	perl/config.c \
@@ -224,6 +225,9 @@ crypto/cipherBlock.o: crypto/cipherBlock.c common/debug.h common/error.auto.h co
 crypto/crypto.o: crypto/crypto.c common/debug.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h crypto/crypto.h
 	$(CC) $(CFLAGS) -c crypto/crypto.c -o crypto/crypto.o
 
+crypto/hash.o: crypto/hash.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h crypto/crypto.h crypto/hash.h
+	$(CC) $(CFLAGS) -c crypto/hash.c -o crypto/hash.o
+
 crypto/random.o: crypto/random.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h crypto/random.h
 	$(CC) $(CFLAGS) -c crypto/random.c -o crypto/random.o
 
@@ -233,7 +237,7 @@ main.o: main.c command/archive/get/get.h command/archive/push/push.h command/com
 perl/config.o: perl/config.c common/debug.h common/error.auto.h common/error.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h
 	$(CC) $(CFLAGS) -c perl/config.c -o perl/config.o
 
-perl/exec.o: perl/exec.c ../libc/LibC.h common/debug.h common/encode.h common/error.auto.h common/error.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h config/parse.h crypto/cipher.h crypto/cipherBlock.h crypto/random.h perl/config.h perl/embed.auto.c perl/exec.h perl/libc.auto.c postgres/pageChecksum.h storage/driver/posix/driver.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/info.h version.h ../libc/xs/common/encode.xsh ../libc/xs/crypto/cipherBlock.xsh
+perl/exec.o: perl/exec.c ../libc/LibC.h common/debug.h common/encode.h common/error.auto.h common/error.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h config/parse.h crypto/cipher.h crypto/cipherBlock.h crypto/hash.h crypto/random.h perl/config.h perl/embed.auto.c perl/exec.h perl/libc.auto.c postgres/pageChecksum.h storage/driver/posix/driver.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/info.h version.h ../libc/xs/common/encode.xsh ../libc/xs/crypto/cipherBlock.xsh ../libc/xs/crypto/hash.xsh
 	$(CC) $(CFLAGS) -c perl/exec.c -o perl/exec.o
 
 postgres/info.o: postgres/info.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h postgres/info.h postgres/type.h postgres/version.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h version.h

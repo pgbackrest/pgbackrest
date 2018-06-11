@@ -8,7 +8,6 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
-use Digest::SHA qw(hmac_sha256 hmac_sha256_hex sha256_hex);
 use Exporter qw(import);
     our @EXPORT = qw();
 use IO::Socket::SSL;
@@ -20,6 +19,7 @@ use pgBackRest::Common::Io::Base;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Xml;
+use pgBackRest::LibC qw(:crypto);
 use pgBackRest::Storage::S3::Auth;
 
 ####################################################################################################################################
@@ -152,7 +152,7 @@ sub request
         $bRetry = false;
 
         # Set content length and hash
-        $hHeader->{&S3_HEADER_CONTENT_SHA256} = defined($rstrBody) ? sha256_hex($$rstrBody) : PAYLOAD_DEFAULT_HASH;
+        $hHeader->{&S3_HEADER_CONTENT_SHA256} = defined($rstrBody) ? cryptoHashOne('sha256', $$rstrBody) : PAYLOAD_DEFAULT_HASH;
         $hHeader->{&S3_HEADER_CONTENT_LENGTH} = defined($rstrBody) ? length($$rstrBody) : 0;
 
         # Generate authorization header

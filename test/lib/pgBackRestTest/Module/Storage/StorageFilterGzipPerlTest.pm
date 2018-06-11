@@ -13,10 +13,10 @@ use Carp qw(confess);
 use English '-no_match_vars';
 
 use Compress::Raw::Zlib qw(Z_OK Z_BUF_ERROR Z_DATA_ERROR);
-use Digest::SHA qw(sha1_hex);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
+use pgBackRest::LibC qw(:crypto);
 use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::Gzip;
 use pgBackRest::Storage::Posix::Driver;
@@ -163,7 +163,7 @@ sub run
         $self->testResult(sub {$oGzipIo->read(\$tBuffer, 1)}, 0, '    read 0 bytes');
 
         $self->testResult(sub {$oGzipIo->close()}, true, '    close');
-        $self->testResult(sha1_hex($tBuffer), '1c7e00fd09b9dd11fc2966590b3e3274645dd031', '    check content');
+        $self->testResult(cryptoHashOne('sha1', $tBuffer), '1c7e00fd09b9dd11fc2966590b3e3274645dd031', '    check content');
 
         storageTest()->remove($strFileGz);
 
@@ -183,7 +183,8 @@ sub run
         $self->testResult(sub {storageTest()->put($strFileGz, $tBuffer) > 0}, true, '    put content');
         executeTest("gzip -df ${strFileGz}");
         $self->testResult(
-            sub {sha1_hex(${storageTest()->get($strFile)})}, '1c7e00fd09b9dd11fc2966590b3e3274645dd031', '    check content');
+            sub {cryptoHashOne('sha1', ${storageTest()->get($strFile)})}, '1c7e00fd09b9dd11fc2966590b3e3274645dd031',
+            '    check content');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $tBuffer = undef;

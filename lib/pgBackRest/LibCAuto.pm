@@ -183,12 +183,6 @@ sub libcAutoExportTag
             'pageChecksumTest',
         ],
 
-        cipher =>
-        [
-            'CIPHER_MODE_ENCRYPT',
-            'CIPHER_MODE_DECRYPT',
-        ],
-
         config =>
         [
             'CFGOPTVAL_INFO_OUTPUT_TEXT',
@@ -348,6 +342,13 @@ sub libcAutoExportTag
             'cfgDefOptionValid',
             'cfgOptionId',
             'cfgOptionTotal',
+        ],
+
+        crypto =>
+        [
+            'CIPHER_MODE_ENCRYPT',
+            'CIPHER_MODE_DECRYPT',
+            'cryptoHashOne',
         ],
 
         debug =>
