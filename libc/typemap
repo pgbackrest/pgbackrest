@@ -1,1 +1,2 @@
 pgBackRest::LibC::Cipher::Block T_PTROBJ
+pgBackRest::LibC::Crypto::Hash T_PTROBJ

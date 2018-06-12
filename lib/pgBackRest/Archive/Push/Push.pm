@@ -56,9 +56,6 @@ sub process
         confess &log(ERROR, 'WAL file to push required', ERROR_PARAM_REQUIRED);
     }
 
-    # Check for a stop lock
-    lockStopTest();
-
     # Extract WAL path and file
     my $strWalPath = dirname(walPath($strWalPathFile, cfgOption(CFGOPT_PG_PATH, false), cfgCommandName(cfgCommandGet())));
     my $strWalFile = basename($strWalPathFile);
@@ -74,6 +71,9 @@ sub process
     # Else push synchronously
     else
     {
+        # Check for a stop lock
+        lockStopTest();
+
         # Load module dynamically
         require pgBackRest::Archive::Push::File;
         pgBackRest::Archive::Push::File->import();

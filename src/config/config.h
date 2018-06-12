@@ -86,7 +86,7 @@ void cfgInit();
 ConfigDefineCommand cfgCommandDefIdFromId(ConfigCommand commandId);
 bool cfgCommandHelp();
 void cfgCommandHelpSet(bool helpParam);
-int cfgCommandId(const char *commandName);
+ConfigCommand cfgCommandId(const char *commandName);
 void cfgCommandParamSet(const StringList *param);
 void cfgCommandSet(ConfigCommand commandParam);
 

@@ -1,11 +1,11 @@
 /***********************************************************************************************************************************
 Test Exit Routines
 ***********************************************************************************************************************************/
-#include <sys/wait.h>
-#include <unistd.h>
-
 #include "common/error.h"
+#include "common/log.h"
 #include "config/config.h"
+
+#include "common/harnessFork.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -13,6 +13,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("exitSignalName()"))
     {
@@ -25,23 +27,17 @@ testRun()
     // *****************************************************************************************************************************
     if (testBegin("exitInit() and exitOnSignal()"))
     {
-        int processId = fork();
-
-        // If this is the fork
-        if (processId == 0)
+        HARNESS_FORK_BEGIN()
         {
-            exitInit();
-            raise(SIGTERM);
-        }
-        else
-        {
-            int processStatus;
+            HARNESS_FORK_CHILD()
+            {
+                exitInit();
+                raise(SIGTERM);
+            }
 
-            if (waitpid(processId, &processStatus, 0) != processId)                         // {uncoverable - fork() does not fail}
-                THROW_SYS_ERROR(AssertError, "unable to find child process");               // {uncoverable+}
-
-            TEST_RESULT_INT(WEXITSTATUS(processStatus), errorTypeCode(&TermError), "test error result");
+            HARNESS_FORK_CHILD_EXPECTED_EXIT_STATUS_SET(errorTypeCode(&TermError));
         }
+        HARNESS_FORK_END();
     }
 
     // *****************************************************************************************************************************
@@ -74,6 +70,42 @@ testRun()
         TRY_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
+        logInit(logLevelDebug, logLevelOff, logLevelOff, false);
+
+        TRY_BEGIN()
+        {
+            THROW(RuntimeError, "test debug error message");
+        }
+        CATCH_ANY()
+        {
+            exitSafe(0, true, signalTypeNone);
+            testLogResultRegExp(
+                "P00  ERROR\\: \\[122\\]\\: test debug error message\n"
+                "            STACK TRACE\\:\n"
+                "            module\\/common\\/exitTest\\:testRun\\:.*\n"
+                "            test\\:main\\:.*\n");
+        }
+        TRY_END();
+
+        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TRY_BEGIN()
+        {
+            THROW(AssertError, "test assert message");
+        }
+        CATCH_ANY()
+        {
+            exitSafe(0, true, signalTypeNone);
+            testLogResultRegExp(
+                "P00 ASSERT\\: \\[025\\]\\: test assert message\n"
+                "            STACK TRACE\\:\n"
+                "            module/common/exitTest\\:testRun\\:.*\n"
+                "            test\\:main\\:.*\n");
+        }
+        TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TRY_BEGIN()
         {
             THROW(RuntimeError, PERL_EMBED_ERROR);
@@ -96,4 +128,6 @@ testRun()
             exitSafe(errorTypeCode(&TermError), false, signalTypeTerm), errorTypeCode(&TermError), "exit on term with SIGTERM");
         testLogResult("P00   INFO: archive-push command end: terminated on signal [SIGTERM]");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

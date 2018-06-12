@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Variant Data Type
 ***********************************************************************************************************************************/
+#include "common/stackTrace.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -8,16 +9,17 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("bool"))
     {
         Variant *boolean = varNewBool(false);
-
-        boolean->type = varTypeString;
-        TEST_ERROR(varBool(boolean), AssertError, "variant type is not bool");
-
-        boolean->type = varTypeBool;
+        TEST_RESULT_INT(varType(boolean), varTypeBool, "get bool type");
         varFree(boolean);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ERROR(varBool(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeBool' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(varBool(varNewBool(true)), true, "true bool variant");
@@ -29,7 +31,7 @@ testRun()
         TEST_RESULT_BOOL(varBoolForce(varNewInt64(false)), false, "force int64 to bool");
         TEST_RESULT_BOOL(varBoolForce(varNewUInt64(12)), true, "force uint64 to bool");
 
-        TEST_ERROR(varBoolForce(varNewVarLstEmpty()), AssertError, "unable to force VariantList to bool");
+        TEST_ERROR(varBoolForce(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to bool");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(varFree(NULL), "ok to free null variant");
@@ -52,13 +54,7 @@ testRun()
         varFree(var);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        var = varNewDbl(-1.1);
-
-        var->type = varTypeString;
-        TEST_ERROR(varDbl(var), AssertError, "variant type is not double");
-
-        var->type = varTypeDouble;
-        varFree(var);
+        TEST_ERROR(varDbl(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeDouble' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_DOUBLE(varDblForce(varNewDbl(4.567)), 4.567, "force double to double");
@@ -69,8 +65,8 @@ testRun()
         TEST_RESULT_DOUBLE(varDblForce(varNewStr(strNew("879.01"))), 879.01, "force String to double");
         TEST_RESULT_DOUBLE(varDblForce(varNewStr(strNew("0"))), 0, "force String to double");
 
-        TEST_ERROR(varDblForce(varNewStr(strNew("AAA"))), FormatError, "unable to convert String 'AAA' to double");
-        TEST_ERROR(varDblForce(varNewVarLstEmpty()), AssertError, "unable to force VariantList to double");
+        TEST_ERROR(varDblForce(varNewStr(strNew("AAA"))), FormatError, "unable to convert string 'AAA' to double");
+        TEST_ERROR(varDblForce(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to double");
         TEST_ERROR(varDblForce(varNewUInt64(9223372036854775808U)), FormatError,
             "unable to convert uint64 9223372036854775808 to double");
 
@@ -92,7 +88,7 @@ testRun()
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(varIntForce(varNewBool(true)), 1, "force bool to int");
-        TEST_ERROR(varIntForce(varNewVarLstEmpty()), AssertError, "unable to force VariantList to int");
+        TEST_ERROR(varIntForce(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to int");
         TEST_RESULT_INT(varIntForce(varNewInt64(999)), 999, "force int64 to int");
         TEST_ERROR(varIntForce(varNewInt64(2147483648)), FormatError, "unable to convert int64 2147483648 to int");
         TEST_ERROR(varIntForce(varNewInt64(-2147483649)), FormatError, "unable to convert int64 -2147483649 to int");
@@ -100,13 +96,7 @@ testRun()
         TEST_ERROR(varIntForce(varNewUInt64(2147483648)), FormatError, "unable to convert uint64 2147483648 to int");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        integer = varNewInt(-1);
-
-        integer->type = varTypeString;
-        TEST_ERROR(varInt(integer), AssertError, "variant type is not int");
-
-        integer->type = varTypeInt;
-        varFree(integer);
+        TEST_ERROR(varInt(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeInt' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(varInt(varDup(varNewInt(88976))), 88976, "dup int");
@@ -136,19 +126,13 @@ testRun()
 
         TEST_ERROR(
             varInt64Force(varNewStrZ("9923372036854775807")), FormatError,
-            "unable to convert String '9923372036854775807' to int64");
-        TEST_ERROR(varInt64Force(varNewVarLstEmpty()), AssertError, "unable to force VariantList to int64");
+            "unable to convert string '9923372036854775807' to int64");
+        TEST_ERROR(varInt64Force(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to int64");
         TEST_ERROR(varInt64Force(varNewUInt64(9223372036854775808U)), FormatError,
             "unable to convert uint64 9223372036854775808 to int64");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        integer = varNewInt64(-1);
-
-        integer->type = varTypeString;
-        TEST_ERROR(varInt64(integer), AssertError, "variant type is not int64");
-
-        integer->type = varTypeInt;
-        varFree(integer);
+        TEST_ERROR(varInt64(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeInt64' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(varInt64(varDup(varNewInt64(88976))), 88976, "dup int64");
@@ -178,20 +162,14 @@ testRun()
 
         TEST_ERROR(
             varUInt64Force(varNewStrZ("18446744073709551616")), FormatError,
-            "unable to convert String '18446744073709551616' to uint64");   // string value is out of bounds for uint64
-        TEST_ERROR(varUInt64Force(varNewStrZ(" 16")), FormatError,"unable to convert String ' 16' to uint64");
-        TEST_ERROR(varUInt64Force(varNewVarLstEmpty()), AssertError, "unable to force VariantList to uint64");
+            "unable to convert string '18446744073709551616' to uint64");   // string value is out of bounds for uint64
+        TEST_ERROR(varUInt64Force(varNewStrZ(" 16")), FormatError,"unable to convert string ' 16' to uint64");
+        TEST_ERROR(varUInt64Force(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to uint64");
         TEST_ERROR(varUInt64Force(varNewInt64(-1)), FormatError, "unable to convert int64 -1 to uint64");
         TEST_ERROR(varUInt64Force(varNewInt(-1)), FormatError, "unable to convert int -1 to uint64");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        uint64 = varNewInt64(1);
-
-        uint64->type = varTypeString;
-        TEST_ERROR(varUInt64(uint64), AssertError, "variant type is not uint64");
-
-        uint64->type = varTypeUInt64;
-        varFree(uint64);
+        TEST_ERROR(varUInt64(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeUInt64' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_DOUBLE(varUInt64(varDup(varNewUInt64(88976))), 88976, "dup uint64");
@@ -207,7 +185,7 @@ testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("keyValue"))
     {
-        TEST_ERROR(varKv(varNewInt(66)), AssertError, "variant type is not 'KeyValue'");
+        TEST_ERROR(varKv(varNewInt(66)), AssertError, "assertion 'this->type == varTypeKeyValue' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *keyValue = NULL;
@@ -233,7 +211,7 @@ testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("String"))
     {
-        TEST_ERROR(varNewStr(NULL), AssertError, "string variant cannot be NULL");
+        TEST_ERROR(varNewStr(NULL), AssertError, "function test assertion 'data != NULL' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *string = varNewStr(strNew("test-str"));
@@ -243,14 +221,10 @@ testRun()
         TEST_RESULT_PTR(varStr(NULL), NULL, "get null string variant");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        string = varNewStr(strNew("not-a-string"));
-        string->type = varTypeInt;
-        TEST_ERROR(strPtr(varStr(string)), AssertError, "variant type is not string");
-        varFree(string);
+        TEST_ERROR(varStr(varNewBool(true)), AssertError, "assertion 'this->type == varTypeString' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(varIntForce(varNewStrZ("777")), 777, "int from string");
-        TEST_RESULT_INT(varIntForce(varNewStrZ("0")), 0, "int from string");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(varBoolForce(varNewStr(strNew("y"))), true, "bool from string");
@@ -267,24 +241,21 @@ testRun()
         TEST_RESULT_STR(strPtr(varStrForce(varNewStr(strNew("teststring")))), "teststring", "force string to string");
         TEST_RESULT_STR(strPtr(varStrForce(varNewInt(999))), "999", "force int to string");
         TEST_RESULT_STR(strPtr(varStrForce(varNewInt64(9223372036854775807L))), "9223372036854775807", "force int64 to string");
-        TEST_RESULT_STR(strPtr(varStrForce(varNewDbl(999.1234))), "999.1234", "force double to string");
         TEST_RESULT_STR(strPtr(varStrForce(varNewDbl((double)999999999.123456))), "999999999.123456", "force double to string");
-        TEST_RESULT_STR(strPtr(varStrForce(varNewDbl(999.0))), "999", "force double to string");
-        TEST_RESULT_STR(strPtr(varStrForce(varNewDbl(9990.0))), "9990", "force double to string");
         TEST_RESULT_STR(strPtr(varStrForce(varNewBool(true))), "true", "force bool to string");
         TEST_RESULT_STR(strPtr(varStrForce(varNewBool(false))), "false", "force bool to string");
         TEST_RESULT_STR(strPtr(varStrForce(varNewUInt64(18446744073709551615U))), "18446744073709551615", "force uint64 to string");
 
-        TEST_ERROR(varStrForce(varNewKv()), AssertError, "unable to force KeyValue to String");
+        TEST_ERROR(varStrForce(varNewKv()), FormatError, "unable to force KeyValue to String");
 
         // -------------------------------------------------------------------------------------------------------------------------
         string = varNewStr(strNew("not-an-int"));
-        TEST_ERROR(varIntForce(string), FormatError, "unable to convert str 'not-an-int' to int");
+        TEST_ERROR(varIntForce(string), FormatError, "unable to convert string 'not-an-int' to int");
         varFree(string);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(strPtr(varStr(varNewStrZ("test-z-str"))), "test-z-str", "new zero-terminated string");
-        TEST_ERROR(varNewStrZ(NULL), AssertError, "zero-terminated string cannot be NULL");
+        TEST_ERROR(varNewStrZ(NULL), AssertError, "function test assertion 'data != NULL' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(strPtr(varStr(varDup(varNewStr(strNew("yabba-dabba-doo"))))), "yabba-dabba-doo", "dup string");
@@ -298,12 +269,12 @@ testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("VariantList"))
     {
-        TEST_ERROR(varVarLst(varNewInt(66)), AssertError, "variant type is not 'VariantList'");
+        TEST_ERROR(varVarLst(varNewInt(66)), AssertError, "assertion 'this->type == varTypeVariantList' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *listVar = NULL;
 
-        TEST_ASSIGN(listVar, varNewVarLstEmpty(), "new empty");
+        TEST_ASSIGN(listVar, varNewVarLst(varLstNew()), "new empty");
 
         TEST_RESULT_INT(varLstSize(varVarLst(listVar)), 0, "    empty size");
         TEST_RESULT_PTR(varVarLst(NULL), NULL, "get null var list");
@@ -330,6 +301,29 @@ testRun()
         varFree(listVarDup);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(varEq(varNewVarLstEmpty(), varNewVarLstEmpty()), AssertError, "unable to test equality for VariantList");
+        TEST_ERROR(varEq(varNewVarLst(varLstNew()), varNewVarLst(varLstNew())), AssertError, "unable to test equality for VariantList");
     }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("varToLog"))
+    {
+        char buffer[STACK_TRACE_PARAM_MAX];
+
+        TEST_RESULT_INT(varToLog(NULL, buffer, 4), 4, "format truncated null");
+        TEST_RESULT_STR(buffer, "nul", "    check buffer");
+
+        TEST_RESULT_INT(varToLog(varNewStrZ("testme"), buffer, STACK_TRACE_PARAM_MAX), 10, "format String");
+        TEST_RESULT_STR(buffer, "{\"testme\"}", "    check buffer");
+
+        TEST_RESULT_INT(varToLog(varNewBool(false), buffer, STACK_TRACE_PARAM_MAX), 7, "format bool");
+        TEST_RESULT_STR(buffer, "{false}", "    check buffer");
+
+        TEST_RESULT_INT(varToLog(varNewKv(), buffer, STACK_TRACE_PARAM_MAX), 10, "format KeyValue");
+        TEST_RESULT_STR(buffer, "{KeyValue}", "    check buffer");
+
+        TEST_RESULT_INT(varToLog(varNewVarLst(varLstNew()), buffer, STACK_TRACE_PARAM_MAX), 13, "format VariantList");
+        TEST_RESULT_STR(buffer, "{VariantList}", "    check buffer");
+    }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

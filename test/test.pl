@@ -42,6 +42,7 @@ use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Config::Build;
 use pgBackRestBuild::Config::BuildDefine;
 use pgBackRestBuild::Config::BuildParse;
+use pgBackRestBuild::Embed::Build;
 use pgBackRestBuild::Error::Build;
 use pgBackRestBuild::Error::Data;
 
@@ -78,16 +79,24 @@ test.pl [options]
    --pg-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
    --no-lint            disable static source code analysis
-   --build-only         compile the C library / packages and run tests only
+   --build-only         compile the test library / packages and run tests only
    --coverage-only      only run coverage tests (as a subset of selected tests)
    --c-only             only run C tests
    --gen-only           only run auto-generation
+   --no-gen             do not run code generation
    --code-count         generate code counts
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
-   --dev                --no-lint --smart --no-package
-   --expect             --no-lint --smart --no-package --vm=co7 --db=9.6 --log-force
+   --dev                --no-lint --smart --no-package --no-optimize
+   --dev-test           --no-lint --no-package
+   --expect             --no-lint --no-package --vm=co7 --db=9.6 --log-force
+   --no-valgrind        don't run valgrind on C unit tests (saves time)
+   --no-coverage        don't run coverage on C unit tests (saves time)
+   --no-optimize        don't do compile optimization for C (saves compile time)
+   --backtrace          enable backtrace when available (adds stack trace line numbers -- very slow)
+   --profile            generate profile info
+   --no-debug           don't generate a debug build
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -133,14 +142,22 @@ my $bVmForce = false;
 my $bNoLint = false;
 my $bBuildOnly = false;
 my $bCoverageOnly = false;
+my $bNoCoverage = false;
 my $bCOnly = false;
 my $bGenOnly = false;
+my $bNoGen = false;
 my $bCodeCount = false;
 my $bSmart = false;
 my $bNoPackage = false;
 my $bNoCiConfig = false;
 my $bDev = false;
+my $bDevTest = false;
+my $bBackTrace = false;
+my $bProfile = false;
 my $bExpect = false;
+my $bNoValgrind = false;
+my $bNoOptimize = false;
+my $bNoDebug = false;
 my $iRetry = 0;
 
 GetOptions ('q|quiet' => \$bQuiet,
@@ -168,12 +185,20 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-package' => \$bNoPackage,
             'no-ci-config' => \$bNoCiConfig,
             'coverage-only' => \$bCoverageOnly,
+            'no-coverage' => \$bNoCoverage,
             'c-only' => \$bCOnly,
             'gen-only' => \$bGenOnly,
+            'no-gen' => \$bNoGen,
             'code-count' => \$bCodeCount,
             'smart' => \$bSmart,
             'dev' => \$bDev,
+            'dev-test' => \$bDevTest,
+            'backtrace' => \$bBackTrace,
+            'profile' => \$bProfile,
             'expect' => \$bExpect,
+            'no-valgrind' => \$bNoValgrind,
+            'no-optimize' => \$bNoOptimize,
+            'no-debug', => \$bNoDebug,
             'retry=s' => \$iRetry)
     or pod2usage(2);
 
@@ -206,13 +231,34 @@ eval
     }
 
     ################################################################################################################################
-    # Update options for --dev
+    # Update options for --dev and --dev-fast and --dev-test
     ################################################################################################################################
+    if ($bDev && $bDevTest)
+    {
+        confess "cannot combine --dev and --dev-test";
+    }
+
     if ($bDev)
     {
         $bNoLint = true;
         $bSmart = true;
         $bNoPackage = true;
+        $bNoOptimize = true;
+    }
+
+    if ($bDevTest)
+    {
+        $bNoPackage = true;
+        $bNoLint = true;
+    }
+
+    ################################################################################################################################
+    # Update options for --profile
+    ################################################################################################################################
+    if ($bProfile)
+    {
+        $bNoValgrind = true;
+        $bNoCoverage = true;
     }
 
     ################################################################################################################################
@@ -318,85 +364,131 @@ eval
             exit 0;
         }
 
-        # Auto-generate C files
+        # Auto-generate files unless --no-gen specified
         #---------------------------------------------------------------------------------------------------------------------------
-        &log(INFO, "check code autogenerate");
-
-        errorDefineLoad(${$oStorageBackRest->get("build/error.yaml")});
-
-        # Get last mod for build files and version file
-        my $lLastBuildMod = buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['build']);
-        my $lLastVersionMod = buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['lib'], 'Version\.pm$');
-
-        # If version mod is later than build mod, then make it the build mod
-        if ($lLastVersionMod > $lLastBuildMod)
+        if (!$bNoGen)
         {
-            $lLastBuildMod = $lLastVersionMod;
-        }
+            &log(INFO, "check code autogenerate");
 
-        if (!$bSmart || $lLastBuildMod > buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['src'], '\.auto\.c$'))
-        {
-            &log(INFO, "    autogenerate C code");
-
-            my $rhBuild =
+            # Auto-generate C files
+            #-----------------------------------------------------------------------------------------------------------------------
+            if (!$bSmart || buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['build']) >
+                buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['src'], '\.auto\.c$'))
             {
-                'config' =>
+                &log(INFO, "    autogenerate C code");
+
+                errorDefineLoad(${$oStorageBackRest->get("build/error.yaml")});
+
+                my $rhBuild =
                 {
-                    &BLD_DATA => buildConfig(),
-                    &BLD_PATH => 'config',
-                },
+                    'config' =>
+                    {
+                        &BLD_DATA => buildConfig(),
+                        &BLD_PATH => 'config',
+                    },
 
-                'configDefine' =>
-                {
-                    &BLD_DATA => buildConfigDefine(),
-                    &BLD_PATH => 'config',
-                },
+                    'configDefine' =>
+                    {
+                        &BLD_DATA => buildConfigDefine(),
+                        &BLD_PATH => 'config',
+                    },
 
-                'configParse' =>
-                {
-                    &BLD_DATA => buildConfigParse(),
-                    &BLD_PATH => 'config',
-                },
+                    'configParse' =>
+                    {
+                        &BLD_DATA => buildConfigParse(),
+                        &BLD_PATH => 'config',
+                    },
 
-                'error' =>
-                {
-                    &BLD_DATA => buildError(),
-                    &BLD_PATH => 'common',
-                },
-            };
+                    'error' =>
+                    {
+                        &BLD_DATA => buildError(),
+                        &BLD_PATH => 'common',
+                    },
+                };
 
-            buildAll("${strBackRestBase}/src", $rhBuild);
-        }
+                buildAll("${strBackRestBase}/src", $rhBuild);
+            }
 
-        # Auto-generate XS files
-        #
-        # Use statements are put here so this will be easy to get rid of someday.
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Get last mod for Perl build files
-        my $lLastPerlBuildMod = buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc/build']);
-
-        # If Perl build mod is later than build mod, then make it the build mod
-        if ($lLastPerlBuildMod > $lLastBuildMod)
-        {
-            $lLastBuildMod = $lLastPerlBuildMod;
-        }
-
-        if (!$bSmart ||
-            $lLastBuildMod > buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc', 'lib'], '(\.auto\.xs|Auto\.pm)$'))
-        {
-            &log(INFO, "    autogenerate Perl code");
+            # Auto-generate Perl code
+            #-----------------------------------------------------------------------------------------------------------------------
             use lib dirname(dirname($0)) . '/libc/build/lib';
             use pgBackRestLibC::Build;                                      ## no critic (Modules::ProhibitConditionalUseStatements)
 
-            buildXsAll("${strBackRestBase}/libc");
+            if (!$bSmart || buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['build', 'libc/build']) >
+                buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['lib'], 'Auto\.pm$'))
+            {
+                &log(INFO, "    autogenerate Perl code");
+
+                errorDefineLoad(${$oStorageBackRest->get("build/error.yaml")});
+
+                buildXsAll("${strBackRestBase}/libc");
+            }
+
+            # Auto-generate C library code to embed in the binary
+            #-----------------------------------------------------------------------------------------------------------------------
+            if (!$bSmart || buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc']) >
+                buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['src/perl'], '^libc\.auto\.c$'))
+            {
+                &log(INFO, "    autogenerate embedded C code");
+
+                my $strLibC = executeTest(
+                    "cd ${strBackRestBase}/libc && " .
+                    "perl /usr/share/perl/5.26/ExtUtils/xsubpp -typemap /usr/share/perl/5.26/ExtUtils/typemap" .
+                        " -typemap typemap LibC.xs");
+
+                # Trim off any trailing LFs
+                $strLibC = trim($strLibC) . "\n";
+
+                # Strip out line numbers.  These are useful for the LibC build but only cause churn in the binary
+                # build.
+                $strLibC =~ s/^\#line .*\n//mg;
+
+                # Save into the bin src dir
+                $oStorageBackRest->put("${strBackRestBase}/src/perl/libc.auto.c", $strLibC);
+            }
+
+            # Auto-generate embedded Perl code
+            #-----------------------------------------------------------------------------------------------------------------------
+            if (!$bSmart || buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['lib']) >
+                buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['src/perl'], 'embed\.auto\.c'))
+            {
+                &log(INFO, "    autogenerate embedded Perl code");
+
+                my $rhBuild =
+                {
+                    'embed' =>
+                    {
+                        &BLD_DATA => buildEmbed($oStorageBackRest),
+                        &BLD_PATH => 'perl',
+                    },
+                };
+
+                buildAll("${strBackRestBase}/src", $rhBuild);
+            }
+
+            # Auto-generate C Makefile
+            #-----------------------------------------------------------------------------------------------------------------------
+            if (!$bSmart || buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['libc', 'src']) >
+                buildLastModTime($oStorageBackRest, "${strBackRestBase}", ['src'], 'Makefile'))
+            {
+                &log(INFO, "    autogenerate C Makefile");
+
+                $oStorageBackRest->put(
+                    "src/Makefile",
+                    buildMakefile(
+                        $oStorageBackRest,
+                        ${$oStorageBackRest->get("src/Makefile")},
+                        {rhOption => {'postgres/pageChecksum.o' => '-funroll-loops -ftree-vectorize'}}));
+            }
+
+            if ($bGenOnly)
+            {
+                exit 0;
+            }
         }
 
-        if ($bGenOnly)
-        {
-            exit 0;
-        }
-
-        # Build CI configuration
+        # Build CI config
+        #---------------------------------------------------------------------------------------------------------------------------
         if (!$bNoCiConfig)
         {
             (new pgBackRestTest::Common::CiTest($oStorageBackRest))->process();
@@ -504,7 +596,9 @@ eval
         # Determine which tests to run
         #---------------------------------------------------------------------------------------------------------------------------
         my $oyTestRun;
-        my $bBuildRequired = false;
+        my $bBinRequired = $bBuildOnly;
+        my $bLibCHostRequired = $bBuildOnly;
+        my $bLibCVmRequired = $bBuildOnly;
 
         # Only get the test list when they can run
         if (!$bBuildOnly)
@@ -513,266 +607,289 @@ eval
             $oyTestRun = testListGet(
                 $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strPgVersion, $bCoverageOnly, $bCOnly);
 
-            # Search for any tests that are not C unit tests to determine if the C binary and lib need to be built for testing.  If
-            # all the tests are C unit tests then no builds are required.  This saves a lot ot time.
+            # Determine if the C binary and test library need to be built
             foreach my $hTest (@{$oyTestRun})
             {
+                # Bin build required for all Perl tests or if a C unit test calls Perl
                 if (!$hTest->{&TEST_C} || $hTest->{&TEST_PERL_REQ})
                 {
-                    $bBuildRequired = true;
-                    last;
+                    $bBinRequired = true;
+                }
+
+                # Host LibC required if a Perl test
+                if (!$hTest->{&TEST_C})
+                {
+                    $bLibCHostRequired = true;
+                }
+
+                # VM LibC required if Perl and not an integration test
+                if (!$hTest->{&TEST_C} && !$hTest->{&TEST_INTEGRATION})
+                {
+                    $bLibCVmRequired = true;
                 }
             }
         }
 
+        my $strBuildRequired;
+
+        if ($bBinRequired || $bLibCHostRequired || $bLibCVmRequired)
+        {
+            if ($bBinRequired)
+            {
+                $strBuildRequired = "bin";
+            }
+
+            if ($bLibCHostRequired)
+            {
+                $strBuildRequired .= ", libc host";
+            }
+
+            if ($bLibCVmRequired)
+            {
+                $strBuildRequired .= ", libc vm";
+            }
+        }
+        else
+        {
+            $strBuildRequired = "none";
+        }
+
+        &log(INFO, "builds required: ${strBuildRequired}");
+
         # Build the binary, library and packages
         #---------------------------------------------------------------------------------------------------------------------------
-        if (!$bDryRun && $bBuildRequired)
+        if (!$bDryRun)
         {
-            &log(INFO, "check bin builds");
-
             my $oVm = vmGet();
             my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
+            my $lTimestampLast;
+            my @stryBinSrcPath = ('src', 'libc');
+            my $strBinPath = "${strVagrantPath}/bin";
+            my $rhBinBuild = {};
 
             # Build the binary
-            #---------------------------------------------------------------------------------------------------------------------------
-            my $strBinPath = "${strVagrantPath}/bin";
-            my $strBinSmart = "${strBinPath}/build.timestamp";
-            my $bRebuild = !$bSmart;
-            my @stryBinSrcPath = ('src');
-
-            # Find the lastest modified time for dirs that affect the bin build
-            my $lTimestampLast = buildLastModTime($oStorageBackRest, $strBackRestBase, \@stryBinSrcPath);
-
-            # Rebuild if the modification time of the smart file does equal the last changes in source paths
-            if ($bSmart)
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($bBinRequired)
             {
-                if (!$oStorageBackRest->exists($strBinSmart) || $oStorageBackRest->info($strBinSmart)->mtime < $lTimestampLast)
+                # Find the lastest modified time for dirs that affect the bin build
+                $lTimestampLast = buildLastModTime($oStorageBackRest, $strBackRestBase, \@stryBinSrcPath);
+
+                # Loop through VMs to do the C bin builds
+                my $bLogDetail = $strLogLevel eq 'detail';
+                my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
+
+                foreach my $strBuildVM (@stryBuildVm)
                 {
-                    &log(INFO, '    bin dependencies have changed, rebuilding...');
+                    my $strBuildPath = "${strBinPath}/${strBuildVM}/src";
+                    my $bRebuild = !$bSmart;
+                    $rhBinBuild->{$strBuildVM} = true;
 
-                    $bRebuild = true;
-                }
-            }
-            else
-            {
-                executeTest("sudo rm -rf ${strBinPath}");
-            }
-
-            # Loop through VMs to do the C bin builds
-            my $bLogDetail = $strLogLevel eq 'detail';
-            my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
-
-            foreach my $strBuildVM (sort(@stryBuildVm))
-            {
-                my $strBuildPath = "${strBinPath}/${strBuildVM}/src";
-
-                if ($bRebuild)
-                {
-                    &log(INFO, "    build bin for ${strBuildVM} (${strBuildPath})");
-
-                    executeTest(
-                        "docker run -itd -h test-build --name=test-build" .
-                        " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
-                        {bSuppressStdErr => true});
-
-                    foreach my $strBinSrcPath (@stryBinSrcPath)
+                    # Rebuild if the modification time of the smart file does equal the last changes in source paths
+                    if ($bSmart)
                     {
-                        $oStorageBackRest->pathCreate(
-                            "${strBinPath}/${strBuildVM}/${strBinSrcPath}", {bIgnoreExists => true, bCreateParent => true});
-                        executeTest("rsync -rt ${strBackRestBase}/${strBinSrcPath}/* ${strBinPath}/${strBuildVM}/${strBinSrcPath}");
+                        my $strBinSmart = "${strBuildPath}/pgbackrest";
+
+                        if (!$oStorageBackRest->exists($strBinSmart) ||
+                            $oStorageBackRest->info($strBinSmart)->mtime < $lTimestampLast)
+                        {
+                            &log(INFO, "    bin dependencies have changed for ${strBuildVM}, rebuilding...");
+
+                            $bRebuild = true;
+                        }
                     }
 
-                    if (vmCoverage($strVm) && !$bNoLint)
+                    if ($bRebuild)
                     {
-                        &log(INFO, "    clang static analyzer ${strBuildVM} (${strBuildPath})");
-                    }
+                        &log(INFO, "    build bin for ${strBuildVM} (${strBuildPath})");
 
-                    executeTest(
-                        'docker exec -i test-build' .
-                        (vmCoverage($strVm) && !$bNoLint ? ' scan-build-5.0' : '') .
-                        " make --silent --directory ${strBuildPath} CEXTRA=-g CDEBUG=",
-                        {bShowOutputAsync => $bLogDetail});
-
-                    executeTest(
-                        "docker exec -i test-build make --silent --directory ${strBuildPath} install",
-                        {bShowOutputAsync => $bLogDetail});
-
-                    executeTest("docker rm -f test-build");
-                }
-            }
-
-            # Write files to indicate the last time a build was successful
-            $oStorageBackRest->put($strBinSmart);
-            utime($lTimestampLast, $lTimestampLast, $strBinSmart) or
-                confess "unable to set time for ${strBinSmart}" . (defined($!) ? ":$!" : '');
-
-            # Build the C Library
-            #---------------------------------------------------------------------------------------------------------------------------
-            my $strLibCPath = "${strVagrantPath}/libc";
-            my $strLibCSmart = "${strLibCPath}/build.timestamp";
-            $bRebuild = !$bSmart;
-            my @stryLibCSrcPath = ('libc', 'src');
-
-            # Find the lastest modified time for dirs that affect the libc build
-            $lTimestampLast = buildLastModTime($oStorageBackRest, $strBackRestBase, \@stryLibCSrcPath);
-
-            # Rebuild if the modification time of the smart file does equal the last changes in source paths
-            if ($bSmart)
-            {
-                if (!$oStorageBackRest->exists($strLibCSmart) || $oStorageBackRest->info($strLibCSmart)->mtime < $lTimestampLast)
-                {
-                    &log(INFO, '    libc dependencies have changed, rebuilding...');
-
-                    $bRebuild = true;
-                }
-            }
-            else
-            {
-                executeTest("sudo rm -rf ${strLibCPath}");
-            }
-
-            # Delete old libc files from the host
-            if ($bRebuild)
-            {
-                executeTest('sudo rm -rf ' . $oVm->{$strVmHost}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC');
-                executeTest('sudo rm -rf ' . $oVm->{$strVmHost}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest');
-            }
-
-            # Loop through VMs to do the C Library builds
-            $bLogDetail = $strLogLevel eq 'detail';
-            @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm eq $strVmHost ? ($strVm) : ($strVm, $strVmHost));
-
-            foreach my $strBuildVM (sort(@stryBuildVm))
-            {
-                my $strBuildPath = "${strLibCPath}/${strBuildVM}/libc";
-                my $bContainerExists = $strVm eq VM_ALL || $strBuildVM ne $strVmHost;
-
-                if ($bRebuild)
-                {
-                    &log(INFO, "    build C library for ${strBuildVM} (${strBuildPath})");
-
-                    # It's very expensive to rebuild the Makefile so make sure it has actually changed
-                    my $bMakeRebuild =
-                        !$oStorageBackRest->exists("${strBuildPath}/Makefile.PL") ||
-                        ($oStorageBackRest->info("${strBackRestBase}/libc/Makefile.PL")->mtime >
-                         $oStorageBackRest->info("${strBuildPath}/Makefile.PL")->mtime);
-
-                    if ($bContainerExists)
-                    {
                         executeTest(
                             "docker run -itd -h test-build --name=test-build" .
                             " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
                             {bSuppressStdErr => true});
-                    }
 
-                    foreach my $strLibCSrcPath (@stryLibCSrcPath)
-                    {
-                        $oStorageBackRest->pathCreate(
-                            "${strLibCPath}/${strBuildVM}/${strLibCSrcPath}", {bIgnoreExists => true, bCreateParent => true});
+                        foreach my $strBinSrcPath (@stryBinSrcPath)
+                        {
+                            $oStorageBackRest->pathCreate(
+                                "${strBinPath}/${strBuildVM}/${strBinSrcPath}", {bIgnoreExists => true, bCreateParent => true});
+                        }
+
                         executeTest(
-                            "rsync -rt ${strBackRestBase}/${strLibCSrcPath}/* ${strLibCPath}/${strBuildVM}/${strLibCSrcPath}");
-                    }
+                            "rsync -rt" . (!$bSmart ? " --delete-excluded" : '') .
+                            " --include=" . join('/*** --include=', @stryBinSrcPath) . '/*** --exclude=*' .
+                            " ${strBackRestBase}/ ${strBinPath}/${strBuildVM}");
 
-                    if ($bMakeRebuild)
-                    {
+                        if (vmCoverage($strVm) && !$bNoLint)
+                        {
+                            &log(INFO, "    clang static analyzer ${strBuildVM} (${strBuildPath})");
+                        }
+
+                        my $strCExtra =
+                            "'-g -fPIC -D_FILE_OFFSET_BITS=64" .
+                            (vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace ? ' -DWITH_BACKTRACE' : '') . "'";
+                        my $strLdExtra = vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace  ? '-lbacktrace' : '';
+                        my $strCDebug = vmDebugIntegration($strBuildVM) ? 'CDEBUG=' : '';
+
                         executeTest(
-                            ($bContainerExists ? "docker exec -i test-build bash -c '" : '') .
-                            "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
-                            ($bContainerExists ? "'" : ''),
-                            {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
-                    }
+                            'docker exec -i test-build' .
+                            (vmCoverage($strVm) && !$bNoLint ? ' scan-build-6.0' : '') .
+                            " make --silent --directory ${strBuildPath} CEXTRA=${strCExtra} LDEXTRA=${strLdExtra} ${strCDebug}",
+                            {bShowOutputAsync => $bLogDetail});
 
-                    executeTest(
-                        ($bContainerExists ? 'docker exec -i test-build ' : '') .
-                            "make --silent --directory ${strBuildPath}",
-                        {bShowOutputAsync => $bLogDetail});
-                    executeTest(
-                        ($bContainerExists ? 'docker exec -i test-build ' : '') .
-                            "make --silent --directory ${strBuildPath} test",
-                        {bShowOutputAsync => $bLogDetail});
-                    executeTest(
-                        ($bContainerExists ? 'docker exec -i test-build ' : 'sudo ') .
-                            "make --silent --directory ${strBuildPath} install",
-                        {bShowOutputAsync => $bLogDetail});
-
-                    if ($bContainerExists)
-                    {
                         executeTest("docker rm -f test-build");
                     }
+                }
+            }
 
-                    if ($strBuildVM eq $strVmHost)
+            # Build the C Library
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($bLibCHostRequired || $bLibCVmRequired)
+            {
+                my $strLibCPath = "${strVagrantPath}/bin";
+
+                # Loop through VMs to do the C Library builds
+                my $bLogDetail = $strLogLevel eq 'detail';
+                my @stryBuildVm = ();
+
+                if ($strVm eq VM_ALL)
+                {
+                    @stryBuildVm  = $bLibCVmRequired ? VM_LIST : ($strVmHost);
+                }
+                else
+                {
+                    @stryBuildVm  = $bLibCVmRequired && $strVmHost ne $strVm ? ($strVmHost, $strVm) : ($strVmHost);
+                }
+
+                foreach my $strBuildVM (@stryBuildVm)
+                {
+                    my $strBuildPath = "${strLibCPath}/${strBuildVM}/libc";
+                    my $bContainerExists = $strBuildVM ne $strVmHost;
+
+                    my $strLibCSmart = "${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so";
+                    my $bRebuild = !$bSmart;
+
+                    # Rebuild if the modification time of the smart file does equal the last changes in source paths
+                    if ($bSmart)
                     {
-                        executeTest("sudo make -C ${strBuildPath} install", {bSuppressStdErr => true});
-
-                        # Load the module dynamically
-                        require pgBackRest::LibC;
-                        pgBackRest::LibC->import(qw(:debug));
-
-                        # Do a basic test to make sure it installed correctly
-                        if (&UVSIZE != 8)
+                        if (!$oStorageBackRest->exists($strLibCSmart) ||
+                            $oStorageBackRest->info($strLibCSmart)->mtime < $lTimestampLast)
                         {
-                            confess &log(ERROR, 'UVSIZE in C library does not equal 8');
+                            &log(INFO, "    libc dependencies have changed for ${strBuildVM}, rebuilding...");
+
+                            $bRebuild = true;
+                        }
+                    }
+
+                    # Delete old libc files from the host
+                    if ($bRebuild)
+                    {
+                        executeTest('sudo rm -rf ' . $oVm->{$strBuildVM}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC');
+                    }
+
+                    if ($bRebuild)
+                    {
+                        &log(INFO, "    build test library for ${strBuildVM} (${strBuildPath})");
+
+                        if (!$rhBinBuild->{$strBuildVM})
+                        {
+                            foreach my $strBinSrcPath (@stryBinSrcPath)
+                            {
+                                $oStorageBackRest->pathCreate(
+                                    "${strBinPath}/${strBuildVM}/${strBinSrcPath}", {bIgnoreExists => true, bCreateParent => true});
+                            }
+
+                            executeTest(
+                                "rsync -rt" . (!$bSmart ? " --delete-excluded" : '') .
+                                " --include=" . join('/*** --include=', @stryBinSrcPath) . '/*** --exclude=*' .
+                                " ${strBackRestBase}/ ${strBinPath}/${strBuildVM}");
                         }
 
-                        # Also check the version number
-                        my $strLibCVersion =
-                            BACKREST_VERSION =~ /dev$/ ?
-                                substr(BACKREST_VERSION, 0, length(BACKREST_VERSION) - 3) . '.999' : BACKREST_VERSION;
+                        # Can't reuse any object files in the libc dir because it does not have proper dependencies
+                        executeTest(
+                            "rsync -rt --exclude=Makefile --delete ${strBackRestBase}/libc/ ${strLibCPath}/${strBuildVM}/libc");
 
-                        if (libcVersion() ne $strLibCVersion)
+                        # It's very expensive to rebuild the Makefile so make sure it has actually changed
+                        my $bMakeRebuild =
+                            !$oStorageBackRest->exists("${strBuildPath}/Makefile") ||
+                            ($oStorageBackRest->info("${strBackRestBase}/libc/Makefile.PL")->mtime >
+                             $oStorageBackRest->info("${strBuildPath}/Makefile.PL")->mtime);
+
+                        if ($bContainerExists)
                         {
-                            confess &log(ERROR, $strLibCVersion . ' was expected for LibC version but found ' . libcVersion());
+                            executeTest(
+                                "docker run -itd -h test-build --name=test-build" .
+                                " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                                {bSuppressStdErr => true});
+                        }
+
+                        if ($bMakeRebuild)
+                        {
+                            &log(INFO, "    rebuild test library Makefile for ${strBuildVM}");
+
+                            executeTest(
+                                ($bContainerExists ? "docker exec -i test-build bash -c '" : '') .
+                                "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
+                                ($bContainerExists ? "'" : ''),
+                                {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+                        }
+
+                        executeTest(
+                            ($bContainerExists ? 'docker exec -i test-build ' : '') .
+                                "make --silent --directory ${strBuildPath}",
+                            {bShowOutputAsync => $bLogDetail});
+
+                        if ($bContainerExists)
+                        {
+                            executeTest("docker rm -f test-build");
+                        }
+
+                        if ($strBuildVM eq $strVmHost)
+                        {
+                            executeTest("sudo make -C ${strBuildPath} install", {bSuppressStdErr => true});
+                            buildLoadLibC();
                         }
                     }
                 }
             }
-
-            # Write files to indicate the last time a build was successful
-            $oStorageBackRest->put($strLibCSmart);
-            utime($lTimestampLast, $lTimestampLast, $strLibCSmart) or
-                confess "unable to set time for ${strLibCSmart}" . (defined($!) ? ":$!" : '');
 
             # Build the package
-            #---------------------------------------------------------------------------------------------------------------------------
-            my $strPackagePath = "${strVagrantPath}/package";
-            my $strPackageSmart = "${strPackagePath}/build.timestamp";
-            my @stryPackageSrcPath = ('lib');
-
-            # Find the lastest modified time for additional dirs that affect the package build
-            foreach my $strPackageSrcPath (@stryPackageSrcPath)
-            {
-                my $hManifest = $oStorageBackRest->manifest($strPackageSrcPath);
-
-                foreach my $strFile (sort(keys(%{$hManifest})))
-                {
-                    if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampLast)
-                    {
-                        $lTimestampLast = $hManifest->{$strFile}{modification_time};
-                    }
-                }
-            }
-
-            # Rebuild if the modification time of the smart file does equal the last changes in source paths
-            if (!$bNoPackage &&
-                (!$bSmart || !$oStorageBackRest->exists($strPackageSmart) ||
-                 $oStorageBackRest->info($strPackageSmart)->mtime < $lTimestampLast))
-            {
-                if ($bSmart)
-                {
-                    &log(INFO, 'package dependencies have changed, rebuilding...');
-                }
-
-                executeTest("sudo rm -rf ${strPackagePath}");
-            }
-
-            # Loop through VMs to do the package builds
+            #-----------------------------------------------------------------------------------------------------------------------
             if (!$bNoPackage)
             {
+                my $strPackagePath = "${strVagrantPath}/package";
+                my $strPackageSmart = "${strPackagePath}/build.timestamp";
+                my @stryPackageSrcPath = ('lib');
+
+                # Find the lastest modified time for additional dirs that affect the package build
+                foreach my $strPackageSrcPath (@stryPackageSrcPath)
+                {
+                    my $hManifest = $oStorageBackRest->manifest($strPackageSrcPath);
+
+                    foreach my $strFile (sort(keys(%{$hManifest})))
+                    {
+                        if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampLast)
+                        {
+                            $lTimestampLast = $hManifest->{$strFile}{modification_time};
+                        }
+                    }
+                }
+
+                # Rebuild if the modification time of the smart file does not equal the last changes in source paths
+                if ((!$bSmart || !$oStorageBackRest->exists($strPackageSmart) ||
+                     $oStorageBackRest->info($strPackageSmart)->mtime < $lTimestampLast))
+                {
+                    if ($bSmart)
+                    {
+                        &log(INFO, 'package dependencies have changed, rebuilding...');
+                    }
+
+                    executeTest("sudo rm -rf ${strPackagePath}");
+                }
+
+                # Loop through VMs to do the package builds
                 my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
                 $oStorageBackRest->pathCreate($strPackagePath, {bIgnoreExists => true, bCreateParent => true});
 
-                foreach my $strBuildVM (sort(@stryBuildVm))
+                foreach my $strBuildVM (@stryBuildVm)
                 {
                     my $strBuildPath = "${strPackagePath}/${strBuildVM}/src";
 
@@ -796,7 +913,7 @@ eval
                         # Patch files in debian package builds
                         #
                         # Use these commands to create a new patch (may need to modify first line):
-                        # BRDIR=/backrest;BRVM=u16;BRPATCHFILE=${BRDIR?}/test/patch/debian-package.patch
+                        # BRDIR=/backrest;BRVM=u18;BRPATCHFILE=${BRDIR?}/test/patch/debian-package.patch
                         # DBDIR=${BRDIR?}/test/.vagrant/package/${BRVM}/src/debian
                         # diff -Naur ${DBDIR?}.old ${DBDIR}.new > ${BRPATCHFILE?}
                         my $strDebianPackagePatch = "${strBackRestBase}/test/patch/debian-package.patch";
@@ -1019,7 +1136,8 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut,
-                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry);
+                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry,
+                        !$bNoValgrind, !$bNoCoverage, !$bNoOptimize, $bBackTrace, $bProfile, !$bNoDebug);
                     $iTestIdx++;
 
                     if ($oJob->run())
@@ -1037,7 +1155,7 @@ eval
         #---------------------------------------------------------------------------------------------------------------------------
         my $iUncoveredCodeModuleTotal = 0;
 
-        if (vmCoverage($strVm) && !$bDryRun)
+        if (vmCoverage($strVm) && !$bNoCoverage && !$bDryRun)
         {
             &log(INFO, 'writing coverage report');
             executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
@@ -1109,16 +1227,10 @@ eval
                     }
                 }
 
-                if (keys(%{$hCoverageActual}) > 0)
-                {
-                    &log(INFO, 'test coverage for: ' . join(', ', sort(keys(%{$hCoverageActual}))));
-                }
-                else
+                if (keys(%{$hCoverageActual}) == 0)
                 {
                     &log(INFO, 'no code modules had all tests run required for coverage');
                 }
-
-                my $strPartialCoverage;
 
                 foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
                 {
@@ -1191,18 +1303,7 @@ eval
                             &log(ERROR, "perl module ${strCodeModule} has 100% coverage but is not marked fully covered");
                             $iUncoveredCodeModuleTotal++;
                         }
-                        else
-                        {
-                            $strPartialCoverage .=
-                                (defined($strPartialCoverage) ? ', ' : '') . "${strCodeModule} (${iCoveragePercent}%)";
-                        }
                     }
-                }
-
-                # If any modules had partial coverage then display them
-                if (defined($strPartialCoverage))
-                {
-                    &log(INFO, "perl module (expected) partial coverage: ${strPartialCoverage}");
                 }
 
                 # Generate C coverage with lcov
@@ -1233,12 +1334,37 @@ eval
 
                         if (defined($strCoverage) && defined($$strCoverage))
                         {
-                            my $iTotalLines = (split(':', ($$strCoverage =~ m/^LF:.*$/mg)[0]))[1] + 0;
-                            my $iCoveredLines = (split(':', ($$strCoverage =~ m/^LH:.*$/mg)[0]))[1] + 0;
+                            my $iTotalLines = (split(':', ($$strCoverage =~ m/^LF\:.*$/mg)[0]))[1] + 0;
+                            my $iCoveredLines = (split(':', ($$strCoverage =~ m/^LH\:.*$/mg)[0]))[1] + 0;
+
+                            my $iTotalBranches = 0;
+                            my $iCoveredBranches = 0;
+
+                            if ($$strCoverage =~ /^BRF\:/mg && $$strCoverage =~ /^BRH\:/mg)
+                            {
+                                # If this isn't here the statements below fail -- huh?
+                                my @match = $$strCoverage =~ m/^BRF\:.*$/mg;
+
+                                $iTotalBranches = (split(':', ($$strCoverage =~ m/^BRF\:.*$/mg)[0]))[1] + 0;
+                                $iCoveredBranches = (split(':', ($$strCoverage =~ m/^BRH\:.*$/mg)[0]))[1] + 0;
+                            }
+
+                            # Generate detail if there is missing coverage
+                            my $strDetail = undef;
 
                             if ($iCoveredLines != $iTotalLines)
                             {
-                                &log(ERROR, "c module ${strCodeModule} is not fully covered ($iCoveredLines/$iTotalLines)");
+                                $strDetail .= "$iCoveredLines/$iTotalLines lines";
+                            }
+
+                            if ($iTotalBranches != $iCoveredBranches)
+                            {
+                                $strDetail .= (defined($strDetail) ? ', ' : '') . "$iCoveredBranches/$iTotalBranches branches";
+                            }
+
+                            if (defined($strDetail))
+                            {
+                                &log(ERROR, "c module ${strCodeModule} is not fully covered ($strDetail)");
                                 $iUncoveredCodeModuleTotal++;
                             }
                         }
@@ -1267,6 +1393,8 @@ eval
     ################################################################################################################################
     # Runs tests
     ################################################################################################################################
+    buildLoadLibC();
+
     my $iRun = 0;
 
     # Create host group for containers

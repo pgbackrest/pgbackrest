@@ -64,8 +64,12 @@ minimize register spilling. For less sophisticated compilers it might be benefic
 ***********************************************************************************************************************************/
 #include <string.h>
 
+#include "common/assert.h"
+#include "common/debug.h"
 #include "common/error.h"
+#include "common/log.h"
 #include "postgres/pageChecksum.h"
+#include "postgres/type.h"
 
 /***********************************************************************************************************************************
 For historical reasons, the 64-bit LSN value is stored as two 32-bit values.
@@ -132,10 +136,18 @@ do { \
 } while (0)
 
 static uint32_t
-pageChecksumBlock(const unsigned char *data, uint32_t size)
+pageChecksumBlock(const unsigned char *page, unsigned int pageSize)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UCHARP, page);
+        FUNCTION_TEST_PARAM(UINT, pageSize);
+
+        FUNCTION_TEST_ASSERT(page != NULL);
+        FUNCTION_TEST_ASSERT(pageSize == PG_PAGE_SIZE);
+    FUNCTION_TEST_END();
+
     uint32_t sums[N_SUMS];
-    uint32_t (*dataArray)[N_SUMS] = (uint32_t (*)[N_SUMS])data;
+    uint32_t (*dataArray)[N_SUMS] = (uint32_t (*)[N_SUMS])page;
     uint32_t result = 0;
     uint32_t i, j;
 
@@ -143,7 +155,7 @@ pageChecksumBlock(const unsigned char *data, uint32_t size)
     memcpy(sums, checksumBaseOffsets, sizeof(checksumBaseOffsets));
 
     /* main checksum calculation */
-    for (i = 0; i < size / sizeof(uint32_t) / N_SUMS; i++)
+    for (i = 0; i < pageSize / sizeof(uint32_t) / N_SUMS; i++)
         for (j = 0; j < N_SUMS; j++)
             CHECKSUM_COMP(sums[j], dataArray[i][j]);
 
@@ -156,7 +168,7 @@ pageChecksumBlock(const unsigned char *data, uint32_t size)
     for (i = 0; i < N_SUMS; i++)
         result ^= sums[i];
 
-    return result;
+    FUNCTION_TEST_RESULT(UINT32, result);
 }
 
 /***********************************************************************************************************************************
@@ -168,6 +180,15 @@ The checksum includes the block number (to detect the case where a page is someh
 uint16_t
 pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageSize)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UCHARP, page);
+        FUNCTION_TEST_PARAM(UINT, blockNo);
+        FUNCTION_TEST_PARAM(UINT, pageSize);
+
+        FUNCTION_TEST_ASSERT(page != NULL);
+        FUNCTION_TEST_ASSERT(pageSize == PG_PAGE_SIZE);
+    FUNCTION_TEST_END();
+
     // Save pd_checksum and temporarily set it to zero, so that the checksum calculation isn't affected by the old checksum stored
     // on the page. Restore it after, because actually updating the checksum is NOT part of the API of this function.
     PageHeader pageHeader = (PageHeader)page;
@@ -181,7 +202,7 @@ pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageS
     checksum ^= blockNo;
 
     // Reduce to a uint16 with an offset of one. That avoids checksums of zero, which seems like a good idea.
-    return (uint16_t)((checksum % 65535) + 1);
+    FUNCTION_TEST_RESULT(UINT16, (uint16_t)(checksum % 65535 + 1));
 }
 
 /***********************************************************************************************************************************
@@ -191,13 +212,25 @@ bool
 pageChecksumTest(
     const unsigned char *page, unsigned int blockNo, unsigned int pageSize, uint32_t ignoreWalId, uint32_t ignoreWalOffset)
 {
-    return
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UCHARP, page);
+        FUNCTION_TEST_PARAM(UINT, blockNo);
+        FUNCTION_TEST_PARAM(UINT, pageSize);
+        FUNCTION_TEST_PARAM(UINT32, ignoreWalId);
+        FUNCTION_TEST_PARAM(UINT32, ignoreWalOffset);
+
+        FUNCTION_TEST_ASSERT(page != NULL);
+        FUNCTION_TEST_ASSERT(pageSize == PG_PAGE_SIZE);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(
+        BOOL,
         // This is a new page so don't test checksum
         ((PageHeader)page)->pd_upper == 0 ||
         // LSN is after the backup started so checksum is not tested because pages may be torn
         (((PageHeader)page)->pd_lsn.walid >= ignoreWalId && ((PageHeader)page)->pd_lsn.xrecoff >= ignoreWalOffset) ||
         // Checksum is valid
-        ((PageHeader)page)->pd_checksum == pageChecksum(page, blockNo, pageSize);
+        ((PageHeader)page)->pd_checksum == pageChecksum(page, blockNo, pageSize));
 }
 
 /***********************************************************************************************************************************
@@ -208,9 +241,21 @@ pageChecksumBufferTest(
     const unsigned char *pageBuffer, unsigned int pageBufferSize, unsigned int blockNoBegin, unsigned int pageSize,
     uint32_t ignoreWalId, uint32_t ignoreWalOffset)
 {
-    // If the buffer does not represent an even number of pages then error
-    if (pageBufferSize % pageSize != 0 || pageBufferSize / pageSize == 0)
-        THROW(AssertError, "buffer size %d, page size %d are not divisible", pageBufferSize, pageSize);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(UCHARP, pageBuffer);
+        FUNCTION_DEBUG_PARAM(UINT, pageBufferSize);
+        FUNCTION_DEBUG_PARAM(UINT, blockNoBegin);
+        FUNCTION_DEBUG_PARAM(UINT, pageSize);
+        FUNCTION_DEBUG_PARAM(UINT32, ignoreWalId);
+        FUNCTION_DEBUG_PARAM(UINT32, ignoreWalOffset);
+
+        FUNCTION_TEST_ASSERT(pageBuffer != NULL);
+        FUNCTION_DEBUG_ASSERT(pageBufferSize > 0);
+        FUNCTION_DEBUG_ASSERT(pageSize == PG_PAGE_SIZE);
+        FUNCTION_DEBUG_ASSERT(pageBufferSize % pageSize == 0);
+    FUNCTION_DEBUG_END();
+
+    bool result = true;
 
     // Loop through all pages in the buffer
     for (unsigned int pageIdx = 0; pageIdx < pageBufferSize / pageSize; pageIdx++)
@@ -219,9 +264,11 @@ pageChecksumBufferTest(
 
         // Return false if the checksums do not match
         if (!pageChecksumTest(page, blockNoBegin + pageIdx, pageSize, ignoreWalId, ignoreWalOffset))
-            return false;
+        {
+            result = false;
+            break;
+        }
     }
 
-    // All checksums match
-    return true;
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }

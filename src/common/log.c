@@ -33,28 +33,25 @@ DEBUG_UNIT_EXTERN int logHandleFile = -1;
 static bool logFileBanner = false;
 
 // Is the timestamp printed in the log?
-static bool logTimestamp = false;
+DEBUG_UNIT_EXTERN bool logTimestamp = false;
 
 /***********************************************************************************************************************************
-Debug Asserts
+Test Asserts
 ***********************************************************************************************************************************/
-#define ASSERT_DEBUG_MESSAGE_LOG_LEVEL_VALID(logLevel)                                                                             \
-    ASSERT_DEBUG(logLevel > logLevelOff)
+#define FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel)                                                                                   \
+    FUNCTION_TEST_ASSERT(logLevel >= LOG_LEVEL_MIN && logLevel <= LOG_LEVEL_MAX)
 
 /***********************************************************************************************************************************
-Log buffer
+Log buffer -- used to format log header and message
 ***********************************************************************************************************************************/
-#define LOG_BUFFER_SIZE                                             32768
-
-char logBuffer[LOG_BUFFER_SIZE];
-char logFormat[LOG_BUFFER_SIZE];
+static char logBuffer[LOG_BUFFER_SIZE];
 
 /***********************************************************************************************************************************
 Convert log level to string and vice versa
 ***********************************************************************************************************************************/
-#define LOG_LEVEL_TOTAL                                             9
+#define LOG_LEVEL_TOTAL                                             (LOG_LEVEL_MAX + 1)
 
-const char *logLevelList[LOG_LEVEL_TOTAL] =
+static const char *logLevelList[LOG_LEVEL_TOTAL] =
 {
     "OFF",
     "ASSERT",
@@ -70,6 +67,12 @@ const char *logLevelList[LOG_LEVEL_TOTAL] =
 LogLevel
 logLevelEnum(const char *logLevel)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, logLevel);
+
+        FUNCTION_TEST_ASSERT(logLevel != NULL);
+    FUNCTION_TEST_END();
+
     LogLevel result = logLevelOff;
 
     // Search for the log level
@@ -79,18 +82,21 @@ logLevelEnum(const char *logLevel)
 
     // If the log level was not found
     if (result == LOG_LEVEL_TOTAL)
-        THROW(AssertError, "log level '%s' not found", logLevel);
+        THROW_FMT(AssertError, "log level '%s' not found", logLevel);
 
-    return result;
+    FUNCTION_TEST_RESULT(ENUM, result);
 }
 
 const char *
 logLevelStr(LogLevel logLevel)
 {
-    if (logLevel >= LOG_LEVEL_TOTAL)
-        THROW(AssertError, "invalid log level '%d'", logLevel);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
 
-    return logLevelList[logLevel];
+        FUNCTION_TEST_ASSERT(logLevel <= LOG_LEVEL_MAX);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(STRINGZ, logLevelList[logLevel]);
 }
 
 /***********************************************************************************************************************************
@@ -99,10 +105,23 @@ Initialize the log system
 void
 logInit(LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevelStdOutParam);
+        FUNCTION_TEST_PARAM(ENUM, logLevelStdErrParam);
+        FUNCTION_TEST_PARAM(ENUM, logLevelFileParam);
+        FUNCTION_TEST_PARAM(BOOL, logTimestampParam);
+
+        FUNCTION_TEST_ASSERT(logLevelStdOutParam <= LOG_LEVEL_MAX);
+        FUNCTION_TEST_ASSERT(logLevelStdErrParam <= LOG_LEVEL_MAX);
+        FUNCTION_TEST_ASSERT(logLevelFileParam <= LOG_LEVEL_MAX);
+    FUNCTION_TEST_END();
+
     logLevelStdOut = logLevelStdOutParam;
     logLevelStdErr = logLevelStdErrParam;
     logLevelFile = logLevelFileParam;
     logTimestamp = logTimestampParam;
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -111,6 +130,12 @@ Set the log file
 void
 logFileSet(const char *logFile)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, logFile);
+
+        FUNCTION_TEST_ASSERT(logFile != NULL);
+    FUNCTION_TEST_END();
+
     // Close the file handle if it is already open
     if (logHandleFile != -1)
     {
@@ -133,6 +158,8 @@ logFileSet(const char *logFile)
         // Output the banner on first log message
         logFileBanner = false;
     }
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -143,38 +170,164 @@ This is useful for log messages that are expensive to generate and should be ski
 static bool
 logWillFile(LogLevel logLevel)
 {
-    ASSERT_DEBUG_MESSAGE_LOG_LEVEL_VALID(logLevel)
-    return logLevel <= logLevelFile && logHandleFile != -1;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
+
+        FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(ENUM, logLevel <= logLevelFile && logHandleFile != -1);
 }
 
 static bool
 logWillStdErr(LogLevel logLevel)
 {
-    ASSERT_DEBUG_MESSAGE_LOG_LEVEL_VALID(logLevel)
-    return logLevel <= logLevelStdErr;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
+
+        FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(ENUM, logLevel <= logLevelStdErr);
 }
 
 static bool
 logWillStdOut(LogLevel logLevel)
 {
-    ASSERT_DEBUG_MESSAGE_LOG_LEVEL_VALID(logLevel)
-    return logLevel <= logLevelStdOut;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
+
+        FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(ENUM, logLevel <= logLevelStdOut);
 }
 
 bool
 logWill(LogLevel logLevel)
 {
-    ASSERT_DEBUG_MESSAGE_LOG_LEVEL_VALID(logLevel)
-    return logWillStdOut(logLevel) || logWillStdErr(logLevel) || logWillFile(logLevel);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
+
+        FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, logWillStdOut(logLevel) || logWillStdErr(logLevel) || logWillFile(logLevel));
+}
+
+/***********************************************************************************************************************************
+Determine if the log level is in the specified range
+***********************************************************************************************************************************/
+static bool
+logRange(LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
+        FUNCTION_TEST_PARAM(ENUM, logRangeMin);
+        FUNCTION_TEST_PARAM(ENUM, logRangeMax);
+
+        FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel);
+        FUNCTION_TEST_ASSERT_LOG_LEVEL(logRangeMin);
+        FUNCTION_TEST_ASSERT_LOG_LEVEL(logRangeMax);
+        FUNCTION_TEST_ASSERT(logRangeMin <= logRangeMax);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, logLevel >= logRangeMin && logLevel <= logRangeMax);
+}
+
+/***********************************************************************************************************************************
+Internal write function that handles errors
+***********************************************************************************************************************************/
+static void
+logWrite(int handle, const char *message, size_t messageSize, const char *errorDetail)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, handle);
+        FUNCTION_TEST_PARAM(STRINGZ, message);
+        FUNCTION_TEST_PARAM(SIZE, messageSize);
+        FUNCTION_TEST_PARAM(STRINGZ, errorDetail);
+
+        FUNCTION_TEST_ASSERT(handle != -1);
+        FUNCTION_TEST_ASSERT(message != NULL);
+        FUNCTION_TEST_ASSERT(messageSize != 0);
+        FUNCTION_TEST_ASSERT(errorDetail != NULL);
+    FUNCTION_TEST_END();
+
+    if ((size_t)write(handle, message, messageSize) != messageSize)
+        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write %s", errorDetail);
+
+    FUNCTION_TEST_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Write out log message and indent subsequent lines
+***********************************************************************************************************************************/
+static void
+logWriteIndent(int handle, const char *message, size_t indentSize, const char *errorDetail)
+{
+    // Indent buffer -- used to write out indent space without having to loop
+    static const char indentBuffer[] = "                                                                                          ";
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, handle);
+        FUNCTION_TEST_PARAM(STRINGZ, message);
+        FUNCTION_TEST_PARAM(SIZE, indentSize);
+        FUNCTION_TEST_PARAM(STRINGZ, errorDetail);
+
+        FUNCTION_TEST_ASSERT(handle != -1);
+        FUNCTION_TEST_ASSERT(message != NULL);
+        FUNCTION_TEST_ASSERT(indentSize > 0 && indentSize < sizeof(indentBuffer));
+        FUNCTION_TEST_ASSERT(errorDetail != NULL);
+    FUNCTION_TEST_END();
+
+    // Indent all lines after the first
+    const char *linefeedPtr = strchr(message, '\n');
+    bool first = true;
+
+    while (linefeedPtr != NULL)
+    {
+        if (!first)
+            logWrite(handle, indentBuffer, indentSize, errorDetail);
+        else
+            first = false;
+
+        logWrite(handle, message, (size_t)(linefeedPtr - message + 1), errorDetail);
+        message += (size_t)(linefeedPtr - message + 1);
+
+        linefeedPtr = strchr(message, '\n');
+    }
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
 General log function
 ***********************************************************************************************************************************/
 void
-logInternal(LogLevel logLevel, const char *fileName, const char *functionName, int code, const char *format, ...)
+logInternal(
+    LogLevel logLevel, LogLevel logRangeMin,  LogLevel logRangeMax, const char *fileName, const char *functionName, int code,
+    const char *format, ...)
 {
-    ASSERT_DEBUG_MESSAGE_LOG_LEVEL_VALID(logLevel)
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
+        FUNCTION_TEST_PARAM(ENUM, logRangeMin);
+        FUNCTION_TEST_PARAM(ENUM, logRangeMax);
+        FUNCTION_TEST_PARAM(STRINGZ, fileName);
+        FUNCTION_TEST_PARAM(STRINGZ, functionName);
+        FUNCTION_TEST_PARAM(INT, code);
+        FUNCTION_TEST_PARAM(STRINGZ, format);
+
+        FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel);
+        FUNCTION_TEST_ASSERT_LOG_LEVEL(logRangeMin);
+        FUNCTION_TEST_ASSERT_LOG_LEVEL(logRangeMax);
+        FUNCTION_TEST_ASSERT(logRangeMin <= logRangeMax);
+        FUNCTION_TEST_ASSERT(fileName != NULL);
+        FUNCTION_TEST_ASSERT(functionName != NULL);
+        FUNCTION_TEST_ASSERT(
+            (code == 0 && logLevel > logLevelError) || (logLevel == logLevelError && code != errorTypeCode(&AssertError)) ||
+            (logLevel == logLevelAssert && code == errorTypeCode(&AssertError)));
+        FUNCTION_TEST_ASSERT(format != NULL);
+    FUNCTION_TEST_END();
 
     size_t bufferPos = 0;   // Current position in the buffer
 
@@ -184,65 +337,43 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
         TimeMSec logTimeMSec = timeMSec();
         time_t logTimeSec = (time_t)(logTimeMSec / MSEC_PER_SEC);
 
-        bufferPos += strftime(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%Y-%m-%d %H:%M:%S", localtime(&logTimeSec));
+        bufferPos += strftime(logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "%Y-%m-%d %H:%M:%S", localtime(&logTimeSec));
         bufferPos += (size_t)snprintf(
-            logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, ".%03d ", (int)(logTimeMSec % 1000));
+            logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, ".%03d ", (int)(logTimeMSec % 1000));
     }
 
     // Add process and aligned log level
-    bufferPos += (size_t)snprintf(
-        logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "P00 %*s: ", 6, logLevelStr(logLevel));
+    bufferPos += (size_t)snprintf(logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "P00 %*s: ", 6, logLevelStr(logLevel));
 
-    // Position after the timestamp and process id for output to stderr
-    size_t messageStdErrPos = bufferPos - strlen(logLevelStr(logLevel)) - 2;
+    // When writing to stderr the timestamp, process, and log level alignment will be skipped
+    char *logBufferStdErr = logBuffer + bufferPos - strlen(logLevelStr(logLevel)) - 2;
 
-    // Check that error code matches log level
-    ASSERT_DEBUG(
-        code == 0 || (logLevel == logLevelError && code != errorTypeCode(&AssertError)) ||
-        (logLevel == logLevelAssert && code == errorTypeCode(&AssertError)));
+    // Set the indent size -- this will need to be adjusted for stderr
+    size_t indentSize = bufferPos;
 
-    // Add code
+    // Add error code
     if (code != 0)
-        bufferPos += (size_t)snprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "[%03d]: ", code);
+        bufferPos += (size_t)snprintf(logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "[%03d]: ", code);
 
     // Add debug info
     if (logLevel >= logLevelDebug)
     {
-        bufferPos += (size_t)snprintf(
-            logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%s:%s(): ", fileName, functionName);
-    }
-
-    // Format message
-    va_list argumentList;
-    va_start(argumentList, format);
-
-    if (logLevel <= logLevelStdErr || strchr(format, '\n') == NULL)
-        bufferPos += (size_t)vsnprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, format, argumentList);
-    else
-    {
-        vsnprintf(logFormat, LOG_BUFFER_SIZE, format, argumentList);
-
-        // Indent all lines after the first
-        const char *formatPtr = logFormat;
-        const char *linefeedPtr = strchr(logFormat, '\n');
-        int indentSize = 12;
-
-        while (linefeedPtr != NULL)
+        // Adding padding for debug and trace levels
+        for (unsigned int paddingIdx = 0; paddingIdx < ((logLevel - logLevelDebug + 1) * 4); paddingIdx++)
         {
-            strncpy(logBuffer + bufferPos, formatPtr, (size_t)(linefeedPtr - formatPtr + 1));
-            bufferPos += (size_t)(linefeedPtr - formatPtr + 1);
-
-            formatPtr = linefeedPtr + 1;
-            linefeedPtr = strchr(formatPtr, '\n');
-
-            for (int indentIdx = 0; indentIdx < indentSize; indentIdx++)
-                logBuffer[bufferPos++] = ' ';
+            logBuffer[bufferPos++] = ' ';
+            indentSize++;
         }
 
-        strcpy(logBuffer + bufferPos, formatPtr);
-        bufferPos += strlen(formatPtr);
+        bufferPos += (size_t)snprintf(
+            logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, "%.*s::%s: ", (int)strlen(fileName) - 2, fileName,
+            functionName);
     }
 
+    // Format message -- this will need to be indented later
+    va_list argumentList;
+    va_start(argumentList, format);
+    bufferPos += (size_t)vsnprintf(logBuffer + bufferPos, LOG_BUFFER_SIZE - bufferPos, format, argumentList);
     va_end(argumentList);
 
     // Add linefeed
@@ -252,42 +383,33 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
     // Determine where to log the message based on log-level-stderr
     if (logWillStdErr(logLevel))
     {
-        if (write(
-            logHandleStdErr, logBuffer + messageStdErrPos, bufferPos - messageStdErrPos) != (int)(bufferPos - messageStdErrPos))
-        {
-            THROW_SYS_ERROR(FileWriteError, "unable to write log to stderr");
-        }
+        if (logRange(logLevelStdErr, logRangeMin, logRangeMax))
+            logWriteIndent(logHandleStdErr, logBufferStdErr, indentSize - (size_t)(logBufferStdErr - logBuffer), "log to stderr");
     }
-    else if (logWillStdOut(logLevel))
-    {
-        if (write(logHandleStdOut, logBuffer, bufferPos) != (int)bufferPos)                     // {uncovered - write does not fail}
-            THROW_SYS_ERROR(FileWriteError, "unable to write log to stdout");                   // {uncovered+}
-    }
+    else if (logWillStdOut(logLevel) && logRange(logLevelStdOut, logRangeMin, logRangeMax))
+        logWriteIndent(logHandleStdOut, logBuffer, indentSize, "log to stdout");
 
     // Log to file
-    if (logWillFile(logLevel))
+    if (logWillFile(logLevel) && logRange(logLevelFile, logRangeMin, logRangeMax))
     {
         // If the banner has not been written
         if (!logFileBanner)
         {
             // Add a blank line if the file already has content
             if (lseek(logHandleFile, 0, SEEK_END) > 0)
-            {
-                if (write(logHandleFile, "\n", 1) != 1)                                         // {uncovered - write does not fail}
-                    THROW_SYS_ERROR(FileWriteError, "unable to write banner spacing to file");  // {uncovered +}
-            }
+                logWrite(logHandleFile, "\n", 1, "banner spacing to file");
 
             // Write process start banner
             const char *banner = "-------------------PROCESS START-------------------\n";
 
-            if (write(logHandleFile, banner, strlen(banner)) != (int)strlen(banner))            // {uncovered - write does not fail}
-                THROW_SYS_ERROR(FileWriteError, "unable to write banner to file");              // {uncovered+}
+            logWrite(logHandleFile, banner, strlen(banner), "banner to file");
 
             // Mark banner as written
             logFileBanner = true;
         }
 
-        if (write(logHandleFile, logBuffer, bufferPos) != (int)bufferPos)                       // {uncovered - write does not fail}
-            THROW_SYS_ERROR(FileWriteError, "unable to write log to file");                     // {uncovered+}
+        logWriteIndent(logHandleFile, logBuffer, indentSize, "log to file");
     }
+
+    FUNCTION_TEST_RESULT_VOID();
 }

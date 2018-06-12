@@ -24,4 +24,12 @@ const Variant *kvGet(const KeyValue *this, const Variant *key);
 VariantList *kvGetList(const KeyValue *this, const Variant *key);
 void kvFree(KeyValue *this);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_KEY_VALUE_TYPE                                                                                              \
+    KeyValue *
+#define FUNCTION_DEBUG_KEY_VALUE_FORMAT(value, buffer, bufferSize)                                                                 \
+    objToLog(value, "KeyValue", buffer, bufferSize)
+
 #endif

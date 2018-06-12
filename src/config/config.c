@@ -4,6 +4,7 @@ Command and Option Configuration
 #include <string.h>
 
 #include "common/assert.h"
+#include "common/debug.h"
 #include "common/error.h"
 #include "common/memContext.h"
 #include "config/config.h"
@@ -69,41 +70,34 @@ typedef struct ConfigOptionData
 /***********************************************************************************************************************************
 Include the automatically generated configuration data
 ***********************************************************************************************************************************/
-#include "config.auto.c"
-
-/***********************************************************************************************************************************
-Debug Asserts
-***********************************************************************************************************************************/
-// The command must be set
-#define ASSERT_DEBUG_COMMAND_SET()                                                                                                 \
-    ASSERT_DEBUG(cfgCommand() != cfgCmdNone)
+#include "config/config.auto.c"
 
 /***********************************************************************************************************************************
 Store the config memory context
 ***********************************************************************************************************************************/
-MemContext *configMemContext = NULL;
+static MemContext *configMemContext = NULL;
 
 /***********************************************************************************************************************************
 Store the current command
 
 This is generally set by the command parser but can also be set by during execute to change commands, i.e. backup -> expire.
 ***********************************************************************************************************************************/
-ConfigCommand command = cfgCmdNone;
+static ConfigCommand command = cfgCmdNone;
 
 /***********************************************************************************************************************************
 Store the location of the executable
 ***********************************************************************************************************************************/
-String *exe = NULL;
+static String *exe = NULL;
 
 /***********************************************************************************************************************************
 Was help requested for the command?
 ***********************************************************************************************************************************/
-bool help = false;
+static bool help = false;
 
 /***********************************************************************************************************************************
 Store the list of parameters passed to the command
 ***********************************************************************************************************************************/
-StringList *paramList = NULL;
+static StringList *paramList = NULL;
 
 /***********************************************************************************************************************************
 Map options names and indexes to option definitions.
@@ -127,6 +121,8 @@ Initialize or reinitialize the configuration data
 void
 cfgInit()
 {
+    FUNCTION_TEST_VOID();
+
     // Reset configuration
     command = cfgCmdNone;
     exe = NULL;
@@ -151,34 +147,32 @@ cfgInit()
         MEM_CONTEXT_NEW_END();
     }
     MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
-Get the current command
+Get/set the current command
 ***********************************************************************************************************************************/
 ConfigCommand
 cfgCommand()
 {
-    return command;
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RESULT(ENUM, command);
 }
 
-/***********************************************************************************************************************************
-Set the current command
-***********************************************************************************************************************************/
 void
 cfgCommandSet(ConfigCommand commandParam)
 {
-    command = commandParam;
-}
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandParam);
 
-/***********************************************************************************************************************************
-Ensure that command id is valid
-***********************************************************************************************************************************/
-void
-cfgCommandCheck(ConfigCommand commandId)
-{
-    if (commandId >= CFG_COMMAND_TOTAL)
-        THROW(AssertError, "command id %d invalid - must be >= 0 and < %d", commandId, CFG_COMMAND_TOTAL);
+        FUNCTION_TEST_ASSERT(commandParam <= cfgCmdNone);
+    FUNCTION_TEST_END();
+
+    command = commandParam;
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -187,13 +181,20 @@ Was help requested?
 bool
 cfgCommandHelp()
 {
-    return help;
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RESULT(BOOL, help);
 }
 
 void
 cfgCommandHelpSet(bool helpParam)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BOOL, helpParam);
+    FUNCTION_TEST_END();
+
     help = helpParam;
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -205,16 +206,27 @@ be modified to do the mapping.
 ConfigDefineCommand
 cfgCommandDefIdFromId(ConfigCommand commandId)
 {
-    cfgCommandCheck(commandId);
-    return (ConfigDefineCommand)commandId;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+
+        FUNCTION_TEST_ASSERT(commandId < cfgCmdNone);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(ENUM, (ConfigDefineCommand)commandId);
 }
 
 /***********************************************************************************************************************************
 Get command id by name
 ***********************************************************************************************************************************/
-int
+ConfigCommand
 cfgCommandId(const char *commandName)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, commandName);
+
+        FUNCTION_TEST_ASSERT(commandName != NULL);
+    FUNCTION_TEST_END();
+
     ConfigCommand commandId;
 
     for (commandId = 0; commandId < cfgCmdNone; commandId++)
@@ -222,9 +234,9 @@ cfgCommandId(const char *commandName)
             break;
 
     if (commandId == cfgCmdNone)
-        THROW(AssertError, "invalid command '%s'", commandName);
+        THROW_FMT(AssertError, "invalid command '%s'", commandName);
 
-    return commandId;
+    FUNCTION_TEST_RESULT(ENUM, commandId);
 }
 
 /***********************************************************************************************************************************
@@ -233,8 +245,13 @@ Get command name by id
 const char *
 cfgCommandName(ConfigCommand commandId)
 {
-    cfgCommandCheck(commandId);
-    return configCommandData[commandId].name;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+
+        FUNCTION_TEST_ASSERT(commandId < cfgCmdNone);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(STRINGZ, configCommandData[commandId].name);
 }
 
 /***********************************************************************************************************************************
@@ -243,6 +260,8 @@ Command parameters, if any
 const StringList *
 cfgCommandParam()
 {
+    FUNCTION_TEST_VOID();
+
     if (paramList == NULL)
     {
         MEM_CONTEXT_BEGIN(configMemContext)
@@ -252,18 +271,25 @@ cfgCommandParam()
         MEM_CONTEXT_END();
     }
 
-    return paramList;
+    FUNCTION_TEST_RESULT(STRING_LIST, paramList);
 }
 
 void
 cfgCommandParamSet(const StringList *param)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, param);
+
+        FUNCTION_TEST_ASSERT(param != NULL);
+    FUNCTION_TEST_END();
+
     MEM_CONTEXT_BEGIN(configMemContext)
     {
         paramList = strLstDup(param);
     }
     MEM_CONTEXT_END();
 
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -272,17 +298,26 @@ Command parameters, if any
 const String *
 cfgExe()
 {
-    return exe;
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RESULT(STRING, exe);
 }
 
 void
 cfgExeSet(const String *exeParam)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, exeParam);
+
+        FUNCTION_TEST_ASSERT(exeParam != NULL);
+    FUNCTION_TEST_END();
+
     MEM_CONTEXT_BEGIN(configMemContext)
     {
         exe = strDup(exeParam);
     }
     MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -291,8 +326,11 @@ Does this command require an immediate lock?
 bool
 cfgLockRequired()
 {
-    ASSERT_DEBUG_COMMAND_SET();
-    return configCommandData[cfgCommand()].lockRequired;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_ASSERT(command != cfgCmdNone);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, configCommandData[cfgCommand()].lockRequired);
 }
 
 /***********************************************************************************************************************************
@@ -301,8 +339,11 @@ Get the lock type required for this command
 LockType
 cfgLockType()
 {
-    ASSERT_DEBUG_COMMAND_SET();
-    return (LockType)configCommandData[cfgCommand()].lockType;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_ASSERT(command != cfgCmdNone);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(ENUM, (LockType)configCommandData[cfgCommand()].lockType);
 }
 
 /***********************************************************************************************************************************
@@ -311,8 +352,11 @@ Does this command log to a file?
 bool
 cfgLogFile()
 {
-    ASSERT_DEBUG_COMMAND_SET();
-    return configCommandData[cfgCommand()].logFile;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_ASSERT(command != cfgCmdNone);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, configCommandData[cfgCommand()].logFile);
 }
 
 /***********************************************************************************************************************************
@@ -321,8 +365,11 @@ Get default log level -- used for log messages that are common to all commands
 LogLevel
 cfgLogLevelDefault()
 {
-    ASSERT_DEBUG_COMMAND_SET();
-    return (LogLevel)configCommandData[cfgCommand()].logLevelDefault;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_ASSERT(command != cfgCmdNone);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(ENUM, (LogLevel)configCommandData[cfgCommand()].logLevelDefault);
 }
 
 /***********************************************************************************************************************************
@@ -331,18 +378,11 @@ Get max stderr log level -- used to suppress error output for higher log levels,
 LogLevel
 cfgLogLevelStdErrMax()
 {
-    ASSERT_DEBUG_COMMAND_SET();
-    return (LogLevel)configCommandData[cfgCommand()].logLevelStdErrMax;
-}
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_ASSERT(command != cfgCmdNone);
+    FUNCTION_TEST_END();
 
-/***********************************************************************************************************************************
-Ensure that option id is valid
-***********************************************************************************************************************************/
-void
-cfgOptionCheck(ConfigOption optionId)
-{
-    if (optionId >= CFG_OPTION_TOTAL)
-        THROW(AssertError, "option id %d invalid - must be >= 0 and < %d", optionId, CFG_OPTION_TOTAL);
+    FUNCTION_TEST_RESULT(ENUM, (LogLevel)configCommandData[cfgCommand()].logLevelStdErrMax);
 }
 
 /***********************************************************************************************************************************
@@ -351,8 +391,13 @@ Get the option define for this option
 ConfigDefineOption
 cfgOptionDefIdFromId(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
-    return configOptionData[optionId].defineId;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(ENUM, configOptionData[optionId].defineId);
 }
 
 /***********************************************************************************************************************************
@@ -361,7 +406,11 @@ Get/set option default
 const Variant *
 cfgOptionDefault(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
 
     if (configOptionValue[optionId].defaultValue == NULL)
     {
@@ -400,8 +449,8 @@ cfgOptionDefault(ConfigOption optionId)
                             configOptionValue[optionId].defaultValue = varDup(defaultValue);
                             break;
 
-                        default:
-                            THROW(                                  // {uncoverable - others types do not have defaults yet}
+                        default:                                    // {uncoverable - other types do not have defaults yet}
+                            THROW_FMT(                              // {+uncoverable}
                                 AssertError, "type for option '%s' does not support defaults", cfgOptionName(optionId));
                     }
                 }
@@ -411,12 +460,19 @@ cfgOptionDefault(ConfigOption optionId)
         }
     }
 
-    return configOptionValue[optionId].defaultValue;
+    FUNCTION_TEST_RESULT(VARIANT, configOptionValue[optionId].defaultValue);
 }
 
 void
 cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(VARIANT, defaultValue);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
     MEM_CONTEXT_BEGIN(configMemContext)
     {
         if (configOptionValue[optionId].defaultValue != NULL)
@@ -433,6 +489,8 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
         }
     }
     MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -441,8 +499,13 @@ Get index for option
 unsigned int
 cfgOptionIndex(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
-    return configOptionData[optionId].index;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(UINT, configOptionData[optionId].index);
 }
 
 /***********************************************************************************************************************************
@@ -451,11 +514,19 @@ Get option id by name
 int
 cfgOptionId(const char *optionName)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, optionName);
+
+        FUNCTION_TEST_ASSERT(optionName != NULL);
+    FUNCTION_TEST_END();
+
+    int result = -1;
+
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
         if (strcmp(optionName, configOptionData[optionId].name) == 0)
-            return optionId;
+            result = optionId;
 
-    return -1;
+    FUNCTION_TEST_RESULT(INT, result);
 }
 
 /***********************************************************************************************************************************
@@ -464,8 +535,13 @@ Get total indexed values for option
 unsigned int
 cfgOptionIndexTotal(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
-    return cfgDefOptionIndexTotal(configOptionData[optionId].defineId);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(UINT, cfgDefOptionIndexTotal(configOptionData[optionId].defineId));
 }
 
 /***********************************************************************************************************************************
@@ -474,19 +550,26 @@ Get the id for this option define
 ConfigOption
 cfgOptionIdFromDefId(ConfigDefineOption optionDefId, unsigned int index)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionDefId);
+        FUNCTION_TEST_PARAM(UINT, index);
+
+        FUNCTION_TEST_ASSERT(optionDefId < cfgDefOptionTotal());
+        FUNCTION_TEST_ASSERT(index < cfgDefOptionIndexTotal(optionDefId));
+    FUNCTION_TEST_END();
+
     // Search for the option
     ConfigOption optionId;
 
-    for (optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
+    for (optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)     // {uncoverable - only a bug in code gen lets this loop end}
         if (configOptionData[optionId].defineId == optionDefId)
             break;
 
-    // Error when not found
-    if (optionId == CFG_OPTION_TOTAL)
-        cfgDefOptionCheck(optionDefId);
+    // If the mapping is not found then there is a bug in the code generator
+    ASSERT_DEBUG(optionId != CFG_OPTION_TOTAL);
 
     // Return with original index
-    return optionId + index;
+    FUNCTION_TEST_RESULT(ENUM, optionId + index);
 }
 
 /***********************************************************************************************************************************
@@ -495,8 +578,13 @@ Get option name by id
 const char *
 cfgOptionName(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
-    return configOptionData[optionId].name;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(STRINGZ, configOptionData[optionId].name);
 }
 
 /***********************************************************************************************************************************
@@ -505,15 +593,28 @@ Was the option negated?
 bool
 cfgOptionNegate(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
-    return configOptionValue[optionId].negate;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, configOptionValue[optionId].negate);
 }
 
 void
 cfgOptionNegateSet(ConfigOption optionId, bool negate)
 {
-    cfgOptionCheck(optionId);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(BOOL, negate);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
     configOptionValue[optionId].negate = negate;
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -522,15 +623,28 @@ Was the option reset?
 bool
 cfgOptionReset(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
-    return configOptionValue[optionId].reset;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, configOptionValue[optionId].reset);
 }
 
 void
 cfgOptionResetSet(ConfigOption optionId, bool reset)
 {
-    cfgOptionCheck(optionId);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(BOOL, reset);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
     configOptionValue[optionId].reset = reset;
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -539,69 +653,90 @@ Get and set config options
 const Variant *
 cfgOption(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
-    return configOptionValue[optionId].value;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(VARIANT, configOptionValue[optionId].value);
 }
 
 bool
 cfgOptionBool(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(ENUM, optionId);
 
-    if (varType(configOptionValue[optionId].value) != varTypeBool)
-        THROW(AssertError, "option '%s' is not type 'bool'", cfgOptionName(optionId));
+        FUNCTION_DEBUG_ASSERT(optionId < CFG_OPTION_TOTAL);
+        FUNCTION_DEBUG_ASSERT(varType(configOptionValue[optionId].value) == varTypeBool);
+    FUNCTION_DEBUG_END();
 
-    return varBool(configOptionValue[optionId].value);
+    FUNCTION_DEBUG_RESULT(BOOL, varBool(configOptionValue[optionId].value));
 }
 
 double
 cfgOptionDbl(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(ENUM, optionId);
 
-    if (varType(configOptionValue[optionId].value) != varTypeDouble)
-        THROW(AssertError, "option '%s' is not type 'double'", cfgOptionName(optionId));
+        FUNCTION_DEBUG_ASSERT(optionId < CFG_OPTION_TOTAL);
+        FUNCTION_DEBUG_ASSERT(varType(configOptionValue[optionId].value) == varTypeDouble);
+    FUNCTION_DEBUG_END();
 
-    return varDbl(configOptionValue[optionId].value);
+    FUNCTION_DEBUG_RESULT(DOUBLE, varDbl(configOptionValue[optionId].value));
 }
 
 int
 cfgOptionInt(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(ENUM, optionId);
 
-    if (varType(configOptionValue[optionId].value) != varTypeInt64)
-        THROW(AssertError, "option '%s' is not type 'int64'", cfgOptionName(optionId));
+        FUNCTION_DEBUG_ASSERT(optionId < CFG_OPTION_TOTAL);
+        FUNCTION_DEBUG_ASSERT(varType(configOptionValue[optionId].value) == varTypeInt64);
+    FUNCTION_DEBUG_END();
 
-    return varIntForce(configOptionValue[optionId].value);
+    FUNCTION_DEBUG_RESULT(INT, varIntForce(configOptionValue[optionId].value));
 }
 
 int64_t
 cfgOptionInt64(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(ENUM, optionId);
 
-    if (varType(configOptionValue[optionId].value) != varTypeInt64)
-        THROW(AssertError, "option '%s' is not type 'int64'", cfgOptionName(optionId));
+        FUNCTION_DEBUG_ASSERT(optionId < CFG_OPTION_TOTAL);
+        FUNCTION_DEBUG_ASSERT(varType(configOptionValue[optionId].value) == varTypeInt64);
+    FUNCTION_DEBUG_END();
 
-    return varInt64(configOptionValue[optionId].value);
+    FUNCTION_DEBUG_RESULT(INT64, varInt64(configOptionValue[optionId].value));
 }
 
 const KeyValue *
 cfgOptionKv(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(ENUM, optionId);
 
-    if (varType(configOptionValue[optionId].value) != varTypeKeyValue)
-        THROW(AssertError, "option '%s' is not type 'KeyValue'", cfgOptionName(optionId));
+        FUNCTION_DEBUG_ASSERT(optionId < CFG_OPTION_TOTAL);
+        FUNCTION_DEBUG_ASSERT(varType(configOptionValue[optionId].value) == varTypeKeyValue);
+    FUNCTION_DEBUG_END();
 
-    return varKv(configOptionValue[optionId].value);
+    FUNCTION_DEBUG_RESULT(KEY_VALUE, varKv(configOptionValue[optionId].value));
 }
 
 const VariantList *
 cfgOptionLst(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(ENUM, optionId);
+
+        FUNCTION_DEBUG_ASSERT(optionId < CFG_OPTION_TOTAL);
+        FUNCTION_DEBUG_ASSERT(
+            configOptionValue[optionId].value == NULL || varType(configOptionValue[optionId].value) == varTypeVariantList);
+    FUNCTION_DEBUG_END();
 
     if (configOptionValue[optionId].value == NULL)
     {
@@ -611,34 +746,39 @@ cfgOptionLst(ConfigOption optionId)
         }
         MEM_CONTEXT_END();
     }
-    else if (varType(configOptionValue[optionId].value) != varTypeVariantList)
-        THROW(AssertError, "option '%s' is not type 'VariantList'", cfgOptionName(optionId));
 
-    return varVarLst(configOptionValue[optionId].value);
+    FUNCTION_DEBUG_RESULT(VARIANT_LIST, varVarLst(configOptionValue[optionId].value));
 }
 
 const String *
 cfgOptionStr(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(ENUM, optionId);
+
+        FUNCTION_DEBUG_ASSERT(optionId < CFG_OPTION_TOTAL);
+        FUNCTION_DEBUG_ASSERT(
+            configOptionValue[optionId].value == NULL || varType(configOptionValue[optionId].value) == varTypeString);
+    FUNCTION_DEBUG_END();
 
     const String *result = NULL;
 
     if (configOptionValue[optionId].value != NULL)
-    {
-        if (varType(configOptionValue[optionId].value) != varTypeString)
-            THROW(AssertError, "option '%s' is not type 'String'", cfgOptionName(optionId));
-
         result = varStr(configOptionValue[optionId].value);
-    }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(CONST_STRING, result);
 }
 
 void
 cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
 {
-    cfgOptionCheck(optionId);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(ENUM, source);
+        FUNCTION_TEST_PARAM(VARIANT, value);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
 
     MEM_CONTEXT_BEGIN(configMemContext)
     {
@@ -689,7 +829,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                     if (varType(value) == varTypeKeyValue)
                         configOptionValue[optionId].value = varDup(value);
                     else
-                        THROW(AssertError, "option '%s' must be set with KeyValue variant", cfgOptionName(optionId));
+                        THROW_FMT(AssertError, "option '%s' must be set with KeyValue variant", cfgOptionName(optionId));
 
                     break;
                 }
@@ -699,7 +839,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                     if (varType(value) == varTypeVariantList)
                         configOptionValue[optionId].value = varDup(value);
                     else
-                        THROW(AssertError, "option '%s' must be set with VariantList variant", cfgOptionName(optionId));
+                        THROW_FMT(AssertError, "option '%s' must be set with VariantList variant", cfgOptionName(optionId));
 
                     break;
                 }
@@ -708,7 +848,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                     if (varType(value) == varTypeString)
                         configOptionValue[optionId].value = varDup(value);
                     else
-                        THROW(AssertError, "option '%s' must be set with String variant", cfgOptionName(optionId));
+                        THROW_FMT(AssertError, "option '%s' must be set with String variant", cfgOptionName(optionId));
 
                     break;
             }
@@ -721,6 +861,8 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
             varFree(valueOld);
     }
     MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -729,8 +871,13 @@ How was the option set (default, param, config)?
 ConfigSource
 cfgOptionSource(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
-    return configOptionValue[optionId].source;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(ENUM, configOptionValue[optionId].source);
 }
 
 /***********************************************************************************************************************************
@@ -739,8 +886,13 @@ Is the option valid for the command and set?
 bool
 cfgOptionTest(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
-    return cfgOptionValid(optionId) && configOptionValue[optionId].value != NULL;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, cfgOptionValid(optionId) && configOptionValue[optionId].value != NULL);
 }
 
 /***********************************************************************************************************************************
@@ -749,13 +901,26 @@ Is the option valid for this command?
 bool
 cfgOptionValid(ConfigOption optionId)
 {
-    cfgOptionCheck(optionId);
-    return configOptionValue[optionId].valid;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, configOptionValue[optionId].valid);
 }
 
 void
 cfgOptionValidSet(ConfigOption optionId, bool valid)
 {
-    cfgOptionCheck(optionId);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(BOOL, valid);
+
+        FUNCTION_TEST_ASSERT(optionId < CFG_OPTION_TOTAL);
+    FUNCTION_TEST_END();
+
     configOptionValue[optionId].valid = valid;
+
+    FUNCTION_TEST_RESULT_VOID();
 }

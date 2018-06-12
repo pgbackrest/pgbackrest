@@ -8,36 +8,15 @@ Test run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // Static tests against known values -- these may break as options change so will need to be kept up to date.  The tests have
     // generally been selected to favor values that are not expected to change but adjustments are welcome as long as the type of
     // test is not drastically changed.
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("check known values"))
     {
-        // Generate standard error messages
-        char optionIdInvalidHighError[256];
-        snprintf(
-            optionIdInvalidHighError, sizeof(optionIdInvalidHighError), "option def id %u invalid - must be >= 0 and < %u",
-            cfgDefOptionTotal(), cfgDefOptionTotal());
-
-        char optionIdInvalidLowError[256];
-        snprintf(
-            optionIdInvalidLowError, sizeof(optionIdInvalidLowError), "option def id -1 invalid - must be >= 0 and < %u",
-            cfgDefOptionTotal());
-
-        char commandIdInvalidHighError[256];
-        snprintf(
-            commandIdInvalidHighError, sizeof(commandIdInvalidHighError), "command def id %u invalid - must be >= 0 and < %u",
-            cfgDefCommandTotal(), cfgDefCommandTotal());
-
-        char commandIdInvalidLowError[256];
-        snprintf(
-            commandIdInvalidLowError, sizeof(commandIdInvalidLowError), "command def id -1 invalid - must be >= 0 and < %u",
-            cfgDefCommandTotal());
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(cfgDefOptionName(cfgDefOptConfig), "config", "option name");
-        TEST_ERROR(cfgDefOptionName(-1), AssertError, optionIdInvalidLowError);
 
         TEST_RESULT_INT(cfgDefOptionId("repo-host"), cfgDefOptRepoHost, "define id");
         TEST_RESULT_INT(cfgDefOptionId(BOGUS_STR), -1, "invalid define id");
@@ -46,6 +25,8 @@ testRun()
         TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgDefCmdBackup, cfgDefOptPgHost), false, "allow list not valid");
         TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgDefCmdBackup, cfgDefOptType), true, "command allow list valid");
 
+        TEST_RESULT_INT(cfgDefOptionAllowListValueTotal(cfgDefCmdBackup, cfgDefOptChecksumPage), 0, "allow list total = 0");
+
         TEST_RESULT_INT(cfgDefOptionAllowListValueTotal(cfgDefCmdBackup, cfgDefOptType), 3, "allow list total");
 
         TEST_RESULT_STR(cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 0), "full", "allow list value 0");
@@ -53,7 +34,7 @@ testRun()
         TEST_RESULT_STR(cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 2), "incr", "allow list value 2");
         TEST_ERROR(
             cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 3), AssertError,
-            "value id 3 invalid - must be >= 0 and < 3");
+            "function test assertion 'valueId < cfgDefOptionAllowListValueTotal(commandDefId, optionDefId)' failed");
 
         TEST_RESULT_BOOL(
             cfgDefOptionAllowListValueValid(cfgDefCmdBackup, cfgDefOptType, "diff"), true, "allow list value valid");
@@ -69,8 +50,12 @@ testRun()
         TEST_RESULT_DOUBLE(
             cfgDefOptionAllowRangeMax(cfgDefCmdArchivePush, cfgDefOptArchivePushQueueMax), 4503599627370496, "range max");
 
-        TEST_ERROR(cfgDefOptionDefault(-1, cfgDefOptCompressLevel), AssertError, commandIdInvalidLowError);
-        TEST_ERROR(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptionTotal()), AssertError, optionIdInvalidHighError);
+        TEST_ERROR(
+            cfgDefOptionDefault(cfgDefCommandTotal(), cfgDefOptCompressLevel), AssertError,
+            "function test assertion 'commandDefId < cfgDefCommandTotal()' failed");
+        TEST_ERROR(cfgDefOptionDefault(
+            cfgDefCmdBackup, cfgDefOptionTotal()), AssertError,
+            "function test assertion 'optionDefId < cfgDefOptionTotal()' failed");
         TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptCompressLevel), "6", "option default exists");
         TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptType), "default", "command default exists");
         TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdLocal, cfgDefOptType), NULL, "command default does not exist");
@@ -88,14 +73,16 @@ testRun()
         TEST_RESULT_STR(cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 2), "xid", "depend option value 2");
         TEST_ERROR(
             cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 3), AssertError,
-            "value id 3 invalid - must be >= 0 and < 3");
+            "function test assertion 'valueId < cfgDefOptionDependValueTotal(commandDefId, optionDefId)' failed");
 
         TEST_RESULT_BOOL(
                 cfgDefOptionDependValueValid(cfgDefCmdRestore, cfgDefOptTarget, "time"), true, "depend option value valid");
         TEST_RESULT_BOOL(
             cfgDefOptionDependValueValid(cfgDefCmdRestore, cfgDefOptTarget, BOGUS_STR), false, "depend option value not valid");
 
-        TEST_ERROR(cfgDefOptionIndexTotal(cfgDefOptionTotal()), AssertError, optionIdInvalidHighError);
+        TEST_ERROR(
+            cfgDefOptionIndexTotal(cfgDefOptionTotal()), AssertError,
+            "function test assertion 'optionDefId < cfgDefOptionTotal()' failed");
         TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgDefOptPgPath), 8, "index total > 1");
         TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgDefOptRepoPath), 1, "index total == 1");
 
@@ -114,15 +101,15 @@ testRun()
         TEST_RESULT_INT(cfgDefOptionSection(cfgDefOptPgPath), cfgDefSectionStanza, "stanza section");
         TEST_RESULT_INT(cfgDefOptionSection(cfgDefOptType), cfgDefSectionCommandLine, "command line only");
 
-        TEST_ERROR(cfgDefOptionSecure(-1), AssertError, optionIdInvalidLowError);
         TEST_RESULT_BOOL(cfgDefOptionSecure(cfgDefOptRepoS3Key), true, "option secure");
         TEST_RESULT_BOOL(cfgDefOptionSecure(cfgDefOptRepoHost), false, "option not secure");
 
-        TEST_ERROR(cfgDefOptionType(-1), AssertError, optionIdInvalidLowError);
         TEST_RESULT_INT(cfgDefOptionType(cfgDefOptType), cfgDefOptTypeString, "string type");
         TEST_RESULT_INT(cfgDefOptionType(cfgDefOptCompress), cfgDefOptTypeBoolean, "boolean type");
 
-        TEST_ERROR(cfgDefOptionValid(cfgDefCmdInfo, cfgDefOptionTotal()), AssertError, optionIdInvalidHighError);
+        TEST_ERROR(
+            cfgDefOptionValid(cfgDefCmdInfo, cfgDefOptionTotal()), AssertError,
+            "function test assertion 'optionDefId < cfgDefOptionTotal()' failed");
         TEST_RESULT_BOOL(cfgDefOptionValid(cfgDefCmdBackup, cfgDefOptType), true, "option valid");
         TEST_RESULT_BOOL(cfgDefOptionValid(cfgDefCmdInfo, cfgDefOptType), false, "option not valid");
     }
@@ -135,7 +122,8 @@ testRun()
         TEST_RESULT_INT(cfgDefOptionHelpNameAltValueTotal(cfgDefOptRepoHost), 1, "name alt value total");
         TEST_RESULT_STR(cfgDefOptionHelpNameAltValue(cfgDefOptRepoHost, 0), "backup-host", "name alt value 0");
         TEST_ERROR(
-            cfgDefOptionHelpNameAltValue(cfgDefOptRepoHost, 1), AssertError, "value id 1 invalid - must be >= 0 and < 1");
+            cfgDefOptionHelpNameAltValue(cfgDefOptRepoHost, 1), AssertError,
+            "function test assertion 'valueId < cfgDefOptionHelpNameAltValueTotal(optionDefId)' failed");
 
         TEST_RESULT_STR(cfgDefCommandHelpSummary(cfgDefCmdBackup), "Backup a database cluster.", "backup command help summary");
         TEST_RESULT_STR(
@@ -161,4 +149,6 @@ testRun()
             "* diff - like an incremental backup but always based on the last full backup.",
             "backup command, type option help description");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

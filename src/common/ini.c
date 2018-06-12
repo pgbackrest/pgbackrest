@@ -5,6 +5,7 @@ Ini Handler
 #include <stdlib.h>
 #include <string.h>
 
+#include "common/debug.h"
 #include "common/memContext.h"
 #include "common/ini.h"
 #include "common/type/keyValue.h"
@@ -49,6 +50,16 @@ Internal function to get an ini value
 static const Variant *
 iniGetInternal(const Ini *this, const String *section, const String *key)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(section != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+    FUNCTION_TEST_END();
+
     const Variant *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -62,7 +73,7 @@ iniGetInternal(const Ini *this, const String *section, const String *key)
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_TEST_RESULT(CONST_VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -71,14 +82,26 @@ Get an ini value -- error if it does not exist
 const Variant *
 iniGet(const Ini *this, const String *section, const String *key)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(section != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+    FUNCTION_TEST_END();
+
     // Get the value
     const Variant *result = iniGetInternal(this, section, key);
 
     // If value is null replace it with default
     if (result == NULL)
-        THROW(FormatError, "section '%s', key '%s' does not exist", strPtr(section), strPtr(key));
+        THROW_FMT(FormatError, "section '%s', key '%s' does not exist", strPtr(section), strPtr(key));
 
     return result;
+
+    FUNCTION_TEST_RESULT(CONST_VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -87,6 +110,17 @@ Get an ini value -- if it does not exist then return specified default
 const Variant *
 iniGetDefault(const Ini *this, const String *section, const String *key, Variant *defaultValue)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(VARIANT, defaultValue);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(section != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+    FUNCTION_TEST_END();
+
     // Get the value
     const Variant *result = iniGetInternal(this, section, key);
 
@@ -94,7 +128,7 @@ iniGetDefault(const Ini *this, const String *section, const String *key, Variant
     if (result == NULL)
         result = defaultValue;
 
-    return result;
+    FUNCTION_TEST_RESULT(CONST_VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -103,6 +137,14 @@ Get a list of keys for a section
 StringList *
 iniSectionKeyList(const Ini *this, const String *section)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+        FUNCTION_TEST_PARAM(STRING, section);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(section != NULL);
+    FUNCTION_TEST_END();
+
     StringList *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -121,7 +163,7 @@ iniSectionKeyList(const Ini *this, const String *section)
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_TEST_RESULT(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -130,11 +172,16 @@ Parse ini from a string
 void
 iniParse(Ini *this, const String *content)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+        FUNCTION_TEST_PARAM(STRING, content);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
     MEM_CONTEXT_BEGIN(this->memContext)
     {
-        if (this->store != NULL)
-            kvFree(this->store);
-
+        kvFree(this->store);
         this->store = kvNew();
 
         if (content != NULL)
@@ -161,7 +208,7 @@ iniParse(Ini *this, const String *content)
                         {
                             // Make sure the section ends with ]
                             if (linePtr[strSize(line) - 1] != ']')
-                                THROW(FormatError, "ini section should end with ] at line %d: %s", lineIdx + 1, linePtr);
+                                THROW_FMT(FormatError, "ini section should end with ] at line %u: %s", lineIdx + 1, linePtr);
 
                             // Assign section
                             section = strNewN(linePtr + 1, strSize(line) - 2);
@@ -170,19 +217,19 @@ iniParse(Ini *this, const String *content)
                         else
                         {
                             if (section == NULL)
-                                THROW(FormatError, "key/value found outside of section at line %d: %s", lineIdx + 1, linePtr);
+                                THROW_FMT(FormatError, "key/value found outside of section at line %u: %s", lineIdx + 1, linePtr);
 
                             // Find the =
                             const char *lineEqual = strstr(linePtr, "=");
 
                             if (lineEqual == NULL)
-                                THROW(FormatError, "missing '=' in key/value at line %d: %s", lineIdx + 1, linePtr);
+                                THROW_FMT(FormatError, "missing '=' in key/value at line %u: %s", lineIdx + 1, linePtr);
 
                             // Extract the key
                             String *key = strTrim(strNewN(linePtr, (size_t)(lineEqual - linePtr)));
 
                             if (strSize(key) == 0)
-                                THROW(FormatError, "key is zero-length at line %d: %s", lineIdx++, linePtr);
+                                THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx++, linePtr);
 
                             // Extract the value
                             Variant *value = varNewStr(strTrim(strNew(lineEqual + 1)));
@@ -197,6 +244,8 @@ iniParse(Ini *this, const String *content)
         }
     }
     MEM_CONTEXT_END()
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -205,6 +254,14 @@ Load ini from a file
 void
 iniLoad(Ini *this, const String *fileName)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+        FUNCTION_TEST_PARAM(STRING, fileName);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(fileName != NULL);
+    FUNCTION_TEST_END();
+
     MEM_CONTEXT_BEGIN(this->memContext)
     {
         // Set the filename
@@ -217,6 +274,8 @@ iniLoad(Ini *this, const String *fileName)
         MEM_CONTEXT_TEMP_END();
     }
     MEM_CONTEXT_END()
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -225,6 +284,18 @@ Set an ini value
 void
 iniSet(Ini *this, const String *section, const String *key, const Variant *value)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(VARIANT, value);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(section != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+        FUNCTION_TEST_ASSERT(value != NULL);
+    FUNCTION_TEST_END();
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         Variant *sectionKey = varNewStr(section);
@@ -236,6 +307,8 @@ iniSet(Ini *this, const String *section, const String *key, const Variant *value
         kvAdd(sectionKv, varNewStr(key), value);
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -244,5 +317,12 @@ Free the ini
 void
 iniFree(Ini *this)
 {
-    memContextFree(this->memContext);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+    FUNCTION_TEST_END();
+
+    if (this != NULL)
+        memContextFree(this->memContext);
+
+    FUNCTION_TEST_RESULT_VOID();
 }

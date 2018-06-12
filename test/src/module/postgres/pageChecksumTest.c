@@ -24,6 +24,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("pageChecksum()"))
     {
@@ -63,6 +65,8 @@ testRun()
         TEST_RESULT_BOOL(
             pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 0x8888, 0x8888), true, "bad checksum past ignore limit");
         TEST_RESULT_BOOL(
+            pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 0x8888, 0x8889), false, "bad checksum before ignore limit");
+        TEST_RESULT_BOOL(
             pageChecksumTest(testPage(0), 0, TEST_PAGE_SIZE, 0x8889, 0x8889), false, "bad checksum before ignore limit");
     }
 
@@ -72,7 +76,7 @@ testRun()
         // Check that assertion fails if page buffer and page size are not divisible
         TEST_ERROR(
             pageChecksumBufferTest(testPage(0), TEST_PAGE_TOTAL * TEST_PAGE_SIZE - 1, 0, TEST_PAGE_SIZE, 0, 0),
-            AssertError, "buffer size 131071, page size 8192 are not divisible");
+            AssertError, "function debug assertion 'pageBufferSize % pageSize == 0' failed");
 
         // Create pages that will pass the test (starting with block 0)
         for (unsigned int pageIdx = 0; pageIdx < TEST_PAGE_TOTAL; pageIdx++)
@@ -111,4 +115,6 @@ testRun()
                 testPage(0), TEST_PAGE_TOTAL * TEST_PAGE_SIZE, blockBegin, TEST_PAGE_SIZE, 0xFFFFFFFF, 0xFFFFFFFF),
             false, "invalid page buffer");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

@@ -8,6 +8,7 @@ String Handler
 #include <string.h>
 
 #include "common/assert.h"
+#include "common/debug.h"
 #include "common/memContext.h"
 #include "common/type/string.h"
 
@@ -27,6 +28,12 @@ Create a new string from a zero-terminated string
 String *
 strNew(const char *string)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, string);
+
+        FUNCTION_TEST_ASSERT(string != NULL);
+    FUNCTION_TEST_END();
+
     // Create object
     String *this = memNew(sizeof(String));
     this->memContext = memContextCurrent();
@@ -36,8 +43,7 @@ strNew(const char *string)
     this->buffer = memNewRaw(this->size + 1);
     strcpy(this->buffer, string);
 
-    // Return buffer
-    return this;
+    FUNCTION_TEST_RESULT(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -49,6 +55,12 @@ character will be used as a string.
 String *
 strNewBuf(const Buffer *buffer)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, buffer);
+
+        FUNCTION_TEST_ASSERT(buffer != NULL);
+    FUNCTION_TEST_END();
+
     // Create object
     String *this = memNew(sizeof(String));
     this->memContext = memContextCurrent();
@@ -59,8 +71,7 @@ strNewBuf(const Buffer *buffer)
     memcpy(this->buffer, (char *)bufPtr(buffer), this->size);
     this->buffer[this->size] = 0;
 
-    // Return buffer
-    return this;
+    FUNCTION_TEST_RESULT(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -69,6 +80,12 @@ Create a new string from a format string with parameters (i.e. sprintf)
 String *
 strNewFmt(const char *format, ...)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, format);
+
+        FUNCTION_TEST_ASSERT(format != NULL);
+    FUNCTION_TEST_END();
+
     // Create object
     String *this = memNew(sizeof(String));
     this->memContext = memContextCurrent();
@@ -85,8 +102,7 @@ strNewFmt(const char *format, ...)
     vsnprintf(this->buffer, this->size + 1, format, argumentList);
     va_end(argumentList);
 
-    // Return buffer
-    return this;
+    FUNCTION_TEST_RESULT(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -97,6 +113,13 @@ The string may or may not be zero-terminated but we'll use that nomeclature sinc
 String *
 strNewN(const char *string, size_t size)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, string);
+        FUNCTION_TEST_PARAM(SIZE, size);
+
+        FUNCTION_TEST_ASSERT(string != NULL);
+    FUNCTION_TEST_END();
+
     // Create object
     String *this = memNew(sizeof(String));
     this->memContext = memContextCurrent();
@@ -108,7 +131,7 @@ strNewN(const char *string, size_t size)
     this->buffer[this->size] = 0;
 
     // Return buffer
-    return this;
+    FUNCTION_TEST_RESULT(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -117,12 +140,18 @@ Return the file part of a string (i.e. everything after the last / or the entire
 String *
 strBase(const String *this)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
     const char *end = this->buffer + this->size;
 
     while (end > this->buffer && *(end - 1) != '/')
         end--;
 
-    return strNew(end);
+    FUNCTION_TEST_RESULT(STRING, strNew(end));
 }
 
 /***********************************************************************************************************************************
@@ -131,19 +160,35 @@ Does the string begin with the specified string?
 bool
 strBeginsWith(const String *this, const String *beginsWith)
 {
-    return strBeginsWithZ(this, strPtr(beginsWith));
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRING, beginsWith);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(beginsWith != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, strBeginsWithZ(this, strPtr(beginsWith)));
 }
 
 bool
 strBeginsWithZ(const String *this, const char *beginsWith)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRINGZ, beginsWith);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(beginsWith != NULL);
+    FUNCTION_TEST_END();
+
     bool result = false;
     unsigned int beginsWithSize = (unsigned int)strlen(beginsWith);
 
     if (this->size >= beginsWithSize)
         result = strncmp(strPtr(this), beginsWith, beginsWithSize) == 0;
 
-    return result;
+    FUNCTION_TEST_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -152,6 +197,14 @@ Append a string
 String *
 strCat(String *this, const char *cat)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRINGZ, cat);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(cat != NULL);
+    FUNCTION_TEST_END();
+
     // Determine length of string to append
     size_t sizeGrow = strlen(cat);
 
@@ -165,7 +218,7 @@ strCat(String *this, const char *cat)
     strcpy(this->buffer + this->size, cat);
     this->size += sizeGrow;
 
-    return this;
+    FUNCTION_TEST_RESULT(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -174,6 +227,14 @@ Append a formatted string
 String *
 strCatFmt(String *this, const char *format, ...)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRINGZ, format);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(format != NULL);
+    FUNCTION_TEST_END();
+
     // Determine how long the allocated string needs to be
     va_list argumentList;
     va_start(argumentList, format);
@@ -193,8 +254,7 @@ strCatFmt(String *this, const char *format, ...)
 
     this->size += sizeGrow;
 
-    // Return buffer
-    return this;
+    FUNCTION_TEST_RESULT(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -203,13 +263,29 @@ C-style string compare
 int
 strCmp(const String *this, const String *compare)
 {
-    return strcmp(strPtr(this), strPtr(compare));
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRING, compare);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(compare != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(INT, strcmp(strPtr(this), strPtr(compare)));
 }
 
 int
 strCmpZ(const String *this, const char *compare)
 {
-    return strcmp(strPtr(this), compare);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRINGZ, compare);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(compare != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(INT, strcmp(strPtr(this), compare));
 }
 
 /***********************************************************************************************************************************
@@ -218,12 +294,16 @@ Duplicate a string from an existing string
 String *
 strDup(const String *this)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+    FUNCTION_TEST_END();
+
     String *result = NULL;
 
     if (this != NULL)
         result = strNew(strPtr(this));
 
-    return result;
+    FUNCTION_TEST_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -232,19 +312,35 @@ Does the string end with the specified string?
 bool
 strEndsWith(const String *this, const String *endsWith)
 {
-    return strEndsWithZ(this, strPtr(endsWith));
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRING, endsWith);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(endsWith != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, strEndsWithZ(this, strPtr(endsWith)));
 }
 
 bool
 strEndsWithZ(const String *this, const char *endsWith)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRINGZ, endsWith);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(endsWith != NULL);
+    FUNCTION_TEST_END();
+
     bool result = false;
     unsigned int endsWithSize = (unsigned int)strlen(endsWith);
 
     if (this->size >= endsWithSize)
         result = strcmp(strPtr(this) + (this->size - endsWithSize), endsWith) == 0;
 
-    return result;
+    FUNCTION_TEST_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -256,18 +352,34 @@ would need a call to strlen().
 bool
 strEq(const String *this, const String *compare)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRING, compare);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(compare != NULL);
+    FUNCTION_TEST_END();
+
     bool result = false;
 
     if (this->size == compare->size)
         result = strcmp(strPtr(this), strPtr(compare)) == 0;
 
-    return result;
+    FUNCTION_TEST_RESULT(BOOL, result);
 }
 
 bool
 strEqZ(const String *this, const char *compare)
 {
-    return strcmp(strPtr(this), compare) == 0;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRINGZ, compare);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(compare != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, strcmp(strPtr(this), compare) == 0);
 }
 
 /***********************************************************************************************************************************
@@ -276,10 +388,16 @@ Upper-case the first letter
 String *
 strFirstUpper(String *this)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
     if (this->size > 0)
         this->buffer[0] = (char)toupper(this->buffer[0]);
 
-    return this;
+    FUNCTION_TEST_RESULT(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -288,10 +406,16 @@ Lower-case the first letter
 String *
 strFirstLower(String *this)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
     if (this->size > 0)
         this->buffer[0] = (char)tolower(this->buffer[0]);
 
-    return this;
+    FUNCTION_TEST_RESULT(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -300,11 +424,17 @@ Upper-case entire string
 String *
 strUpper(String *this)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
     if (this->size > 0)
         for (unsigned int idx = 0; idx <= this->size; idx++)
             this->buffer[idx] = (char)toupper(this->buffer[idx]);
 
-    return this;
+    FUNCTION_TEST_RESULT(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -313,11 +443,17 @@ Upper-case entire string
 String *
 strLower(String *this)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
     if (this->size > 0)
         for (unsigned int idx = 0; idx <= this->size; idx++)
             this->buffer[idx] = (char)tolower(this->buffer[idx]);
 
-    return this;
+    FUNCTION_TEST_RESULT(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -326,12 +462,19 @@ Return the path part of a string (i.e. everything before the last / or "" if the
 String *
 strPath(const String *this)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
     const char *end = this->buffer + this->size;
 
     while (end > this->buffer && *(end - 1) != '/')
         end--;
 
-    return strNewN(this->buffer, end - this->buffer <= 1 ? (size_t)(end - this->buffer) : (size_t)(end - this->buffer - 1));
+    FUNCTION_TEST_RESULT(
+        STRING, strNewN(this->buffer, end - this->buffer <= 1 ? (size_t)(end - this->buffer) : (size_t)(end - this->buffer - 1)));
 }
 
 /***********************************************************************************************************************************
@@ -340,12 +483,47 @@ Return string ptr
 const char *
 strPtr(const String *this)
 {
-    const char *result = NULL;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+    FUNCTION_TEST_END();
+
+    char *result = NULL;
 
     if (this != NULL)
-        result = (const char *)this->buffer;
+        result = this->buffer;
 
-    return result;
+    FUNCTION_TEST_RESULT(CHARP, result);
+}
+
+/***********************************************************************************************************************************
+Quote a string
+***********************************************************************************************************************************/
+String *
+strQuote(const String *this, const String *quote)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRING, quote);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(quote != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(STRING, strQuoteZ(this, strPtr(quote)));
+}
+
+String *
+strQuoteZ(const String *this, const char *quote)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRINGZ, quote);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(quote != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(STRING, strNewFmt("%s%s%s", quote, strPtr(this), quote));
 }
 
 /***********************************************************************************************************************************
@@ -354,7 +532,15 @@ Return a substring given only the start position
 String *
 strSub(const String *this, size_t start)
 {
-    return strSubN(this, start, this->size - start);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(SIZE, start);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(start < this->size);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(STRING, strSubN(this, start, this->size - start));
 }
 
 /***********************************************************************************************************************************
@@ -363,10 +549,17 @@ Return a substring given the start position and size
 String *
 strSubN(const String *this, size_t start, size_t size)
 {
-    ASSERT(start < this->size);
-    ASSERT(start + size <= this->size);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(SIZE, start);
+        FUNCTION_TEST_PARAM(SIZE, size);
 
-    return strNewN(this->buffer + start, size);
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(start < this->size);
+        FUNCTION_TEST_ASSERT(start + size <= this->size);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(STRING, strNewN(this->buffer + start, size));
 }
 
 /***********************************************************************************************************************************
@@ -375,7 +568,13 @@ Return string size
 size_t
 strSize(const String *this)
 {
-    return this->size;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(SIZE, this->size);
 }
 
 /***********************************************************************************************************************************
@@ -384,6 +583,12 @@ Trim whitespace from the beginnning and end of a string
 String *
 strTrim(String *this)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
     // Nothing to trim if size is zero
     if (this->size > 0)
     {
@@ -420,7 +625,7 @@ strTrim(String *this)
         }
     }
 
-    return this;
+    FUNCTION_TEST_RESULT(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -429,16 +634,23 @@ Return the index to the location of the the first occurrence of a character with
 int
 strChr(const String *this, char chr)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
     int result = -1;
 
     if (this->size > 0)
     {
         const char *ptr = strchr(this->buffer, chr);
+
         if (ptr != NULL)
-            result =  (int)(ptr - this->buffer);
+            result = (int)(ptr - this->buffer);
     }
 
-    return result;
+    FUNCTION_TEST_RESULT(INT, result);
 }
 
 /***********************************************************************************************************************************
@@ -447,9 +659,12 @@ Truncate the end of a string from the index provided to the current end (e.g. 12
 String *
 strTrunc(String *this, int idx)
 {
-    // If the index position is outside the array boundaries then error
-    if (idx < 0 || (size_t)idx > this->size)
-        THROW(AssertError, "index passed is outside the string boundaries");
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(idx >= 0 && (size_t)idx <= this->size);
+    FUNCTION_TEST_END();
 
     if (this->size > 0)
     {
@@ -465,7 +680,31 @@ strTrunc(String *this, int idx)
         MEM_CONTEXT_END();
     }
 
-    return this;
+    FUNCTION_TEST_RESULT(STRING, this);
+}
+
+/***********************************************************************************************************************************
+Convert to a zero-terminated string for logging
+***********************************************************************************************************************************/
+size_t
+strToLog(const String *this, char *buffer, size_t bufferSize)
+{
+    size_t result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *string = NULL;
+
+        if (this == NULL)
+            string = strNew("null");
+        else
+            string = strNewFmt("{\"%s\"}", strPtr(this));
+
+        result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -474,6 +713,10 @@ Free the string
 void
 strFree(String *this)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+    FUNCTION_TEST_END();
+
     if (this != NULL)
     {
         MEM_CONTEXT_BEGIN(this->memContext)
@@ -483,4 +726,6 @@ strFree(String *this)
         }
         MEM_CONTEXT_END();
     }
+
+    FUNCTION_TEST_RESULT_VOID();
 }

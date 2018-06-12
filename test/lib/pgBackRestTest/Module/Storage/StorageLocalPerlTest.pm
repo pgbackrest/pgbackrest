@@ -12,11 +12,10 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
-use Digest::SHA qw(sha1_hex);
-
 use pgBackRest::Config::Config;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
+use pgBackRest::LibC qw(:crypto);
 use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Local;
@@ -246,7 +245,7 @@ sub run
         $self->testResult(sub {$oFileIo->read(\$tContent, $iFileSize)}, $iFileSize, "read $iFileSize bytes");
         $self->testResult(sub {$oFileIo->close()}, true, 'close');
         $self->testResult($tContent, $strFileContent, '    check read');
-        $self->testResult($oFileIo->result(STORAGE_FILTER_SHA), sha1_hex($strFileContent), '    check hash');
+        $self->testResult($oFileIo->result(STORAGE_FILTER_SHA), cryptoHashOne('sha1', $strFileContent), '    check hash');
     }
 
     ################################################################################################################################
@@ -283,7 +282,7 @@ sub run
 
         $self->testResult(
             sub {$self->storageLocal()->hashSize($strFile)},
-            qw{(} . sha1_hex($strFileContent) . ', ' . $iFileSize . qw{)}, '    check hash/size');
+            qw{(} . cryptoHashOne('sha1', $strFileContent) . ', ' . $iFileSize . qw{)}, '    check hash/size');
     }
 
     ################################################################################################################################
@@ -361,7 +360,7 @@ sub run
     if ($self->begin('encryption'))
     {
         my $strCipherPass = 'x';
-        $self->testResult(sub {sha1_hex($strFileContent)}, $strFileHash, 'hash check contents to be written');
+        $self->testResult(sub {cryptoHashOne('sha1', $strFileContent)}, $strFileHash, 'hash check contents to be written');
 
         # Error when passphrase not passed
         #---------------------------------------------------------------------------------------------------------------------------
@@ -381,7 +380,7 @@ sub run
             '    test storage encrypted and valid');
 
         $self->testResult(
-            sub {sha1_hex(${storageTest()->get($strFile)}) ne $strFileHash}, true, '    check written sha1 different');
+            sub {cryptoHashOne('sha1', ${storageTest()->get($strFile)}) ne $strFileHash}, true, '    check written sha1 different');
 
         # Error when passphrase not passed
         #---------------------------------------------------------------------------------------------------------------------------
@@ -406,8 +405,8 @@ sub run
             true, 'copy - decrypt/encrypt');
 
         $self->testResult(
-            sub {sha1_hex(${$self->storageEncrypt()->get($strFileCopy, {strCipherPass => $strCipherPass})})}, $strFileHash,
-                '    check decrypted copy file sha1 same as original plaintext file');
+            sub {cryptoHashOne('sha1', ${$self->storageEncrypt()->get($strFileCopy, {strCipherPass => $strCipherPass})})},
+            $strFileHash, '    check decrypted copy file sha1 same as original plaintext file');
 
         # Write an empty encrypted file
         #---------------------------------------------------------------------------------------------------------------------------

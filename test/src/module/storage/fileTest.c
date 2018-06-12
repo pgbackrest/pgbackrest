@@ -9,6 +9,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // Create default storage object for testing
     Storage *storageTest = storageNewP(strNew(testPath()), .write = true, .bufferSize = 2);
 
@@ -147,7 +149,7 @@ testRun()
         TEST_RESULT_VOID(storageFileReadFree(NULL), "   free null file");
         TEST_RESULT_VOID(storageFileReadPosixFree(NULL), "   free null file");
 
-        TEST_RESULT_VOID(storageFileReadMove(NULL, NULL), "   move null file");
+        TEST_RESULT_VOID(storageFileReadMove(NULL, memContextTop()), "   move null file");
     }
 
     // *****************************************************************************************************************************
@@ -246,7 +248,7 @@ testRun()
         TEST_RESULT_VOID(storageFileWriteFree(file), "   free file");
         TEST_RESULT_VOID(storageFileWriteFree(NULL), "   free null file");
         TEST_RESULT_VOID(storageFileWritePosixFree(NULL), "   free null posix file");
-        TEST_RESULT_VOID(storageFileWriteMove(NULL, NULL), "   move null file");
+        TEST_RESULT_VOID(storageFileWriteMove(NULL, memContextTop()), "   move null file");
 
         Buffer *expectedBuffer = storageGetNP(storageNewReadNP(storageTest, fileName));
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents");
@@ -275,4 +277,6 @@ testRun()
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

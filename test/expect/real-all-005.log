@@ -26,6 +26,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
@@ -50,6 +51,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
+log-timestamp=n
 protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
@@ -88,6 +90,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 protocol-timeout=60
 repo1-path=[TEST_PATH]/backup/repo
 
@@ -130,6 +133,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
@@ -156,6 +160,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
+log-timestamp=n
 protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
@@ -195,6 +200,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 protocol-timeout=60
 repo1-path=[TEST_PATH]/backup/repo
 
@@ -211,7 +217,7 @@ check db - verify check command on standby (db-standby host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 incr backup - update during backup (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stop-auto --no-archive-check --buffer-size=32768 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stop-auto --buffer-size=32768 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -231,6 +237,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
@@ -257,6 +264,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
+log-timestamp=n
 protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
@@ -296,6 +304,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 protocol-timeout=60
 repo1-path=[TEST_PATH]/backup/repo
 

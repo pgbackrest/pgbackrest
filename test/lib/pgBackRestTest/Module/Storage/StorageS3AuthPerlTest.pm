@@ -98,7 +98,7 @@ sub run
             sub {s3AuthorizationHeader(
                 'us-east-1', 'bucket.s3.amazonaws.com', 'GET', qw(/), 'list-type=2', '20170606T121212Z',
                 {'authorization' => BOGUS, 'host' => 'bucket.s3.amazonaws.com', 'x-amz-date' => '20170606T121212Z'},
-                'AKIAIOSFODNN7EXAMPLE', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+                'AKIAIOSFODNN7EXAMPLE', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY', undef,
                 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')},
             '({authorization => AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,' .
                 'SignedHeaders=host;x-amz-content-sha256;x-amz-date,' .
@@ -121,6 +121,46 @@ sub run
             "20170606/us-east-1/s3/aws4_request\n" .
             "4f2d4ee971f579e60ba6b3895e87434e17b1260f04392f02b512c1e8bada72dd)",
             'authorization header request');
+
+        $self->testResult(
+            sub {s3AuthorizationHeader(
+                'us-east-1', 'bucket.s3.amazonaws.com', 'GET', qw(/), 'list-type=2', '20170606T121212Z',
+                {'authorization' => BOGUS, 'host' => 'bucket.s3.amazonaws.com', 'x-amz-date' => '20170606T121212Z'},
+                'AKIAIOSFODNN7EXAMPLE', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+                'AQoDYXdzEPT//////////wEXAMPLEtc764bNrC9SAPBSM22wDOk4x4HIZ8j4FZTwdQW' .
+                'LWsKWHGBuFqwAeMicRXmxfpSPfIeoIYRqTflfKD8YUuwthAx7mSEI/qkPpKPi/kMcGd' .
+                'QrmGdeehM4IC1NtBmUpp2wUE8phUZampKsburEDy0KPkyQDYwT7WZ0wq5VSXDvp75YU' .
+                '9HFvlRd8Tx6q6fE8YQcHNVXAkiY9q6d+xo0rKwT38xVqr7ZD0u0iPPkUL64lIZbqBAz' .
+                '+scqKmlzm8FDrypNC9Yjc8fPOLn9FX9KSYvKTr4rvx3iSIlTJabIQwj2ICCR/oLxBA==',
+                'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')},
+            '({authorization => AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,' .
+                'SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,' .
+                'Signature=c12565bf5d7e0ef623f76d66e09e5431aebef803f6a25a01c586525f17e474a3,' .
+                ' host => bucket.s3.amazonaws.com,' .
+                ' x-amz-content-sha256 => e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855,' .
+                ' x-amz-date => 20170606T121212Z, x-amz-security-token => AQoDYXdzEPT//////////wEXAMPLEtc764bNrC9SAPBSM22wDOk4x4H' .
+                    'IZ8j4FZTwdQWLWsKWHGBuFqwAeMicRXmxfpSPfIeoIYRqTflfKD8YUuwthAx7mSEI/qkPpKPi/kMcGdQrmGdeehM4IC1NtBmUpp2wUE8phUZ' .
+                    'ampKsburEDy0KPkyQDYwT7WZ0wq5VSXDvp75YU9HFvlRd8Tx6q6fE8YQcHNVXAkiY9q6d+xo0rKwT38xVqr7ZD0u0iPPkUL64lIZbqBAz+sc' .
+                    'qKmlzm8FDrypNC9Yjc8fPOLn9FX9KSYvKTr4rvx3iSIlTJabIQwj2ICCR/oLxBA==}, ' .
+            "GET\n" .
+            "/\n" .
+            "list-type=2\n" .
+            "host:bucket.s3.amazonaws.com\n" .
+            "x-amz-content-sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n" .
+            "x-amz-date:20170606T121212Z\n" .
+            "x-amz-security-token:AQoDYXdzEPT//////////wEXAMPLEtc764bNrC9SAPBSM22wDOk4x4HIZ8j4FZTwdQWLWsKWHGBuFqwAeMicRXmxfpSPfIe" .
+                "oIYRqTflfKD8YUuwthAx7mSEI/qkPpKPi/kMcGdQrmGdeehM4IC1NtBmUpp2wUE8phUZampKsburEDy0KPkyQDYwT7WZ0wq5VSXDvp75YU9HFvlR" .
+                "d8Tx6q6fE8YQcHNVXAkiY9q6d+xo0rKwT38xVqr7ZD0u0iPPkUL64lIZbqBAz+scqKmlzm8FDrypNC9Yjc8fPOLn9FX9KSYvKTr4rvx3iSIlTJab" .
+                "IQwj2ICCR/oLxBA==\n" .
+            "\n" .
+            "host;x-amz-content-sha256;x-amz-date;x-amz-security-token\n" .
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855, " .
+                "host;x-amz-content-sha256;x-amz-date;x-amz-security-token, " .
+                "AWS4-HMAC-SHA256\n" .
+            "20170606T121212Z\n" .
+            "20170606/us-east-1/s3/aws4_request\n" .
+            "c171e7a68355ef4e0e6e1003d2d4a79a7b06e7424e3000ba619f5f7882a3251e)",
+            'authorization header request with token');
     }
 }
 

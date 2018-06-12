@@ -12,10 +12,9 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
-use Digest::SHA qw(sha1_hex);
-
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
+use pgBackRest::LibC qw(:crypto);
 use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::Posix::Driver;
@@ -55,8 +54,9 @@ sub run
 
         $self->testResult(sub {$oShaIo->close()}, true, 'close');
         my $strSha = $self->testResult(
-            sub {$oShaIo->result(STORAGE_FILTER_SHA)}, sha1_hex($strFileContent), 'check hash against original content');
-        $self->testResult($strSha, sha1_hex($tBuffer), 'check hash against buffer');
+            sub {$oShaIo->result(STORAGE_FILTER_SHA)}, cryptoHashOne('sha1', $strFileContent),
+            'check hash against original content');
+        $self->testResult($strSha, cryptoHashOne('sha1', $tBuffer), 'check hash against buffer');
         $self->testResult(sub {${storageTest()->get($strFile)}}, $strFileContent, 'check content');
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -74,7 +74,7 @@ sub run
         $self->testResult(sub {$oShaIo->close()}, true, '    close');
         $self->testResult(sub {$oShaIo->close()}, false, '    close again to make sure nothing bad happens');
         $self->testResult($oShaIo->result(STORAGE_FILTER_SHA), '1c7e00fd09b9dd11fc2966590b3e3274645dd031', '    check hash');
-        $self->testResult(sha1_hex($tBuffer), '1c7e00fd09b9dd11fc2966590b3e3274645dd031', '    check content');
+        $self->testResult(cryptoHashOne('sha1', $tBuffer), '1c7e00fd09b9dd11fc2966590b3e3274645dd031', '    check content');
     }
 
     ################################################################################################################################
@@ -98,7 +98,8 @@ sub run
 
         $self->testResult(sub {$oShaIo->close()}, true, 'close');
         my $strSha = $self->testResult(
-            sub {$oShaIo->result(STORAGE_FILTER_SHA)}, sha1_hex($strFileContent), 'check hash against original content');
+            sub {$oShaIo->result(STORAGE_FILTER_SHA)}, cryptoHashOne('sha1', $strFileContent),
+            'check hash against original content');
         $self->testResult(sub {${storageTest()->get($strFile)}}, $strFileContent, 'check content');
     }
 }

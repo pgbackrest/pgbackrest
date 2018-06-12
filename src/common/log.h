@@ -6,21 +6,14 @@ Log Handler
 
 #include <stdbool.h>
 
+#include "common/logLevel.h"
+
 /***********************************************************************************************************************************
-Log types
+Max size allowed for a single log message including header
 ***********************************************************************************************************************************/
-typedef enum
-{
-    logLevelOff,
-    logLevelAssert,
-    logLevelError,
-    logLevelProtocol,
-    logLevelWarn,
-    logLevelInfo,
-    logLevelDetail,
-    logLevelDebug,
-    logLevelTrace,
-} LogLevel;
+#ifndef LOG_BUFFER_SIZE
+    #define LOG_BUFFER_SIZE                                         ((size_t)(32 * 1024))
+#endif
 
 /***********************************************************************************************************************************
 Expose internal data for unit testing/debugging
@@ -33,6 +26,8 @@ Expose internal data for unit testing/debugging
     extern int logHandleStdOut;
     extern int logHandleStdErr;
     extern int logHandleFile;
+
+    extern bool logTimestamp;
 #endif
 
 /***********************************************************************************************************************************
@@ -51,27 +46,37 @@ Macros
 
 Only call logInternal() if the message will be logged to one of the available outputs.
 ***********************************************************************************************************************************/
-#define LOG_ANY(logLevel, code, ...)                                                                                               \
+#define LOG_INTERNAL(logLevel, logRangeMin, logRangeMax, code, ...)                                                                \
+    logInternal(logLevel, logRangeMin, logRangeMax, __FILE__, __func__, code, __VA_ARGS__)
+
+#define LOG(logLevel, code, ...)                                                                                                   \
+    LOG_INTERNAL(logLevel, LOG_LEVEL_MIN, LOG_LEVEL_MAX, code, __VA_ARGS__)
+
+#define LOG_WILL(logLevel, code, ...)                                                                                              \
+do                                                                                                                                 \
 {                                                                                                                                  \
     if (logWill(logLevel))                                                                                                         \
-        logInternal(logLevel, __FILE__, __func__, code, __VA_ARGS__);                                                              \
-}
+        LOG(logLevel, code, __VA_ARGS__);                                                                                          \
+} while(0)
 
 #define LOG_ASSERT(...)                                                                                                            \
-    LOG_ANY(logLevelAssert, errorTypeCode(&AssertError), __VA_ARGS__)
+    LOG_WILL(logLevelAssert, errorTypeCode(&AssertError), __VA_ARGS__)
 #define LOG_ERROR(code, ...)                                                                                                       \
-    LOG_ANY(logLevelError, code, __VA_ARGS__)
-#define LOG_DEBUG(...)                                                                                                             \
-    LOG_ANY(logLevelDebug, 0, __VA_ARGS__)
-#define LOG_INFO(...)                                                                                                              \
-    LOG_ANY(logLevelInfo, 0, __VA_ARGS__)
+    LOG_WILL(logLevelError, code, __VA_ARGS__)
 #define LOG_WARN(...)                                                                                                              \
-    LOG_ANY(logLevelWarn, 0, __VA_ARGS__)
+    LOG_WILL(logLevelWarn, 0, __VA_ARGS__)
+#define LOG_INFO(...)                                                                                                              \
+    LOG_WILL(logLevelInfo, 0, __VA_ARGS__)
+#define LOG_DETAIL(...)                                                                                                            \
+    LOG_WILL(logLevelDetail, 0, __VA_ARGS__)
+#define LOG_TRACE(...)                                                                                                             \
+    LOG_WILL(logLevelTrace, 0, __VA_ARGS__)
 
 /***********************************************************************************************************************************
 Internal Functions
 ***********************************************************************************************************************************/
 void logInternal(
-    LogLevel logLevel, const char *fileName, const char *functionName, int code, const char *format, ...);
+    LogLevel logLevel, LogLevel logRangeMin,  LogLevel logRangeMax, const char *fileName, const char *functionName,
+    int code, const char *format, ...);
 
 #endif

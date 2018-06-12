@@ -68,10 +68,17 @@ Functions to get information about the current error
 const ErrorType *errorType();
 int errorCode();
 const char *errorFileName();
+const char *errorFunctionName();
 int errorFileLine();
+bool errorInstanceOf(const ErrorType *errorTypeTest);
 const char *errorMessage();
 const char *errorName();
-bool errorInstanceOf(const ErrorType *errorTypeTest);
+const char *errorStackTrace();
+
+/***********************************************************************************************************************************
+Functions to get information about the try stack
+***********************************************************************************************************************************/
+unsigned int errorTryDepth();
 
 /***********************************************************************************************************************************
 Begin a block where errors can be thrown
@@ -79,7 +86,7 @@ Begin a block where errors can be thrown
 #define TRY_BEGIN()                                                                                                                \
 do                                                                                                                                 \
 {                                                                                                                                  \
-    if (errorInternalTry(__FILE__, __LINE__) && setjmp(*errorInternalJump()) >= 0)                                                 \
+    if (errorInternalTry(__FILE__, __func__, __LINE__) && setjmp(*errorInternalJump()) >= 0)                                       \
     {                                                                                                                              \
         while (errorInternalProcess(false))                                                                                        \
             if (errorInternalStateTry())
@@ -117,26 +124,40 @@ error information to stderr.
 
 The seldom used "THROWP" variants allow an error to be thrown with a pointer to the error type.
 ***********************************************************************************************************************************/
-#define THROW(errorType, ...)                                                                                                      \
-    errorInternalThrow(&errorType, __FILE__, __LINE__, __VA_ARGS__)
-#define THROWP(errorType, ...)                                                                                                     \
-    errorInternalThrow(errorType, __FILE__, __LINE__, __VA_ARGS__)
+#define THROW(errorType, message)                                                                                                  \
+    errorInternalThrow(&errorType, __FILE__, __func__, __LINE__, message)
+#define THROW_FMT(errorType, ...)                                                                                                  \
+    errorInternalThrowFmt(&errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
+#define THROWP(errorType, message)                                                                                                 \
+    errorInternalThrow(errorType, __FILE__, __func__, __LINE__, message)
+#define THROWP_FMT(errorType, ...)                                                                                                 \
+    errorInternalThrowFmt(errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
-#define THROW_CODE(errorCode, ...)                                                                                                 \
-    errorInternalThrow(errorTypeFromCode(errorCode), __FILE__, __LINE__, __VA_ARGS__)
+#define THROW_CODE(errorCode, message)                                                                                             \
+    errorInternalThrow(errorTypeFromCode(errorCode), __FILE__, __func__, __LINE__, message)
+#define THROW_CODE_FMT(errorCode, ...)                                                                                             \
+    errorInternalThrowFmt(errorTypeFromCode(errorCode), __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /***********************************************************************************************************************************
 Throw an error when a system call fails
 ***********************************************************************************************************************************/
-#define THROW_SYS_ERROR(errorType, ...)                                                                                            \
-    errorInternalThrowSys(errno, &errorType, __FILE__, __LINE__, __VA_ARGS__)
-#define THROWP_SYS_ERROR(errorType, ...)                                                                                           \
-    errorInternalThrowSys(errno, errorType, __FILE__, __LINE__, __VA_ARGS__)
+#define THROW_SYS_ERROR(errorType, message)                                                                                        \
+    errorInternalThrowSys(errno, &errorType, __FILE__, __func__, __LINE__, message)
+#define THROW_SYS_ERROR_FMT(errorType, ...)                                                                                        \
+    errorInternalThrowSysFmt(errno, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
+#define THROWP_SYS_ERROR(errorType, message)                                                                                       \
+    errorInternalThrowSys(errno, errorType, __FILE__, __func__, __LINE__, message)
+#define THROWP_SYS_ERROR_FMT(errorType, ...)                                                                                       \
+    errorInternalThrowSysFmt(errno, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
-#define THROW_SYS_ERROR_CODE(errNo, errorType, ...)                                                                                \
-    errorInternalThrowSys(errNo, &errorType, __FILE__, __LINE__, __VA_ARGS__)
-#define THROWP_SYS_ERROR_CODE(errNo, errorType, ...)                                                                               \
-    errorInternalThrowSys(errNo, errorType, __FILE__, __LINE__, __VA_ARGS__)
+#define THROW_SYS_ERROR_CODE(errNo, errorType, message)                                                                            \
+    errorInternalThrowSys(errNo, &errorType, __FILE__, __func__, __LINE__, message)
+#define THROW_SYS_ERROR_CODE_FMT(errNo, errorType, ...)                                                                            \
+    errorInternalThrowSysFmt(errNo, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
+#define THROWP_SYS_ERROR_CODE(errNo, errorType, message)                                                                           \
+    errorInternalThrowSys(errNo, errorType, __FILE__, __func__, __LINE__, message)
+#define THROWP_SYS_ERROR_CODE_FMT(errNo, errorType, ...)                                                                           \
+    errorInternalThrowSysFmt(errNo, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /***********************************************************************************************************************************
 Rethrow the current error
@@ -149,7 +170,7 @@ Internal functions
 
 These functions are used by the macros to implement the error handler and should never be called independently.
 ***********************************************************************************************************************************/
-bool errorInternalTry(const char *fileName, int fileLine);
+bool errorInternalTry(const char *fileName, const char *functionName, int fileLine);
 jmp_buf *errorInternalJump();
 bool errorInternalStateTry();
 bool errorInternalStateCatch(const ErrorType *errorTypeCatch);
@@ -157,7 +178,24 @@ bool errorInternalStateFinal();
 bool errorInternalProcess(bool catch);
 void errorInternalPropagate() __attribute__((__noreturn__));
 void errorInternalThrow(
-    const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...) __attribute__((__noreturn__));
-void errorInternalThrowSys(int errNo, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...);
+    const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
+    __attribute__((__noreturn__));
+void errorInternalThrowFmt(
+    const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
+    __attribute__((format(printf, 5, 6))) __attribute__((__noreturn__));
+void errorInternalThrowSys(
+    int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
+    __attribute__((__noreturn__));
+void errorInternalThrowSysFmt(
+    int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
+    __attribute__((format(printf, 6, 7))) __attribute__((__noreturn__));
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_ERROR_TYPE_TYPE                                                                                             \
+    ErrorType *
+#define FUNCTION_DEBUG_ERROR_TYPE_FORMAT(value, buffer, bufferSize)                                                                \
+    objToLog(value, "ErrorType", buffer, bufferSize)
 
 #endif

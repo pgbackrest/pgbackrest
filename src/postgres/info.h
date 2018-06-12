@@ -25,4 +25,12 @@ Functions
 ***********************************************************************************************************************************/
 PgControlInfo pgControlInfo(const String *pgPath);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_PG_CONTROL_INFO_TYPE                                                                                        \
+    PgControlInfo
+#define FUNCTION_DEBUG_PG_CONTROL_INFO_FORMAT(value, buffer, bufferSize)                                                           \
+    objToLog(&value, "PgControlInfo", buffer, bufferSize)
+
 #endif

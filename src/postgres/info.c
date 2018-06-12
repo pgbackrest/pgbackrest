@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 PostgreSQL Info
 ***********************************************************************************************************************************/
+#include "common/debug.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "postgres/info.h"
 #include "postgres/type.h"
@@ -13,9 +15,16 @@ Map control/catalog version to PostgreSQL version
 static uint
 pgVersionMap(uint32_t controlVersion, uint32_t catalogVersion)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT32, controlVersion);
+        FUNCTION_TEST_PARAM(UINT32, catalogVersion);
+    FUNCTION_TEST_END();
+
     uint result = 0;
 
-    if (controlVersion == 1002 && catalogVersion == 201707211)
+    if (controlVersion == 1100 && catalogVersion == 201804191)
+        result = PG_VERSION_11;
+    else if (controlVersion == 1002 && catalogVersion == 201707211)
         result = PG_VERSION_10;
     else if (controlVersion == 960 && catalogVersion == 201608131)
         result = PG_VERSION_96;
@@ -37,14 +46,14 @@ pgVersionMap(uint32_t controlVersion, uint32_t catalogVersion)
         result = PG_VERSION_83;
     else
     {
-        THROW(
+        THROW_FMT(
             VersionNotSupportedError,
             "unexpected control version = %u and catalog version = %u\n"
                 "HINT: is this version of PostgreSQL supported?",
             controlVersion, catalogVersion);
     }
 
-    return result;
+    FUNCTION_TEST_RESULT(UINT, result);
 }
 
 /***********************************************************************************************************************************
@@ -53,6 +62,12 @@ Get info from pg_control
 PgControlInfo
 pgControlInfo(const String *pgPath)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(STRING, pgPath);
+
+        FUNCTION_TEST_ASSERT(pgPath != NULL);
+    FUNCTION_DEBUG_END();
+
     PgControlInfo result = {0};
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -73,5 +88,5 @@ pgControlInfo(const String *pgPath)
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_DEBUG_RESULT(PG_CONTROL_INFO, result);
 }

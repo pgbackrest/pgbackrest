@@ -6,6 +6,8 @@ Test C Types
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("test int size"))
     {
@@ -20,4 +22,6 @@ testRun()
         assert(true);
         assert(!false);
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

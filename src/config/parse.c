@@ -6,6 +6,7 @@ Command and Option Parse
 #include <strings.h>
 
 #include "common/assert.h"
+#include "common/debug.h"
 #include "common/error.h"
 #include "common/ini.h"
 #include "common/log.h"
@@ -47,7 +48,7 @@ Parse option flags
 /***********************************************************************************************************************************
 Include automatically generated data structure for getopt_long()
 ***********************************************************************************************************************************/
-#include "parse.auto.c"
+#include "config/parse.auto.c"
 
 /***********************************************************************************************************************************
 Struct to hold options parsed from the command line
@@ -86,6 +87,13 @@ Convert the value passed into bytes and update valueDbl for range checking
 void
 convertToByte(String **value, double *valueDbl)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRINGP, value);
+        FUNCTION_DEBUG_PARAM(DOUBLEP, valueDbl);
+
+        FUNCTION_DEBUG_ASSERT(valueDbl != NULL);
+    FUNCTION_DEBUG_END();
+
     // Make a copy of the value so it is not updated until we know the conversion will succeed
     String *result = strLower(strDup(*value));
 
@@ -141,8 +149,8 @@ convertToByte(String **value, double *valueDbl)
                         multiplier = 1024LL * 1024LL * 1024LL * 1024LL * 1024LL;
                         break;
 
-                    default:
-                        THROW(                                      // {uncoverable - regex covers all cases but default required}
+                    default:                                        // {uncoverable - regex covers all cases but default required}
+                        THROW_FMT(                                  // {+uncoverable}
                             AssertError, "character %c is not a valid type", strArray[chrPos]);
                 }
             }
@@ -160,7 +168,9 @@ convertToByte(String **value, double *valueDbl)
         *value = result;
     }
     else
-        THROW(FormatError, "value '%s' is not valid", strPtr(*value));
+        THROW_FMT(FormatError, "value '%s' is not valid", strPtr(*value));
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -198,6 +208,18 @@ cfgFileLoad(                                                        // NOTE: Pas
     const String *optConfigIncludePathDefault,                      // Current default for --config-include-path option
     const String *origConfigDefault)                                // Original --config option default (/etc/pgbackrest.conf)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM_PTR("ParseOption *", optionList);
+        FUNCTION_DEBUG_PARAM(STRING, optConfigDefault);
+        FUNCTION_DEBUG_PARAM(STRING, optConfigIncludePathDefault);
+        FUNCTION_DEBUG_PARAM(STRING, origConfigDefault);
+
+        FUNCTION_TEST_ASSERT(optionList != NULL);
+        FUNCTION_TEST_ASSERT(optConfigDefault != NULL);
+        FUNCTION_TEST_ASSERT(optConfigIncludePathDefault != NULL);
+        FUNCTION_TEST_ASSERT(origConfigDefault != NULL);
+    FUNCTION_DEBUG_END();
+
     bool loadConfig = true;
     bool loadConfigInclude = true;
 
@@ -324,7 +346,7 @@ cfgFileLoad(                                                        // NOTE: Pas
         }
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -336,6 +358,11 @@ logic to this critical path code.
 void
 configParse(unsigned int argListSize, const char *argList[])
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(UINT, argListSize);
+        FUNCTION_DEBUG_PARAM(CHARPY, argList);
+    FUNCTION_DEBUG_END();
+
     // Initialize configuration
     cfgInit();
 
@@ -383,7 +410,7 @@ configParse(unsigned int argListSize, const char *argList[])
                         // don't have any control over what the user passes), so modify the error code and message.
                         CATCH(AssertError)
                         {
-                            THROW(CommandInvalidError, "invalid command '%s'", argList[optind - 1]);
+                            THROW_FMT(CommandInvalidError, "invalid command '%s'", argList[optind - 1]);
                         }
                         TRY_END();
 
@@ -406,17 +433,11 @@ configParse(unsigned int argListSize, const char *argList[])
 
                 // If the option is unknown then error
                 case '?':
-                {
-                    THROW(OptionInvalidError, "invalid option '%s'", argList[optind - 1]);
-                    break;
-                }
+                    THROW_FMT(OptionInvalidError, "invalid option '%s'", argList[optind - 1]);
 
                 // If the option is missing an argument then error
                 case ':':
-                {
-                    THROW(OptionInvalidError, "option '%s' requires argument", argList[optind - 1]);
-                    break;
-                }
+                    THROW_FMT(OptionInvalidError, "option '%s' requires argument", argList[optind - 1]);
 
                 // Parse valid option
                 default:
@@ -446,23 +467,23 @@ configParse(unsigned int argListSize, const char *argList[])
                         // Make sure option is not negated more than once.  It probably wouldn't hurt anything to accept this case
                         // but there's no point in allowing the user to be sloppy.
                         if (parseOptionList[optionId].negate && negate)
-                            THROW(OptionInvalidError, "option '%s' is negated multiple times", cfgOptionName(optionId));
+                            THROW_FMT(OptionInvalidError, "option '%s' is negated multiple times", cfgOptionName(optionId));
 
                         // Make sure option is not reset more than once.  Same justification as negate.
                         if (parseOptionList[optionId].reset && reset)
-                            THROW(OptionInvalidError, "option '%s' is reset multiple times", cfgOptionName(optionId));
+                            THROW_FMT(OptionInvalidError, "option '%s' is reset multiple times", cfgOptionName(optionId));
 
                         // Don't allow an option to be both negated and reset
                         if ((parseOptionList[optionId].reset && negate) || (parseOptionList[optionId].negate && reset))
-                            THROW(OptionInvalidError, "option '%s' cannot be negated and reset", cfgOptionName(optionId));
+                            THROW_FMT(OptionInvalidError, "option '%s' cannot be negated and reset", cfgOptionName(optionId));
 
                         // Don't allow an option to be both set and negated
                         if (parseOptionList[optionId].negate != negate)
-                            THROW(OptionInvalidError, "option '%s' cannot be set and negated", cfgOptionName(optionId));
+                            THROW_FMT(OptionInvalidError, "option '%s' cannot be set and negated", cfgOptionName(optionId));
 
                         // Don't allow an option to be both set and reset
                         if (parseOptionList[optionId].reset != reset)
-                            THROW(OptionInvalidError, "option '%s' cannot be set and reset", cfgOptionName(optionId));
+                            THROW_FMT(OptionInvalidError, "option '%s' cannot be set and reset", cfgOptionName(optionId));
 
                         // Add the argument
                         strLstAdd(parseOptionList[optionId].valueList, strNew(optarg));
@@ -481,7 +502,7 @@ configParse(unsigned int argListSize, const char *argList[])
         {
             // If there are args then error
             if (argFound)
-                THROW(CommandRequiredError, "no command found");
+                THROW_FMT(CommandRequiredError, "no command found");
 
             // Otherwise set the comand to help
             cfgCommandHelpSet(true);
@@ -582,7 +603,7 @@ configParse(unsigned int argListSize, const char *argList[])
 
                         if (optionFoundName != NULL)
                         {
-                            THROW(
+                            THROW_FMT(
                                 OptionInvalidError, "configuration file contains duplicate options ('%s', '%s') in section '[%s]'",
                                 strPtr(key), strPtr(varStr(optionFoundName)), strPtr(section));
                         }
@@ -622,8 +643,10 @@ configParse(unsigned int argListSize, const char *argList[])
                         const Variant *value = iniGetDefault(config, section, key, NULL);
 
                         if (varType(value) == varTypeString && strSize(varStr(value)) == 0)
-                            THROW(OptionInvalidValueError, "section '%s', key '%s' must have a value", strPtr(section),
-                            strPtr(key));
+                        {
+                            THROW_FMT(
+                                OptionInvalidValueError, "section '%s', key '%s' must have a value", strPtr(section), strPtr(key));
+                        }
 
                         parseOptionList[optionId].found = true;
                         parseOptionList[optionId].source = cfgSourceConfig;
@@ -634,7 +657,7 @@ configParse(unsigned int argListSize, const char *argList[])
                             if (strcasecmp(strPtr(varStr(value)), "n") == 0)
                                 parseOptionList[optionId].negate = true;
                             else if (strcasecmp(strPtr(varStr(value)), "y") != 0)
-                                THROW(OptionInvalidError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
+                                THROW_FMT(OptionInvalidError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
                         }
                         // Else add the string value
                         else if (varType(value) == varTypeString)
@@ -677,7 +700,7 @@ configParse(unsigned int argListSize, const char *argList[])
                     // Error if the option is not valid for this command
                     if (parseOption->found && !cfgDefOptionValid(commandDefId, optionDefId))
                     {
-                        THROW(
+                        THROW_FMT(
                             OptionInvalidError, "option '%s' not valid for command '%s'", cfgOptionName(optionId),
                             cfgCommandName(cfgCommand()));
                     }
@@ -685,7 +708,7 @@ configParse(unsigned int argListSize, const char *argList[])
                     // Error if this option is secure and cannot be passed on the command line
                     if (parseOption->found && parseOption->source == cfgSourceParam && cfgDefOptionSecure(optionDefId))
                     {
-                        THROW(
+                        THROW_FMT(
                             OptionInvalidError,
                             "option '%s' is not allowed on the command-line\n"
                             "HINT: this option could expose secrets in the process list.\n"
@@ -698,7 +721,7 @@ configParse(unsigned int argListSize, const char *argList[])
                         !(cfgDefOptionType(cfgOptionDefIdFromId(optionId)) == cfgDefOptTypeHash ||
                           cfgDefOptionType(cfgOptionDefIdFromId(optionId)) == cfgDefOptTypeList))
                     {
-                        THROW(OptionInvalidError, "option '%s' cannot have multiple arguments", cfgOptionName(optionId));
+                        THROW_FMT(OptionInvalidError, "option '%s' cannot have multiple arguments", cfgOptionName(optionId));
                     }
 
                     // Is the option valid for this command?  If not, mark it as resolved since there is nothing more to do.
@@ -760,7 +783,7 @@ configParse(unsigned int argListSize, const char *argList[])
                             // if (optionSet)
                             if (optionSet && parseOption->source == cfgSourceParam)
                             {
-                                THROW(
+                                THROW_FMT(
                                     OptionInvalidError, "option '%s' not valid without option '%s'", cfgOptionName(optionId),
                                     cfgOptionName(dependOptionId));
                             }
@@ -782,7 +805,8 @@ configParse(unsigned int argListSize, const char *argList[])
                                 // Build the list of possible depend values
                                 StringList *dependValueList = strLstNew();
 
-                                for (int listIdx = 0; listIdx < cfgDefOptionDependValueTotal(commandDefId, optionDefId); listIdx++)
+                                for (unsigned int listIdx = 0;
+                                        listIdx < cfgDefOptionDependValueTotal(commandDefId, optionDefId); listIdx++)
                                 {
                                     const char *dependValue = cfgDefOptionDependValue(commandDefId, optionDefId, listIdx);
 
@@ -806,30 +830,33 @@ configParse(unsigned int argListSize, const char *argList[])
                                         }
 
                                         // Other types are output plain
-                                        case cfgDefOptTypeFloat:
+                                        case cfgDefOptTypeFloat:                        // {uncovered - no depends of other types}
                                         case cfgDefOptTypeHash:
                                         case cfgDefOptTypeInteger:
                                         case cfgDefOptTypeList:
                                         case cfgDefOptTypeSize:
                                         {
-                                            strLstAddZ(dependValueList, dependValue);   // {uncovered - no depends of other types}
+                                            strLstAddZ(dependValueList, dependValue);   // {+uncovered}
                                             break;                                      // {+uncovered}
                                         }
                                     }
                                 }
 
                                 // Build the error string
-                                String *error = strNew("option '%s' not valid without option '%s'");
+                                String *errorValue = strNew("");
 
                                 if (strLstSize(dependValueList) == 1)
-                                    strCat(error, " = %s");
+                                    errorValue = strNewFmt(" = %s", strPtr(strLstGet(dependValueList, 0)));
                                 else if (strLstSize(dependValueList) > 1)
-                                    strCat(error, " in (%s)");
+                                    errorValue = strNewFmt(" in (%s)", strPtr(strLstJoin(dependValueList, ", ")));
 
                                 // Throw the error
                                 THROW(
-                                    OptionInvalidError, strPtr(error), cfgOptionName(optionId), strPtr(dependOptionName),
-                                    strPtr(strLstJoin(dependValueList, ", ")));
+                                    OptionInvalidError,
+                                    strPtr(
+                                        strNewFmt(
+                                            "option '%s' not valid without option '%s'%s", cfgOptionName(optionId),
+                                            strPtr(dependOptionName), strPtr(errorValue))));
                             }
                         }
                     }
@@ -853,7 +880,7 @@ configParse(unsigned int argListSize, const char *argList[])
 
                                 if (equal == NULL)
                                 {
-                                    THROW(
+                                    THROW_FMT(
                                         OptionInvalidError, "key/value '%s' not valid for '%s' option",
                                         strPtr(strLstGet(parseOption->valueList, listIdx)), cfgOptionName(optionId));
                                 }
@@ -897,7 +924,7 @@ configParse(unsigned int argListSize, const char *argList[])
                                 }
                                 CATCH_ANY()
                                 {
-                                    THROW(
+                                    THROW_FMT(
                                         OptionInvalidValueError, "'%s' is not valid for '%s' option", strPtr(value),
                                         cfgOptionName(optionId));
                                 }
@@ -908,7 +935,7 @@ configParse(unsigned int argListSize, const char *argList[])
                                     (valueDbl < cfgDefOptionAllowRangeMin(commandDefId, optionDefId) ||
                                      valueDbl > cfgDefOptionAllowRangeMax(commandDefId, optionDefId)))
                                 {
-                                    THROW(
+                                    THROW_FMT(
                                         OptionInvalidValueError, "'%s' is out of range for '%s' option", strPtr(value),
                                         cfgOptionName(optionId));
                                 }
@@ -918,7 +945,7 @@ configParse(unsigned int argListSize, const char *argList[])
                             if (cfgDefOptionAllowList(commandDefId, optionDefId) &&
                                 !cfgDefOptionAllowListValueValid(commandDefId, optionDefId, strPtr(value)))
                             {
-                                THROW(
+                                THROW_FMT(
                                     OptionInvalidValueError, "'%s' is not allowed for '%s' option", strPtr(value),
                                     cfgOptionName(optionId));
                             }
@@ -944,7 +971,7 @@ configParse(unsigned int argListSize, const char *argList[])
                             if (cfgDefOptionSection(optionDefId) == cfgDefSectionStanza)
                                 hint = "\nHINT: does this stanza exist?";
 
-                            THROW(
+                            THROW_FMT(
                                 OptionRequiredError, "%s command requires option: %s%s", cfgCommandName(cfgCommand()),
                                 cfgOptionName(optionId), hint);
                         }
@@ -958,4 +985,6 @@ configParse(unsigned int argListSize, const char *argList[])
         }
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

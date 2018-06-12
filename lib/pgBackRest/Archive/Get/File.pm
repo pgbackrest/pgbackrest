@@ -140,13 +140,15 @@ sub archiveGetFile
     (
         $strOperation,
         $strSourceArchive,
-        $strDestinationFile
+        $strDestinationFile,
+        $bAtomic,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::archiveGetFile', \@_,
             {name => 'strSourceArchive'},
-            {name => 'strDestinationFile'}
+            {name => 'strDestinationFile'},
+            {name => 'bAtomic'},
         );
 
     lockStopTest();
@@ -185,7 +187,7 @@ sub archiveGetFile
                 strCipherPass => defined($strCipherPass) ? $strCipherPass : undef}),
             storageDb()->openWrite(
                 $strDestinationFile,
-                {rhyFilter => $bSourceCompressed ?
+                {bAtomic => $bAtomic, rhyFilter => $bSourceCompressed ?
                     [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef}));
     }
 

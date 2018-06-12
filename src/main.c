@@ -4,9 +4,11 @@ Main
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "command/archive/get/get.h"
 #include "command/archive/push/push.h"
 #include "command/help/help.h"
 #include "command/command.h"
+#include "common/debug.h"
 #include "common/error.h"
 #include "common/exit.h"
 #include "config/config.h"
@@ -17,6 +19,18 @@ Main
 int
 main(int argListSize, const char *argList[])
 {
+#ifdef WITH_BACKTRACE
+    stackTraceInit(argList[0]);
+#endif
+
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(INT, argListSize);
+        FUNCTION_DEBUG_PARAM(CHARPY, argList);
+    FUNCTION_DEBUG_END();
+
+    // Initialize command with the start time
+    cmdInit();
+
     volatile bool result = 0;
     volatile bool error = false;
 
@@ -42,6 +56,13 @@ main(int argListSize, const char *argList[])
         {
             printf(PGBACKREST_NAME " " PGBACKREST_VERSION "\n");
             fflush(stdout);
+        }
+
+        // Archive get command
+        // -------------------------------------------------------------------------------------------------------------------------
+        else if (cfgCommand() == cfgCmdArchiveGet)
+        {
+            result = cmdArchiveGet();
         }
 
         // Archive push command.  Currently only implements local operations of async archive push.
@@ -80,5 +101,5 @@ main(int argListSize, const char *argList[])
     }
     TRY_END();
 
-    return exitSafe(result, error, 0);
+    FUNCTION_DEBUG_RESULT(INT, exitSafe(result, error, 0));
 }

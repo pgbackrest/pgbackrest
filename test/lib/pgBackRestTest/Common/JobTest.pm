@@ -66,6 +66,12 @@ sub new
         $self->{bShowOutputAsync},
         $self->{bNoCleanup},
         $self->{iRetry},
+        $self->{bValgrindUnit},
+        $self->{bCoverageUnit},
+        $self->{bOptimize},
+        $self->{bBackTrace},
+        $self->{bProfile},
+        $self->{bDebug},
     ) =
         logDebugParam
         (
@@ -86,6 +92,12 @@ sub new
             {name => 'bShowOutputAsync'},
             {name => 'bNoCleanup'},
             {name => 'iRetry'},
+            {name => 'bValgrindUnit'},
+            {name => 'bCoverageUnit'},
+            {name => 'bOptimize'},
+            {name => 'bBackTrace'},
+            {name => 'bProfile'},
+            {name => 'bDebug'},
         );
 
     # Set try to 0
@@ -179,16 +191,18 @@ sub run
                 # If testing C code copy source files to the test directory
                 if ($self->{oTest}->{&TEST_C})
                 {
-                    if (!$bGCovExists)
-                    {
-                        executeTest("cp -r $self->{strBackRestBase}/src/*  $self->{strGCovPath}");
-                    }
-
-                    if (!$bGCovExists || defined($rhBuildFlags->{$self->{iVmIdx}}) != defined($self->{oTest}->{&TEST_CDEF}) ||
+                    # If any of the build flags have changed then we'll need to rebuild from scratch
+                    my $bFlagsChanged =
+                        defined($rhBuildFlags->{$self->{iVmIdx}}) != defined($self->{oTest}->{&TEST_CDEF}) ||
                         defined($rhBuildFlags->{$self->{iVmIdx}}) &&
-                        $rhBuildFlags->{$self->{iVmIdx}} ne $self->{oTest}->{&TEST_CDEF})
+                        $rhBuildFlags->{$self->{iVmIdx}} ne $self->{oTest}->{&TEST_CDEF};
+
+                    if (!$bGCovExists || $bFlagsChanged)
                     {
-                        executeTest("cp -r $self->{strBackRestBase}/test/src/*  $self->{strGCovPath}");
+                        executeTest("rsync -rt --delete $self->{strBackRestBase}/src/ $self->{strGCovPath}");
+                        executeTest("rsync -t $self->{strBackRestBase}/libc/LibC.h $self->{strGCovPath}");
+                        executeTest("rsync -rt $self->{strBackRestBase}/libc/xs/ $self->{strGCovPath}/xs");
+                        executeTest("rsync -rt $self->{strBackRestBase}/test/src/ $self->{strGCovPath}");
                     }
 
                     $rhBuildFlags->{$self->{iVmIdx}} = $self->{oTest}->{&TEST_CDEF};
@@ -197,7 +211,9 @@ sub run
                 # If testing Perl code (or C code that calls Perl code) install bin and Perl C Library
                 if (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_PERL_REQ})
                 {
-                    jobInstallC($self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage);
+                    jobInstallC(
+                        $self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage,
+                        !$self->{oTest}->{&TEST_C} && !$self->{oTest}->{&TEST_INTEGRATION});
                 }
             }
         }
@@ -245,8 +261,6 @@ sub run
                 ($self->{bDryRun} ? ' --vm-out' : '') .
                 ($self->{bNoCleanup} ? " --no-cleanup" : '');
         }
-
-        &log(DETAIL, $strCommand);
 
         if (!$self->{bDryRun} || $self->{bVmOut})
         {
@@ -341,34 +355,40 @@ sub run
                 # Build the Makefile
                 my $strMakefile =
                     "CC=gcc\n" .
-                    "CFLAGS=-I. -std=c99 -fPIC -g \\\n" .
+                    "CFLAGS=-I. -std=c99 -fPIC -g" . ($self->{bProfile} ? " -pg" : '') . "\\\n" .
                     "       -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wswitch-enum -Wconversion \\\n" .
-                    ($self->{oTest}->{&TEST_VM} eq VM_U16 ? "       -Wformat-signedness \\\n" : '') .
+                    ($self->{oTest}->{&TEST_VM} eq VM_U16 || $self->{oTest}->{&TEST_VM} eq VM_U18 ?
+                        "       -Wformat-signedness \\\n" : '') .
                     # This warning appears to be broken on U12 even though the functionality is fine
                     ($self->{oTest}->{&TEST_VM} eq VM_U12 || $self->{oTest}->{&TEST_VM} eq VM_CO6 ?
                         "       -Wno-missing-field-initializers \\\n" : '') .
-                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ?
-                        "       -Wpedantic \\\n" : '') .
+                    # ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 &&
+                    #     $self->{oTest}->{&TEST_MODULE} ne 'perl' && $self->{oTest}->{&TEST_NAME} ne 'exec' ?
+                    #         "       -Wpedantic \\\n" : '') .
                     "       -Wformat=2 -Wformat-nonliteral \\\n" .
                     "       `perl -MExtUtils::Embed -e ccopts`\n" .
-                    "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) ? " -lgcov" : '') .
+                    "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
+                        (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -lbacktrace' : '') .
                         " `perl -MExtUtils::Embed -e ldopts`\n" .
-                    'TESTFLAGS=' . ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : "-DDEBUG_UNIT ") .
-                        ($self->{oTest}->{&TEST_CDEF} ? "$self->{oTest}->{&TEST_CDEF}" : '') .
+                    'TESTFLAGS=' . ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : "-DDEBUG_UNIT") .
+                        (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
+                        ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
+                        ($self->{bDebug} ? '' : " -DNDEBUG") .
                     "\n" .
                     "\nSRCS=" . join(' ', @stryCFile) . "\n" .
                     "OBJS=\$(SRCS:.c=.o)\n" .
                     "\n" .
                     "test: \$(OBJS) test.o\n" .
-                    "\t\$(CC) -o test \$(OBJS) test.o \$(LDFLAGS)\n" .
+                    "\t\$(CC) -o test \$(OBJS) test.o"  . ($self->{bProfile} ? " -pg" : '') . " \$(LDFLAGS)\n" .
                     "\n" .
                     "test.o: test.c\n" .
-	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) " .
-                        (vmCoverage($self->{oTest}->{&TEST_VM}) ? '-fprofile-arcs -ftest-coverage -O0' : '-O2') .
+	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) -O0" .
+                        (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
+                            ' -fprofile-arcs -ftest-coverage' : '') .
                         " -c test.c\n" .
                     "\n" .
                     ".c.o:\n" .
-	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) -O2 -c \$< -o \$@\n";
+	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) " . ($self->{bOptimize} ? '-O2' : '-O0') . " -c \$< -o \$@\n";
 
                 $self->{oStorageTest}->put($self->{strGCovPath} . "/Makefile", $strMakefile);
             }
@@ -426,8 +446,20 @@ sub end
             syswrite(*STDOUT, "\n");
         }
 
-        # If C library generate coverage info
-        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverage($self->{oTest}->{&TEST_VM}))
+        # If C code generate profile info
+        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && $self->{bProfile})
+        {
+            executeTest(
+                'docker exec -i -u ' . TEST_USER . " ${strImage} " .
+                "gprof --flat-profile $self->{strGCovPath}/test $self->{strGCovPath}/gmon.out > $self->{strGCovPath}/gprof.flat.txt");
+
+            $self->{oStorageTest}->pathCreate("$self->{strBackRestBase}/test/profile", {strMode => '0750', bIgnoreExists => true});
+            $self->{oStorageTest}->copy(
+                "$self->{strGCovPath}/gprof.flat.txt", "$self->{strBackRestBase}/test/profile/gprof.flat.txt");
+        }
+
+        # If C code generate coverage info
+        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit})
         {
             # Generate a list of files to cover
             my $hTestCoverage =
@@ -437,22 +469,24 @@ sub end
 
             foreach my $strModule (sort(keys(%{$hTestCoverage})))
             {
-                # Skip modules that have no code
-                next if ($hTestCoverage->{$strModule} eq TESTDEF_COVERAGE_NOCODE);
-
-                push (@stryCoveredModule, testRunName(basename($strModule), false) . ".c.gcov");
+                push (@stryCoveredModule, $strModule);
             }
+
+            push(
+                @stryCoveredModule,
+                "module/$self->{oTest}->{&TEST_MODULE}/" . testRunName($self->{oTest}->{&TEST_NAME}, false) . 'Test');
 
             # Generate coverage reports for the modules
             my $strLCovExe = "lcov --config-file=$self->{strBackRestBase}/test/src/lcov.conf";
             my $strLCovOut = $self->{strGCovPath} . '/test.lcov';
+            my $strLCovOutTmp = $self->{strGCovPath} . '/test.tmp.lcov';
 
             executeTest(
                 'docker exec -i -u ' . TEST_USER . " ${strImage} " .
                 "${strLCovExe} --capture --directory=$self->{strGCovPath} --o=${strLCovOut}");
 
             # Generate coverage report for each module
-            foreach my $strModule (sort(keys(%{$hTestCoverage})))
+            foreach my $strModule (@stryCoveredModule)
             {
                 my $strModuleName = testRunName($strModule, false);
                 my $strModuleOutName = $strModuleName;
@@ -471,14 +505,22 @@ sub end
 
                 executeTest(
                     'docker exec -i -u ' . TEST_USER . " ${strImage} " .
-                    "${strLCovExe} --extract=${strLCovOut} */${strModuleName}.c --o=${strLCovFile}");
+                    "${strLCovExe} --extract=${strLCovOut} */${strModuleName}.c --o=${strLCovOutTmp}");
+
+                # Combine with prior run if there was one
+                if ($self->{oStorageTest}->exists($strLCovFile))
+                {
+                    executeTest(
+                        'docker exec -i -u ' . TEST_USER . " ${strImage} " .
+                        "${strLCovExe} --add-tracefile=${strLCovOutTmp} --add-tracefile=${strLCovFile} --o=${strLCovOutTmp}");
+                }
 
                 # Update source file
-                my $strCoverage = ${$self->{oStorageTest}->get($strLCovFile)};
+                my $strCoverage = ${$self->{oStorageTest}->get($strLCovOutTmp)};
 
                 if (defined($strCoverage))
                 {
-                    if ($hTestCoverage->{$strModule} eq TESTDEF_COVERAGE_NOCODE)
+                    if (!$bTest && $hTestCoverage->{$strModule} eq TESTDEF_COVERAGE_NOCODE)
                     {
                         confess &log(ERROR, "module '${strModule}' is marked 'no code' but has code");
                     }
@@ -490,8 +532,11 @@ sub end
                     my $iTotalBranches = 0;
                     my $iCoveredBranches = 0;
 
-                    if ($strCoverage =~ /^BRF\:$/mg && $strCoverage =~ /^BRH\:$/mg)
+                    if ($strCoverage =~ /^BRF\:/mg && $strCoverage =~ /^BRH\:/mg)
                     {
+                        # If this isn't here the statements below fail -- huh?
+                        my @match = $strCoverage =~ m/^BRF\:.*$/mg;
+
                         $iTotalBranches = (split(':', ($strCoverage =~ m/^BRF:.*$/mg)[0]))[1] + 0;
                         $iCoveredBranches = (split(':', ($strCoverage =~ m/^BRH:.*$/mg)[0]))[1] + 0;
                     }
@@ -502,10 +547,9 @@ sub end
                         # Fix source file name
                         $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
 
-                        # Save coverage file
                         $self->{oStorageTest}->put($strLCovFile, $strCoverage);
 
-                        if ($self->{oStorageTest}->exists(${strLCovTotal}))
+                        if ($self->{oStorageTest}->exists($strLCovTotal))
                         {
                             executeTest(
                                 'docker exec -i -u ' . TEST_USER . " ${strImage} " .
@@ -578,27 +622,22 @@ sub jobInstallC
     my $strBasePath = shift;
     my $strVm = shift;
     my $strImage = shift;
+    my $bCopyLibC = shift;
 
     # Install Perl C Library
     my $oVm = vmGet();
-    my $strBuildPath = "${strBasePath}/test/.vagrant";
-    my $strBuildLibCPath = "$strBuildPath/libc/${strVm}/libc";
-    my $strBuildBinPath = "$strBuildPath/bin/${strVm}/src";
+    my $strBuildPath = "${strBasePath}/test/.vagrant/bin/${strVm}";
+    my $strBuildLibCPath = "${strBuildPath}/libc";
+    my $strBuildBinPath = "${strBuildPath}/src";
     my $strPerlAutoPath = $oVm->{$strVm}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
-    my $strPerlModulePath = $oVm->{$strVm}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest';
 
     executeTest(
         "docker exec -i -u root ${strImage} bash -c '" .
-        "mkdir -p -m 755 ${strPerlAutoPath} && " .
-        # "cp ${strBuildLibCPath}/blib/arch/auto/pgBackRest/LibC/LibC.bs ${strPerlAutoPath} && " .
-        "cp ${strBuildLibCPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
-        "cp ${strBuildLibCPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
-        "mkdir -p -m 755 ${strPerlModulePath} && " .
-        "cp ${strBuildLibCPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath} && " .
-        "cp ${strBuildLibCPath}/blib/lib/pgBackRest/LibCAuto.pm ${strPerlModulePath} && " .
+        (defined($bCopyLibC) && $bCopyLibC ?
+            "mkdir -p -m 755 ${strPerlAutoPath} && " .
+            "cp ${strBuildLibCPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " : '') .
         "cp ${strBuildBinPath}/" . BACKREST_EXE . ' /usr/bin/' . BACKREST_EXE . ' && ' .
-        'chmod 755 /usr/bin/' . BACKREST_EXE . ' && ' .
-        "ln -s ${strBasePath}/lib/pgBackRest /usr/share/perl5/pgBackRest'");
+        'chmod 755 /usr/bin/' . BACKREST_EXE . "'");
 }
 
 push(@EXPORT, qw(jobInstallC));

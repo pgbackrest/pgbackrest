@@ -48,7 +48,7 @@ use constant BACKREST_USER_ID                                       => getpwnam(
 ####################################################################################################################################
 # Package constants
 ####################################################################################################################################
-use constant LIB_COVER_VERSION                                      => '1.23-2';
+use constant LIB_COVER_VERSION                                      => '1.29-2';
     push @EXPORT, qw(LIB_COVER_VERSION);
 use constant LIB_COVER_EXE                                          => '/usr/bin/cover';
     push @EXPORT, qw(LIB_COVER_EXE);
@@ -214,7 +214,8 @@ sub certSetup
         "    openssl req -new -key server.key -out server.csr \\\n" .
         "        -subj \"/C=US/ST=Country/L=City/O=Organization/CN=*.pgbackrest.org\" && \\\n" .
         "    openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 99999 \\\n" .
-        "        -sha256";
+        "        -sha256 && \\\n" .
+        "    chmod 644 /etc/fake-cert/*";
 }
 
 ####################################################################################################################################
@@ -241,6 +242,11 @@ sub s3ServerSetup
             "    wget -O /root/nodejs.sh https://deb.nodesource.com/setup_6.x && \\\n" .
             "    bash /root/nodejs.sh && \\\n" .
             "    apt-get install -y nodejs";
+
+        if ($strOS eq VM_U18)
+        {
+            $strScript .= ' npm';
+        }
     }
 
     # Install Scality S3
@@ -348,21 +354,22 @@ sub containerBuild
         else
         {
             $strScript .=
+                "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
                 "    apt-get update && \\\n" .
                 "    apt-get -y install wget python && \\\n" .
                 "    wget --no-check-certificate -O /root/get-pip.py https://bootstrap.pypa.io/get-pip.py && \\\n" .
                 "    python /root/get-pip.py && \\\n" .
                 "    apt-get -y install openssh-server wget sudo python-pip build-essential valgrind git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libio-socket-ssl-perl libxml-libxml-perl libssl-dev libperl-dev \\\n" .
-                "        libyaml-libyaml-perl";
+                "        libyaml-libyaml-perl tzdata";
 
             if ($strOS eq VM_U12)
             {
                 $strScript .= ' libperl5.14';
             }
-            elsif ($strOS eq VM_U16)
+            elsif ($strOS eq VM_U18)
             {
-                $strScript .= ' clang-5.0 lcov';
+                $strScript .= ' clang-6.0 clang-tools-6.0 lcov';
             }
         }
 
@@ -466,14 +473,18 @@ sub containerBuild
             {
                 $strScript .=
                     "    echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
-                    $$oVm{$strOS}{&VM_OS_REPO} . "-pgdg main' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
+                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' . ($strOS ne VM_U12 ? ' 11' : '') .
+                        "' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
-                    "    apt-get update";
+                    "    apt-get update && \\\n" .
+                    "    apt-get install -y postgresql-common && \\\n" .
+                    "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
+                        "/etc/postgresql-common/createcluster.conf";
             }
 
             if (defined($oOS->{&VM_DB}) && @{$oOS->{&VM_DB}} > 0)
             {
-                $strScript .=  sectionHeader() .
+                $strScript .= sectionHeader() .
                     "# Install Postgresql\n";
 
                 if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
@@ -486,8 +497,6 @@ sub containerBuild
                 }
 
                 # Construct list of databases to install
-                my $strRunAfterInstall;
-
                 foreach my $strDbVersion (@{$oOS->{&VM_DB}})
                 {
                     if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
@@ -500,16 +509,7 @@ sub containerBuild
                     else
                     {
                         $strScript .= " postgresql-${strDbVersion}";
-
-                        $strRunAfterInstall .= (defined($strRunAfterInstall) ? " && \\\n" : '') .
-                            "    pg_dropcluster --stop ${strDbVersion} main";
                     }
-                }
-
-                # If there are commands to run after install
-                if (defined($strRunAfterInstall))
-                {
-                    $strScript .= " && \\\n" . $strRunAfterInstall;
                 }
             }
         }
@@ -631,15 +631,15 @@ sub containerBuild
             }
             else
             {
-                $strImageParent = $oVm->{&VM_U16}{&VM_IMAGE};
+                $strImageParent = $oVm->{&VM_U18}{&VM_IMAGE};
 
                 $strScript = sectionHeader() .
                     "# Install required packages\n" .
                     "    apt-get update && \\\n" .
-                    "    apt-get install -y wget git";
+                    "    apt-get install -y wget git gnupg";
 
                 $strScript .= certSetup();
-                $strScript .= s3ServerSetup(VM_U16);
+                $strScript .= s3ServerSetup(VM_U18);
 
                 $strScript .= sectionHeader() .
                     "# Fix root tty\n" .
@@ -669,6 +669,10 @@ sub containerBuild
                     "COPY ${strOS}-${strPkgDevelCover} /tmp/${strPkgDevelCover}";
 
                 $strScript = sectionHeader() .
+                    "# Install packages\n" .
+                    "    apt-get install -y libjson-maybexs-perl";
+
+                $strScript .= sectionHeader() .
                     "# Install Devel::Cover\n" .
                     "    dpkg -i /tmp/${strPkgDevelCover}";
             }

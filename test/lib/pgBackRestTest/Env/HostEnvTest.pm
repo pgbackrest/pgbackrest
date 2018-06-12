@@ -11,7 +11,6 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use Digest::SHA qw(sha1_hex);
 use Exporter qw(import);
     our @EXPORT = qw();
 use Storable qw(dclone);
@@ -20,6 +19,7 @@ use pgBackRest::Archive::Common;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
+use pgBackRest::LibC qw(:crypto);
 use pgBackRest::Protocol::Storage::Helper;
 
 use pgBackRestTest::Env::Host::HostBackupTest;
@@ -441,7 +441,7 @@ sub walGenerateContentChecksum
             {name => 'hParam', required => false, trace => true},
         );
 
-    return sha1_hex(${$self->walGenerateContent($strPgVersion, $hParam)});
+    return cryptoHashOne('sha1', ${$self->walGenerateContent($strPgVersion, $hParam)});
 }
 
 ####################################################################################################################################
@@ -457,13 +457,21 @@ sub walGenerate
     my $iSourceNo = shift;
     my $strWalSegment = shift;
     my $bPartial = shift;
+    my $bChecksum = shift;
+    my $bReady = shift;
 
-    my $strWalFile = "${strWalPath}/${strWalSegment}" . (defined($bPartial) && $bPartial ? '.partial' : '');
     my $rtWalContent = $self->walGenerateContent($strPgVersion, {iSourceNo => $iSourceNo});
+    my $strWalFile =
+        "${strWalPath}/${strWalSegment}" . ($bChecksum ? '-' . cryptoHashOne('sha1', $rtWalContent) : '') .
+            (defined($bPartial) && $bPartial ? '.partial' : '');
 
     # Put the WAL segment and the ready file
     storageTest()->put($strWalFile, $rtWalContent);
-    storageTest()->put("${strWalPath}/archive_status/${strWalSegment}.ready");
+
+    if (!defined($bReady) || $bReady)
+    {
+        storageTest()->put("${strWalPath}/archive_status/${strWalSegment}.ready");
+    }
 
     return $strWalFile;
 }

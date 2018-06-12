@@ -40,4 +40,12 @@ Destructor
 ***********************************************************************************************************************************/
 void storageFileReadFree(StorageFileRead *this);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_STORAGE_FILE_READ_TYPE                                                                                      \
+    StorageFileRead *
+#define FUNCTION_DEBUG_STORAGE_FILE_READ_FORMAT(value, buffer, bufferSize)                                                         \
+    objToLog(value, "StorageFileRead", buffer, bufferSize)
+
 #endif

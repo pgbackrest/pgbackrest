@@ -11,7 +11,6 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname basename);
-use Digest::SHA;
 use Time::Local qw(timelocal);
 
 use pgBackRest::DbVersion;
@@ -985,15 +984,19 @@ sub linkCheck
         if ($self->isTargetLink($strTargetParent))
         {
             my $strParentPath = $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strTargetParent, MANIFEST_SUBKEY_PATH);
+            my $strParentFile = $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strTargetParent, MANIFEST_SUBKEY_FILE, false);
 
             foreach my $strTargetChild ($self->keys(MANIFEST_SECTION_BACKUP_TARGET))
             {
                 if ($self->isTargetLink($strTargetChild) && $strTargetParent ne $strTargetChild)
                 {
                     my $strChildPath = $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strTargetChild, MANIFEST_SUBKEY_PATH);
+                    my $strChildFile = $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strTargetParent, MANIFEST_SUBKEY_FILE, false);
 
-                    if (index(storageLocal()->pathAbsolute(
-                        $strBasePath, $strChildPath) . '/', storageLocal()->pathAbsolute($strBasePath, $strParentPath) . '/') == 0)
+                    if (!(defined($strParentFile) && defined($strChildFile)) &&
+                        index(
+                            storageLocal()->pathAbsolute($strBasePath, $strChildPath) . '/',
+                            storageLocal()->pathAbsolute($strBasePath, $strParentPath) . '/') == 0)
                     {
                         confess &log(ERROR, 'link ' . $self->dbPathGet($strBasePath, $strTargetChild) .
                                             " (${strChildPath}) references a subdirectory of or" .

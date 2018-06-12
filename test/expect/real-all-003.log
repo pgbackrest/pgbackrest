@@ -26,6 +26,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 protocol-timeout=60
 repo1-host=db-standby
 repo1-host-cmd=[BACKREST-BIN]
@@ -60,6 +61,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
+log-timestamp=n
 protocol-timeout=60
 repo1-path=[TEST_PATH]/db-standby/repo
 spool-path=[TEST_PATH]/db-standby/spool
@@ -103,6 +105,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 protocol-timeout=60
 repo1-host=db-standby
 repo1-host-cmd=[BACKREST-BIN]
@@ -140,6 +143,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
+log-timestamp=n
 protocol-timeout=60
 repo1-path=[TEST_PATH]/db-standby/repo
 spool-path=[TEST_PATH]/db-standby/spool
@@ -153,7 +157,7 @@ check db - confirm standby manifest->build executed (db-standby host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 incr backup - update during backup (db-standby host)
-> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stop-auto --no-archive-check --buffer-size=32768 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
+> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stop-auto --buffer-size=32768 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -173,6 +177,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 protocol-timeout=60
 repo1-host=db-standby
 repo1-host-cmd=[BACKREST-BIN]
@@ -210,6 +215,7 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
+log-timestamp=n
 protocol-timeout=60
 repo1-path=[TEST_PATH]/db-standby/repo
 spool-path=[TEST_PATH]/db-standby/spool

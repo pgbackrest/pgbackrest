@@ -28,6 +28,8 @@ Test run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // config and config-include-path options
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("cfgFileLoad()"))
@@ -1226,4 +1228,6 @@ testRun()
             testOptionFind(strPtr(strNewFmt("db%u-user", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostUser + optionIdx));
         }
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

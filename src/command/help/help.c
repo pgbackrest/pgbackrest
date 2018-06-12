@@ -2,8 +2,11 @@
 Help Command
 ***********************************************************************************************************************************/
 #include <string.h>
+#include <sys/types.h>
 #include <unistd.h>
 
+#include "common/assert.h"
+#include "common/debug.h"
 #include "common/io/handle.h"
 #include "common/memContext.h"
 #include "config/config.h"
@@ -21,6 +24,16 @@ Helper function for helpRender() to make output look good on a console
 static String *
 helpRenderText(const String *text, size_t indent, bool indentFirst, size_t length)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, text);
+        FUNCTION_DEBUG_PARAM(SIZE, indent);
+        FUNCTION_DEBUG_PARAM(BOOL, indentFirst);
+        FUNCTION_DEBUG_PARAM(SIZE, length);
+
+        FUNCTION_DEBUG_ASSERT(text != NULL);
+        FUNCTION_DEBUG_ASSERT(length > 0);
+    FUNCTION_DEBUG_END();
+
     String *result = strNew("");
 
     // Split the text into paragraphs
@@ -53,7 +66,7 @@ helpRenderText(const String *text, size_t indent, bool indentFirst, size_t lengt
         }
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -62,6 +75,10 @@ Helper function for helpRender() to output values as strings
 static String *
 helpRenderValue(const Variant *value)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(VARIANT, value);
+    FUNCTION_DEBUG_END();
+
     String *result = NULL;
 
     if (value != NULL)
@@ -73,11 +90,42 @@ helpRenderValue(const Variant *value)
             else
                 result = strNew("n");
         }
+        else if (varType(value) == varTypeKeyValue)
+        {
+            result = strNew("");
+
+            const KeyValue *optionKv = varKv(value);
+            const VariantList *keyList = kvKeyList(optionKv);
+
+            for (uint keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+            {
+                if (keyIdx != 0)
+                    strCat(result, ", ");
+
+                strCatFmt(
+                    result, "%s=%s", strPtr(varStr(varLstGet(keyList, keyIdx))),
+                    strPtr(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
+            }
+        }
+        else if (varType(value) == varTypeVariantList)
+        {
+            result = strNew("");
+
+            const VariantList *list = varVarLst(value);
+
+            for (uint listIdx = 0; listIdx < varLstSize(list); listIdx++)
+            {
+                if (listIdx != 0)
+                    strCat(result, ", ");
+
+                strCatFmt(result, "%s", strPtr(varStr(varLstGet(list, listIdx))));
+            }
+        }
         else
             result = varStrForce(value);
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -86,6 +134,8 @@ Render help to a string
 static String *
 helpRender()
 {
+    FUNCTION_DEBUG_VOID(logLevelDebug);
+
     String *result = strNew(PGBACKREST_NAME " " PGBACKREST_VERSION);
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -262,7 +312,7 @@ helpRender()
                     if (cfgDefOptionId(optionName) != -1)
                         optionId = cfgOptionIdFromDefId(cfgDefOptionId(optionName), 0);
                     else
-                        THROW(OptionInvalidError, "option '%s' is not valid for command '%s'", optionName, commandName);
+                        THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", optionName, commandName);
                 }
 
                 // Output option summary and description
@@ -302,15 +352,15 @@ helpRender()
                 {
                     strCat(result, "\ndeprecated name");
 
-                    if (cfgDefOptionHelpNameAltValueTotal(optionDefId) > 1)
-                        strCat(result, "s");                        // {uncovered - no option has more than one alt name}
+                    if (cfgDefOptionHelpNameAltValueTotal(optionDefId) > 1) // {uncovered - no option has more than one alt name}
+                        strCat(result, "s");                                // {+uncovered}
 
                     strCat(result, ": ");
 
-                    for (int nameAltIdx = 0; nameAltIdx < cfgDefOptionHelpNameAltValueTotal(optionDefId); nameAltIdx++)
+                    for (uint nameAltIdx = 0; nameAltIdx < cfgDefOptionHelpNameAltValueTotal(optionDefId); nameAltIdx++)
                     {
-                        if (nameAltIdx != 0)
-                            strCat(result, ", ");                   // {uncovered - no option has more than one alt name}
+                        if (nameAltIdx != 0)                                // {uncovered - no option has more than one alt name}
+                            strCat(result, ", ");                           // {+uncovered}
 
                         strCat(result, cfgDefOptionHelpNameAltValue(optionDefId, nameAltIdx));
                     }
@@ -326,7 +376,7 @@ helpRender()
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_DEBUG_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -335,9 +385,13 @@ Render help and output to stdout
 void
 cmdHelp()
 {
+    FUNCTION_DEBUG_VOID(logLevelDebug);
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ioHandleWriteOneStr(STDOUT_FILENO, helpRender());
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

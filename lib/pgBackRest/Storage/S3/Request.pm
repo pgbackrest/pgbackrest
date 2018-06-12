@@ -8,7 +8,6 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
-use Digest::SHA qw(hmac_sha256 hmac_sha256_hex sha256_hex);
 use Exporter qw(import);
     our @EXPORT = qw();
 use IO::Socket::SSL;
@@ -20,6 +19,7 @@ use pgBackRest::Common::Io::Base;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Xml;
+use pgBackRest::LibC qw(:crypto);
 use pgBackRest::Storage::S3::Auth;
 
 ####################################################################################################################################
@@ -72,6 +72,7 @@ sub new
         $self->{strRegion},
         $self->{strAccessKeyId},
         $self->{strSecretAccessKey},
+        $self->{strSecurityToken},
         $self->{strHost},
         $self->{iPort},
         $self->{bVerifySsl},
@@ -87,6 +88,7 @@ sub new
             {name => 'strRegion'},
             {name => 'strAccessKeyId', redact => true},
             {name => 'strSecretAccessKey', redact => true},
+            {name => 'strSecurityToken', optional => true, redact => true},
             {name => 'strHost', optional => true},
             {name => 'iPort', optional => true},
             {name => 'bVerifySsl', optional => true, default => true},
@@ -150,13 +152,14 @@ sub request
         $bRetry = false;
 
         # Set content length and hash
-        $hHeader->{&S3_HEADER_CONTENT_SHA256} = defined($rstrBody) ? sha256_hex($$rstrBody) : PAYLOAD_DEFAULT_HASH;
+        $hHeader->{&S3_HEADER_CONTENT_SHA256} = defined($rstrBody) ? cryptoHashOne('sha256', $$rstrBody) : PAYLOAD_DEFAULT_HASH;
         $hHeader->{&S3_HEADER_CONTENT_LENGTH} = defined($rstrBody) ? length($$rstrBody) : 0;
 
         # Generate authorization header
         ($hHeader, my $strCanonicalRequest, my $strSignedHeaders, my $strStringToSign) = s3AuthorizationHeader(
             $self->{strRegion}, "$self->{strBucket}.$self->{strEndPoint}", $strVerb, $strUri, httpQuery($hQuery), s3DateTime(),
-            $hHeader, $self->{strAccessKeyId}, $self->{strSecretAccessKey}, $hHeader->{&S3_HEADER_CONTENT_SHA256});
+            $hHeader, $self->{strAccessKeyId}, $self->{strSecretAccessKey}, $self->{strSecurityToken},
+            $hHeader->{&S3_HEADER_CONTENT_SHA256});
 
         # Send the request
         my $oHttpClient = new pgBackRest::Common::Http::Client(

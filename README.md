@@ -6,9 +6,9 @@ pgBackRest aims to be a simple, reliable backup and restore system that can seam
 
 Instead of relying on traditional backup tools like tar and rsync, pgBackRest implements all backup features internally and uses a custom protocol for communicating with remote systems. Removing reliance on tar and rsync allows for better solutions to database-specific backup challenges. The custom remote protocol allows for more flexibility and limits the types of connections that are required to perform a backup which increases security.
 
-pgBackRest [v2.01](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.01) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
+pgBackRest [v2.03](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.03) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
 
-pgBackRest v1 will receive bugs fixes only until EOL. Documentation for v1 can be found [here](http://www.pgbackrest.org/1).
+Documentation for v1 can be found [here](http://www.pgbackrest.org/1). No further releases are planned for v1 because v2 is backward-compatible with v1 options and repositories.
 
 ## Features
 
@@ -60,13 +60,15 @@ If the repository is on a backup server, compression is performed on the databas
 
 The manifest contains checksums for every file in the backup so that during a restore it is possible to use these checksums to speed processing enormously. On a delta restore any files not present in the backup are first removed and then checksums are taken for the remaining files. Files that match the backup are left in place and the rest of the files are restored as usual. Parallel processing can lead to a dramatic reduction in restore times.
 
-### Parallel WAL Archiving
+### Parallel, Asynchronous WAL Push & Get
 
-Dedicated commands are included for both pushing WAL to the archive and retrieving WAL from the archive.
+Dedicated commands are included for pushing WAL to the archive and getting WAL from the archive. Both commands support parallelism to accelerate processing and run asynchronously to provide the fastest possible response time to PostgreSQL.
 
-The push command automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical, otherwise an error is raised. The push and get commands both ensure that the database and repository match by comparing PostgreSQL versions and system identifiers. This precludes the possibility of misconfiguring the WAL archive location.
+WAL push automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical, otherwise an error is raised. Asynchronous WAL push allows transfer to be offloaded to another process which compresses WAL segments in parallel for maximum throughput. This can be a critical feature for databases with extremely high write volume.
 
-Asynchronous archiving allows transfer to be offloaded to another process which compresses WAL segments in parallel for maximum throughput. This can be a critical feature for databases with extremely high write volume.
+Asynchronous WAL get maintains a local queue of WAL segments that are decompressed and ready for replay. This reduces the time needed to provide WAL to PostgreSQL which maximizes replay speed. Higher-latency connections and storage (such as S3) benefit the most.
+
+The push and get commands both ensure that the database and repository match by comparing PostgreSQL versions and system identifiers. This virtually eliminates the possibility of misconfiguring the WAL archive location.
 
 ### Tablespace & Link Support
 

@@ -8,6 +8,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -23,6 +25,7 @@ testRun()
         TEST_RESULT_INT(pgVersionMap( 942, 201510051), PG_VERSION_95, "   check version 9.5");
         TEST_RESULT_INT(pgVersionMap( 960, 201608131), PG_VERSION_96, "   check version 9.6");
         TEST_RESULT_INT(pgVersionMap(1002, 201707211), PG_VERSION_10, "   check version 10");
+        TEST_RESULT_INT(pgVersionMap(1100, 201804191), PG_VERSION_11, "   check version 11");
 
         // -------------------------------------------------------------------------------------------------------------------------
         #define MAP_ERROR                                                                                                          \
@@ -38,6 +41,7 @@ testRun()
         TEST_ERROR_FMT(pgVersionMap( 942, 0), VersionNotSupportedError, MAP_ERROR,  942);
         TEST_ERROR_FMT(pgVersionMap( 960, 0), VersionNotSupportedError, MAP_ERROR,  960);
         TEST_ERROR_FMT(pgVersionMap(1002, 0), VersionNotSupportedError, MAP_ERROR, 1002);
+        TEST_ERROR_FMT(pgVersionMap(1100, 0), VersionNotSupportedError, MAP_ERROR, 1100);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -54,4 +58,6 @@ testRun()
         TEST_RESULT_INT(info.catalogVersion, 200711281, "   check catalog version");
         TEST_RESULT_INT(info.version, PG_VERSION_83, "   check version");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

@@ -36,4 +36,12 @@ Destructor
 ***********************************************************************************************************************************/
 void storageFileReadPosixFree(StorageFileReadPosix *this);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_STORAGE_FILE_READ_POSIX_TYPE                                                                                \
+    StorageFileReadPosix *
+#define FUNCTION_DEBUG_STORAGE_FILE_READ_POSIX_FORMAT(value, buffer, bufferSize)                                                   \
+    objToLog(value, "StorageFileReadPosix", buffer, bufferSize)
+
 #endif

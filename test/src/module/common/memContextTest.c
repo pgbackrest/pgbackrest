@@ -30,6 +30,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("memAllocInternal(), memReAllocInternal(), and memFreeInternal()"))
     {
@@ -38,7 +40,7 @@ testRun()
         if (sizeof(size_t) == 8)
         {
             TEST_ERROR(memAllocInternal((size_t)5629499534213120, false), MemoryError, "unable to allocate 5629499534213120 bytes");
-            TEST_ERROR(memFreeInternal(NULL), MemoryError, "unable to free null pointer");
+            TEST_ERROR(memFreeInternal(NULL), AssertError, "function test assertion 'buffer != NULL' failed");
 
             // Check that bad realloc is caught
             void *buffer = memAllocInternal(sizeof(size_t), false);
@@ -209,7 +211,7 @@ testRun()
             memFree(memContextCurrent()->allocList[MEM_CONTEXT_ALLOC_INITIAL_SIZE].buffer), AssertError,
             "unable to find allocation");
 
-        TEST_ERROR(memFree(NULL), AssertError, "unable to find null allocation");
+        TEST_ERROR(memFree(NULL), AssertError, "function test assertion 'buffer != NULL' failed");
         TEST_ERROR(memFree((void *)0x01), AssertError, "unable to find allocation");
         memFree(buffer);
 
@@ -220,7 +222,9 @@ testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("memContextCallback()"))
     {
-        TEST_ERROR(memContextCallback(memContextTop(), NULL, NULL), AssertError, "top context may not have a callback");
+        TEST_ERROR(
+            memContextCallback(memContextTop(), (MemContextCallback)testFree, NULL), AssertError,
+            "top context may not have a callback");
 
         MemContext *memContext = memContextNew("test-callback");
         memContextCallback(memContext, (MemContextCallback)testFree, memContext);
@@ -309,7 +313,7 @@ testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("memContextMove()"))
     {
-        TEST_RESULT_VOID(memContextMove(NULL, NULL), "move NULL context");
+        TEST_RESULT_VOID(memContextMove(NULL, memContextTop()), "move NULL context");
 
         // -------------------------------------------------------------------------------------------------------------------------
         MemContext *memContext = NULL;
@@ -348,4 +352,6 @@ testRun()
     }
 
     memContextFree(memContextTop());
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

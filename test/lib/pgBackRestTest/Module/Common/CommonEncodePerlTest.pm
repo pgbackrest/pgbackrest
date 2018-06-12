@@ -53,7 +53,7 @@ sub run
         $self->testResult(sub {decodeToBin(ENCODE_TYPE_BASE64, $tEncodedData)}, $tData, 'decode binary');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {encodeToStr(-1, '')}, ERROR_ASSERT, 'invalid encode type -1');
+        $self->testException(sub {encodeToStr(99999, '')}, ERROR_ASSERT, 'invalid encode type 99999');
         $self->testException(
             sub {decodeToBin(ENCODE_TYPE_BASE64, "XX")}, ERROR_FORMAT, 'base64 size 2 is not evenly divisible by 4');
     }

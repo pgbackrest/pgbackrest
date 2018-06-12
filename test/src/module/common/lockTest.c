@@ -3,12 +3,16 @@ Test Lock Handler
 ***********************************************************************************************************************************/
 #include "common/time.h"
 
+#include "common/harnessFork.h"
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // Create default storage object for testing
     Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
 
@@ -74,24 +78,27 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         String *backupLock = strNewFmt("%s/main-backup.lock", testPath());
 
-        if (fork() == 0)
+        HARNESS_FORK_BEGIN()
         {
-            TEST_RESULT_BOOL(
-                lockAcquireFile(backupLock, 0, true), true, "lock on fork");
-            sleepMSec(500);
-            exit(0);
+            HARNESS_FORK_CHILD()
+            {
+                TEST_RESULT_BOOL(lockAcquireFile(backupLock, 0, true), true, "lock on fork");
+                sleepMSec(500);
+            }
+
+            HARNESS_FORK_PARENT()
+            {
+                sleepMSec(250);
+                TEST_ERROR(
+                    lockAcquireFile(backupLock, 0, true),
+                    LockAcquireError,
+                    strPtr(
+                        strNewFmt(
+                            "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
+                            "HINT: is another pgBackRest process running?", strPtr(backupLock))));
+            }
         }
-        else
-        {
-            sleepMSec(250);
-            TEST_ERROR(
-                lockAcquireFile(backupLock, 0, true),
-                LockAcquireError,
-                strPtr(
-                    strNewFmt(
-                        "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
-                        "HINT: is another pgBackRest process running?", strPtr(backupLock))));
-        }
+        HARNESS_FORK_END();
     }
 
     // *****************************************************************************************************************************
@@ -171,4 +178,6 @@ testRun()
         TEST_RESULT_BOOL(storageExistsNP(storageTest, archiveLockFile), true, "archive lock file still exists");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, backupLockFile), true, "backup lock file still exists");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

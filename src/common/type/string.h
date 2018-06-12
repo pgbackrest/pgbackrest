@@ -37,6 +37,8 @@ String *strUpper(String *this);
 String *strLower(String *this);
 String *strPath(const String *this);
 const char *strPtr(const String *this);
+String *strQuote(const String *this, const String *quote);
+String *strQuoteZ(const String *this, const char *quote);
 size_t strSize(const String *this);
 String *strSub(const String *this, size_t start);
 String *strSubN(const String *this, size_t start, size_t size);
@@ -45,5 +47,25 @@ int strChr(const String *this, char chr);
 String *strTrunc(String *this, int idx);
 
 void strFree(String *this);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+size_t strToLog(const String *this, char *buffer, size_t bufferSize);
+
+#define FUNCTION_DEBUG_CONST_STRING_TYPE                                                                                           \
+    const String *
+#define FUNCTION_DEBUG_CONST_STRING_FORMAT(value, buffer, bufferSize)                                                              \
+    FUNCTION_DEBUG_STRING_FORMAT(value, buffer, bufferSize)
+
+#define FUNCTION_DEBUG_STRING_TYPE                                                                                                 \
+    String *
+#define FUNCTION_DEBUG_STRING_FORMAT(value, buffer, bufferSize)                                                                    \
+    strToLog(value, buffer, bufferSize)
+
+#define FUNCTION_DEBUG_STRINGP_TYPE                                                                                                \
+    const String **
+#define FUNCTION_DEBUG_STRINGP_FORMAT(value, buffer, bufferSize)                                                                   \
+    ptrToLog(value, "String **", buffer, bufferSize)
 
 #endif

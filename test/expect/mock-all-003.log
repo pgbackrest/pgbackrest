@@ -14,7 +14,7 @@ info all stanzas - no stanzas exist (db-master host)
 stanza-create db - create required data for stanza (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: /backup/db/backup.info
@@ -60,7 +60,7 @@ full backup - error on identical link destinations (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P00  ERROR: [070]: link [TEST_PATH]/db-master/db/base/postgresql.conf (../pg_config) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_config_bad (../../db/pg_config)
+P00  ERROR: [070]: link [TEST_PATH]/db-master/db/base/pg_hba.conf (../pg_config) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_config_bad (../../db/pg_config)
 
 full backup - error on link to a link (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --type=full --stanza=db backup
@@ -92,6 +92,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -119,6 +120,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -168,6 +170,7 @@ option-online=false
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
+pg_data/pg_hba.conf={"file":"pg_hba.conf","path":"../pg_config","type":"link"}
 pg_data/pg_stat={"path":"../pg_stat","type":"link"}
 pg_data/postgresql.conf={"file":"postgresql.conf","path":"../pg_config","type":"link"}
 
@@ -185,6 +188,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_hba.conf={"checksum":"dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
@@ -195,6 +199,7 @@ mode="0600"
 user="[USER-1]"
 
 [target:link]
+pg_data/pg_hba.conf={"destination":"../pg_config/pg_hba.conf"}
 pg_data/pg_stat={"destination":"../pg_stat"}
 pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf"}
 
@@ -266,6 +271,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -293,6 +299,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -342,6 +349,7 @@ option-online=false
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
+pg_data/pg_hba.conf={"file":"pg_hba.conf","path":"../pg_config","type":"link"}
 pg_data/pg_stat={"path":"../pg_stat","type":"link"}
 pg_data/postgresql.conf={"file":"postgresql.conf","path":"../pg_config","type":"link"}
 
@@ -359,6 +367,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_hba.conf={"checksum":"dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
@@ -369,6 +378,7 @@ mode="0600"
 user="[USER-1]"
 
 [target:link]
+pg_data/pg_hba.conf={"destination":"../pg_config/pg_hba.conf"}
 pg_data/pg_stat={"destination":"../pg_stat"}
 pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf"}
 
@@ -444,6 +454,7 @@ restore delta, force, backup '[BACKUP-FULL-2]', expect exit 40 - fail on missing
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=warn  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '[TEST_PATH]/db-master/db/base' to confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files exist in the destination directories the restore will be aborted.
+P00   WARN: file link pg_hba.conf will be restored as a file at the same location
 P00   WARN: contents of directory link pg_stat will be restored in a directory at the same location
 P00   WARN: file link postgresql.conf will be restored as a file at the same location
 P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
@@ -453,6 +464,7 @@ restore delta, force, backup '[BACKUP-FULL-2]' - restore succeeds with backup.ma
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: group bogus in manifest cannot be used for restore, set to [USER-1]
 P00   WARN: user bogus in manifest cannot be used for restore, set to [USER-1]
+P00   WARN: file link pg_hba.conf will be restored as a file at the same location
 P00   WARN: contents of directory link pg_stat will be restored in a directory at the same location
 P00   WARN: file link postgresql.conf will be restored as a file at the same location
 
@@ -539,6 +551,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -566,6 +579,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -721,6 +735,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -748,6 +763,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -913,6 +929,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -940,6 +957,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -1101,6 +1119,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -1128,6 +1147,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -1311,6 +1331,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -1338,6 +1359,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -1472,7 +1494,7 @@ db-version="9.4"
 stanza-create db - create required data for stanza (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --force --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --force --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db
 P00  ERROR: [055]: backup information missing and repo is encrypted and info file(s) are missing, --force cannot be used
 P00   INFO: stanza-create command end: aborted with exception [055]
 
@@ -1521,6 +1543,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -1548,6 +1571,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -1710,6 +1734,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -1737,6 +1762,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -1898,6 +1924,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -1925,6 +1952,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -2089,6 +2117,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -2116,6 +2145,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -2274,6 +2304,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -2301,6 +2332,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -2448,7 +2480,7 @@ stanza: db
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 160KB, backup size: 160KB
-            repository size: 160.3KB, repository backup size: 160.3KB
+            repository size: 160.4KB, repository backup size: 160.4KB
 
         diff backup: [BACKUP-DIFF-2]
             timestamp start/stop: [TIMESTAMP-STR]
@@ -2781,7 +2813,7 @@ info db stanza - normal output (backup host)
 expire full=1 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --repo1-retention-full=1  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-retention-full=1 --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-retention-full=1 --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db
 P00   INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3], [BACKUP-INCR-4], [BACKUP-DIFF-3], [BACKUP-INCR-5], [BACKUP-DIFF-4]
 P00   INFO: remove expired backup [BACKUP-DIFF-4]
 P00   INFO: remove expired backup [BACKUP-DIFF-3]
@@ -2816,6 +2848,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -2843,6 +2876,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -3150,7 +3184,7 @@ info bogus stanza - bogus stanza (db-master host)
 diff backup - config file not validated on remote (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
@@ -3179,6 +3213,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -3207,6 +3242,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x
@@ -3341,7 +3377,7 @@ db-version="9.4"
 diff backup - option backup-standby reset - backup performed from master (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but standby is not properly configured - backups will be performed from the master
@@ -3371,6 +3407,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
@@ -3398,6 +3435,7 @@ log-level-console=warn
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
+log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-cipher-pass=x

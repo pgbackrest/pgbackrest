@@ -118,14 +118,6 @@ eval
         executeTest('sudo apt-get install -y texlive-font-utils latex-xcolor', {bSuppressStdErr => true});
         processEnd();
 
-        processBegin(VM_CO6 . ' build');
-        executeTest("${strTestExe} --vm-build --vm=" . VM_CO6, {bShowOutputAsync => true});
-        processEnd();
-
-        processBegin(VM_U16 . ' build');
-        executeTest("${strTestExe} --vm-build --vm=" . VM_U16, {bShowOutputAsync => true});
-        processEnd();
-
         processBegin('release documentation doc');
         executeTest("${strReleaseExe} --build", {bShowOutputAsync => true});
         processEnd();
@@ -142,10 +134,10 @@ eval
             confess &log(ERROR, '--vm is required');
         }
 
-        # Only lint on U16
+        # Only lint on U18
         my $strParam = undef;
 
-        if ($strVm ne VM_U16)
+        if ($strVm ne VM_U18)
         {
             $strParam .= '--no-lint';
         }
@@ -156,7 +148,8 @@ eval
 
         processBegin("${strVm} test" . (defined($strParam) ? ": ${strParam}" : ''));
         executeTest(
-            "${strTestExe} --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}" . (defined($strParam) ? " ${strParam}" : ''),
+            "${strTestExe} --no-gen --no-ci-config --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}" .
+                (defined($strParam) ? " ${strParam}" : ''),
             {bShowOutputAsync => true});
         processEnd();
     }

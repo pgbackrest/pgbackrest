@@ -63,6 +63,9 @@
     <!ATTLIST execute user CDATA "">
     <!ATTLIST execute filter CDATA "">
     <!ATTLIST execute filter-context CDATA "">
+    <!ATTLIST execute user-force CDATA "">
+    <!ATTLIST execute bash-wrap CDATA "">
+    <!ATTLIST execute load-env CDATA "">
     <!ATTLIST execute skip CDATA "">
     <!ATTLIST execute show CDATA "">
     <!ATTLIST execute output CDATA "">
@@ -189,6 +192,8 @@
     <!ATTLIST host-add user CDATA #REQUIRED>
     <!ATTLIST host-add image CDATA #REQUIRED>
     <!ATTLIST host-add option CDATA "">
+    <!ATTLIST host-add update-hosts CDATA "">
+    <!ATTLIST host-add param CDATA "">
     <!ATTLIST host-add os CDATA "">
     <!ATTLIST host-add mount CDATA "">
 

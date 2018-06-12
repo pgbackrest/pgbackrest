@@ -36,7 +36,7 @@
 
         <p><backrest/> <link url="{[github-url-base]}/releases/tag/release/{[version-stable]}">v{[version-stable]}</link> is the current stable release.  Release notes are on the <link page="{[backrest-page-release]}">Releases</link> page.</p>
 
-        <p><backrest/> <proper>v1</proper> will receive bugs fixes only until EOL.  Documentation for <proper>v1</proper> can be found <link url="{[backrest-url-base]}/1">here</link>.</p>
+        <p>Documentation for <proper>v1</proper> can be found <link url="{[backrest-url-base]}/1">here</link>.  No further releases are planned for <proper>v1</proper> because <proper>v2</proper> is backward-compatible with <proper>v1</proper> options and repositories.</p>
     </section>
 
     <section id="features">
@@ -109,13 +109,15 @@
         </section>
 
         <section id="parallel-archiving">
-            <title>Parallel WAL Archiving</title>
+            <title>Parallel, Asynchronous WAL Push &amp; Get</title>
 
-            <p>Dedicated commands are included for both pushing WAL to the archive and retrieving WAL from the archive.</p>
+            <p>Dedicated commands are included for pushing WAL to the archive and getting WAL from the archive.  Both commands support parallelism to accelerate processing and run asynchronously to provide the fastest possible response time to <postgres/>.</p>
 
-            <p>The push command automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical, otherwise an error is raised.  The push and get commands both ensure that the database and repository match by comparing <postgres/> versions and system identifiers.  This precludes the possibility of misconfiguring the WAL archive location.</p>
+            <p>WAL push automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical, otherwise an error is raised.  Asynchronous WAL push allows transfer to be offloaded to another process which compresses WAL segments in parallel for maximum throughput.  This can be a critical feature for databases with extremely high write volume.</p>
 
-            <p>Asynchronous archiving allows transfer to be offloaded to another process which compresses WAL segments in parallel for maximum throughput.  This can be a critical feature for databases with extremely high write volume.</p>
+            <p>Asynchronous WAL get maintains a local queue of WAL segments that are decompressed and ready for replay.  This reduces the time needed to provide WAL to <postgres/> which maximizes replay speed.  Higher-latency connections and storage (such as <proper>S3</proper>) benefit the most.</p>
+
+            <p>The push and get commands both ensure that the database and repository match by comparing <postgres/> versions and system identifiers.  This virtually eliminates the possibility of misconfiguring the WAL archive location.</p>
         </section>
 
         <section id="tablespace-link-support">

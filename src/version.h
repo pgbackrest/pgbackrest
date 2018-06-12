@@ -23,7 +23,7 @@ repository will be invalid unless migration functions are written.
 /***********************************************************************************************************************************
 Version of the software.  ??? Currently this value is maintained in Version.pm and updated by test.pl.
 ***********************************************************************************************************************************/
-#define PGBACKREST_VERSION                                          "2.02dev"
+#define PGBACKREST_VERSION                                          "2.04dev"
 
 
 #endif

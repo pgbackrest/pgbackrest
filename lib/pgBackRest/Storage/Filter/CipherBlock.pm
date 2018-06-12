@@ -15,7 +15,7 @@ use Exporter qw(import);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Io::Base;
 use pgBackRest::Common::Log;
-use pgBackRest::LibC qw(:cipher);
+use pgBackRest::LibC qw(:crypto);
 use pgBackRest::Storage::Base;
 
 ####################################################################################################################################

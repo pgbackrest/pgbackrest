@@ -25,6 +25,8 @@ use constant VM_DB                                                  => 'db';
     push @EXPORT, qw(VM_DB);
 use constant VM_DB_TEST                                             => 'db-test';
     push @EXPORT, qw(VM_DB_TEST);
+use constant VMDEF_DEBUG_INTEGRATION                                => 'debug-integration';
+    push @EXPORT, qw(VMDEF_DEBUG_INTEGRATION);
 use constant VM_CONTROL_MASTER                                      => 'control-master';
     push @EXPORT, qw(VM_CONTROL_MASTER);
 use constant VM_DEPRECATED                                          => 'deprecated';
@@ -41,6 +43,8 @@ use constant VMDEF_PGSQL_BIN                                        => 'pgsql-bi
     push @EXPORT, qw(VMDEF_PGSQL_BIN);
 use constant VMDEF_PERL_ARCH_PATH                                   => 'perl-arch-path';
     push @EXPORT, qw(VMDEF_PERL_ARCH_PATH);
+use constant VMDEF_WITH_BACKTRACE                                   => 'with-backtrace';
+    push @EXPORT, qw(VMDEF_WITH_BACKTRACE);
 
 ####################################################################################################################################
 # Valid OS base List
@@ -84,6 +88,8 @@ use constant VM_U14                                                 => 'u14';
     push @EXPORT, qw(VM_U14);
 use constant VM_U16                                                 => 'u16';
     push @EXPORT, qw(VM_U16);
+use constant VM_U18                                                 => 'u18';
+    push @EXPORT, qw(VM_U18);
 use constant VM_D8                                                  => 'd8';
     push @EXPORT, qw(VM_D8);
 use constant VM_D9                                                  => 'd9';
@@ -94,14 +100,14 @@ use constant VM_EXPECT                                              => VM_CO7;
     push @EXPORT, qw(VM_EXPECT);
 
 # Defines the host VM (the VM that the containers run in)
-use constant VM_HOST_DEFAULT                                        => VM_U16;
+use constant VM_HOST_DEFAULT                                        => VM_U18;
     push @EXPORT, qw(VM_HOST_DEFAULT);
 
 # Defines the VM that will do coverage testing
-use constant VM_COVERAGE                                            => VM_U16;
+use constant VM_COVERAGE                                            => VM_U18;
 
 # Lists valid VMs
-use constant VM_LIST                                                => (VM_CO6, VM_U16, VM_CO7, VM_U12);
+use constant VM_LIST                                                => (VM_U18, VM_CO6, VM_CO7, VM_U12);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -141,6 +147,8 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
+
+        &VMDEF_DEBUG_INTEGRATION => false,
 
         &VM_DB =>
         [
@@ -230,17 +238,47 @@ my $oyVm =
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.22.1',
 
+        &VMDEF_WITH_BACKTRACE => true,
+
+        &VM_DB =>
+        [
+            PG_VERSION_94,
+            PG_VERSION_95,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_94,
+            PG_VERSION_95,
+        ],
+    },
+
+    # Ubuntu 18.04
+    &VM_U18 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
+        &VM_OS => VM_OS_UBUNTU,
+        &VM_OS_REPO => 'bionic',
+        &VM_IMAGE => 'ubuntu:18.04',
+        &VM_ARCH => VM_ARCH_AMD64,
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.26.1',
+
+        &VMDEF_WITH_BACKTRACE => true,
+
         &VM_DB =>
         [
             PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_10,
+            PG_VERSION_11,
         ],
 
         &VM_DB_TEST =>
         [
             PG_VERSION_94,
             PG_VERSION_10,
+            PG_VERSION_11,
         ],
     },
 };
@@ -344,5 +382,29 @@ sub vmArchBits
 }
 
 push @EXPORT, qw(vmArchBits);
+
+####################################################################################################################################
+# Does the VM support libbacktrace?
+####################################################################################################################################
+sub vmWithBackTrace
+{
+    my $strVm = shift;
+
+    return ($oyVm->{$strVm}{&VMDEF_WITH_BACKTRACE} ? true : false);
+}
+
+push @EXPORT, qw(vmWithBackTrace);
+
+####################################################################################################################################
+# Will integration tests be run in debug mode?
+####################################################################################################################################
+sub vmDebugIntegration
+{
+    my $strVm = shift;
+
+    return (defined($oyVm->{$strVm}{&VMDEF_DEBUG_INTEGRATION}) ? $oyVm->{$strVm}{&VMDEF_DEBUG_INTEGRATION} : true);
+}
+
+push @EXPORT, qw(vmDebugIntegration);
 
 1;

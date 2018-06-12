@@ -8,6 +8,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("ASSERT()"))
     {
@@ -21,4 +23,6 @@ testRun()
         TEST_RESULT_VOID(ASSERT_DEBUG(true), "assert true ignored");
         TEST_RESULT_VOID(ASSERT_DEBUG(false || false), "assert false ignored");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

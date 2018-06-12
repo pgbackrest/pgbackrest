@@ -33,8 +33,6 @@ use constant BLD_HEADER                                             => 'h';
 
 use constant BLD_CONSTANT                                           => 'constant';
     push @EXPORT, qw(BLD_CONSTANT);
-use constant BLD_CONSTANT_EXPORT                                    => 'constantExport';
-    push @EXPORT, qw(BLD_CONSTANT_EXPORT);
 use constant BLD_CONSTANT_GROUP                                     => 'constantGroup';
     push @EXPORT, qw(BLD_CONSTANT_GROUP);
 use constant BLD_CONSTANT_VALUE                                     => 'constantValue';

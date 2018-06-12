@@ -9,14 +9,6 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
-use Exporter qw(import);
-    our @EXPORT = qw();
-use Fcntl qw(SEEK_CUR O_RDONLY O_WRONLY O_CREAT);
-use File::Basename qw(dirname basename);
-use IO::Socket::UNIX;
-use POSIX qw(setsid);
-use Scalar::Util qw(blessed);
-
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
@@ -153,6 +145,9 @@ sub processQueue
 
         eval
         {
+            # Check for a stop lock
+            lockStopTest();
+
             # Hold a lock when the repo is remote to be sure no other process is pushing WAL
             !isRepoLocal() && protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP);
 
@@ -176,7 +171,7 @@ sub processQueue
                         $iErrorTotal++;
 
                         &log(WARN,
-                            "could not push WAl file ${strWalFile} to archive (will be retried): [" .
+                            "could not push WAL file ${strWalFile} to archive (will be retried): [" .
                                 $hJob->{oException}->code() . "] " . $hJob->{oException}->message());
                     }
                     # Else write success

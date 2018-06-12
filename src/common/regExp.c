@@ -4,6 +4,7 @@ Regular Expression Handler
 #include <regex.h>
 #include <sys/types.h>
 
+#include "common/debug.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
 
@@ -22,9 +23,15 @@ Handle errors
 static void
 regExpError(int error)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, error);
+    FUNCTION_TEST_END();
+
     char buffer[4096];
     regerror(error, NULL, buffer, sizeof(buffer));
     THROW(FormatError, buffer);
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -33,6 +40,12 @@ New regular expression handler
 RegExp *
 regExpNew(const String *expression)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, expression);
+
+        FUNCTION_TEST_ASSERT(expression != NULL);
+    FUNCTION_TEST_END();
+
     RegExp *this = NULL;
 
     MEM_CONTEXT_NEW_BEGIN("RegExp")
@@ -54,7 +67,7 @@ regExpNew(const String *expression)
     }
     MEM_CONTEXT_NEW_END();
 
-    return this;
+    FUNCTION_TEST_RESULT(REGEXP, this);
 }
 
 /***********************************************************************************************************************************
@@ -63,6 +76,14 @@ Match on a regular expression
 bool
 regExpMatch(RegExp *this, const String *string)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(REGEXP, this);
+        FUNCTION_TEST_PARAM(STRING, string);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(string != NULL);
+    FUNCTION_TEST_END();
+
     // Test for a match
     int result = regexec(&this->regExp, strPtr(string), 0, NULL, 0);
 
@@ -70,7 +91,7 @@ regExpMatch(RegExp *this, const String *string)
     if (result != 0 && result != REG_NOMATCH)                                   // {uncoverable - no error condition known}
         regExpError(result);                                                    // {+uncoverable}
 
-    return result == 0;
+    FUNCTION_TEST_RESULT(BOOL, result == 0);
 }
 
 /***********************************************************************************************************************************
@@ -79,11 +100,17 @@ Free regular expression
 void
 regExpFree(RegExp *this)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(REGEXP, this);
+    FUNCTION_TEST_END();
+
     if (this != NULL)
     {
         regfree(&this->regExp);
         memContextFree(this->memContext);
     }
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -92,6 +119,14 @@ Match a regular expression in one call for brevity
 bool
 regExpMatchOne(const String *expression, const String *string)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, expression);
+        FUNCTION_TEST_PARAM(STRING, string);
+
+        FUNCTION_TEST_ASSERT(expression != NULL);
+        FUNCTION_TEST_ASSERT(string != NULL);
+    FUNCTION_TEST_END();
+
     bool result = false;
     RegExp *regExp = regExpNew(expression);
 
@@ -105,5 +140,5 @@ regExpMatchOne(const String *expression, const String *string)
     }
     TRY_END();
 
-    return result;
+    FUNCTION_TEST_RESULT(BOOL, result);
 }

@@ -12,7 +12,133 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.02dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.04dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <p><postgres/> 11 Beta 1 support.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Move cryptographic hash functions to C using <proper>OpenSSL</proper>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Split log levels into separate header file.  Many modules that use <code>debug.h</code> do not need to do logging so this reduces dependencies for those modules.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Auto-generate Makefile with dependencies.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Rename <code>cipher</code> module to the more general <code>crypto</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Update Debian package to add debug symbols to <backrest/> executable.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Build containers from scratch for more accurate testing.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Document generator improvements.  Allow parameters to be passed when a container is created.  Allow <file>/etc/hosts</file> update to be skipped (for containers without bash).  Allow environment load to be skipped.  Allow bash wrapping to be skipped.  Allow forcing a command to run as a user without sudo.</p>
+                    </release-item>
+                </release-development-list>
+            </release-doc-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Update primary test environment (Vagrant and Docker) to Ubuntu 18.04.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improve efficiency of C library builds now that they are used only for testing.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove RHEL package patch since it has been committed upstream.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
+        </release>
+
+        <release date="2018-05-22" version="2.03" title="Single Executable to Deploy">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="loxo.lætitia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix potential buffer overrun in error message handling.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="uspen"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix archive write lock being taken for the synchronous <cmd>archive-get</cmd> command.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <p>Embed exported C functions and Perl modules directly into the <backrest/> executable.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="floersch.nick"/>
+                        </release-item-contributor-list>
+
+                        <p>Use <code>time_t</code> instead of <code>__time_t</code> for better portability.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Print total runtime in milliseconds at command end.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Add stack trace macros to all functions.  Low-level functions only include stack trace in test builds while higher-level functions ship with stack trace built-in.  Stack traces include all parameters passed to the function but production builds only create the parameter list when the log level is set high enough, i.e. <id>debug</id> or <id>trace</id> depending on the function.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Build <path>libc</path> using links rather than referencing the C files in <path>src</path> directly.  The C library builds with different options which should not be reused for the C binary or vice versa.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Test harness improvements.  Allow more than one test to provide coverage for the same module.  Add option to disable valgrind.  Add option to disabled coverage.  Add option to disable debug build.  Add option to disable compiler optimization.  Add <id>--dev-test</id> mode.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Update SSL error message test on CentOS 7.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Set <br-option>log-timestamp=n</br-option> for integration tests.  This means less filtering of logs needs to be done and new timestamps can be added without adding new filters.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
+        </release>
+
+        <release date="2018-05-06" version="2.02" title="Parallel Asynchronous Archive Get and Configuration Includes">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -22,9 +148,42 @@
 
                         <p>Fix directory syncs running recursively when only the specified directory should be synced.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="yummyliu"/>
+                            <release-item-ideator id="kukharik.vitaliy"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix <br-option>archive-copy</br-option> throwing <quote>path not found</quote> error for incr/diff backups.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="kukharik.vitaliy"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix failure in manifest build when two or more files in <id>PGDATA</id> are linked to the same directory.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fix delta restore failing when a linked file is missing.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="adams.clinton"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix rendering of key/value and list options in help.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
+                    <release-item>
+                        <p>Add asynchronous, parallel <cmd>archive-get</cmd>.  This feature maintains a queue of WAL segments to help reduce latency when <postgres/> requests a WAL segment with <pg-option>restore_command</pg-option>.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
@@ -32,13 +191,17 @@
 
                         <p>Add support for additional <backrest/> configuration files in the directory specified by the <br-option>--config-include-path</br-option> option. Add <br-option>--config-path</br-option> option for overriding the default base path of the <br-option>--config</br-option> and <br-option>--config-include-path</br-option> option.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="sharma.yogesh"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>repo-s3-token</br-option> option to allow temporary credentials tokens to be configured.  <backrest/> currently has no way to request new credentials so the entire command (e.g. <cmd>backup</cmd>, <cmd>restore</cmd>) must complete before the credentials expire.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
-                    <release-item>
-                        <p>Make backup directory sync more efficient.  Scanning the entire backup directory can be very expensive if there are a lot of small tables.  The backup manifest contains the backup directory list so use it to perform syncs instead of scanning the backup directory.</p>
-                    </release-item>
-
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
@@ -48,11 +211,15 @@
                     </release-item>
 
                     <release-item>
-                        <p>Show command parameters as well as command options in initial info message.</p>
+                        <p>Make backup/restore path sync more efficient.  Scanning the entire directory can be very expensive if there are a lot of small tables.  The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Rename <br-option>archive-queue-max</br-option> option to <br-option>archive-push-queue-max</br-option> to avoid confusion with the <br-option>archive-get-queue-max</br-option> option.  The old option name will continue to be accepted.</p>
+                        <p>Show command parameters as well as command options in initial info log message.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Rename <br-option>archive-queue-max</br-option> option to <br-option>archive-push-queue-max</br-option> to avoid confusion with the new <br-option>archive-get-queue-max</br-option> option.  The old option name will continue to be accepted.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -78,7 +245,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageCopy()</code>, <code>storageExists()</code>, <code>storageMove()</code>, <code>storageNewRead()</code>/<code>storageNewWrite()</code>, <code>storagePathCreate()</code>, <code>storagePathRemove()</code>, <code>storagePathSync()</code>, and <code>storageRemove()</code>.  Add <code>StorageFileRead</code> and <code>StorageFileWrite</code> objects.  Abstract Posix driver code into a separate module. Call <code>storagePathCreate()</code> from the Perl Posix driver.</p>
+                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageCopy()</code>, <code>storageExists()</code>, <code>storageMove()</code>, <code>storageNewRead()</code>/<code>storageNewWrite()</code>, <code>storagePathCreate()</code>, <code>storagePathRemove()</code>, <code>storagePathSync()</code>, and <code>storageRemove()</code>.  Add <code>StorageFileRead</code> and <code>StorageFileWrite</code> objects.  Abstract Posix driver code into a separate module. Call <code>storagePathRemove()</code> from the Perl Posix driver.</p>
                     </release-item>
 
                     <release-item>
@@ -103,7 +270,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <code>THROWP_</code>* macro variants for error handling.  These macros allow an <code>ErrorType</code> pointer to be passed and are required for functions that may return different errors based on a parameter.</p>
+                        <p>Error handling improvments.  Add <code>THROWP_</code>* macro variants for error handling.  These macros allow an <code>ErrorType</code> pointer to be passed and are required for functions that may return different errors based on a parameter.  Add <code>_FMT</code> variants for all <code>THROW</code> macros so format types are checked by the compiler.</p>
                     </release-item>
 
                     <release-item>
@@ -115,7 +282,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve branch coverage in C code.</p>
+                        <p>Full branch coverage in C code.</p>
                     </release-item>
 
                     <release-item>
@@ -135,7 +302,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Split debug and assert code into separate headers.  Assert can be used earlier because it only depends on the error-handler and not logging.  Add <code>ASSERT()</code> that is preserved in production builds.</p>
+                        <p>Split debug and assert code into separate headers.  Assert can be used earlier because it only depends on the error-handler and not logging.  Add <code>ASSERT()</code> macro which is preserved in production builds.</p>
                     </release-item>
 
                     <release-item>
@@ -170,6 +337,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="courtois.christophe"/>
+                        </release-item-contributor-list>
+
+                        <p>Add example of command section usage to archiving configuration.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove documentation describing <code>info --output=json</code> as experimental.</p>
                     </release-item>
 
@@ -192,7 +367,7 @@
             <release-test-list>
                 <release-feature-list>
                     <release-item>
-                        <p>Use <proper>lcov</proper> for C unit test coverage reporting.  Switch from <proper>Devel::Cover</proper> because it would not report on branch coverage for reports converted from <proper>gcov</proper>.  Branch coverage is not complete, so for the time being errors will only be generated when statement coverage is not complete.  Coverage of unit tests is not displayed in the report unless they are incomplete for either statement or branch coverage.</p>
+                        <p>Use <proper>lcov</proper> for C unit test coverage reporting.  Switch from <proper>Devel::Cover</proper> because it would not report on branch coverage for reports converted from <proper>gcov</proper>.  Incomplete branch coverage for a module now generates an error.  Coverage of unit tests is not displayed in the report unless they are incomplete for either statement or branch coverage.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -211,6 +386,10 @@
 
                     <release-item>
                         <p>Add <code>harnessCfgLoad()</code> test function, which allows a new config to be loaded for unit testing without resetting log functions, opening a log file, or taking locks.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>HARNESS_FORK</code> macros for tests that require fork().  A standard pattern for tests makes fork() easier to use and should help prevent some common mistakes.</p>
                     </release-item>
 
                     <release-item>
@@ -4468,6 +4647,11 @@
             <contributor-id type="github">Tostino</contributor-id>
         </contributor>
 
+        <contributor id="courtois.christophe">
+            <contributor-name-display>Christophe Courtois</contributor-name-display>
+            <contributor-id type="github">Krysztophe</contributor-id>
+        </contributor>
+
         <contributor id="cox.william">
             <contributor-name-display>William Cox</contributor-name-display>
             <contributor-id type="github">mydimension</contributor-id>
@@ -4491,6 +4675,11 @@
         <contributor id="flatley.thomas">
             <contributor-name-display>Thomas Flatley</contributor-name-display>
             <contributor-id type="github">seadba</contributor-id>
+        </contributor>
+
+        <contributor id="floersch.nick">
+            <contributor-name-display>Nick Floersch</contributor-name-display>
+            <contributor-id type="github">seinick</contributor-id>
         </contributor>
 
         <contributor id="fort.chris">
@@ -4546,6 +4735,11 @@
         <contributor id="james.craig">
             <contributor-name-display>Craig A. James</contributor-name-display>
             <contributor-id type="github">cjames53</contributor-id>
+        </contributor>
+
+        <contributor id="kukharik.vitaliy">
+            <contributor-name-display>Vitaliy Kukharik</contributor-name-display>
+            <contributor-id type="github">vitabaks</contributor-id>
         </contributor>
 
         <contributor id="kulkarni.nikhilchandra">
@@ -4688,6 +4882,11 @@
         <contributor id="youatt.david">
             <contributor-name-display>David Youatt</contributor-name-display>
             <contributor-id type="github">youattd</contributor-id>
+        </contributor>
+
+        <contributor id="yummyliu">
+            <contributor-name-display>yummyliu</contributor-name-display>
+            <contributor-id type="github">yummyliu</contributor-id>
         </contributor>
     </contributor-list>
 </doc>

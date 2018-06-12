@@ -5,6 +5,8 @@ Test Storage Manager
 #include "storage/fileRead.h"
 #include "storage/fileWrite.h"
 
+#include "common/harnessFork.h"
+
 /***********************************************************************************************************************************
 Test function for path expression
 ***********************************************************************************************************************************/
@@ -16,7 +18,7 @@ storageTestPathExpression(const String *expression, const String *path)
     if (strcmp(strPtr(expression), "<TEST>") == 0)
         result = strNewFmt("test%s", path == NULL ? "" : strPtr(strNewFmt("/%s", strPtr(path))));
     else if (strcmp(strPtr(expression), "<NULL>") != 0)
-        THROW(AssertError, "invalid expression '%s'", strPtr(expression));
+        THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));
 
     return result;
 }
@@ -27,6 +29,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // Create default storage object for testing
     Storage *storageTest = storageNewP(strNew(testPath()), .write = true, .bufferSize = 3);
     Storage *storageTmp = storageNewP(strNew("/tmp"), .write = true);
@@ -46,7 +50,7 @@ testRun()
     {
         Storage *storageTest = NULL;
 
-        TEST_ERROR(storageNewNP(NULL), AssertError, "storage base path cannot be null");
+        TEST_ERROR(storageNewNP(NULL), AssertError, "function debug assertion 'path != NULL' failed");
 
         TEST_ASSIGN(storageTest, storageNewNP(strNew("/")), "new storage (defaults)");
         TEST_RESULT_STR(strPtr(storageTest->path), "/", "    check path");
@@ -93,14 +97,21 @@ testRun()
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm %s", strPtr(fileExists)))), 0, "remove exists file");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        if (fork() == 0)
+        HARNESS_FORK_BEGIN()
         {
-            sleepMSec(250);
-            TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileExists)))), 0, "create exists file");
-            exit(0);
-        }
+            HARNESS_FORK_CHILD()
+            {
+                sleepMSec(250);
+                TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileExists)))), 0, "create exists file");
+            }
 
-        TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 1), true, "file exists after wait");
+            HARNESS_FORK_PARENT()
+            {
+                TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 1), true, "file exists after wait");
+            }
+        }
+        HARNESS_FORK_END();
+
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm %s", strPtr(fileExists)))), 0, "remove exists file");
     }
 
@@ -567,4 +578,6 @@ testRun()
             storageRemoveNP(storageTest, fileNoPerm), FileRemoveError,
             "unable to remove '%s': [13] Permission denied", strPtr(fileNoPerm));
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

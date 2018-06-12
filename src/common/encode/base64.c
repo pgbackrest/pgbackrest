@@ -4,6 +4,7 @@ Base64 Binary to String Encode/Decode
 #include <string.h>
 
 #include "common/encode/base64.h"
+#include "common/debug.h"
 #include "common/error.h"
 
 /***********************************************************************************************************************************
@@ -14,6 +15,15 @@ static const char encodeBase64Lookup[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkl
 void
 encodeToStrBase64(const unsigned char *source, size_t sourceSize, char *destination)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UCHARP, source);
+        FUNCTION_TEST_PARAM(SIZE, sourceSize);
+        FUNCTION_TEST_PARAM(CHARP, destination);
+
+        FUNCTION_TEST_ASSERT(source != NULL);
+        FUNCTION_TEST_ASSERT(destination != NULL);
+    FUNCTION_TEST_END();
+
     unsigned int destinationIdx = 0;
 
     // Encode the string from three bytes to four characters
@@ -56,6 +66,8 @@ encodeToStrBase64(const unsigned char *source, size_t sourceSize, char *destinat
 
     // Zero-terminate the string
     destination[destinationIdx] = 0;
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -64,6 +76,10 @@ Size of the destination param required by encodeToStrBase64() minus space for th
 size_t
 encodeToStrSizeBase64(size_t sourceSize)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, sourceSize);
+    FUNCTION_TEST_END();
+
     // Calculate how many groups of three are in the source
     size_t encodeGroupTotal = sourceSize / 3;
 
@@ -72,7 +88,7 @@ encodeToStrSizeBase64(size_t sourceSize)
         encodeGroupTotal++;
 
     // Four characters are needed to encode each group
-    return encodeGroupTotal * 4;
+    FUNCTION_TEST_RESULT(SIZE, encodeGroupTotal * 4);
 }
 
 /***********************************************************************************************************************************
@@ -101,6 +117,11 @@ static const int decodeBase64Lookup[256] =
 void
 decodeToBinBase64(const char *source, unsigned char *destination)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, source);
+        FUNCTION_TEST_PARAM(UCHARP, destination);
+    FUNCTION_TEST_END();
+
     // Validate encoded string
     decodeToBinValidateBase64(source);
 
@@ -127,6 +148,8 @@ decodeToBinBase64(const char *source, unsigned char *destination)
                 (((decodeBase64Lookup[(int)source[sourceIdx + 2]] << 6) & 0xc0) | decodeBase64Lookup[(int)source[sourceIdx + 3]]);
         }
     }
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -135,6 +158,10 @@ Size of the destination param required by decodeToBinBase64()
 size_t
 decodeToBinSizeBase64(const char *source)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, source);
+    FUNCTION_TEST_END();
+
     // Validate encoded string
     decodeToBinValidateBase64(source);
 
@@ -152,7 +179,7 @@ decodeToBinSizeBase64(const char *source)
             destinationSize--;
     }
 
-    return destinationSize;
+    FUNCTION_TEST_RESULT(SIZE, destinationSize);
 }
 
 /***********************************************************************************************************************************
@@ -161,11 +188,15 @@ Validate the encoded string
 void
 decodeToBinValidateBase64(const char *source)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, source);
+    FUNCTION_TEST_END();
+
     // Check for the correct length
     size_t sourceSize = strlen(source);
 
     if (sourceSize % 4 != 0)
-        THROW(FormatError, "base64 size %d is not evenly divisible by 4", sourceSize);
+        THROW_FMT(FormatError, "base64 size %zu is not evenly divisible by 4", sourceSize);
 
     // Check all characters
     for (unsigned int sourceIdx = 0; sourceIdx < sourceSize; sourceIdx++)
@@ -185,7 +216,9 @@ decodeToBinValidateBase64(const char *source)
         {
             // Error on any invalid characters
             if (decodeBase64Lookup[(int)source[sourceIdx]] == -1)
-                THROW(FormatError, "base64 invalid character found at position %d", sourceIdx);
+                THROW_FMT(FormatError, "base64 invalid character found at position %u", sourceIdx);
         }
     }
+
+    FUNCTION_TEST_RESULT_VOID();
 }

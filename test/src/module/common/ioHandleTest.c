@@ -9,6 +9,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("ioHandleWriteOneStr()"))
     {
@@ -22,4 +24,6 @@ testRun()
 
         TEST_RESULT_VOID(ioHandleWriteOneStr(fileHandle, strNew("test1\ntest2")), "write string to file");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

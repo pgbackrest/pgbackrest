@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
+#include "common/harnessDebug.h"
 #include "common/logTest.h"
 
 #include "config/load.h"
@@ -15,7 +16,14 @@ log files, acquire locks, etc.
 void
 harnessCfgLoad(unsigned int argListSize, const char *argList[])
 {
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(UINT, argListSize);
+        FUNCTION_HARNESS_PARAM(CHARPY, argList);
+    FUNCTION_HARNESS_END();
+
     configParse(argListSize, argList);
-    logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+    logInit(logLevelInfo, logLevelOff, logLevelDebug, false);
     cfgLoadUpdateOption();
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

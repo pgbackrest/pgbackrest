@@ -25,6 +25,8 @@ use constant STORAGE_LOCAL                                          => '<LOCAL>'
 
 use constant STORAGE_SPOOL                                          => '<SPOOL>';
     push @EXPORT, qw(STORAGE_SPOOL);
+use constant STORAGE_SPOOL_ARCHIVE_IN                               => '<SPOOL:ARCHIVE:IN>';
+    push @EXPORT, qw(STORAGE_SPOOL_ARCHIVE_IN);
 use constant STORAGE_SPOOL_ARCHIVE_OUT                              => '<SPOOL:ARCHIVE:OUT>';
     push @EXPORT, qw(STORAGE_SPOOL_ARCHIVE_OUT);
 
@@ -108,6 +110,7 @@ sub storageSpool
         # Path rules
         my $hRule =
         {
+            &STORAGE_SPOOL_ARCHIVE_IN => "archive/${strStanza}/in",
             &STORAGE_SPOOL_ARCHIVE_OUT => "archive/${strStanza}/out",
         };
 

@@ -3,6 +3,19 @@ Test Error Handling
 ***********************************************************************************************************************************/
 #include <assert.h>
 
+#include "common/harnessFork.h"
+
+/***********************************************************************************************************************************
+Declare some error locally because real errors won't work for some tests -- they could also break as errors change
+***********************************************************************************************************************************/
+ERROR_DECLARE(TestParent1Error);
+ERROR_DECLARE(TestParent2Error);
+ERROR_DECLARE(TestChildError);
+
+ERROR_DEFINE(101, TestParent1Error, TestParent1Error);
+ERROR_DEFINE(102, TestParent2Error, TestParent1Error);
+ERROR_DEFINE(200, TestChildError, TestParent2Error);
+
 /***********************************************************************************************************************************
 testTryRecurse - test to blow up try stack
 ***********************************************************************************************************************************/
@@ -37,13 +50,24 @@ Test Run
 void
 testRun()
 {
-    // -----------------------------------------------------------------------------------------------------------------------------
+    FUNCTION_HARNESS_VOID();
+
+    // *****************************************************************************************************************************
     if (testBegin("check that try stack is initialized correctly"))
     {
         assert(errorContext.tryTotal == 0);
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
+    if (testBegin("errorTypeExtends"))
+    {
+        assert(errorTypeExtends(&TestParent1Error, &TestParent1Error));
+        assert(errorTypeExtends(&TestChildError, &TestParent1Error));
+        assert(errorTypeExtends(&TestChildError, &TestParent2Error));
+        assert(!errorTypeExtends(&TestChildError, &TestChildError));
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("TRY with no errors"))
     {
         volatile bool tryDone = false;
@@ -72,31 +96,36 @@ testRun()
         assert(errorContext.tryTotal == 0);
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("TRY with multiple catches"))
     {
         volatile bool tryDone = false;
         volatile bool catchDone = false;
         volatile bool finallyDone = false;
 
+        assert(errorTryDepth() == 0);
+
         TRY_BEGIN()
         {
-            assert(errorContext.tryTotal == 1);
+            assert(errorTryDepth() == 1);
 
             TRY_BEGIN()
             {
-                assert(errorContext.tryTotal == 2);
+                assert(errorTryDepth() == 2);
 
                 TRY_BEGIN()
                 {
-                    assert(errorContext.tryTotal == 3);
+                    assert(errorTryDepth() == 3);
 
                     TRY_BEGIN()
                     {
-                        assert(errorContext.tryTotal == 4);
+                        assert(errorTryDepth() == 4);
                         tryDone = true;
 
-                        THROW(AssertError, BOGUS_STR);
+                        char bigMessage[sizeof(messageBuffer) * 32];
+                        memset(bigMessage, 'A', sizeof(bigMessage));
+
+                        THROW(AssertError, bigMessage);
                     }
                     TRY_END();
                 }
@@ -123,12 +152,15 @@ testRun()
         }
         CATCH(RuntimeError)
         {
-            assert(errorContext.tryTotal == 1);
+            assert(errorTryDepth() == 1);
             assert(errorContext.tryList[1].state == errorStateCatch);
+            assert(strlen(errorMessage()) == sizeof(messageBuffer) - 1);
 
             catchDone = true;
         }
         TRY_END();
+
+        assert(errorTryDepth() == 0);
 
         assert(tryDone);
         assert(catchDone);
@@ -136,7 +168,7 @@ testRun()
         assert(errorContext.tryTotal == 0);
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("too deep recursive TRY_ERROR()"))
     {
         volatile bool tryDone = false;
@@ -151,13 +183,17 @@ testRun()
         CATCH(AssertError)
         {
             assert(errorCode() == AssertError.code);
-            assert(errorFileName() != NULL);
-            assert(errorFileLine() >= 1);
+            assert(strcmp(errorFileName(), "module/common/errorTest.c") == 0);
+            assert(strcmp(errorFunctionName(), "testTryRecurse") == 0);
+            assert(errorFileLine() == 29);
+            assert(
+                strcmp(errorStackTrace(), "module/common/errorTest:testTryRecurse:29:(test build required for parameters)") == 0);
             assert(strcmp(errorMessage(), "too many nested try blocks") == 0);
             assert(strcmp(errorName(), AssertError.name) == 0);
             assert(errorType() == &AssertError);
             assert(errorTypeCode(errorType()) == AssertError.code);
             assert(strcmp(errorTypeName(errorType()), AssertError.name) == 0);
+
             catchDone = true;
         }
         FINALLY()
@@ -177,8 +213,8 @@ testRun()
         assert(testTryRecurseFinally);
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("THROW_CODE()"))
+    // *****************************************************************************************************************************
+    if (testBegin("THROW_CODE() and THROW_CODE_FMT()"))
     {
         TRY_BEGIN()
         {
@@ -188,6 +224,18 @@ testRun()
         {
             assert(errorCode() == 25);
             assert(strcmp(errorMessage(), "message") == 0);
+        }
+        TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TRY_BEGIN()
+        {
+            THROW_CODE_FMT(122, "message %d", 1);
+        }
+        CATCH_ANY()
+        {
+            assert(errorCode() == 122);
+            assert(strcmp(errorMessage(), "message 1") == 0);
         }
         TRY_END();
 
@@ -204,8 +252,8 @@ testRun()
         TRY_END();
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("THROW_SYS_ERROR()"))
+    // *****************************************************************************************************************************
+    if (testBegin("THROW_SYS_ERROR() and THROW_SYS_ERROR_FMT()"))
     {
         TRY_BEGIN()
         {
@@ -219,5 +267,37 @@ testRun()
             assert(strcmp(errorMessage(), "message: [7] Argument list too long") == 0);
         }
         TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TRY_BEGIN()
+        {
+            errno = EIO;
+            THROW_SYS_ERROR_FMT(AssertError, "message %d", 1);
+        }
+        CATCH_ANY()
+        {
+            printf("%s\n", errorMessage());
+            assert(errorCode() == AssertError.code);
+            assert(strcmp(errorMessage(), "message 1: [5] Input/output error") == 0);
+        }
+        TRY_END();
     }
+
+    // *****************************************************************************************************************************
+    if (testBegin("Uncaught error"))
+    {
+        // Test in a fork so the process does not actually exit
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD()
+            {
+                THROW(TestChildError, "does not get caught!");
+            }
+
+            HARNESS_FORK_CHILD_EXPECTED_EXIT_STATUS_SET(UnhandledError.code);
+        }
+        HARNESS_FORK_END();
+    }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

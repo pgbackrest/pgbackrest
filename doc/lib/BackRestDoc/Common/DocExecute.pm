@@ -154,9 +154,10 @@ sub executeKey
         );
 
     # Add user to command
+    my $bUserForce = $oCommand->paramTest('user-force', 'y') ? true : false;
     my $strCommand = $self->{oManifest}->variableReplace(trim($oCommand->fieldGet('exe-cmd')));
-    my $strUser = $self->{oManifest}->variableReplace($oCommand->paramGet('user', false, 'postgres'));
-    $strCommand = ($strUser eq DOC_USER ? '' : ('sudo ' . ($strUser eq 'root' ? '' : "-u $strUser "))) . $strCommand;
+    my $strUser = $self->{oManifest}->variableReplace($oCommand->paramGet('user', false, DOC_USER));
+    $strCommand = ($strUser eq DOC_USER || $bUserForce ? '' : ('sudo ' . ($strUser eq 'root' ? '' : "-u $strUser "))) . $strCommand;
 
     # Format and split command
     $strCommand =~ s/[ ]*\n[ ]*/ \\\n    /smg;
@@ -169,6 +170,8 @@ sub executeKey
         cmd => \@stryCommand,
         output => JSON::PP::false,
     };
+
+    $$hCacheKey{'run-as-user'} = $bUserForce ? $strUser : undef;
 
     if (defined($oCommand->fieldGet('exe-cmd-extra', false)))
     {
@@ -184,6 +187,9 @@ sub executeKey
     {
         $$hCacheKey{'output'} = JSON::PP::true;
     }
+
+    $$hCacheKey{'load-env'} = $oCommand->paramTest('load-env', 'n') ? JSON::PP::false : JSON::PP::true;
+    $$hCacheKey{'bash-wrap'} = $oCommand->paramTest('bash-wrap', 'n') ? JSON::PP::false : JSON::PP::true;
 
     if (defined($oCommand->fieldGet('exe-highlight', false)))
     {
@@ -276,7 +282,8 @@ sub execute
                     $strCommand . (defined($$hCacheKey{'cmd-extra'}) ? ' ' . $$hCacheKey{'cmd-extra'} : ''),
                     {iExpectedExitStatus => $$hCacheKey{'err-expect'},
                      bSuppressError => $oCommand->paramTest('err-suppress', 'y'),
-                     iRetrySeconds => $oCommand->paramGet('retry', false)});
+                     iRetrySeconds => $oCommand->paramGet('retry', false)}, $hCacheKey->{'run-as-user'},
+                     {bLoadEnv => $hCacheKey->{'load-env'}, bBashWrap => $hCacheKey->{'bash-wrap'}});
                 $oExec->begin();
                 $oExec->end();
 
@@ -831,10 +838,17 @@ sub hostKey
         $$hCacheKey{option} = $self->{oManifest}->variableReplace($oHost->paramGet('option'));
     }
 
+    if (defined($oHost->paramGet('param', false)))
+    {
+        $$hCacheKey{param} = $self->{oManifest}->variableReplace($oHost->paramGet('param'));
+    }
+
     if (defined($oHost->paramGet('os', false)))
     {
         $$hCacheKey{os} = $self->{oManifest}->variableReplace($oHost->paramGet('os'));
     }
+
+    $$hCacheKey{'update-hosts'} = $oHost->paramTest('update-hosts', 'n') ? JSON::PP::false : JSON::PP::true;
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -1023,7 +1037,7 @@ sub sectionChildProcess
                     $self->{oManifest}->variableReplace($oChild->paramGet('user')), $$hCacheKey{os},
                     defined($oChild->paramGet('mount', false)) ?
                         [$self->{oManifest}->variableReplace($oChild->paramGet('mount'))] : undef,
-                    $$hCacheKey{option});
+                    $$hCacheKey{option}, $$hCacheKey{param});
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;
                 $self->{oManifest}->variableSet('host-' . $hCacheKey->{id} . '-ip', $oHost->{strIP}, true);
@@ -1031,7 +1045,7 @@ sub sectionChildProcess
 
                 # Add to the host group
                 my $oHostGroup = hostGroupGet();
-                $oHostGroup->hostAdd($oHost);
+                $oHostGroup->hostAdd($oHost, {bUpdateHosts => $$hCacheKey{'update-hosts'}});
 
                 # Execute initialize commands
                 foreach my $oExecute ($oChild->nodeList('execute', false))

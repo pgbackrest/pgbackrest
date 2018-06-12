@@ -8,6 +8,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("iniNew() and iniFree()"))
     {
@@ -15,8 +17,9 @@ testRun()
 
         TEST_ASSIGN(ini, iniNew(), "new ini");
         TEST_RESULT_PTR_NE(ini->memContext, NULL, "mem context is set");
-        TEST_RESULT_PTR_NE(ini->store, NULL, "stores is set");
+        TEST_RESULT_PTR_NE(ini->store, NULL, "store is set");
         TEST_RESULT_VOID(iniFree(ini), "free ini");
+        TEST_RESULT_VOID(iniFree(NULL), "free null ini");
     }
 
     // *****************************************************************************************************************************
@@ -33,6 +36,7 @@ testRun()
 
         TEST_ERROR(iniGet(ini, strNew("section2"), strNew("key2")), FormatError, "section 'section2', key 'key2' does not exist");
 
+        TEST_RESULT_INT(varInt(iniGetDefault(ini, strNew("section1"), strNew("key1"), NULL)), 11, "get section, key, int");
         TEST_RESULT_PTR(iniGetDefault(ini, strNew("section2"), strNew("key2"), NULL), NULL, "get section, key, NULL");
         TEST_RESULT_BOOL(
                 varBool(iniGetDefault(ini, strNew("section3"), strNew("key3"), varNewBool(true))), true, "get section, key, bool");
@@ -50,6 +54,7 @@ testRun()
         String *content = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(iniParse(iniNew(), NULL), "no content");
         TEST_ERROR(
             iniParse(iniNew(), strNew("compress=y\n")), FormatError, "key/value found outside of section at line 1: compress=y");
         TEST_ERROR(iniParse(iniNew(), strNew("[section\n")), FormatError, "ini section should end with ] at line 1: [section");
@@ -94,4 +99,6 @@ testRun()
         TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("global"), strNew("compress")))), "y", "get compress");
         TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("db"), strNew("pg1-path")))), "/path/to/pg", "get pg1-path");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

@@ -3,6 +3,7 @@ Storage Helper
 ***********************************************************************************************************************************/
 #include <string.h>
 
+#include "common/debug.h"
 #include "common/memContext.h"
 #include "config/config.h"
 #include "storage/helper.h"
@@ -30,6 +31,8 @@ Create the storage helper memory context
 static void
 storageHelperInit()
 {
+    FUNCTION_TEST_VOID();
+
     if (memContextStorageHelper == NULL)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
@@ -38,6 +41,8 @@ storageHelperInit()
         }
         MEM_CONTEXT_END();
     }
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -46,10 +51,12 @@ Get a local storage object
 const Storage *
 storageLocal()
 {
-    storageHelperInit();
+    FUNCTION_TEST_VOID();
 
     if (storageLocalData == NULL)
     {
+        storageHelperInit();
+
         MEM_CONTEXT_BEGIN(memContextStorageHelper)
         {
             storageLocalData = storageNewNP(strNew("/"));
@@ -57,7 +64,7 @@ storageLocal()
         MEM_CONTEXT_END();
     }
 
-    return storageLocalData;
+    FUNCTION_TEST_RESULT(STORAGE, storageLocalData);
 }
 
 /***********************************************************************************************************************************
@@ -68,10 +75,12 @@ This should be used very sparingly.  If writes are not needed then always use st
 const Storage *
 storageLocalWrite()
 {
-    storageHelperInit();
+    FUNCTION_TEST_VOID();
 
     if (storageLocalWriteData == NULL)
     {
+        storageHelperInit();
+
         MEM_CONTEXT_BEGIN(memContextStorageHelper)
         {
             storageLocalWriteData = storageNewP(strNew("/"), .write = true);
@@ -79,7 +88,7 @@ storageLocalWrite()
         MEM_CONTEXT_END();
     }
 
-    return storageLocalWriteData;
+    FUNCTION_TEST_RESULT(STORAGE, storageLocalWriteData);
 }
 
 /***********************************************************************************************************************************
@@ -88,9 +97,23 @@ Get a spool storage object
 String *
 storageSpoolPathExpression(const String *expression, const String *path)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, expression);
+        FUNCTION_TEST_PARAM(STRING, path);
+
+        FUNCTION_TEST_ASSERT(expression != NULL);
+    FUNCTION_TEST_END();
+
     String *result = NULL;
 
-    if (strcmp(strPtr(expression), STORAGE_SPOOL_ARCHIVE_OUT) == 0)
+    if (strcmp(strPtr(expression), STORAGE_SPOOL_ARCHIVE_IN) == 0)
+    {
+        if (path == NULL)
+            result = strNewFmt("archive/%s/in", strPtr(storageSpoolStanza));
+        else
+            result = strNewFmt("archive/%s/in/%s", strPtr(storageSpoolStanza), strPtr(path));
+    }
+    else if (strcmp(strPtr(expression), STORAGE_SPOOL_ARCHIVE_OUT) == 0)
     {
         if (path == NULL)
             result = strNewFmt("archive/%s/out", strPtr(storageSpoolStanza));
@@ -98,9 +121,9 @@ storageSpoolPathExpression(const String *expression, const String *path)
             result = strNewFmt("archive/%s/out/%s", strPtr(storageSpoolStanza), strPtr(path));
     }
     else
-        THROW(AssertError, "invalid expression '%s'", strPtr(expression));
+        THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));
 
-    return result;
+    FUNCTION_TEST_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -109,10 +132,12 @@ Get a spool storage object
 const Storage *
 storageSpool()
 {
-    storageHelperInit();
+    FUNCTION_TEST_VOID();
 
     if (storageSpoolData == NULL)
     {
+        storageHelperInit();
+
         MEM_CONTEXT_BEGIN(memContextStorageHelper)
         {
             storageSpoolStanza = strDup(cfgOptionStr(cfgOptStanza));
@@ -123,5 +148,5 @@ storageSpool()
         MEM_CONTEXT_END();
     }
 
-    return storageSpoolData;
+    FUNCTION_TEST_RESULT(STORAGE, storageSpoolData);
 }

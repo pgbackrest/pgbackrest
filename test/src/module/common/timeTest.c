@@ -8,6 +8,8 @@ Test Run
 void
 testRun()
 {
+    FUNCTION_HARNESS_VOID();
+
     // *****************************************************************************************************************************
     if (testBegin("timeMSec()"))
     {
@@ -28,4 +30,6 @@ testRun()
         TEST_RESULT_BOOL(end - begin >= (TimeMSec)1400, true, "lower range check");
         TEST_RESULT_BOOL(end - begin < (TimeMSec)1500, true, "upper range check");
     }
+
+    FUNCTION_HARNESS_RESULT_VOID();
 }

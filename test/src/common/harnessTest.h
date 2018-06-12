@@ -16,8 +16,11 @@ void testAdd(int run, bool selected);
 bool testBegin(const char *name);
 void testComplete();
 
+const char *testExe();
+void testExeSet(const char *testExe);
+
 const char *testPath();
-void testPathSet(const char *testPathParam);
+void testPathSet(const char *testPath);
 
 /***********************************************************************************************************************************
 Convert a macro to a string -- handy for testing debug macros
@@ -52,14 +55,14 @@ Test that an expected error is actually thrown and error when it isn't
         TEST_ERROR_catch = true;                                                                                                   \
                                                                                                                                    \
         if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                                \
-            THROW(                                                                                                                 \
-                AssertError, "expected error %s, '%s' but got %s, '%s'", errorTypeName(&errorTypeExpected), errorMessageExpected,  \
-                errorName(), errorMessage());                                                                                      \
+            THROW_FMT(                                                                                                             \
+                AssertError, "EXECTED %s: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),              \
+                errorMessageExpected, errorName(), errorMessage(), errorStackTrace());                                             \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
                                                                                                                                    \
     if (!TEST_ERROR_catch)                                                                                                         \
-        THROW(                                                                                                                     \
+        THROW_FMT(                                                                                                                 \
             AssertError, "statement '%s' returned but error %s, '%s' was expected", #statement, errorTypeName(&errorTypeExpected), \
             errorMessageExpected);                                                                                                 \
 }
@@ -72,7 +75,7 @@ Test error with a formatted expected message
     char TEST_ERROR_FMT_buffer[8192];                                                                                              \
                                                                                                                                    \
     if (snprintf(TEST_ERROR_FMT_buffer, sizeof(TEST_ERROR_FMT_buffer), __VA_ARGS__) >= (int)sizeof(TEST_ERROR_FMT_buffer))         \
-        THROW(AssertError, "error message needs more than the %d characters available", sizeof(TEST_ERROR_FMT_buffer));            \
+        THROW_FMT(AssertError, "error message needs more than the %zu characters available", sizeof(TEST_ERROR_FMT_buffer));       \
                                                                                                                                    \
     TEST_ERROR(statement, errorTypeExpected, TEST_ERROR_FMT_buffer);                                                               \
 }
@@ -87,8 +90,8 @@ Format the test type into the given buffer -- or return verbatim if char *
 #define TEST_TYPE_FORMAT_SPRINTF(format, value)                                                                                    \
     if (snprintf((char *)value##Str, TEST_RESULT_FORMAT_SIZE + 1, format, value) > TEST_RESULT_FORMAT_SIZE)                        \
     {                                                                                                                              \
-        THROW(                                                                                                                     \
-            AssertError, "formatted type '" format "' needs more than the %d characters available", TEST_RESULT_FORMAT_SIZE);      \
+        THROW_FMT(                                                                                                                 \
+            AssertError, "formatted type '%" format "' needs more than the %d characters available", TEST_RESULT_FORMAT_SIZE);     \
     }
 
 #define TEST_TYPE_FORMAT(type, format, value)                                                                                      \
@@ -152,9 +155,9 @@ parameters.
     CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
         /* No errors were expected so error */                                                                                     \
-        THROW(                                                                                                                     \
-            AssertError, "statement '%s' threw error %s, '%s' but result <%s> expected",                                           \
-            #statement, errorName(), errorMessage(), TEST_RESULT_resultExpectedStr);                                               \
+        THROW_FMT(                                                                                                                 \
+            AssertError, "STATEMENT: %s\n\nTHREW %s: %s\n\nTHROWN AT:\n%s\n\nBUT EXPECTED RESULT:\n%s",                            \
+            #statement, errorName(), errorMessage(), errorStackTrace(), TEST_RESULT_resultExpectedStr);                            \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
                                                                                                                                    \
@@ -169,7 +172,7 @@ parameters.
         formatMacro(type, format, TEST_RESULT_result);                                                                             \
                                                                                                                                    \
         /* Throw error */                                                                                                          \
-        THROW(                                                                                                                     \
+        THROW_FMT(                                                                                                                 \
             AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT EXPECTED:\n%s\n\n",                                           \
             #statement, TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr);                                                     \
     }                                                                                                                              \
@@ -191,7 +194,7 @@ Test that a void statement returns and does not throw an error
     CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
         /* No errors were expected so error */                                                                                     \
-        THROW(AssertError, "statement '%s' threw error %s, '%s' but void expected", #statement, errorName(), errorMessage());      \
+        THROW_FMT(AssertError, "statement '%s' threw error %s, '%s' but void expected", #statement, errorName(), errorMessage());  \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
 }
@@ -212,7 +215,7 @@ Test that a statement does not error and assign it to the specified variable if 
     CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
         /* No errors were expected so error */                                                                                     \
-        THROW(AssertError, "statement '%s' threw error %s, '%s' but result expected", #statement, errorName(), errorMessage());    \
+        THROW_FMT(AssertError, "statement '%s' threw error %s, '%s' but result expected", #statement, errorName(), errorMessage());\
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
 }
@@ -259,6 +262,6 @@ Macros to ease the use of common data types
     TEST_RESULT_STR_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
 #define TEST_RESULT_U16_HEX(statement, resultExpected, ...)                                                                        \
-    TEST_RESULT(statement, resultExpected, uint16_t, "0x%04X", TEST_TYPE_FORMAT, ==, TEST_TYPE_COMPARE, __VA_ARGS__);
+    TEST_RESULT(statement, resultExpected, uint16_t, "%04X", TEST_TYPE_FORMAT, ==, TEST_TYPE_COMPARE, __VA_ARGS__);
 
 #endif
