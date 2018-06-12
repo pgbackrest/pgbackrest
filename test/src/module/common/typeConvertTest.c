@@ -112,14 +112,21 @@ testRun()
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("UInt64ToZ()"))
+    if (testBegin("UInt64ToZ() and cvtZToUInt64()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];
 
         TEST_ERROR(cvtUInt64ToZ(9999, buffer, 4), AssertError, "buffer overflow");
 
-        TEST_RESULT_INT(cvtUInt64ToZ(0xFFFFFFFFFFFFFFFF, buffer, STACK_TRACE_PARAM_MAX), 20, "convert int64 to string");
+        TEST_RESULT_INT(cvtUInt64ToZ(0xFFFFFFFFFFFFFFFF, buffer, STACK_TRACE_PARAM_MAX), 20, "convert uint64 to string");
         TEST_RESULT_STR(buffer, "18446744073709551615", "    check buffer");
+
+        TEST_ERROR(cvtZToUInt64("FEF"), FormatError, "unable to convert string 'FEF' to uint64");
+        TEST_ERROR(cvtZToUInt64(" 10"), FormatError, "unable to convert string ' 10' to uint64"); // number but leading space
+        TEST_ERROR(cvtZToUInt64("10 "), FormatError, "unable to convert string '10 ' to uint64"); // number but trailing space
+        TEST_ERROR(cvtZToUInt64("-1"), FormatError, "unable to convert string '-1' to uint64"); // number but trailing space
+
+        TEST_RESULT_DOUBLE(cvtZToUInt64("18446744073709551615"), 18446744073709551615U, "convert string to uint64");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

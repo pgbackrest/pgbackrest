@@ -49,7 +49,7 @@ infoValidInternal(const Info *this, const bool ignoreError)
     {
         if (!ignoreError)
         {
-            THROW(
+            THROW_FMT(
                 FormatError, "invalid format in '%s', expected %d but found %d",
                 strPtr(this->fileName), PGBACKREST_FORMAT, varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST),
                 strNew(INI_KEY_FORMAT))));
@@ -121,7 +121,7 @@ infoNew(
             if (!loadInternal(this, true))
             {
                 if (!ignoreMissing)
-                    THROW(
+                    THROW_FMT(
                         FileMissingError, "unable to open %s or %s",
                         strPtr(this->fileName), strPtr(strCat(strDup(this->fileName), INI_COPY_EXT)));
             }

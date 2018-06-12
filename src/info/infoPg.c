@@ -52,7 +52,7 @@ infoPgVersionToUIntInternal(const String *version)
     {
         // If format is not number.number (9.4) or number only (10) then error
         if (!regExpMatchOne(strNew("^[0-9]+[.]*[0-9]+$"), version))
-            THROW(AssertError, "version %s format is invalid", strPtr(version));
+            THROW_FMT(AssertError, "version %s format is invalid", strPtr(version));
 
         size_t idxStart = (size_t)(strChr(version, '.'));
         int minor = 0;
@@ -87,7 +87,7 @@ infoPgVersionToUIntInternal(const String *version)
             }
 
             default:
-                THROW(AssertError, "version %s is not a valid PostgreSQl version", strPtr(version));
+                THROW_FMT(AssertError, "version %s is not a valid PostgreSQl version", strPtr(version));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -141,7 +141,7 @@ infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
                     (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_CONTROL_VERSION)));
             }
             else if (type != infoPgArchive)
-                THROW(AssertError, "invalid InfoPg type %d", type);
+                THROW_FMT(AssertError, "invalid InfoPg type %u", type);
         }
         MEM_CONTEXT_TEMP_END();
 

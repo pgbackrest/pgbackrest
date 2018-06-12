@@ -231,6 +231,15 @@ crypto/hash.o: crypto/hash.c common/debug.h common/error.auto.h common/error.h c
 crypto/random.o: crypto/random.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h crypto/random.h
 	$(CC) $(CFLAGS) -c crypto/random.c -o crypto/random.o
 
+info/info.o: info/info.c common/error.auto.h common/error.h common/ini.h common/memContext.h common/type/buffer.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h info/info.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h version.h
+	$(CC) $(CFLAGS) -c info/info.c -o info/info.o
+
+info/infoArchive.o: info/infoArchive.c common/error.auto.h common/error.h common/ini.h common/memContext.h common/type/buffer.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h info/infoArchive.h info/infoPg.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h version.h
+	$(CC) $(CFLAGS) -c info/infoArchive.c -o info/infoArchive.o
+
+info/infoPg.o: info/infoPg.c common/error.auto.h common/error.h common/ini.h common/memContext.h common/regExp.h common/type/buffer.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h info/info.h info/infoPg.h postgres/version.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h version.h
+	$(CC) $(CFLAGS) -c info/infoPg.c -o info/infoPg.o
+
 main.o: main.c command/archive/get/get.h command/archive/push/push.h command/command.h command/help/help.h common/debug.h common/error.auto.h common/error.h common/exit.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h perl/exec.h version.h
 	$(CC) $(CFLAGS) -c main.c -o main.o
 

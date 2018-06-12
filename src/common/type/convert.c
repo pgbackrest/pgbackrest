@@ -244,7 +244,7 @@ cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize)
 }
 
 /***********************************************************************************************************************************
-Convert uint64 to zero-terminated string
+Convert uint64 to zero-terminated string and visa versa
 ***********************************************************************************************************************************/
 size_t
 cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize)
@@ -263,4 +263,29 @@ cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize)
         THROW(AssertError, "buffer overflow");
 
     FUNCTION_TEST_RESULT(SIZE, result);
+}
+
+uint64_t
+cvtZToUInt64(const char *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, value);
+
+        FUNCTION_TEST_ASSERT(value != NULL);
+    FUNCTION_TEST_END();
+
+    // Attempt to convert the string to base-10 64-bit unsigned int. The conversion will be up to the first
+    // character that cannot be converted (except leading whitespace is ignored - which will still cause an error since
+    // the final buffer for strcmp will then not be equal).
+    char *endPtr;
+    uint64_t result = strtoull(value, &endPtr, (int)10);
+
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "%" PRIu64, result);
+
+    if (strcmp(value, buffer) != 0)
+        THROW_FMT(
+            FormatError, "unable to convert string '%s' to uint64", value);
+
+    FUNCTION_TEST_RESULT(UINT64, result);
 }
