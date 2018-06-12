@@ -160,20 +160,24 @@ sub sectionProcess
         # Execute a command
         if ($oChild->nameGet() eq 'execute-list')
         {
+            my $bShow = $oChild->paramTest('show', 'n') ? false : true;
             my $strHostName = $self->{oManifest}->variableReplace($oChild->paramGet('host'));
 
-            $strLatex .=
-                "\n\\begin\{lstlisting\}[title=\{\\textnormal{\\textbf\{${strHostName}}} --- " .
-                $self->processText($oChild->nodeGet('title')->textGet()) . "}]\n";
+            if ($bShow)
+            {
+                $strLatex .=
+                    "\n\\begin\{lstlisting\}[title=\{\\textnormal{\\textbf\{${strHostName}}} --- " .
+                    $self->processText($oChild->nodeGet('title')->textGet()) . "}]\n";
+            }
 
             foreach my $oExecute ($oChild->nodeList('execute'))
             {
                 my $bExeShow = !$oExecute->paramTest('show', 'n');
-                my ($strCommand, $strOutput) = $self->execute($oSection,
-                                                              $self->{oManifest}->variableReplace($oChild->paramGet('host')),
-                                                              $oExecute, $iDepth + 3);
+                my ($strCommand, $strOutput) = $self->execute(
+                    $oSection, $self->{oManifest}->variableReplace($oChild->paramGet('host')), $oExecute,
+                    {iIndent => $iDepth + 3, bShow => $bShow && $bExeShow});
 
-                if ($bExeShow)
+                if ($bShow && $bExeShow)
                 {
                     $strLatex .= "${strCommand}\n";
 
@@ -184,8 +188,11 @@ sub sectionProcess
                 }
             }
 
-            $strLatex .=
-                "\\end{lstlisting}\n";
+            if ($bShow)
+            {
+                $strLatex .=
+                    "\\end{lstlisting}\n";
+            }
         }
         # Add code block
         elsif ($oChild->nameGet() eq 'code-block')

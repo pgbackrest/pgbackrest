@@ -70,6 +70,11 @@ use constant CERT_FAKE_SERVER_KEY                                   => CERT_FAKE
 use constant CONTAINER_DEBUG                                        => false;
 
 ####################################################################################################################################
+# Container Debug - speeds container debugging by splitting each section into a separate intermediate container
+####################################################################################################################################
+use constant CONTAINER_S3_SERVER_TAG                                => 's3-server-20180612A';
+
+####################################################################################################################################
 # Generate Devel::Cover package name
 ####################################################################################################################################
 sub packageDevelCover
@@ -631,19 +636,8 @@ sub containerBuild
             }
             else
             {
-                $strImageParent = $oVm->{&VM_U18}{&VM_IMAGE};
-
-                $strScript = sectionHeader() .
-                    "# Install required packages\n" .
-                    "    apt-get update && \\\n" .
-                    "    apt-get install -y wget git gnupg";
-
-                $strScript .= certSetup();
-                $strScript .= s3ServerSetup(VM_U18);
-
-                $strScript .= sectionHeader() .
-                    "# Fix root tty\n" .
-                    "    echo 'tty -s && mesg n || true' > /root/.profile";
+                $strImageParent = containerRepo() . ':' . CONTAINER_S3_SERVER_TAG;
+                $strScript = '';
             }
 
             $strScript .= "\n\nENTRYPOINT npm start --prefix /root/scalitys3";

@@ -241,16 +241,16 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="host-install">
-        <execute-list keyword="default" host="{[host-install-host]}">
+        <execute-list keyword="default" host="{[host-install-host]}" show="n">
             <title>Update apt repository and install packages</title>
 
             <!-- Fix root tty -->
-            <execute user="root" user-force="y" load-env="n" show="n">
+            <execute user="root" user-force="y" load-env="n">
                 <exe-cmd>sed -i 's/^mesg n/tty -s \&amp;\&amp; mesg n/g' /root/.profile</exe-cmd>
             </execute>
 
             <!-- Suppress dpkg interactive output -->
-            <execute user="root" user-force="y" show="n">
+            <execute user="root" user-force="y">
                 <exe-cmd>rm /etc/apt/apt.conf.d/70debconf</exe-cmd>
             </execute>
 
@@ -260,7 +260,7 @@
             </execute>
 
             <!-- Create an ssh key for root so all hosts can ssh to each other as root -->
-            <execute user="root" user-force="y" show="n">
+            <execute user="root" user-force="y">
                 <exe-cmd>{[ssh-key-install]}</exe-cmd>
             </execute>
 
@@ -276,19 +276,19 @@
             </execute>
 
             <!-- add doc user -->
-            <execute user="root" user-force="y" show="n">
+            <execute user="root" user-force="y">
                 <exe-cmd>adduser --disabled-password --gecos "" {[host-user]}</exe-cmd>
             </execute>
-            <execute user="root" user-force="y" show="n">
+            <execute user="root" user-force="y">
                 <exe-cmd>echo '%{[host-user]} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers</exe-cmd>
             </execute>
         </execute-list>
 
-        <execute-list keyword="co6" host="{[host-install-host]}">
+        <execute-list keyword="co6" host="{[host-install-host]}" show="n">
             <title>Update yum repository and install packages</title>
 
             <!-- Create an ssh key for root so all hosts can ssh to each other as root -->
-            <execute user="root" user-force="y" show="n">
+            <execute user="root" user-force="y">
                 <exe-cmd>{[ssh-key-install]}</exe-cmd>
             </execute>
 
@@ -299,10 +299,10 @@
             </execute>
 
             <!-- add doc user -->
-            <execute user="root" user-force="y" show="n">
+            <execute user="root" user-force="y">
                 <exe-cmd>adduser -n {[host-user]}</exe-cmd>
             </execute>
-            <execute user="root" user-force="y" show="n">
+            <execute user="root" user-force="y">
                 <exe-cmd>echo '{[host-user]}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/{[host-user]}</exe-cmd>
             </execute>
 
@@ -591,65 +591,10 @@
         <title>Installation</title>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="ubuntu:16.04" os="{[host-os]}">
-            <!-- Suppress dpkg interactive output -->
-            <execute user="root" user-force="y" load-env="n" show="n">
-                <exe-cmd>rm /etc/apt/apt.conf.d/70debconf</exe-cmd>
-            </execute>
-
-            <!-- Install OpenSSL -->
-            <execute user="root" user-force="y" load-env="n" show="n">
-                <exe-cmd>
-                    apt-get update &amp;&amp;
-                    apt-get -y install build-essential openssl wget git 2>&amp;1
-                </exe-cmd>
-            </execute>
-
-            <!-- Create self-signed cert -->
-            <execute user="root" user-force="y" load-env="n" show="n">
-                <exe-cmd>
-                    mkdir -p -m 755 /etc/fake-cert &amp;&amp;
-                    cd /etc/fake-cert &amp;&amp;
-                    openssl genrsa -out ca.key 2048 2>&amp;1 &amp;&amp;
-                    openssl req -new -x509 -extensions v3_ca -key ca.key -out ca.crt -days 99999
-                        -subj "/C=US/ST=Country/L=City/O=Organization/CN=pgbackrest.org" 2>&amp;1 &amp;&amp;
-                    openssl genrsa -out server.key 2048 2>&amp;1 &amp;&amp;
-                    openssl req -new -key server.key -out server.csr
-                        -subj "/C=US/ST=Country/L=City/O=Organization/CN=*.pgbackrest.org" 2>&amp;1 &amp;&amp;
-                    openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 99999
-                        -sha256 2>&amp;1 &amp;&amp;
-                    chmod 644 /etc/fake-cert/*
-                </exe-cmd>
-            </execute>
-
-            <!-- Install node.js -->
-            <execute user="root" user-force="y" load-env="n" show="n">
-                <exe-cmd>
-                    wget -q -O /root/nodejs.sh https://deb.nodesource.com/setup_6.x &amp;&amp;
-                    bash /root/nodejs.sh  &amp;&amp;
-                    apt-get install -y nodejs
-                </exe-cmd>
-            </execute>
-
-            <!-- Install ScalityS3 -->
-            <execute user="root" user-force="y" load-env="n" show="n">
-                <exe-cmd>
-                    wget -q -O /root/scalitys3.tar.gz https://github.com/scality/S3/archive/GA6.4.2.1.tar.gz &amp;&amp;
-                    mkdir /root/scalitys3 &amp;&amp;
-                    tar -C /root/scalitys3 --strip-components 1 -xvf /root/scalitys3.tar.gz &amp;&amp;
-                    cd /root/scalitys3 &amp;&amp;
-                    npm install  2>&amp;1 &amp;&amp;
-                    sed -i "0,/,/s//,\n    \"certFilePaths\":{\"key\":\"\/etc\/fake\-cert\/server.key\",\"cert\":\"\/etc\/fake\-cert\/server.crt\",\"ca\":\"\/etc\/fake\-cert\/ca.crt\"},/"
-                        ./config.json &amp;&amp;
-                    sed -i "s/ort\"\: 8000/ort\"\: 443/" ./config.json
-                </exe-cmd>
-            </execute>
-
-            <!-- Run ScalityS3 -->
-            <execute user="root" user-force="y" load-env="n" bash-wrap="n" show="n">
-                <exe-cmd>
-                    nohup npm start --prefix /root/scalitys3 &amp;
-                </exe-cmd>
+        <host-add id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="pgbackrest/test:s3-server-20180612A" os="{[host-os]}">
+            <!-- Set host entries to redirect AWS to local s3 server -->
+            <execute user="root" user-force="y">
+                <exe-cmd>echo "{[host-s3-ip]} demo-bucket.s3.amazonaws.com s3.amazonaws.com" | tee -a /etc/hosts</exe-cmd>
             </execute>
         </host-add>
 
@@ -1897,6 +1842,14 @@
 
         <p><backrest/> supports storing repositories in <proper>Amazon S3</proper>.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.</p>
 
+        <execute-list host="{[host-s3]}" show="n">
+            <title>Create the bucket</title>
+
+            <execute show='n'>
+                <exe-cmd>aws s3 --no-verify-ssl mb s3://demo-bucket 2>&amp;1</exe-cmd>
+            </execute>
+        </execute-list>
+
         <backrest-config host="{[host-pg1]}" show="n" file="{[backrest-config-demo]}">
             <title>Clear the cipher settings</title>
 
@@ -1924,49 +1877,9 @@
         <execute-list host="{[host-pg1]}">
             <title>Create the stanza</title>
 
-            <!-- Install AWS CLI -->
-            <execute keyword="default" user="root" show='n'>
-                <exe-cmd>apt-get -y install python 2>&amp;1</exe-cmd>
-            </execute>
-            <execute keyword="co6" user="root" show='n'>
-                <exe-cmd>yum -y install epel-release 2>&amp;1</exe-cmd>
-            </execute>
-            <execute keyword="co6" user="root" show='n'>
-                <exe-cmd>yum -y install python-pip 2>&amp;1</exe-cmd>
-            </execute>
-            <execute keyword="default" user="root" show='n'>
-                <exe-cmd>
-                    wget -q --no-check-certificate -O /root/get-pip.py
-                    https://bootstrap.pypa.io/get-pip.py
-                </exe-cmd>
-            </execute>
-            <execute keyword="default" user="root" show='n'>
-                <exe-cmd>-H python /root/get-pip.py</exe-cmd>
-            </execute>
-            <execute keyword="co6" user="root" show='n'>
-                <exe-cmd>pip install {[dash]}-upgrade {[dash]}-no-cache-dir pip==9.0.3 2>&amp;1</exe-cmd>
-            </execute>
-            <execute user="root" show='n'>
-                <exe-cmd>-H pip install --upgrade awscli 2>&amp;1</exe-cmd>
-            </execute>
-            <execute show='n'>
-                <exe-cmd>aws configure set region us-east-1</exe-cmd>
-            </execute>
-            <execute show='n'>
-                <exe-cmd>aws configure set aws_access_key_id accessKey1</exe-cmd>
-            </execute>
-            <execute show='n'>
-                <exe-cmd>aws configure set aws_secret_access_key verySecretKey1</exe-cmd>
-            </execute>
-
             <!-- Set host entries to redirect AWS to local s3 server -->
-            <execute user="root" show='n'>
-                <exe-cmd>echo "{[host-s3-ip]} demo-bucket.s3.amazonaws.com s3.amazonaws.com" |
-                    sudo tee -a /etc/hosts</exe-cmd>
-            </execute>
-
-            <execute show='n'>
-                <exe-cmd>aws s3 --no-verify-ssl mb s3://demo-bucket 2>&amp;1</exe-cmd>
+            <execute user="root" user-force="y" show="n">
+                <exe-cmd>echo "{[host-s3-ip]} demo-bucket.s3.amazonaws.com s3.amazonaws.com" | tee -a /etc/hosts</exe-cmd>
             </execute>
 
             <execute user="postgres" output="y">
