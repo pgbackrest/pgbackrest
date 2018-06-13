@@ -31,13 +31,19 @@ struct Info
     Ini *ini;                                                       // Parsed file contents
 };
 
-
 /***********************************************************************************************************************************
 Internal function to check if the information is valid or not
 ***********************************************************************************************************************************/
 static bool
 infoValidInternal(const Info *this, const bool ignoreError)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO, this);
+        FUNCTION_DEBUG_PARAM(BOOL, ignoreError);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
     bool result = true;
 
     // ??? Need to add in checksum validation as first check
@@ -60,7 +66,7 @@ infoValidInternal(const Info *this, const bool ignoreError)
         }
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -69,6 +75,13 @@ Internal function to load the copy and check validity
 static bool
 loadInternal(Info *this, const bool copyFile)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO, this);
+        FUNCTION_DEBUG_PARAM(BOOL, copyFile);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
     bool result = false;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -89,7 +102,7 @@ loadInternal(Info *this, const bool copyFile)
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -104,6 +117,13 @@ infoNew(
     const String *fileName,                                         // Full path/filename to load
     const bool ignoreMissing)                                       // Ignore if the file is missing, else required
 {
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(STRING, fileName);
+        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+
+        FUNCTION_DEBUG_ASSERT(fileName != NULL);
+    FUNCTION_DEBUG_END();
+
     Info *this = NULL;
 
     MEM_CONTEXT_NEW_BEGIN("info")
@@ -134,13 +154,19 @@ infoNew(
     MEM_CONTEXT_NEW_END();
 
     // Return buffer
-    return this;
+    FUNCTION_DEBUG_RESULT(INFO, this);
 }
 
 Ini *
 infoIni(const Info *this)
 {
-    return this->ini;
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(INFO, this);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
+    FUNCTION_DEBUG_RESULT(INI, this->ini);
 }
 
 /***********************************************************************************************************************************
@@ -149,8 +175,14 @@ Free the info
 void
 infoFree(Info *this)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO, this);
+    FUNCTION_DEBUG_END();
+
     if (this != NULL)
         memContextFree(this->memContext);
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 
@@ -160,11 +192,23 @@ Accessor functions
 String *
 infoFileName(const Info *this)
 {
-    return this->fileName;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(STRING, this->fileName);
 }
 
 bool
 infoExists(const Info *this)
 {
-    return this->exists;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(STRING, this->exists);
 }

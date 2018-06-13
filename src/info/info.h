@@ -22,4 +22,12 @@ bool infoExists(const Info *this);
 
 void infoFree(Info *this);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_INFO_TYPE                                                                                                   \
+    Info *
+#define FUNCTION_DEBUG_INFO_FORMAT(value, buffer, bufferSize)                                                                      \
+    objToLog(value, "Info", buffer, bufferSize)
+
 #endif
