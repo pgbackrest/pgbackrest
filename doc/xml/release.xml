@@ -71,6 +71,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Preliminary documentation for <postgres/> 11 unprivileged user backup.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Build containers from scratch for more accurate testing.  Use a prebuilt s3 server container.</p>
                     </release-item>
 

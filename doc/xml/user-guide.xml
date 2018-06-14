@@ -34,6 +34,8 @@
         <variable key="pg-home-path" keyword="default">/var/lib/postgresql</variable>
         <variable key="pg-home-path" keyword="co6">/var/lib/pgsql</variable>
 
+        <variable key="pg-group">postgres</variable>
+
         <variable key="perl-lib-path">/usr/share/perl5</variable>
         <variable key="perl-bin-path">/usr/bin</variable>
 
@@ -84,6 +86,8 @@
 
         <variable key="postgres-recovery-demo" keyword="default">{[pg-path]}/recovery.conf</variable>
         <variable key="postgres-recovery-demo" keyword="co6">{[pg-path]}/recovery.conf</variable>
+
+        <variable key="pg-switch-wal">pg_switch_xlog</variable>
 
         <!-- Hosts -->
         <variable key="host-os" keyword="default">u16</variable>
@@ -189,11 +193,11 @@
         <execute-list host="{[setup-ssh-host]}">
             <title>Create <host>{[setup-ssh-host]}</host> host key pair</title>
 
-            <execute user="postgres">
-                <exe-cmd>mkdir -m 750 -p {[pg-home-path]}/.ssh</exe-cmd>
+            <execute user="{[setup-ssh-user]}">
+                <exe-cmd>mkdir -m 750 -p {[setup-ssh-user-home-path]}/.ssh</exe-cmd>
             </execute>
-            <execute user="postgres">
-                <exe-cmd>ssh-keygen -f {[pg-home-path]}/.ssh/id_rsa
+            <execute user="{[setup-ssh-user]}">
+                <exe-cmd>ssh-keygen -f {[setup-ssh-user-home-path]}/.ssh/id_rsa
                     -t rsa -b 4096 -N ""</exe-cmd>
             </execute>
         </execute-list>
@@ -204,7 +208,7 @@
             <title>Copy <host>{[setup-ssh-host]}</host> public key to <host>{[host-repo1]}</host></title>
 
             <execute user="root" err-suppress="y">
-                <exe-cmd>ssh root@{[setup-ssh-host]} cat {[pg-home-path]}/.ssh/id_rsa.pub |
+                <exe-cmd>ssh root@{[setup-ssh-host]} cat {[setup-ssh-user-home-path]}/.ssh/id_rsa.pub |
                     sudo -u pgbackrest tee -a {[br-home-path]}/.ssh/authorized_keys</exe-cmd>
             </execute>
         </execute-list>
@@ -214,7 +218,7 @@
 
             <execute user="root" err-suppress="y">
                 <exe-cmd>ssh root@{[host-repo1]} cat {[br-home-path]}/.ssh/id_rsa.pub |
-                    sudo -u postgres tee -a {[pg-home-path]}/.ssh/authorized_keys</exe-cmd>
+                    sudo -u {[setup-ssh-user]} tee -a {[setup-ssh-user-home-path]}/.ssh/authorized_keys</exe-cmd>
             </execute>
         </execute-list>
 
@@ -223,8 +227,8 @@
         <execute-list host="{[host-repo1]}">
             <title>Test connection from <host>{[host-repo1]}</host> to <host>{[setup-ssh-host]}</host></title>
 
-            <execute user="pgbackrest" err-suppress="y">
-                <exe-cmd>ssh postgres@{[setup-ssh-host]}</exe-cmd>
+            <execute user="{[br-user]}" err-suppress="y">
+                <exe-cmd>ssh {[setup-ssh-user]}@{[setup-ssh-host]}</exe-cmd>
                 <exe-cmd-extra>-o StrictHostKeyChecking=no ls</exe-cmd-extra>
             </execute>
         </execute-list>
@@ -232,7 +236,7 @@
         <execute-list host="{[setup-ssh-host]}">
             <title>Test connection from <host>{[setup-ssh-host]}</host> to <host>{[host-repo1]}</host></title>
 
-            <execute user="postgres" err-suppress="y">
+            <execute user="{[setup-ssh-user]}" err-suppress="y">
                 <exe-cmd>ssh pgbackrest@{[host-repo1]}</exe-cmd>
                 <exe-cmd-extra>-o StrictHostKeyChecking=no ls</exe-cmd-extra>
             </execute>
@@ -266,7 +270,7 @@
 
             <!-- Install packages -->
             <execute user="root" user-force="y">
-                <exe-cmd>apt-get install sudo ssh wget</exe-cmd>
+                <exe-cmd>apt-get install sudo ssh wget vim</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
@@ -294,7 +298,7 @@
 
             <!-- Install packages -->
             <execute user="root" user-force="y">
-                <exe-cmd>yum install openssh-server openssh-clients sudo wget</exe-cmd>
+                <exe-cmd>yum install openssh-server openssh-clients sudo wget vim</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
@@ -321,7 +325,7 @@
 
             <execute keyword="default" user="root">
                 <exe-cmd>
-                    echo 'deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main' |
+                    echo 'deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main 11' |
                     sudo tee -a /etc/apt/sources.list.d/pgdg.list
                 </exe-cmd>
             </execute>
@@ -633,6 +637,17 @@
         <block id="pg-install">
             <block-variable-replace key="pg-install-host">{[host-pg1]}</block-variable-replace>
         </block>
+
+        <execute-list keyword="pg11" host="{[host-pg1]}">
+            <title>Create <user>{[br-user]}</user> user</title>
+
+            <execute keyword="default" user="root">
+                <exe-cmd>adduser --ingroup {[pg-group]} --disabled-password --gecos "" {[br-user]}</exe-cmd>
+            </execute>
+            <execute keyword="co6" user="root">
+                <exe-cmd>adduser -g{[pg-group]} -n {[br-user]}</exe-cmd>
+            </execute>
+        </execute-list>
 
         <block id="br-install">
             <block-variable-replace key="br-install-host">{[host-pg1]}</block-variable-replace>
@@ -1386,8 +1401,8 @@
                 <!-- Push a few WAL segments to make the example below more interesting -->
                 <execute user="postgres" show="n">
                     <exe-cmd>psql -c "
-                        select pg_create_restore_point('generate WAL'); select pg_switch_xlog();
-                        select pg_create_restore_point('generate WAL'); select pg_switch_xlog();"</exe-cmd>
+                        select pg_create_restore_point('generate WAL'); select {[pg-switch-wal]}();
+                        select pg_create_restore_point('generate WAL'); select {[pg-switch-wal]}();"</exe-cmd>
                 </execute>
 
                 <execute user="postgres" output="y">
@@ -1999,10 +2014,10 @@
             <execute-list host="{[host-repo1]}">
                 <title>Create <host>{[host-repo1]}</host> host key pair</title>
 
-                <execute user="pgbackrest">
+                <execute user="{[br-user]}">
                     <exe-cmd>mkdir -m 750 {[br-home-path]}/.ssh</exe-cmd>
                 </execute>
-                <execute user="pgbackrest">
+                <execute user="{[br-user]}">
                     <exe-cmd>ssh-keygen -f {[br-home-path]}/.ssh/id_rsa
                         -t rsa -b 4096 -N ""</exe-cmd>
                 </execute>
@@ -2010,7 +2025,15 @@
 
             <block id="setup-ssh">
                 <block-variable-replace key="setup-ssh-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user">postgres</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user-home-path">{[pg-home-path]}</block-variable-replace>
             </block>
+
+            <!-- <block keyword="pg11" id="setup-ssh">
+                <block-variable-replace key="setup-ssh-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user">pgbackrest</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user-home-path">{[br-home-path]}</block-variable-replace>
+            </block> -->
         </section>
 
         <!-- SECTION => REPOSITORY HOST - INSTALL/CONFIGURE -->
@@ -2030,7 +2053,7 @@
 
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
                 <backrest-config-option section="demo" key="pg1-host">{[host-pg1]}</backrest-config-option>
-                <backrest-config-option section="demo" key="pg1-host-user">postgres</backrest-config-option>
+                <backrest-config-option keyword="pg11" section="demo" key="pg1-host-user">{[br-user]}</backrest-config-option>
 
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
                 <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
@@ -2056,12 +2079,28 @@
 
             <p>Commands are run the same as on a single host configuration except that some commands such as <cmd>backup</cmd> and <cmd>expire</cmd> are run from the <host>repository</host> host instead of the <host>database</host> host.</p>
 
+            <execute-list keyword="pg11" host="{[host-pg1]}">
+                <title>Set permissions required for backup</title>
+
+                <execute user="postgres">
+                    <exe-cmd>
+                        psql -c "
+                            create user pgbackrest;
+                            grant pg_read_all_settings to pgbackrest;
+                            grant execute on function pg_start_backup(text, boolean, boolean) to pgbackrest;
+                            grant execute on function pg_stop_backup(boolean, boolean) to pgbackrest;
+                            grant execute on function pg_switch_wal() to pgbackrest;
+                            grant execute on function pg_create_restore_point(text) to pgbackrest;"
+                    </exe-cmd>
+                </execute>
+            </execute-list>
+
             <p>Create the stanza in the new repository.</p>
 
             <execute-list host="{[host-repo1]}">
                 <title>Create the stanza</title>
 
-                <execute user="pgbackrest" output="y" filter="n" >
+                <execute user="{[br-user]}" output="y" filter="n">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} stanza-create</exe-cmd>
                 </execute>
             </execute-list>
@@ -2071,7 +2110,7 @@
             <execute-list host="{[host-pg1]}">
                 <title>Check the configuration</title>
 
-                <execute user="postgres" output="y" filter="n" >
+                <execute user="postgres" output="y" filter="n">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} check</exe-cmd>
                 </execute>
             </execute-list>
@@ -2079,7 +2118,7 @@
             <execute-list host="{[host-repo1]}">
                 <title>Check the configuration</title>
 
-                <execute user="pgbackrest" output="y" filter="n" >
+                <execute user="{[br-user]}" output="y" filter="n">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} check</exe-cmd>
                 </execute>
             </execute-list>
@@ -2094,7 +2133,7 @@
             <execute-list host="{[host-repo1]}">
                 <title>Backup the {[postgres-cluster-demo]} cluster</title>
 
-                <execute user="pgbackrest" output="y" filter="n">
+                <execute user="{[br-user]}" output="y" filter="n">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 </execute>
             </execute-list>
@@ -2133,7 +2172,7 @@
             <execute-list host="{[host-repo1]}">
                 <title>Backup the {[postgres-cluster-demo]} cluster</title>
 
-                <execute user="pgbackrest">
+                <execute user="{[br-user]}">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 </execute>
             </execute-list>
@@ -2162,7 +2201,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Perform a backup with single process</title>
 
-            <execute user="pgbackrest">
+            <execute user="{[br-user]}">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=full backup</exe-cmd>
             </execute>
         </execute-list>
@@ -2176,7 +2215,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Perform a backup with multiple processes</title>
 
-            <execute user="pgbackrest">
+            <execute user="{[br-user]}">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=full backup</exe-cmd>
             </execute>
         </execute-list>
@@ -2184,7 +2223,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Get backup info for the {[postgres-cluster-demo]} cluster</title>
 
-            <execute filter="n" output="y" user="pgbackrest">
+            <execute filter="n" output="y" user="{[br-user]}">
                 <exe-cmd>{[project-exe]} info</exe-cmd>
                 <exe-highlight>timestamp start/stop</exe-highlight>
             </execute>
@@ -2212,7 +2251,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Attempt a backup</title>
 
-            <execute user="pgbackrest" err-expect="62" output="y">
+            <execute user="{[br-user]}" err-expect="62" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 <exe-highlight>\: stop file exists for all stanzas</exe-highlight>
             </execute>
@@ -2253,7 +2292,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Attempt a backup</title>
 
-            <execute user="pgbackrest" err-expect="62" output="y">
+            <execute user="{[br-user]}" err-expect="62" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 <exe-highlight>\: stop file exists for stanza demo</exe-highlight>
             </execute>
@@ -2292,6 +2331,17 @@
                 <block-variable-replace key="pg-install-host">{[host-pg2]}</block-variable-replace>
             </block>
 
+            <execute-list keyword="pg11" host="{[host-pg2]}">
+                <title>Create <user>{[br-user]}</user> user</title>
+
+                <execute keyword="default" user="root">
+                    <exe-cmd>adduser --ingroup {[pg-group]} --disabled-password --gecos "" {[br-user]}</exe-cmd>
+                </execute>
+                <execute keyword="co6" user="root">
+                    <exe-cmd>adduser -g{[pg-group]} -n {[br-user]}</exe-cmd>
+                </execute>
+            </execute-list>
+
             <block id="br-install">
                 <block-variable-replace key="br-install-host">{[host-pg2]}</block-variable-replace>
                 <block-variable-replace key="br-install-user">postgres</block-variable-replace>
@@ -2309,7 +2359,15 @@
 
             <block id="setup-ssh">
                 <block-variable-replace key="setup-ssh-host">{[host-pg2]}</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user">postgres</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user-home-path">{[pg-home-path]}</block-variable-replace>
             </block>
+
+            <!-- <block keyword="pg11" id="setup-ssh">
+                <block-variable-replace key="setup-ssh-host">{[host-pg2]}</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user">{[br-user]}</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user-home-path">{[br-home-path]}</block-variable-replace>
+            </block> -->
         </section>
 
         <!-- SECTION => REPLICATION - HOT-STANDBY -->
@@ -2335,7 +2393,7 @@
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
-            <p keyword="default">The demo cluster must be created (even though it will be overwritten restore) in order to create the <postgres/> configuration files.</p>
+            <p keyword="default">The demo cluster must be created (even though it will be overwritten on restore) in order to create the <postgres/> configuration files.</p>
 
             <execute-list keyword="default" host="{[host-pg2]}">
                 <title>Create demo cluster</title>
@@ -2445,14 +2503,14 @@
 
             <p>So, what went wrong?  Since <postgres/> is pulling WAL segments from the archive to perform replication, changes won't be seen on the standby until the WAL segment that contains those changes is pushed from <host>{[host-pg1]}</host>.</p>
 
-            <p>This can be done manually by calling <code>pg_switch_xlog()</code> which pushes the current WAL segment to the archive (a new WAL segment is created to contain further changes).</p>
+            <p>This can be done manually by calling <code>{[pg-switch-wal]}()</code> which pushes the current WAL segment to the archive (a new WAL segment is created to contain further changes).</p>
 
             <execute-list host="{[host-pg1]}">
-                <title>Call <code>pg_switch_xlog()</code></title>
+                <title>Call <code>{[pg-switch-wal]}()</code></title>
 
                 <execute user="postgres" output="y" filter="n">
                     <exe-cmd>
-                        psql -c "select *, current_timestamp from pg_switch_xlog()";
+                        psql -c "select *, current_timestamp from {[pg-switch-wal]}()";
                     </exe-cmd>
                 </execute>
             </execute-list>
@@ -2597,7 +2655,7 @@
                 </execute>
             </execute-list>
 
-            <p>Now when a table is created on <host>{[host-pg1]}</host> it will appear on <host>{[host-pg2]}</host> quickly and without the need to call <code>pg_switch_xlog()</code>.</p>
+            <p>Now when a table is created on <host>{[host-pg1]}</host> it will appear on <host>{[host-pg2]}</host> quickly and without the need to call <code>{[pg-switch-wal]}()</code>.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Create a new table on the primary</title>
@@ -2720,11 +2778,11 @@
                 <execute user="postgres" output="n">
                     <exe-cmd>
                         psql -c "
-                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
-                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
-                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
-                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
-                            select pg_create_restore_point('test async push'); select pg_switch_xlog();"
+                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
+                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
+                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
+                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
+                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();"
                     </exe-cmd>
                 </execute>
 
@@ -2790,7 +2848,7 @@
 
             <backrest-config-option section="demo" key="pg2-path">{[pg-path]}</backrest-config-option>
             <backrest-config-option section="demo" key="pg2-host">{[host-pg2]}</backrest-config-option>
-            <backrest-config-option section="demo" key="pg2-host-user">postgres</backrest-config-option>
+            <backrest-config-option keyword="pg11" section="demo" key="pg2-host-user">{[br-user]}</backrest-config-option>
 
             <backrest-config-option section="global" key="backup-standby">y</backrest-config-option>
         </backrest-config>
@@ -2800,7 +2858,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Backup the {[postgres-cluster-demo]} cluster from <host>pg2</host></title>
 
-            <execute user="pgbackrest" output="y" filter="y">
+            <execute user="{[br-user]}" output="y" filter="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --log-level-console=detail backup</exe-cmd>
                 <exe-highlight>backup file {[host-pg1]}|replay on the standby</exe-highlight>
             </execute>
@@ -2956,7 +3014,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Upgrade the stanza</title>
 
-            <execute user="pgbackrest" output="y">
+            <execute user="{[br-user]}" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-no-online
                     {[dash]}-log-level-console=info stanza-upgrade</exe-cmd>
                 <exe-highlight>completed successfully</exe-highlight>
@@ -3030,7 +3088,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Check configuration</title>
 
-            <execute user="pgbackrest" output="y" filter="n" >
+            <execute user="{[br-user]}" output="y" filter="n" >
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} check</exe-cmd>
             </execute>
         </execute-list>
@@ -3040,7 +3098,7 @@
         <execute-list host="{[host-repo1]}">
             <title>Run a full backup</title>
 
-            <execute user="pgbackrest">
+            <execute user="{[br-user]}">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=full backup</exe-cmd>
             </execute>
         </execute-list>
