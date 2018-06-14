@@ -1220,8 +1220,10 @@ sub process
             }
         }
 
+&log(INFO, "CSHANG");
+
         # Output the generated filter for debugging
-        &log(DETAIL, "database filter: $strDbFilter");
+        &log(DETAIL, "database filter CSHANG: " . (defined($strDbFilter) ? "${strDbFilter}" : ''));
     }
 
     # Initialize the restore process
