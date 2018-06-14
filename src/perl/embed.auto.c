@@ -19204,7 +19204,7 @@ static const EmbeddedModule embeddedModule[] =
             "}\n"
             "\n"
             "\n"
-            "&log(DETAIL, \"database filter: $strDbFilter\");\n"
+            "&log(DETAIL, \"database filter: \" . (defined($strDbFilter) ? \"${strDbFilter}\" : ''));\n"
             "}\n"
             "\n"
             "\n"

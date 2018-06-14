@@ -14,6 +14,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.04dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed inability to run restore with <br-option>--db-include</br-option> when only one user database exists in the cluster.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <p><postgres/> 11 Beta 1 support.</p>
