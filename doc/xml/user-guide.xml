@@ -105,7 +105,7 @@
         <variable key="host-pg1-image">{[host-image]}</variable>
         <variable key="host-pg1-mount">{[host-mount]}</variable>
 
-        <variable key="host-build-id">pg1</variable>
+        <variable key="host-build-id">build</variable>
         <variable key="host-build">build</variable>
         <variable key="host-build-user">root</variable>
         <variable key="host-build-image">{[host-image]}</variable>
@@ -266,7 +266,7 @@
 
             <!-- Install packages -->
             <execute user="root" user-force="y">
-                <exe-cmd>apt-get install sudo ssh</exe-cmd>
+                <exe-cmd>apt-get install sudo ssh wget</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
@@ -294,7 +294,7 @@
 
             <!-- Install packages -->
             <execute user="root" user-force="y">
-                <exe-cmd>yum install openssh-server openssh-clients sudo</exe-cmd>
+                <exe-cmd>yum install openssh-server openssh-clients sudo wget</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
@@ -318,16 +318,6 @@
 
         <execute-list host="{[pg-install-host]}">
             <title>Install <postgres/></title>
-
-            <execute keyword="default" user="root">
-                <exe-cmd>apt-get install wget</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute keyword="co6" user="root">
-                <exe-cmd>yum install wget</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
 
             <execute keyword="default" user="root">
                 <exe-cmd>
@@ -381,57 +371,18 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="br-install">
-        <p keyword="default">{[user-guide-os]} packages for <backrest/> are available at <link url="https://www.postgresql.org/download/linux/ubuntu/">apt.postgresql.org</link>.  If they are not provided for your distribution/version it is easy to download the source and install manually.</p>
-
-        <p keyword="co6">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
+        <p><backrest/> needs to be installed from a package or installed manually as shown here.</p>
 
         <execute-list host="{[br-install-host]}">
-            <title>Download version <id>{[version]}</id> of <backrest/></title>
+            <title>Copy <backrest/> binary from build host</title>
 
-            <!-- This is shown to the user but never actually run for the very good reason that the release is not available before the documentation is built -->
-            <execute user="root" skip="y">
-                <exe-cmd>wget -q -O -
-                    {[github-url-release]}/{[version]}.tar.gz |
-                    sudo tar zx -C /root</exe-cmd>
-            </execute>
-
-            <!-- These commands simulate what the command above would do if it could be run -->
-            <execute user="root" show="n">
-                <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-            <execute user="root" show="n">
-                <exe-cmd>cp -r /backrest/libc /root/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-            <execute user="root" show="n">
-                <exe-cmd>cp -r /backrest/src /root/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <!-- Bin installation -->
-        <p>The <backrest/> executable is written in C.  This allows certain time-critical commands (like async <cmd>archive-push</cmd>/<cmd>archive-get</cmd>) to run more quickly.</p>
-
-        <execute-list host="{[br-install-host]}">
-            <title>Install build dependencies</title>
-
-            <execute keyword="default" user="root">
-                <exe-cmd>apt-get install build-essential libssl-dev libperl-dev</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute keyword="co6" user="root">
-                <exe-cmd>yum install build-essential gcc openssl-devel perl-ExtUtils-Embed</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[br-install-host]}">
-            <title>Build and install binary</title>
-
-            <execute user="root" err-suppress="y">
-                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/src</exe-cmd>
-            </execute>
             <execute user="root">
-                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/src install</exe-cmd>
+                <exe-cmd>scp {[host-build]}:/root/pgbackrest-release-{[version]}/src/pgbackrest /usr/bin</exe-cmd>
+                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <execute user="root">
+                <exe-cmd>chmod 755 /usr/bin/pgbackrest</exe-cmd>
             </execute>
         </execute-list>
 
@@ -586,9 +537,9 @@
         </section>
     </section>
 
-    <!-- SECTION => INSTALLATION -->
-    <section id="installation">
-        <title>Installation</title>
+    <!-- ======================================================================================================================= -->
+    <section id="build">
+        <title>Build</title>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
         <host-add id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="pgbackrest/test:s3-server-20180612A" os="{[host-os]}">
@@ -598,6 +549,79 @@
             </execute>
         </host-add>
 
+        <p keyword="default">{[user-guide-os]} packages for <backrest/> are available at <link url="https://www.postgresql.org/download/linux/ubuntu/">apt.postgresql.org</link>.  If they are not provided for your distribution/version it is easy to download the source and install manually.</p>
+
+        <p keyword="co6">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
+
+        <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[host-os]}" mount="{[host-build-mount]}"/>
+
+        <block id="host-install">
+            <block-variable-replace key="host-install-host">{[host-build]}</block-variable-replace>
+        </block>
+
+        <p>When building from source it is best to use a build host rather than building on production.  Many of the tools required for the build should generally not be installed in production.  <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
+
+        <execute-list host="{[host-build]}">
+            <title>Download version <id>{[version]}</id> of <backrest/></title>
+
+            <!-- This is shown to the user but never actually run for the very good reason that the release is not available before the documentation is built -->
+            <execute user="root" skip="y">
+                <exe-cmd>wget -q -O -
+                    {[github-url-release]}/{[version]}.tar.gz |
+                    sudo tar zx -C /root</exe-cmd>
+            </execute>
+
+            <!-- These commands simulate what the command above would do if it could be run -->
+            <execute user="root" show="n">
+                <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+            <execute user="root" show="n">
+                <exe-cmd>cp -r /backrest/libc /root/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+            <execute user="root" show="n">
+                <exe-cmd>cp -r /backrest/src /root/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-build]}">
+            <title>Install build dependencies</title>
+
+            <execute keyword="default" user="root">
+                <exe-cmd>apt-get install build-essential libssl-dev libperl-dev</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <execute keyword="co6" user="root">
+                <exe-cmd>yum install build-essential gcc openssl-devel perl-ExtUtils-Embed</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+        </execute-list>
+
+        <p><backrest/> supports 32-bit distributions that build Perl with 64-bit integer support.</p>
+
+        <execute-list host="{[host-build]}">
+            <title>Check for 64-bit integers</title>
+
+            <execute output="y">
+                <exe-cmd>perl -V | grep USE_64_BIT_INT</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>The <backrest/> executable is written in C.  This allows certain time-critical commands (like async <cmd>archive-push</cmd>/<cmd>archive-get</cmd>) to run more quickly.</p>
+
+        <execute-list host="{[host-build]}">
+            <title>Build <backrest/> executable</title>
+
+            <execute user="root" err-suppress="y">
+                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/src</exe-cmd>
+            </execute>
+        </execute-list>
+    </section>
+
+    <!-- SECTION => INSTALLATION -->
+    <section id="installation">
+        <title>Installation</title>
+
         <p>A new host named <host>pg1</host> is created to contain the demo cluster and run <backrest/> examples.</p>
 
         <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[host-os]}" mount="{[host-pg1-mount]}"/>
@@ -605,25 +629,6 @@
         <block id="host-install">
             <block-variable-replace key="host-install-host">{[host-pg1]}</block-variable-replace>
         </block>
-
-        <p><backrest/> supports 32-bit distributions that build Perl with 64-bit integer support.</p>
-
-        <execute-list host="{[host-pg1]}" keyword="co6">
-            <title>Install Perl</title>
-
-            <execute user="root">
-                <exe-cmd>yum install perl</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Check for 64-bit integers</title>
-
-            <execute output="y">
-                <exe-cmd>perl -V | grep USE_64_BIT_INT</exe-cmd>
-            </execute>
-        </execute-list>
 
         <block id="pg-install">
             <block-variable-replace key="pg-install-host">{[host-pg1]}</block-variable-replace>
