@@ -97,7 +97,7 @@ helpRenderValue(const Variant *value)
             const KeyValue *optionKv = varKv(value);
             const VariantList *keyList = kvKeyList(optionKv);
 
-            for (uint keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+            for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
             {
                 if (keyIdx != 0)
                     strCat(result, ", ");
@@ -113,7 +113,7 @@ helpRenderValue(const Variant *value)
 
             const VariantList *list = varVarLst(value);
 
-            for (uint listIdx = 0; listIdx < varLstSize(list); listIdx++)
+            for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
             {
                 if (listIdx != 0)
                     strCat(result, ", ");
@@ -357,7 +357,7 @@ helpRender()
 
                     strCat(result, ": ");
 
-                    for (uint nameAltIdx = 0; nameAltIdx < cfgDefOptionHelpNameAltValueTotal(optionDefId); nameAltIdx++)
+                    for (unsigned int nameAltIdx = 0; nameAltIdx < cfgDefOptionHelpNameAltValueTotal(optionDefId); nameAltIdx++)
                     {
                         if (nameAltIdx != 0)                                // {uncovered - no option has more than one alt name}
                             strCat(result, ", ");                           // {+uncovered}

@@ -91,7 +91,7 @@ testRun()
 
         TEST_ERROR(cvtUIntToZ(9999, buffer, 4), AssertError, "buffer overflow");
 
-        TEST_RESULT_INT(cvtUIntToZ(4294967295, buffer, STACK_TRACE_PARAM_MAX), 10, "convert uint to string");
+        TEST_RESULT_INT(cvtUIntToZ(4294967295, buffer, STACK_TRACE_PARAM_MAX), 10, "convert unsigned int to string");
         TEST_RESULT_STR(buffer, "4294967295", "    check buffer");
     }
 

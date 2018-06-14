@@ -112,7 +112,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
 Get the next WAL segment given a WAL segment and WAL segment size
 ***********************************************************************************************************************************/
 String *
-walSegmentNext(const String *walSegment, size_t walSegmentSize, uint pgVersion)
+walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(STRING, walSegment);
@@ -161,7 +161,7 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, uint pgVersion)
 Build a list of WAL segments based on a beginning WAL and number of WAL in the range (inclusive)
 ***********************************************************************************************************************************/
 StringList *
-walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, uint pgVersion, uint range)
+walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, walSegmentBegin);
@@ -181,7 +181,7 @@ walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, uint pgVer
         {
             String *current = strDup(walSegmentBegin);
 
-            for (uint rangeIdx = 0; rangeIdx < range - 1; rangeIdx++)
+            for (unsigned int rangeIdx = 0; rangeIdx < range - 1; rangeIdx++)
             {
                 String *next = walSegmentNext(current, walSegmentSize, pgVersion);
 

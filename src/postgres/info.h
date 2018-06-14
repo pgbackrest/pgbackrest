@@ -15,7 +15,7 @@ typedef struct PgControlInfo
     uint64_t systemId;
     uint32_t controlVersion;
     uint32_t catalogVersion;
-    uint version;
+    unsigned int version;
 } PgControlInfo;
 
 #include "common/type/string.h"

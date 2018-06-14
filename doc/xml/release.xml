@@ -51,6 +51,14 @@
                     <release-item>
                         <p>Update Debian package to add debug symbols to <backrest/> executable.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="gunduz.devrim"/>
+                        </release-item-contributor-list>
+
+                        <p>Convert the not very portable <code>uint</code> type to <code>unsigned int</code>.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
