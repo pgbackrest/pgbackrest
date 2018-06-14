@@ -287,25 +287,30 @@ sub sectionProcess
         # Execute a command
         if ($oChild->nameGet() eq 'execute-list')
         {
-            my $oSectionBodyExecute = $oSectionBodyElement->addNew(HTML_DIV, "execute");
+            my $bShow = $oChild->paramTest('show', 'n') ? false : true;
+            my $oExecuteBodyElement;
             my $bFirst = true;
             my $strHostName = $self->{oManifest}->variableReplace($oChild->paramGet('host'));
 
-            $oSectionBodyExecute->
-                addNew(HTML_DIV, "execute-title",
-                       {strContent => "<span class=\"host\">${strHostName}</span> <b>&#x21d2;</b> " .
-                                      $self->processText($oChild->nodeGet('title')->textGet())});
-
-            my $oExecuteBodyElement = $oSectionBodyExecute->addNew(HTML_DIV, "execute-body");
+            if ($bShow)
+            {
+                my $oSectionBodyExecute = $oSectionBodyElement->addNew(HTML_DIV, "execute");
+                $oSectionBodyExecute->
+                    addNew(HTML_DIV, "execute-title",
+                           {strContent => "<span class=\"host\">${strHostName}</span> <b>&#x21d2;</b> " .
+                                          $self->processText($oChild->nodeGet('title')->textGet())});
+                $oExecuteBodyElement = $oSectionBodyExecute->addNew(HTML_DIV, "execute-body");
+            }
 
             foreach my $oExecute ($oChild->nodeList('execute'))
             {
                 my $bExeShow = !$oExecute->paramTest('show', 'n');
                 my $bExeExpectedError = defined($oExecute->paramGet('err-expect', false));
 
-                my ($strCommand, $strOutput) = $self->execute($oSection, $strHostName, $oExecute, $iDepth + 3);
+                my ($strCommand, $strOutput) = $self->execute(
+                    $oSection, $strHostName, $oExecute, {iIndent => $iDepth + 3, bShow => $bShow && $bExeShow});
 
-                if ($bExeShow)
+                if ($bShow && $bExeShow)
                 {
                     # Add continuation chars and proper spacing
                     $strCommand =~ s/\n/\n   /smg;

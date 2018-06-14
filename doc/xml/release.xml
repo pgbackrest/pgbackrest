@@ -44,13 +44,19 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <p>Create a new section to describe building <backrest/> and build on a separate host.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
-                        <p>Build containers from scratch for more accurate testing.</p>
+                        <p>Build containers from scratch for more accurate testing.  Use a prebuilt s3 server container.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Document generator improvements.  Allow parameters to be passed when a container is created.  Allow <file>/etc/hosts</file> update to be skipped (for containers without bash).  Allow environment load to be skipped.  Allow bash wrapping to be skipped.  Allow forcing a command to run as a user without sudo.</p>
+                        <p>Document generator improvements.  Allow parameters to be passed when a container is created.  Allow <file>/etc/hosts</file> update to be skipped (for containers without bash).  Allow environment load to be skipped.  Allow bash wrapping to be skipped.  Allow forcing a command to run as a user without sudo.  Allow an entire execute list to be hidden.</p>
                     </release-item>
                 </release-development-list>
             </release-doc-list>

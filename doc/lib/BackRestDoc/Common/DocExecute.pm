@@ -227,6 +227,7 @@ sub execute
         $oCommand,
         $iIndent,
         $bCache,
+        $bShow,
     ) =
         logDebugParam
         (
@@ -234,8 +235,9 @@ sub execute
             {name => 'oSection'},
             {name => 'strHostName'},
             {name => 'oCommand'},
-            {name => 'iIndent', default => 1},
-            {name => 'bCache', default => true},
+            {name => 'iIndent', optional => true, default => 1},
+            {name => 'bCache', optional => true, default => true},
+            {name => 'bShow', optional => true, default => true},
         );
 
     # Working variables
@@ -243,7 +245,7 @@ sub execute
     my $strCommand = join("\n", @{$$hCacheKey{cmd}});
     my $strOutput;
 
-    if (!$oCommand->paramTest('show', 'n') && $self->{bExe} && $self->isRequired($oSection))
+    if ($bShow && $self->{bExe} && $self->isRequired($oSection))
     {
         # Make sure that no lines are greater than 80 chars
         foreach my $strLine (split("\n", $strCommand))
@@ -624,7 +626,7 @@ sub backrestConfig
             my $oConfigClean = dclone($self->{config}{$strHostName}{$$hCacheKey{file}});
             delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_LOG_LEVEL_STDERR});
             delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_LOG_TIMESTAMP});
-            delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_REPO_S3_VERIFY_SSL});
+            delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-verify-ssl'});
 
             if (keys(%{$$oConfigClean{&CFGDEF_SECTION_GLOBAL}}) == 0)
             {
@@ -1050,7 +1052,8 @@ sub sectionChildProcess
                 # Execute initialize commands
                 foreach my $oExecute ($oChild->nodeList('execute', false))
                 {
-                    $self->execute($oSection, $$hCacheKey{name}, $oExecute, $iDepth + 1, false);
+                    $self->execute(
+                        $oSection, $$hCacheKey{name}, $oExecute, {iIndent => $iDepth + 1, bCache => false, bShow => false});
                 }
 
                 $self->cachePush($strCacheType, $hCacheKey, $hCacheValue);
