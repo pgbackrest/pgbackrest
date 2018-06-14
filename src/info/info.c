@@ -153,7 +153,7 @@ infoNew(
     }
     MEM_CONTEXT_NEW_END();
 
-    // Return buffer
+    // Return object
     FUNCTION_DEBUG_RESULT(INFO, this);
 }
 
@@ -161,7 +161,7 @@ Ini *
 infoIni(const Info *this)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(INFO, this);
+        FUNCTION_DEBUG_PARAM(INI, this);
 
         FUNCTION_DEBUG_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();

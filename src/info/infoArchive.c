@@ -33,6 +33,13 @@ Create a new InfoArchive object
 InfoArchive *
 infoArchiveNew(String *fileName, const bool ignoreMissing)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(STRING, fileName);
+        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+
+        FUNCTION_DEBUG_ASSERT(fileName != NULL);
+    FUNCTION_DEBUG_END();
+
     InfoArchive *this = NULL;
 
     MEM_CONTEXT_NEW_BEGIN("infoArchive")
@@ -51,17 +58,8 @@ infoArchiveNew(String *fileName, const bool ignoreMissing)
     }
     MEM_CONTEXT_NEW_END();
 
-    // Return buffer
-    return this;
-}
-
-/***********************************************************************************************************************************
-Return the current archive id
-***********************************************************************************************************************************/
-const String *
-infoArchiveId(const InfoArchive *this)
-{
-    return this->archiveId;
+    // Return object
+    FUNCTION_DEBUG_RESULT(INFO_ARCHIVE, this);
 }
 
 /***********************************************************************************************************************************
@@ -71,6 +69,14 @@ Checks the archive info file's DB section against the PG version and system id p
 void
 infoArchiveCheckPg(const InfoArchive *this, const uint pgVersion, uint64_t pgSystemId)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_DEBUG_PARAM(UINT, pgVersion);
+        FUNCTION_DEBUG_PARAM(UINT64, pgSystemId);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
     String *errorMsg = NULL;
 
     InfoPgData archivePg = infoPgDataCurrent(this->infoPg);
@@ -91,6 +97,8 @@ infoArchiveCheckPg(const InfoArchive *this, const uint pgVersion, uint64_t pgSys
         errorMsg = strCatFmt(errorMsg, "\nHINT: are you archiving to the correct stanza?");
         THROW(ArchiveMismatchError, strPtr(errorMsg));
     }
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -99,6 +107,27 @@ Free the info
 void
 infoArchiveFree(InfoArchive *this)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO_ARCHIVE, this);
+    FUNCTION_DEBUG_END();
+
     if (this != NULL)
         memContextFree(this->memContext);
+
+    FUNCTION_DEBUG_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Accessor functions
+***********************************************************************************************************************************/
+const String *
+infoArchiveId(const InfoArchive *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(STRING, this->archiveId);
 }

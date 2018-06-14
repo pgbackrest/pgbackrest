@@ -19,4 +19,12 @@ void infoArchiveCheckPg(const InfoArchive *this, const uint pgVersion, uint64_t 
 
 void infoArchiveFree(InfoArchive *this);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_INFO_ARCHIVE_TYPE                                                                                                   \
+    InfoArchive *
+#define FUNCTION_DEBUG_INFO_ARCHIVE_FORMAT(value, buffer, bufferSize)                                                                      \
+    objToLog(value, "InfoArchive", buffer, bufferSize)
+
 #endif
