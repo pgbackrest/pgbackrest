@@ -6,6 +6,8 @@ InfoArchive Handler for archive information
 #include <string.h>
 #include <inttypes.h>
 
+#include "common/debug.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "common/ini.h"
 #include "info/infoArchive.h"
@@ -58,7 +60,7 @@ infoArchiveNew(String *fileName, const bool ignoreMissing)
     }
     MEM_CONTEXT_NEW_END();
 
-    // Return object
+    // Return buffer
     FUNCTION_DEBUG_RESULT(INFO_ARCHIVE, this);
 }
 
@@ -67,7 +69,7 @@ Checks the archive info file's DB section against the PG version and system id p
 // ??? Should we still check that the file exists if it is required?
 ***********************************************************************************************************************************/
 void
-infoArchiveCheckPg(const InfoArchive *this, const uint pgVersion, uint64_t pgSystemId)
+infoArchiveCheckPg(const InfoArchive *this, const unsigned int pgVersion, uint64_t pgSystemId)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(INFO_ARCHIVE, this);

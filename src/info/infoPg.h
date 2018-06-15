@@ -43,4 +43,16 @@ String *infoPgVersionToString(unsigned int version);
 
 void infoPgFree(InfoPg *this);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_INFO_PG_TYPE                                                                                                \
+    InfoPg *
+#define FUNCTION_DEBUG_INFO_PG_FORMAT(value, buffer, bufferSize)                                                                   \
+    objToLog(value, "InfoPg", buffer, bufferSize)
+#define FUNCTION_DEBUG_INFO_PG_DATA_TYPE                                                                                           \
+    InfoPgData *
+#define FUNCTION_DEBUG_INFO_PG_DATA_FORMAT(value, buffer, bufferSize)                                                              \
+    objToLog(value, "InfoPgData", buffer, bufferSize)
+
 #endif

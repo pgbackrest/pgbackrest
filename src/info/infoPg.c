@@ -5,6 +5,8 @@ InfoPg Handler for postgres database information
 #include <stdlib.h>
 #include <string.h>
 
+#include "common/debug.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "common/ini.h"
 #include "common/memContext.h"
@@ -38,7 +40,6 @@ struct InfoPg
     unsigned int indexCurrent;                                      // Index to the history list for the db Section
     Info *info;                                                     // Info contents
 };
-
 
 /***********************************************************************************************************************************
 Return the PostgreSQL version constant given a string
@@ -105,6 +106,13 @@ Create a new InfoPg object
 InfoPg *
 infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(STRING, fileName);
+        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+
+        FUNCTION_DEBUG_ASSERT(fileName != NULL);
+    FUNCTION_DEBUG_END();
+
     InfoPg *this = NULL;
 
     MEM_CONTEXT_NEW_BEGIN("infoPg")
@@ -117,7 +125,8 @@ infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
 
         Ini *infoPgIni = infoIni(this->info);
 
-        // ??? need to get the history list from the file...for now just getting current
+        // CSHANG Do we have a parser yet?
+        // ??? need to get the history list from the file but need json parser so for now just getting current
         this->history = lstNew(sizeof(InfoPgData));
 
         InfoPgData infoPgData = {0};
@@ -147,11 +156,15 @@ infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
 
         lstAdd(this->history, &infoPgData);
         this->indexCurrent = lstSize(this->history) - 1;
+
+        // CSHANG Should we put a log statement to log the indexCurrent and the infoPgData elements? Otherwise there is no way to
+        // know what is going on since all of the called functions above are FUNCTION_TEST_... or the DEBUG parameter is only a
+        // pointer (which maybe is simply not helpful)
     }
     MEM_CONTEXT_NEW_END();
 
     // Return buffer
-    return this;
+    FUNCTION_DEBUG_RESULT(INFO_PG, this);
 }
 
 /***********************************************************************************************************************************
@@ -160,7 +173,13 @@ Return a structure of the current Postgres data
 InfoPgData
 infoPgDataCurrent(InfoPg *this)
 {
-    return *((InfoPgData *)lstGet(this->history, this->indexCurrent));
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(INFO_PG, this);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
+    FUNCTION_DEBUG_RESULT(INFO_PG_DATA, *((InfoPgData *)lstGet(this->history, this->indexCurrent));
 }
 
 

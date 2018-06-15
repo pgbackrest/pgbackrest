@@ -105,7 +105,8 @@ testRun()
 
         // Free
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(infoPgFree(infoPg), "free infoPg");
+        TEST_RESULT_VOID(infoPgFree(infoPg), "infoPgFree() - free infoPg");
+        TEST_RESULT_VOID(infoPgFree(NULL), "    NULL ptr");
     }
 
     // *****************************************************************************************************************************

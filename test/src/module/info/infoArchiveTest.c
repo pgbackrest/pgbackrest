@@ -9,8 +9,16 @@ void
 testRun()
 {
     // *****************************************************************************************************************************
-    if (testBegin("infoArchive"))
+    if (testBegin("infoArchiveNew(), infoArchiveCheckPg(), infoArchiveFree()"))
     {
+        // Test assertions
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_ERROR(infoArchiveNew(NULL, false), AssertError, "function debug assertion 'fileName != NULL' failed");
+        TEST_ERROR(infoArchiveCheckPg(NULL, 1, 1), AssertError, "function debug assertion 'this != NULL' failed");
+        TEST_ERROR(infoArchiveId(NULL), AssertError, "function test assertion 'this != NULL' failed");
+
+        // Initialize test variables
+        //--------------------------------------------------------------------------------------------------------------------------
         String *content = NULL;
         String *fileName = strNewFmt("%s/test.ini", testPath());
 
@@ -55,6 +63,7 @@ testRun()
 
         // Free
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(infoArchiveFree(info), "free archive info");
+        TEST_RESULT_VOID(infoArchiveFree(info), "infoArchiveFree() - free archive info");
+        TEST_RESULT_VOID(infoArchiveFree(NULL), "    - NULL ptr");
     }
 }
