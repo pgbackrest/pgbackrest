@@ -71,6 +71,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Fix default location of <file>pgbackrest.conf</file> in option reference.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Preliminary documentation for <postgres/> 11 unprivileged user backup.</p>
                     </release-item>
 
