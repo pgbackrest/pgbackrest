@@ -39,32 +39,12 @@ Internal function to check if the information is valid or not
 static bool
 infoValidInternal(const Info *this, const bool ignoreError)
 {
-    // FUNCTION_DEBUG_BEGIN(logLevelTrace);
-    //     FUNCTION_DEBUG_PARAM(INFO, this);
-    //     FUNCTION_DEBUG_PARAM(BOOL, ignoreError);
-    //
-    //     FUNCTION_DEBUG_ASSERT(this != NULL);
-    // FUNCTION_DEBUG_END();
-    // CSHANG Unable to have the Function Debug statements in this function:
-    //     run 001 - info
-    //         l0031 - expect FileMissingError: unable to open /home/vagrant/test/test-0/test.ini or /home/vagrant/test/test-0/test.ini.copy
-    //         l0032 - new info - no files, ignore missing
-    //         l0033 -     exists is false
-    //         l0034 -     info filename is set
-    //         l0039 - put info.copy to file
-    //         l0041 - new info - load copy file
-    //
-    //     TEST FAILED WITH AssertError:
-    //
-    //     --------------------------------------------------------------------------------
-    //     statement 'infoNew(fileName, false)' threw error AssertError, 'popping info/info.c:infoValidInternal but expected common/ini.c:iniGet' but result expected
-    //     --------------------------------------------------------------------------------
-    //
-    //     THROWN AT:
-    //     module/info/infoTest:testRun:41:(test build required for parameters)
-    //         ... function(s) ommitted ...
-    //     test:main:(argListSize: 1, argList: (char *[]))
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO, this);
+        FUNCTION_DEBUG_PARAM(BOOL, ignoreError);
 
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
 
     bool result = true;
 
@@ -88,9 +68,7 @@ infoValidInternal(const Info *this, const bool ignoreError)
         }
     }
 
-    return result;
-
-    // FUNCTION_DEBUG_RESULT(BOOL, result);  // CSHANG
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -141,9 +119,6 @@ infoNew(
     const String *fileName,                                         // Full path/filename to load
     const bool ignoreMissing)                                       // Ignore if the file is missing, else required
 {
-    // CSHANG How do these actually get output? I ran the following but did not see infoNew or anything from this module:
-    // /backrest/test/test.pl --dev --vm-out --vm=u18 --module=info --test=info --log-level=debug
-
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, fileName);
         FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
@@ -180,7 +155,6 @@ infoNew(
     }
     MEM_CONTEXT_NEW_END();
 
-// CSHANG So will this just log the pointer when log level is debug?
     // Return buffer
     FUNCTION_DEBUG_RESULT(INFO, this);
 }
@@ -213,16 +187,12 @@ infoFree(Info *this)
     FUNCTION_DEBUG_RESULT_VOID();
 }
 
-
 /***********************************************************************************************************************************
 Accessor functions
 ***********************************************************************************************************************************/
 String *
 infoFileName(const Info *this)
 {
-    // CSHANG These only get output if an error occurs in our development environment, so maybe these should be FUNCTION_DEBUG
-    // instead so we can see the filename in a production log (assuming is it displayed) and also be able to debug if a NULL pointer
-    // was passed.
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO, this);
 
@@ -235,12 +205,11 @@ infoFileName(const Info *this)
 bool
 infoExists(const Info *this)
 {
-    // CSHANG same: FUNCTION_DEBUG vs TEST
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO, this);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO, this);
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_TEST_END();
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->exists);
+    FUNCTION_DEBUG_RESULT(BOOL, this->exists);
 }

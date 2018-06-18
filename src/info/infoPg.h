@@ -20,7 +20,7 @@ typedef struct InfoPgData
     uint32_t catalogVersion;
     uint32_t controlVersion;
     uint64_t systemId;
-    uint version;
+    unsigned int version;
 } InfoPgData;
 
 /***********************************************************************************************************************************
@@ -51,8 +51,8 @@ Macros for function logging
 #define FUNCTION_DEBUG_INFO_PG_FORMAT(value, buffer, bufferSize)                                                                   \
     objToLog(value, "InfoPg", buffer, bufferSize)
 #define FUNCTION_DEBUG_INFO_PG_DATA_TYPE                                                                                           \
-    InfoPgData *
+    InfoPgData
 #define FUNCTION_DEBUG_INFO_PG_DATA_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "InfoPgData", buffer, bufferSize)
+    objToLog(&value, "InfoPgData", buffer, bufferSize)
 
 #endif

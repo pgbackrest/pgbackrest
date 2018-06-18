@@ -99,8 +99,6 @@ iniGet(const Ini *this, const String *section, const String *key)
     if (result == NULL)
         THROW_FMT(FormatError, "section '%s', key '%s' does not exist", strPtr(section), strPtr(key));
 
-    return result;
-
     FUNCTION_TEST_RESULT(CONST_VARIANT, result);
 }
 

@@ -13,12 +13,11 @@ testRun()
     {
         // Test assertions
         //--------------------------------------------------------------------------------------------------------------------------
-        // CSHANG I'm a little confused, in production, will these spit out the file name and function?
         TEST_ERROR(infoNew(NULL, false), AssertError, "function debug assertion 'fileName != NULL' failed");
         TEST_ERROR(loadInternal(NULL, true), AssertError, "function debug assertion 'this != NULL' failed");
         TEST_ERROR(infoIni(NULL), AssertError, "function debug assertion 'this != NULL' failed");
         TEST_ERROR(infoFileName(NULL), AssertError, "function test assertion 'this != NULL' failed");
-        TEST_ERROR(infoExists(NULL), AssertError, "function test assertion 'this != NULL' failed");
+        TEST_ERROR(infoExists(NULL), AssertError, "function debug assertion 'this != NULL' failed");
 
         // Initialize test variables
         //--------------------------------------------------------------------------------------------------------------------------

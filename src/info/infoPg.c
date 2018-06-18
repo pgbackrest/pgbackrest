@@ -156,16 +156,23 @@ infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
 
         lstAdd(this->history, &infoPgData);
         this->indexCurrent = lstSize(this->history) - 1;
-
-        // CSHANG Should we put a log statement to log the indexCurrent and the infoPgData elements? Otherwise there is no way to
-        // know what is going on since all of the called functions above are FUNCTION_TEST_... or the DEBUG parameter is only a
-        // pointer (which maybe is simply not helpful)
     }
     MEM_CONTEXT_NEW_END();
 
     // Return buffer
     FUNCTION_DEBUG_RESULT(INFO_PG, this);
 }
+
+// void
+// infoPgAdd(InfoPg *this, InfoPgData infoPgData)
+// {
+//     FUNCTION_DEBUG_BEGIN(logLevelTrace);
+//         FUNCTION_DEBUG_PARAM(INFO_PG, this);
+//         FUNCTION_DEBUG_PARAM(INT, infoPgData.someting);
+//
+//         FUNCTION_DEBUG_ASSERT(this != NULL);
+//
+//     FUNCTION_DEBUG_END();
 
 /***********************************************************************************************************************************
 Return a structure of the current Postgres data
@@ -179,9 +186,10 @@ infoPgDataCurrent(InfoPg *this)
         FUNCTION_DEBUG_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();
 
-    FUNCTION_DEBUG_RESULT(INFO_PG_DATA, *((InfoPgData *)lstGet(this->history, this->indexCurrent));
-}
+    FUNCTION_DEBUG_RESULT(INFO_PG_DATA, *((InfoPgData *)lstGet(this->history, this->indexCurrent)));
 
+    // return *((InfoPgData *)lstGet(this->history, this->indexCurrent));
+}
 
 /***********************************************************************************************************************************
 Return a string representation of the PostgreSQL version
@@ -191,6 +199,31 @@ infoPgVersionToString(unsigned int version)
 {
     return strNewFmt("%u.%u", ((unsigned int)(version/10000)), ((version%10000)/100));
 }
+
+
+/***********************************************************************************************************************************
+Convert to a zero-terminated string for logging
+***********************************************************************************************************************************/
+// size_t
+// infoPgDataToLog(const InfoPgData *this, char *buffer, size_t bufferSize)
+// {
+//     size_t result = 0;
+//
+//     MEM_CONTEXT_TEMP_BEGIN()
+//     {
+//         String *string = NULL;
+//
+//         if (this == NULL)
+//             string = strNew("null");
+//         else
+//             string = strNewFmt("{\"id: %u, version: %u\"}", this->id, this->version);
+//
+//         result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
+//     }
+//     MEM_CONTEXT_TEMP_END();
+//
+//     return result;
+// }
 
 /***********************************************************************************************************************************
 Free the info
