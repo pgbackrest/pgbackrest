@@ -159,18 +159,6 @@ infoNew(
     FUNCTION_DEBUG_RESULT(INFO, this);
 }
 
-Ini *
-infoIni(const Info *this)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(INFO, this);
-
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
-
-    FUNCTION_DEBUG_RESULT(INI, this->ini);
-}
-
 /***********************************************************************************************************************************
 Free the info
 ***********************************************************************************************************************************/
@@ -190,6 +178,18 @@ infoFree(Info *this)
 /***********************************************************************************************************************************
 Accessor functions
 ***********************************************************************************************************************************/
+Ini *
+infoIni(const Info *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(INFO, this);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
+    FUNCTION_DEBUG_RESULT(INI, this->ini);
+}
+
 String *
 infoFileName(const Info *this)
 {

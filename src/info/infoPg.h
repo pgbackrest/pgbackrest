@@ -17,9 +17,9 @@ InfoPg Postgres data object
 typedef struct InfoPgData
 {
     unsigned int id;
+    uint64_t systemId;
     uint32_t catalogVersion;
     uint32_t controlVersion;
-    uint64_t systemId;
     unsigned int version;
 } InfoPgData;
 
@@ -37,7 +37,7 @@ typedef enum
 Functions
 ***********************************************************************************************************************************/
 InfoPg *infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type);
-
+unsigned int infoPgAdd(InfoPg *this, InfoPgData *infoPgData);
 InfoPgData infoPgDataCurrent(InfoPg *this);
 String *infoPgVersionToString(unsigned int version);
 
@@ -46,6 +46,8 @@ void infoPgFree(InfoPg *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+size_t infoPgDataToLog(const InfoPgData *this, char *buffer, size_t bufferSize);
+
 #define FUNCTION_DEBUG_INFO_PG_TYPE                                                                                                \
     InfoPg *
 #define FUNCTION_DEBUG_INFO_PG_FORMAT(value, buffer, bufferSize)                                                                   \
@@ -53,6 +55,11 @@ Macros for function logging
 #define FUNCTION_DEBUG_INFO_PG_DATA_TYPE                                                                                           \
     InfoPgData
 #define FUNCTION_DEBUG_INFO_PG_DATA_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(&value, "InfoPgData", buffer, bufferSize)
+    infoPgDataToLog(&value, buffer, bufferSize)
+#define FUNCTION_DEBUG_INFO_PG_DATAP_TYPE                                                                                          \
+    InfoPgData *
+#define FUNCTION_DEBUG_INFO_PG_DATAP_FORMAT(value, buffer, bufferSize)                                                             \
+    infoPgDataToLog(value, buffer, bufferSize)
+
 
 #endif

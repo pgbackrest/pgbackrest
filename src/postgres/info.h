@@ -15,7 +15,7 @@ typedef struct PgControlInfo
     uint64_t systemId;
     uint32_t controlVersion;
     uint32_t catalogVersion;
-    uint version;
+    uint version;  // CSHANG Should this be 'unsigned int'?
 } PgControlInfo;
 
 #include "common/type/string.h"

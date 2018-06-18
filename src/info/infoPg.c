@@ -3,6 +3,7 @@ InfoPg Handler for postgres database information
 ***********************************************************************************************************************************/
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "common/debug.h"
@@ -47,6 +48,12 @@ Return the PostgreSQL version constant given a string
 unsigned int
 infoPgVersionToUIntInternal(const String *version)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, version);
+
+        FUNCTION_DEBUG_ASSERT(version != NULL);
+    FUNCTION_DEBUG_END();
+
     unsigned int result = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -93,7 +100,7 @@ infoPgVersionToUIntInternal(const String *version)
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_DEBUG_RESULT(UINT, result);
 }
 
 /***********************************************************************************************************************************
@@ -102,6 +109,7 @@ Create a new InfoPg object
         $bRequired,                                 # Is archive info required?  --- may not need this if ignoreMissing is enough
         $bLoad,                                     # Should the file attempt to be loaded?
         $strCipherPassSub,                          # Passphrase to encrypt the subsequent archive files if repo is encrypted
+??? Currently this assumes the file exists and loads data from it
 ***********************************************************************************************************************************/
 InfoPg *
 infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
@@ -123,10 +131,10 @@ infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
 
         this->info = infoNew(fileName, ignoreMissing);
 
+        // ??? If file does not exist, then do nothing - infoExists(this->info) will be false, the user will have to set infoPgData
         Ini *infoPgIni = infoIni(this->info);
 
-        // CSHANG Do we have a parser yet?
-        // ??? need to get the history list from the file but need json parser so for now just getting current
+        // ??? need to get the history list from the file in ascending order but need json parser so for now just getting current
         this->history = lstNew(sizeof(InfoPgData));
 
         InfoPgData infoPgData = {0};
@@ -154,8 +162,8 @@ infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
         }
         MEM_CONTEXT_TEMP_END();
 
-        lstAdd(this->history, &infoPgData);
-        this->indexCurrent = lstSize(this->history) - 1;
+        infoPgAdd(this, &infoPgData);
+
     }
     MEM_CONTEXT_NEW_END();
 
@@ -163,16 +171,28 @@ infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
     FUNCTION_DEBUG_RESULT(INFO_PG, this);
 }
 
-// void
-// infoPgAdd(InfoPg *this, InfoPgData infoPgData)
-// {
-//     FUNCTION_DEBUG_BEGIN(logLevelTrace);
-//         FUNCTION_DEBUG_PARAM(INFO_PG, this);
-//         FUNCTION_DEBUG_PARAM(INT, infoPgData.someting);
-//
-//         FUNCTION_DEBUG_ASSERT(this != NULL);
-//
-//     FUNCTION_DEBUG_END();
+/***********************************************************************************************************************************
+Add Postgres data tot he history list and return the new currentIndex
+***********************************************************************************************************************************/
+unsigned int
+infoPgAdd(InfoPg *this, InfoPgData *infoPgData)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);  // CSHANG Maybe change to trace?
+        FUNCTION_DEBUG_PARAM(INFO_PG, this);
+        FUNCTION_DEBUG_PARAM(INFO_PG_DATAP, infoPgData);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+        FUNCTION_DEBUG_ASSERT(infoPgData != NULL);
+    FUNCTION_DEBUG_END();
+
+    lstAdd(this->history, infoPgData);
+
+    // CSHANG this assumes added in ascending order, but when reading the history from the file, can we ensure that? May be better
+    // to loop throuh the history and get the highest ID value?
+    this->indexCurrent = lstSize(this->history) - 1;
+
+    FUNCTION_DEBUG_RESULT(UINT, this->indexCurrent);  // CSHANG Do we need to return the index? Nice for debugging...
+}
 
 /***********************************************************************************************************************************
 Return a structure of the current Postgres data
@@ -180,15 +200,13 @@ Return a structure of the current Postgres data
 InfoPgData
 infoPgDataCurrent(InfoPg *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);  // CSHANG Maybe change to trace?
         FUNCTION_DEBUG_PARAM(INFO_PG, this);
 
         FUNCTION_DEBUG_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();
 
     FUNCTION_DEBUG_RESULT(INFO_PG_DATA, *((InfoPgData *)lstGet(this->history, this->indexCurrent)));
-
-    // return *((InfoPgData *)lstGet(this->history, this->indexCurrent));
 }
 
 /***********************************************************************************************************************************
@@ -197,33 +215,37 @@ Return a string representation of the PostgreSQL version
 String *
 infoPgVersionToString(unsigned int version)
 {
-    return strNewFmt("%u.%u", ((unsigned int)(version/10000)), ((version%10000)/100));
-}
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(UINT, version);
+    FUNCTION_DEBUG_END();
 
+    FUNCTION_DEBUG_RESULT(STRING, strNewFmt("%u.%u", ((unsigned int)(version/10000)), ((version%10000)/100)));
+}
 
 /***********************************************************************************************************************************
 Convert to a zero-terminated string for logging
 ***********************************************************************************************************************************/
-// size_t
-// infoPgDataToLog(const InfoPgData *this, char *buffer, size_t bufferSize)
-// {
-//     size_t result = 0;
-//
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//         String *string = NULL;
-//
-//         if (this == NULL)
-//             string = strNew("null");
-//         else
-//             string = strNewFmt("{\"id: %u, version: %u\"}", this->id, this->version);
-//
-//         result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
-//     }
-//     MEM_CONTEXT_TEMP_END();
-//
-//     return result;
-// }
+size_t
+infoPgDataToLog(const InfoPgData *this, char *buffer, size_t bufferSize)
+{
+    size_t result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *string = NULL;
+
+        if (this == NULL)
+            string = strNew("null");
+        else
+            string = strNewFmt("{\"id: %u, version: %u, systemId %" PRIu64 ", catalog %"PRIu32", control %"PRIu32"\"}",
+                this->id, this->version, this->systemId, this->catalogVersion, this->controlVersion);
+
+        result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
+}
 
 /***********************************************************************************************************************************
 Free the info
@@ -231,6 +253,12 @@ Free the info
 void
 infoPgFree(InfoPg *this)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO_PG, this);
+    FUNCTION_DEBUG_END();
+
     if (this != NULL)
         memContextFree(this->memContext);
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

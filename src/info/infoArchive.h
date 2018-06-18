@@ -13,7 +13,6 @@ typedef struct InfoArchive InfoArchive;
 Functions
 ***********************************************************************************************************************************/
 InfoArchive *infoArchiveNew(String *fileName, const bool ignoreMissing);
-
 const String *infoArchiveId(const InfoArchive *this);
 void infoArchiveCheckPg(const InfoArchive *this, const unsigned int pgVersion, uint64_t pgSystemId);
 
