@@ -1221,7 +1221,7 @@ sub process
         }
 
         # Output the generated filter for debugging
-        &log(DETAIL, "database filter: $strDbFilter");
+        &log(DETAIL, "database filter: " . (defined($strDbFilter) ? "${strDbFilter}" : ''));
     }
 
     # Initialize the restore process

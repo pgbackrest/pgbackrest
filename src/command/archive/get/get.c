@@ -23,7 +23,7 @@ Archive Get Command
 Clean the queue and prepare a list of WAL segments that the async process should get
 ***********************************************************************************************************************************/
 static StringList *
-queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegmentSize, uint pgVersion)
+queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegmentSize, unsigned int pgVersion)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, walSegment);
@@ -47,7 +47,7 @@ queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegm
 
         // Determine how many WAL segments should be in the queue.  The queue total must be at least 2 or it doesn't make sense to
         // have async turned on at all.
-        uint walSegmentQueueTotal = (uint)(queueSize / walSegmentSize);
+        unsigned int walSegmentQueueTotal = (unsigned int)(queueSize / walSegmentSize);
 
         if (walSegmentQueueTotal < 2)
             walSegmentQueueTotal = 2;
@@ -65,7 +65,7 @@ queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegm
         // Build a list of WAL segments that are being kept so we can later make a list of what is needed
         StringList *keepQueue = strLstNew();
 
-        for (uint actualQueueIdx = 0; actualQueueIdx < strLstSize(actualQueue); actualQueueIdx++)
+        for (unsigned int actualQueueIdx = 0; actualQueueIdx < strLstSize(actualQueue); actualQueueIdx++)
         {
             // Get file from actual queue
             const String *file = strLstGet(actualQueue, actualQueueIdx);
@@ -80,7 +80,7 @@ queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegm
         }
 
         // Generate a list of the WAL that are needed by removing kept WAL from the ideal queue
-        for (uint idealQueueIdx = 0; idealQueueIdx < strLstSize(idealQueue); idealQueueIdx++)
+        for (unsigned int idealQueueIdx = 0; idealQueueIdx < strLstSize(idealQueue); idealQueueIdx++)
         {
             if (!strLstExists(keepQueue, strLstGet(idealQueue, idealQueueIdx)))
                 strLstAdd(result, strLstGet(idealQueue, idealQueueIdx));
@@ -210,10 +210,10 @@ cmdArchiveGet()
                         TRY_BEGIN()
                         {
                             // Get the version of PostgreSQL
-                            uint pgVersion = pgControlInfo(cfgOptionStr(cfgOptPgPath)).version;
+                            unsigned int pgVersion = pgControlInfo(cfgOptionStr(cfgOptPgPath)).version;
 
                             // Determine WAL segment size -- for now this is the default but for PG11 it will be configurable
-                            uint walSegmentSize = WAL_SEGMENT_DEFAULT_SIZE;
+                            unsigned int walSegmentSize = WAL_SEGMENT_DEFAULT_SIZE;
 
                             // Create the queue
                             storagePathCreateNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN));

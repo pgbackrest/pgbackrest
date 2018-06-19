@@ -14,6 +14,17 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.04dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="nj.baliyan"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix error in selective restore when only one user database exists in the cluster.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <p><postgres/> 11 Beta 1 support.</p>
@@ -40,6 +51,14 @@
                     <release-item>
                         <p>Update Debian package to add debug symbols to <backrest/> executable.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="gunduz.devrim"/>
+                        </release-item-contributor-list>
+
+                        <p>Convert the not very portable <code>uint</code> type to <code>unsigned int</code>.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
@@ -51,6 +70,14 @@
                 </release-improvement-list>
 
                 <release-development-list>
+                    <release-item>
+                        <p>Fix default location of <file>pgbackrest.conf</file> in option reference.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Preliminary documentation for <postgres/> 11 unprivileged user backup.</p>
+                    </release-item>
+
                     <release-item>
                         <p>Build containers from scratch for more accurate testing.  Use a prebuilt s3 server container.</p>
                     </release-item>
@@ -4781,6 +4808,11 @@
         <contributor id="nicholson.brad">
             <contributor-name-display>Brad Nicholson</contributor-name-display>
             <contributor-id type="github">bradnicholson</contributor-id>
+        </contributor>
+
+        <contributor id="nj.baliyan">
+            <contributor-name-display>Nj Baliyan</contributor-name-display>
+            <contributor-id type="github">nj3110</contributor-id>
         </contributor>
 
         <contributor id="nullmeier.markus">

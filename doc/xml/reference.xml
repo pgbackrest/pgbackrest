@@ -5,7 +5,7 @@
     <config title="{[project]} Configuration Reference">
         <description>The {[project]} Configuration Reference details all configuration options.</description>
 
-        <text><backrest/> can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is <file>/etc/pgbackrest.conf</file>.</text>
+        <text><backrest/> can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is <file>/etc/pgbackrest/pgbackrest.conf</file>.  If no file exists in that location then the old default of <file>/etc/pgbackrest.conf</file> will be checked.</text>
 
         <config-section-list title="Settings">
             <!-- CONFIG - LOG -->

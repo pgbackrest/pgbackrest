@@ -26,7 +26,7 @@ WAL segment constants
 #define WAL_SEGMENT_REGEXP                                          "^[0-F]{24}$"
 
 // Defines the size of standard WAL segment name -- this should never changed
-#define WAL_SEGMENT_NAME_SIZE                                       ((uint)24)
+#define WAL_SEGMENT_NAME_SIZE                                       ((unsigned int)24)
 
 // Default size of a WAL segment
 #define WAL_SEGMENT_DEFAULT_SIZE                                    ((size_t)(16 * 1024 * 1024))
@@ -36,7 +36,7 @@ Functions
 ***********************************************************************************************************************************/
 bool archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confessOnError);
 
-String *walSegmentNext(const String *walSegment, size_t walSegmentSize, uint pgVersion);
-StringList *walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, uint pgVersion, uint range);
+String *walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion);
+StringList *walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range);
 
 #endif

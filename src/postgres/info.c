@@ -12,7 +12,7 @@ PostgreSQL Info
 /***********************************************************************************************************************************
 Map control/catalog version to PostgreSQL version
 ***********************************************************************************************************************************/
-static uint
+static unsigned int
 pgVersionMap(uint32_t controlVersion, uint32_t catalogVersion)
 {
     FUNCTION_TEST_BEGIN();
@@ -20,7 +20,7 @@ pgVersionMap(uint32_t controlVersion, uint32_t catalogVersion)
         FUNCTION_TEST_PARAM(UINT32, catalogVersion);
     FUNCTION_TEST_END();
 
-    uint result = 0;
+    unsigned int result = 0;
 
     if (controlVersion == 1100 && catalogVersion == 201804191)
         result = PG_VERSION_11;
