@@ -50,9 +50,10 @@ infoArchiveNew(String *fileName, const bool ignoreMissing)
         this = memNew(sizeof(InfoArchive));
         this->memContext = MEM_CONTEXT_NEW();
 
-        this->infoPg = infoPgNew(fileName, ignoreMissing, infoPgArchive);
+        // ??? Hardcoding ignoreMissing to false as a safeguard until full capabilities are coded
+        this->infoPg = infoPgNew(fileName, false, infoPgArchive);
 
-        // Store the archiveId for the current PG db-version.db-id
+        // Store the archiveId for the current PG db-version db-id
         InfoPgData currentPg = infoPgDataCurrent(this->infoPg);
 
         this->archiveId = strNew("");

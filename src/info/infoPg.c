@@ -134,7 +134,8 @@ infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
         // ??? If file does not exist, then do nothing - infoExists(this->info) will be false, the user will have to set infoPgData
         Ini *infoPgIni = infoIni(this->info);
 
-        // ??? need to get the history list from the file in ascending order but need json parser so for now just getting current
+        // ??? need to get the history list from the file in ascending order (important for ensuring currentIndex set properly in
+        // infoPgAdd) but need json parser so for now just getting current
         this->history = lstNew(sizeof(InfoPgData));
 
         InfoPgData infoPgData = {0};
@@ -186,12 +187,9 @@ infoPgAdd(InfoPg *this, InfoPgData *infoPgData)
     FUNCTION_DEBUG_END();
 
     lstAdd(this->history, infoPgData);
-
-    // CSHANG this assumes added in ascending order, but when reading the history from the file, can we ensure that? May be better
-    // to loop throuh the history and get the highest ID value?
     this->indexCurrent = lstSize(this->history) - 1;
 
-    FUNCTION_DEBUG_RESULT(UINT, this->indexCurrent);  // CSHANG Do we need to return the index? Nice for debugging...
+    FUNCTION_DEBUG_RESULT(UINT, this->indexCurrent);
 }
 
 /***********************************************************************************************************************************
@@ -200,13 +198,44 @@ Return a structure of the current Postgres data
 InfoPgData
 infoPgDataCurrent(InfoPg *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);  // CSHANG Maybe change to trace?
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(INFO_PG, this);
 
         FUNCTION_DEBUG_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();
 
     FUNCTION_DEBUG_RESULT(INFO_PG_DATA, *((InfoPgData *)lstGet(this->history, this->indexCurrent)));
+}
+
+/***********************************************************************************************************************************
+Validate PostgreSQL version
+??? Maybe this should be in postgres/info.c
+***********************************************************************************************************************************/
+bool
+pgVersionValid(unsigned int version)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, version);
+    FUNCTION_TEST_END();
+
+    bool result = false;
+
+    if (version == PG_VERSION_11 ||
+        version == PG_VERSION_10 ||
+        version == PG_VERSION_96 ||
+        version == PG_VERSION_95 ||
+        version == PG_VERSION_94 ||
+        version == PG_VERSION_93 ||
+        version == PG_VERSION_92 ||
+        version == PG_VERSION_91 ||
+        version == PG_VERSION_90 ||
+        version == PG_VERSION_84 ||
+        version == PG_VERSION_83)
+    {
+        result = true;
+    }
+
+    FUNCTION_TEST_RESULT(UINT, result);
 }
 
 /***********************************************************************************************************************************
@@ -217,6 +246,8 @@ infoPgVersionToString(unsigned int version)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(UINT, version);
+
+        FUNCTION_DEBUG_ASSERT(pgVersionValid(version) == true);
     FUNCTION_DEBUG_END();
 
     FUNCTION_DEBUG_RESULT(STRING, strNewFmt("%u.%u", ((unsigned int)(version/10000)), ((version%10000)/100)));
