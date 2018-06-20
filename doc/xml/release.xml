@@ -99,7 +99,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Remove RHEL package patch since it has been committed upstream.</p>
+                        <p>Remove RHEL and Debian package patches since they have been committed upstream.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
