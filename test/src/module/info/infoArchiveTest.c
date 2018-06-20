@@ -64,6 +64,6 @@ testRun()
         // Free
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(infoArchiveFree(info), "infoArchiveFree() - free archive info");
-        TEST_RESULT_VOID(infoArchiveFree(NULL), "    - NULL ptr");
+        TEST_RESULT_VOID(infoArchiveFree(NULL), "    NULL ptr");
     }
 }

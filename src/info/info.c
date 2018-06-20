@@ -6,10 +6,11 @@ Info Handler for pgbackrest information
 #include <string.h>
 
 #include "common/debug.h"
+#include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "crypto/hash.h"
 #include "info/info.h"
-#include "common/ini.h"
 #include "storage/helper.h"
 #include "version.h"
 
@@ -48,9 +49,45 @@ infoValidInternal(const Info *this, const bool ignoreError)
 
     bool result = true;
 
-    // ??? Need to add in checksum validation as first check
-    // ?? Also, would it be better to pass in the filename? This and the old code will throw errors with the main file name even
-    //   though erroring on the copy
+    // Make sure the ini is valid by testing the checksum
+    String *infoChecksum = varStr(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_CHECKSUM)));
+    StringList *sectionList = iniSectionList(this->ini);
+
+    CryptoHash *hash = cryptoHashNew(strNew(HASH_TYPE_SHA1));
+
+    // Loop through sections and create hash for checking checksum
+    for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
+    {
+        String *section = strLstGet(sectionList, sectionIdx);
+
+// CSHANG Can we have an empty section in the backup.manifest?
+        if (sectionIdx != 0)
+            cryptoHashProcessStr(hash, strNewFmt("\n[%s]", strPtr(section)));
+        else
+            cryptoHashProcessStr(hash, strNewFmt("[%s]", strPtr(section)));
+
+        StringList *keyList = iniSectionKeyList(this->ini, section);
+
+        // Loop through values
+        for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+        {
+            String *key = strLstGet(keyList, keyIdx);
+
+            // Skip the checksum in the file
+            if (!strCmp(key, strNew(INI_KEY_CHECKSUM)))
+            {
+                cryptoHashProcessStr(hash, strNewFmt("\n%s=%s", strPtr(strLstGet(keyList, keyIdx)),
+                    strPtr(varStr(iniGet(this->ini, section, strLstGet(keyList, keyIdx))))));
+            }
+        }
+    }
+
+    if (infoChecksum == NULL || !strCmp(infoChecksum, cryptoHashHex(hash)))
+    {
+        THROW_FMT(
+            ChecksumError, "invalid checksum in '%s', expected '%s' but found '%s'",
+            strPtr(this->fileName), strPtr(cryptoHashHex(hash)), infoChecksum == NULL ? "[undef]" : strPtr(infoChecksum));
+    }
 
     // Make sure that the format is current, otherwise error
     if (varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT))) != PGBACKREST_FORMAT)

@@ -18,7 +18,7 @@ struct Ini
 {
     MemContext *memContext;                                         // Context that contains the ini
     KeyValue *store;                                                // Key value store that contains the ini data
-    String *fileName;                                               // File name (if one has been set)
+    String *fileName;                                               // File name (if one has been set) // CSHANG this is not used
 };
 
 /***********************************************************************************************************************************
@@ -150,12 +150,38 @@ iniSectionKeyList(const Ini *this, const String *section)
         // Get the section
         KeyValue *sectionKv = varKv(kvGet(this->store, varNewStr(section)));
 
-        // Return key list of the section exists
+        // Return key list if the section exists
         if (sectionKv != NULL)
             result = strLstNewVarLst(kvKeyList(sectionKv));
         // Otherwise return an empty list
         else
             result = strLstNew();
+
+        strLstMove(result, MEM_CONTEXT_OLD());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RESULT(STRING_LIST, result);
+}
+
+/***********************************************************************************************************************************
+Get a list of sections
+***********************************************************************************************************************************/
+StringList *
+iniSectionList(const Ini *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    StringList *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Get the sections from the keyList
+        result = strLstNewVarLst(kvKeyList(this->store));
 
         strLstMove(result, MEM_CONTEXT_OLD());
     }
@@ -248,6 +274,7 @@ iniParse(Ini *this, const String *content)
 
 /***********************************************************************************************************************************
 Load ini from a file
+??? CSHANG This is dead code
 ***********************************************************************************************************************************/
 void
 iniLoad(Ini *this, const String *fileName)
