@@ -40,72 +40,49 @@ Internal function to check if the information is valid or not
 static bool
 infoValidInternal(const Info *this, const bool ignoreError)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO, this);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreError);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+        FUNCTION_TEST_PARAM(BOOL, ignoreError);
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
 
     bool result = true;
 
-    // Make sure the ini is valid by testing the checksum
-    String *infoChecksum = varStr(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_CHECKSUM)));
-    StringList *sectionList = iniSectionList(this->ini);
-
-    CryptoHash *hash = cryptoHashNew(strNew(HASH_TYPE_SHA1));
-
-    // Loop through sections and create hash for checking checksum
-    for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *section = strLstGet(sectionList, sectionIdx);
+        // Make sure the ini is valid by testing the checksum
+        String *infoChecksum = varStr(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_CHECKSUM)));
 
-// CSHANG Can we have an empty section in the backup.manifest?
-        if (sectionIdx != 0)
-            cryptoHashProcessStr(hash, strNewFmt("\n[%s]", strPtr(section)));
-        else
-            cryptoHashProcessStr(hash, strNewFmt("[%s]", strPtr(section)));
+        CryptoHash *hash = infoHash(this->ini);
 
-        StringList *keyList = iniSectionKeyList(this->ini, section);
-
-        // Loop through values
-        for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+        // ??? Temporary hack until get json parser: add quotes around hash before comparing
+        if (infoChecksum == NULL || !strCmp(infoChecksum, strQuoteZ(cryptoHashHex(hash), "\"")))
         {
-            String *key = strLstGet(keyList, keyIdx);
+            THROW_FMT(
+                ChecksumError, "invalid checksum in '%s', expected '%s' but found '%s'",
+                strPtr(this->fileName), strPtr(cryptoHashHex(hash)), infoChecksum == NULL ? "[undef]" : strPtr(infoChecksum));
+        }
 
-            // Skip the checksum in the file
-            if (!strCmp(key, strNew(INI_KEY_CHECKSUM)))
+        // Make sure that the format is current, otherwise error
+        if (varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT))) != PGBACKREST_FORMAT)
+        {
+            if (!ignoreError)
             {
-                cryptoHashProcessStr(hash, strNewFmt("\n%s=%s", strPtr(strLstGet(keyList, keyIdx)),
-                    strPtr(varStr(iniGet(this->ini, section, strLstGet(keyList, keyIdx))))));
+                THROW_FMT(
+                    FormatError, "invalid format in '%s', expected %d but found %d",
+                    strPtr(this->fileName), PGBACKREST_FORMAT, varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST),
+                    strNew(INI_KEY_FORMAT))));
+            }
+            else
+            {
+                result = false;
             }
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
-    if (infoChecksum == NULL || !strCmp(infoChecksum, cryptoHashHex(hash)))
-    {
-        THROW_FMT(
-            ChecksumError, "invalid checksum in '%s', expected '%s' but found '%s'",
-            strPtr(this->fileName), strPtr(cryptoHashHex(hash)), infoChecksum == NULL ? "[undef]" : strPtr(infoChecksum));
-    }
-
-    // Make sure that the format is current, otherwise error
-    if (varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT))) != PGBACKREST_FORMAT)
-    {
-        if (!ignoreError)
-        {
-            THROW_FMT(
-                FormatError, "invalid format in '%s', expected %d but found %d",
-                strPtr(this->fileName), PGBACKREST_FORMAT, varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST),
-                strNew(INI_KEY_FORMAT))));
-        }
-        else
-        {
-            result = false;
-        }
-    }
-
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_TEST_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -194,6 +171,61 @@ infoNew(
 
     // Return buffer
     FUNCTION_DEBUG_RESULT(INFO, this);
+}
+
+/***********************************************************************************************************************************
+Return a hash of the contents of the info file
+***********************************************************************************************************************************/
+CryptoHash *
+infoHash(Ini *ini)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, ini);
+
+        FUNCTION_TEST_ASSERT(ini != NULL);
+    FUNCTION_TEST_END();
+
+    CryptoHash *result = cryptoHashNew(strNew(HASH_TYPE_SHA1));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        StringList *sectionList = iniSectionList(ini);
+        // Loop through sections and create hash for checking checksum
+        for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
+        {
+            String *section = strLstGet(sectionList, sectionIdx);
+
+            // Add extra linefeed before additional sections
+            if (sectionIdx != 0)
+                cryptoHashProcessC(result, (const unsigned char *)"\n", 1);
+
+            // Create the section header
+            cryptoHashProcessC(result, (const unsigned char *)"[", 1);
+            cryptoHashProcessStr(result, section);
+            cryptoHashProcessC(result, (const unsigned char *)"]\n", 2);
+
+            StringList *keyList = iniSectionKeyList(ini, section);
+
+            // Loop through values and build the section
+            for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+            {
+                String *key = strLstGet(keyList, keyIdx);
+
+                // Skip the backrest checksum in the file
+                if ((strCmp(section, strNew(INI_SECTION_BACKREST)) && !strCmp(key, strNew(INI_KEY_CHECKSUM))) ||
+                    !strCmp(section, strNew(INI_SECTION_BACKREST)))
+                {
+                    cryptoHashProcessC(result, (const unsigned char *)"\n", 1);
+                    cryptoHashProcessStr(result, strLstGet(keyList, keyIdx));
+                    cryptoHashProcessC(result, (const unsigned char *)"=", 1);
+                    cryptoHashProcessStr(result, varStr(iniGet(ini, section, strLstGet(keyList, keyIdx))));
+                }
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RESULT(CRYPTO_HASH, result);
 }
 
 /***********************************************************************************************************************************

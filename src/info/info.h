@@ -5,6 +5,7 @@ Info Handler for pgbackrest information
 #define INFO_INFO_H
 
 #include "common/ini.h"
+#include "crypto/hash.h"
 
 /***********************************************************************************************************************************
 Info object
@@ -16,6 +17,7 @@ Functions
 ***********************************************************************************************************************************/
 Info *infoNew(const String *fileName, const bool ignoreMissing);
 Ini *infoIni(const Info *this);
+CryptoHash *infoHash(Ini *ini);
 String * infoFileName(const Info *this);
 bool infoExists(const Info *this);
 
