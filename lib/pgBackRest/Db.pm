@@ -210,9 +210,14 @@ sub connect
 
                 if ($fDbVersion >= PG_VERSION_APPLICATION_NAME)
                 {
+                    # Set application name for monitoring and debugging
                     $self->{hDb}->do(
                         "set application_name = '" . BACKREST_NAME . ' [' .
                         (cfgOptionValid(CFGOPT_COMMAND) ? cfgOption(CFGOPT_COMMAND) : cfgCommandName(cfgCommandGet())) . "]'")
+                        or confess &log(ERROR, $self->{hDb}->errstr, ERROR_DB_QUERY);
+
+                    # Clear search path to prevent possible function overrides
+                    $self->{hDb}->do("set search_path = 'pg_catalog'")
                         or confess &log(ERROR, $self->{hDb}->errstr, ERROR_DB_QUERY);
                 }
             }
