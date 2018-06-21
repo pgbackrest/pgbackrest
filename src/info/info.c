@@ -55,13 +55,18 @@ infoValidInternal(const Info *this, const bool ignoreError)
         String *infoChecksum = varStr(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_CHECKSUM)));
 
         CryptoHash *hash = infoHash(this->ini);
-
+printf("HASH: %s, INFOCHECKSUM: %s\n", strPtr(strQuoteZ(cryptoHashHex(hash), "\"")), strPtr(infoChecksum)); fflush(stdout);
         // ??? Temporary hack until get json parser: add quotes around hash before comparing
-        if (infoChecksum == NULL || !strCmp(infoChecksum, strQuoteZ(cryptoHashHex(hash), "\"")))
+        if (infoChecksum == NULL || !strEq(infoChecksum, strQuoteZ(cryptoHashHex(hash), "\"")))
         {
-            THROW_FMT(
-                ChecksumError, "invalid checksum in '%s', expected '%s' but found '%s'",
-                strPtr(this->fileName), strPtr(cryptoHashHex(hash)), infoChecksum == NULL ? "[undef]" : strPtr(infoChecksum));
+            if (!ignoreError)
+            {
+                THROW_FMT(
+                    ChecksumError, "invalid checksum in '%s', expected '%s' but found '%s'",
+                    strPtr(this->fileName), strPtr(cryptoHashHex(hash)), infoChecksum == NULL ? "[undef]" : strPtr(infoChecksum));
+            }
+            else
+                result = false;
         }
 
         // Make sure that the format is current, otherwise error
@@ -75,9 +80,7 @@ infoValidInternal(const Info *this, const bool ignoreError)
                     strNew(INI_KEY_FORMAT))));
             }
             else
-            {
                 result = false;
-            }
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -109,6 +112,7 @@ loadInternal(Info *this, const bool copyFile)
         // If the file exists, parse and validate it
         if (buffer != NULL)
         {
+printf("PARSING: %s\n", strPtr(fileName)); fflush(stdout);
             iniParse(this->ini, strNewBuf(buffer));
 
             // Do not ignore errors if the copy file is invalid
@@ -156,10 +160,16 @@ infoNew(
         {
             if (!loadInternal(this, true))
             {
+                // ??? This is current perl behavior - it may be time to reconsider:
+                // If only the info main file exists but is invalid, invalid errors will not be thrown. Instead a "missing" error
+                // will be thrown, so if a missing error occurs, it can be that the files are both missing or the main file only
+                // exists but is invalid.
                 if (!ignoreMissing)
+                {
                     THROW_FMT(
                         FileMissingError, "unable to open %s or %s",
                         strPtr(this->fileName), strPtr(strCat(strDup(this->fileName), INI_COPY_EXT)));
+                }
             }
             else
                 this->exists = true;
@@ -186,23 +196,32 @@ infoHash(Ini *ini)
     FUNCTION_TEST_END();
 
     CryptoHash *result = cryptoHashNew(strNew(HASH_TYPE_SHA1));
+CryptoHash *testHash =  cryptoHashNew(strNew(HASH_TYPE_SHA1));
+
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         StringList *sectionList = iniSectionList(ini);
+String *test = strNew("\n");
+
         // Loop through sections and create hash for checking checksum
         for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
         {
             String *section = strLstGet(sectionList, sectionIdx);
-
+printf("SECTION: %s\n", strPtr(section)); fflush(stdout);
             // Add extra linefeed before additional sections
             if (sectionIdx != 0)
+{
+test=strCatFmt(test, "\n");
                 cryptoHashProcessC(result, (const unsigned char *)"\n", 1);
+}
 
             // Create the section header
             cryptoHashProcessC(result, (const unsigned char *)"[", 1);
             cryptoHashProcessStr(result, section);
             cryptoHashProcessC(result, (const unsigned char *)"]\n", 2);
+
+test=strCatFmt(test, "[%s]\n", strPtr(section));
 
             StringList *keyList = iniSectionKeyList(ini, section);
 
@@ -212,18 +231,25 @@ infoHash(Ini *ini)
                 String *key = strLstGet(keyList, keyIdx);
 
                 // Skip the backrest checksum in the file
-                if ((strCmp(section, strNew(INI_SECTION_BACKREST)) && !strCmp(key, strNew(INI_KEY_CHECKSUM))) ||
-                    !strCmp(section, strNew(INI_SECTION_BACKREST)))
+                if ((strEq(section, strNew(INI_SECTION_BACKREST)) && !strEq(key, strNew(INI_KEY_CHECKSUM))) ||
+                    !strEq(section, strNew(INI_SECTION_BACKREST)))
                 {
-                    cryptoHashProcessC(result, (const unsigned char *)"\n", 1);
-                    cryptoHashProcessStr(result, strLstGet(keyList, keyIdx));
+printf("KEY=VALUE: %s=%s\n", strPtr(key), strPtr(varStr(iniGet(ini, section, strLstGet(keyList, keyIdx))))); fflush(stdout);
+                    cryptoHashProcessStr(result, key);
                     cryptoHashProcessC(result, (const unsigned char *)"=", 1);
                     cryptoHashProcessStr(result, varStr(iniGet(ini, section, strLstGet(keyList, keyIdx))));
+                    cryptoHashProcessC(result, (const unsigned char *)"\n", 1);
+test=strCatFmt(test, "%s=%s\n", strPtr(key), strPtr(varStr(iniGet(ini, section, strLstGet(keyList, keyIdx)))));
                 }
             }
         }
+
+// printf("TEST: %s\n", strPtr(test)); fflush(stdout);
+cryptoHashProcessStr(testHash, test);
+printf("TEST: %s, HASH: %s\n", strPtr(test), strPtr(cryptoHashHex(testHash))); fflush(stdout);
     }
     MEM_CONTEXT_TEMP_END();
+
 
     FUNCTION_TEST_RESULT(CRYPTO_HASH, result);
 }
