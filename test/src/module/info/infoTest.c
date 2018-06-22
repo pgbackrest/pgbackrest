@@ -130,7 +130,7 @@ testRun()
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"4306ec205f71417c301e403c4714090e61c8a999\"\n"
+            "backrest-checksum=\"4306ec205f71417c301e403c4714090e61c8a736\"\n"
             "backrest-format=5\n"
             "backrest-version=\"1.23\"\n"
             "\n"
