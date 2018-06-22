@@ -44,6 +44,9 @@ testRun()
         TEST_RESULT_INT(strLstSize(iniSectionKeyList(ini, strNew("bogus"))), 0, "get keys for missing section");
         TEST_RESULT_STR(strPtr(strLstJoin(iniSectionKeyList(ini, strNew("section1")), "|")), "key1|key2", "get keys for section");
 
+        TEST_RESULT_VOID(iniSet(ini, strNew("section2"), strNew("key2"), varNewInt(2)), "set section2, key, int");        TEST_RESULT_INT(strLstSize(iniSectionList(ini)), 2, "number of sections");
+        TEST_RESULT_STR(strPtr(strLstJoin(iniSectionList(ini), "|")), "section1|section2", "get sections");
+
         TEST_RESULT_VOID(iniFree(ini), "free ini");
     }
 
