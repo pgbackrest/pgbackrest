@@ -69,6 +69,14 @@
 
                         <p>Convert the not very portable <code>uint</code> type to <code>unsigned int</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Move minimum set of code from Perl to C for reading archive.info file.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

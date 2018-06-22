@@ -27,23 +27,6 @@ testRun()
         String *fileNameCopy = strNewFmt("%s/test.ini.copy", testPath());
         Info *info = NULL;
 
-        // content = strNew
-        // (
-        //     "[backrest]\n"
-        //     "backrest-checksum=\"4306ec205f71417c301e403c4714090e61c8a736\"\n"
-        //     "backrest-format=5\n"
-        //     "backrest-version=\"1.23\"\n"
-        //     "\n"
-        //     "[db]\n"
-        //     "db-id=1\n"
-        //     "db-system-id=6455618988686438683\n"
-        //     "db-version=\"9.6\"\n"
-        //     "\n"
-        //     "[db:history]\n"
-        //     "1={\"db-id\":6455618988686438683,\"db-version\":\"9.6\"}\n"
-        //     "2={\"db-id\":6457457208275135411,\"db-version\":\"9.6\"}\n"
-        // );
-
         content = strNew
         (
             "[backrest]\n"
@@ -109,7 +92,8 @@ testRun()
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+            "\"db-version\":\"9.4\"}\n"
         );
 
         TEST_RESULT_VOID(

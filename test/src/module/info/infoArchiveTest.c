@@ -25,17 +25,17 @@ testRun()
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"18a65555903b0e2a3250d141825de809409eb1cf\"\n"
+            "backrest-checksum=\"b34b238ce89d8e1365c9e392ce59e7b03342ceb9\"\n"
             "backrest-format=5\n"
-            "backrest-version=\"2.02dev\"\n"
+            "backrest-version=\"2.04dev\"\n"
             "\n"
             "[db]\n"
             "db-id=1\n"
-            "db-system-id=6365925855997464783\n"
+            "db-system-id=6569239123849665679\n"
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6365925855997464783,\"db-version\":\"9.4\"}\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
         );
 
         TEST_RESULT_VOID(
@@ -48,17 +48,16 @@ testRun()
 
         // Check PG version
         //--------------------------------------------------------------------------------------------------------------------------
-        // !!! Can't use PG_VERSION_94 - get error: 'PG_VERSION_94' undeclared (first use in this function)
-        TEST_RESULT_VOID(infoArchiveCheckPg(info, 90400, 6365925855997464783), "check PG current");
-        TEST_ERROR(infoArchiveCheckPg(info, 1, 6365925855997464783), ArchiveMismatchError,
+        TEST_RESULT_VOID(infoArchiveCheckPg(info, 90400, 6569239123849665679), "check PG current");
+        TEST_ERROR(infoArchiveCheckPg(info, 1, 6569239123849665679), ArchiveMismatchError,
             "WAL segment version 1 does not match archive version 90400"
             "\nHINT: are you archiving to the correct stanza?");
         TEST_ERROR(infoArchiveCheckPg(info, 90400, 1), ArchiveMismatchError,
-            "WAL segment system-id 1 does not match archive system-id 6365925855997464783"
+            "WAL segment system-id 1 does not match archive system-id 6569239123849665679"
             "\nHINT: are you archiving to the correct stanza?");
         TEST_ERROR(infoArchiveCheckPg(info, 1, 1), ArchiveMismatchError,
             "WAL segment version 1 does not match archive version 90400"
-            "\nWAL segment system-id 1 does not match archive system-id 6365925855997464783"
+            "\nWAL segment system-id 1 does not match archive system-id 6569239123849665679"
             "\nHINT: are you archiving to the correct stanza?");
 
         // Free

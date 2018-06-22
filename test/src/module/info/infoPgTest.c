@@ -19,17 +19,17 @@ testRun()
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"18a65555903b0e2a3250d141825de809409eb1cf\"\n"
+            "backrest-checksum=\"b34b238ce89d8e1365c9e392ce59e7b03342ceb9\"\n"
             "backrest-format=5\n"
-            "backrest-version=\"2.02dev\"\n"
+            "backrest-version=\"2.04dev\"\n"
             "\n"
             "[db]\n"
             "db-id=1\n"
-            "db-system-id=6365925855997464783\n"
+            "db-system-id=6569239123849665679\n"
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6365925855997464783,\"db-version\":\"9.4\"}\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
         );
 
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put info to file");
@@ -44,7 +44,7 @@ testRun()
         InfoPgData infoPgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(infoPgData.id, 1, "    id set");
         TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
-        TEST_RESULT_INT(infoPgData.systemId, 6365925855997464783, "    system-id set");
+        TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    system-id set");
         TEST_RESULT_INT(infoPgData.catalogVersion, 0, "    catalog-version not set");
         TEST_RESULT_INT(infoPgData.controlVersion, 0, "    control-version not set");
 
@@ -55,20 +55,20 @@ testRun()
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"18a65555903b0e2a3250d141825de809409eb1cf\"\n"
+            "backrest-checksum=\"fc1d9ca71ebf1f5562f1fd21c4959233c9d04b18\"\n"
             "backrest-format=5\n"
-            "backrest-version=\"2.02dev\"\n"
+            "backrest-version=\"2.04dev\"\n"
             "\n"
             "[db]\n"
-            "db-id=1\n"
-            "db-system-id=6365925855997464783\n"
-            "db-version=\"9.5\"\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,"
-            "\"db-system-id\":6365925855997464783,\"db-version\":\"9.5\"}\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+            "\"db-version\":\"9.4\"}\n"
         );
 
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put info to file");
@@ -80,8 +80,8 @@ testRun()
 
         infoPgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(infoPgData.id, 1, "    id set");
-        TEST_RESULT_INT(infoPgData.version, PG_VERSION_95, "    version set");
-        TEST_RESULT_INT(infoPgData.systemId, 6365925855997464783, "    system-id set");
+        TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
+        TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    system-id set");
         TEST_RESULT_INT(infoPgData.catalogVersion, 201409291, "    catalog-version set");
         TEST_RESULT_INT(infoPgData.controlVersion, 942, "    control-version set");
 
@@ -94,8 +94,8 @@ testRun()
 
         infoPgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(infoPgData.id, 1, "    id set");
-        TEST_RESULT_INT(infoPgData.version, PG_VERSION_95, "    version set");
-        TEST_RESULT_INT(infoPgData.systemId, 6365925855997464783, "    system-id set");
+        TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
+        TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    system-id set");
         TEST_RESULT_INT(infoPgData.catalogVersion, 201409291, "    catalog-version set");
         TEST_RESULT_INT(infoPgData.controlVersion, 942, "    control-version set");
 
