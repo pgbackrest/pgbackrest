@@ -97,18 +97,19 @@ testRun()
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"4306ec205f71417c301e403c4714090e61c8a736\"\n"
-            "backrest-format=999\n"
-            "backrest-version=\"1.23\"\n"
+            "backrest-checksum=\"3ad6cbfc41984548747c65498a5079be96a4e4ef\"\n"
+            "backrest-format=4\n"
+            "backrest-version=\"2.04dev\"\n"
             "\n"
             "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
             "db-id=1\n"
-            "db-system-id=6455618988686438683\n"
-            "db-version=\"9.6\"\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6455618988686438683,\"db-version\":\"9.6\"}\n"
-            "2={\"db-id\":6457457208275135411,\"db-version\":\"9.6\"}\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
         );
 
         TEST_RESULT_VOID(
@@ -120,7 +121,7 @@ testRun()
 
         TEST_ERROR(
             infoNew(fileName, false), FormatError,
-            strPtr(strNewFmt("invalid format in '%s', expected %d but found %d", strPtr(fileName), PGBACKREST_FORMAT, 999)));
+            strPtr(strNewFmt("invalid format in '%s', expected %d but found %d", strPtr(fileName), PGBACKREST_FORMAT, 4)));
 
         // Invalid checksum
         //--------------------------------------------------------------------------------------------------------------------------
@@ -130,7 +131,7 @@ testRun()
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"4306ec205f71417c301e403c4714090e61c8a736\"\n"
+            "backrest-checksum=\"4306ec205f71417c301e403c4714090e61c8a999\"\n"
             "backrest-format=5\n"
             "backrest-version=\"1.23\"\n"
             "\n"
@@ -145,11 +146,32 @@ testRun()
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), bufNewStr(content)), "put invalid checksum to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), bufNewStr(content)), "put invalid checksum to copy");
+
+        // NULL the checksum
+        content = strNew
+        (
+            "[backrest]\n"
+            "backrest-checksum=\n"
+            "backrest-format=5\n"
+            "backrest-version=\"1.23\"\n"
+            "\n"
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6455618988686438683\n"
+            "db-version=\"9.6\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6455618988686438683,\"db-version\":\"9.6\"}\n"
+            "2={\"db-id\":6457457208275135411,\"db-version\":\"9.6\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put null checksum to file");
 
         TEST_ERROR(
             infoNew(fileName, false), ChecksumError,
-            strPtr(strNewFmt("invalid checksum in '%s', expected '%s' but found '%s'", strPtr(fileNameCopy),
+            strPtr(strNewFmt("invalid checksum in '%s', expected '%s' but found '%s'", strPtr(fileName),
             "4306ec205f71417c301e403c4714090e61c8a736", "4306ec205f71417c301e403c4714090e61c8a999")));
 
         // infoFree()
@@ -157,33 +179,4 @@ testRun()
         TEST_RESULT_VOID(infoFree(info), "infoFree() - free info memory context");
         TEST_RESULT_VOID(infoFree(NULL), "    NULL ptr");
     }
-
-    // // *****************************************************************************************************************************
-    // if (testBegin("test hash"))
-    // {
-    //     String *content = NULL;
-    //     String *hashName = strNewFmt("%s/hash.ini", testPath());
-    //     Info *info = NULL;
-    //
-    //     content = strNew
-    //     (
-    //         [backrest]
-    //         backrest-checksum="b34b238ce89d8e1365c9e392ce59e7b03342ceb9"
-    //         backrest-format=5
-    //         backrest-version="2.04dev"
-    //
-    //         [db]
-    //         db-id=1
-    //         db-system-id=6569239123849665679
-    //         db-version="9.4"
-    //
-    //         [db:history]
-    //         1={"db-id":6569239123849665679,"db-version":"9.4"}
-    //     );
-    //
-    //     TEST_RESULT_VOID(
-    //         storagePutNP(storageNewWriteNP(storageLocalWrite(), hashName), bufNewStr(content)), "put hashed contents to file");
-    //
-    //     TEST_ASSIGN(info, infoNew(hashName, false), "   load hash file");
-    // }
 }

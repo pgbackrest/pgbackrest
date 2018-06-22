@@ -56,15 +56,16 @@ infoValidInternal(const Info *this, const bool ignoreError)
 
         CryptoHash *hash = infoHash(this->ini);
 
-printf("HASH: %s, INFOCHECKSUM: %s\n", strPtr(strQuoteZ(cryptoHashHex(hash), "\"")), strPtr(infoChecksum)); fflush(stdout);
         // ??? Temporary hack until get json parser: add quotes around hash before comparing
         if (infoChecksum == NULL || !strEq(infoChecksum, strQuoteZ(cryptoHashHex(hash), "\"")))
         {
             if (!ignoreError)
             {
+                // ??? Temporary hack until get json parser: remove quotes around hash before displaying in error messsage
                 THROW_FMT(
                     ChecksumError, "invalid checksum in '%s', expected '%s' but found '%s'",
-                    strPtr(this->fileName), strPtr(cryptoHashHex(hash)), infoChecksum == NULL ? "[undef]" : strPtr(infoChecksum));
+                    strPtr(this->fileName), strPtr(cryptoHashHex(hash)), infoChecksum == NULL ? "[undef]" :
+                    strPtr(strSubN(infoChecksum, 1, strSize(infoChecksum) - 2)));
             }
             else
                 result = false;
@@ -113,7 +114,6 @@ loadInternal(Info *this, const bool copyFile)
         // If the file exists, parse and validate it
         if (buffer != NULL)
         {
-printf("PARSING: %s\n", strPtr(fileName)); fflush(stdout);
             iniParse(this->ini, strNewBuf(buffer));
 
             // Do not ignore errors if the copy file is invalid
@@ -197,8 +197,6 @@ infoHash(Ini *ini)
     FUNCTION_TEST_END();
 
     CryptoHash *result = cryptoHashNew(strNew(HASH_TYPE_SHA1));
-CryptoHash *testHash =  cryptoHashNew(strNew(HASH_TYPE_SHA1));
-
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -206,26 +204,20 @@ CryptoHash *testHash =  cryptoHashNew(strNew(HASH_TYPE_SHA1));
 
         // Initial JSON opening bracket
         cryptoHashProcessC(result, (const unsigned char *)"{", 1);
-String *test = strNew("{");
 
         // Loop through sections and create hash for checking checksum
         for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
         {
             String *section = strLstGet(sectionList, sectionIdx);
-printf("SECTION: %s\n", strPtr(section)); fflush(stdout);
+
             // Add a comma before additional sections
             if (sectionIdx != 0)
-{
-test=strCatFmt(test, ",");
                 cryptoHashProcessC(result, (const unsigned char *)",", 1);
-}
 
             // Create the section header
             cryptoHashProcessC(result, (const unsigned char *)"\"", 1);
             cryptoHashProcessStr(result, section);
             cryptoHashProcessC(result, (const unsigned char *)"\":{", 3);
-
-test=strCatFmt(test, "\"%s\":{", strPtr(section));
 
             StringList *keyList = iniSectionKeyList(ini, section);
             unsigned int keyListSize = strLstSize(keyList);
@@ -239,35 +231,23 @@ test=strCatFmt(test, "\"%s\":{", strPtr(section));
                 if ((strEq(section, strNew(INI_SECTION_BACKREST)) && !strEq(key, strNew(INI_KEY_CHECKSUM))) ||
                     !strEq(section, strNew(INI_SECTION_BACKREST)))
                 {
-printf("KEY=VALUE: \"%s\":%s\n", strPtr(key), strPtr(varStr(iniGet(ini, section, strLstGet(keyList, keyIdx))))); fflush(stdout);
                     cryptoHashProcessC(result, (const unsigned char *)"\"", 1);
                     cryptoHashProcessStr(result, key);
                     cryptoHashProcessC(result, (const unsigned char *)"\":", 2);
                     cryptoHashProcessStr(result, varStr(iniGet(ini, section, strLstGet(keyList, keyIdx))));
-test=strCatFmt(test, "\"%s\":%s", strPtr(key), strPtr(varStr(iniGet(ini, section, strLstGet(keyList, keyIdx)))));
                     if ((keyListSize > 1) && (keyIdx < keyListSize - 1))
-{
                         cryptoHashProcessC(result, (const unsigned char *)",", 1);
-test=strCatFmt(test, ",");
-}
                 }
             }
             // Close the key/value list
             cryptoHashProcessC(result, (const unsigned char *)"}", 1);
-test=strCatFmt(test, "}");
         }
 
         // JSON closing bracket
         cryptoHashProcessC(result, (const unsigned char *)"}", 1);
-test=strCatFmt(test, "}");
-
-String *test2 = strNew("{\"backrest\":{\"backrest-format\":999,\"backrest-version\":\"1.23\"},\"db\":{\"db-id\":1,\"db-system-id\":6455618988686438683,\"db-version\":\"9.6\"},\"db:history\":{\"1\":{\"db-id\":6455618988686438683,\"db-version\":\"9.6\"},\"2\":{\"db-id\":6457457208275135411,\"db-version\":\"9.6\"}}}");
-cryptoHashProcessStr(testHash, test2);
-printf("TEST2: %s\nHASH: %s\n", strPtr(test2), strPtr(cryptoHashHex(testHash))); fflush(stdout);
     }
     MEM_CONTEXT_TEMP_END();
 
-//4306ec205f71417c301e403c4714090e61c8a736
     FUNCTION_TEST_RESULT(CRYPTO_HASH, result);
 }
 
