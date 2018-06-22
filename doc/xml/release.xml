@@ -31,6 +31,16 @@
                     </release-item>
                 </release-feature-list>
 
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                        </release-item-contributor-list>
+
+                        <p>Set <code>search_path = 'pg_catalog'</code> on <postgres/> connections.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Move cryptographic hash functions to C using <proper>OpenSSL</proper>.</p>
@@ -99,7 +109,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Remove RHEL package patch since it has been committed upstream.</p>
+                        <p>Remove RHEL and Debian package patches since they have been committed upstream.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
