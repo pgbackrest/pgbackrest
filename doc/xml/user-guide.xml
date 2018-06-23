@@ -1860,7 +1860,7 @@
     <section id="s3-support" depend="/quickstart/configure-archiving">
         <title>S3 Support</title>
 
-        <p><backrest/> supports storing repositories in <proper>Amazon S3</proper>.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.</p>
+        <p><backrest/> supports storing repositories in <proper>Amazon S3</proper>.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so S3 logs or other data can also be stored in the bucket without conflicts.</p>
 
         <execute-list host="{[host-s3]}" show="n">
             <title>Create the bucket</title>
@@ -1881,7 +1881,7 @@
             <title>Configure <proper>S3</proper></title>
 
             <backrest-config-option section="global" key="repo1-type">s3</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-path">/</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-path">/demo-repo</backrest-config-option>
             <backrest-config-option section="global" key="repo1-s3-key">accessKey1</backrest-config-option>
             <backrest-config-option section="global" key="repo1-s3-key-secret">verySecretKey1</backrest-config-option>
             <backrest-config-option section="global" key="repo1-s3-bucket">demo-bucket</backrest-config-option>
@@ -1891,6 +1891,63 @@
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
+
+        <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible.  This sample policy will restrict all reads and writes to the bucket and repository path.</p>
+
+        <code-block title="Sample S3 Policy">
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:ListBucket"
+                        ],
+                        "Resource": [
+                            "arn:aws:s3:::demo-bucket"
+                        ],
+                        "Condition": {
+                            "StringEquals": {
+                                "s3:prefix": [
+                                    "",
+                                    "demo-repo"
+                                ],
+                                "s3:delimiter": [
+                                    "/"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:ListBucket"
+                        ],
+                        "Resource": [
+                            "arn:aws:s3:::demo-bucket"
+                        ],
+                        "Condition": {
+                            "StringLike": {
+                                "s3:prefix": [
+                                    "demo-repo/*"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:PutObject",
+                            "s3:GetObject",
+                            "s3:DeleteObject"
+                        ],
+                        "Resource": [
+                            "arn:aws:s3:::demo-bucket/demo-repo/*"
+                        ]
+                    }
+                ]
+            }
+        </code-block>
 
         <p>Commands are run exactly as if the repository were stored on a local disk.</p>
 

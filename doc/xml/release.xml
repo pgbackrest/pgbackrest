@@ -77,6 +77,15 @@
                     <release-item>
                         <p>Create a new section to describe building <backrest/> and build on a separate host.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="hunley.douglas"/>
+                            <release-item-ideator id="odonnell.jason"/>
+                        </release-item-contributor-list>
+
+                        <p>Add sample S3 policy to restrict bucket privileges.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
