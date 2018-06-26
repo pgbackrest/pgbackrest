@@ -34,6 +34,14 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="sumner.adam.k"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve the HTTP client to set <id>content-length</id> to 0 when not specified by the server.  S3 (and gateways) always set <id>content-length</id> or <id>transfer-encoding</id> but <id>HTTP 1.1</id> does not require it and proxies (e.g. <proper>HAProxy</proper>) may not include either.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="frost.stephen"/>
                         </release-item-contributor-list>
 
