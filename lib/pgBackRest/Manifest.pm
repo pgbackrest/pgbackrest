@@ -643,7 +643,6 @@ sub build
     # Get the manifest for this level
     my $hManifest = $oStorageDbMaster->manifest($strPath);
     my $strManifestType = MANIFEST_VALUE_LINK;
-use Data::Dumper;  # CSHANG
 
     # Loop though all paths/files/links in the manifest
     foreach my $strName (sort(CORE::keys(%{$hManifest})))
@@ -704,13 +703,8 @@ use Data::Dumper;  # CSHANG
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSERIAL . '\/') && $self->dbVersion() >= PG_VERSION_91;
 
         # Skip pg_snapshots/* since these files cannot be reused on recovery
-        # next if $strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/') && $self->dbVersion() >= PG_VERSION_92; # CSHANG
-syswrite(*STDOUT, "SNAPSHOTS? ". ($strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS)) ? Dumper($strFile) : "NO\n");
-        if ($strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/') && $self->dbVersion() >= PG_VERSION_92)
-        {
-syswrite(*STDOUT, "SKIPPING SNAPSHOTS $strFile\n");
-        next;
-    }
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/') && $self->dbVersion() >= PG_VERSION_92;
+
         # Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always created
         # there.
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/') && $self->dbVersion() >= PG_VERSION_84;
@@ -735,46 +729,42 @@ syswrite(*STDOUT, "SKIPPING SNAPSHOTS $strFile\n");
         # If version is greater than 9.0, check for files to exclude
         if ($self->dbVersion() >= PG_VERSION_90)
         {
-            # If this is a database directory then check for files to skip.
-            my $strDir = dirname($strFile);
-syswrite(*STDOUT, "FILENAME: $strFile, DIRNAME: ".Dumper($strDir).", BASENAME: ".Dumper(basename($strFile)));
+            # Get the directory name from the manifest; it will be used later to seach for existence in the keys
+            my $strDir = dirname($strName);
+
+            # If it is a database data directory (base or tablespace) then check for files to skip
             if ($strDir =~ ('base\/[0-9]+$') ||
-                $strDir =~ (MANIFEST_TARGET_PGTBLSPC . '\/[0-9]+\/PG\_[0-9]+\.[0-9]+\_[0-9]+\/[0-9]+$'))
+                $strDir =~ ('PG\_[0-9]+\.[0-9]+\_[0-9]+\/[0-9]+$'))
             {
-                my $strBasename = basename($strFile);
-syswrite(*STDOUT, "DB or TBLSPC\n");
-# CSHANG This is not right since need to skip _vm and _fsm associated with temp tables as well
-                # Skip temp tables
-                if ($strBasename =~ ('^t[0-9]+\_[0-9]+'))
+                # Get just the filename
+                my $strBasename = basename($strName);
+
+                # Skip temp tables (lower t followed by numbers underscore numbers and a dot (segment) or underscore (fork) and/or
+                # segment, e.g. t1234_123, t1234_123.1, t1234_123_vm, t1234_123_fsm.1
+                if ($strBasename =~ ('^t[0-9]+\_[0-9]+((\.[0-9]+)*|(\_(fsm|vm)(\.[0-9])*)*)$'))
                 {
-syswrite(*STDOUT, "SKIPPING TEMP\n");
                     next;
                 }
 
                 # If version is greater than 9.1 then check for unlogged tables to skip.
                 if ($self->dbVersion() >= PG_VERSION_91)
                 {
-                    # If this is an unlogged object, then skip
-                    if ($strBasename =~ ('\_init$'))
+                    # Exclude all forks for unlogged tables except the init fork (numbers underscore init and optional dot segment)
+                    if ($strBasename =~ ('^[0-9]+((\.[0-9]+)*|(\_(fsm|vm)(\.[0-9])*)*)$'))
                     {
-syswrite(*STDOUT, "SKIPPING _init\n");
-                        next;
-                    }
+                        # Get the filenode (OID)
+                        my ($strFilenode) = $strBasename =~ ('^(\d+)');
 
-#  CSHANG will this get the right thing for "When a table or index exceeds 1 GB, it is divided into gigabyte-sized segments. The first segment's file name is the same as the filenode; subsequent segments are named filenode.1, filenode.2, etc." Need to test.
-                    # Get the filenode/OID
-                    my ($strFilenode) = $strBasename =~ ('^(\d+)');
-syswrite(*STDOUT, "OID: ".Dumper($strFilenode));
-                    # Add _init to the OID to see if this is an unlogged object
-                    if (defined($strFilenode))
-                    {
-                        $strFilenode = $strDir. "/" . $strFilenode . "_init";
-syswrite(*STDOUT, "FILENODE: ".Dumper($strFilenode));
-                        # If exists in manifest then skip
-                        if (exists($hManifest->{$strFilenode}))
+                        # Add _init to the OID to see if this is an unlogged object
+                        if (defined($strFilenode))
                         {
-syswrite(*STDOUT, "SKIPPING UNLOG\n");  # CSHANG Not getting here!
-                            next;
+                            $strFilenode = $strDir. "/" . $strFilenode . "_init";
+
+                            # If key exists in manifest then skip
+                            if (exists($hManifest->{$strFilenode}))
+                            {
+                                next;
+                            }
                         }
                     }
                 }
