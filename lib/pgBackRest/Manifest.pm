@@ -737,11 +737,11 @@ sub build
                 $strDir =~ ('PG\_[0-9]+\.[0-9]+\_[0-9]+\/[0-9]+$'))
             {
                 # Get just the filename
-                my $strBasename = basename($strName);
+                my $strBaseName = basename($strName);
 
                 # Skip temp tables (lower t followed by numbers underscore numbers and a dot (segment) or underscore (fork) and/or
                 # segment, e.g. t1234_123, t1234_123.1, t1234_123_vm, t1234_123_fsm.1
-                if ($strBasename =~ ('^t[0-9]+\_[0-9]+((\.[0-9]+)*|(\_(fsm|vm)(\.[0-9])*)*)$'))
+                if ($strBaseName =~ ('^t[0-9]+\_[0-9]+((\.[0-9]+)*|(\_(fsm|vm)(\.[0-9]+)*)*)$'))
                 {
                     next;
                 }
@@ -750,21 +750,18 @@ sub build
                 if ($self->dbVersion() >= PG_VERSION_91)
                 {
                     # Exclude all forks for unlogged tables except the init fork (numbers underscore init and optional dot segment)
-                    if ($strBasename =~ ('^[0-9]+((\.[0-9]+)*|(\_(fsm|vm)(\.[0-9])*)*)$'))
+                    if ($strBaseName =~ ('^[0-9]+((\.[0-9]+)*|(\_(fsm|vm)(\.[0-9]+)*)*)$'))
                     {
                         # Get the filenode (OID)
-                        my ($strFilenode) = $strBasename =~ ('^(\d+)');
+                        my ($strFileNode) = $strBaseName =~ ('^(\d+)');
 
                         # Add _init to the OID to see if this is an unlogged object
-                        if (defined($strFilenode))
-                        {
-                            $strFilenode = $strDir. "/" . $strFilenode . "_init";
+                        $strFileNode = $strDir. "/" . $strFileNode . "_init";
 
-                            # If key exists in manifest then skip
-                            if (exists($hManifest->{$strFilenode}))
-                            {
-                                next;
-                            }
+                        # If key exists in manifest then skip
+                        if (exists($hManifest->{$strFileNode}))
+                        {
+                            next;
                         }
                     }
                 }
