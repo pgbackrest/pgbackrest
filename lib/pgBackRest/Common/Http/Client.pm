@@ -159,8 +159,7 @@ sub new
                 split(' ', trim($self->readLine()));
 
             # Read the response headers
-            $self->{iContentLength} = undef;
-
+            $self->{iContentLength} = 0;
             $self->{strResponseHeader} = '';
             my $strHeader = trim($self->readLine());
 
@@ -204,17 +203,6 @@ sub new
 
                 # Read next header
                 $strHeader = trim($self->readLine());
-            }
-
-            # Test response code
-            if ($self->{iResponseCode} == 200)
-            {
-                # Content length should have been defined either by content-length or transfer encoding
-                if (!defined($self->{iContentLength}))
-                {
-                    confess &log(ERROR,
-                        HTTP_HEADER_CONTENT_LENGTH . ' or ' . HTTP_HEADER_TRANSFER_ENCODING . ' must be defined', ERROR_PROTOCOL);
-                }
             }
 
             # Prefetch response - mostly useful when the response is known to be short
