@@ -35,7 +35,7 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         waitRemainder();
-        $self->testResult(sub {s3DateTime()}, strftime("%Y%m%dT%k%M%SZ", gmtime()), 'format current date/time');
+        $self->testResult(sub {s3DateTime()}, strftime("%Y%m%dT%H%M%SZ", gmtime()), 'format current date/time');
     }
 
     ################################################################################################################################
