@@ -90,3 +90,22 @@ pgControlInfo(const String *pgPath)
 
     FUNCTION_DEBUG_RESULT(PG_CONTROL_INFO, result);
 }
+
+
+/***********************************************************************************************************************************
+Validate PostgreSQL version
+***********************************************************************************************************************************/
+void
+pgVersionValid(const unsigned int version)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, version);
+    FUNCTION_TEST_END();
+
+    if (version < PG_MIN_VERSION || version > PG_MAX_VERSION)
+    {
+        THROW_FMT(VersionNotSupportedError, "version %u is not valid or is not a supported PostgreSQL version", version);
+    }
+
+    FUNCTION_TEST_RESULT_VOID();
+}

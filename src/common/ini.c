@@ -18,7 +18,6 @@ struct Ini
 {
     MemContext *memContext;                                         // Context that contains the ini
     KeyValue *store;                                                // Key value store that contains the ini data
-    String *fileName;                                               // File name (if one has been set) // CSHANG this is not used
 };
 
 /***********************************************************************************************************************************
@@ -266,37 +265,6 @@ iniParse(Ini *this, const String *content)
             }
             MEM_CONTEXT_TEMP_END();
         }
-    }
-    MEM_CONTEXT_END()
-
-    FUNCTION_TEST_RESULT_VOID();
-}
-
-/***********************************************************************************************************************************
-Load ini from a file
-??? CSHANG This is dead code
-***********************************************************************************************************************************/
-void
-iniLoad(Ini *this, const String *fileName)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INI, this);
-        FUNCTION_TEST_PARAM(STRING, fileName);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(fileName != NULL);
-    FUNCTION_TEST_END();
-
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        // Set the filename
-        this->fileName = strDup(fileName);
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            iniParse(this, strNewBuf(storageGetNP(storageNewReadNP(storageLocal(), this->fileName))));
-        }
-        MEM_CONTEXT_TEMP_END();
     }
     MEM_CONTEXT_END()
 

@@ -15,11 +15,10 @@ typedef struct Info Info;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-Info *infoNew(const String *fileName, const bool ignoreMissing);
+Info *infoNew(const String *fileName);
 Ini *infoIni(const Info *this);
-CryptoHash *infoHash(Ini *ini);
+CryptoHash *infoHash(const Ini *ini);
 String * infoFileName(const Info *this);
-bool infoExists(const Info *this);
 
 void infoFree(Info *this);
 

@@ -33,7 +33,7 @@ Create a new InfoArchive object
 // ??? Need loadFile parameter
 ***********************************************************************************************************************************/
 InfoArchive *
-infoArchiveNew(String *fileName, const bool ignoreMissing)
+infoArchiveNew(const String *fileName, const bool ignoreMissing)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, fileName);
@@ -49,9 +49,7 @@ infoArchiveNew(String *fileName, const bool ignoreMissing)
         // Create object
         this = memNew(sizeof(InfoArchive));
         this->memContext = MEM_CONTEXT_NEW();
-
-        // ??? Hardcoding ignoreMissing to false as a safeguard until full capabilities are coded
-        this->infoPg = infoPgNew(fileName, false, infoPgArchive);
+        this->infoPg = infoPgNew(fileName, infoPgArchive);
 
         // Store the archiveId for the current PG db-version db-id
         InfoPgData currentPg = infoPgDataCurrent(this->infoPg);

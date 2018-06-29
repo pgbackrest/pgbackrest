@@ -15,6 +15,7 @@ InfoPg Handler for postgres database information
 #include "common/type/list.h"
 #include "info/info.h"
 #include "info/infoPg.h"
+#include "postgres/info.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
 
@@ -75,28 +76,6 @@ infoPgVersionToUIntInternal(const String *version)
         major = atoi(strPtr(strSubN(version, 0, idxStart)));
 
         result = (unsigned int)((major * 10000) + (minor * 100));
-
-        // ??? This will be hard to maintain so we should deal with it later
-        switch (result)
-        {
-            case PG_VERSION_83:
-            case PG_VERSION_84:
-            case PG_VERSION_90:
-            case PG_VERSION_91:
-            case PG_VERSION_92:
-            case PG_VERSION_93:
-            case PG_VERSION_94:
-            case PG_VERSION_95:
-            case PG_VERSION_96:
-            case PG_VERSION_10:
-            case PG_VERSION_11:
-            {
-                break;
-            }
-
-            default:
-                THROW_FMT(AssertError, "version %s is not a valid PostgreSQl version", strPtr(version));
-        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -104,7 +83,7 @@ infoPgVersionToUIntInternal(const String *version)
 }
 
 /***********************************************************************************************************************************
-Create a new InfoPg object
+Load an InfoPg object
 ??? Need to consider adding the following parameters in order to throw errors
         $bRequired,                                 # Is archive info required?  --- may not need this if ignoreMissing is enough
         $bLoad,                                     # Should the file attempt to be loaded?
@@ -112,11 +91,10 @@ Create a new InfoPg object
 ??? Currently this assumes the file exists and loads data from it
 ***********************************************************************************************************************************/
 InfoPg *
-infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
+infoPgNew(const String *fileName, const InfoPgType type)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, fileName);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
 
         FUNCTION_DEBUG_ASSERT(fileName != NULL);
     FUNCTION_DEBUG_END();
@@ -128,10 +106,8 @@ infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
         // Create object
         this = memNew(sizeof(InfoPg));
         this->memContext = MEM_CONTEXT_NEW();
+        this->info = infoNew(fileName);
 
-        this->info = infoNew(fileName, ignoreMissing);
-
-        // ??? If file does not exist, then do nothing - infoExists(this->info) will be false, the user will have to set infoPgData
         Ini *infoPgIni = infoIni(this->info);
 
         // ??? need to get the history list from the file in ascending order (important for ensuring currentIndex set properly in
@@ -164,7 +140,6 @@ infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
         MEM_CONTEXT_TEMP_END();
 
         infoPgAdd(this, &infoPgData);
-
     }
     MEM_CONTEXT_NEW_END();
 
@@ -173,12 +148,12 @@ infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type)
 }
 
 /***********************************************************************************************************************************
-Add Postgres data tot he history list and return the new currentIndex
+Add Postgres data to the history list and return the new currentIndex
 ***********************************************************************************************************************************/
 unsigned int
-infoPgAdd(InfoPg *this, InfoPgData *infoPgData)
+infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);  // CSHANG Maybe change to trace?
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(INFO_PG, this);
         FUNCTION_DEBUG_PARAM(INFO_PG_DATAP, infoPgData);
 
@@ -196,7 +171,7 @@ infoPgAdd(InfoPg *this, InfoPgData *infoPgData)
 Return a structure of the current Postgres data
 ***********************************************************************************************************************************/
 InfoPgData
-infoPgDataCurrent(InfoPg *this)
+infoPgDataCurrent(const InfoPg *this)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(INFO_PG, this);
@@ -208,49 +183,19 @@ infoPgDataCurrent(InfoPg *this)
 }
 
 /***********************************************************************************************************************************
-Validate PostgreSQL version
-??? Maybe this should be in postgres/info.c
-***********************************************************************************************************************************/
-bool
-pgVersionValid(unsigned int version)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, version);
-    FUNCTION_TEST_END();
-
-    bool result = false;
-
-    if (version == PG_VERSION_11 ||
-        version == PG_VERSION_10 ||
-        version == PG_VERSION_96 ||
-        version == PG_VERSION_95 ||
-        version == PG_VERSION_94 ||
-        version == PG_VERSION_93 ||
-        version == PG_VERSION_92 ||
-        version == PG_VERSION_91 ||
-        version == PG_VERSION_90 ||
-        version == PG_VERSION_84 ||
-        version == PG_VERSION_83)
-    {
-        result = true;
-    }
-
-    FUNCTION_TEST_RESULT(UINT, result);
-}
-
-/***********************************************************************************************************************************
 Return a string representation of the PostgreSQL version
 ***********************************************************************************************************************************/
 String *
-infoPgVersionToString(unsigned int version)
+infoPgVersionToString(const unsigned int version)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(UINT, version);
-
-        FUNCTION_DEBUG_ASSERT(pgVersionValid(version) == true);
     FUNCTION_DEBUG_END();
 
-    FUNCTION_DEBUG_RESULT(STRING, strNewFmt("%u.%u", ((unsigned int)(version/10000)), ((version%10000)/100)));
+    // Validate the version
+    pgVersionValid(version);
+
+    FUNCTION_DEBUG_RESULT(STRING, strNewFmt("%u.%u", ((unsigned int)(version / 10000)), ((version % 10000) / 100)));
 }
 
 /***********************************************************************************************************************************

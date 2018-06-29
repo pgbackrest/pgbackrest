@@ -36,10 +36,10 @@ typedef enum
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-InfoPg *infoPgNew(String *fileName, const bool ignoreMissing, InfoPgType type);
-unsigned int infoPgAdd(InfoPg *this, InfoPgData *infoPgData);
-InfoPgData infoPgDataCurrent(InfoPg *this);
-String *infoPgVersionToString(unsigned int version);
+InfoPg *infoPgNew(const String *fileName, const InfoPgType type);
+unsigned int infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
+InfoPgData infoPgDataCurrent(const InfoPg *this);
+String *infoPgVersionToString(const unsigned int version);
 
 void infoPgFree(InfoPg *this);
 

@@ -11,15 +11,6 @@ testRun()
     // *****************************************************************************************************************************
     if (testBegin("infoNew(), infoExists(), infoFileName(), infoIni()"))
     {
-        // Test assertions
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(infoNew(NULL, false), AssertError, "function debug assertion 'fileName != NULL' failed");
-        TEST_ERROR(loadInternal(NULL, true), AssertError, "function debug assertion 'this != NULL' failed");
-        TEST_ERROR(infoIni(NULL), AssertError, "function debug assertion 'this != NULL' failed");
-        TEST_ERROR(infoFileName(NULL), AssertError, "function test assertion 'this != NULL' failed");
-        TEST_ERROR(infoExists(NULL), AssertError, "function debug assertion 'this != NULL' failed");
-        TEST_ERROR(infoValidInternal(NULL, true), AssertError, "function test assertion 'this != NULL' failed");
-
         // Initialize test variables
         //--------------------------------------------------------------------------------------------------------------------------
         String *content = NULL;
@@ -47,19 +38,15 @@ testRun()
         //--------------------------------------------------------------------------------------------------------------------------
         String *missingInfoError = strNewFmt("unable to open %s or %s", strPtr(fileName), strPtr(fileNameCopy));
 
-        TEST_ERROR(infoNew(fileName, false), FileMissingError, strPtr(missingInfoError));
-        TEST_ASSIGN(info, infoNew(fileName, true), "infoNew() - no files, ignore missing");
-        TEST_RESULT_BOOL(infoExists(info), false, "    infoExists() is false");
-        TEST_RESULT_STR(strPtr(infoFileName(info)), strPtr(fileName), "    infoFileName() is set");
+        TEST_ERROR(infoNew(fileName), FileMissingError, strPtr(missingInfoError));
 
         // Only copy exists and one is required
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), bufNewStr(content)), "put info.copy to file");
 
-        TEST_ASSIGN(info, infoNew(fileName, false), "infoNew() - load copy file");
+        TEST_ASSIGN(info, infoNew(fileName), "infoNew() - load copy file");
         TEST_RESULT_STR(strPtr(infoFileName(info)), strPtr(fileName), "    infoFileName() is set");
-        TEST_RESULT_BOOL(infoExists(info), true, "    infoExists() is true");
 
         TEST_RESULT_PTR(infoIni(info), info->ini, "    infoIni() returns pointer to info->ini");
 
@@ -68,10 +55,9 @@ testRun()
         storageMoveNP(storageNewReadNP(storageLocal(), fileNameCopy), storageNewWriteNP(storageLocalWrite(), fileName));
 
         // Only main info exists and is required
-        TEST_ASSIGN(info, infoNew(fileName, false), "infoNew() - load file");
+        TEST_ASSIGN(info, infoNew(fileName), "infoNew() - load file");
 
         TEST_RESULT_STR(strPtr(infoFileName(info)), strPtr(fileName), "    infoFileName() is set");
-        TEST_RESULT_BOOL(infoExists(info), true, "    infoExists() is true");
 
         // Invalid format
         //--------------------------------------------------------------------------------------------------------------------------
@@ -96,20 +82,26 @@ testRun()
             "\"db-version\":\"9.4\"}\n"
         );
 
+        // Only main file exists but the backrest-format is invalid
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put invalid br format to file");
 
-        TEST_ERROR(infoNew(fileName, false), FileMissingError, strPtr(missingInfoError));
+        TEST_ERROR(infoNew(fileName), FileMissingError, strPtr(missingInfoError));
+        testLogResult(strPtr(strNewFmt("P00   WARN: invalid format in '%s', expected %d but found %d",
+            strPtr(fileName), PGBACKREST_FORMAT, 4)));
 
         storageCopyNP(storageNewReadNP(storageLocal(), fileName), storageNewWriteNP(storageLocalWrite(), fileNameCopy));
 
         TEST_ERROR(
-            infoNew(fileName, false), FormatError,
+            infoNew(fileName), FormatError,
             strPtr(strNewFmt("invalid format in '%s', expected %d but found %d", strPtr(fileName), PGBACKREST_FORMAT, 4)));
+        testLogResult(strPtr(strNewFmt("P00   WARN: invalid format in '%s', expected %d but found %d",
+            strPtr(fileName), PGBACKREST_FORMAT, 4)));
 
         // Invalid checksum
         //--------------------------------------------------------------------------------------------------------------------------
         storageRemoveNP(storageLocalWrite(), fileName);
+        storageRemoveNP(storageLocalWrite(), fileNameCopy);
 
         // change the checksum
         content = strNew
@@ -132,7 +124,7 @@ testRun()
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), bufNewStr(content)), "put invalid checksum to copy");
 
-        // NULL the checksum
+        // NULL the checksum for main file
         content = strNew
         (
             "[backrest]\n"
@@ -154,9 +146,13 @@ testRun()
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put null checksum to file");
 
         TEST_ERROR(
-            infoNew(fileName, false), ChecksumError,
+            infoNew(fileName), ChecksumError,
             strPtr(strNewFmt("invalid checksum in '%s', expected '%s' but found '%s'", strPtr(fileName),
             "4306ec205f71417c301e403c4714090e61c8a736", "4306ec205f71417c301e403c4714090e61c8a999")));
+
+        // Clear warning from main file
+        testLogResult(strPtr(strNewFmt("P00   WARN: invalid checksum in '%s', expected '%s' but found '%s'", strPtr(fileName),
+            "4306ec205f71417c301e403c4714090e61c8a736", "[undef]")));
 
         // infoFree()
         //--------------------------------------------------------------------------------------------------------------------------

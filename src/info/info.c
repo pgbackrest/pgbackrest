@@ -30,7 +30,6 @@ struct Info
 {
     MemContext *memContext;                                         // Context that contains the info
     String *fileName;                                               // Full path name of the file
-    bool exists;                                                    // Does the file exist?
     Ini *ini;                                                       // Parsed file contents
 };
 
@@ -38,7 +37,9 @@ struct Info
 Internal function to check if the information is valid or not
 ***********************************************************************************************************************************/
 static bool
-infoValidInternal(const Info *this, const bool ignoreError)
+infoValidInternal(
+        const Info *this,                                           // Info object to validate
+        const bool ignoreError)                                     // ignore errors found?
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO, this);
@@ -59,30 +60,38 @@ infoValidInternal(const Info *this, const bool ignoreError)
         // ??? Temporary hack until get json parser: add quotes around hash before comparing
         if (infoChecksum == NULL || !strEq(infoChecksum, strQuoteZ(cryptoHashHex(hash), "\"")))
         {
+            // ??? Temporary hack until get json parser: remove quotes around hash before displaying in messsage
+            String *chksumMsg = strNewFmt("invalid checksum in '%s', expected '%s' but found '%s'",
+            strPtr(this->fileName), strPtr(cryptoHashHex(hash)), (infoChecksum == NULL || strSize(infoChecksum) < 3) ?
+                "[undef]" : strPtr(strSubN(infoChecksum, 1, strSize(infoChecksum) - 2)));
+
             if (!ignoreError)
             {
-                // ??? Temporary hack until get json parser: remove quotes around hash before displaying in error messsage
-                THROW_FMT(
-                    ChecksumError, "invalid checksum in '%s', expected '%s' but found '%s'",
-                    strPtr(this->fileName), strPtr(cryptoHashHex(hash)), infoChecksum == NULL ? "[undef]" :
-                    strPtr(strSubN(infoChecksum, 1, strSize(infoChecksum) - 2)));
+                THROW(ChecksumError, strPtr(chksumMsg));
             }
             else
+            {
+                LOG_WARN(strPtr(chksumMsg));
                 result = false;
+            }
         }
 
         // Make sure that the format is current, otherwise error
         if (varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT))) != PGBACKREST_FORMAT)
         {
+            String *fmtMsg = strNewFmt("invalid format in '%s', expected %d but found %d",
+                strPtr(this->fileName), PGBACKREST_FORMAT, varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST),
+                strNew(INI_KEY_FORMAT))));
+
             if (!ignoreError)
             {
-                THROW_FMT(
-                    FormatError, "invalid format in '%s', expected %d but found %d",
-                    strPtr(this->fileName), PGBACKREST_FORMAT, varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST),
-                    strNew(INI_KEY_FORMAT))));
+                THROW(FormatError, strPtr(fmtMsg));
             }
             else
+            {
+                LOG_WARN(strPtr(fmtMsg));
                 result = false;
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -94,7 +103,9 @@ infoValidInternal(const Info *this, const bool ignoreError)
 Internal function to load the copy and check validity
 ***********************************************************************************************************************************/
 static bool
-loadInternal(Info *this, const bool copyFile)
+loadInternal(
+    Info *this,                                                     // Info object to load parsed buffer into
+    const bool copyFile)                                            // Is this the copy file?
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(INFO, this);
@@ -127,20 +138,17 @@ loadInternal(Info *this, const bool copyFile)
 }
 
 /***********************************************************************************************************************************
-Create a new Info object
+Load an Info object
 // ??? Need loadFile parameter to be able to load from a string.
 // ??? Need to handle modified flag, encryption and checksum, initialization, etc.
-// ??? The current Perl code does not handle this, but should we consider if the main file is the only one that exists & is invalid
-//     an "invalid format" should be returned vs "unable to open x or x.copy"?
+// ??? The file MUST exist currently, so this is not actually creating the object - rather it is loading it
 ***********************************************************************************************************************************/
 Info *
 infoNew(
-    const String *fileName,                                         // Full path/filename to load
-    const bool ignoreMissing)                                       // Ignore if the file is missing, else required
+    const String *fileName)                                         // Full path/filename to load
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, fileName);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
 
         FUNCTION_DEBUG_ASSERT(fileName != NULL);
     FUNCTION_DEBUG_END();
@@ -161,22 +169,11 @@ infoNew(
         {
             if (!loadInternal(this, true))
             {
-                // ??? This is current perl behavior - it may be time to reconsider:
-                // If only the info main file exists but is invalid, invalid errors will not be thrown. Instead a "missing" error
-                // will be thrown, so if a missing error occurs, it can be that the files are both missing or the main file only
-                // exists but is invalid.
-                if (!ignoreMissing)
-                {
-                    THROW_FMT(
-                        FileMissingError, "unable to open %s or %s",
-                        strPtr(this->fileName), strPtr(strCat(strDup(this->fileName), INI_COPY_EXT)));
-                }
+                THROW_FMT(
+                    FileMissingError, "unable to open %s or %s",
+                    strPtr(this->fileName), strPtr(strCat(strDup(this->fileName), INI_COPY_EXT)));
             }
-            else
-                this->exists = true;
         }
-        else
-            this->exists = true;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -188,7 +185,7 @@ infoNew(
 Return a hash of the contents of the info file
 ***********************************************************************************************************************************/
 CryptoHash *
-infoHash(Ini *ini)
+infoHash(const Ini *ini)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, ini);
@@ -239,6 +236,7 @@ infoHash(Ini *ini)
                         cryptoHashProcessC(result, (const unsigned char *)",", 1);
                 }
             }
+
             // Close the key/value list
             cryptoHashProcessC(result, (const unsigned char *)"}", 1);
         }
@@ -292,16 +290,4 @@ infoFileName(const Info *this)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(STRING, this->fileName);
-}
-
-bool
-infoExists(const Info *this)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO, this);
-
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
-
-    FUNCTION_DEBUG_RESULT(BOOL, this->exists);
 }

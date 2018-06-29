@@ -73,7 +73,7 @@ testRun()
 
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put info to file");
 
-        TEST_ASSIGN(infoPg, infoPgNew(fileName, false, infoPgBackup), "new infoPg backup - load file");
+        TEST_ASSIGN(infoPg, infoPgNew(fileName, infoPgBackup), "new infoPg backup - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
         TEST_RESULT_INT(infoPg->indexCurrent, 0, "    current index set");
@@ -87,7 +87,7 @@ testRun()
 
         // Manifest info
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(infoPg, infoPgNew(fileName, false, infoPgManifest), "new infoPg manifest - load file");
+        TEST_ASSIGN(infoPg, infoPgNew(fileName, infoPgManifest), "new infoPg manifest - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "history record added");
         TEST_RESULT_INT(infoPg->indexCurrent, 0, "current index set");
@@ -117,8 +117,8 @@ testRun()
 
         // Errors
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(infoPgNew(fileName, false, 10), AssertError, "invalid InfoPg type 10");
-        TEST_ERROR(infoPgNew(NULL, false, infoPgManifest), AssertError, "function debug assertion 'fileName != NULL' failed");
+        TEST_ERROR(infoPgNew(fileName, 10), AssertError, "invalid InfoPg type 10");
+        TEST_ERROR(infoPgNew(NULL, infoPgManifest), AssertError, "function debug assertion 'fileName != NULL' failed");
 
         TEST_ERROR(infoPgDataCurrent(NULL), AssertError, "function debug assertion 'this != NULL' failed");
 
@@ -173,18 +173,7 @@ testRun()
 
         // infoPgVersionToString
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(infoPgVersionToString(1), AssertError, "function debug assertion 'pgVersionValid(version) == true' failed");
-
         TEST_RESULT_STR(infoPgVersionToString(PG_VERSION_11), strNew("11.0"), "infoPgVersionToString 11.0");
-        TEST_RESULT_STR(infoPgVersionToString(PG_VERSION_10), strNew("10.0"), "infoPgVersionToString 10.0");
         TEST_RESULT_STR(infoPgVersionToString(PG_VERSION_96), strNew("9.6"), "infoPgVersionToString 9.6");
-        TEST_RESULT_STR(infoPgVersionToString(PG_VERSION_95), strNew("9.5"), "infoPgVersionToString 9.5");
-        TEST_RESULT_STR(infoPgVersionToString(PG_VERSION_94), strNew("9.4"), "infoPgVersionToString 9.4");
-        TEST_RESULT_STR(infoPgVersionToString(PG_VERSION_93), strNew("9.3"), "infoPgVersionToString 9.3");
-        TEST_RESULT_STR(infoPgVersionToString(PG_VERSION_92), strNew("9.2"), "infoPgVersionToString 9.2");
-        TEST_RESULT_STR(infoPgVersionToString(PG_VERSION_91), strNew("9.2"), "infoPgVersionToString 9.1");
-        TEST_RESULT_STR(infoPgVersionToString(PG_VERSION_90), strNew("9.0"), "infoPgVersionToString 9.0");
-        TEST_RESULT_STR(infoPgVersionToString(PG_VERSION_84), strNew("8.4"), "infoPgVersionToString 8.4");
-        TEST_RESULT_STR(infoPgVersionToString(PG_VERSION_83), strNew("8.3"), "infoPgVersionToString 8.3");
     }
 }

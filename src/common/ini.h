@@ -20,7 +20,6 @@ const Variant *iniGetDefault(const Ini *this, const String *section, const Strin
 StringList *iniSectionKeyList(const Ini *this, const String *section);
 StringList *iniSectionList(const Ini *this);
 void iniParse(Ini *this, const String *content);
-void iniLoad(Ini *this, const String *fileName);
 void iniSet(Ini *this, const String *section, const String *key, const Variant *value);
 void iniFree(Ini *this);
 String *iniFileName(const Ini *this);

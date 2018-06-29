@@ -19,4 +19,7 @@ PostgreSQL version constants
 #define PG_VERSION_10                                               100000
 #define PG_VERSION_11                                               110000
 
+#define PG_MIN_VERSION                                              PG_VERSION_83
+#define PG_MAX_VERSION                                              PG_VERSION_11
+
 #endif

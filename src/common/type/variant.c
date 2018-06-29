@@ -834,7 +834,7 @@ varStrForce(const Variant *this)
 
     String *result = NULL;
 
-    switch (this->type)
+    switch (varType(this))
     {
         case varTypeBool:
         {

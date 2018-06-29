@@ -59,5 +59,20 @@ testRun()
         TEST_RESULT_INT(info.version, PG_VERSION_83, "   check version");
     }
 
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("pgControlInfo()"))
+    {
+        String *controlFile = strNew(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
+        PgControlFile control = {.systemId = 0xFACEFACE, .controlVersion = 833, .catalogVersion = 200711281};
+        storagePutNP(storageNewWriteNP(storageTest, controlFile), bufNewC(sizeof(PgControlFile), &control));
+
+        PgControlInfo info = {0};
+        TEST_ASSIGN(info, pgControlInfo(strNew(testPath())), "get control info");
+        TEST_RESULT_INT(info.systemId, 0xFACEFACE, "   check system id");
+        TEST_RESULT_INT(info.controlVersion, 833, "   check control version");
+        TEST_RESULT_INT(info.catalogVersion, 200711281, "   check catalog version");
+        TEST_RESULT_INT(info.version, PG_VERSION_83, "   check version");
+    }
+
     FUNCTION_HARNESS_RESULT_VOID();
 }
