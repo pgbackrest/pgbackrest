@@ -10363,7 +10363,7 @@ static const EmbeddedModule embeddedModule[] =
             "},\n"
             "1100 =>\n"
             "{\n"
-            "201804191 => PG_VERSION_11,\n"
+            "201806231 => PG_VERSION_11,\n"
             "},\n"
             "};\n"
             "\n"
