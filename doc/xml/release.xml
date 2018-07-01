@@ -23,6 +23,14 @@
 
                         <p>Fix error in selective restore when only one user database exists in the cluster.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="schwartz.andrew"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix non-compliant ISO-8601 timestamp format in S3 authorization headers.  AWS and some gateways were tolerant of space rather than zero-padded hours while others were not.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -4870,6 +4878,11 @@
         <contributor id="rogozin.aleksandr">
             <contributor-name-display>Aleksandr Rogozin</contributor-name-display>
             <contributor-id type="github">arogozin</contributor-id>
+        </contributor>
+
+        <contributor id="schwartz.andrew">
+            <contributor-name-display>Andrew Schwartz</contributor-name-display>
+            <contributor-id type="github">trinchan</contributor-id>
         </contributor>
 
         <contributor id="shang.cynthia">

@@ -23733,7 +23733,7 @@ static const EmbeddedModule embeddedModule[] =
             "return logDebugReturn\n"
             "(\n"
             "$strOperation,\n"
-            "{name => 'strDateTime', value => strftime(\"%Y%m%dT%k%M%SZ\", gmtime($lTime)), trace => true}\n"
+            "{name => 'strDateTime', value => strftime(\"%Y%m%dT%H%M%SZ\", gmtime($lTime)), trace => true}\n"
             ");\n"
             "}\n"
             "\n"
