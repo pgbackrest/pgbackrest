@@ -31,11 +31,11 @@ sub run
     ################################################################################################################################
     if ($self->begin('s3DateTime'))
     {
-        $self->testResult(sub {s3DateTime(1492127085)}, '20170413T234445Z', 'format date/time');
+        $self->testResult(sub {s3DateTime(1491267845)}, '20170404T010405Z', 'format date/time');
 
         #---------------------------------------------------------------------------------------------------------------------------
         waitRemainder();
-        $self->testResult(sub {s3DateTime()}, strftime("%Y%m%dT%k%M%SZ", gmtime()), 'format current date/time');
+        $self->testResult(sub {s3DateTime()}, strftime("%Y%m%dT%H%M%SZ", gmtime()), 'format current date/time');
     }
 
     ################################################################################################################################
