@@ -11,12 +11,6 @@ testRun()
     // *****************************************************************************************************************************
     if (testBegin("infoArchiveNew(), infoArchiveCheckPg(), infoArchiveFree()"))
     {
-        // Test assertions
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(infoArchiveNew(NULL, false), AssertError, "function debug assertion 'fileName != NULL' failed");
-        TEST_ERROR(infoArchiveCheckPg(NULL, 1, 1), AssertError, "function debug assertion 'this != NULL' failed");
-        TEST_ERROR(infoArchiveId(NULL), AssertError, "function test assertion 'this != NULL' failed");
-
         // Initialize test variables
         //--------------------------------------------------------------------------------------------------------------------------
         String *content = NULL;

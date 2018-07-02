@@ -39,7 +39,7 @@ Internal function to check if the information is valid or not
 static bool
 infoValidInternal(
         const Info *this,                                           // Info object to validate
-        const bool ignoreError)                                     // ignore errors found?
+        bool ignoreError)                                     // ignore errors found?
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO, this);
@@ -58,11 +58,11 @@ infoValidInternal(
         CryptoHash *hash = infoHash(this->ini);
 
         // ??? Temporary hack until get json parser: add quotes around hash before comparing
-        if (infoChecksum == NULL || !strEq(infoChecksum, strQuoteZ(cryptoHashHex(hash), "\"")))
+        if (!strEq(infoChecksum, strQuoteZ(cryptoHashHex(hash), "\"")))
         {
-            // ??? Temporary hack until get json parser: remove quotes around hash before displaying in messsage
+            // ??? Temporary hack until get json parser: remove quotes around hash before displaying in messsage & check < 3
             String *chksumMsg = strNewFmt("invalid checksum in '%s', expected '%s' but found '%s'",
-            strPtr(this->fileName), strPtr(cryptoHashHex(hash)), (infoChecksum == NULL || strSize(infoChecksum) < 3) ?
+            strPtr(this->fileName), strPtr(cryptoHashHex(hash)), (strSize(infoChecksum) < 3) ?
                 "[undef]" : strPtr(strSubN(infoChecksum, 1, strSize(infoChecksum) - 2)));
 
             if (!ignoreError)
@@ -105,7 +105,7 @@ Internal function to load the copy and check validity
 static bool
 loadInternal(
     Info *this,                                                     // Info object to load parsed buffer into
-    const bool copyFile)                                            // Is this the copy file?
+    bool copyFile)                                            // Is this the copy file?
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(INFO, this);
@@ -120,6 +120,7 @@ loadInternal(
     {
         String *fileName = copyFile ? strCat(strDup(this->fileName), INI_COPY_EXT) : this->fileName;
 
+        // ??? Need to replace storageLocal when able
         Buffer *buffer = storageGetNP(storageNewReadP(storageLocal(), fileName, .ignoreMissing = true));
 
         // If the file exists, parse and validate it

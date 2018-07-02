@@ -75,6 +75,7 @@ infoPgVersionToUIntInternal(const String *version)
 
         major = atoi(strPtr(strSubN(version, 0, idxStart)));
 
+        // No check to see if valid/supported PG version is on purpose
         result = (unsigned int)((major * 10000) + (minor * 100));
     }
     MEM_CONTEXT_TEMP_END();
@@ -91,7 +92,7 @@ Load an InfoPg object
 ??? Currently this assumes the file exists and loads data from it
 ***********************************************************************************************************************************/
 InfoPg *
-infoPgNew(const String *fileName, const InfoPgType type)
+infoPgNew(const String *fileName, InfoPgType type)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, fileName);
@@ -186,14 +187,11 @@ infoPgDataCurrent(const InfoPg *this)
 Return a string representation of the PostgreSQL version
 ***********************************************************************************************************************************/
 String *
-infoPgVersionToString(const unsigned int version)
+infoPgVersionToString(unsigned int version)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(UINT, version);
     FUNCTION_DEBUG_END();
-
-    // Validate the version
-    pgVersionValid(version);
 
     FUNCTION_DEBUG_RESULT(STRING, strNewFmt("%u.%u", ((unsigned int)(version / 10000)), ((version % 10000) / 100)));
 }

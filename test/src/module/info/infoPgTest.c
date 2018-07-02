@@ -36,7 +36,7 @@ testRun()
 
         InfoPg *infoPg = NULL;
 
-        TEST_ASSIGN(infoPg, infoPgNew(fileName, false, infoPgArchive), "new infoPg archive - load file");
+        TEST_ASSIGN(infoPg, infoPgNew(fileName, infoPgArchive), "new infoPg archive - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
         TEST_RESULT_INT(infoPg->indexCurrent, 0, "    current index set");
@@ -161,8 +161,9 @@ testRun()
         version = strNew("10");
         TEST_RESULT_INT(infoPgVersionToUIntInternal(version), PG_VERSION_10, "Valid pg version 10 integer identifier");
 
+        // Internal function - doesn't check for validity since requested not to
         version = strNew("15");
-        TEST_ERROR(infoPgVersionToUIntInternal(version), AssertError, "version 15 is not a valid PostgreSQl version");
+        TEST_RESULT_INT(infoPgVersionToUIntInternal(version), 150000, "version 15 is converted");
 
         version = strNew("9.3.4");
         TEST_ERROR(infoPgVersionToUIntInternal(version), AssertError, "version 9.3.4 format is invalid");
@@ -173,7 +174,8 @@ testRun()
 
         // infoPgVersionToString
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(infoPgVersionToString(PG_VERSION_11), strNew("11.0"), "infoPgVersionToString 11.0");
-        TEST_RESULT_STR(infoPgVersionToString(PG_VERSION_96), strNew("9.6"), "infoPgVersionToString 9.6");
+        TEST_RESULT_STR(strPtr(infoPgVersionToString(PG_VERSION_11)), "11.0", "infoPgVersionToString 11.0");
+        TEST_RESULT_STR(strPtr(infoPgVersionToString(PG_VERSION_96)), "9.6", "infoPgVersionToString 9.6");
+        TEST_RESULT_STR(strPtr(infoPgVersionToString(123456)), "12.34", "infoPgVersionToString 123456");
     }
 }

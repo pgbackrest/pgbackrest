@@ -124,7 +124,7 @@ testRun()
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), bufNewStr(content)), "put invalid checksum to copy");
 
-        // NULL the checksum for main file
+        // Empty checksum for main file
         content = strNew
         (
             "[backrest]\n"
@@ -143,16 +143,20 @@ testRun()
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put null checksum to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put empty checksum to file");
 
+        // Copy file error
         TEST_ERROR(
             infoNew(fileName), ChecksumError,
             strPtr(strNewFmt("invalid checksum in '%s', expected '%s' but found '%s'", strPtr(fileName),
             "4306ec205f71417c301e403c4714090e61c8a736", "4306ec205f71417c301e403c4714090e61c8a999")));
 
-        // Clear warning from main file
+        // Main file warning
         testLogResult(strPtr(strNewFmt("P00   WARN: invalid checksum in '%s', expected '%s' but found '%s'", strPtr(fileName),
             "4306ec205f71417c301e403c4714090e61c8a736", "[undef]")));
+
+        storageRemoveNP(storageLocalWrite(), fileName);
+        storageRemoveNP(storageLocalWrite(), fileNameCopy);
 
         // infoFree()
         //--------------------------------------------------------------------------------------------------------------------------

@@ -33,7 +33,7 @@ Create a new InfoArchive object
 // ??? Need loadFile parameter
 ***********************************************************************************************************************************/
 InfoArchive *
-infoArchiveNew(const String *fileName, const bool ignoreMissing)
+infoArchiveNew(const String *fileName, bool ignoreMissing)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, fileName);
@@ -68,7 +68,7 @@ Checks the archive info file's DB section against the PG version and system id p
 // ??? Should we still check that the file exists if it is required?
 ***********************************************************************************************************************************/
 void
-infoArchiveCheckPg(const InfoArchive *this, const unsigned int pgVersion, uint64_t pgSystemId)
+infoArchiveCheckPg(const InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(INFO_ARCHIVE, this);
