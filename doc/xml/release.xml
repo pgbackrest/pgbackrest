@@ -140,6 +140,10 @@
                     <release-item>
                         <p>Update parameters for <file>VBoxService</file> start.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Make <file>ls</file> ordering deterministic in <id>mock</id>/<id>all</id> test.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>

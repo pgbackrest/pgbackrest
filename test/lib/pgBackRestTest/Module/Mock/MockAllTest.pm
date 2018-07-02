@@ -1265,7 +1265,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bRemote && !$bS3)
         {
-            executeTest('ls -1R ' . storageRepo()->pathGet('backup/' . $self->stanza() . '/' . PATH_BACKUP_HISTORY),
+            executeTest('ls -1Rtr ' . storageRepo()->pathGet('backup/' . $self->stanza() . '/' . PATH_BACKUP_HISTORY),
                         {oLogTest => $self->expect(), bRemote => $bRemote});
         }
 
