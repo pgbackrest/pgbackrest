@@ -148,10 +148,10 @@ sub run
         $self->httpsServer(sub
         {
             $self->httpsServerAccept();
-            $self->{oConnection}->write("HTTP/1.1 200 NoContentLengthMessage1\r\n\r\n");
+            $self->{oConnection}->write("HTTP/1.1 404 Error\r\nBogus-Header\r\n\r\n");
 
             $self->httpsServerAccept();
-            $self->{oConnection}->write("HTTP/1.1 200 NoContentLengthMessage2\r\n\r\n");
+            $self->{oConnection}->write("HTTP/1.1 404 Error\r\nBogus-Header\r\n\r\n");
 
             $self->httpsServerAccept();
             $self->httpsServerResponse(200, $strTestData);
@@ -161,7 +161,7 @@ sub run
         $self->testException(
             sub {new pgBackRest::Common::Http::Client(
                 $strTestHost, HTTP_VERB_GET, {iPort => HTTPS_TEST_PORT, bVerifySsl => false, iTryTotal => 1})},
-            ERROR_PROTOCOL, 'content-length or transfer-encoding must be defined');
+            ERROR_PROTOCOL, "http header 'Bogus-Header' requires colon separator");
 
         $self->testResult(
             sub {new pgBackRest::Common::Http::Client(

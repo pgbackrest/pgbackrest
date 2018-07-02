@@ -44,7 +44,7 @@ Vagrant.configure(2) do |config|
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Time Sync Settings' && date
         sudo /etc/init.d/virtualbox-guest-utils stop
-        sudo /usr/sbin/VBoxService --timesync-set-on-restore 1 --timesync-interval 5000 --timesync-set-threshold 1
+        sudo /usr/sbin/VBoxService --timesync-set-on-restore --timesync-interval 5000 --timesync-set-threshold 1
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Perl Modules' && date

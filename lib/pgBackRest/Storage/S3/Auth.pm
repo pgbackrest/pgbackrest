@@ -62,7 +62,7 @@ sub s3DateTime
     return logDebugReturn
     (
         $strOperation,
-        {name => 'strDateTime', value => strftime("%Y%m%dT%k%M%SZ", gmtime($lTime)), trace => true}
+        {name => 'strDateTime', value => strftime("%Y%m%dT%H%M%SZ", gmtime($lTime)), trace => true}
     );
 }
 
