@@ -28,6 +28,10 @@
                     <release-item>
                         <p>Make <file>ls</file> ordering deterministic in <id>mock</id>/<id>all</id> test.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Change backup test user from <id>backrest</id> to <id>pgbackrest</id>.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
