@@ -17,6 +17,16 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="youatt.david"/>
+                            <release-item-ideator id="sharma.yogesh"/>
+                            <release-item-ideator id="frost.stephen"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix critical bug in resume that resulted in inconsistent backups.  A regression in <id>v0.82</id> removed the timestamp comparison when deciding which files from the aborted backup to keep on resume.  All resumed backups should be considered inconsistent.  A resumed backup can be identified by checking the log for the message <quote>aborted backup of same type exists, will be cleaned to remove invalid files and resumed</quote>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="nj.baliyan"/>
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
