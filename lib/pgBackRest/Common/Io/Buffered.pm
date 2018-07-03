@@ -53,7 +53,7 @@ sub new
     my $self = $class->SUPER::new($oParent);
     bless $self, $class;
 
-    # Set write handle so select object is created
+    # Set read handle so select object is created
     $self->handleReadSet($self->handleRead());
 
     # Set variables
@@ -107,7 +107,7 @@ sub read
     while ($iRemainingSize > 0 && $fRemaining > 0)
     {
         # Check if the sysread call will block
-        if ($self->{oReadSelect}->can_read($fRemaining))
+        if ($self->pending() || $self->{oReadSelect}->can_read($fRemaining))
         {
             # Read data into the buffer
             my $iReadSize = $self->parent()->read($tBufferRef, $iRemainingSize);
@@ -175,7 +175,7 @@ sub readLine
             # Load data into the buffer
             my $iBufferRead = 0;
 
-            if ($self->{oReadSelect}->can_read($fRemaining))
+            if ($self->pending() || $self->{oReadSelect}->can_read($fRemaining))
             {
                 $iBufferRead = $self->parent()->read(
                     \$self->{tBuffer},
@@ -259,8 +259,22 @@ sub handleReadSet
 
     $self->parent()->handleReadSet($fhRead);
 
+    # Create select object to make IO waits more efficient
     $self->{oReadSelect} = IO::Select->new();
     $self->{oReadSelect}->add($self->handleRead());
+
+    # Check if the read handle has a pending method.  This should be checked before can_read for SSL sockets.
+    $self->{bPending} = defined($fhRead) && $fhRead->can('pending') ? true : false;
+}
+
+####################################################################################################################################
+# Are bytes pending that won't show up in select?
+####################################################################################################################################
+sub pending
+{
+    my $self = shift;
+
+    return ($self->{bPending} && $self->handleRead()->pending() ? true : false);
 }
 
 1;

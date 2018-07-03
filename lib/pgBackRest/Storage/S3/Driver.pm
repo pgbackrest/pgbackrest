@@ -474,7 +474,7 @@ sub remove
                 $iTotal++;
                 $strXml .= '<Object><Key>' . substr($strFile, 1) . '</Key></Object>';
 
-                $strFile = $iTotal < 2 ? shift(@{$rstryFileAll}) : undef;
+                $strFile = $iTotal < S3_BATCH_MAX ? shift(@{$rstryFileAll}) : undef;
             }
 
             $strXml .= '</Delete>';

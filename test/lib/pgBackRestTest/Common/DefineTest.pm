@@ -178,7 +178,7 @@ my $oTestDef =
 
                     &TESTDEF_COVERAGE =>
                     {
-                        'Common/Io/Buffered' => TESTDEF_COVERAGE_FULL,
+                        'Common/Io/Buffered' => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
                 {

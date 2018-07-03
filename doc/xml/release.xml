@@ -11,6 +11,36 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.29dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                     <release-item>
+                         <release-item-contributor-list>
+                             <release-item-contributor id="schwartz.andrew"/>
+                         </release-item-contributor-list>
+
+                         <p>Fix non-compliant ISO-8601 timestamp format in S3 authorization headers.  AWS and some gateways were tolerant of space rather than zero-padded hours while others were not.</p>
+                     </release-item>
+                </release-bug-list>
+
+                <release-improvement-list>
+                     <release-item>
+                         <release-item-contributor-list>
+                             <release-item-ideator id="sumner.adam.k"/>
+                         </release-item-contributor-list>
+
+                         <p>Improve the HTTP client to set <id>content-length</id> to 0 when not specified by the server.  S3 (and gateways) always set <id>content-length</id> or <id>transfer-encoding</id> but <id>HTTP 1.1</id> does not require it and proxies (e.g. <proper>HAProxy</proper>) may not include either.</p>
+                     </release-item>
+
+                    <release-item>
+                        <p>Improve performance of HTTPS client.  Buffering now takes the <code>pending</code> bytes on the socket into account (when present) rather than relying entirely on <code>select()</code>.  In some instances the final bytes would not be flushed until the connection was closed.</p>
+                    </release-item>
+
+                     <release-item>
+                         <p>Improve S3 delete performance.  The constant <id>S3_BATCH_MAX</id> had been replaced with a hard-coded value of 2, probably during testing.</p>
+                     </release-item>
+                </release-improvement-list>
+            </release-core-list>
+
             <release-test-list>
                 <release-development-list>
                     <release-item>
@@ -3979,6 +4009,11 @@
         <contributor id="rogozin.aleksandr">
             <contributor-name-display>Aleksandr Rogozin</contributor-name-display>
             <contributor-id type="github">arogozin</contributor-id>
+        </contributor>
+
+        <contributor id="schwartz.andrew">
+            <contributor-name-display>Andrew Schwartz</contributor-name-display>
+            <contributor-id type="github">trinchan</contributor-id>
         </contributor>
 
         <contributor id="shang.cynthia">
