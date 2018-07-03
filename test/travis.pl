@@ -156,7 +156,8 @@ eval
 
         processBegin("${strVm} test" . (defined($strParam) ? ": ${strParam}" : ''));
         executeTest(
-            "${strTestExe} --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}" . (defined($strParam) ? " ${strParam}" : ''),
+            "${strTestExe} --vm-host=" . VM_U14 . " --vm-max=2 --no-package --vm=${strVm}" .
+                (defined($strParam) ? " ${strParam}" : ''),
             {bShowOutputAsync => true});
         processEnd();
     }

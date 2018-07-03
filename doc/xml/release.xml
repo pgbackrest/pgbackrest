@@ -14,6 +14,14 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>Disable package build tests since <id>v1</id> will no longer be packaged.  Users installing packages should update to <id>v2</id>. <id>v1</id> builds are intended for users installing from source.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Update SSL error message test on CentOS 7.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Update URL for Debian package repository.</p>
                     </release-item>
                 </release-development-list>
