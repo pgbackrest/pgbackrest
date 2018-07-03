@@ -39,6 +39,8 @@ use constant CIPHER_MAGIC                                           => 'Salted__
 ####################################################################################################################################
 use constant STORAGE_CAPABILITY_LINK                                => 'link';
     push @EXPORT, qw(STORAGE_CAPABILITY_LINK);
+use constant STORAGE_CAPABILITY_PATH_SYNC                           => 'path-sync';
+    push @EXPORT, qw(STORAGE_CAPABILITY_PATH_SYNC);
 
 ####################################################################################################################################
 # new

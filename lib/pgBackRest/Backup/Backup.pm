@@ -434,10 +434,6 @@ sub process
     my $bCompress = cfgOption(CFGOPT_COMPRESS);
     my $bHardLink = cfgOption(CFGOPT_HARDLINK);
 
-    # Create the cluster backup and history path
-    $oStorageRepo->pathCreate(
-        STORAGE_REPO_BACKUP . qw(/) . PATH_BACKUP_HISTORY, {bIgnoreExists => true, bCreateParent => true});
-
     # Load the backup.info
     my $oBackupInfo = new pgBackRest::Backup::Info($oStorageRepo->pathGet(STORAGE_REPO_BACKUP));
 
@@ -957,8 +953,23 @@ sub process
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_STOP, undef, $lTimestampStop + 0);
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupLabel);
 
-    # Sync all paths in the backup cluster path
-    $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . "/${strBackupLabel}", {bRecurse => true});
+    # Sync backup path if supported
+    if ($oStorageRepo->driver()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+    {
+        # Sync all paths in the backup
+        $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
+
+        foreach my $strPath ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_PATH))
+        {
+            my $strPathSync = $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}/$strPath");
+
+            # Not all paths are created for diff/incr backups, so only sync if this is a full backup or the path exists
+            if ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $oStorageRepo->pathExists($strPathSync))
+            {
+                $oStorageRepo->pathSync($strPathSync);
+            }
+        }
+    }
 
     # Final save of the backup manifest
     $oBackupManifest->save();
@@ -967,17 +978,24 @@ sub process
 
     # Copy a compressed version of the manifest to history. If the repo is encrypted then the passphrase to open the manifest is
     # required.
+    my $strHistoryPath = $oStorageRepo->pathGet(
+        STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY . qw{/} . substr($strBackupLabel, 0, 4));
+
     $oStorageRepo->copy(
         $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . FILE_MANIFEST,
             {'strCipherPass' => $strCipherPassManifest}),
         $oStorageRepo->openWrite(
-            STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY . qw{/} . substr($strBackupLabel, 0, 4) .
-                "/${strBackupLabel}.manifest." . COMPRESS_EXT, {rhyFilter => [{strClass => STORAGE_FILTER_GZIP}],
+            "${strHistoryPath}/${strBackupLabel}.manifest." . COMPRESS_EXT,
+            {rhyFilter => [{strClass => STORAGE_FILTER_GZIP}],
                 bPathCreate => true, bAtomic => true,
                 strCipherPass => defined($strCipherPassManifest) ? $strCipherPassManifest : undef}));
 
-    # Sync history path
-    $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY);
+    # Sync history path if supported
+    if ($oStorageRepo->driver()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+    {
+        $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY);
+        $oStorageRepo->pathSync($strHistoryPath);
+    }
 
     # Create a link to the most recent backup
     $oStorageRepo->remove(STORAGE_REPO_BACKUP . qw(/) . LINK_LATEST);
@@ -991,8 +1009,11 @@ sub process
     # Save backup info
     $oBackupInfo->add($oBackupManifest);
 
-    # Sync backup root path
-    $oStorageRepo->pathSync(STORAGE_REPO_BACKUP);
+    # Sync backup root path if supported
+    if ($oStorageRepo->driver()->capability(STORAGE_CAPABILITY_PATH_SYNC))
+    {
+        $oStorageRepo->pathSync(STORAGE_REPO_BACKUP);
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

@@ -933,7 +933,7 @@ sub run
 
         $oHostDbMaster->restore(
             'remap all paths', $strBackup,
-            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, strOptionalParam => $strLogReduced});
+            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, strOptionalParam => ($bRemote ? $strLogReduced : '')});
 
         # Restore (make sure file in root tablespace path is not deleted by --delta)
         #---------------------------------------------------------------------------------------------------------------------------

@@ -83,7 +83,6 @@ P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/db-master/log
-P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/backup.history
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/backup/db/backup.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
@@ -258,23 +257,20 @@ P00  DEBUG:     Backup::Backup->processManifest=>: lSizeTotal = 163878
 P00   INFO: full backup size = 160KB
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = true, strPathExp = <REPO:BACKUP>/[BACKUP-FULL-1]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]/backup.manifest
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]/backup.manifest.copy
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]
 P00   INFO: new backup label = [BACKUP-FULL-1]
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = <REPO:BACKUP>/[BACKUP-FULL-1]/backup.manifest
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = <REPO:BACKUP>/backup.history/[YEAR-1]/[BACKUP-FULL-1].manifest.gz
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.history/[YEAR-1]/[BACKUP-FULL-1].manifest.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>/backup.history
 P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, xstryPathFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = false
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info.copy
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=16384 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --repo-type=cifs --stanza=db
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db, strCipherPassSub = [undef]
@@ -474,7 +470,6 @@ P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/db-master/log
-P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/backup.history
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/backup/db/backup.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
@@ -654,7 +649,6 @@ P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/db-master/log
-P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/backup.history
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/backup/db/backup.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
@@ -808,24 +802,41 @@ P00  DEBUG:     Backup::Backup->processManifest=>: lSizeTotal = 163878
 P00   INFO: full backup size = 160KB
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = true, strPathExp = <REPO:BACKUP>/[BACKUP-FULL-2]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>/[BACKUP-FULL-2]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/base
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/base/1
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/base/16384
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/base/32768
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/global
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/pg_clog
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/pg_dynshmem
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/pg_notify
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/pg_replslot
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/pg_serial
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/pg_snapshots
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/pg_stat
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/pg_stat_tmp
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/pg_subtrans
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/pg_tblspc
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/backup.manifest.copy
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]
 P00   INFO: new backup label = [BACKUP-FULL-2]
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = <REPO:BACKUP>/[BACKUP-FULL-2]/backup.manifest
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = <REPO:BACKUP>/backup.history/[YEAR-1]/[BACKUP-FULL-2].manifest.gz
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.history/[YEAR-1]/[BACKUP-FULL-2].manifest.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>/backup.history
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>/backup.history
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/backup.history/[YEAR-1]
 P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, xstryPathFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = false
 P00  DEBUG:     Storage::Local->linkCreate(): bHard = <false>, bIgnoreExists = <false>, bPathCreate = <true>, bRelative = true, strDestinationLinkExp = <REPO:BACKUP>/latest, strSourcePathFileExp = <REPO:BACKUP>/[BACKUP-FULL-2]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info.copy
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db, strCipherPassSub = [undef]
@@ -1257,13 +1268,28 @@ P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, xstryPathFileExp = [TEST_PATH]/db-master/db/base/recovery.conf
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00   INFO: write [TEST_PATH]/db-master/db/base/recovery.conf
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = true, strPathExp = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/base
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/base/1
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/base/16384
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/base/32768
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/global
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/pg_clog
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/pg_dynshmem
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/pg_notify
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/pg_replslot
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/pg_serial
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/pg_snapshots
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/pg_stat_tmp
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/pg_subtrans
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base/pg_tblspc
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/pg_stat
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/pg_config
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = [TEST_PATH]/db-master/db/base/global/pg_control, strSourcePathExp = [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest.tmp
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, xstryPathFileExp = [TEST_PATH]/db-master/db/base/backup.manifest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
@@ -1648,7 +1674,6 @@ P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/db-master/log
-P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/backup.history
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/backup/db/backup.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
@@ -1756,24 +1781,70 @@ P00  DEBUG:     Backup::Backup->processManifest=>: lSizeTotal = 18
 P00   INFO: incr backup size = 18B
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = true, strPathExp = <REPO:BACKUP>/[BACKUP-INCR-1]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>/[BACKUP-INCR-1]
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/base
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/base/1
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/base/16384
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/base/32768
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/global
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/pg_clog
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/pg_dynshmem
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/pg_notify
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/pg_replslot
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/pg_serial
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/pg_snapshots
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/pg_stat
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/pg_stat_tmp
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/pg_subtrans
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_data/pg_tblspc
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_tblspc
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_tblspc
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_tblspc/1
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_tblspc/1
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_tblspc/1/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_tblspc/1/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_tblspc/1/[TS_PATH-1]/16384
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/pg_tblspc/1/[TS_PATH-1]/16384
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/backup.manifest
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/backup.manifest.copy
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]
 P00   INFO: new backup label = [BACKUP-INCR-1]
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = <REPO:BACKUP>/[BACKUP-INCR-1]/backup.manifest
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = <REPO:BACKUP>/backup.history/[YEAR-1]/[BACKUP-INCR-1].manifest.gz
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.history/[YEAR-1]/[BACKUP-INCR-1].manifest.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>/backup.history
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>/backup.history
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/backup.history/[YEAR-1]
 P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, xstryPathFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->linkCreate(): bHard = <false>, bIgnoreExists = <false>, bPathCreate = <true>, bRelative = true, strDestinationLinkExp = <REPO:BACKUP>/latest, strSourcePathFileExp = <REPO:BACKUP>/[BACKUP-INCR-1]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info.copy
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db, strCipherPassSub = [undef]
@@ -1967,7 +2038,6 @@ P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/db-master/log
-P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/backup.history
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/backup/db/backup.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
@@ -2106,24 +2176,83 @@ P00  DEBUG:     Backup::Backup->processManifest=>: lSizeTotal = 25
 P00   INFO: incr backup size = 25B
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = true, strPathExp = <REPO:BACKUP>/[BACKUP-INCR-2]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>/[BACKUP-INCR-2]
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/1
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/16384
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/32768
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/global
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_clog
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_dynshmem
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_notify
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_replslot
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_serial
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_snapshots
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_stat
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_stat_tmp
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_subtrans
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_tblspc
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/1
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/1
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/1/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/1/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/1/[TS_PATH-1]/16384
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/1/[TS_PATH-1]/16384
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/11
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/11/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/2
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/2
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/2/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/2/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/2/[TS_PATH-1]/32768
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_tblspc/2/[TS_PATH-1]/32768
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/backup.manifest
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/backup.manifest.copy
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]
 P00   INFO: new backup label = [BACKUP-INCR-2]
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = <REPO:BACKUP>/[BACKUP-INCR-2]/backup.manifest
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = <REPO:BACKUP>/backup.history/[YEAR-1]/[BACKUP-INCR-2].manifest.gz
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.history/[YEAR-1]/[BACKUP-INCR-2].manifest.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>/backup.history
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>/backup.history
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db/backup.history/[YEAR-1]
 P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, xstryPathFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->linkCreate(): bHard = <false>, bIgnoreExists = <false>, bPathCreate = <true>, bRelative = true, strDestinationLinkExp = <REPO:BACKUP>/latest, strSourcePathFileExp = <REPO:BACKUP>/[BACKUP-INCR-2]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info.copy
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db, strCipherPassSub = [undef]
@@ -2647,38 +2776,317 @@ P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/base' that c
 P00   INFO: restore command end: aborted with exception [040]
 
 restore, backup '[BACKUP-DIFF-2]', remap - remap all paths (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2]   --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, strLockType = restore
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
+P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/lock
+P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/db-master/log
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base-2, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/postmaster.pid
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = <REPO:BACKUP>/backup.info
+P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [TEST_PATH]/db-master/db/base-2/backup.info, xSourceFile = [object]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/db/base-2/backup.info
+P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = false, oStorage = [object], strBackupClusterPath = [TEST_PATH]/db-master/db/base-2, strCipherPassSub = [undef]
+P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/db/base-2/backup.info
+P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
+P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
+P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base-2/backup.info
+P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, xstryPathFileExp = [TEST_PATH]/db-master/db/base-2/backup.info
+P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
+P00  DEBUG:     Backup::Info->current(): strBackup = [BACKUP-DIFF-2]
+P00  DEBUG:     Backup::Info->current=>: bTest = true
 P00   INFO: restore backup set [BACKUP-DIFF-2]
+P00  DEBUG:     Restore->manifestLoad(): strCipherPass = [undef]
+P00  DEBUG:     Storage::Local->exists(): strFileExp = <REPO:BACKUP>/[BACKUP-DIFF-2]/backup.manifest
+P00  DEBUG:     Storage::Local->exists=>: bExists = true
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = <REPO:BACKUP>/[BACKUP-DIFF-2]/backup.manifest
+P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [TEST_PATH]/db-master/db/base-2/backup.manifest, xSourceFile = [object]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/db/base-2/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = <true>, oStorage = [object], strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/db-master/db/base-2/backup.manifest
+P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/db/base-2/backup.manifest
+P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
+P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
+P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base-2/backup.manifest
+P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
 P00   INFO: remap $PGDATA directory to [TEST_PATH]/db-master/db/base-2
 P00   INFO: remap tablespace pg_tblspc/1 directory to [TEST_PATH]/db-master/db/tablespace/ts1-2
 P00   INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db-master/db/tablespace/ts2-2
+P00  DEBUG:     Restore->manifestOwnershipCheck(): oManifest = [object]
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, xstryPathFileExp = [TEST_PATH]/db-master/db/base-2/global/pg_control
+P00  DEBUG:     Storage::Local->remove=>: bRemoved = false
+P00  DEBUG:     Restore->clean(): oManifest = [object]
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/base-2
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts1-2 exists
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts1-2
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts1-2/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts2-2
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts2-2/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Restore->build(): oManifest = [object]
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts1-2
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts2-2
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     build level 1 paths/links
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/base
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/base
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/base
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/global
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/global
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/global
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_clog
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_clog
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_clog
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_dynshmem
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_dynshmem
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_dynshmem
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_notify
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_notify
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_notify
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_replslot
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_replslot
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_replslot
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_serial
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_serial
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_serial
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_snapshots
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_snapshots
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_snapshots
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_stat
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_stat
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_stat
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_stat_tmp
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_stat_tmp
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_stat_tmp
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_subtrans
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_subtrans
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_subtrans
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
+P00  DEBUG:     build level 2 paths/links
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/base/1
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/base/1
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/base/1
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/base/16384
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/base/16384
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/base/16384
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/base/32768
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/base/32768
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/base/32768
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/1
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/1
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->linkCreate(): bHard = <false>, bIgnoreExists = true, bPathCreate = <true>, bRelative = false, strDestinationLinkExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/1, strSourcePathFileExp = [TEST_PATH]/db-master/db/tablespace/ts1-2
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/2
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/2
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->linkCreate(): bHard = <false>, bIgnoreExists = true, bPathCreate = <true>, bRelative = false, strDestinationLinkExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/2, strSourcePathFileExp = [TEST_PATH]/db-master/db/tablespace/ts2-2
+P00  DEBUG:     build level 3 paths/links
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]
+P00  DEBUG:     build level 4 paths/links
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384
+P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768
+P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = 0700, strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768
+P00  DEBUG:     build level 5 paths/links
+P00  DEBUG:     Protocol::Local::Process->new(): bConfessError = <true>, iSelectTimeout = <30>, strBackRestBin = <[BACKREST-BIN]>, strHostType = backup
+P00  DEBUG:     Protocol::Local::Process->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/base/32768/33001, 65536, [MODIFICATION-TIME-1], 6bf316f11d28c28914ea9be92c00de9bea6d9a6b, 0, 0, pg_data/base/32768/33001, [BACKUP-FULL-2], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_data/base/32768/33001, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/base/32768/33000.32767, 32768, [MODIFICATION-TIME-1], 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5, 0, 0, pg_data/base/32768/33000.32767, [BACKUP-FULL-2], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_data/base/32768/33000.32767, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/base/32768/33000, 32768, [MODIFICATION-TIME-1], 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f, 0, 0, pg_data/base/32768/33000, [BACKUP-FULL-2], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_data/base/32768/33000, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/base/16384/17000, 16384, [MODIFICATION-TIME-1], e0101dd8ffb910c9c202ca35b5f828bcb9697bed, 0, 0, pg_data/base/16384/17000, [BACKUP-FULL-2], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_data/base/16384/17000, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/global/pg_control.pgbackrest.tmp, 8192, [MODIFICATION-TIME-2], b4a3adade1e81ebfc7e9a27bca0887a347d81522, 0, 0, pg_data/global/pg_control, [BACKUP-FULL-2], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_data/global/pg_control, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/base/1/12000, 8192, [MODIFICATION-TIME-1], 22c98d248ff548311eda88559e4a8405ed77c003, 0, 0, pg_data/base/1/12000, [BACKUP-FULL-2], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_data/base/1/12000, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/postgresql.conf, 21, [MODIFICATION-TIME-2], 6721d92c9fcdf4248acff1f9a1377127d9064807, 0, 0, pg_data/postgresql.conf, [BACKUP-FULL-2], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_data/postgresql.conf, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/badchecksum.txt, 11, [MODIFICATION-TIME-1], f927212cd08d11a42a666b2f04235398e9ceeb51, 0, 0, pg_data/badchecksum.txt, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_data/badchecksum.txt, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, 7, [MODIFICATION-TIME-1], dc7f76e43c46101b47acc55ae4d593a9e6983578, 0, 0, pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strOp = restoreFile, strQueue = pg_tblspc/2
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, [MODIFICATION-TIME-1], d85de07d6421d90aa9191c11c889bfde43680f0f, 0, 0, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = restoreFile, strQueue = pg_tblspc/1
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/pg_stat/global.stat, 5, [MODIFICATION-TIME-2], e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, 0, 0, pg_data/pg_stat/global.stat, [BACKUP-FULL-2], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_data/pg_stat/global.stat, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/base/32768/PG_VERSION, [BACKUP-FULL-2], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_data/base/32768/PG_VERSION, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/base/16384/PG_VERSION, [BACKUP-FULL-2], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_data/base/16384/PG_VERSION, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/base/1/PG_VERSION, [BACKUP-FULL-2], 0660, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_data/base/1/PG_VERSION, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base-2/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/PG_VERSION, [BACKUP-FULL-2], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-4], 0, [BACKUP-DIFF-2], 0), rParamSecure = [undef], strKey = pg_data/PG_VERSION, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = backup
+P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=restore --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2 --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local
+P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=restore --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2 --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local, strId = local-1 process, strName = local
+P00  DEBUG:     Protocol::Local::Process->hostConnect=>: bResult = true
+P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 2
+P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/33001, strQueueIdx = 0
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_data/base/32768/33001
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/33000.32767, strQueueIdx = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 65536, lSizeCurrent = 0, lSizeTotal = 163903, strChecksum = 6bf316f11d28c28914ea9be92c00de9bea6d9a6b, strDbFile = [TEST_PATH]/db-master/db/base-2/base/32768/33001
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 39%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_data/base/32768/33000.32767
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/33000, strQueueIdx = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 32768, lSizeCurrent = 65536, lSizeTotal = 163903, strChecksum = 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5, strDbFile = [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 59%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_data/base/32768/33000
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/16384/17000, strQueueIdx = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 32768, lSizeCurrent = 98304, lSizeTotal = 163903, strChecksum = 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f, strDbFile = [TEST_PATH]/db-master/db/base-2/base/32768/33000
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000 (32KB, 79%) checksum 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_data/base/16384/17000
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/global/pg_control, strQueueIdx = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 16384, lSizeCurrent = 131072, lSizeTotal = 163903, strChecksum = e0101dd8ffb910c9c202ca35b5f828bcb9697bed, strDbFile = [TEST_PATH]/db-master/db/base-2/base/16384/17000
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (16KB, 89%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_data/global/pg_control
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/1/12000, strQueueIdx = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 8192, lSizeCurrent = 147456, lSizeTotal = 163903, strChecksum = b4a3adade1e81ebfc7e9a27bca0887a347d81522, strDbFile = [TEST_PATH]/db-master/db/base-2/global/pg_control.pgbackrest.tmp
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control.pgbackrest.tmp (8KB, 94%) checksum b4a3adade1e81ebfc7e9a27bca0887a347d81522
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_data/base/1/12000
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/postgresql.conf, strQueueIdx = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 8192, lSizeCurrent = 155648, lSizeTotal = 163903, strChecksum = 22c98d248ff548311eda88559e4a8405ed77c003, strDbFile = [TEST_PATH]/db-master/db/base-2/base/1/12000
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_data/postgresql.conf
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/badchecksum.txt, strQueueIdx = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 21, lSizeCurrent = 163840, lSizeTotal = 163903, strChecksum = 6721d92c9fcdf4248acff1f9a1377127d9064807, strDbFile = [TEST_PATH]/db-master/db/base-2/postgresql.conf
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_data/badchecksum.txt
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/pg_stat/global.stat, strQueueIdx = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 11, lSizeCurrent = 163861, lSizeTotal = 163903, strChecksum = f927212cd08d11a42a666b2f04235398e9ceeb51, strDbFile = [TEST_PATH]/db-master/db/base-2/badchecksum.txt
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_data/pg_stat/global.stat
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/PG_VERSION, strQueueIdx = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 5, lSizeCurrent = 163872, lSizeTotal = 163903, strChecksum = e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, strDbFile = [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_data/base/32768/PG_VERSION
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/16384/PG_VERSION, strQueueIdx = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 3, lSizeCurrent = 163877, lSizeTotal = 163903, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_data/base/16384/PG_VERSION
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/1/PG_VERSION, strQueueIdx = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 3, lSizeCurrent = 163880, lSizeTotal = 163903, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_data/base/1/PG_VERSION
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/PG_VERSION, strQueueIdx = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 3, lSizeCurrent = 163883, lSizeTotal = 163903, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_data/PG_VERSION
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strQueueIdx = 1
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 3, lSizeCurrent = 163886, lSizeTotal = 163903, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base-2/PG_VERSION
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strQueueIdx = 2
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 7, lSizeCurrent = 163889, lSizeTotal = 163903, strChecksum = dc7f76e43c46101b47acc55ae4d593a9e6983578, strDbFile = [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt
+P00  DEBUG:     Protocol::Local::Process->process: no jobs found, stop local: iHostConfigIdx = [undef], iHostIdx = 0, iProcessId = 1, strHostType = [undef]
+P00  DEBUG:     Protocol::Command::Master->close=>: iExitStatus = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 7, lSizeCurrent = 163896, lSizeTotal = 163903, strChecksum = d85de07d6421d90aa9191c11c889bfde43680f0f, strDbFile = [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P00  DEBUG:     Protocol::Local::Process->process: all jobs complete
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base-2/recovery.conf
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
 P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/base
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/base/1
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/base/16384
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/base/32768
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/global
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_clog
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_dynshmem
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_notify
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_replslot
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_serial
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_snapshots
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_stat
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_stat_tmp
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_subtrans
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts1-2
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
+P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = [TEST_PATH]/db-master/db/base-2/global/pg_control, strSourcePathExp = [TEST_PATH]/db-master/db/base-2/global/pg_control.pgbackrest.tmp
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, xstryPathFileExp = [TEST_PATH]/db-master/db/base-2/backup.manifest
+P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
+P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
+P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: restore command end: completed successfully
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
 ------------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, backup '[BACKUP-DIFF-2]', remap - ensure file in tblspc root remains after --delta (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore

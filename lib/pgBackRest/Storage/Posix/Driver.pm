@@ -866,51 +866,23 @@ sub pathSync
     (
         $strOperation,
         $strPath,
-        $bRecurse,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->pathSync', \@_,
             {name => 'strPath', trace => true},
-            {name => 'bRecurse', default => false, trace => true},
         );
 
-    if ($bRecurse)
-    {
-        my $oManifest = $self->manifest($strPath);
+    open(my $hPath, "<", $strPath)
+        or confess &log(ERROR, "unable to open '${strPath}' for sync", ERROR_PATH_OPEN);
+    open(my $hPathDup, ">&", $hPath)
+        or confess &log(ERROR, "unable to duplicate '${strPath}' handle for sync", ERROR_PATH_OPEN);
 
-        # Iterate all files in the manifest
-        foreach my $strFile (sort(keys(%{$oManifest})))
-        {
-            # Only sync if this is a directory
-            if ($oManifest->{$strFile}{type} eq 'd')
-            {
-                # If current directory
-                if ($strFile eq '.')
-                {
-                    $self->pathSync($strPath);
-                }
-                # Else a subdirectory
-                else
-                {
-                    $self->pathSync("${strPath}/${strFile}");
-                }
-            }
-        }
-    }
-    else
-    {
-        open(my $hPath, "<", $strPath)
-            or confess &log(ERROR, "unable to open '${strPath}' for sync", ERROR_PATH_OPEN);
-        open(my $hPathDup, ">&", $hPath)
-            or confess &log(ERROR, "unable to duplicate '${strPath}' handle for sync", ERROR_PATH_OPEN);
+    $hPathDup->sync()
+        or confess &log(ERROR, "unable to sync path '${strPath}'", ERROR_PATH_SYNC);
 
-        $hPathDup->sync()
-            or confess &log(ERROR, "unable to sync path '${strPath}'", ERROR_PATH_SYNC);
-
-        close($hPathDup);
-        close($hPath);
-    }
+    close($hPathDup);
+    close($hPath);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

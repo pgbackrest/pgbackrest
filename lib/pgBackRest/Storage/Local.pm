@@ -730,7 +730,7 @@ sub pathGet
 }
 
 ####################################################################################################################################
-# pathSync - perform driver sync operation on path
+# Sync path so newly added file entries are not lost
 ####################################################################################################################################
 sub pathSync
 {
@@ -741,16 +741,14 @@ sub pathSync
     (
         $strOperation,
         $strPathExp,
-        $bRecurse,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->pathSync', \@_,
             {name => 'strPathExp'},
-            {name => 'bRecurse', default => false},
         );
 
-    $self->driver()->pathSync($self->pathGet($strPathExp), {bRecurse => true});
+    $self->driver()->pathSync($self->pathGet($strPathExp));
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
