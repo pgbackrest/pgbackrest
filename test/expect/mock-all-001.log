@@ -4588,13 +4588,14 @@ info bogus stanza - bogus stanza (db-master host)
     }
 ]
 
-> ls -1R [TEST_PATH]/db-master/repo/backup/db/backup.history
+> ls -1Rtr [TEST_PATH]/db-master/repo/backup/db/backup.history
 ------------------------------------------------------------------------------------------------------------------------------------
 [TEST_PATH]/db-master/repo/backup/db/backup.history:
 [YEAR-1]
 
 [TEST_PATH]/db-master/repo/backup/db/backup.history/[YEAR-1]:
 [BACKUP-FULL-1].manifest.gz
+[BACKUP-FULL-2].manifest.gz
 [BACKUP-INCR-1].manifest.gz
 [BACKUP-INCR-2].manifest.gz
 [BACKUP-DIFF-1].manifest.gz
@@ -4604,9 +4605,8 @@ info bogus stanza - bogus stanza (db-master host)
 [BACKUP-DIFF-3].manifest.gz
 [BACKUP-INCR-5].manifest.gz
 [BACKUP-DIFF-4].manifest.gz
-[BACKUP-FULL-2].manifest.gz
-[BACKUP-DIFF-5].manifest.gz
 [BACKUP-FULL-3].manifest.gz
+[BACKUP-DIFF-5].manifest.gz
 
 diff backup - config file warning on local (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=info 2>&1 --type=diff --stanza=db backup
