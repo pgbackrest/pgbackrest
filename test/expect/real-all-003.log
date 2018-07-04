@@ -153,7 +153,7 @@ check db - verify check command on standby (db-standby host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 incr backup - update during backup (db-standby host)
-> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stop-auto --no-archive-check --buffer-size=32768 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
+> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stop-auto --buffer-size=32768 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf

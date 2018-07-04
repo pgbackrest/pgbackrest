@@ -161,7 +161,7 @@ start all stanzas (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 incr backup - update during backup (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stop-auto --no-archive-check --buffer-size=32768 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stop-auto --buffer-size=32768 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf

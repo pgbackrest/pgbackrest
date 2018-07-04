@@ -36,6 +36,15 @@
 
                          <p>Fix <br-option>--target-action</br-option> and <br-option>--recovery-option</br-option> options being reported as invalid when restoring with <br-option>--type=immediate</br-option>.</p>
                      </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="yummyliu"/>
+                            <release-item-ideator id="kukharik.vitaliy"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix <br-option>archive-copy</br-option> throwing <quote>path not found</quote> error for incr/diff backups.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
@@ -3982,6 +3991,11 @@
             <contributor-id type="github">cjames53</contributor-id>
         </contributor>
 
+          <contributor id="kukharik.vitaliy">
+             <contributor-name-display>Vitaliy Kukharik</contributor-name-display>
+             <contributor-id type="github">vitabaks</contributor-id>
+         </contributor>
+
         <contributor id="kulkarni.nikhilchandra">
             <contributor-name-display>Nikhilchandra Kulkarni</contributor-name-display>
             <contributor-id type="github">nikhilchandra-kulkarni</contributor-id>
@@ -4114,5 +4128,10 @@
             <contributor-name-display>Javier Wilson</contributor-name-display>
             <contributor-id type="github">javierwilson</contributor-id>
         </contributor>
+
+         <contributor id="yummyliu">
+             <contributor-name-display>yummyliu</contributor-name-display>
+             <contributor-id type="github">yummyliu</contributor-id>
+         </contributor>
     </contributor-list>
 </doc>
