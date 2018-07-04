@@ -101,6 +101,18 @@
                 </release-development-list>
             </release-core-list>
 
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                        <release-item-ideator id="youatt.david"/>
+                    </release-item-contributor-list>
+
+                        <p>Clarify that S3 buckets must be created by the user.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-development-list>
                     <release-item>
@@ -4154,6 +4166,11 @@
             <contributor-name-display>Javier Wilson</contributor-name-display>
             <contributor-id type="github">javierwilson</contributor-id>
         </contributor>
+
+         <contributor id="youatt.david">
+             <contributor-name-display>David Youatt</contributor-name-display>
+             <contributor-id type="github">youattd</contributor-id>
+         </contributor>
 
          <contributor id="yummyliu">
              <contributor-name-display>yummyliu</contributor-name-display>
