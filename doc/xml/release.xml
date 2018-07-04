@@ -57,6 +57,15 @@
                      <release-item>
                          <p>Fix delta restore failing when a linked file was missing.</p>
                      </release-item>
+
+                     <release-item>
+                         <release-item-contributor-list>
+                             <release-item-ideator id="nj.baliyan"/>
+                             <release-item-contributor id="shang.cynthia"/>
+                         </release-item-contributor-list>
+
+                         <p>Fix error in selective restore when only one user database exists in the cluster.</p>
+                     </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
@@ -4036,6 +4045,11 @@
         <contributor id="nicholson.brad">
             <contributor-name-display>Brad Nicholson</contributor-name-display>
             <contributor-id type="github">bradnicholson</contributor-id>
+        </contributor>
+
+        <contributor id="nj.baliyan">
+            <contributor-name-display>Nj Baliyan</contributor-name-display>
+            <contributor-id type="github">nj3110</contributor-id>
         </contributor>
 
         <contributor id="nullmeier.markus">
