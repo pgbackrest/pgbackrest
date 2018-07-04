@@ -842,13 +842,14 @@ my $oConfigHelpData =
         {
             section => 'general',
             summary =>
-                "Path where WAL segments are spooled during async archiving.",
+                "Path where transient data is stored.",
             description =>
-                "When asynchronous archiving is enabled pgBackRest needs a local directory to store WAL segments before they " .
-                    "are compressed and moved to the repository. Depending on the volume of WAL generated this directory could " .
-                    "become very large so be sure to plan accordingly.\n" .
+                "This path is used to store acknowledgements from the asynchronous archive-push process. These files are " .
+                    "generally very small (zero to a few hundred bytes) so not much space is required.\n" .
                 "\n" .
-                "The archive-queue-max option can be used to limit the amount of WAL that will be spooled locally."
+                "The data stored in the spool path is not strictly temporary since it can and should survive a reboot. However, " .
+                    "loss of the data in the spool path is not a problem. pgBackRest will simply recheck each WAL segment to " .
+                    "ensure it is safely archived."
         },
 
         # STANZA Option Help
@@ -1579,6 +1580,7 @@ my $oConfigHelpData =
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
+                'log-level-stderr' => 'section',
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
@@ -1662,6 +1664,7 @@ my $oConfigHelpData =
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
+                'log-level-stderr' => 'section',
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
@@ -1719,6 +1722,7 @@ my $oConfigHelpData =
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
+                'log-level-stderr' => 'section',
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
