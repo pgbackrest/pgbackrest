@@ -1817,8 +1817,9 @@ P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/global/pg_con
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/badchecksum.txt, pg_data/badchecksum.txt, 11, [undef], 0, [BACKUP-INCR-1], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), rParamSecure = [undef], strKey = pg_data/badchecksum.txt, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, [undef], 1, [BACKUP-INCR-1], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), rParamSecure = [undef], strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, [undef], 1, [BACKUP-INCR-1], 0, 3, [MODIFICATION-TIME-2], 1, {iWalId => 65535, iWalOffset => 65535}), rParamSecure = [undef], strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/changesize.txt, pg_data/changesize.txt, 4, [undef], 0, [BACKUP-INCR-1], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), rParamSecure = [undef], strKey = pg_data/changesize.txt, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
@@ -1831,16 +1832,19 @@ P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection =
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/badchecksum.txt, strQueueIdx = 0
 P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1, 11, 11, f927212cd08d11a42a666b2f04235398e9ceeb51, [undef]), strKey = pg_data/badchecksum.txt
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/changesize.txt, strQueueIdx = 0
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 50%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1, 4, 4, 88087292ed82e26f3eb824d0bffc05ccf7a30f8d, [undef]), strKey = pg_data/changesize.txt
 P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strQueueIdx = 1
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 61%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1, 7, 7, d85de07d6421d90aa9191c11c889bfde43680f0f, {bAlign => 0, bValid => 0}), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/changesize.txt (4B, 68%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1, 7, 7, 14c44cef6287269b08d41de489fd492bb9fc795d, {bAlign => 0, bValid => 0}), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt
 P00  DEBUG:     Protocol::Local::Process->process: no jobs found, stop local: iHostConfigIdx = [undef], iHostIdx = 0, iProcessId = 1, strHostType = [undef]
 P00  DEBUG:     Protocol::Command::Master->close=>: iExitStatus = 0
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum 14c44cef6287269b08d41de489fd492bb9fc795d
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
 P00  DEBUG:     Protocol::Local::Process->process: all jobs complete
-P00  DEBUG:     Backup::Backup->processManifest=>: lSizeTotal = 18
-P00   INFO: incr backup size = 18B
+P00  DEBUG:     Backup::Backup->processManifest=>: lSizeTotal = 22
+P00   INFO: incr backup size = 22B
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>/[BACKUP-INCR-1]
@@ -2018,10 +2022,11 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changesize.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"14c44cef6287269b08d41de489fd492bb9fc795d","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
 [target:file:default]
 group="[GROUP-1]"
@@ -2193,6 +2198,10 @@ P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt
 P00  DEBUG:     Backup::Backup->resumeClean(): oAbortedManifest = [object], oManifest = [object], oStorageRepo = [object], strBackupLabel = [BACKUP-INCR-2]
 P00 DETAIL: clean resumed backup path: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = <REPO:BACKUP>/[BACKUP-INCR-2]
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/changesize.txt
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, xstryPathFileExp = (<REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/changesize.txt, <REPO:BACKUP>/[BACKUP-INCR-2]/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt)
+P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/backup.manifest.copy
@@ -2206,9 +2215,10 @@ P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/17
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/global/pg_control to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/badchecksum.txt, pg_data/badchecksum.txt, 11, bogus, 0, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), rParamSecure = [undef], strKey = pg_data/badchecksum.txt, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/badchecksum.txt, pg_data/badchecksum.txt, 11, f927212cd08d11a42a666b2f04235398e9ceeb51, 0, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), rParamSecure = [undef], strKey = pg_data/badchecksum.txt, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/changesize.txt, pg_data/changesize.txt, 9, [undef], 0, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), rParamSecure = [undef], strKey = pg_data/changesize.txt, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, 7, [undef], 1, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), rParamSecure = [undef], strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strOp = backupFile, strQueue = pg_tblspc/2
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, d85de07d6421d90aa9191c11c889bfde43680f0f, 1, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), rParamSecure = [undef], strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, [undef], 1, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), rParamSecure = [undef], strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
@@ -2222,20 +2232,25 @@ P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection =
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/badchecksum.txt, strQueueIdx = 0
 P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (2, 11, 11, f927212cd08d11a42a666b2f04235398e9ceeb51, [undef]), strKey = pg_data/badchecksum.txt
+P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/changesize.txt, strQueueIdx = 0
+P00   WARN: resumed backup file pg_data/badchecksum.txt does not have expected checksum f927212cd08d11a42a666b2f04235398e9ceeb51. The file will be recopied and backup will continue but this may be an issue unless the resumed backup path in the repository is known to be corrupted.
+            NOTE: this does not indicate a problem with the PostgreSQL page checksums.
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 32%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1, 9, 9, 3905d5be2ec8d67f41435dab5e0dcda3ae47455d, [undef]), strKey = pg_data/changesize.txt
 P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strQueueIdx = 1
-P00   WARN: resumed backup file pg_data/badchecksum.txt should have checksum bogus but actually has checksum f927212cd08d11a42a666b2f04235398e9ceeb51. The file will be recopied and backup will continue but this may be an issue unless the backup temp path is known to be corrupted.
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 44%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/changesize.txt (9B, 58%) checksum 3905d5be2ec8d67f41435dab5e0dcda3ae47455d
 P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1, 7, 7, dc7f76e43c46101b47acc55ae4d593a9e6983578, {bAlign => 0, bValid => 0}), strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt
 P00  DEBUG:     Protocol::Local::Process->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strQueueIdx = 2
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 72%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 79%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
-P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (0, 7, 7, d85de07d6421d90aa9191c11c889bfde43680f0f, [undef]), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt
+P00  DEBUG:     Protocol::Local::Process->process: job complete: iProcessId = 1, rResult = (1, 7, 7, d85de07d6421d90aa9191c11c889bfde43680f0f, {bAlign => 0, bValid => 0}), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt
 P00  DEBUG:     Protocol::Local::Process->process: no jobs found, stop local: iHostConfigIdx = [undef], iHostIdx = 0, iProcessId = 1, strHostType = [undef]
 P00  DEBUG:     Protocol::Command::Master->close=>: iExitStatus = 0
-P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
 P00  DEBUG:     Protocol::Local::Process->process: all jobs complete
-P00  DEBUG:     Backup::Backup->processManifest=>: lSizeTotal = 25
-P00   INFO: incr backup size = 25B
+P00  DEBUG:     Backup::Backup->processManifest=>: lSizeTotal = 34
+P00   INFO: incr backup size = 34B
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Storage::Local->pathSync(): strPathExp = <REPO:BACKUP>/[BACKUP-INCR-2]
@@ -2428,6 +2443,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changesize.txt={"checksum":"3905d5be2ec8d67f41435dab5e0dcda3ae47455d","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
