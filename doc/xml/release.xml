@@ -28,6 +28,14 @@
 
                          <p>Fix directory syncs running recursively when only the specified directory should be synced.</p>
                      </release-item>
+
+                     <release-item>
+                         <release-item-contributor-list>
+                             <release-item-ideator id="nicholson.brad"/>
+                         </release-item-contributor-list>
+
+                         <p>Fix <br-option>--target-action</br-option> and <br-option>--recovery-option</br-option> options being reported as invalid when restoring with <br-option>--type=immediate</br-option>.</p>
+                     </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
@@ -3997,6 +4005,11 @@
         <contributor id="mccormick.jeff">
             <contributor-name-display>Jeff McCormick</contributor-name-display>
             <contributor-id type="github">jmccormick2001</contributor-id>
+        </contributor>
+
+        <contributor id="nicholson.brad">
+            <contributor-name-display>Brad Nicholson</contributor-name-display>
+            <contributor-id type="github">bradnicholson</contributor-id>
         </contributor>
 
         <contributor id="nullmeier.markus">

@@ -674,6 +674,7 @@ my %hConfigDefine =
                     &CFGDEF_DEPEND_OPTION => CFGOPT_TYPE,
                     &CFGDEF_DEPEND_LIST =>
                     [
+                        &CFGOPTVAL_RESTORE_TYPE_IMMEDIATE,
                         &CFGOPTVAL_RESTORE_TYPE_NAME,
                         &CFGOPTVAL_RESTORE_TYPE_TIME,
                         &CFGOPTVAL_RESTORE_TYPE_XID,
@@ -1695,6 +1696,7 @@ my %hConfigDefine =
             &CFGDEF_DEPEND_LIST =>
             [
                 &CFGOPTVAL_RESTORE_TYPE_DEFAULT,
+                &CFGOPTVAL_RESTORE_TYPE_IMMEDIATE,
                 &CFGOPTVAL_RESTORE_TYPE_NAME,
                 &CFGOPTVAL_RESTORE_TYPE_TIME,
                 &CFGOPTVAL_RESTORE_TYPE_XID,

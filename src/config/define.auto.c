@@ -1674,6 +1674,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             (
                 cfgDefOptType,
                 "default",
+                "immediate",
                 "name",
                 "time",
                 "xid"
@@ -2598,6 +2599,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
                 (
                     cfgDefOptType,
+                    "immediate",
                     "name",
                     "time",
                     "xid"
