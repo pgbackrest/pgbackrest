@@ -56,6 +56,10 @@
                      <release-item>
                          <p>Make <path>backup.history</path> sync more efficient.  Only the <path>backup.history/[year]</path> directory was being synced, so check if the <path>backup.history</path> is newly created and sync it as well.</p>
                      </release-item>
+
+                     <release-item>
+                         <p>Add log-level-stderr option for stanza-* commands.</p>
+                     </release-item>
                 </release-development-list>
             </release-core-list>
 
