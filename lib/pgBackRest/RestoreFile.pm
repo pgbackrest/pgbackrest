@@ -9,6 +9,7 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
+use Fcntl qw(:mode);
 use File::Basename qw(dirname);
 use File::stat qw(lstat);
 
@@ -77,6 +78,7 @@ sub restoreFile
     my $oStorageDb = storageDb();
     my $bCopy = true;
 
+    # Zero file if requested
     if ($bZero)
     {
         $bCopy = false;
@@ -90,16 +92,20 @@ sub restoreFile
 
         $oDestinationFileIo->close();
     }
-    elsif ($oStorageDb->exists($strDbFile))
+    # Perform delta if requested
+    elsif ($bDelta)
     {
-        # Perform delta if requested
-        if ($bDelta)
+        my $oStat = $oStorageDb->info($strDbFile, {bIgnoreMissing => true});
+
+        # Do the delta if the file exists and is not a link or the link destination exists
+        if (defined($oStat) &&
+            (!S_ISLNK($oStat->mode) ||
+                $oStorageDb->exists(
+                    $oStorageDb->pathAbsolute(dirname($strDbFile), $oStorageDb->{oDriver}->linkDestination($strDbFile)))))
         {
             # If force then use size/timestamp delta
             if ($bForce)
             {
-                my $oStat = lstat($strDbFile);
-
                 # Make sure that timestamp/size are equal and that timestamp is before the copy start time of the backup
                 if (defined($oStat) && $oStat->size == $lSize &&
                     $oStat->mtime == $lModificationTime && $oStat->mtime < $lCopyTimeStart)

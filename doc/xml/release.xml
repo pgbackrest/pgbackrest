@@ -45,6 +45,10 @@
 
                         <p>Fix <br-option>archive-copy</br-option> throwing <quote>path not found</quote> error for incr/diff backups.</p>
                     </release-item>
+
+                     <release-item>
+                         <p>Fix delta restore failing when a linked file was missing.</p>
+                     </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
