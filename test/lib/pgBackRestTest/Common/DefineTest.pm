@@ -183,7 +183,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'io-process',
-                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_TOTAL => 3,
 
                     &TESTDEF_COVERAGE =>
                     {

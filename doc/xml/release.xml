@@ -129,6 +129,10 @@
 
             <release-test-list>
                 <release-development-list>
+                     <release-item>
+                         <p>Add new test for <code>Common::Io::Process</code> to show that output on stderr will raise an exception on <code>close()</code> even if the exit code is 0.</p>
+                     </release-item>
+
                     <release-item>
                         <p>Disable package build tests since <id>v1</id> will no longer be packaged.  Users installing packages should update to <id>v2</id>. <id>v1</id> builds are intended for users installing from source.</p>
                     </release-item>
