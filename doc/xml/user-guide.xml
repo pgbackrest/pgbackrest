@@ -1861,16 +1861,7 @@
 
         <p><backrest/> offers parallel processing to improve performance of compression and transfer. The number of processes to be used for this feature is set using the <br-option>--process-max</br-option> option.</p>
 
-        <execute-list host="{[host-backup]}">
-            <title>Check the number of CPUs</title>
-
-            <execute user="root" output="y">
-                <exe-cmd>lscpu</exe-cmd>
-                <exe-highlight>^CPU\(s\)\:</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <p>It is usually best not to use more than 25% of the available CPUs for the <cmd>backup</cmd> command.  Backups don't have to run that fast as long as they are performed regularly and the backup process should not impact database performance, if at all possible.</p>
+        <p>It is usually best not to use more than 25% of available CPUs for the <cmd>backup</cmd> command.  Backups don't have to run that fast as long as they are performed regularly and the backup process should not impact database performance, if at all possible.</p>
 
         <p>The restore command can and should use all available CPUs because during a restore the <postgres/> cluster is shut down and there is generally no other important work being done on the host.  If the host contains multiple clusters then that should be considered when setting restore parallelism.</p>
 
