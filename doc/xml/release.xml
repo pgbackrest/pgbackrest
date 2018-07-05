@@ -145,6 +145,10 @@
                          <p>Add new test for <code>Common::Io::Process</code> to show that output on stderr will raise an exception on <code>close()</code> even if the exit code is 0.</p>
                      </release-item>
 
+                     <release-item>
+                         <p>Add zero-length file to <id>mock</id>/<id>all</id> test.</p>
+                     </release-item>
+
                     <release-item>
                         <p>Disable package build tests since <id>v1</id> will no longer be packaged.  Users installing packages should update to <id>v2</id>. <id>v1</id> builds are intended for users installing from source.</p>
                     </release-item>
