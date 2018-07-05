@@ -253,7 +253,7 @@ sub run
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'paths/files and different modes');
 
-        # Master = false
+        # Master = false (what can be copied from a standby vs the master)
         #---------------------------------------------------------------------------------------------------------------------------
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_BASE . '/' . $strTest,
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strTest);
@@ -345,6 +345,31 @@ sub run
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_RECOVERYCONF), '');
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_RECOVERYDONE), '');
 
+        # Create temp table files in a data directory - these will be skipped
+        my $strDbDataDirBasePath = "/" . DB_PATH_BASE . "/12134";
+        my $strDbDataDir = $self->{strDbPath} . $strDbDataDirBasePath;
+        storageDb()->pathCreate($strDbDataDir);
+        storageDb()->put(storageDb()->openWrite($strDbDataDir . '/t123_456'), '');
+        storageDb()->put(storageDb()->openWrite($strDbDataDir . '/t123_456.1'), '');
+        storageDb()->put(storageDb()->openWrite($strDbDataDir . '/t123_456_fsm'), '');
+        storageDb()->put(storageDb()->openWrite($strDbDataDir . '/t123_456_vm.12'), '');
+
+        # Create unlogged files to skip
+        storageDb()->put(storageDb()->openWrite($strDbDataDir . '/11111',
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), ''); # will not be skipped
+        storageDb()->put(storageDb()->openWrite($strDbDataDir . '/12345_init',
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), ''); # will not be skipped
+        storageDb()->put(storageDb()->openWrite($strDbDataDir . '/12345_init.1',
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), ''); # will not be skipped
+        storageDb()->put(storageDb()->openWrite($strDbDataDir . '/12345'), '');
+        storageDb()->put(storageDb()->openWrite($strDbDataDir . '/12345.11'), '');
+        storageDb()->put(storageDb()->openWrite($strDbDataDir . '/12345_fsm.1'), '');
+        storageDb()->put(storageDb()->openWrite($strDbDataDir . '/12345_vm'), '');
+
+        # Create a temp-looking file not in the database directory - this will not be skipped
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . "/" . DB_PATH_BASE . '/t111_111',
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
+
         # Create directories to skip. Add a bogus file to them for test coverage.
         storageDb()->pathCreate(DB_FILE_PREFIX_TMP);
         storageDb()->pathCreate('pg_xlog');
@@ -373,7 +398,7 @@ sub run
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
         storageDb()->pathCreate(DB_FILE_PGINTERNALINIT);
 
-        # Update expected manifest
+        # Update expected manifest with files and paths that will not be skipped
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . '/pg_xlog', undef, $hDefault);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGDYNSHMEM, undef, $hDefault);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGNOTIFY, undef, $hDefault);
@@ -382,6 +407,35 @@ sub run
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGSNAPSHOTS, undef, $hDefault);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGSTATTMP, undef, $hDefault);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGSUBTRANS, undef, $hDefault);
+
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . $strDbDataDirBasePath, undef, $hDefault);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . "/" . DB_PATH_BASE . '/t111_111',
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . "/" . DB_PATH_BASE . '/t111_111',
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strDbDataDirBasePath. '/11111',
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strDbDataDirBasePath . '/11111',
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strDbDataDirBasePath . '/12345_init',
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strDbDataDirBasePath . '/12345_init',
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strDbDataDirBasePath . '/12345_init.1',
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strDbDataDirBasePath . '/12345_init.1',
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        # The number of files that can be retrieved from the standby has increased so default for [target:file:default] "master"
+        # setting is now expected to be false and the files that must be copied from the master will individually change to true
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MASTER, undef, false);
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . "/" .  DB_PATH_BASE . "/" . $strTest,
+            MANIFEST_SUBKEY_MASTER);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' .DB_FILE_PGVERSION,
+            MANIFEST_SUBKEY_MASTER, true);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strConfFile,
+            MANIFEST_SUBKEY_MASTER, true);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL, MANIFEST_SUBKEY_MASTER, true);
 
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'skip directories/files');
@@ -395,23 +449,22 @@ sub run
         $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_93);
 
         # Update expected manifest
-        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0600);
-        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
-        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
-        $oManifestExpectedUnskip->boolSet(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MASTER, undef, true);
-
         $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGDYNSHMEM . '/' . BOGUS,
             MANIFEST_SUBKEY_SIZE, 0);
         $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGDYNSHMEM . '/' . BOGUS,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpectedUnskip->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_PATH_PGDYNSHMEM . '/' . BOGUS,
+            MANIFEST_SUBKEY_MASTER, true);
         $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGREPLSLOT . '/' . BOGUS,
             MANIFEST_SUBKEY_SIZE, 0);
         $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGREPLSLOT . '/' . BOGUS,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpectedUnskip->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_PATH_PGREPLSLOT . '/' . BOGUS,
+            MANIFEST_SUBKEY_MASTER, true);
 
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 94 directories');
-
+exit;
         # Change DB version to 91
         $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_91});
         $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_91);
@@ -548,7 +601,7 @@ sub run
         storageTest()->pathCreate("${strTablespace}/${strTablespaceName}/${strTablespaceOid}", {bCreateParent => true});
         my $strTablespacePath = storageTest()->pathGet("${strTablespace}/${strTablespaceName}/${strTablespaceOid}");
         testLinkCreate("${strTblSpcPath}/${strTablespaceOid}", $strTablespacePath);
-
+# CSHANG Somewhere in here add one temp and one unlogged file to skip
         # Create the tablespace info in expected manifest
         my $strMfTs = MANIFEST_TARGET_PGTBLSPC . "/" . $strTablespaceOid;
         $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, $strMfTs, MANIFEST_SUBKEY_PATH, $strTablespacePath);
@@ -591,7 +644,7 @@ sub run
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, $hTablespaceMap, $hDatabaseMap);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'offline passing tablespace map and database map');
-
+# CSHANG Add temp and unlogged files to skip
         # Reload the manifest with version < 9.0
         #---------------------------------------------------------------------------------------------------------------------------
         $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_84});
@@ -621,6 +674,8 @@ sub run
             MANIFEST_SUBKEY_SIZE, 0);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGNOTIFY . '/' . BOGUS,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+# CSHANG Add temp and unlogged files NOT to skip
 
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, $hTablespaceMap, $hDatabaseMap);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
