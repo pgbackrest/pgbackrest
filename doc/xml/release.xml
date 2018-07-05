@@ -102,6 +102,16 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="tabara.viorel"/>
+                        </release-item-contributor-list>
+
+                        <p>Update docs with 32-bit support and caveats. 32-bit support was added in <proper>v1.26</proper>.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -4135,6 +4145,10 @@
         <contributor id="sumner.adam.k">
             <contributor-name-display>Adam K. Sumner</contributor-name-display>
             <contributor-id type="github">Flamacue</contributor-id>
+        </contributor>
+
+        <contributor id="tabara.viorel">
+            <contributor-name-display>Viorel Tabara</contributor-name-display>
         </contributor>
 
         <contributor id="uspen">
