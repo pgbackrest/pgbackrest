@@ -124,6 +124,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Remove call to <file>lscpu</file> which can vary widely by build host.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Build containers from scratch for more accurate testing.  Use a prebuilt s3 server container.</p>
                     </release-item>
 
