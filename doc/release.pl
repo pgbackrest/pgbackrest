@@ -152,20 +152,20 @@ eval
     {
         my $strDeployPath = "${strDocPath}/site";
 
-        # Generate deployment docs for the website history
+        # Generate docs for the website history
         &log(INFO, 'Generate website ' . ($bDev ? 'dev' : 'history') . ' documentation');
 
         executeTest(
             $strDocExe . ($bDev ? '' : ' --deploy --cache-only') . ' --out=html --var=project-url-root=index.html' .
             ($bDev ? ' --keyword=default --keyword=dev --no-exe' :  ' --exclude=release'));
 
-        # Deploy to server
+        # Deploy to repository
         &log(INFO, '...Deploy to repository');
         executeTest("rm -rf ${strDeployPath}/prior/${strVersion}");
         executeTest("mkdir ${strDeployPath}/prior/${strVersion}");
         executeTest("cp ${strDocHtml}/* ${strDeployPath}/prior/${strVersion}");
 
-        # Generate deployment docs for the main website
+        # Generate docs for the main website
         if (!$bDev)
         {
             &log(INFO, "Generate website documentation");
@@ -174,11 +174,8 @@ eval
 
             &log(INFO, '...Deploy to repository');
             executeTest("rm -rf ${strDeployPath}/dev");
-            executeTest("find ${strDeployPath} -maxdepth 1 -type f -exec rm {} +");
-            executeTest("cp ${strDocHtml}/* ${strDeployPath}");
-            executeTest("cp ${strDocPath}/../README.md ${strDeployPath}");
-            executeTest("cp ${strDocPath}/../LICENSE ${strDeployPath}");
-            executeTest("echo 'pgbackrest.org' > ${strDeployPath}/CNAME");
+            executeTest("find ${strDeployPath}/1 -maxdepth 1 -type f -exec rm {} +");
+            executeTest("cp ${strDocHtml}/* ${strDeployPath}/1");
         }
 
         # Update permissions

@@ -10,9 +10,9 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.29dev" title="UNDER DEVELOPMENT">
+        <release date="2018-07-05" version="1.29" title="Critical Bug Fix for Backup Resume">
             <release-core-list>
-                <p><b>IMPORTANT NOTE</b>: This release fixes a critical bug in the backup resume feature.  All resumed backups should be considered inconsistent.  A backup will be resumed after a prior backup fails, unless <br-option>resume=n</br-option> has been specified.  A resumed backup can be identified by checking the backup log for the message <quote>aborted backup of same type exists, will be cleaned to remove invalid files and resumed</quote>.  Check the restore logs to see if a resumed backup was restored.  If so, there may be inconsistent data in the cluster.</p>
+                <p><b>IMPORTANT NOTE</b>: This release fixes a critical bug in the backup resume feature. All resumed backups prior to this release should be considered inconsistent. A backup will be resumed after a prior backup fails, unless <br-option>resume=n</br-option> has been specified. A resumed backup can be identified by checking the backup log for the message <quote>aborted backup of same type exists, will be cleaned to remove invalid files and resumed</quote>. If the message exists, do not use this backup or any backup in the same set for a restore and check the restore logs to see if a resumed backup was restored. If so, there may be inconsistent data in the cluster.</p>
 
                 <release-bug-list>
                     <release-item>
