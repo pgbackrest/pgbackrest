@@ -862,6 +862,8 @@ sub run
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt', 'SIZE', '88087292ed82e26f3eb824d0bffc05ccf7a30f8d', $lTime,
             undef, true);
+        $oHostDbMaster->manifestFileCreate(
+            \%oManifest, MANIFEST_TARGET_PGDATA, 'zerosize.txt', '', undef, $lTime - 100, undef, true);
 
         # Create temp dir and file that will be ignored
         if (!$bRemote)

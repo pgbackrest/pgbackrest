@@ -136,6 +136,10 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>Add zero-length file to <id>mock</id>/<id>all</id> test.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Update primary test environment (Vagrant and Docker) to Ubuntu 18.04.</p>
                     </release-item>
 
