@@ -96,7 +96,7 @@
         <variable key="host-image" keyword="default">ubuntu:16.04</variable>
         <variable key="host-image" keyword="co6">centos:6</variable>
 
-        <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'ubuntu' : getpwuid($UID) . ''</variable>
+        <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
         <variable key="host-mount">{[pgbackrest-base-dir]}:/backrest</variable>
         <variable key="image-repo">pgbackrest/test</variable>
 
