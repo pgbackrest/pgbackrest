@@ -246,9 +246,10 @@ sub backupManifestUpdate
     {
         &log(
             WARN,
-            "resumed backup file ${strRepoFile} should have checksum ${strChecksum} but actually has checksum ${strChecksumCopy}." .
-            " The file will be recopied and backup will continue but this may be an issue unless the backup temp path is known to" .
-            " be corrupted.");
+            "resumed backup file ${strRepoFile} does not have expected checksum ${strChecksum}. The file will be recopied and" .
+            " backup will continue but this may be an issue unless the resumed backup path in the repository is known to be" .
+            " corrupted.\n" .
+            "NOTE: this does not indicate a problem with the PostgreSQL page checksums.");
     }
 
     # If copy was successful store the checksum and size

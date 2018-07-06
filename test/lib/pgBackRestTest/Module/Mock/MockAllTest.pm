@@ -861,10 +861,15 @@ sub run
         $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384');
 
         $oHostDbMaster->manifestFileCreate(
-            \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384/tablespace1.txt', 'TBLSPC1',
-            'd85de07d6421d90aa9191c11c889bfde43680f0f', $lTime, undef, undef, false);
+            \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384/tablespace1.txt', 'TBLSPCB',
+            '14c44cef6287269b08d41de489fd492bb9fc795d', $lTime - 100, undef, undef, false);
         $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'badchecksum.txt', 'BADCHECKSUM',
                                               'f927212cd08d11a42a666b2f04235398e9ceeb51', $lTime, undef, true);
+        $oHostDbMaster->manifestFileCreate(
+            \%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt', 'SIZE', '88087292ed82e26f3eb824d0bffc05ccf7a30f8d', $lTime,
+            undef, true);
+        $oHostDbMaster->manifestFileCreate(
+            \%oManifest, MANIFEST_TARGET_PGDATA, 'zerosize.txt', '', undef, $lTime - 100, undef, true);
 
         # Create temp dir and file that will be ignored
         if (!$bRemote)
@@ -889,11 +894,30 @@ sub run
         forceStorageRemove(storageRepo(), $strResumePath);
         forceStorageMove(storageRepo(), 'backup/' . $self->stanza() . "/${strBackup}", $strResumePath);
 
-        $oHostBackup->manifestMunge(
-            basename($strResumePath),
-            {&MANIFEST_SECTION_TARGET_FILE =>
-                {(&MANIFEST_TARGET_PGDATA . '/badchecksum.txt') => {&MANIFEST_SUBKEY_CHECKSUM => BOGUS}}},
-            false);
+        # Munge manifest so the resumed file in the repo appears to be bad
+        if ($bRemote)
+        {
+            $oHostBackup->manifestMunge(
+                basename($strResumePath),
+                {&MANIFEST_SECTION_TARGET_FILE =>
+                    {(&MANIFEST_TARGET_PGDATA . '/badchecksum.txt') => {&MANIFEST_SUBKEY_CHECKSUM => BOGUS}}},
+                false);
+        }
+        # Change contents of resumed file without changing size so it will throw a nasty error about the repo having been corrupted
+        else
+        {
+            storageRepo()->put("${strResumePath}/pg_data/badchecksum.txt", 'BDDCHECKSUM');
+        }
+
+        # Change contents/size of a db file to make sure it recopies (and does not resume)
+        $oHostDbMaster->manifestFileCreate(
+            \%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt', 'SIZE+MORE', '3905d5be2ec8d67f41435dab5e0dcda3ae47455d', $lTime,
+            undef, true);
+
+        # Change contents/time of a db file to make sure it recopies (and does not resume)
+        $oHostDbMaster->manifestFileCreate(
+            \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384/tablespace1.txt', 'TBLSPC1',
+            'd85de07d6421d90aa9191c11c889bfde43680f0f', $lTime, undef, undef, false);
 
         # Remove the main manifest so the backup appears aborted
         forceStorageRemove(storageRepo(), "${strResumePath}/" . FILE_MANIFEST);
@@ -916,6 +940,9 @@ sub run
             $strType, 'resume and add tablespace 2',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
                 strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
+
+        # Remove the size-changed test file to avoid expect log churn
+        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt');
 
         # Resume Diff Backup
         #---------------------------------------------------------------------------------------------------------------------------
