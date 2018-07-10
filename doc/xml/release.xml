@@ -13,6 +13,14 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.05dev" title="UNDER DEVELOPMENT">
+
+            <release-test-list>
+                <release-improvement-list>
+                    <release-item>
+                        <p>Error if LibC build is performed outside the test environment.  LibC is no longer required for production builds.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-test-list>
         </release>
 
         <release date="2018-07-05" version="2.04" title="Critical Bug Fix for Backup Resume">
