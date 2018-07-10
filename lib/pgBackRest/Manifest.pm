@@ -741,7 +741,7 @@ sub build
 
                 # Skip temp tables (lower t followed by numbers underscore numbers and a dot (segment) or underscore (fork) and/or
                 # segment, e.g. t1234_123, t1234_123.1, t1234_123_vm, t1234_123_fsm.1
-                if ($strBaseName =~ ('^t[0-9]+\_[0-9]+((\.[0-9]+)*|(\_(fsm|vm)(\.[0-9]+)*)*)$'))
+                if ($strBaseName =~ ('^t[0-9]+\_[0-9]+(|\_(fsm|vm)){0,1}(\.[0-9]+){0,1}$'))
                 {
                     next;
                 }
@@ -750,7 +750,7 @@ sub build
                 if ($self->dbVersion() >= PG_VERSION_91)
                 {
                     # Exclude all forks for unlogged tables except the init fork (numbers underscore init and optional dot segment)
-                    if ($strBaseName =~ ('^[0-9]+((\.[0-9]+)*|(\_(fsm|vm)(\.[0-9]+)*)*)$'))
+                    if ($strBaseName =~ ('^[0-9]+(|\_(fsm|vm)){0,1}(\.[0-9]+){0,1}$'))
                     {
                         # Get the filenode (OID)
                         my ($strFileNode) = $strBaseName =~ ('^(\d+)');
