@@ -64,6 +64,31 @@ cvtZToInt64Internal(const char *value, const char *type)
 }
 
 /***********************************************************************************************************************************
+Convert zero-terminated string to uint64 and validate result
+***********************************************************************************************************************************/
+static uint64_t
+cvtZToUInt64Internal(const char *value, const char *type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, value);
+        FUNCTION_TEST_PARAM(CHARP, type);
+
+        FUNCTION_TEST_ASSERT(value != NULL);
+        FUNCTION_TEST_ASSERT(type != NULL);
+    FUNCTION_TEST_END();
+
+    // Convert from string
+    errno = 0;
+    char *endPtr = NULL;
+    uint64_t result = strtoull(value, &endPtr, 10);
+
+    // Validate the result
+    cvtZToIntValid(errno, value, endPtr, type);
+
+    FUNCTION_TEST_RESULT(UINT64, result);
+}
+
+/***********************************************************************************************************************************
 Convert uint64 to zero-terminated string
 ***********************************************************************************************************************************/
 size_t
@@ -289,7 +314,7 @@ cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize)
 }
 
 /***********************************************************************************************************************************
-Convert uint64 to zero-terminated string
+Convert uint64 to zero-terminated string and visa versa
 ***********************************************************************************************************************************/
 size_t
 cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize)
@@ -308,4 +333,22 @@ cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize)
         THROW(AssertError, "buffer overflow");
 
     FUNCTION_TEST_RESULT(SIZE, result);
+}
+
+uint64_t
+cvtZToUInt64(const char *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, value);
+
+        FUNCTION_TEST_ASSERT(value != NULL);
+    FUNCTION_TEST_END();
+
+    uint64_t result = cvtZToUInt64Internal(value, "uint64");
+
+    // Don't allow negative numbers even though strtoull() does
+    if (*value == '-')
+        THROW_FMT(FormatError, "unable to convert string '%s' to uint64", value);
+
+    FUNCTION_TEST_RESULT(UINT64, result);
 }
