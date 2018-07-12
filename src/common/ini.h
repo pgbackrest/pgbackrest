@@ -18,11 +18,12 @@ Ini *iniNew();
 const Variant *iniGet(const Ini *this, const String *section, const String *key);
 const Variant *iniGetDefault(const Ini *this, const String *section, const String *key, Variant *defaultValue);
 StringList *iniSectionKeyList(const Ini *this, const String *section);
+StringList *iniSectionList(const Ini *this);
 void iniParse(Ini *this, const String *content);
-void iniLoad(Ini *this, const String *fileName);
 void iniSet(Ini *this, const String *section, const String *key, const Variant *value);
-
 void iniFree(Ini *this);
+String *iniFileName(const Ini *this);
+bool iniFileExists(const Ini *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

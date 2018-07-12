@@ -32,6 +32,14 @@
 
                         <p>Add <code>uint64</code> variant type and supporting conversion functions.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>iniSectionList()</code> to <code>Ini</code> object and remove dead code.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
