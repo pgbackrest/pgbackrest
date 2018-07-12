@@ -281,6 +281,7 @@ sub backupCreate
     my $strManifestFile = "$$oStanza{strBackupClusterPath}/${strBackupLabel}/" . FILE_MANIFEST;
 
     my $oManifest = new pgBackRest::Manifest($strManifestFile, {bLoad => false, strDbVersion => PG_VERSION_93,
+        iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_93),
         strCipherPass => $strCipherPassManifest, strCipherPassSub => $strCipherPassBackupSet});
 
     # Store information about the backup into the backup section
