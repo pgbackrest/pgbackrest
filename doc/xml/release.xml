@@ -13,6 +13,18 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.05dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-reviewer id="frost.stephen"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve performance of string to int conversion.  Use <code>strtoll()</code> instead of <code>sprintf()</code> for conversion.  Also use available integer min/max constants rather than hard-coded values.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
 
             <release-test-list>
                 <release-improvement-list>

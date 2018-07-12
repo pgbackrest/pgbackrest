@@ -118,8 +118,8 @@ testRun()
         TEST_RESULT_INT(varInt64Force(varNewStrZ("9223372036854775807")), 9223372036854775807L, "force str to int64");
 
         TEST_ERROR(
-            varInt64Force(varNewStrZ("9923372036854775807")), FormatError,
-            "unable to convert string '9923372036854775807' to int64");
+            varInt64Force(varNewStrZ("9223372036854775808")), FormatError,
+            "unable to convert string '9223372036854775808' to int64");
         TEST_ERROR(varInt64Force(varNewVarLst(varLstNew())), FormatError, "unable to force VariantList to int64");
 
         // -------------------------------------------------------------------------------------------------------------------------

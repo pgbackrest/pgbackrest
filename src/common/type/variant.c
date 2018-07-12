@@ -457,7 +457,8 @@ varIntForce(const Variant *this)
         {
             int64_t resultTest = varInt64(this);
 
-            if (resultTest > 2147483647 || resultTest < -2147483648)
+            // Make sure the value fits into a normal 32-bit int range since 32-bit platforms are supported
+            if (resultTest > INT32_MAX || resultTest < INT32_MIN)
                 THROW_FMT(
                     AssertError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeInt]);
