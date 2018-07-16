@@ -403,17 +403,7 @@ varDblForce(const Variant *this)
 
         case varTypeUInt64:
         {
-            uint64_t resultTest = varUInt64(this);
-
-            if (resultTest <= 9223372036854775807)
-                result = (double)resultTest;
-            else
-            {
-                THROW_FMT(
-                    FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
-                    variantTypeName[varTypeDouble]);
-            }
-
+            result = (double)varUInt64(this);
             break;
         }
 
@@ -492,9 +482,8 @@ varIntForce(const Variant *this)
         {
             int64_t resultTest = varInt64(this);
 
-            // Not using INT_MIN/INT_MAX because the value can change depending on the system and we always want "int" to be a
-            // 32-bit value
-            if (resultTest > 2147483647 || resultTest < -2147483648)
+            // Make sure the value fits into a normal 32-bit int range since 32-bit platforms are supported
+            if (resultTest > INT32_MAX || resultTest < INT32_MIN)
                 THROW_FMT(
                     FormatError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeInt]);
@@ -507,7 +496,8 @@ varIntForce(const Variant *this)
         {
             uint64_t resultTest = varUInt64(this);
 
-            if (resultTest > 2147483647)
+            // Make sure the value fits into a normal 32-bit int range
+            if (resultTest > INT32_MAX)
                 THROW_FMT(
                     FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeInt]);
@@ -598,7 +588,7 @@ varInt64Force(const Variant *this)
             uint64_t resultTest = varUInt64(this);
 
             // If max number of unsigned 64-bit integer is greater than max 64-bit signed integer can hold, then error
-            if (resultTest <= 9223372036854775807)
+            if (resultTest <= INT64_MAX)
                 result = (int64_t)resultTest;
             else
             {

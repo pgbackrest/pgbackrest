@@ -64,11 +64,11 @@ testRun()
         TEST_RESULT_DOUBLE(varDblForce(varNewUInt64(9223372036854775807U)), 9223372036854775807U, "force uint64 to double");
         TEST_RESULT_DOUBLE(varDblForce(varNewStr(strNew("879.01"))), 879.01, "force String to double");
         TEST_RESULT_DOUBLE(varDblForce(varNewStr(strNew("0"))), 0, "force String to double");
+        TEST_RESULT_DOUBLE(
+            varDblForce(varNewUInt64(UINT64_MAX)), 18446744073709551616.0, "force max uint64 to double (it will be rounded)");
 
         TEST_ERROR(varDblForce(varNewStr(strNew("AAA"))), FormatError, "unable to convert string 'AAA' to double");
         TEST_ERROR(varDblForce(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to double");
-        TEST_ERROR(varDblForce(varNewUInt64(9223372036854775808U)), FormatError,
-            "unable to convert uint64 9223372036854775808 to double");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_DOUBLE(varDbl(varDup(varNewDbl(3.1415))), 3.1415, "dup double");
@@ -125,8 +125,8 @@ testRun()
         TEST_RESULT_INT(varInt64Force(varNewUInt64(9223372036854775807U)), 9223372036854775807L, "force uint64 to int64");
 
         TEST_ERROR(
-            varInt64Force(varNewStrZ("9923372036854775807")), FormatError,
-            "unable to convert string '9923372036854775807' to int64");
+            varInt64Force(varNewStrZ("9223372036854775808")), FormatError,
+            "unable to convert string '9223372036854775808' to int64");
         TEST_ERROR(varInt64Force(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to int64");
         TEST_ERROR(varInt64Force(varNewUInt64(9223372036854775808U)), FormatError,
             "unable to convert uint64 9223372036854775808 to int64");

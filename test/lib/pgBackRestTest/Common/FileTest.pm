@@ -107,8 +107,11 @@ sub testFileCreate
     open($hFile, '>', $strFile)
         or confess "unable to open ${strFile} for writing";
 
-    syswrite($hFile, $strContent)
-        or confess "unable to write to ${strFile}: $!";
+    if (defined($strContent) && $strContent ne '')
+    {
+        syswrite($hFile, $strContent)
+            or confess "unable to write to ${strFile}: $!";
+    }
 
     close($hFile);
 

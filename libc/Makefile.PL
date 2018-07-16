@@ -1,5 +1,8 @@
 ####################################################################################################################################
 # Build Makefile and Auto-Generate Files Required for Build
+#
+# The C library is only used for Perl unit tests.  For a production build all C library exports are built directly into the
+# pgbackrest executable.  See src/perl/libc.auto.c.
 ####################################################################################################################################
 use 5.010001;
 use strict;
@@ -14,12 +17,20 @@ use Cwd qw(abs_path);
 use ExtUtils::MakeMaker;
 use File::Basename qw(dirname);
 
-use lib dirname($0) . '/lib';
-
 ####################################################################################################################################
 # Storage object to use for all file operations
 ####################################################################################################################################
 use constant BACKREST_NAME                                          => 'pgBackRest';
+
+####################################################################################################################################
+# Make sure the makefile is being created in an expected test directory.  This should prevent users from building it in production.
+####################################################################################################################################
+if (dirname($0) !~ /\.vagrant\/bin\/[^\/]+\/libc$/)
+{
+    confess
+        "LibC is not being built in a test directory (" . dirname($0) .
+        ").  LibC should not be distributed for production builds.  See build documentation for details.";
+}
 
 ####################################################################################################################################
 # Create C Makefile
