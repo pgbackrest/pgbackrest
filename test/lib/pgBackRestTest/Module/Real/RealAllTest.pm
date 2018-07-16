@@ -119,6 +119,7 @@ sub run
 
         # Create a manifest with the pg version to get version-specific paths
         my $oManifest = new pgBackRest::Manifest(BOGUS, {bLoad => false, strDbVersion => $self->pgVersion(),
+            iDbCatalogVersion => $self->dbCatalogVersion($self->pgVersion()),
             strCipherPass => $strCipherPass, strCipherPassSub => $bRepoEncrypt ? ENCRYPTION_KEY_BACKUPSET : undef});
 
         # Static backup parameters

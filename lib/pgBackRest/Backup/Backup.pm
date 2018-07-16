@@ -667,7 +667,7 @@ sub process
     # Instead just instantiate it. Pass the passphrases to open the manifest and one to encrypt the backup files if the repo is
     # encrypted (undefined if not).
     my $oBackupManifest = new pgBackRest::Manifest("$strBackupPath/" . FILE_MANIFEST,
-        {bLoad => false, strDbVersion => $strDbVersion,
+        {bLoad => false, strDbVersion => $strDbVersion, iDbCatalogVersion => $iCatalogVersion,
         strCipherPass => defined($strCipherPassManifest) ? $strCipherPassManifest : undef,
         strCipherPassSub => defined($strCipherPassManifest) ? $strCipherPassBackupSet : undef});
 
@@ -687,7 +687,6 @@ sub process
     # Database settings
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $iDbHistoryId);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
-    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iCatalogVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
 
     # Backup from standby can only be used on PostgreSQL >= 9.1
