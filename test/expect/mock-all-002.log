@@ -122,7 +122,7 @@ P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = <false>, strExpression 
 P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = true, strExpression = ^[BACKUP-FULL-1], strPathExp = <REPO:BACKUP>/backup.history/[YEAR-1], strSortOrder = <forward>
 P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
-P00  DEBUG:     Manifest->new(): bLoad = false, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-1]/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = false, iDbCatalogVersion = 201409291, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-1]/backup.manifest
 P00  DEBUG:     Protocol::Storage::Remote->exists(): strPathExp = [TEST_PATH]/db-master/db/base/postmaster.pid
 P00  DEBUG:     Protocol::Storage::Remote->exists=>: bExists = false
 P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], oLastManifest = [undef], oStorageDbMaster = [object], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
@@ -576,7 +576,7 @@ P00  DEBUG:     Storage::Local->exists(): strFileExp = <REPO:BACKUP>/[BACKUP-FUL
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = <REPO:BACKUP>/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
-P00  DEBUG:     Manifest->new(): bLoad = <true>, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = <true>, iDbCatalogVersion = [undef], oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
@@ -589,7 +589,7 @@ P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest.copy
 P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
-P00  DEBUG:     Manifest->new(): bLoad = false, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = false, iDbCatalogVersion = 201409291, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Protocol::Storage::Remote->exists(): strPathExp = [TEST_PATH]/db-master/db/base/postmaster.pid
 P00  DEBUG:     Protocol::Storage::Remote->exists=>: bExists = false
 P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], oLastManifest = [undef], oStorageDbMaster = [object], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
@@ -925,7 +925,7 @@ P00  DEBUG:     Storage::Local->exists(): strFileExp = <REPO:BACKUP>/[BACKUP-FUL
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = <REPO:BACKUP>/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
-P00  DEBUG:     Manifest->new(): bLoad = <true>, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = <true>, iDbCatalogVersion = [undef], oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
@@ -938,7 +938,7 @@ P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest.copy
 P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
-P00  DEBUG:     Manifest->new(): bLoad = false, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = false, iDbCatalogVersion = 201409291, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Protocol::Storage::Remote->exists(): strPathExp = [TEST_PATH]/db-master/db/base/postmaster.pid
 P00  DEBUG:     Protocol::Storage::Remote->exists=>: bExists = false
 P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], oLastManifest = [undef], oStorageDbMaster = [object], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
@@ -1075,7 +1075,7 @@ P00  DEBUG:     Storage::Local->exists(): strFileExp = <REPO:BACKUP>/[BACKUP-FUL
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = <REPO:BACKUP>/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
-P00  DEBUG:     Manifest->new(): bLoad = <true>, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = <true>, iDbCatalogVersion = [undef], oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
@@ -1088,7 +1088,7 @@ P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest.copy
 P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
-P00  DEBUG:     Manifest->new(): bLoad = false, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = false, iDbCatalogVersion = 201409291, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Protocol::Storage::Remote->exists(): strPathExp = [TEST_PATH]/db-master/db/base/postmaster.pid
 P00  DEBUG:     Protocol::Storage::Remote->exists=>: bExists = true
 P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like the postmaster is running and the backup will probably not be consistent
@@ -1475,7 +1475,7 @@ P00  DEBUG:     Protocol::Storage::Remote->exists=>: bExists = true
 P00  DEBUG:     Protocol::Storage::Remote->openRead(): rhParam = [hash], strFileExp = <REPO:BACKUP>/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [TEST_PATH]/db-master/db/base/backup.manifest, xSourceFile = [object]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/db/base/backup.manifest
-P00  DEBUG:     Manifest->new(): bLoad = <true>, oStorage = [object], strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/db-master/db/base/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = <true>, iDbCatalogVersion = [undef], oStorage = [object], strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/db-master/db/base/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/db/base/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
@@ -1950,7 +1950,7 @@ P00  DEBUG:     Backup::Info->list=>: stryBackup = ([BACKUP-FULL-2])
 P00  DEBUG:     Backup::Info->last=>: strBackup = [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Info->dbHistoryList=>: hDbHash = [hash]
 P00  DEBUG:     Backup::Info->confirmDb=>: bConfirmDb = true
-P00  DEBUG:     Manifest->new(): bLoad = <true>, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = <true>, iDbCatalogVersion = [undef], oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
@@ -1970,7 +1970,7 @@ P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = <false>, strExpression 
 P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = true, strExpression = [BACKUP-EXPR](D|I)\.manifest\.gz$, strPathExp = <REPO:BACKUP>/backup.history/[YEAR-1], strSortOrder = <forward>
 P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
-P00  DEBUG:     Manifest->new(): bLoad = false, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-1]/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = false, iDbCatalogVersion = 201409291, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-1]/backup.manifest
 P00  DEBUG:     Protocol::Storage::Remote->exists(): strPathExp = [TEST_PATH]/db-master/db/base/postmaster.pid
 P00  DEBUG:     Protocol::Storage::Remote->exists=>: bExists = false
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
@@ -2363,7 +2363,7 @@ P00  DEBUG:     Backup::Info->list=>: stryBackup = ([BACKUP-FULL-2])
 P00  DEBUG:     Backup::Info->last=>: strBackup = [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Info->dbHistoryList=>: hDbHash = [hash]
 P00  DEBUG:     Backup::Info->confirmDb=>: bConfirmDb = true
-P00  DEBUG:     Manifest->new(): bLoad = <true>, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = <true>, iDbCatalogVersion = [undef], oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
@@ -2379,7 +2379,7 @@ P00  DEBUG:     Storage::Local->exists(): strFileExp = <REPO:BACKUP>/[BACKUP-INC
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = <REPO:BACKUP>/[BACKUP-INCR-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
-P00  DEBUG:     Manifest->new(): bLoad = <true>, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-2]/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = <true>, iDbCatalogVersion = [undef], oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = [undef], strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-2]/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-2]/backup.manifest
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
@@ -2392,7 +2392,7 @@ P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-2]/backup.manifest.copy
 P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
-P00  DEBUG:     Manifest->new(): bLoad = false, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-2]/backup.manifest
+P00  DEBUG:     Manifest->new(): bLoad = false, iDbCatalogVersion = 201409291, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-2]/backup.manifest
 P00  DEBUG:     Protocol::Storage::Remote->exists(): strPathExp = [TEST_PATH]/db-master/db/base/postmaster.pid
 P00  DEBUG:     Protocol::Storage::Remote->exists=>: bExists = false
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
