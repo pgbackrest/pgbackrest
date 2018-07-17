@@ -34,6 +34,14 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow <code>Buffer</code> object <quote>used size</quote> to be different than <quote>allocated size</quote>.  Add functions to manage used size and remaining size and update automatically when possible.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p><code>storageFileRead()</code> accepts a buffer for output rather than creating one.  This is more efficient overall and allows the caller to specify how many bytes will be read on each call.  Reads are appended if the buffer already contains data but the buffer size will never increase.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>

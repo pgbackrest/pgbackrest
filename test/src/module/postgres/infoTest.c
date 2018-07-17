@@ -49,7 +49,10 @@ testRun()
     {
         String *controlFile = strNew(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
         PgControlFile control = {.systemId = 0xFACEFACE, .controlVersion = 833, .catalogVersion = 200711281};
-        storagePutNP(storageNewWriteNP(storageTest, controlFile), bufNewC(sizeof(PgControlFile), &control));
+        Buffer *controlBuffer = bufNew(512);
+        memcpy(bufPtr(controlBuffer), &control, sizeof(PgControlFile));
+        bufUsedSet(controlBuffer, bufSize(controlBuffer));
+        storagePutNP(storageNewWriteNP(storageTest, controlFile), controlBuffer);
 
         PgControlInfo info = {0};
         TEST_ASSIGN(info, pgControlInfo(strNew(testPath())), "get control info");

@@ -42,7 +42,7 @@ testRun()
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("bufResize()"))
+    if (testBegin("bufResize(), bufFull(), bufRemains*(), and bufUsed*()"))
     {
         Buffer *buffer = NULL;
         unsigned char *bufferPtr = NULL;
@@ -51,6 +51,8 @@ testRun()
         TEST_RESULT_INT(bufSize(buffer), 0, "check size");
         TEST_RESULT_PTR(bufResize(buffer, 256), buffer, "resize buffer");
         TEST_RESULT_INT(bufSize(buffer), 256, "check size");
+        TEST_RESULT_VOID(bufUsedSet(buffer, 256), "set used size");
+        TEST_RESULT_BOOL(bufFull(buffer), true, "check buffer full");
 
         // Load data
         TEST_ASSIGN(bufferPtr, bufPtr(buffer), "buffer pointer");
@@ -62,6 +64,12 @@ testRun()
         TEST_ASSIGN(bufferPtr, bufPtr(bufResize(buffer, 512)), "increase buffer size");
         TEST_ASSIGN(bufferPtr, bufPtr(bufResize(buffer, 512)), "set to same size");
         TEST_RESULT_INT(bufSize(buffer), 512, "check size");
+        TEST_RESULT_INT(bufUsed(buffer), 256, "check used size");
+        TEST_RESULT_BOOL(bufFull(buffer), false, "check buffer not full");
+        TEST_RESULT_INT(bufRemains(buffer), 256, "check remaining buffer space");
+        TEST_RESULT_PTR(bufRemainsPtr(buffer), bufPtr(buffer) + 256, "check remaining buffer space pointer");
+        TEST_RESULT_VOID(bufUsedInc(buffer, 256), "set used size");
+        TEST_RESULT_BOOL(bufFull(buffer), true, "check buffer full");
 
         // Test that no bytes have changed in the original data
         unsigned int sameTotal = 0;
@@ -84,9 +92,12 @@ testRun()
         TEST_RESULT_INT(sameTotal, 128, "original bytes match");
 
         // Resize to zero buffer
-        TEST_ASSIGN(bufferPtr, bufPtr(bufResize(buffer, 0)), "decrease to zero");
+        TEST_RESULT_VOID(bufUsedZero(buffer), "set used to 0");
+        TEST_RESULT_INT(bufUsed(buffer), 0, "check used is zero");
+
+        TEST_RESULT_VOID(bufResize(buffer, 0), "decrease size to zero");
         TEST_RESULT_INT(bufSize(buffer), 0, "check size");
-        TEST_ASSIGN(bufferPtr, bufPtr(bufResize(buffer, 0)), "decrease to zero again");
+        TEST_RESULT_VOID(bufResize(buffer, 0), "decrease size to zero again");
         TEST_RESULT_INT(bufSize(buffer), 0, "check size");
     }
 
@@ -104,6 +115,10 @@ testRun()
         TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewStr(strNew("123")), NULL))), "123", "cat null buffer");
         TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewStr(strNew("123")), bufNew(0)))), "123", "cat empty buffer");
         TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewStr(strNew("123")), bufNewStr(strNew("ABC"))))), "123ABC", "cat buffer");
+
+        Buffer *buffer = NULL;
+        TEST_ASSIGN(buffer, bufNew(2), "new buffer with space");
+        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(buffer, bufNewStr(strNew("AB"))))), "AB", "cat buffer with space");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

@@ -138,7 +138,7 @@ storageFileWritePosix(StorageFileWritePosix *this, const Buffer *buffer)
     FUNCTION_DEBUG_END();
 
     // Write the data
-    if (write(this->handle, bufPtr(buffer), bufSize(buffer)) != (ssize_t)bufSize(buffer))
+    if (write(this->handle, bufPtr(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
         THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strPtr(this->name));
 
     FUNCTION_DEBUG_RESULT_VOID();

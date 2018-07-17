@@ -22,7 +22,7 @@ StorageFileRead *storageFileReadNew(const String *name, bool ignoreMissing, size
 Functions
 ***********************************************************************************************************************************/
 bool storageFileReadOpen(StorageFileRead *this);
-Buffer *storageFileRead(StorageFileRead *this);
+void storageFileRead(StorageFileRead *this, Buffer *buffer);
 void storageFileReadClose(StorageFileRead *this);
 
 StorageFileRead *storageFileReadMove(StorageFileRead *this, MemContext *parentNew);
@@ -30,7 +30,9 @@ StorageFileRead *storageFileReadMove(StorageFileRead *this, MemContext *parentNe
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+size_t storageFileReadBufferSize(const StorageFileRead *this);
 StorageFileReadPosix *storageFileReadFileDriver(const StorageFileRead *this);
+bool storageFileReadEof(const StorageFileRead *this);
 bool storageFileReadIgnoreMissing(const StorageFileRead *this);
 const String *storageFileReadName(const StorageFileRead *this);
 size_t storageFileReadSize(const StorageFileRead *this);
