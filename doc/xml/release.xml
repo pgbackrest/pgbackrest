@@ -40,6 +40,14 @@
 
                         <p>Add <code>iniSectionList()</code> to <code>Ini</code> object and remove dead code.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Require <postgres/> catalog version when instantiating a <code>Manifest</code> object (and not loading it from disk).</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

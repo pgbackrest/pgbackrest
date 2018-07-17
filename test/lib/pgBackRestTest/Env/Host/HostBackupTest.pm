@@ -1811,14 +1811,8 @@ sub restoreCompare
     my $oActualManifest = new pgBackRest::Manifest(
         "${strTestPath}/" . FILE_MANIFEST,
         {bLoad => false, strDbVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION},
+            iDbCatalogVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG},
             oStorage => storageTest()});
-
-    $oActualManifest->set(
-        MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef,
-        $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION});
-    $oActualManifest->numericSet(
-        MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
-        $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG});
 
     $oActualManifest->build(storageTest(), $strDbClusterPath, $oLastManifest, false, $oTablespaceMap);
 
