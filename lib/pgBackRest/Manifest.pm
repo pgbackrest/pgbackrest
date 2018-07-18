@@ -284,6 +284,7 @@ sub new
         $bLoad,
         $oStorage,
         $strDbVersion,
+        $iDbCatalogVersion,
         $strCipherPass,                                             # Passphrase to open the manifest if encrypted
         $strCipherPassSub,                                          # Passphrase to encrypt the backup files
     ) =
@@ -294,6 +295,7 @@ sub new
             {name => 'bLoad', optional => true, default => true, trace => true},
             {name => 'oStorage', optional => true, default => storageRepo(), trace => true},
             {name => 'strDbVersion', optional => true, trace => true},
+            {name => 'iDbCatalogVersion', optional => true, trace => true},
             {name => 'strCipherPass', optional => true, redact => true},
             {name => 'strCipherPassSub', optional => true, redact => true},
         );
@@ -302,15 +304,16 @@ sub new
     my $self = $class->SUPER::new($strFileName, {bLoad => $bLoad, oStorage => $oStorage, strCipherPass => $strCipherPass,
         strCipherPassSub => $strCipherPassSub});
 
-    # If manifest not loaded from a file then the db version must be set
+    # If manifest not loaded from a file then the db version and catalog version must be set
     if (!$bLoad)
     {
-        if (!defined($strDbVersion))
+        if (!(defined($strDbVersion) && defined($iDbCatalogVersion)))
         {
-            confess &log(ASSERT, 'strDbVersion must be provided with bLoad = false');
+            confess &log(ASSERT, 'strDbVersion and iDbCatalogVersion must be provided with bLoad = false');
         }
 
         $self->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $strDbVersion);
+        $self->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iDbCatalogVersion);
     }
 
     # Return from function and log return values if any

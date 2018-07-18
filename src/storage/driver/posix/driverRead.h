@@ -15,18 +15,19 @@ typedef struct StorageFileReadPosix StorageFileReadPosix;
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-StorageFileReadPosix *storageFileReadPosixNew(const String *name, bool ignoreMissing, size_t bufferSize);
+StorageFileReadPosix *storageFileReadPosixNew(const String *name, bool ignoreMissing);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 bool storageFileReadPosixOpen(StorageFileReadPosix *this);
-Buffer *storageFileReadPosix(StorageFileReadPosix *this);
+void storageFileReadPosix(StorageFileReadPosix *this, Buffer *buffer);
 void storageFileReadPosixClose(StorageFileReadPosix *this);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+bool storageFileReadPosixEof(StorageFileReadPosix *this);
 bool storageFileReadPosixIgnoreMissing(StorageFileReadPosix *this);
 const String *storageFileReadPosixName(StorageFileReadPosix *this);
 size_t storageFileReadPosixSize(StorageFileReadPosix *this);

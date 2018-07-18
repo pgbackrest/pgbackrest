@@ -116,7 +116,10 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         String *controlFile = strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
         PgControlFile control = {.systemId = 0xFACEFACE, .controlVersion = 1002, .catalogVersion = 201707211};
-        storagePutNP(storageNewWriteNP(storageTest, controlFile), bufNewC(sizeof(PgControlFile), &control));
+        Buffer *controlBuffer = bufNew(512);
+        memcpy(bufPtr(controlBuffer), &control, sizeof(PgControlFile));
+        bufUsedSet(controlBuffer, bufSize(controlBuffer));
+        storagePutNP(storageNewWriteNP(storageTest, controlFile), controlBuffer);
 
         storagePathCreateNP(storageTest, strNewFmt("%s/db/pg_wal", testPath()));
 

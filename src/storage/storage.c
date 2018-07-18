@@ -87,14 +87,15 @@ storageCopy(StorageFileRead *source, StorageFileWrite *destination)
             storageFileWriteOpen(destination);
 
             // Copy data from source to destination
-            Buffer *read = NULL;
+            Buffer *read = bufNew(storageFileReadBufferSize(source));
 
             do
             {
-                read = storageFileRead(source);
+                storageFileRead(source, read);
                 storageFileWrite(destination, read);
+                bufUsedZero(read);
             }
-            while (read != NULL);
+            while (!storageFileReadEof(source));
 
             // Close the source and destination files
             storageFileReadClose(source);
@@ -151,10 +152,11 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
 Read from storage into a buffer
 ***********************************************************************************************************************************/
 Buffer *
-storageGet(StorageFileRead *file)
+storageGet(StorageFileRead *file, StorageGetParam param)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ, file);
+        FUNCTION_DEBUG_PARAM(SIZE, param.exactSize);
 
         FUNCTION_TEST_ASSERT(file != NULL);
     FUNCTION_DEBUG_END();
@@ -166,20 +168,38 @@ storageGet(StorageFileRead *file)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            result = bufNew(0);
-            Buffer *read = NULL;
-
-            do
+            // If exact read
+            if (param.exactSize > 0)
             {
-                // Read data
-                read = storageFileRead(file);
+                result = bufNew(param.exactSize);
+                storageFileRead(file, result);
 
-                // Add to result and free read buffer
-                bufCat(result, read);
-                bufFree(read);
+                // If an exact read make sure the size is as expected
+                if (bufUsed(result) != param.exactSize)
+                {
+                    THROW_FMT(
+                        FileReadError, "unable to read %zu byte(s) from '%s'", param.exactSize, strPtr(storageFileReadName(file)));
+                }
             }
-            while (read != NULL);
+            // Else read entire file
+            else
+            {
+                result = bufNew(0);
+                Buffer *read = bufNew(storageFileReadBufferSize(file));
 
+                do
+                {
+                    // Read data
+                    storageFileRead(file, read);
+
+                    // Add to result and free read buffer
+                    bufCat(result, read);
+                    bufUsedZero(read);
+                }
+                while (!storageFileReadEof(file));
+            }
+
+            // Move buffer to parent context on success
             bufMove(result, MEM_CONTEXT_OLD());
         }
         MEM_CONTEXT_TEMP_END();
@@ -302,14 +322,12 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
 
     StorageFileRead *result = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageFileRead")
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *fileName = storagePathNP(this, fileExp);
-
-        // Create the file
-        result = storageFileReadMove(storageFileReadNew(fileName, param.ignoreMissing, this->bufferSize), MEM_CONTEXT_OLD());
+        result = storageFileReadMove(
+            storageFileReadNew(storagePathNP(this, fileExp), param.ignoreMissing, this->bufferSize), MEM_CONTEXT_OLD());
     }
-    MEM_CONTEXT_NEW_END();
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_DEBUG_RESULT(STORAGE_FILE_READ, result);
 }
@@ -338,12 +356,9 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *fileName = storagePathNP(this, fileExp);
-
-        // Create the file
         result = storageFileWriteMove(
             storageFileWriteNew(
-                fileName, param.modeFile != 0 ? param.modeFile : this->modeFile,
+                storagePathNP(this, fileExp), param.modeFile != 0 ? param.modeFile : this->modeFile,
                 param.modePath != 0 ? param.modePath : this->modePath, param.noCreatePath, param.noSyncFile, param.noSyncPath,
                 param.noAtomic),
             MEM_CONTEXT_OLD());

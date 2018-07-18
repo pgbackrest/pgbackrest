@@ -827,7 +827,7 @@ eval
 
                             executeTest(
                                 ($bContainerExists ? "docker exec -i test-build bash -c '" : '') .
-                                "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
+                                "cd ${strBuildPath} && perl ${strBuildPath}/Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
                                 ($bContainerExists ? "'" : ''),
                                 {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
                         }

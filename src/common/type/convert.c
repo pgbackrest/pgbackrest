@@ -1,7 +1,9 @@
 /***********************************************************************************************************************************
 Convert Base Data Types
 ***********************************************************************************************************************************/
+#include <ctype.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +11,82 @@ Convert Base Data Types
 #include "common/assert.h"
 #include "common/debug.h"
 #include "common/type/convert.h"
+
+/***********************************************************************************************************************************
+Check results of strto*() function for:
+    * leading/trailing spaces
+    * invalid characters
+    * blank string
+    * error in errno
+***********************************************************************************************************************************/
+static void
+cvtZToIntValid(int errNo, const char *value, const char *endPtr, const char *type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, errNo);
+        FUNCTION_TEST_PARAM(CHARP, value);
+        FUNCTION_TEST_PARAM(CHARP, endPtr);
+        FUNCTION_TEST_PARAM(CHARP, type);
+
+        FUNCTION_TEST_ASSERT(value != NULL);
+        FUNCTION_TEST_ASSERT(endPtr != NULL);
+    FUNCTION_TEST_END();
+
+    if (errNo != 0 || *value == '\0' || isspace(*value) || *endPtr != '\0')
+        THROW_FMT(FormatError, "unable to convert string '%s' to %s", value, type);
+
+    FUNCTION_TEST_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Convert zero-terminated string to int64 and validate result
+***********************************************************************************************************************************/
+static int64_t
+cvtZToInt64Internal(const char *value, const char *type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, value);
+        FUNCTION_TEST_PARAM(CHARP, type);
+
+        FUNCTION_TEST_ASSERT(value != NULL);
+        FUNCTION_TEST_ASSERT(type != NULL);
+    FUNCTION_TEST_END();
+
+    // Convert from string
+    errno = 0;
+    char *endPtr = NULL;
+    int64_t result = strtoll(value, &endPtr, 10);
+
+    // Validate the result
+    cvtZToIntValid(errno, value, endPtr, type);
+
+    FUNCTION_TEST_RESULT(INT64, result);
+}
+
+/***********************************************************************************************************************************
+Convert zero-terminated string to uint64 and validate result
+***********************************************************************************************************************************/
+static uint64_t
+cvtZToUInt64Internal(const char *value, const char *type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, value);
+        FUNCTION_TEST_PARAM(CHARP, type);
+
+        FUNCTION_TEST_ASSERT(value != NULL);
+        FUNCTION_TEST_ASSERT(type != NULL);
+    FUNCTION_TEST_END();
+
+    // Convert from string
+    errno = 0;
+    char *endPtr = NULL;
+    uint64_t result = strtoull(value, &endPtr, 10);
+
+    // Validate the result
+    cvtZToIntValid(errno, value, endPtr, type);
+
+    FUNCTION_TEST_RESULT(UINT64, result);
+}
 
 /***********************************************************************************************************************************
 Convert uint64 to zero-terminated string
@@ -127,12 +205,12 @@ cvtZToInt(const char *value)
         FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
 
-    int result = atoi(value);
+    int64_t result = cvtZToInt64Internal(value, "int");
 
-    if (result == 0 && strcmp(value, "0") != 0)
+    if (result > INT_MAX || result < INT_MIN)
         THROW_FMT(FormatError, "unable to convert string '%s' to int", value);
 
-    FUNCTION_TEST_RESULT(INT, result);
+    FUNCTION_TEST_RESULT(INT, (int)result);
 }
 
 /***********************************************************************************************************************************
@@ -166,15 +244,7 @@ cvtZToInt64(const char *value)
         FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
 
-    int64_t result = atoll(value);
-
-    char buffer[32];
-    snprintf(buffer, sizeof(buffer), "%" PRId64, result);
-
-    if (strcmp(value, buffer) != 0)
-        THROW_FMT(FormatError, "unable to convert string '%s' to int64", value);
-
-    FUNCTION_TEST_RESULT(INT64, result);
+    FUNCTION_TEST_RESULT(INT64, cvtZToInt64Internal(value, "int64"));
 }
 
 /***********************************************************************************************************************************
@@ -244,7 +314,7 @@ cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize)
 }
 
 /***********************************************************************************************************************************
-Convert uint64 to zero-terminated string
+Convert uint64 to zero-terminated string and visa versa
 ***********************************************************************************************************************************/
 size_t
 cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize)
@@ -263,4 +333,22 @@ cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize)
         THROW(AssertError, "buffer overflow");
 
     FUNCTION_TEST_RESULT(SIZE, result);
+}
+
+uint64_t
+cvtZToUInt64(const char *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, value);
+
+        FUNCTION_TEST_ASSERT(value != NULL);
+    FUNCTION_TEST_END();
+
+    uint64_t result = cvtZToUInt64Internal(value, "uint64");
+
+    // Don't allow negative numbers even though strtoull() does
+    if (*value == '-')
+        THROW_FMT(FormatError, "unable to convert string '%s' to uint64", value);
+
+    FUNCTION_TEST_RESULT(UINT64, result);
 }

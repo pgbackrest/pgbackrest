@@ -20,10 +20,62 @@
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
-                        <p>Eliminated copying of unnecessary temporary and unlogged table/index files during a backup.</p>
+                        <p>Eliminated copying of unnecessary temporary and unlogged table/index files during a backup to improve speed and space.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-reviewer id="frost.stephen"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve performance of string to int conversion.  Use <code>strtoll()</code> instead of <code>sprintf()</code> for conversion.  Also use available integer min/max constants rather than hard-coded values.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-reviewer id="frost.stephen"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>uint64</code> variant type and supporting conversion functions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Allow <code>Buffer</code> object <quote>used size</quote> to be different than <quote>allocated size</quote>.  Add functions to manage used size and remaining size and update automatically when possible.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p><code>storageFileRead()</code> accepts a buffer for output rather than creating one.  This is more efficient overall and allows the caller to specify how many bytes will be read on each call.  Reads are appended if the buffer already contains data but the buffer size will never increase.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>iniSectionList()</code> to <code>Ini</code> object and remove dead code.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Require <postgres/> catalog version when instantiating a <code>Manifest</code> object (and not loading it from disk).</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-improvement-list>
+                    <release-item>
+                        <p>Error if LibC build is performed outside the test environment.  LibC is no longer required for production builds.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-test-list>
         </release>
 
         <release date="2018-07-05" version="2.04" title="Critical Bug Fix for Backup Resume">

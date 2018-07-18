@@ -23,7 +23,7 @@ testRun()
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("iniSet(), iniGet(), iniGetDefault(), and iniSectionKeyList()"))
+    if (testBegin("iniSet(), iniGet(), iniGetDefault(), iniSectionList(), and iniSectionKeyList()"))
     {
         Ini *ini = NULL;
 
@@ -44,11 +44,15 @@ testRun()
         TEST_RESULT_INT(strLstSize(iniSectionKeyList(ini, strNew("bogus"))), 0, "get keys for missing section");
         TEST_RESULT_STR(strPtr(strLstJoin(iniSectionKeyList(ini, strNew("section1")), "|")), "key1|key2", "get keys for section");
 
+        TEST_RESULT_VOID(iniSet(ini, strNew("section2"), strNew("key2"), varNewInt(2)), "set section2, key, int");
+        TEST_RESULT_INT(strLstSize(iniSectionList(ini)), 2, "number of sections");
+        TEST_RESULT_STR(strPtr(strLstJoin(iniSectionList(ini), "|")), "section1|section2", "get sections");
+
         TEST_RESULT_VOID(iniFree(ini), "free ini");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("iniParse() and iniLoad()"))
+    if (testBegin("iniParse()"))
     {
         Ini *ini = NULL;
         String *content = NULL;
@@ -66,6 +70,7 @@ testRun()
 
         content = strNew
         (
+            "# Comment\n"
             "[global] \n"
             "compress=y \n"
             "\n"
@@ -74,27 +79,6 @@ testRun()
         );
 
         TEST_RESULT_VOID(iniParse(ini, content), "load ini");
-
-        TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("global"), strNew("compress")))), "y", "get compress");
-        TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("db"), strNew("pg1-path")))), "/path/to/pg", "get pg1-path");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(ini, iniNew(), "new ini");
-        String *fileName = strNewFmt("%s/test.ini", testPath());
-
-        content = strNew
-        (
-            "# Comment\n"
-            " [global]\n"
-            "           \n"
-            " compress= y \n"
-            "[db]\t\r\n"
-            " pg1-path =/path/to/pg\n"
-            "\n"
-        );
-
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put ini to file");
-        TEST_RESULT_VOID(iniLoad(ini, fileName), "load ini from file");
 
         TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("global"), strNew("compress")))), "y", "get compress");
         TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("db"), strNew("pg1-path")))), "/path/to/pg", "get pg1-path");

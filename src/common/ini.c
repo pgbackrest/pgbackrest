@@ -18,11 +18,10 @@ struct Ini
 {
     MemContext *memContext;                                         // Context that contains the ini
     KeyValue *store;                                                // Key value store that contains the ini data
-    String *fileName;                                               // File name (if one has been set)
 };
 
 /***********************************************************************************************************************************
-Create a new string from a zero-terminated string
+Create a new Ini object
 ***********************************************************************************************************************************/
 Ini *
 iniNew()
@@ -99,8 +98,6 @@ iniGet(const Ini *this, const String *section, const String *key)
     if (result == NULL)
         THROW_FMT(FormatError, "section '%s', key '%s' does not exist", strPtr(section), strPtr(key));
 
-    return result;
-
     FUNCTION_TEST_RESULT(CONST_VARIANT, result);
 }
 
@@ -152,12 +149,38 @@ iniSectionKeyList(const Ini *this, const String *section)
         // Get the section
         KeyValue *sectionKv = varKv(kvGet(this->store, varNewStr(section)));
 
-        // Return key list of the section exists
+        // Return key list if the section exists
         if (sectionKv != NULL)
             result = strLstNewVarLst(kvKeyList(sectionKv));
         // Otherwise return an empty list
         else
             result = strLstNew();
+
+        strLstMove(result, MEM_CONTEXT_OLD());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RESULT(STRING_LIST, result);
+}
+
+/***********************************************************************************************************************************
+Get a list of sections
+***********************************************************************************************************************************/
+StringList *
+iniSectionList(const Ini *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    StringList *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Get the sections from the keyList
+        result = strLstNewVarLst(kvKeyList(this->store));
 
         strLstMove(result, MEM_CONTEXT_OLD());
     }
@@ -242,36 +265,6 @@ iniParse(Ini *this, const String *content)
             }
             MEM_CONTEXT_TEMP_END();
         }
-    }
-    MEM_CONTEXT_END()
-
-    FUNCTION_TEST_RESULT_VOID();
-}
-
-/***********************************************************************************************************************************
-Load ini from a file
-***********************************************************************************************************************************/
-void
-iniLoad(Ini *this, const String *fileName)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INI, this);
-        FUNCTION_TEST_PARAM(STRING, fileName);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(fileName != NULL);
-    FUNCTION_TEST_END();
-
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        // Set the filename
-        this->fileName = strDup(fileName);
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            iniParse(this, strNewBuf(storageGetNP(storageNewReadNP(storageLocal(), this->fileName))));
-        }
-        MEM_CONTEXT_TEMP_END();
     }
     MEM_CONTEXT_END()
 

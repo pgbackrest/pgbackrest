@@ -272,7 +272,8 @@ sub run
         my $strBackupPath = storageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
 
         my $strBackupManifestFile = "$strBackupPath/" . FILE_MANIFEST;
-        my $oBackupManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
+        my $oBackupManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
+            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         storageRepo()->pathCreate($strBackupPath);
         $oBackupManifest->save();
 
@@ -338,12 +339,13 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         # Try to create a manifest without a passphrase in an encrypted storage
         $self->testException(sub {new pgBackRest::Manifest($strBackupManifestFile,
-            {bLoad => false, strDbVersion => PG_VERSION_94})}, ERROR_CIPHER,
-            'passphrase is required when storage is encrypted');
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)})},
+            ERROR_CIPHER, 'passphrase is required when storage is encrypted');
 
         # Get the encryption passphrase and create the new manifest
         my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath});
         $oBackupManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
+            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94),
             strCipherPass => $oBackupInfo->cipherPassSub(), strCipherPassSub => cipherPassGen()});
 
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupLabel);
@@ -797,6 +799,7 @@ sub run
         my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath});
 
         $self->testResult(sub {(new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
+            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94),
             strCipherPass => $oBackupInfo->cipherPassSub(), strCipherPassSub => 'x'}))->save()},
             "[undef]", '    manifest saved');
 

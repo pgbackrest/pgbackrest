@@ -550,6 +550,16 @@ testRun()
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TESTFILE\n", bufSize(buffer)) == 0, true, "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(
+            buffer, storageGetP(storageNewReadNP(storageTest, strNewFmt("%s/test.txt", testPath())), .exactSize = 4), "get exact");
+        TEST_RESULT_INT(bufSize(buffer), 4, "check size");
+        TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TEST", bufSize(buffer)) == 0, true, "check content");
+
+        TEST_ERROR_FMT(
+            storageGetP(storageNewReadNP(storageTest, strNewFmt("%s/test.txt", testPath())), .exactSize = 64), FileReadError,
+            "unable to read 64 byte(s) from '%s/test.txt'", testPath());
+
+        // -------------------------------------------------------------------------------------------------------------------------
         const Storage *storage = storageTest;
         ((Storage *)storage)->bufferSize = 2;
 

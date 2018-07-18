@@ -1,7 +1,9 @@
 /***********************************************************************************************************************************
 Variant Data Type
 ***********************************************************************************************************************************/
+#include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,6 +36,7 @@ static const char *variantTypeName[] =
     "KeyValue",                                                     // varTypeKeyValue
     "String",                                                       // varTypeString
     "VariantList",                                                  // varTypeVariantList
+    "uint64",                                                       // varTypeUInt64
 };
 
 /***********************************************************************************************************************************
@@ -117,6 +120,12 @@ varDup(const Variant *this)
                 break;
             }
 
+            case varTypeUInt64:
+            {
+                result = varNewUInt64(varUInt64(this));
+                break;
+            }
+
             case varTypeKeyValue:
             {
                 KeyValue *data = kvDup(varKv(this));
@@ -183,6 +192,12 @@ varEq(const Variant *this1, const Variant *this2)
                 case varTypeInt64:
                 {
                     result = varInt64(this1) == varInt64(this2);
+                    break;
+                }
+
+                case varTypeUInt64:
+                {
+                    result = varUInt64(this1) == varUInt64(this2);
                     break;
                 }
 
@@ -278,6 +293,10 @@ varBoolForce(const Variant *this)
             result = varInt64(this) != 0;
             break;
 
+        case varTypeUInt64:
+            result = varUInt64(this) != 0;
+            break;
+
         case varTypeString:
         {
             // List of false/true boolean string values.  Note that false/true values must be equal.
@@ -306,7 +325,7 @@ varBoolForce(const Variant *this)
         }
 
         default:
-            THROW_FMT(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeBool]);
+            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeBool]);
     }
 
     FUNCTION_TEST_RESULT(BOOL, result);
@@ -382,6 +401,12 @@ varDblForce(const Variant *this)
             break;
         }
 
+        case varTypeUInt64:
+        {
+            result = (double)varUInt64(this);
+            break;
+        }
+
         case varTypeString:
         {
             result = cvtZToDouble(strPtr(varStr(this)));
@@ -389,7 +414,7 @@ varDblForce(const Variant *this)
         }
 
         default:
-            THROW_FMT(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeDouble]);
+            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeDouble]);
     }
 
     FUNCTION_TEST_RESULT(DOUBLE, result);
@@ -457,9 +482,24 @@ varIntForce(const Variant *this)
         {
             int64_t resultTest = varInt64(this);
 
-            if (resultTest > 2147483647 || resultTest < -2147483648)
+            // Make sure the value fits into a normal 32-bit int range since 32-bit platforms are supported
+            if (resultTest > INT32_MAX || resultTest < INT32_MIN)
                 THROW_FMT(
-                    AssertError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeInt]);
+
+            result = (int)resultTest;
+            break;
+        }
+
+        case varTypeUInt64:
+        {
+            uint64_t resultTest = varUInt64(this);
+
+            // Make sure the value fits into a normal 32-bit int range
+            if (resultTest > INT32_MAX)
+                THROW_FMT(
+                    FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
                     variantTypeName[varTypeInt]);
 
             result = (int)resultTest;
@@ -473,7 +513,7 @@ varIntForce(const Variant *this)
         }
 
         default:
-            THROW_FMT(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt]);
+            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt]);
     }
 
     FUNCTION_TEST_RESULT(INT, result);
@@ -543,6 +583,23 @@ varInt64Force(const Variant *this)
             break;
         }
 
+        case varTypeUInt64:
+        {
+            uint64_t resultTest = varUInt64(this);
+
+            // If max number of unsigned 64-bit integer is greater than max 64-bit signed integer can hold, then error
+            if (resultTest <= INT64_MAX)
+                result = (int64_t)resultTest;
+            else
+            {
+                THROW_FMT(
+                    FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeInt64]);
+            }
+
+            break;
+        }
+
         case varTypeString:
         {
             result = cvtZToInt64(strPtr(varStr(this)));
@@ -550,10 +607,115 @@ varInt64Force(const Variant *this)
         }
 
         default:
-            THROW_FMT(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt64]);
+            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt64]);
     }
 
     FUNCTION_TEST_RESULT(INT64, result);
+}
+
+/***********************************************************************************************************************************
+New uint64 variant
+***********************************************************************************************************************************/
+Variant *
+varNewUInt64(uint64_t data)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, data);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(VARIANT, varNewInternal(varTypeUInt64, (void *)&data, sizeof(data)));
+}
+
+/***********************************************************************************************************************************
+Return int64
+***********************************************************************************************************************************/
+uint64_t
+varUInt64(const Variant *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VARIANT, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    ASSERT(this->type == varTypeUInt64);
+
+    FUNCTION_TEST_RESULT(UINT64, *((uint64_t *)varData(this)));
+}
+
+/***********************************************************************************************************************************
+Return uint64 regardless of variant type
+***********************************************************************************************************************************/
+uint64_t
+varUInt64Force(const Variant *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VARIANT, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    uint64_t result = 0;
+
+    switch (this->type)
+    {
+        case varTypeBool:
+        {
+            result = varBool(this);
+            break;
+        }
+
+        case varTypeInt:
+        {
+            int resultTest = varInt(this);
+
+            // If integer is a negative number, throw an error since the resulting conversion would be a different number
+            if (resultTest >= 0)
+                result = (uint64_t)resultTest;
+            else
+            {
+                THROW_FMT(
+                    FormatError, "unable to convert %s %d to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeUInt64]);
+            }
+
+            break;
+        }
+
+        case varTypeInt64:
+        {
+            int64_t resultTest = varInt64(this);
+
+            // If integer is a negative number, throw an error since the resulting conversion would be out of bounds
+            if (resultTest >= 0)
+                result = (uint64_t)resultTest;
+            else
+            {
+                THROW_FMT(
+                    FormatError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeUInt64]);
+            }
+
+            break;
+        }
+
+        case varTypeUInt64:
+        {
+            result = varUInt64(this);
+            break;
+        }
+
+        case varTypeString:
+        {
+            result = cvtZToUInt64(strPtr(varStr(this)));
+            break;
+        }
+
+        default:
+            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUInt64]);
+    }
+
+    FUNCTION_TEST_RESULT(UINT64, result);
 }
 
 /***********************************************************************************************************************************
@@ -702,6 +864,12 @@ varStrForce(const Variant *this)
             break;
         }
 
+        case varTypeUInt64:
+        {
+            result = strNewFmt("%" PRIu64, varUInt64(this));
+            break;
+        }
+
         case varTypeString:
         {
             result = strDup(varStr(this));
@@ -800,6 +968,7 @@ varToLog(const Variant *this, char *buffer, size_t bufferSize)
                 case varTypeDouble:
                 case varTypeInt:
                 case varTypeInt64:
+                case varTypeUInt64:
                 {
                     string = varStrForce(this);
                     break;
@@ -853,6 +1022,7 @@ varFree(Variant *this)
                 case varTypeDouble:
                 case varTypeInt:
                 case varTypeInt64:
+                case varTypeUInt64:
                     break;
             }
 

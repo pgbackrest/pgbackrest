@@ -29,8 +29,9 @@ testRun()
         TEST_RESULT_BOOL(varBoolForce(varNewBool(false)), false, "force bool to bool");
         TEST_RESULT_BOOL(varBoolForce(varNewInt(1)), true, "force int to bool");
         TEST_RESULT_BOOL(varBoolForce(varNewInt64(false)), false, "force int64 to bool");
+        TEST_RESULT_BOOL(varBoolForce(varNewUInt64(12)), true, "force uint64 to bool");
 
-        TEST_ERROR(varBoolForce(varNewVarLst(varLstNew())), FormatError, "unable to force VariantList to bool");
+        TEST_ERROR(varBoolForce(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to bool");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(varFree(NULL), "ok to free null variant");
@@ -60,11 +61,14 @@ testRun()
         TEST_RESULT_DOUBLE(varDblForce(varNewBool(false)), 0, "force bool to double");
         TEST_RESULT_DOUBLE(varDblForce(varNewInt(123)), 123, "force int to double");
         TEST_RESULT_DOUBLE(varDblForce(varNewInt64(999999999999)), 999999999999, "force int64 to double");
+        TEST_RESULT_DOUBLE(varDblForce(varNewUInt64(9223372036854775807U)), 9223372036854775807U, "force uint64 to double");
         TEST_RESULT_DOUBLE(varDblForce(varNewStr(strNew("879.01"))), 879.01, "force String to double");
         TEST_RESULT_DOUBLE(varDblForce(varNewStr(strNew("0"))), 0, "force String to double");
+        TEST_RESULT_DOUBLE(
+            varDblForce(varNewUInt64(UINT64_MAX)), 18446744073709551616.0, "force max uint64 to double (it will be rounded)");
 
         TEST_ERROR(varDblForce(varNewStr(strNew("AAA"))), FormatError, "unable to convert string 'AAA' to double");
-        TEST_ERROR(varDblForce(varNewVarLst(varLstNew())), FormatError, "unable to force VariantList to double");
+        TEST_ERROR(varDblForce(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to double");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_DOUBLE(varDbl(varDup(varNewDbl(3.1415))), 3.1415, "dup double");
@@ -84,10 +88,12 @@ testRun()
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(varIntForce(varNewBool(true)), 1, "force bool to int");
-        TEST_ERROR(varIntForce(varNewVarLst(varLstNew())), FormatError, "unable to force VariantList to int");
+        TEST_ERROR(varIntForce(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to int");
         TEST_RESULT_INT(varIntForce(varNewInt64(999)), 999, "force int64 to int");
-        TEST_ERROR(varIntForce(varNewInt64(2147483648)), AssertError, "unable to convert int64 2147483648 to int");
-        TEST_ERROR(varIntForce(varNewInt64(-2147483649)), AssertError, "unable to convert int64 -2147483649 to int");
+        TEST_ERROR(varIntForce(varNewInt64(2147483648)), FormatError, "unable to convert int64 2147483648 to int");
+        TEST_ERROR(varIntForce(varNewInt64(-2147483649)), FormatError, "unable to convert int64 -2147483649 to int");
+        TEST_RESULT_INT(varIntForce(varNewUInt64(12345)), 12345, "force uint64 to int");
+        TEST_ERROR(varIntForce(varNewUInt64(2147483648)), FormatError, "unable to convert uint64 2147483648 to int");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(varInt(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeInt' failed");
@@ -116,11 +122,14 @@ testRun()
         TEST_RESULT_INT(varInt64Force(varNewBool(true)), 1, "force bool to int64");
         TEST_RESULT_INT(varInt64Force(varNewInt(2147483647)), 2147483647, "force int to int64");
         TEST_RESULT_INT(varInt64Force(varNewStrZ("9223372036854775807")), 9223372036854775807L, "force str to int64");
+        TEST_RESULT_INT(varInt64Force(varNewUInt64(9223372036854775807U)), 9223372036854775807L, "force uint64 to int64");
 
         TEST_ERROR(
-            varInt64Force(varNewStrZ("9923372036854775807")), FormatError,
-            "unable to convert string '9923372036854775807' to int64");
-        TEST_ERROR(varInt64Force(varNewVarLst(varLstNew())), FormatError, "unable to force VariantList to int64");
+            varInt64Force(varNewStrZ("9223372036854775808")), FormatError,
+            "unable to convert string '9223372036854775808' to int64");
+        TEST_ERROR(varInt64Force(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to int64");
+        TEST_ERROR(varInt64Force(varNewUInt64(9223372036854775808U)), FormatError,
+            "unable to convert uint64 9223372036854775808 to int64");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(varInt64(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeInt64' failed");
@@ -134,6 +143,43 @@ testRun()
 
         TEST_RESULT_BOOL(varEq(varNewInt64(9223372036854775807L), varNewInt64(9223372036854775807L)), true, "int64, int64 eq");
         TEST_RESULT_BOOL(varEq(varNewInt64(444), varNewInt64(123)), false, "int64, int64 not eq");
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("uint64"))
+    {
+        Variant *uint64 = varNewUInt64(44);
+        TEST_RESULT_DOUBLE(varUInt64(uint64), 44, "uint64 variant");
+        TEST_RESULT_DOUBLE(varUInt64Force(uint64), 44, "force uint64 to uint64");
+        varFree(uint64);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_DOUBLE(varUInt64Force(varNewBool(true)), 1, "force bool to uint64");
+        TEST_RESULT_DOUBLE(varUInt64Force(varNewInt(2147483647)), 2147483647, "force int to uint64");
+        TEST_RESULT_DOUBLE(varUInt64Force(varNewInt64(2147483647)), 2147483647, "force int64 to uint64");
+        TEST_RESULT_DOUBLE(varUInt64Force(varNewStrZ("18446744073709551615")), 18446744073709551615U, "force str to uint64");
+        TEST_RESULT_DOUBLE(varUInt64Force(varNewUInt64(18446744073709551615U)), 18446744073709551615U, "force uint64 to uint64");
+
+        TEST_ERROR(
+            varUInt64Force(varNewStrZ("18446744073709551616")), FormatError,
+            "unable to convert string '18446744073709551616' to uint64");   // string value is out of bounds for uint64
+        TEST_ERROR(varUInt64Force(varNewStrZ(" 16")), FormatError,"unable to convert string ' 16' to uint64");
+        TEST_ERROR(varUInt64Force(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to uint64");
+        TEST_ERROR(varUInt64Force(varNewInt64(-1)), FormatError, "unable to convert int64 -1 to uint64");
+        TEST_ERROR(varUInt64Force(varNewInt(-1)), FormatError, "unable to convert int -1 to uint64");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ERROR(varUInt64(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeUInt64' failed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_DOUBLE(varUInt64(varDup(varNewUInt64(88976))), 88976, "dup uint64");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_BOOL(varEq(NULL, NULL), true, "null, null eq");
+        TEST_RESULT_BOOL(varEq(NULL, varNewUInt64(123)), false, "null, uint64 not eq");
+
+        TEST_RESULT_BOOL(varEq(varNewUInt64(9223372036854775807L), varNewUInt64(9223372036854775807L)), true, "uint64, uint64 eq");
+        TEST_RESULT_BOOL(varEq(varNewUInt64(444), varNewUInt64(123)), false, "uint64, uint64 not eq");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -198,6 +244,7 @@ testRun()
         TEST_RESULT_STR(strPtr(varStrForce(varNewDbl((double)999999999.123456))), "999999999.123456", "force double to string");
         TEST_RESULT_STR(strPtr(varStrForce(varNewBool(true))), "true", "force bool to string");
         TEST_RESULT_STR(strPtr(varStrForce(varNewBool(false))), "false", "force bool to string");
+        TEST_RESULT_STR(strPtr(varStrForce(varNewUInt64(18446744073709551615U))), "18446744073709551615", "force uint64 to string");
 
         TEST_ERROR(varStrForce(varNewKv()), FormatError, "unable to force KeyValue to String");
 

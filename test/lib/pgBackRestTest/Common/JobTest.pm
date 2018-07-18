@@ -510,6 +510,10 @@ sub end
                 # Combine with prior run if there was one
                 if ($self->{oStorageTest}->exists($strLCovFile))
                 {
+                    my $strCoverage = ${$self->{oStorageTest}->get($strLCovOutTmp)};
+                    $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
+                    $self->{oStorageTest}->put($strLCovOutTmp, $strCoverage);
+
                     executeTest(
                         'docker exec -i -u ' . TEST_USER . " ${strImage} " .
                         "${strLCovExe} --add-tracefile=${strLCovOutTmp} --add-tracefile=${strLCovFile} --o=${strLCovOutTmp}");

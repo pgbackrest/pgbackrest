@@ -81,10 +81,17 @@ bool storageExists(const Storage *this, const String *pathExp, StorageExistsPara
 /***********************************************************************************************************************************
 storageGet
 ***********************************************************************************************************************************/
-#define storageGetNP(file)                                                                                                         \
-    storageGet(file)
+typedef struct StorageGetParam
+{
+    size_t exactSize;
+} StorageGetParam;
 
-Buffer *storageGet(StorageFileRead *file);
+#define storageGetP(file, ...)                                                                                               \
+    storageGet(file, (StorageGetParam){__VA_ARGS__})
+#define storageGetNP(file)                                                                                                         \
+    storageGet(file, (StorageGetParam){0})
+
+Buffer *storageGet(StorageFileRead *file, StorageGetParam param);
 
 /***********************************************************************************************************************************
 storageInfo

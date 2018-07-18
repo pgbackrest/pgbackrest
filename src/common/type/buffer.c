@@ -14,8 +14,9 @@ Contains information about the buffer
 struct Buffer
 {
     MemContext *memContext;
-    size_t size;
-    unsigned char *buffer;
+    size_t size;                                                    // Actual size of buffer
+    size_t used;                                                    // Amount of buffer used
+    unsigned char *buffer;                                          // Buffer allocation
 };
 
 /***********************************************************************************************************************************
@@ -36,6 +37,7 @@ bufNew(size_t size)
         this = memNew(sizeof(Buffer));
         this->memContext = MEM_CONTEXT_NEW();
         this->size = size;
+        this->used = 0;
 
         // Allocate buffer
         if (size > 0)
@@ -62,6 +64,7 @@ bufNewC(size_t size, const void *buffer)
     // Create object and copy data
     Buffer *this = bufNew(size);
     memcpy(this->buffer, buffer, this->size);
+    this->used = this->size;
 
     FUNCTION_TEST_RESULT(BUFFER, this);
 }
@@ -78,11 +81,10 @@ bufNewStr(const String *string)
         FUNCTION_TEST_ASSERT(string != NULL);
     FUNCTION_TEST_END();
 
-    // Create object
+    // Create object and copy string
     Buffer *this = bufNew(strSize(string));
-
-    // Copy the data
     memcpy(this->buffer, strPtr(string), this->size);
+    this->used = this->size;
 
     FUNCTION_TEST_RESULT(BUFFER, this);
 }
@@ -100,16 +102,16 @@ bufCat(Buffer *this, const Buffer *cat)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    if (cat != NULL && cat->size > 0)
+    if (cat != NULL && cat->used > 0)
     {
-        size_t sizeOld = this->size;
-
-        bufResize(this, sizeOld + cat->size);
+        if (this->used + cat->used > this->size)
+            bufResize(this, this->used + cat->used);
 
         // Just here to silence nonnull warnings from clang static analyzer
         ASSERT_DEBUG(this->buffer != NULL);
 
-        memcpy(this->buffer + sizeOld, cat->buffer, cat->size);
+        memcpy(this->buffer + this->used, cat->buffer, cat->used);
+        this->used = this->used + cat->used;
     }
 
     FUNCTION_TEST_RESULT(BUFFER, this);
@@ -131,8 +133,8 @@ bufEq(const Buffer *this, const Buffer *compare)
 
     bool result = false;
 
-    if (this->size == compare->size)
-        result = memcmp(this->buffer, compare->buffer, compare->size) == 0;
+    if (this->used == compare->used)
+        result = memcmp(this->buffer, compare->buffer, compare->used) == 0;
 
     FUNCTION_TEST_RESULT(BOOL, result);
 }
@@ -154,21 +156,6 @@ bufMove(Buffer *this, MemContext *parentNew)
         memContextMove(this->memContext, parentNew);
 
     FUNCTION_TEST_RESULT(BUFFER, this);
-}
-
-/***********************************************************************************************************************************
-Return buffer ptr
-***********************************************************************************************************************************/
-unsigned char *
-bufPtr(const Buffer *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RESULT(UCHARP, this->buffer);
 }
 
 /***********************************************************************************************************************************
@@ -216,13 +203,76 @@ bufResize(Buffer *this, size_t size)
 
             this->size = size;
         }
+
+        if (this->used > this->size)
+            this->used = this->size;
     }
 
     FUNCTION_TEST_RESULT(BUFFER, this);
 }
 
 /***********************************************************************************************************************************
-Return buffer size
+Is the buffer full?
+***********************************************************************************************************************************/
+bool
+bufFull(const Buffer *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, this->used == this->size);
+}
+
+/***********************************************************************************************************************************
+Return buffer ptr
+***********************************************************************************************************************************/
+unsigned char *
+bufPtr(const Buffer *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(UCHARP, this->buffer);
+}
+
+/***********************************************************************************************************************************
+Get remaining space in the buffer
+***********************************************************************************************************************************/
+size_t
+bufRemains(const Buffer *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(SIZE, this->size - this->used);
+}
+
+/***********************************************************************************************************************************
+Return pointer to remaining space in the buffer (after used space)
+***********************************************************************************************************************************/
+unsigned char *
+bufRemainsPtr(const Buffer *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(UCHARP, this->buffer + this->used);
+}
+
+/***********************************************************************************************************************************
+Get buffer size
 ***********************************************************************************************************************************/
 size_t
 bufSize(const Buffer *this)
@@ -234,6 +284,70 @@ bufSize(const Buffer *this)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(SIZE, this->size);
+}
+
+/***********************************************************************************************************************************
+Get/set the amount of the buffer actually used
+
+Tracks how much of the buffer has actually been used.  This will be updated automatically when possible but if the buffer is
+modified by using bufPtr() then the user is reponsible for updating the used size.
+***********************************************************************************************************************************/
+size_t
+bufUsed(const Buffer *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(SIZE, this->used);
+}
+
+void
+bufUsedInc(Buffer *this, size_t inc)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+        FUNCTION_TEST_PARAM(SIZE, inc);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(this->used + inc <= this->size);
+    FUNCTION_TEST_END();
+
+    this->used += inc;
+
+    FUNCTION_TEST_RESULT_VOID();
+}
+
+void
+bufUsedSet(Buffer *this, size_t used)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+        FUNCTION_TEST_PARAM(SIZE, used);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(used <= this->size);
+    FUNCTION_TEST_END();
+
+    this->used = used;
+
+    FUNCTION_TEST_RESULT_VOID();
+}
+
+void
+bufUsedZero(Buffer *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    this->used = 0;
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -251,7 +365,7 @@ bufToLog(const Buffer *this, char *buffer, size_t bufferSize)
         if (this == NULL)
             string = strNew("null");
         else
-            string = strNewFmt("{size: %zu}", this->size);
+            string = strNewFmt("{used: %zu, size: %zu}", this->used, this->size);
 
         result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
     }

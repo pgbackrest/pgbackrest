@@ -18,12 +18,22 @@ Functions
 Buffer *bufNew(size_t size);
 Buffer *bufNewC(size_t size, const void *buffer);
 Buffer *bufNewStr(const String *string);
+
 Buffer *bufCat(Buffer *this, const Buffer *cat);
 bool bufEq(const Buffer *this, const Buffer *compare);
 Buffer *bufMove(Buffer *this, MemContext *parentNew);
 Buffer *bufResize(Buffer *this, size_t size);
-size_t bufSize(const Buffer *this);
+
+bool bufFull(const Buffer *this);
 unsigned char *bufPtr(const Buffer *this);
+size_t bufRemains(const Buffer *this);
+unsigned char *bufRemainsPtr(const Buffer *this);
+size_t bufSize(const Buffer *this);
+size_t bufUsed(const Buffer *this);
+void bufUsedInc(Buffer *this, size_t inc);
+void bufUsedSet(Buffer *this, size_t used);
+void bufUsedZero(Buffer *this);
+
 void bufFree(Buffer *this);
 
 /***********************************************************************************************************************************

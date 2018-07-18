@@ -95,6 +95,7 @@ testRun()
         TEST_RESULT_BOOL(storageFileReadOpen(file), false, "   missing file ignored");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        Buffer *outBuffer = bufNew(2);
         Buffer *expectedBuffer = bufNewStr(strNew("TESTFILE\n"));
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, fileName), expectedBuffer), "write test file");
 
@@ -105,7 +106,7 @@ testRun()
         close(file->fileDriver->handle);
 
         TEST_ERROR_FMT(
-            storageFileRead(file), FileReadError,
+            storageFileRead(file, outBuffer), FileReadError,
             "unable to read '%s': [9] Bad file descriptor", strPtr(fileName));
         TEST_ERROR_FMT(
             storageFileReadClose(file), FileCloseError,
@@ -127,19 +128,33 @@ testRun()
         TEST_RESULT_STR(strPtr(storageFileReadName(file)), strPtr(fileName), "    check file name");
         TEST_RESULT_INT(storageFileReadSize(file), 0, "    check size");
 
-        TEST_RESULT_VOID(bufCat(buffer, storageFileRead(file)), "    load data");
-        TEST_RESULT_VOID(bufCat(buffer, storageFileRead(file)), "    load data");
-        TEST_RESULT_VOID(bufCat(buffer, storageFileRead(file)), "    load data");
-        TEST_RESULT_VOID(bufCat(buffer, storageFileRead(file)), "    load data");
+        TEST_RESULT_VOID(storageFileRead(file, outBuffer), "    load data");
+        bufCat(buffer, outBuffer);
+        bufUsedZero(outBuffer);
+        TEST_RESULT_VOID(storageFileRead(file, outBuffer), "    load data");
+        bufCat(buffer, outBuffer);
+        bufUsedZero(outBuffer);
+        TEST_RESULT_VOID(storageFileRead(file, outBuffer), "    load data");
+        bufCat(buffer, outBuffer);
+        bufUsedZero(outBuffer);
+        TEST_RESULT_VOID(storageFileRead(file, outBuffer), "    load data");
+        bufCat(buffer, outBuffer);
+        bufUsedZero(outBuffer);
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), false, "    check file contents (not all loaded yet)");
         TEST_RESULT_INT(storageFileReadSize(file), 8, "    check size");
 
-        TEST_RESULT_VOID(bufCat(buffer, storageFileRead(file)), "    load data");
+        TEST_RESULT_VOID(storageFileRead(file, outBuffer), "    load data");
+        bufCat(buffer, outBuffer);
+        bufUsedZero(outBuffer);
+
+        TEST_RESULT_VOID(storageFileRead(file, outBuffer), "    no data to load");
+        TEST_RESULT_INT(bufUsed(outBuffer), 0, "    buffer is empty");
+
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents (all loaded)");
         TEST_RESULT_INT(storageFileReadSize(file), 9, "    check size");
 
-        TEST_RESULT_PTR(storageFileRead(file), NULL, "    eof");
-        TEST_RESULT_PTR(storageFileRead(file), NULL, "    still eof");
+        TEST_RESULT_BOOL(storageFileReadEof(file), true, "    eof");
+        TEST_RESULT_BOOL(storageFileReadEof(file), true, "    still eof");
 
         TEST_RESULT_VOID(storageFileReadClose(file), "    close file");
         TEST_RESULT_VOID(storageFileReadClose(file), "    close again");

@@ -10,6 +10,12 @@ PostgreSQL Info
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
+Set control data size.  The control file is actually 8192 bytes but only the first 512 bytes are used to prevent torn pages even on
+really old storage with 512-byte sectors.
+***********************************************************************************************************************************/
+#define PG_CONTROL_DATA_SIZE                                        512
+
+/***********************************************************************************************************************************
 Map control/catalog version to PostgreSQL version
 ***********************************************************************************************************************************/
 static unsigned int
@@ -72,15 +78,13 @@ pgControlInfo(const String *pgPath)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Open control file for read
-        StorageFileRead *controlRead = storageNewReadNP(
-            storageLocal(), strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pgPath)));
-        storageFileReadOpen(controlRead);
+        // Read control file
+        PgControlFile *control = (PgControlFile *)bufPtr(
+            storageGetP(
+                storageNewReadNP(storageLocal(), strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strPtr(pgPath))),
+                .exactSize = PG_CONTROL_DATA_SIZE));
 
-        // Read contents
-        PgControlFile *control = (PgControlFile *)bufPtr(storageFileRead(controlRead));
-
-        // Copy to result structure and get PostgreSQL version
+        // Get PostgreSQL version
         result.systemId = control->systemId;
         result.controlVersion = control->controlVersion;
         result.catalogVersion = control->catalogVersion;

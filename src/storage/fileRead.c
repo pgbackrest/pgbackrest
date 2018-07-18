@@ -14,6 +14,7 @@ struct StorageFileRead
 {
     MemContext *memContext;
     StorageFileReadPosix *fileDriver;
+    size_t bufferSize;
 };
 
 /***********************************************************************************************************************************
@@ -38,8 +39,8 @@ storageFileReadNew(const String *name, bool ignoreMissing, size_t bufferSize)
         this = memNew(sizeof(StorageFileRead));
         this->memContext = memContextCurrent();
 
-        // Call driver function
-        this->fileDriver = storageFileReadPosixNew(name, ignoreMissing, bufferSize);
+        this->fileDriver = storageFileReadPosixNew(name, ignoreMissing);
+        this->bufferSize = bufferSize;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -64,8 +65,8 @@ storageFileReadOpen(StorageFileRead *this)
 /***********************************************************************************************************************************
 Read data from the file
 ***********************************************************************************************************************************/
-Buffer *
-storageFileRead(StorageFileRead *this)
+void
+storageFileRead(StorageFileRead *this, Buffer *buffer)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ, this);
@@ -73,7 +74,9 @@ storageFileRead(StorageFileRead *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();
 
-    FUNCTION_DEBUG_RESULT(BUFFER, storageFileReadPosix(this->fileDriver));
+    storageFileReadPosix(this->fileDriver, buffer);
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -113,6 +116,21 @@ storageFileReadClose(StorageFileRead *this)
 }
 
 /***********************************************************************************************************************************
+Get buffer size
+***********************************************************************************************************************************/
+size_t
+storageFileReadBufferSize(const StorageFileRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_READ, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(SIZE, this->bufferSize);
+}
+
+/***********************************************************************************************************************************
 Get file driver
 ***********************************************************************************************************************************/
 StorageFileReadPosix *
@@ -125,6 +143,21 @@ storageFileReadFileDriver(const StorageFileRead *this)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(STORAGE_FILE_READ_POSIX, this->fileDriver);
+}
+
+/***********************************************************************************************************************************
+Has file reached EOF?
+***********************************************************************************************************************************/
+bool
+storageFileReadEof(const StorageFileRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_READ, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, storageFileReadPosixEof(this->fileDriver));
 }
 
 /***********************************************************************************************************************************
