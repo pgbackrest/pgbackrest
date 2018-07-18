@@ -131,7 +131,7 @@ sub resumeClean
             {
                 # To be preserved the checksum must be defined
                 my $strChecksum = $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
-
+# CSHANG In this conditional, wrap the timestamp check and change to && (checksum-delta feature is on OR timestamp check).
                 if (defined($strChecksum) &&
                     $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
                     $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) &&
@@ -289,6 +289,7 @@ sub processManifest
         # However, if hard-linking is turned on the link will need to be created
         my $strReference = $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE, false);
 
+# CSHANG Here we skip putting this file on the queue because we figure by this point, we've checked the size and timestamp and have decided that we can reference the file in the previous backup. However, if checksum-delta is on, then we can't skip - we need to check the checksum
         if (defined($strReference))
         {
             # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup

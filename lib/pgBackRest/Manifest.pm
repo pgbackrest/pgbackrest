@@ -889,6 +889,7 @@ sub build
                 }
             }
             # Else check if modification time and size are unchanged since last backup
+# CSHANG In this conditional, wrap the timestamp check and change to && (checksum-delta feature is on OR timestamp check).
             elsif (defined($oLastManifest) && $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName) &&
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) ==
                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&

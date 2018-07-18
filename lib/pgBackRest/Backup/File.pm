@@ -250,6 +250,7 @@ sub backupManifestUpdate
             " backup will continue but this may be an issue unless the resumed backup path in the repository is known to be" .
             " corrupted.\n" .
             "NOTE: this does not indicate a problem with the PostgreSQL page checksums.");
+# CSHANG If the checksum-delta feature is on, we would remove the MANIFEST_SUBKEY_REFERENCE if it exists (for aborted backups, a checksum can exist but not a reference).
     }
 
     # If copy was successful store the checksum and size
