@@ -260,6 +260,12 @@ sub run
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_RECOVERYCONF, 'IGNORE');
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_RECOVERYDONE, 'IGNORE');
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global/' . DB_FILE_PGINTERNALINIT, 'IGNORE');
+
+            # Unlog and temp files to ignore (unlog _init will NOT be ignored)
+            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/44000_init', $tPageValid,
+                '4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f', $lTime);
+            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/44000', 'IGNORE');
+            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/t333_44000', 'IGNORE');
         }
 
         # Help and Version.  These have complete unit tests, so here just make sure there is output from the command line.
