@@ -6,6 +6,7 @@ Storage Manager
 
 #include "common/assert.h"
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/wait.h"
@@ -21,7 +22,6 @@ struct Storage
     String *path;
     mode_t modeFile;
     mode_t modePath;
-    size_t bufferSize;
     bool write;
     StoragePathExpressionCallback pathExpressionFunction;
 };
@@ -36,7 +36,6 @@ storageNew(const String *path, StorageNewParam param)
         FUNCTION_DEBUG_PARAM(STRING, path);
         FUNCTION_DEBUG_PARAM(MODE, param.modeFile);
         FUNCTION_DEBUG_PARAM(MODE, param.modePath);
-        FUNCTION_DEBUG_PARAM(SIZE, param.bufferSize);
         FUNCTION_DEBUG_PARAM(BOOL, param.write);
         FUNCTION_DEBUG_PARAM(FUNCTIONP, param.pathExpressionFunction);
 
@@ -53,7 +52,6 @@ storageNew(const String *path, StorageNewParam param)
         this->path = strDup(path);
         this->modeFile = param.modeFile == 0 ? STORAGE_FILE_MODE_DEFAULT : param.modeFile;
         this->modePath = param.modePath == 0 ? STORAGE_PATH_MODE_DEFAULT : param.modePath;
-        this->bufferSize = param.bufferSize == 0 ? STORAGE_BUFFER_SIZE_DEFAULT : param.bufferSize;
         this->write = param.write;
         this->pathExpressionFunction = param.pathExpressionFunction;
     }
@@ -81,25 +79,25 @@ storageCopy(StorageFileRead *source, StorageFileWrite *destination)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Open source file
-        if (storageFileReadOpen(source))
+        if (ioReadOpen(storageFileReadIo(source)))
         {
             // Open the destination file now that we know the source file exists and is readable
-            storageFileWriteOpen(destination);
+            ioWriteOpen(storageFileWriteIo(destination));
 
             // Copy data from source to destination
-            Buffer *read = bufNew(storageFileReadBufferSize(source));
+            Buffer *read = bufNew(ioBufferSize(source));
 
             do
             {
-                storageFileRead(source, read);
-                storageFileWrite(destination, read);
+                ioRead(storageFileReadIo(source), read);
+                ioWrite(storageFileWriteIo(destination), read);
                 bufUsedZero(read);
             }
-            while (!storageFileReadEof(source));
+            while (!ioReadEof(storageFileReadIo(source)));
 
             // Close the source and destination files
-            storageFileReadClose(source);
-            storageFileWriteClose(destination);
+            ioReadClose(storageFileReadIo(source));
+            ioWriteClose(storageFileWriteIo(destination));
 
             // Set result to indicate that the file was copied
             result = true;
@@ -164,7 +162,7 @@ storageGet(StorageFileRead *file, StorageGetParam param)
     Buffer *result = NULL;
 
     // If the file exists
-    if (storageFileReadOpen(file))
+    if (ioReadOpen(storageFileReadIo(file)))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -172,7 +170,7 @@ storageGet(StorageFileRead *file, StorageGetParam param)
             if (param.exactSize > 0)
             {
                 result = bufNew(param.exactSize);
-                storageFileRead(file, result);
+                ioRead(storageFileReadIo(file), result);
 
                 // If an exact read make sure the size is as expected
                 if (bufUsed(result) != param.exactSize)
@@ -185,18 +183,18 @@ storageGet(StorageFileRead *file, StorageGetParam param)
             else
             {
                 result = bufNew(0);
-                Buffer *read = bufNew(storageFileReadBufferSize(file));
+                Buffer *read = bufNew(ioBufferSize(file));
 
                 do
                 {
                     // Read data
-                    storageFileRead(file, read);
+                    ioRead(storageFileReadIo(file), read);
 
                     // Add to result and free read buffer
                     bufCat(result, read);
                     bufUsedZero(read);
                 }
-                while (!storageFileReadEof(file));
+                while (!ioReadEof(storageFileReadIo(file)));
             }
 
             // Move buffer to parent context on success
@@ -204,7 +202,7 @@ storageGet(StorageFileRead *file, StorageGetParam param)
         }
         MEM_CONTEXT_TEMP_END();
 
-        storageFileReadClose(file);
+        ioReadClose(storageFileReadIo(file));
     }
 
     FUNCTION_DEBUG_RESULT(BUFFER, result);
@@ -324,8 +322,7 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = storageFileReadMove(
-            storageFileReadNew(storagePathNP(this, fileExp), param.ignoreMissing, this->bufferSize), MEM_CONTEXT_OLD());
+        result = storageFileReadMove(storageFileReadNew(storagePathNP(this, fileExp), param.ignoreMissing), MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -575,9 +572,9 @@ storagePut(StorageFileWrite *file, const Buffer *buffer)
         FUNCTION_DEBUG_ASSERT(file != NULL);
     FUNCTION_DEBUG_END();
 
-    storageFileWriteOpen(file);
-    storageFileWrite(file, buffer);
-    storageFileWriteClose(file);
+    ioWriteOpen(storageFileWriteIo(file));
+    ioWrite(storageFileWriteIo(file), buffer);
+    ioWriteClose(storageFileWriteIo(file));
 
     FUNCTION_DEBUG_RESULT_VOID();
 }

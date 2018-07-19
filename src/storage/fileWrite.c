@@ -14,6 +14,7 @@ struct StorageFileWrite
 {
     MemContext *memContext;
     StorageFileWritePosix *fileDriver;
+    IoWrite *io;
 };
 
 /***********************************************************************************************************************************
@@ -42,56 +43,20 @@ storageFileWriteNew(
 
     ASSERT_DEBUG(name != NULL);
 
-    // Create the file.  The file driver is not created here because we don't want to open the file for write until we know that
-    // there is a source file.
     MEM_CONTEXT_NEW_BEGIN("StorageFileWrite")
     {
         this = memNew(sizeof(StorageFileWrite));
         this->memContext = MEM_CONTEXT_NEW();
 
         this->fileDriver = storageFileWritePosixNew(name, modeFile, modePath, noCreatePath, noSyncFile, noSyncPath, noAtomic);
+
+        this->io = ioWriteNew(
+            this->fileDriver, (IoWriteOpen)storageFileWritePosixOpen, (IoWriteProcess)storageFileWritePosix,
+            (IoWriteClose)storageFileWritePosixClose);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_DEBUG_RESULT(STORAGE_FILE_WRITE, this);
-}
-
-/***********************************************************************************************************************************
-Open the file
-***********************************************************************************************************************************/
-void
-storageFileWriteOpen(StorageFileWrite *this)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
-
-    // Open the file
-    storageFileWritePosixOpen(this->fileDriver);
-
-    FUNCTION_DEBUG_RESULT_VOID();
-}
-
-/***********************************************************************************************************************************
-Write to a file
-***********************************************************************************************************************************/
-void
-storageFileWrite(StorageFileWrite *this, const Buffer *buffer)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
-
-    // Only write if there is data to write
-    if (buffer != NULL && bufSize(buffer) > 0)
-        storageFileWritePosix(this->fileDriver, buffer);
-
-    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -111,23 +76,6 @@ storageFileWriteMove(StorageFileWrite *this, MemContext *parentNew)
         memContextMove(this->memContext, parentNew);
 
     FUNCTION_TEST_RESULT(STORAGE_FILE_WRITE, this);
-}
-
-/***********************************************************************************************************************************
-Close the file
-***********************************************************************************************************************************/
-void
-storageFileWriteClose(StorageFileWrite *this)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
-
-    storageFileWritePosixClose(this->fileDriver);
-
-    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -175,6 +123,21 @@ storageFileWriteFileDriver(const StorageFileWrite *this)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(STORAGE_FILE_WRITE_POSIX, this->fileDriver);
+}
+
+/***********************************************************************************************************************************
+Get the IO object
+***********************************************************************************************************************************/
+IoWrite *
+storageFileWriteIo(const StorageFileWrite *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(IO_WRITE, this->io);
 }
 
 /***********************************************************************************************************************************

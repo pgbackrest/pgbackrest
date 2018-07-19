@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Storage File
 ***********************************************************************************************************************************/
+#include "common/io/io.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -12,7 +13,8 @@ testRun()
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storageNewP(strNew(testPath()), .write = true, .bufferSize = 2);
+    Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
+    ioBufferSizeSet(2);
 
     // Create a directory and file that cannot be accessed to test permissions errors
     String *fileNoPerm = strNewFmt("%s/noperm/noperm", testPath());
@@ -79,7 +81,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewReadNP(storageTest, fileNoPerm), "new no perm read file");
         TEST_ERROR_FMT(
-            storageFileReadOpen(file), FileOpenError,
+            ioReadOpen(storageFileReadIo(file)), FileOpenError,
             "unable to open '%s' for read: [13] Permission denied", strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -87,12 +89,12 @@ testRun()
 
         TEST_ASSIGN(file, storageNewReadNP(storageTest, fileName), "new missing read file");
         TEST_ERROR_FMT(
-            storageFileReadOpen(file), FileOpenError,
+            ioReadOpen(storageFileReadIo(file)), FileOpenError,
             "unable to open '%s' for read: [2] No such file or directory", strPtr(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName, .ignoreMissing = true), "new missing read file");
-        TEST_RESULT_BOOL(storageFileReadOpen(file), false, "   missing file ignored");
+        TEST_RESULT_BOOL(ioReadOpen(storageFileReadIo(file)), false, "   missing file ignored");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *outBuffer = bufNew(2);
@@ -100,16 +102,16 @@ testRun()
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, fileName), expectedBuffer), "write test file");
 
         TEST_ASSIGN(file, storageNewReadNP(storageTest, fileName), "new read file");
-        TEST_RESULT_BOOL(storageFileReadOpen(file), true, "   open file");
+        TEST_RESULT_BOOL(ioReadOpen(storageFileReadIo(file)), true, "   open file");
 
         // Close the file handle so operations will fail
         close(file->fileDriver->handle);
 
         TEST_ERROR_FMT(
-            storageFileRead(file, outBuffer), FileReadError,
+            ioRead(storageFileReadIo(file), outBuffer), FileReadError,
             "unable to read '%s': [9] Bad file descriptor", strPtr(fileName));
         TEST_ERROR_FMT(
-            storageFileReadClose(file), FileCloseError,
+            ioReadClose(storageFileReadIo(file)), FileCloseError,
             "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
 
         // Set file handle to -1 so the close on free with not fail
@@ -124,41 +126,41 @@ testRun()
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_BOOL(storageFileReadOpen(file), true, "   open file");
+        TEST_RESULT_BOOL(ioReadOpen(storageFileReadIo(file)), true, "   open file");
         TEST_RESULT_STR(strPtr(storageFileReadName(file)), strPtr(fileName), "    check file name");
-        TEST_RESULT_INT(storageFileReadSize(file), 0, "    check size");
+        TEST_RESULT_INT(ioReadSize(storageFileReadIo(file)), 0, "    check size");
 
-        TEST_RESULT_VOID(storageFileRead(file, outBuffer), "    load data");
+        TEST_RESULT_VOID(ioRead(storageFileReadIo(file), outBuffer), "    load data");
         bufCat(buffer, outBuffer);
         bufUsedZero(outBuffer);
-        TEST_RESULT_VOID(storageFileRead(file, outBuffer), "    load data");
+        TEST_RESULT_VOID(ioRead(storageFileReadIo(file), outBuffer), "    load data");
         bufCat(buffer, outBuffer);
         bufUsedZero(outBuffer);
-        TEST_RESULT_VOID(storageFileRead(file, outBuffer), "    load data");
+        TEST_RESULT_VOID(ioRead(storageFileReadIo(file), outBuffer), "    load data");
         bufCat(buffer, outBuffer);
         bufUsedZero(outBuffer);
-        TEST_RESULT_VOID(storageFileRead(file, outBuffer), "    load data");
+        TEST_RESULT_VOID(ioRead(storageFileReadIo(file), outBuffer), "    load data");
         bufCat(buffer, outBuffer);
         bufUsedZero(outBuffer);
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), false, "    check file contents (not all loaded yet)");
-        TEST_RESULT_INT(storageFileReadSize(file), 8, "    check size");
+        TEST_RESULT_INT(ioReadSize(storageFileReadIo(file)), 8, "    check size");
 
-        TEST_RESULT_VOID(storageFileRead(file, outBuffer), "    load data");
+        TEST_RESULT_VOID(ioRead(storageFileReadIo(file), outBuffer), "    load data");
         bufCat(buffer, outBuffer);
         bufUsedZero(outBuffer);
 
-        TEST_RESULT_VOID(storageFileRead(file, outBuffer), "    no data to load");
+        TEST_RESULT_VOID(ioRead(storageFileReadIo(file), outBuffer), "    no data to load");
         TEST_RESULT_INT(bufUsed(outBuffer), 0, "    buffer is empty");
 
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents (all loaded)");
-        TEST_RESULT_INT(storageFileReadSize(file), 9, "    check size");
+        TEST_RESULT_INT(ioReadSize(storageFileReadIo(file)), 9, "    check size");
 
-        TEST_RESULT_BOOL(storageFileReadEof(file), true, "    eof");
-        TEST_RESULT_BOOL(storageFileReadEof(file), true, "    still eof");
+        TEST_RESULT_BOOL(ioReadEof(storageFileReadIo(file)), true, "    eof");
+        TEST_RESULT_BOOL(ioReadEof(storageFileReadIo(file)), true, "    still eof");
 
-        TEST_RESULT_VOID(storageFileReadClose(file), "    close file");
-        TEST_RESULT_VOID(storageFileReadClose(file), "    close again");
-        TEST_RESULT_INT(storageFileReadSize(file), 9, "    check size");
+        TEST_RESULT_VOID(ioReadClose(storageFileReadIo(file)), "    close file");
+        TEST_RESULT_VOID(ioReadClose(storageFileReadIo(file)), "    close again");
+        TEST_RESULT_INT(ioReadSize(storageFileReadIo(file)), 9, "    check size");
 
         TEST_RESULT_VOID(storageFileReadFree(file), "   free file");
         TEST_RESULT_VOID(storageFileReadFree(NULL), "   free null file");
@@ -192,7 +194,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true), "new write file");
         TEST_ERROR_FMT(
-            storageFileWriteOpen(file), FileOpenError,
+            ioWriteOpen(storageFileWriteIo(file)), FileOpenError,
             "unable to open '%s' for write: [13] Permission denied", strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -200,7 +202,7 @@ testRun()
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noCreatePath = true, .noAtomic = true), "new write file");
         TEST_ERROR_FMT(
-            storageFileWriteOpen(file), FileOpenError,
+            ioWriteOpen(storageFileWriteIo(file)), FileOpenError,
             "unable to open '%s' for write: [2] No such file or directory", strPtr(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -209,24 +211,24 @@ testRun()
 
         TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file");
         TEST_RESULT_STR(strPtr(storageFileWriteName(file)), strPtr(fileName), "    check file name");
-        TEST_RESULT_VOID(storageFileWriteOpen(file), "    open file");
+        TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
 
         // Close the file handle so operations will fail
         close(file->fileDriver->handle);
         storageRemoveP(storageTest, fileTmp, .errorOnMissing = true);
 
         TEST_ERROR_FMT(
-            storageFileWrite(file, buffer), FileWriteError,
+            ioWrite(storageFileWriteIo(file), buffer), FileWriteError,
             "unable to write '%s': [9] Bad file descriptor", strPtr(fileName));
         TEST_ERROR_FMT(
-            storageFileWriteClose(file), FileSyncError,
+            ioWriteClose(storageFileWriteIo(file)), FileSyncError,
             "unable to sync '%s': [9] Bad file descriptor", strPtr(fileName));
 
         // Disable file sync so the close can be reached
         file->fileDriver->noSyncFile = true;
 
         TEST_ERROR_FMT(
-            storageFileWriteClose(file), FileCloseError,
+            ioWriteClose(storageFileWriteIo(file)), FileCloseError,
             "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
 
         // Set file handle to -1 so the close on free with not fail
@@ -235,12 +237,12 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file");
         TEST_RESULT_STR(strPtr(storageFileWriteName(file)), strPtr(fileName), "    check file name");
-        TEST_RESULT_VOID(storageFileWriteOpen(file), "    open file");
+        TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
 
         // Rename the file back to original name from tmp -- this will cause the rename in close to fail
         TEST_RESULT_INT(rename(strPtr(fileTmp), strPtr(fileName)), 0, " rename tmp file");
         TEST_ERROR_FMT(
-            storageFileWriteClose(file), FileMoveError,
+            ioWriteClose(storageFileWriteIo(file)), FileMoveError,
             "unable to move '%s' to '%s': [2] No such file or directory", strPtr(fileTmp), strPtr(fileName));
 
         // Set file handle to -1 so the close on free with not fail
@@ -255,11 +257,12 @@ testRun()
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_VOID(storageFileWriteOpen(file), "    open file");
-        TEST_RESULT_VOID(storageFileWrite(file, NULL), "   write null buffer to file");
-        TEST_RESULT_VOID(storageFileWrite(file, bufNew(0)), "   write zero buffer to file");
-        TEST_RESULT_VOID(storageFileWrite(file, buffer), "   write to file");
-        TEST_RESULT_VOID(storageFileWriteClose(file), "   close file");
+        TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
+        TEST_RESULT_VOID(ioWrite(storageFileWriteIo(file), NULL), "   write null buffer to file");
+        TEST_RESULT_VOID(ioWrite(storageFileWriteIo(file), bufNew(0)), "   write zero buffer to file");
+        TEST_RESULT_VOID(ioWrite(storageFileWriteIo(file), buffer), "   write to file");
+        TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
+        TEST_RESULT_SIZE(ioWriteSize(storageFileWriteIo(file)), 9, "   check size");
         TEST_RESULT_VOID(storageFileWriteFree(file), "   free file");
         TEST_RESULT_VOID(storageFileWriteFree(NULL), "   free null file");
         TEST_RESULT_VOID(storageFileWritePosixFree(NULL), "   free null posix file");
@@ -281,9 +284,9 @@ testRun()
                 storageTest, fileName, .modePath = 0700, .modeFile = 0600, .noSyncPath = true, .noSyncFile = true,
                 .noAtomic = true),
             "new write file");
-        TEST_RESULT_VOID(storageFileWriteOpen(file), "    open file");
-        TEST_RESULT_VOID(storageFileWrite(file, buffer), "   write to file");
-        TEST_RESULT_VOID(storageFileWriteClose(file), "   close file");
+        TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
+        TEST_RESULT_VOID(ioWrite(storageFileWriteIo(file), buffer), "   write to file");
+        TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
 
         expectedBuffer = storageGetNP(storageNewReadNP(storageTest, fileName));
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents");

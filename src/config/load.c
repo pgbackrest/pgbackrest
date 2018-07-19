@@ -7,6 +7,7 @@ Configuration Load
 #include "command/command.h"
 #include "common/memContext.h"
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/lock.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -223,6 +224,10 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         // If a command is set
         if (cfgCommand() != cfgCmdNone)
         {
+            // Set IO buffer size
+            if (cfgOptionValid(cfgOptBufferSize))
+                ioBufferSizeSet((size_t)cfgOptionInt(cfgOptBufferSize));
+
             // Open the log file if this command logs to a file
             if (cfgLogFile() && !cfgCommandHelp())
             {
@@ -234,7 +239,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             // Begin the command
             cmdBegin(true);
 
-            // Open the log file if this command logs to a file
+            // Acquire a lock if this command requires a lock
             if (cfgLockRequired() && !cfgCommandHelp())
                 lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
 

@@ -142,8 +142,7 @@ storageSpool()
         {
             storageSpoolStanza = strDup(cfgOptionStr(cfgOptStanza));
             storageSpoolData = storageNewP(
-                cfgOptionStr(cfgOptSpoolPath), .bufferSize = (size_t)cfgOptionInt(cfgOptBufferSize),
-                .pathExpressionFunction = storageSpoolPathExpression, .write = true);
+                cfgOptionStr(cfgOptSpoolPath), .pathExpressionFunction = storageSpoolPathExpression, .write = true);
         }
         MEM_CONTEXT_END();
     }

@@ -21,7 +21,7 @@ StorageFileReadPosix *storageFileReadPosixNew(const String *name, bool ignoreMis
 Functions
 ***********************************************************************************************************************************/
 bool storageFileReadPosixOpen(StorageFileReadPosix *this);
-void storageFileReadPosix(StorageFileReadPosix *this, Buffer *buffer);
+size_t storageFileReadPosix(StorageFileReadPosix *this, Buffer *buffer);
 void storageFileReadPosixClose(StorageFileReadPosix *this);
 
 /***********************************************************************************************************************************
@@ -30,7 +30,6 @@ Getters
 bool storageFileReadPosixEof(StorageFileReadPosix *this);
 bool storageFileReadPosixIgnoreMissing(StorageFileReadPosix *this);
 const String *storageFileReadPosixName(StorageFileReadPosix *this);
-size_t storageFileReadPosixSize(StorageFileReadPosix *this);
 
 /***********************************************************************************************************************************
 Destructor

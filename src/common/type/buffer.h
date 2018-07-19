@@ -20,6 +20,8 @@ Buffer *bufNewC(size_t size, const void *buffer);
 Buffer *bufNewStr(const String *string);
 
 Buffer *bufCat(Buffer *this, const Buffer *cat);
+Buffer *bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize);
+Buffer *bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize);
 bool bufEq(const Buffer *this, const Buffer *compare);
 Buffer *bufMove(Buffer *this, MemContext *parentNew);
 Buffer *bufResize(Buffer *this, size_t size);

@@ -110,11 +110,16 @@ testRun()
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("bufCat()"))
+    if (testBegin("bufCat*()"))
     {
         TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewStr(strNew("123")), NULL))), "123", "cat null buffer");
         TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewStr(strNew("123")), bufNew(0)))), "123", "cat empty buffer");
         TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewStr(strNew("123")), bufNewStr(strNew("ABC"))))), "123ABC", "cat buffer");
+
+        TEST_RESULT_STR(strPtr(strNewBuf(bufCatSub(bufNewStr(strNew("123")), NULL, 0, 0))), "123", "cat sub null buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(bufCatSub(bufNewStr(strNew("123")), bufNew(0), 0, 0))), "123", "cat sub empty buffer");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(bufCatSub(bufNewStr(strNew("123")), bufNewStr(strNew("ABC")), 1, 2))), "123BC", "cat sub buffer");
 
         Buffer *buffer = NULL;
         TEST_ASSIGN(buffer, bufNew(2), "new buffer with space");

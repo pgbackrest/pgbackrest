@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Storage Manager
 ***********************************************************************************************************************************/
+#include "common/io/io.h"
 #include "common/time.h"
 #include "storage/fileRead.h"
 #include "storage/fileWrite.h"
@@ -32,8 +33,9 @@ testRun()
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storageNewP(strNew(testPath()), .write = true, .bufferSize = 3);
+    Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
     Storage *storageTmp = storageNewP(strNew("/tmp"), .write = true);
+    ioBufferSizeSet(2);
 
     // Create a directory and file that cannot be accessed to test permissions errors
     String *fileNoPerm = strNewFmt("%s/noperm/noperm", testPath());
@@ -56,20 +58,18 @@ testRun()
         TEST_RESULT_STR(strPtr(storageTest->path), "/", "    check path");
         TEST_RESULT_INT(storageTest->modeFile, 0640, "    check file mode");
         TEST_RESULT_INT(storageTest->modePath, 0750, "     check path mode");
-        TEST_RESULT_INT(storageTest->bufferSize, 65536, "    check buffer size");
         TEST_RESULT_BOOL(storageTest->write, false, "    check write");
         TEST_RESULT_BOOL(storageTest->pathExpressionFunction == NULL, true, "    check expression function is not set");
 
         TEST_ASSIGN(
             storageTest,
             storageNewP(
-                strNew("/path/to"), .modeFile = 0600, .modePath = 0700, .bufferSize = 8192, .write = true,
+                strNew("/path/to"), .modeFile = 0600, .modePath = 0700, .write = true,
                 .pathExpressionFunction = storageTestPathExpression),
             "new storage (non-default)");
         TEST_RESULT_STR(strPtr(storageTest->path), "/path/to", "    check path");
         TEST_RESULT_INT(storageTest->modeFile, 0600, "    check file mode");
         TEST_RESULT_INT(storageTest->modePath, 0700, "     check path mode");
-        TEST_RESULT_INT(storageTest->bufferSize, 8192, "    check buffer size");
         TEST_RESULT_BOOL(storageTest->write, true, "    check write");
         TEST_RESULT_BOOL(storageTest->pathExpressionFunction != NULL, true, "    check expression function is set");
 
@@ -475,14 +475,14 @@ testRun()
 
         TEST_ASSIGN(file, storageNewReadNP(storageTest, fileName), "new read file (defaults)");
         TEST_ERROR_FMT(
-            storageFileReadOpen(file), FileOpenError,
+            ioReadOpen(storageFileReadIo(file)), FileOpenError,
             "unable to open '%s' for read: [2] No such file or directory", strPtr(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileName)))), 0, "create read file");
 
-        TEST_RESULT_BOOL(storageFileReadOpen(file), true, "    open file");
-        TEST_RESULT_VOID(storageFileReadClose(file), "    close file");
+        TEST_RESULT_BOOL(ioReadOpen(storageFileReadIo(file)), true, "    open file");
+        TEST_RESULT_VOID(ioReadClose(storageFileReadIo(file)), "    close file");
     }
 
     // *****************************************************************************************************************************
@@ -492,15 +492,15 @@ testRun()
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true), "new write file (defaults)");
         TEST_ERROR_FMT(
-            storageFileWriteOpen(file), FileOpenError,
+            ioWriteOpen(storageFileWriteIo(file)), FileOpenError,
             "unable to open '%s' for write: [13] Permission denied", strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/sub1/testfile", testPath());
 
         TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file (defaults)");
-        TEST_RESULT_VOID(storageFileWriteOpen(file), "    open file");
-        TEST_RESULT_VOID(storageFileWriteClose(file), "   close file");
+        TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
+        TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
         TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
         TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0640, "    check file mode");
 
@@ -509,8 +509,8 @@ testRun()
 
         TEST_ASSIGN(
             file, storageNewWriteP(storageTest, fileName, .modePath = 0700, .modeFile = 0600), "new write file (set mode)");
-        TEST_RESULT_VOID(storageFileWriteOpen(file), "    open file");
-        TEST_RESULT_VOID(storageFileWriteClose(file), "   close file");
+        TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
+        TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
         TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0700, "    check path mode");
         TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0600, "    check file mode");
     }
@@ -560,8 +560,7 @@ testRun()
             "unable to read 64 byte(s) from '%s/test.txt'", testPath());
 
         // -------------------------------------------------------------------------------------------------------------------------
-        const Storage *storage = storageTest;
-        ((Storage *)storage)->bufferSize = 2;
+        ioBufferSizeSet(2);
 
         TEST_ASSIGN(buffer, storageGetNP(storageNewReadNP(storageTest, strNewFmt("%s/test.txt", testPath()))), "get text");
         TEST_RESULT_INT(bufSize(buffer), 9, "check size");

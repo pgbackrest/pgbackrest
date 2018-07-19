@@ -23,7 +23,6 @@ struct StorageFileReadPosix
 
     int handle;
     bool eof;
-    size_t size;
 };
 
 /***********************************************************************************************************************************
@@ -87,7 +86,7 @@ storageFileReadPosixOpen(StorageFileReadPosix *this)
 /***********************************************************************************************************************************
 Read from a file
 ***********************************************************************************************************************************/
-void
+size_t
 storageFileReadPosix(StorageFileReadPosix *this, Buffer *buffer)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
@@ -99,19 +98,20 @@ storageFileReadPosix(StorageFileReadPosix *this, Buffer *buffer)
     FUNCTION_DEBUG_END();
 
     // Read if EOF has not been reached
+    ssize_t actualBytes = 0;
+
     if (!this->eof)
     {
         // Read and handle errors
         size_t expectedBytes = bufRemains(buffer);
-        ssize_t actualBytes = read(this->handle, bufRemainsPtr(buffer), expectedBytes);
+        actualBytes = read(this->handle, bufRemainsPtr(buffer), expectedBytes);
 
         // Error occurred during write
         if (actualBytes == -1)
             THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strPtr(this->name));
 
-        // Update amount of buffer used and total size
+        // Update amount of buffer used
         bufUsedInc(buffer, (size_t)actualBytes);
-        this->size += (size_t)actualBytes;
 
         // If less data than expected was read then EOF.  The file may not actually be EOF but we are not concerned with files that
         // are growing.  Just read up to the point where the file is being extended.
@@ -119,7 +119,7 @@ storageFileReadPosix(StorageFileReadPosix *this, Buffer *buffer)
             this->eof = true;
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_DEBUG_RESULT(SIZE, (size_t)actualBytes);
 }
 
 /***********************************************************************************************************************************
@@ -189,21 +189,6 @@ storageFileReadPosixName(StorageFileReadPosix *this)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(CONST_STRING, this->name);
-}
-
-/***********************************************************************************************************************************
-File size
-***********************************************************************************************************************************/
-size_t
-storageFileReadPosixSize(StorageFileReadPosix *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_FILE_READ_POSIX, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RESULT(SIZE, this->size);
 }
 
 /***********************************************************************************************************************************

@@ -38,6 +38,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Abstract IO layer out of the storage layer.  This allows the routines to be used for IO objects that do not have a storage representation.  Implement buffer read and write IO objects.</p>
+                    </release-item>
+
+                    <release-item>
                         <p><code>storageFileRead()</code> accepts a buffer for output rather than creating one.  This is more efficient overall and allows the caller to specify how many bytes will be read on each call.  Reads are appended if the buffer already contains data but the buffer size will never increase.</p>
                     </release-item>
 

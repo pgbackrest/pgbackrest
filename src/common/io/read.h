@@ -1,48 +1,48 @@
 /***********************************************************************************************************************************
-Storage File Read
+IO Read
 ***********************************************************************************************************************************/
-#ifndef STORAGE_FILEREAD_H
-#define STORAGE_FILEREAD_H
+#ifndef COMMON_IO_READ_H
+#define COMMON_IO_READ_H
 
 /***********************************************************************************************************************************
-Storage file read object
+IO read object
 ***********************************************************************************************************************************/
-typedef struct StorageFileRead StorageFileRead;
+typedef struct IoRead IoRead;
 
-#include "common/io/read.h"
 #include "common/type/buffer.h"
-#include "common/type/string.h"
-#include "storage/driver/posix/driverRead.h"
+
+/***********************************************************************************************************************************
+Function pointer types
+***********************************************************************************************************************************/
+typedef bool (*IoReadOpen)(void *driver);
+typedef size_t (*IoReadProcess)(void *driver, Buffer *buffer);
+typedef void (*IoReadClose)(void *driver);
+typedef bool (*IoReadEof)(void *driver);
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-StorageFileRead *storageFileReadNew(const String *name, bool ignoreMissing);
+IoRead *ioReadNew(void *driver, IoReadOpen open, IoReadProcess process, IoReadClose close, IoReadEof eof);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-StorageFileRead *storageFileReadMove(StorageFileRead *this, MemContext *parentNew);
+bool ioReadOpen(IoRead *this);
+size_t ioRead(IoRead *this, Buffer *buffer);
+void ioReadClose(IoRead *this);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-StorageFileReadPosix *storageFileReadFileDriver(const StorageFileRead *this);
-IoRead *storageFileReadIo(const StorageFileRead *this);
-bool storageFileReadIgnoreMissing(const StorageFileRead *this);
-const String *storageFileReadName(const StorageFileRead *this);
-
-/***********************************************************************************************************************************
-Destructor
-***********************************************************************************************************************************/
-void storageFileReadFree(StorageFileRead *this);
+bool ioReadEof(const IoRead *this);
+size_t ioReadSize(const IoRead *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_FILE_READ_TYPE                                                                                      \
-    StorageFileRead *
-#define FUNCTION_DEBUG_STORAGE_FILE_READ_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageFileRead", buffer, bufferSize)
+#define FUNCTION_DEBUG_IO_READ_TYPE                                                                                                \
+    IoRead *
+#define FUNCTION_DEBUG_IO_READ_FORMAT(value, buffer, bufferSize)                                                                   \
+    objToLog(value, "IoRead", buffer, bufferSize)
 
 #endif

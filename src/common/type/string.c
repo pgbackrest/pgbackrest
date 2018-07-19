@@ -64,7 +64,7 @@ strNewBuf(const Buffer *buffer)
     // Create object
     String *this = memNew(sizeof(String));
     this->memContext = memContextCurrent();
-    this->size = bufSize(buffer);
+    this->size = bufUsed(buffer);
 
     // Allocate and assign string
     this->buffer = memNewRaw(this->size + 1);

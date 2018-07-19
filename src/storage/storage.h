@@ -18,14 +18,6 @@ typedef struct Storage Storage;
 #include "storage/info.h"
 
 /***********************************************************************************************************************************
-Default buffer size
-
-Generally buffer size should be pulled out of options but some storage is created without access to options.  In those cases we'll
-assume they are not doing any heavy lifting and have a moderate default.
-***********************************************************************************************************************************/
-#define STORAGE_BUFFER_SIZE_DEFAULT                                 (64 * 1024)
-
-/***********************************************************************************************************************************
 Default file and path modes
 ***********************************************************************************************************************************/
 #define STORAGE_FILE_MODE_DEFAULT                                   0640
@@ -43,7 +35,6 @@ typedef struct StorageNewParam
 {
     mode_t modeFile;
     mode_t modePath;
-    size_t bufferSize;
     bool write;
     StoragePathExpressionCallback pathExpressionFunction;
 } StorageNewParam;
