@@ -126,17 +126,25 @@ sub resumeClean
             }
 
             # To be preserved the file must exist in the new manifest and not be a reference to a previous backup
+# CSHANG So anything that is a reference to a prior backup, but for some reason exists in this directory, we remove it and expect
+# that the referenced file in the prior backup dir is ok
             if ($oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile) &&
                 !$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE))
             {
                 # To be preserved the checksum must be defined
                 my $strChecksum = $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
-# CSHANG In this conditional, wrap the timestamp check and change to && (checksum-delta feature is on OR timestamp check).
+
+                # If the size and timestamp match OR if the size matches and the option to checksum all files is set, then keep the
+                # file. In the latter case, if there had been a timeline switch then rather than removing and recopying the file
+                # the file will be tested in backupFile to see if the checksum still matches: if so, it is not necessary to recopy,
+                # else it will need to be copied to the new backup.
                 if (defined($strChecksum) &&
-                    $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
-                    $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) &&
                     $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) ==
-                    $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE))
+                    $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE)  &&
+# CSHANG But why are we even giving this as an option? Why not get rid of timestamp checking and ALWAYS use the checksum checking if we want to be truly sure? I gues b/c most cases the timestamp checking is enough? Except in HA it might not be...
+                    (cfgOption(CFGOPT_CHECKSUM_DELTA) ||
+                    $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
+                    $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP)))
                 {
                     $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
 
@@ -285,18 +293,18 @@ sub processManifest
               sprintf("%016d-${a}", $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $a, MANIFEST_SUBKEY_SIZE))}
         ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_FILE, INI_SORT_NONE)))
     {
-        # If the file has a reference it does not need to be copied since it can be retrieved from the referenced backup.
+        # If the file has a reference it does not need to be copied since it can be retrieved from the referenced backup - unless
+        # the option to checksum all files is set.
         # However, if hard-linking is turned on the link will need to be created
         my $strReference = $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE, false);
 
-# CSHANG Here we skip putting this file on the queue because we figure by this point, we've checked the size and timestamp and have decided that we can reference the file in the previous backup. However, if checksum-delta is on, then we can't skip - we need to check the checksum
         if (defined($strReference))
         {
             # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
             if ($bHardLink)
             {
                 &log(DETAIL, "hardlink ${strRepoFile} to ${strReference}");
-
+# CSHANG But what do we do about these if we have to copy the file again into the new backup dir?
                 storageRepo()->linkCreate(
                     STORAGE_REPO_BACKUP . "/${strReference}/${strRepoFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
                     STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strRepoFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
@@ -308,8 +316,13 @@ sub processManifest
                 logDebugMisc($strOperation, "reference ${strRepoFile} to ${strReference}");
             }
 
-            # This file will not need to be copied
-            next;
+            # If the option to checksum all files is set - instead of just checking the size and timestamp - then don't skip
+            # checking this file to see if it needs to be copied again.
+            if (!cfgOption(CFGOPT_CHECKSUM_DELTA))
+            {
+                # This file will not need to be copied
+                next;
+            }
         }
 
         # By default put everything into a single queue
@@ -344,7 +357,7 @@ sub processManifest
 
         $lFileTotal++;
         $lSizeTotal += $lSize;
-
+# CSHANG So now files to be copied into this backup dir AND files referenced in another backup will be checked - possibly resulting in a copy
         # Queue for parallel backup
         $oBackupProcess->queueJob(
             $iHostConfigIdx, $strQueueKey, $strRepoFile, OP_BACKUP_FILE,

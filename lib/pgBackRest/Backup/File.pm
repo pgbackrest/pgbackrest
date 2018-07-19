@@ -87,6 +87,7 @@ sub backupFile
     my $strFileOp = $strRepoFile . ($bCompress ? '.' . COMPRESS_EXT : '');
 
     # If checksum is defined then the file already exists but needs to be checked
+# CSHANG This would not be true now since the file could be a reference to a file in a prior backup
     my $bCopy = true;
 
     if (defined($strChecksum))
@@ -98,7 +99,9 @@ sub backupFile
         {
             push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]});
         }
-
+# CSHANG I don't really think we have to do anything special with the checksum-delta option - we should just be passing in the correct file
+# to look at - so if it's a prior reference, we look at that file and if it fails, we copy to the current location, so have another param
+# say, strReferencePath - this would either be a duplicate of strBackupLabel or the prior label where it actually exists.
         # Get the checksum
         ($strCopyChecksum, $lCopySize) = $oStorageRepo->hashSize(
             $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
@@ -116,7 +119,7 @@ sub backupFile
     {
         # Add sha filter
         my $rhyFilter = [{strClass => STORAGE_FILTER_SHA}];
-
+# CSHANG What do we do about hardlinks if we're copying a file that was in a prior backup that the checksum no longer matches for?
         # Add page checksum filter
         if ($bChecksumPage)
         {
@@ -250,7 +253,9 @@ sub backupManifestUpdate
             " backup will continue but this may be an issue unless the resumed backup path in the repository is known to be" .
             " corrupted.\n" .
             "NOTE: this does not indicate a problem with the PostgreSQL page checksums.");
-# CSHANG If the checksum-delta feature is on, we would remove the MANIFEST_SUBKEY_REFERENCE if it exists (for aborted backups, a checksum can exist but not a reference).
+
+# CSHANG We shouldn't even need to check for the checksum delta here - if we've copied the file then the reference should always be removed, right?
+        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE);
     }
 
     # If copy was successful store the checksum and size
