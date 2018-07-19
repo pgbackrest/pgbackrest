@@ -730,39 +730,39 @@ sub build
         }
 
         # If version is greater than 9.0, check for files to exclude
-        if ($self->dbVersion() >= PG_VERSION_90)
+        if ($self->dbVersion() >= PG_VERSION_90 && $hManifest->{$strName}{type} eq 'f')
         {
             # Get the directory name from the manifest; it will be used later to seach for existence in the keys
             my $strDir = dirname($strName);
 
             # If it is a database data directory (base or tablespace) then check for files to skip
-            if ($strDir =~ ('base\/[0-9]+$') ||
-                $strDir =~ ('PG\_[0-9]+\.[0-9]+\_[0-9]+\/[0-9]+$'))
+            if ($strDir =~ '^base\/[0-9]+$' ||
+                $strDir =~ ('^' . $self->tablespacePathGet() . '\/[0-9]+$'))
             {
                 # Get just the filename
                 my $strBaseName = basename($strName);
 
                 # Skip temp tables (lower t followed by numbers underscore numbers and a dot (segment) or underscore (fork) and/or
                 # segment, e.g. t1234_123, t1234_123.1, t1234_123_vm, t1234_123_fsm.1
-                if ($strBaseName =~ ('^t[0-9]+\_[0-9]+(|\_(fsm|vm)){0,1}(\.[0-9]+){0,1}$'))
+                if ($strBaseName =~ '^t[0-9]+\_[0-9]+(|\_(fsm|vm)){0,1}(\.[0-9]+){0,1}$')
                 {
                     next;
                 }
 
-                # If version is greater than 9.1 then check for unlogged tables to skip.
+                # If version is greater than 9.1 then check for unlogged tables to skip
                 if ($self->dbVersion() >= PG_VERSION_91)
                 {
                     # Exclude all forks for unlogged tables except the init fork (numbers underscore init and optional dot segment)
-                    if ($strBaseName =~ ('^[0-9]+(|\_(fsm|vm)){0,1}(\.[0-9]+){0,1}$'))
+                    if ($strBaseName =~ '^[0-9]+(|\_(fsm|vm)){0,1}(\.[0-9]+){0,1}$')
                     {
                         # Get the filenode (OID)
-                        my ($strFileNode) = $strBaseName =~ ('^(\d+)');
+                        my ($strFileNode) = $strBaseName =~ '^(\d+)';
 
                         # Add _init to the OID to see if this is an unlogged object
                         $strFileNode = $strDir. "/" . $strFileNode . "_init";
 
                         # If key exists in manifest then skip
-                        if (exists($hManifest->{$strFileNode}))
+                        if (exists($hManifest->{$strFileNode}) && $hManifest->{$strFileNode}{type} eq 'f')
                         {
                             next;
                         }
