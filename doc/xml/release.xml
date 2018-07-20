@@ -60,6 +60,10 @@
 
                         <p>Require <postgres/> catalog version when instantiating a <code>Manifest</code> object (and not loading it from disk).</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Show exact log level required for stack trace param output instead of just <quote>debug</quote>.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
