@@ -22,13 +22,13 @@ testRun()
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "archive-push");
-        cfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_ERROR(cmdArchivePush(), ParamRequiredError, "WAL segment to push required");
 
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "000000010000000100000001");
-        cfgLoad(strLstSize(argList), strLstPtr(argList));
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_ERROR(cmdArchivePush(), AssertError, "archive-push in C does not support synchronous mode");
 
@@ -70,7 +70,7 @@ testRun()
             bufNewStr(strNew("")));
 
         TEST_RESULT_VOID(cmdArchivePush(), "successful push");
-        testLogResult("P00   INFO: pushed WAL segment 000000010000000100000001 asynchronously");
+        harnessLogResult("P00   INFO: pushed WAL segment 000000010000000100000001 asynchronously");
 
         storageRemoveP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok"), .errorOnMissing = true);
 

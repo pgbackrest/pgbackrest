@@ -5,10 +5,94 @@ Test Log Handler
 #include <unistd.h>
 
 #include <common/regExp.h>
-#include <storage/storage.h>
 
-void harnessLogLoad(const char *logFile);
-extern char harnessLogBuffer[];
+/***********************************************************************************************************************************
+Open a log file
+***********************************************************************************************************************************/
+static int
+testLogOpen(const char *logFile, int flags, int mode)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, logFile);
+        FUNCTION_HARNESS_PARAM(INT, flags);
+        FUNCTION_HARNESS_PARAM(INT, mode);
+
+        FUNCTION_HARNESS_ASSERT(logFile != NULL);
+    FUNCTION_HARNESS_END();
+
+    int result = open(logFile, flags, mode);
+
+    if (result == -1)                                                                           // {uncovered - no errors in test}
+        THROW_SYS_ERROR_FMT(FileOpenError, "unable to open log file '%s'", logFile);            // {+uncovered}
+
+    FUNCTION_HARNESS_RESULT(INT, result);
+}
+
+/***********************************************************************************************************************************
+Load log result from file into a buffer
+***********************************************************************************************************************************/
+static void
+testLogLoad(const char *logFile, char *buffer, size_t bufferSize)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, logFile);
+        FUNCTION_HARNESS_PARAM(STRINGZ, buffer);
+        FUNCTION_HARNESS_PARAM(SIZE, bufferSize);
+
+        FUNCTION_HARNESS_ASSERT(logFile != NULL);
+        FUNCTION_HARNESS_ASSERT(buffer != NULL);
+    FUNCTION_HARNESS_END();
+
+    buffer[0] = 0;
+
+    int handle = testLogOpen(logFile, O_RDONLY, 0);
+
+    size_t totalBytes = 0;
+    ssize_t actualBytes = 0;
+
+    do
+    {
+        actualBytes = read(handle, buffer, bufferSize - totalBytes);
+
+        if (actualBytes == -1)                                                                  // {uncovered - no errors in test}
+            THROW_SYS_ERROR_FMT(FileOpenError, "unable to read log file '%s'", logFile);        // {+uncovered}
+
+        totalBytes += (size_t)actualBytes;
+    }
+    while (actualBytes != 0);
+
+    if (close(handle) == -1)                                                                    // {uncovered - no errors in test}
+        THROW_SYS_ERROR_FMT(FileOpenError, "unable to close log file '%s'", logFile);           // {+uncovered}
+
+    // Remove final linefeed
+    buffer[totalBytes - 1] = 0;
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Compare log to a static string
+***********************************************************************************************************************************/
+void
+testLogResult(const char *logFile, const char *expected)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, logFile);
+        FUNCTION_HARNESS_PARAM(STRINGZ, expected);
+
+        FUNCTION_HARNESS_ASSERT(logFile != NULL);
+        FUNCTION_HARNESS_ASSERT(expected != NULL);
+    FUNCTION_HARNESS_END();
+
+    char actual[32768];
+    testLogLoad(logFile, actual, sizeof(actual));
+
+    if (strcmp(actual, expected) != 0)                                                          // {uncovered - no errors in test}
+        THROW_FMT(                                                                              // {+uncovered}
+            AssertError, "\n\nexpected log:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expected, actual);
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
 
 /***********************************************************************************************************************************
 Test Run
@@ -104,7 +188,14 @@ testRun()
             true, "check timestamp format: %s", strPtr(logTime));
 
         // Redirect output to files
-        testLogInit();
+        char stdoutFile[1024];
+        snprintf(stdoutFile, sizeof(stdoutFile), "%s/stdout.log", testPath());
+        logHandleStdOut = testLogOpen(stdoutFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+
+        char stderrFile[1024];
+        snprintf(stderrFile, sizeof(stderrFile), "%s/stderr.log", testPath());
+        logHandleStdErr = testLogOpen(stderrFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+
         TEST_RESULT_VOID(logInit(logLevelWarn, logLevelOff, logLevelOff, false), "init logging to warn (timestamp off)");
 
         logBuffer[0] = 0;
@@ -129,8 +220,9 @@ testRun()
         TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false), "init logging to debug");
 
         // Log to file
-        String *fileFile = strNewFmt("%s/file.log", testPath());
-        logFileSet(strPtr(fileFile));
+        char fileFile[1024];
+        snprintf(fileFile, sizeof(stdoutFile), "%s/file.log", testPath());
+        logFileSet(fileFile);
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
@@ -147,7 +239,7 @@ testRun()
         TEST_RESULT_STR(logBuffer, "P00  TRACE:         test::test_func: message\n", "    check log");
 
         // Reopen the log file
-        logFileSet(strPtr(fileFile));
+        logFileSet(fileFile);
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
@@ -162,13 +254,15 @@ testRun()
 
         // Check stdout
         testLogResult(
+            stdoutFile,
             "P00   WARN: format 99\n"
             "P00  ERROR: [026]: message\n"
             "P00  ERROR: [026]: message1\n"
             "            message2");
 
         // Check stderr
-        testLogErrResult(
+        testLogResult(
+            stderrFile,
             "DEBUG:     test::test_func: message\n"
             "           message2\n"
             "INFO: info message\n"
@@ -177,18 +271,15 @@ testRun()
             "      NOTE: process will continue without log file.");
 
         // Check file
-        harnessLogLoad(strPtr(fileFile));
-
-        TEST_RESULT_STR(
-            harnessLogBuffer,
+        testLogResult(
+            fileFile,
             "-------------------PROCESS START-------------------\n"
             "P00  DEBUG:     test::test_func: message\n"
             "                message2\n"
             "\n"
             "-------------------PROCESS START-------------------\n"
             "P00   INFO: info message\n"
-            "P00   INFO: info message 2",
-            "checkout file output");
+            "P00   INFO: info message 2");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

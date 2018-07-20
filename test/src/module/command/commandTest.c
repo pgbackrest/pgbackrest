@@ -32,14 +32,14 @@ testRun()
         cfgCommandParamSet(commandParamList);
 
         TEST_RESULT_VOID(cmdBegin(true), "command begin with command parameter");
-        testLogResult(
+        harnessLogResult(
             "P00   INFO: archive-get command begin " PGBACKREST_VERSION ": [param1] --compress");
 
         strLstAddZ(commandParamList, "param 2");
         cfgCommandParamSet(commandParamList);
 
         TEST_RESULT_VOID(cmdBegin(true), "command begin with command parameters");
-        testLogResult(
+        harnessLogResult(
             "P00   INFO: archive-get command begin " PGBACKREST_VERSION ": [param1, \"param 2\"] --compress");
 
         cfgInit();
@@ -78,32 +78,32 @@ testRun()
         cfgOptionSet(cfgOptRecoveryOption, cfgSourceParam, recoveryVar);
 
         TEST_RESULT_VOID(cmdBegin(true), "command begin with option logging");
-        testLogResult(
+        harnessLogResult(
             "P00   INFO: archive-get command begin " PGBACKREST_VERSION ": --no-config --db-include=db1 --db-include=db2"
                 " --recovery-option=standby_mode=on --recovery-option=primary_conn_info=blah --reset-repo1-host"
                 " --repo1-path=\"/path/to the/repo\" --repo1-s3-key=<redacted>");
 
         TEST_RESULT_VOID(cmdBegin(false), "command begin no option logging");
-        testLogResult(
+        harnessLogResult(
             "P00   INFO: archive-get command begin");
 
         // Nothing should be logged for command begin when the log level is too low
         // -------------------------------------------------------------------------------------------------------------------------
-        logInit(logLevelWarn, logLevelOff, logLevelOff, false);
+        harnessLogLevelSet(logLevelWarn);
         TEST_RESULT_VOID(cmdBegin(true), "command begin no logging");
 
         // Nothing should be logged for command end when the log level is too low
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdEnd(0, NULL), "command end no logging");
-        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+        harnessLogLevelSet(logLevelInfo);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdEnd(25, strNew("aborted with exception [025]")), "command end with error");
-        testLogResult("P00   INFO: archive-get command end: aborted with exception [025]");
+        harnessLogResult("P00   INFO: archive-get command end: aborted with exception [025]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");
-        testLogResult("P00   INFO: archive-get command end: completed successfully");
+        harnessLogResult("P00   INFO: archive-get command end: completed successfully");
 
         // Make sure time output is covered but don't do expect testing since the output is variable
         // -------------------------------------------------------------------------------------------------------------------------
@@ -111,12 +111,12 @@ testRun()
         cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, varNewBool(false));
 
         TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");
-        testLogResult("P00   INFO: archive-get command end: completed successfully");
+        harnessLogResult("P00   INFO: archive-get command end: completed successfully");
 
         cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, varNewBool(true));
 
         TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");
-        testLogResultRegExp("P00   INFO\\: archive-get command end: completed successfully \\([0-9]+ms\\)");
+        harnessLogResultRegExp("P00   INFO\\: archive-get command end: completed successfully \\([0-9]+ms\\)");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

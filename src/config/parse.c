@@ -356,7 +356,7 @@ Parse the command-line arguments and config file to produce final config data
 logic to this critical path code.
 ***********************************************************************************************************************************/
 void
-configParse(unsigned int argListSize, const char *argList[])
+configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(UINT, argListSize);
@@ -513,7 +513,7 @@ configParse(unsigned int argListSize, const char *argList[])
             cfgCommandParamSet(commandParamList);
 
         // Enable logging (except for local and remote commands) so config file warnings will be output
-        if (cfgCommand() != cfgCmdLocal && cfgCommand() != cfgCmdRemote)
+        if (cfgCommand() != cfgCmdLocal && cfgCommand() != cfgCmdRemote && resetLogLevel)
             logInit(logLevelWarn, logLevelWarn, logLevelOff, false);
 
         // Phase 2: parse config file unless --no-config passed

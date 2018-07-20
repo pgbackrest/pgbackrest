@@ -212,7 +212,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Parse config from command line and config file
-        configParse(argListSize, argList);
+        configParse(argListSize, argList, true);
 
         // Load the log settings
         cfgLoadLogSetting();

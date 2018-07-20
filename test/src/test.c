@@ -17,7 +17,7 @@ This wrapper runs the the C unit tests.
 #include "common/harnessTest.h"
 
 #ifndef NO_LOG
-    #include "common/logTest.h"
+    #include "common/harnessLog.h"
 #endif
 
 #ifndef NO_MEM_CONTEXT

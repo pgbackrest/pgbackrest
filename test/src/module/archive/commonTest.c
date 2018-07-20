@@ -64,13 +64,13 @@ testRun()
             storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewStr(strNew("0\nwarning")));
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "ok file with warning");
-        testLogResult("P00   WARN: warning");
+        harnessLogResult("P00   WARN: warning");
 
         storagePutNP(
             storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewStr(strNew("25\nerror")));
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "error status renamed to ok");
-        testLogResult(
+        harnessLogResult(
             "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
 
         // -------------------------------------------------------------------------------------------------------------------------

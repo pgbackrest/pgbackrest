@@ -84,13 +84,13 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
-        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help from empty command line");
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "help from empty command line");
         TEST_RESULT_STR(strPtr(helpRender()), generalHelp, "    check text");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "help");
-        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help from help command");
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "help from help command");
         TEST_RESULT_STR(strPtr(helpRender()), generalHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -107,7 +107,7 @@ testRun()
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "version");
-        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for version command");
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "help for version command");
         TEST_RESULT_STR(strPtr(helpRender()), commandHelp, "    check text");
 
         // This test is broken up into multiple strings because C99 does not require compilers to support const strings > 4095 bytes
@@ -227,7 +227,7 @@ testRun()
         strLstAddZ(argList, "--link-map=/link2=/dest2");
         strLstAddZ(argList, "--db-include=db1");
         strLstAddZ(argList, "--db-include=db2");
-        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for restore command");
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "help for restore command");
         TEST_RESULT_STR(strPtr(helpRender()), commandHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -237,7 +237,7 @@ testRun()
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "buffer-size");
         strLstAddZ(argList, "buffer-size");
-        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "parse too many options");
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "parse too many options");
         TEST_ERROR(helpRender(), ParamInvalidError, "only one option allowed for option help");
 
         argList = strLstNew();
@@ -245,7 +245,7 @@ testRun()
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, BOGUS_STR);
-        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "parse bogus option");
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "parse bogus option");
         TEST_ERROR(helpRender(), OptionInvalidError, "option 'BOGUS' is not valid for command 'archive-push'");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -267,11 +267,13 @@ testRun()
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "buffer-size");
-        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, buffer-size option");
+        TEST_RESULT_VOID(
+            configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, buffer-size option");
         TEST_RESULT_STR(strPtr(helpRender()), strPtr(strNewFmt("%s\ndefault: 4194304\n", optionHelp)), "    check text");
 
         strLstAddZ(argList, "--buffer-size=32768");
-        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, buffer-size option");
+        TEST_RESULT_VOID(
+            configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, buffer-size option");
         TEST_RESULT_STR(
             strPtr(helpRender()), strPtr(strNewFmt("%s\ncurrent: 32768\ndefault: 4194304\n", optionHelp)), "    check text");
 
@@ -290,13 +292,13 @@ testRun()
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "repo1-s3-host");
         TEST_RESULT_VOID(
-            configParse(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, repo1-s3-host option");
+            configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, repo1-s3-host option");
         TEST_RESULT_STR(strPtr(helpRender()), optionHelp, "    check text");
 
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAddZ(argList, "--repo1-s3-host=s3-host");
         TEST_RESULT_VOID(
-            configParse(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, repo1-s3-host option");
+            configParse(strLstSize(argList), strLstPtr(argList), false), "help for archive-push command, repo1-s3-host option");
         TEST_RESULT_STR(
             strPtr(helpRender()), strPtr(strNewFmt("%s\ncurrent: s3-host\n", optionHelp)), "    check text");
 
@@ -321,7 +323,8 @@ testRun()
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "backup");
         strLstAddZ(argList, "repo-hardlink");
-        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for backup command, repo-hardlink option");
+        TEST_RESULT_VOID(
+            configParse(strLstSize(argList), strLstPtr(argList), false), "help for backup command, repo-hardlink option");
         TEST_RESULT_STR(strPtr(helpRender()), optionHelp, "    check text");
     }
 
@@ -330,7 +333,7 @@ testRun()
     {
         StringList *argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
-        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "parse help from empty command line");
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "parse help from empty command line");
 
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);
