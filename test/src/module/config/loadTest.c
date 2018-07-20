@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Configuration Load
 ***********************************************************************************************************************************/
+#include "common/io/io.h"
 #include "common/log.h"
 #include "version.h"
 
@@ -268,7 +269,17 @@ testRun()
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "no command");
 
-        // Help command
+        // Help command only
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("help"));
+
+        ioBufferSizeSet(333);
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command");
+        TEST_RESULT_SIZE(ioBufferSize(), 333, "buffer size not updated by help command");
+
+        // Help command for backup
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -276,7 +287,8 @@ testRun()
         strLstAdd(argList, strNew("backup"));
         strLstAdd(argList, strNew("--repo1-retention-full=2"));
 
-        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command");
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
+        TEST_RESULT_SIZE(ioBufferSize(), 4 * 1024 * 1024, "buffer size set to option default");
 
         // Command takes lock and opens log file
         // -------------------------------------------------------------------------------------------------------------------------

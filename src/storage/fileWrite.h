@@ -11,6 +11,7 @@ Storage file read object
 ***********************************************************************************************************************************/
 typedef struct StorageFileWrite StorageFileWrite;
 
+#include "common/io/write.h"
 #include "common/type/buffer.h"
 #include "common/type/string.h"
 #include "storage/driver/posix/driverWrite.h"
@@ -30,10 +31,6 @@ StorageFileWrite *storageFileWriteNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void storageFileWriteOpen(StorageFileWrite *this);
-void storageFileWrite(StorageFileWrite *this, const Buffer *buffer);
-void storageFileWriteClose(StorageFileWrite *this);
-
 StorageFileWrite *storageFileWriteMove(StorageFileWrite *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
@@ -42,6 +39,7 @@ Getters
 bool storageFileWriteAtomic(const StorageFileWrite *this);
 bool storageFileWriteCreatePath(const StorageFileWrite *this);
 StorageFileWritePosix *storageFileWriteFileDriver(const StorageFileWrite *this);
+IoWrite *storageFileWriteIo(const StorageFileWrite *this);
 mode_t storageFileWriteModeFile(const StorageFileWrite *this);
 mode_t storageFileWriteModePath(const StorageFileWrite *this);
 const String *storageFileWriteName(const StorageFileWrite *this);

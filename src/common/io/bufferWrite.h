@@ -1,48 +1,42 @@
 /***********************************************************************************************************************************
-Storage File Read
+Buffer IO Write
 ***********************************************************************************************************************************/
-#ifndef STORAGE_FILEREAD_H
-#define STORAGE_FILEREAD_H
+#ifndef COMMON_IO_BUFFERWRITE_H
+#define COMMON_IO_BUFFERWRITE_H
 
 /***********************************************************************************************************************************
-Storage file read object
+Buffer write object
 ***********************************************************************************************************************************/
-typedef struct StorageFileRead StorageFileRead;
+typedef struct IoBufferWrite IoBufferWrite;
 
-#include "common/io/read.h"
-#include "common/type/buffer.h"
-#include "common/type/string.h"
-#include "storage/driver/posix/driverRead.h"
+#include "common/io/write.h"
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-StorageFileRead *storageFileReadNew(const String *name, bool ignoreMissing);
+IoBufferWrite *ioBufferWriteNew(Buffer *buffer);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-StorageFileRead *storageFileReadMove(StorageFileRead *this, MemContext *parentNew);
+IoBufferWrite *ioBufferWriteMove(IoBufferWrite *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-StorageFileReadPosix *storageFileReadFileDriver(const StorageFileRead *this);
-IoRead *storageFileReadIo(const StorageFileRead *this);
-bool storageFileReadIgnoreMissing(const StorageFileRead *this);
-const String *storageFileReadName(const StorageFileRead *this);
+IoWrite *ioBufferWriteIo(const IoBufferWrite *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void storageFileReadFree(StorageFileRead *this);
+void ioBufferWriteFree(IoBufferWrite *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_FILE_READ_TYPE                                                                                      \
-    StorageFileRead *
-#define FUNCTION_DEBUG_STORAGE_FILE_READ_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageFileRead", buffer, bufferSize)
+#define FUNCTION_DEBUG_IO_BUFFER_WRITE_TYPE                                                                                        \
+    IoBufferWrite *
+#define FUNCTION_DEBUG_IO_BUFFER_WRITE_FORMAT(value, buffer, bufferSize)                                                           \
+    objToLog(value, "IoBufferWrite", buffer, bufferSize)
 
 #endif

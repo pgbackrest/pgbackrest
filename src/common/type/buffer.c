@@ -102,16 +102,64 @@ bufCat(Buffer *this, const Buffer *cat)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    if (cat != NULL && cat->used > 0)
+    if (cat != NULL)
+        bufCatC(this, cat->buffer, 0, cat->used);
+
+    FUNCTION_TEST_RESULT(BUFFER, this);
+}
+
+/***********************************************************************************************************************************
+Append a C buffer
+***********************************************************************************************************************************/
+Buffer *
+bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+        FUNCTION_TEST_PARAM(UCHARP, cat);
+        FUNCTION_TEST_PARAM(SIZE, catOffset);
+        FUNCTION_TEST_PARAM(SIZE, catSize);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(catSize == 0 || cat != NULL);
+    FUNCTION_TEST_END();
+
+    if (catSize > 0)
     {
-        if (this->used + cat->used > this->size)
-            bufResize(this, this->used + cat->used);
+        if (this->used + catSize > this->size)
+            bufResize(this, this->used + catSize);
 
         // Just here to silence nonnull warnings from clang static analyzer
         ASSERT_DEBUG(this->buffer != NULL);
 
-        memcpy(this->buffer + this->used, cat->buffer, cat->used);
-        this->used = this->used + cat->used;
+        memcpy(this->buffer + this->used, cat + catOffset, catSize);
+        this->used += catSize;
+    }
+
+    FUNCTION_TEST_RESULT(BUFFER, this);
+}
+
+/***********************************************************************************************************************************
+Append a subset of another buffer
+***********************************************************************************************************************************/
+Buffer *
+bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+        FUNCTION_TEST_PARAM(BUFFER, cat);
+        FUNCTION_TEST_PARAM(SIZE, catOffset);
+        FUNCTION_TEST_PARAM(SIZE, catSize);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    if (cat != NULL)
+    {
+        ASSERT(catOffset <= cat->used);
+        ASSERT(catSize <= cat->used - catOffset);
+
+        bufCatC(this, cat->buffer, catOffset, catSize);
     }
 
     FUNCTION_TEST_RESULT(BUFFER, this);

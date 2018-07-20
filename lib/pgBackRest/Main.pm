@@ -43,8 +43,9 @@ sub main
 
     # Run in eval block to catch errors
     # ------------------------------------------------------------------------------------------------------------------------------
-    my $result = 0;
-    my $message = '';
+    my $iResult = 0;
+    my $bErrorC = false;
+    my $strMessage = '';
 
     eval
     {
@@ -86,7 +87,7 @@ sub main
             require pgBackRest::Archive::Get::Get;
             pgBackRest::Archive::Get::Get->import();
 
-            $result = new pgBackRest::Archive::Get::Get()->process(\@stryCommandArg);
+            $iResult = new pgBackRest::Archive::Get::Get()->process(\@stryCommandArg);
         }
 
         # Process remote command
@@ -145,7 +146,7 @@ sub main
             require pgBackRest::Check::Check;
             pgBackRest::Check::Check->import();
 
-            $result = new pgBackRest::Check::Check()->process();
+            $iResult = new pgBackRest::Check::Check()->process();
         }
 
         # Process start/stop commands
@@ -239,7 +240,7 @@ sub main
                         require pgBackRest::Stanza;
                         pgBackRest::Stanza->import();
 
-                        $result = new pgBackRest::Stanza()->process();
+                        $iResult = new pgBackRest::Stanza()->process();
                     }
 
                     # Process backup command
@@ -282,26 +283,27 @@ sub main
         # If a backrest exception
         if (isException(\$oException))
         {
-            $result = $oException->code();
+            $iResult = $oException->code();
+            $bErrorC = $oException->errorC();
 
             # Only return message if we are in an async process since this will not be logged to the console
             if (!$bConfigLoaded && cfgOption(CFGOPT_ARCHIVE_ASYNC))
             {
-                $message = $oException->message();
+                $strMessage = $oException->message();
             }
         }
         # Else a regular Perl exception
         else
         {
-            $result = ERROR_UNHANDLED;
-            $message =
+            $iResult = ERROR_UNHANDLED;
+            $strMessage =
                 'process terminated due to an unhandled exception' .
                 (defined($oException) ? ":\n${oException}" : ': [exception not defined]');
         }
     };
 
     # Return result and error message if the result is an error
-    return $result, $message;
+    return $iResult, $bErrorC, $strMessage;
 }
 
 ####################################################################################################################################

@@ -1,48 +1,46 @@
 /***********************************************************************************************************************************
-Storage File Read
+IO Write
 ***********************************************************************************************************************************/
-#ifndef STORAGE_FILEREAD_H
-#define STORAGE_FILEREAD_H
+#ifndef COMMON_IO_WRITE_H
+#define COMMON_IO_WRITE_H
 
 /***********************************************************************************************************************************
-Storage file read object
+IO write object
 ***********************************************************************************************************************************/
-typedef struct StorageFileRead StorageFileRead;
+typedef struct IoWrite IoWrite;
 
-#include "common/io/read.h"
 #include "common/type/buffer.h"
-#include "common/type/string.h"
-#include "storage/driver/posix/driverRead.h"
+
+/***********************************************************************************************************************************
+Function pointer types
+***********************************************************************************************************************************/
+typedef void (*IoWriteOpen)(void *driver);
+typedef void (*IoWriteProcess)(void *driver, const Buffer *buffer);
+typedef void (*IoWriteClose)(void *driver);
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-StorageFileRead *storageFileReadNew(const String *name, bool ignoreMissing);
+IoWrite *ioWriteNew(void *driver, IoWriteOpen open, IoWriteProcess process, IoWriteClose close);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-StorageFileRead *storageFileReadMove(StorageFileRead *this, MemContext *parentNew);
+void ioWriteOpen(IoWrite *this);
+void ioWrite(IoWrite *this, const Buffer *buffer);
+void ioWriteClose(IoWrite *this);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-StorageFileReadPosix *storageFileReadFileDriver(const StorageFileRead *this);
-IoRead *storageFileReadIo(const StorageFileRead *this);
-bool storageFileReadIgnoreMissing(const StorageFileRead *this);
-const String *storageFileReadName(const StorageFileRead *this);
-
-/***********************************************************************************************************************************
-Destructor
-***********************************************************************************************************************************/
-void storageFileReadFree(StorageFileRead *this);
+size_t ioWriteSize(const IoWrite *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_FILE_READ_TYPE                                                                                      \
-    StorageFileRead *
-#define FUNCTION_DEBUG_STORAGE_FILE_READ_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageFileRead", buffer, bufferSize)
+#define FUNCTION_DEBUG_IO_WRITE_TYPE                                                                                               \
+    IoWrite *
+#define FUNCTION_DEBUG_IO_WRITE_FORMAT(value, buffer, bufferSize)                                                                  \
+    objToLog(value, "IoWrite", buffer, bufferSize)
 
 #endif

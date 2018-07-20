@@ -254,6 +254,13 @@ Macros to ease the use of common data types
 #define TEST_RESULT_PTR_NE(statement, resultExpected, ...)                                                                         \
     TEST_RESULT_PTR_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
+#define TEST_RESULT_SIZE_PARAM(statement, resultExpected, typeOp, ...)                                                             \
+    TEST_RESULT(statement, resultExpected, size_t, "%zu", TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
+#define TEST_RESULT_SIZE(statement, resultExpected, ...)                                                                           \
+    TEST_RESULT_SIZE_PARAM(statement, resultExpected, ==, __VA_ARGS__);
+#define TEST_RESULT_SIZE_NE(statement, resultExpected, ...)                                                                        \
+    TEST_RESULT_SIZE_PARAM(statement, resultExpected, !=, __VA_ARGS__);
+
 #define TEST_RESULT_STR_PARAM(statement, resultExpected, typeOp, ...)                                                              \
     TEST_RESULT(statement, resultExpected, char *, "%s", TEST_TYPE_FORMAT_PTR, typeOp, TEST_TYPE_COMPARE_STR, __VA_ARGS__);
 #define TEST_RESULT_STR(statement, resultExpected, ...)                                                                            \

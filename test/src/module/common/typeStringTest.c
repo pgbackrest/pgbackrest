@@ -28,6 +28,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *buffer = bufNew(8);
         memcpy(bufPtr(buffer), "12345678", 8);
+        bufUsedSet(buffer, 8);
 
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "12345678", "new string from buffer");
 

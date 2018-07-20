@@ -103,9 +103,10 @@ testRun()
                 "    check stack trace");
 #endif
 
-            assert(stackTracePush("file1.c", "function2", logLevelDebug) == logLevelDebug);
+            assert(stackTracePush("file1.c", "function2", logLevelTrace) == logLevelTrace);
             stackTrace[stackSize - 2].fileLine = 7777;
-            assert(strcmp(stackTraceParam(), "debug log level required for parameters") == 0);
+            assert(strcmp(stackTraceParam(), "trace log level required for parameters") == 0);
+            stackTrace[stackSize - 1].functionLogLevel = logLevelDebug;
 
             TRY_BEGIN()
             {

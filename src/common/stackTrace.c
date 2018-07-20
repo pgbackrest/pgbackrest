@@ -177,7 +177,9 @@ stackTraceParamIdx(int stackIdx)
         return data->param;
     }
 
-    return "debug log level required for parameters";
+    // If no parameters return the log level required to get them
+    #define LOG_LEVEL_REQUIRED " log level required for parameters"
+    return data->functionLogLevel == logLevelTrace ? "trace" LOG_LEVEL_REQUIRED : "debug" LOG_LEVEL_REQUIRED;
 }
 
 const char *
