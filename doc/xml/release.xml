@@ -14,6 +14,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.05dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="hunley.douglas"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue where errors raised in C were not logged when called from Perl.  <backrest/> properly terminated with the correct error code but lacked an error message to aid in debugging.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>

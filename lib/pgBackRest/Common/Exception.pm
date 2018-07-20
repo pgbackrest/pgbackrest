@@ -30,6 +30,7 @@ sub new
     my $strMessage = shift;  # ErrorMessage
     my $strTrace = shift;    # Stack trace
     my $rExtra = shift;      # Extra info used exclusively by the logging system
+    my $bErrorC = shift;     # Is this a C error?
 
     if ($iCode < ERROR_MINIMUM || $iCode > ERROR_MAXIMUM)
     {
@@ -46,6 +47,7 @@ sub new
     $self->{strMessage} = $strMessage;
     $self->{strTrace} = $strTrace;
     $self->{rExtra} = $rExtra;
+    $self->{bErrorC} = $bErrorC ? 1 : 0;
 
     return $self;
 }
@@ -68,6 +70,16 @@ sub code
     my $self = shift;
 
     return $self->{iCode};
+}
+
+####################################################################################################################################
+# Is this a C error?
+####################################################################################################################################
+sub errorC
+{
+    my $self = shift;
+
+    return $self->{bErrorC};
 }
 
 ####################################################################################################################################
@@ -128,7 +140,7 @@ sub isException
             my $strMessage = join(':', @stryException);
 
             # Create exception
-            $$roException = new pgBackRest::Common::Exception("ERROR", $iCode, $strMessage, $strTrace);
+            $$roException = new pgBackRest::Common::Exception("ERROR", $iCode, $strMessage, $strTrace, undef, 1);
 
             return 1;
         }

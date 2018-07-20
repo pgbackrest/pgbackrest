@@ -67,7 +67,7 @@ perlMain()
 
     // Construct Perl main call
     String *mainCall = strNewFmt(
-        "($iResult, $strMessage) = " PGBACKREST_MAIN "('%s'%s)", cfgCommandName(cfgCommand()), strPtr(commandParam));
+        "($iResult, $bErrorC, $strMessage) = " PGBACKREST_MAIN "('%s'%s)", cfgCommandName(cfgCommand()), strPtr(commandParam));
 
     FUNCTION_TEST_RESULT(STRING, mainCall);
 }
@@ -221,10 +221,16 @@ perlExec()
 
     // Return result code
     int code = (int)SvIV(get_sv("iResult", 0));
-    char *message = SvPV_nolen(get_sv("strMessage", 0));                            // {uncoverable - internal Perl macro branch}
+    bool errorC = (int)SvIV(get_sv("bErrorC", 0));
+    char *message = SvPV_nolen(get_sv("strMessage", 0));                            // {uncovered - internal Perl macro branch}
 
     if (code >= errorTypeCode(&AssertError))                                        // {uncovered - success tested in integration}
-        THROW_CODE(code, strlen(message) == 0 ? PERL_EMBED_ERROR : message);        // {+uncovered}
+    {
+        if (errorC)                                                                 // {+uncovered}
+            RETHROW();                                                              // {+uncovered}
+        else
+            THROW_CODE(code, strlen(message) == 0 ? PERL_EMBED_ERROR : message);    // {+uncovered}
+    }
 
     FUNCTION_DEBUG_RESULT(INT, code);                                               // {+uncovered}
 }

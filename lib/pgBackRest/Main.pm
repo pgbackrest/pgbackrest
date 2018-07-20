@@ -44,6 +44,7 @@ sub main
     # Run in eval block to catch errors
     # ------------------------------------------------------------------------------------------------------------------------------
     my $iResult = 0;
+    my $bErrorC = false;
     my $strMessage = '';
 
     eval
@@ -283,6 +284,7 @@ sub main
         if (isException(\$oException))
         {
             $iResult = $oException->code();
+            $bErrorC = $oException->errorC();
 
             # Only return message if we are in an async process since this will not be logged to the console
             if (!$bConfigLoaded && cfgOption(CFGOPT_ARCHIVE_ASYNC))
@@ -301,7 +303,7 @@ sub main
     };
 
     # Return result and error message if the result is an error
-    return $iResult, $strMessage;
+    return $iResult, $bErrorC, $strMessage;
 }
 
 ####################################################################################################################################

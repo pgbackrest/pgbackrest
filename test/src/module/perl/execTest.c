@@ -20,7 +20,8 @@ testRun()
         cfgCommandSet(cfgCmdInfo);
         cfgExeSet(strNew("/path/to/pgbackrest"));
 
-        TEST_RESULT_STR(strPtr(perlMain()), "($iResult, $strMessage) = pgBackRest::Main::main('info')", "command with no options");
+        TEST_RESULT_STR(
+            strPtr(perlMain()), "($iResult, $bErrorC, $strMessage) = pgBackRest::Main::main('info')", "command with no options");
 
         // -------------------------------------------------------------------------------------------------------------------------
         cfgOptionValidSet(cfgOptCompress, true);
@@ -32,7 +33,7 @@ testRun()
         cfgCommandParamSet(commandParamList);
 
         TEST_RESULT_STR(
-            strPtr(perlMain()), "($iResult, $strMessage) = pgBackRest::Main::main('info','A','B')",
+            strPtr(perlMain()), "($iResult, $bErrorC, $strMessage) = pgBackRest::Main::main('info','A','B')",
             "command with one option and params");
     }
 
