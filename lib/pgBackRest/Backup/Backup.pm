@@ -126,23 +126,20 @@ sub resumeClean
             }
 
             # To be preserved the file must exist in the new manifest and not be a reference to a previous backup
-# CSHANG So anything that is a reference to a prior backup, but for some reason exists in this directory, we remove it and expect
-# that the referenced file in the prior backup dir is ok
             if ($oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile) &&
                 !$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE))
             {
                 # To be preserved the checksum must be defined
                 my $strChecksum = $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
 
-                # If the size and timestamp match OR if the size matches and the option to checksum all files is set, then keep the
-                # file. In the latter case, if there had been a timeline switch then rather than removing and recopying the file
-                # the file will be tested in backupFile to see if the checksum still matches: if so, it is not necessary to recopy,
+                # If the size and timestamp match OR if the size matches and the delta option is set, then keep the file.
+                # In the latter case, if there had been a timeline switch then rather than removing and recopying the file, the file
+                # will be tested in backupFile to see if the db/repo checksum still matches: if so, it is not necessary to recopy,
                 # else it will need to be copied to the new backup.
                 if (defined($strChecksum) &&
                     $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) ==
                     $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE)  &&
-# CSHANG But why are we even giving this as an option? Why not get rid of timestamp checking and ALWAYS use the checksum checking if we want to be truly sure? I gues b/c most cases the timestamp checking is enough? Except in HA it might not be...
-                    (cfgOption(CFGOPT_CHECKSUM_DELTA) ||
+                    (cfgOption(CFGOPT_DELTA) ||
                     $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
                     $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP)))
                 {
@@ -300,25 +297,11 @@ sub processManifest
 
         if (defined($strReference))
         {
-            # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
-            if ($bHardLink)
-            {
-                &log(DETAIL, "hardlink ${strRepoFile} to ${strReference}");
-# CSHANG But what do we do about these if we have to copy the file again into the new backup dir?
-                storageRepo()->linkCreate(
-                    STORAGE_REPO_BACKUP . "/${strReference}/${strRepoFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
-                    STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strRepoFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
-                    {bHard => true});
-            }
-            # Else log the reference
-            else
-            {
-                logDebugMisc($strOperation, "reference ${strRepoFile} to ${strReference}");
-            }
+            logDebugMisc($strOperation, "reference ${strRepoFile} to ${strReference}");
 
             # If the option to checksum all files is set - instead of just checking the size and timestamp - then don't skip
             # checking this file to see if it needs to be copied again.
-            if (!cfgOption(CFGOPT_CHECKSUM_DELTA))
+            if (!cfgOption(CFGOPT_DELTA))
             {
                 # This file will not need to be copied
                 next;
@@ -357,7 +340,7 @@ sub processManifest
 
         $lFileTotal++;
         $lSizeTotal += $lSize;
-# CSHANG So now files to be copied into this backup dir AND files referenced in another backup will be checked - possibly resulting in a copy
+
         # Queue for parallel backup
         $oBackupProcess->queueJob(
             $iHostConfigIdx, $strQueueKey, $strRepoFile, OP_BACKUP_FILE,
@@ -366,7 +349,8 @@ sub processManifest
                 cfgOption(CFGOPT_CHECKSUM_PAGE) ? isChecksumPage($strRepoFile) : false, $strBackupLabel, $bCompress,
                 cfgOption(CFGOPT_COMPRESS_LEVEL), $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile,
                 MANIFEST_SUBKEY_TIMESTAMP, false), $bIgnoreMissing,
-                cfgOption(CFGOPT_CHECKSUM_PAGE) && isChecksumPage($strRepoFile) ? $hStartLsnParam : undef],
+                cfgOption(CFGOPT_CHECKSUM_PAGE) && isChecksumPage($strRepoFile) ? $hStartLsnParam : undef,
+                cfgOption(CFGOPT_DELTA), defined($strReference) ? true : false],
             {rParamSecure => $oBackupManifest->cipherPassSub() ? [$oBackupManifest->cipherPassSub()] : undef});
 
         # Size and checksum will be removed and then verified later as a sanity check
@@ -415,6 +399,29 @@ sub processManifest
         # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
         # then the remote might timeout while waiting for a command.
         protocolKeepAlive();
+    }
+
+    foreach my $strFile ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_FILE))
+    {
+        # If the file has a reference, then it was not copied since it can be retrieved from the referenced backup.
+        # However, if hard-linking is turned on the link will need to be created.
+        my $strReference = $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE, false);
+
+        # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
+        if ($bHardLink)
+        {
+            &log(DETAIL, "hardlink ${strRepoFile} to ${strReference}");
+
+            storageRepo()->linkCreate(
+                STORAGE_REPO_BACKUP . "/${strReference}/${strRepoFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
+                STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strRepoFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
+                {bHard => true});
+        }
+        # Else log the reference. With delta, it is possible that references may have been removed if a file needed to be recopied.
+        else
+        {
+            logDebugMisc($strOperation, " after backup, reference ${strRepoFile} to ${strReference}");
+        }
     }
 
     # Validate the manifest

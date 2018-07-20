@@ -888,13 +888,16 @@ sub build
                     $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_FUTURE, 'y');
                 }
             }
-            # Else check if modification time and size are unchanged since last backup
-# CSHANG In this conditional, wrap the timestamp check and change to && (checksum-delta feature is on OR timestamp check).
+            # Else check if the size and timestamp match OR if the size matches and the delta option is set, then keep the file.
+            # In the latter case, if there had been a timeline switch then rather than removing and recopying the file, the file
+            # will be tested in backupFile to see if the db/repo checksum still matches: if so, it is not necessary to recopy,
+            # else it will need to be copied to the new backup.
             elsif (defined($oLastManifest) && $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName) &&
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) ==
                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&
+                   (cfgOption(CFGOPT_DELTA) ||
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
-                       $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP))
+                       $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP)))
             {
                 # Copy reference from previous backup if possible
                 if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE))

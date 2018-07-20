@@ -58,6 +58,8 @@ sub backupFile
         $bIgnoreMissing,                            # Is it OK if the file is missing?
         $hExtraParam,                               # Parameter to pass to the extra function
         $strCipherPass,                             # Passphrase to access the repo file (undefined if repo not encrypted)
+        $bDelta,                                    # Is the detla option on?
+        $bHasReference,                             # Does a reference exist to the file in a prior backup in the set?
     ) =
         logDebugParam
         (
@@ -74,6 +76,8 @@ sub backupFile
             {name => 'bIgnoreMissing', default => true, trace => true},
             {name => 'hExtraParam', required => false, trace => true},
             {name => 'strCipherPass', required => false, trace => true},
+            {name => 'bDelta', trace => true},
+            {name => 'bHasReference', trace => true},
         );
 
     my $oStorageRepo = storageRepo();               # Repo storage
@@ -86,10 +90,10 @@ sub backupFile
     # Add compression suffix if needed
     my $strFileOp = $strRepoFile . ($bCompress ? '.' . COMPRESS_EXT : '');
 
-    # If checksum is defined then the file already exists but needs to be checked
-# CSHANG This would not be true now since the file could be a reference to a file in a prior backup
     my $bCopy = true;
 
+    # If checksum is defined then the file needs to be checked. If delta option then check the DB and possibly the repo, else just
+    # check the repo.
     if (defined($strChecksum))
     {
         # Add decompression
@@ -99,16 +103,38 @@ sub backupFile
         {
             push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]});
         }
-# CSHANG I don't really think we have to do anything special with the checksum-delta option - we should just be passing in the correct file
-# to look at - so if it's a prior reference, we look at that file and if it fails, we copy to the current location, so have another param
-# say, strReferencePath - this would either be a duplicate of strBackupLabel or the prior label where it actually exists.
-        # Get the checksum
-        ($strCopyChecksum, $lCopySize) = $oStorageRepo->hashSize(
-            $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-            {rhyFilter => $rhyFilter, strCipherPass => $strCipherPass}));
 
-        # Determine if the file needs to be recopied
-        $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
+        # If delta, then check the DB checksum and possibly the repo. If the checksum does not match in either case then recopy.
+        if ($bDelta)
+        {
+            # Get the checksum
+            ($strCopyChecksum, $lCopySize) = storageDb()->hashSize(
+                storageDb()->openRead($strDbFile, {rhyFilter => $rhyFilter, strCipherPass => $strCipherPass}));
+
+            $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
+
+            # If checksum matches and not a prior reference, then check the repo
+            if (!$bCopy && !$bHasReference)
+            {
+                # Get the checksum
+                ($strCopyChecksum, $lCopySize) = $oStorageRepo->hashSize(
+                    $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
+                    {rhyFilter => $rhyFilter, strCipherPass => $strCipherPass}));
+
+                # Determine if the file needs to be recopied
+                $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
+            }
+        }
+        else
+        {
+            # Get the checksum
+            ($strCopyChecksum, $lCopySize) = $oStorageRepo->hashSize(
+                $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
+                {rhyFilter => $rhyFilter, strCipherPass => $strCipherPass}));
+
+            # Determine if the file needs to be recopied
+            $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
+        }
 
         # Set copy result
         $iCopyResult = $bCopy ? BACKUP_FILE_RECOPY : BACKUP_FILE_CHECKSUM;
@@ -119,7 +145,7 @@ sub backupFile
     {
         # Add sha filter
         my $rhyFilter = [{strClass => STORAGE_FILTER_SHA}];
-# CSHANG What do we do about hardlinks if we're copying a file that was in a prior backup that the checksum no longer matches for?
+
         # Add page checksum filter
         if ($bChecksumPage)
         {
@@ -254,7 +280,7 @@ sub backupManifestUpdate
             " corrupted.\n" .
             "NOTE: this does not indicate a problem with the PostgreSQL page checksums.");
 
-# CSHANG We shouldn't even need to check for the checksum delta here - if we've copied the file then the reference should always be removed, right?
+        # If the file has been recopied, then remove any reference to the file's existence in a prior backup.
         $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE);
     }
 
