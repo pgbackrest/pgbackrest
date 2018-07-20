@@ -120,10 +120,9 @@ testRun()
             "P00  TRACE:         module/common/debugOnTest::testFunction2: (void)\n"
             "P00  TRACE:         module/common/debugOnTest::testFunction2: => void\n"
             "P00  DEBUG:     module/common/debugOnTest::testFunction1: => 1");
-        harnessLogLevelSet(logLevelTrace);
+        harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        harnessLogLevelSet(logLevelInfo);
         testFunction1(55, true, 0.99, 0755);
 
         harnessLogResult("");

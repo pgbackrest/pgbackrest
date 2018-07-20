@@ -931,9 +931,7 @@ testRun()
         TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "    command is none");
         TEST_RESULT_INT(logLevelStdOut, logLevelWarn, "console logging is warn");
         TEST_RESULT_INT(logLevelStdErr, logLevelWarn, "stderr logging is warn");
-        logLevelStdOut = logLevelOff;
-        logLevelStdErr = logLevelOff;
-        logLevelFile = logLevelInfo;
+        harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();

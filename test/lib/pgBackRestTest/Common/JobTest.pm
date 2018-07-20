@@ -62,6 +62,7 @@ sub new
         $self->{iTestIdx},
         $self->{iTestMax},
         $self->{strLogLevel},
+        $self->{strLogLevelTest},
         $self->{bLogForce},
         $self->{bShowOutputAsync},
         $self->{bNoCleanup},
@@ -88,6 +89,7 @@ sub new
             {name => 'iTestIdx'},
             {name => 'iTestMax'},
             {name => 'strLogLevel'},
+            {name => 'strLogLevelTest'},
             {name => 'bLogForce'},
             {name => 'bShowOutputAsync'},
             {name => 'bNoCleanup'},
@@ -328,6 +330,10 @@ sub run
 
                 # Set globals
                 $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strVmTestPath/g;
+
+                # Set defalt log level
+                my $strLogLevelTestC = "logLevel" . ucfirst($self->{strLogLevelTest});
+                $strTestC =~ s/\{\[C\_LOG\_LEVEL\_TEST\]\}/$strLogLevelTestC/g;
 
                 # Initialize tests
                 my $strTestInit;

@@ -87,7 +87,7 @@ testRun()
         }
         TRY_END();
 
-        harnessLogLevelSet(logLevelInfo);
+        harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TRY_BEGIN()

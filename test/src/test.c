@@ -18,6 +18,7 @@ This wrapper runs the the C unit tests.
 
 #ifndef NO_LOG
     #include "common/harnessLog.h"
+    void harnessLogLevelDefaultSet(LogLevel logLevel);
 #endif
 
 #ifndef NO_MEM_CONTEXT
@@ -72,6 +73,11 @@ main(int argListSize, const char *argList[])
     // Set globals
     testExeSet(argList[0]);
     testPathSet("{[C_TEST_PATH]}");
+
+    // Set default test log level
+#ifndef NO_LOG
+    harnessLogLevelDefaultSet({[C_LOG_LEVEL_TEST]});
+#endif
 
     // Initialize tests
     //      run, selected

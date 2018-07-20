@@ -92,6 +92,10 @@
                     <release-item>
                         <p>Refactor the <code>common/log</code> tests to not depend on <code>common/harnessLog</code>.  <code>common/harnessLog</code> was not ideally suited for general testing and made all the tests quite awkward.  Instead, move all code used to test the <code>common/log</code> module into the <code>logTest</code> module and repurpose <code>common/harnessLog</code> to do log expect testing for all other tests in a cleaner way. Add a few exceptions for config testing since the log levels are reset by default in <code>config/parse</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <setting>--log-level-test</setting> option.  This allows setting the test log level independently from the general test harness setting, but current only works for the C tests.  It is useful for seeing log output from functions on the console while a test is running.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>

@@ -17,10 +17,14 @@ Log Test Harness
 /***********************************************************************************************************************************
 Expose log internal data for unit testing/debugging
 ***********************************************************************************************************************************/
-extern LogLevel logLevelStdOut;
 extern LogLevel logLevelFile;
 extern int logHandleFile;
 extern bool logFileBanner;
+
+/***********************************************************************************************************************************
+Default log level for testing
+***********************************************************************************************************************************/
+LogLevel logLevelTestDefault = logLevelOff;
 
 /***********************************************************************************************************************************
 Name of file where logs are stored for testing
@@ -62,7 +66,7 @@ harnessLogInit()
 {
     FUNCTION_HARNESS_VOID();
 
-    logInit(logLevelOff, logLevelOff, logLevelInfo, false);
+    logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false);
     logFileBanner = true;
 
     snprintf(logFile, sizeof(logFile), "%s/expect.log", testPath());
@@ -79,7 +83,29 @@ This is info by default but it can sometimes be useful to set the log level to s
 void
 harnessLogLevelSet(LogLevel logLevel)
 {
-    logInit(logLevelStdOut, logLevelOff, logLevel, false);
+    logInit(logLevelTestDefault, logLevelOff, logLevel, false);
+}
+
+/***********************************************************************************************************************************
+Reset test log level
+
+Set back to info
+***********************************************************************************************************************************/
+void
+harnessLogLevelReset()
+{
+    logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false);
+}
+
+/***********************************************************************************************************************************
+Change default test log level
+
+Set the default log level for output to the console (for testing).
+***********************************************************************************************************************************/
+void
+harnessLogLevelDefaultSet(LogLevel logLevel)
+{
+    logLevelTestDefault = logLevel;
 }
 
 /***********************************************************************************************************************************

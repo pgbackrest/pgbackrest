@@ -95,7 +95,7 @@ testRun()
         // Nothing should be logged for command end when the log level is too low
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdEnd(0, NULL), "command end no logging");
-        harnessLogLevelSet(logLevelInfo);
+        harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdEnd(25, strNew("aborted with exception [025]")), "command end with error");
