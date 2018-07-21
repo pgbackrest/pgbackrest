@@ -90,6 +90,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Use pre-built images from Docker Hub when the container definition has not changed.  Downloading an image is quite a bit faster than building a new image from scratch and saves minutes per test run in CI.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Refactor the <code>common/log</code> tests to not depend on <code>common/harnessLog</code>.  <code>common/harnessLog</code> was not ideally suited for general testing and made all the tests quite awkward.  Instead, move all code used to test the <code>common/log</code> module into the <code>logTest</code> module and repurpose <code>common/harnessLog</code> to do log expect testing for all other tests in a cleaner way. Add a few exceptions for config testing since the log levels are reset by default in <code>config/parse</code>.</p>
                     </release-item>
 

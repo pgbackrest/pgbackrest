@@ -5,10 +5,10 @@ Vagrant.configure(2) do |config|
     end
 
     config.vm.box = "ubuntu/bionic64"
-    config.vm.box_version = "20180531.0.0"
+    config.vm.box_version = "20180719.0.0"
 
     # vagrant plugin install vagrant-disksize
-    # config.disksize.size = '64GB'
+    config.disksize.size = '64GB'
 
     config.vm.provider :virtualbox do |vb|
         vb.name = "pgbackrest-test"
@@ -91,7 +91,6 @@ Vagrant.configure(2) do |config|
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Create Postgres Group & pgBackRest User' && date
-        groupadd -g5000 postgres
         adduser --uid=5001 --ingroup=vagrant --disabled-password --gecos "" pgbackrest
 
         #---------------------------------------------------------------------------------------------------------------------------

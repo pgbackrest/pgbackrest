@@ -120,7 +120,7 @@ sub process
         "install:\n" .
         "  - |\n" .
         "    # User Configuration\n" .
-        "    sudo adduser --ingroup=\${USER?} --disabled-password --gecos \"\" " . BACKREST_USER . "\n" .
+        "    sudo adduser --ingroup=\${USER?} --uid=5001 --disabled-password --gecos \"\" " . BACKREST_USER . "\n" .
         "    umask 0022\n" .
         "    cd ~ && pwd && whoami && umask && groups\n" .
         "    mv \${TRAVIS_BUILD_DIR?} " . BACKREST_EXE . "\n" .

@@ -12,6 +12,7 @@ use Carp qw(confess longmess);
 use English '-no_match_vars';
 
 use Cwd qw(abs_path);
+use Digest::SHA qw(sha1_hex);
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
@@ -30,9 +31,9 @@ use pgBackRestTest::Common::VmTest;
 ####################################################################################################################################
 use constant POSTGRES_GROUP                                         => 'postgres';
     push @EXPORT, qw(POSTGRES_GROUP);
-use constant POSTGRES_GROUP_ID                                      => getgrnam(POSTGRES_GROUP) . '';
+use constant POSTGRES_GROUP_ID                                      => 5000;
 use constant POSTGRES_USER                                          => POSTGRES_GROUP;
-use constant POSTGRES_USER_ID                                       => POSTGRES_GROUP_ID;
+use constant POSTGRES_USER_ID                                       => 5000;
 
 use constant TEST_GROUP                                             => getgrgid($UID) . '';
     push @EXPORT, qw(TEST_GROUP);
@@ -73,6 +74,11 @@ use constant CONTAINER_DEBUG                                        => false;
 # Container Debug - speeds container debugging by splitting each section into a separate intermediate container
 ####################################################################################################################################
 use constant CONTAINER_S3_SERVER_TAG                                => 's3-server-20180612A';
+
+####################################################################################################################################
+# Store cache container checksums
+####################################################################################################################################
+my $hContainerCache;
 
 ####################################################################################################################################
 # Generate Devel::Cover package name
@@ -120,14 +126,41 @@ sub containerWrite
     my $bForce = shift;
 
     my $strTag = containerRepo() . ":${strImage}";
-    &log(INFO, "Building ${strTag} image...");
 
     $strScript =
         "# ${strTitle} Container\n" .
-        "FROM ${strImageParent}\n\n" .
-        (defined($strCopy) ? "${strCopy}\n\n" : '') .
-        "RUN echo '" . (CONTAINER_DEBUG ? 'DEBUG' : 'OPTIMIZED') . " BUILD'" .
-        $strScript;
+        "FROM ${strImageParent}" .
+        (defined($strCopy) ? "\n\n${strCopy}\n\n" : '') .
+        (defined($strScript) && $strScript ne ''?
+            "\n\nRUN echo '" . (CONTAINER_DEBUG ? 'DEBUG' : 'OPTIMIZED') . " BUILD'" . $strScript : '');
+
+    # Search for the image in the cache
+    my $strScriptSha1;
+    my $bCached = false;
+
+    if ($strImage =~ /\-base$/)
+    {
+        $strScriptSha1 = sha1_hex($strScript);
+
+        foreach my $strBuild (reverse(keys(%{$hContainerCache})))
+        {
+            if (defined($hContainerCache->{$strBuild}{$strOS}) && $hContainerCache->{$strBuild}{$strOS} eq $strScriptSha1)
+            {
+                &log(INFO, "Using cached ${strTag}-${strBuild} image (${strScriptSha1}) ...");
+
+                $strScript =
+                    "# ${strTitle} Container\n" .
+                    "FROM ${strTag}-${strBuild}";
+
+                $bCached = true;
+            }
+        }
+    }
+
+    if (!$bCached)
+    {
+        &log(INFO, "Building ${strTag} image" . (defined($strScriptSha1) ? " (${strScriptSha1})" : '') . ' ...');
+    }
 
     # Write the image
     $oStorageDocker->put("${strTempPath}/${strImage}", trim($strScript) . "\n");
@@ -179,25 +212,44 @@ sub sshSetup
     my $strGroup = shift;
     my $bControlMaster = shift;
 
+    my $strUserPath = $strUser eq 'root' ? "/${strUser}" : "/home/${strUser}";
+
     my $strScript = sectionHeader() .
         "# Setup SSH\n" .
-        "    mkdir /home/${strUser}/.ssh && \\\n" .
-        "    cp /root/.ssh/id_rsa  /home/${strUser}/.ssh/id_rsa && \\\n" .
-        "    cp /root/.ssh/authorized_keys  /home/${strUser}/.ssh/authorized_keys && \\\n" .
-        "    cp /root/.ssh/config /home/${strUser}/.ssh/config && \\\n";
+        "    mkdir ${strUserPath}/.ssh && \\\n" .
+        "    echo '-----BEGIN RSA PRIVATE KEY-----' > ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'MIICXwIBAAKBgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ou' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'X3Q2OyNjsBaDbsRJd+sp9IRq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazwIDAQAB' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'AoGBAJXa6xzrnFVmwgK5BKzYuX/YF5TPgk2j80ch0ct50buQXH/Cb0/rUH5i4jWS' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'T6Hy/DFUehnuzpvV6O9auTOhDs3BhEKFRuRLn1nBwTtZny5Hh+cw7azUCEHFCJlz' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'makCrVbgawtno6oU/pFgQm1FcxD0f+Me5ruNcLHqUZsPQwkRAkEA+8pG+ckOlz6R' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'AJLIHedmfcrEY9T7sfdo83bzMOz8H5soUUP4aOTLJYCla1LO7JdDnXMGo0KxaHBP' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'l8j5zDmVewJBANVVPDJr1w37m0FBi37QgUOAijVfLXgyPMxYp2uc9ddjncif0063' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '0Wc0FQefoPszf3CDrHv/RHvhHq97jXDwTb0CQQDgH83NygoS1r57pCw9chzpG/R0' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'aMEiSPhCvz757fj+qT3aGIal2AJ7/2c/gRZvwrWNETZ3XIZOUKqIkXzJLPjBAkEA' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'wnP799W2Y8d4/+VX2pMBkF7lG7sSviHEq1sP2BZtPBRQKSQNvw3scM7XcGh/mxmY' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'yx0qpqfKa8SKbNgI1+4iXQJBAOlg8MJLwkUtrG+p8wf69oCuZsnyv0K6UMDxm6/8' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'cbvfmvODulYFaIahaqHWEZoRo5CLYZ7gN43WHPOrKxdDL78=' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '-----END RSA PRIVATE KEY-----' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ouX3Q2OyNjsBaDbsRJd+sp9I" .
+             "Rq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazw== " .
+             "user\@pgbackrest-test' > ${strUserPath}/.ssh/authorized_keys && \\\n" .
+        "    echo 'Host *' > ${strUserPath}/.ssh/config && \\\n" .
+        "    echo '    StrictHostKeyChecking no' >> ${strUserPath}/.ssh/config && \\\n";
 
     if ($bControlMaster)
     {
         $strScript .=
-            "    echo '    ControlMaster auto' >> /home/${strUser}/.ssh/config && \\\n" .
-            "    echo '    ControlPath /tmp/\%r\@\%h:\%p' >> /home/${strUser}/.ssh/config && \\\n" .
-            "    echo '    ControlPersist 30' >> /home/${strUser}/.ssh/config && \\\n";
+            "    echo '    ControlMaster auto' >> ${strUserPath}/.ssh/config && \\\n" .
+            "    echo '    ControlPath /tmp/\%r\@\%h:\%p' >> ${strUserPath}/.ssh/config && \\\n" .
+            "    echo '    ControlPersist 30' >> ${strUserPath}/.ssh/config && \\\n";
     }
 
     $strScript .=
-        "    chown -R ${strUser}:${strGroup} /home/${strUser}/.ssh && \\\n" .
-        "    chmod 700 /home/${strUser}/.ssh && \\\n" .
-        "    chmod 600 /home/${strUser}/.ssh/*";
+        "    chown -R ${strUser}:${strGroup} ${strUserPath}/.ssh && \\\n" .
+        "    chmod 700 ${strUserPath}/.ssh && \\\n" .
+        "    chmod 600 ${strUserPath}/.ssh/*";
 
     return $strScript;
 }
@@ -273,6 +325,31 @@ sub s3ServerSetup
 }
 
 ####################################################################################################################################
+# Entry point setup
+####################################################################################################################################
+sub entryPointSetup
+{
+    my $strOS = shift;
+
+    my $strScript =
+        "\n\n# Start SSH when container starts\n" .
+        'ENTRYPOINT ';
+
+    my $oVm = vmGet();
+
+    if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL || $strOS eq VM_U12)
+    {
+        $strScript .= '/usr/sbin/sshd -D';
+    }
+    else
+    {
+        $strScript .= 'service ssh restart && bash';
+    }
+
+    return $strScript;
+}
+
+####################################################################################################################################
 # Build containers
 ####################################################################################################################################
 sub containerBuild
@@ -284,6 +361,12 @@ sub containerBuild
     # Create temp path
     my $strTempPath = $oStorageDocker->pathGet('test/.vagrant/docker');
     $oStorageDocker->pathCreate($strTempPath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
+
+    # Load container definitions from yaml
+    require YAML::XS;
+    YAML::XS->import(qw(Load));
+
+    $hContainerCache = Load(${$oStorageDocker->get($oStorageDocker->pathGet('test/container.yaml'))});
 
     # Remove old images on force
     if ($bVmForce)
@@ -297,18 +380,6 @@ sub containerBuild
 
         executeTest("rm -f ${strTempPath}/" . ($strVm eq 'all' ? '*' : "${strVm}-*"));
         imageRemove("${strRegExp}.*");
-    }
-
-    # Create SSH key (if it does not already exist)
-    if (-e "${strTempPath}/id_rsa")
-    {
-        &log(INFO, "SSH key already exists");
-    }
-    else
-    {
-        &log(INFO, "Building SSH keys...");
-
-        executeTest("ssh-keygen -f ${strTempPath}/id_rsa -t rsa -b 1024 -N ''", {bSuppressStdErr => true});
     }
 
     # VM Images
@@ -327,12 +398,7 @@ sub containerBuild
         ###########################################################################################################################
         my $strImageParent = "$$oVm{$strOS}{&VM_IMAGE}";
         my $strImage = "${strOS}-base";
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        my $strCopy =
-            "# Copy root SSH keys\n" .
-            "COPY id_rsa /root/.ssh/id_rsa\n" .
-            "COPY id_rsa.pub /root/.ssh/authorized_keys";
+        my $strCopy = undef;
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $strScript = sectionHeader() .
@@ -345,7 +411,7 @@ sub containerBuild
                 "    yum -y update && \\\n" .
                 "    yum -y install openssh-server openssh-clients wget sudo python-pip build-essential valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL perl-YAML-LibYAML \\\n" .
-                "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed";
+                "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build zlib-devel";
 
             if ($strOS eq VM_CO6)
             {
@@ -366,7 +432,8 @@ sub containerBuild
                 "    python /root/get-pip.py && \\\n" .
                 "    apt-get -y install openssh-server wget sudo python-pip build-essential valgrind git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libio-socket-ssl-perl libxml-libxml-perl libssl-dev libperl-dev \\\n" .
-                "        libyaml-libyaml-perl tzdata";
+                "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
+                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev";
 
             if ($strOS eq VM_U12)
             {
@@ -383,25 +450,6 @@ sub containerBuild
             "# Regenerate SSH keys\n" .
             "    rm -f /etc/ssh/ssh_host_rsa_key* && \\\n" .
             "    ssh-keygen -t rsa -b 1024 -f /etc/ssh/ssh_host_rsa_key";
-
-        $strScript .= sectionHeader() .
-            "# Fix SSH permissions\n" .
-            "    chmod 700 /root/.ssh && \\\n" .
-            "    chmod 600 /root/.ssh/*";
-
-        $strScript .= sectionHeader() .
-            "# Disable strict host key checking (so tests will run without a prior logon)\n" .
-            "    echo 'Host *' > /root/.ssh/config && \\\n" .
-            "    echo '    StrictHostKeyChecking no' >> /root/.ssh/config";
-
-        $strScript .= sectionHeader() .
-            "# Create banner to make sure pgBackRest ignores it\n" .
-            "    echo '***********************************************' >  /etc/issue.net && \\\n" .
-            "    echo 'Sample banner to make sure banners are skipped.' >> /etc/issue.net && \\\n" .
-            "    echo ''                                                >> /etc/issue.net && \\\n" .
-            "    echo 'More banner after a blank line.'                 >> /etc/issue.net && \\\n" .
-            "    echo '***********************************************' >> /etc/issue.net && \\\n" .
-            "    echo 'Banner /etc/issue.net'                           >> /etc/ssh/sshd_config";
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
@@ -425,29 +473,6 @@ sub containerBuild
         $strScript .= certSetup();
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $strScript .= sectionHeader() .
-            "# Create test user\n" .
-            '    ' . groupCreate($strOS, TEST_GROUP, TEST_GROUP_ID) . " && \\\n" .
-            '    ' . userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP) . " && \\\n" .
-            '    mkdir -m 750 /home/' . TEST_USER . "/test && \\\n" .
-            '    chown ' . TEST_USER . ':' . TEST_GROUP . ' /home/' . TEST_USER . "/test";
-
-        $strScript .= sectionHeader() .
-            "# Configure sudo\n";
-
-        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
-        {
-            $strScript .=
-                "    echo '%" . TEST_GROUP . "        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/" . TEST_GROUP . " && \\\n" .
-                "    sed -i 's/^Defaults    requiretty\$/\\# Defaults    requiretty/' /etc/sudoers";
-        }
-        else
-        {
-            $strScript .=
-                "    echo '%" . TEST_GROUP . " ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers";
-        }
-
-        #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDeprecated)
         {
             $strScript .=  sectionHeader() .
@@ -456,22 +481,33 @@ sub containerBuild
                 '    ' . userCreate($strOS, POSTGRES_USER, POSTGRES_USER_ID, POSTGRES_GROUP);
 
             $strScript .=  sectionHeader() .
-                "# Install Postgresql packages\n";
+                "# Install PostgreSQL packages\n";
 
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
             {
                 if ($strOS eq VM_CO6)
                 {
                     $strScript .=
-                        "    rpm -ivh http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm \\\n" .
+                        "    rpm -ivh \\\n" .
+                        "        http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm \\\n" .
                         "        http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-6.noarch.rpm \\\n" .
+                        "        http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-8.noarch.rpm \\\n" .
+                        "        http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-3.noarch.rpm \\\n" .
+                        "        http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-3.noarch.rpm \\\n" .
                         "        http://yum.postgresql.org/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-3.noarch.rpm \\\n" .
-                        "        http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm";
+                        "        http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm \\\n" .
+                        "        http://yum.postgresql.org/10/redhat/rhel-6-x86_64/pgdg-centos10-10-2.noarch.rpm";
                 }
                 elsif ($strOS eq VM_CO7)
                 {
                     $strScript .=
-                        "    rpm -ivh http://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm";
+                        "    rpm -ivh \\\n" .
+                        "        http://yum.postgresql.org/9.2/redhat/rhel-7-x86_64/pgdg-centos92-9.2-3.noarch.rpm \\\n" .
+                        "        http://yum.postgresql.org/9.3/redhat/rhel-7-x86_64/pgdg-centos93-9.3-3.noarch.rpm \\\n" .
+                        "        http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-3.noarch.rpm \\\n" .
+                        "        http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-3.noarch.rpm \\\n" .
+                        "        http://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm \\\n" .
+                        "        http://yum.postgresql.org/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm";
                 }
             }
             else
@@ -490,7 +526,7 @@ sub containerBuild
             if (defined($oOS->{&VM_DB}) && @{$oOS->{&VM_DB}} > 0)
             {
                 $strScript .= sectionHeader() .
-                    "# Install Postgresql\n";
+                    "# Install PostgreSQL\n";
 
                 if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
                 {
@@ -525,10 +561,7 @@ sub containerBuild
             $strScript .= sectionHeader() .
                 "# Install AWS CLI\n" .
                 "    pip install --upgrade --no-cache-dir pip==9.0.3 && \\\n" .
-                "    pip install --upgrade awscli && \\\n" .
-                '    sudo -i -u ' . TEST_USER . " aws configure set region us-east-1 && \\\n" .
-                '    sudo -i -u ' . TEST_USER . " aws configure set aws_access_key_id accessKey1 && \\\n" .
-                '    sudo -i -u ' . TEST_USER . " aws configure set aws_secret_access_key verySecretKey1";
+                "    pip install --upgrade awscli";
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -537,21 +570,8 @@ sub containerBuild
             $strScript .= s3ServerSetup($strOS);
         }
 
-        #---------------------------------------------------------------------------------------------------------------------------
-        $strScript .=
-            "\n\n# Start SSH when container starts\n" .
-            'ENTRYPOINT ';
-
-        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL || $strOS eq VM_U12)
-        {
-            $strScript .= '/usr/sbin/sshd -D';
-        }
-        else
-        {
-            $strScript .= 'service ssh restart && bash';
-        }
-
-        containerWrite($oStorageDocker, $strTempPath, $strOS, 'Base', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
+        containerWrite(
+            $oStorageDocker, $strTempPath, $strOS, 'Base', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
 
         # Build image
         ###########################################################################################################################
@@ -562,14 +582,14 @@ sub containerBuild
         my $strPkgDevelCover = packageDevelCover($oVm->{$strOS}{&VM_ARCH});
         my $bPkgDevelCoverBuild = vmCoverage($strOS) && !$oStorageDocker->exists("test/package/${strOS}-${strPkgDevelCover}");
 
+        $strScript = sectionHeader() .
+            "# Create test user\n" .
+            '    ' . groupCreate($strOS, TEST_GROUP, TEST_GROUP_ID) . " && \\\n" .
+            '    ' . userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP);
+
         # Install Perl packages
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
-            $strScript = sectionHeader() .
-                "# Install package build tools\n" .
-                "    apt-get install -y devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
-                "        libpod-coverage-perl libppi-html-perl libtemplate-perl libtest-differences-perl";
-
             $strScript .=  sectionHeader() .
                 "# Install pgBackRest package source\n" .
                 "    git clone https://salsa.debian.org/postgresql/pgbackrest.git /root/package-src";
@@ -588,10 +608,6 @@ sub containerBuild
         }
         else
         {
-            $strScript = sectionHeader() .
-                "# Install package build tools\n" .
-                "    yum install -y rpm-build";
-
             $strScript .=  sectionHeader() .
                 "# Install pgBackRest package source\n" .
                 "    mkdir /root/package-src && \\\n" .
@@ -602,6 +618,8 @@ sub containerBuild
                     "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;" .
                     "f=rpm/redhat/master/pgbackrest/master/pgbackrest.spec;hb=refs/heads/master'";
         }
+
+        $strScript .= entryPointSetup($strOS);
 
         containerWrite($oStorageDocker, $strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strCopy,$strScript, $bVmForce);
 
@@ -627,20 +645,18 @@ sub containerBuild
         if (!$bDeprecated)
         {
             $strImage = "${strOS}-s3-server";
+            $strScript = '';
             $strCopy = undef;
 
             if ($strOS ne VM_CO6 && $strOS ne VM_U12)
             {
                 $strImageParent = containerRepo() . ":${strOS}-base";
-                $strScript = '';
+                $strScript = "\n\nENTRYPOINT npm start --prefix /root/scalitys3";
             }
             else
             {
                 $strImageParent = containerRepo() . ':' . CONTAINER_S3_SERVER_TAG;
-                $strScript = '';
             }
-
-            $strScript .= "\n\nENTRYPOINT npm start --prefix /root/scalitys3";
 
             containerWrite(
                 $oStorageDocker, $strTempPath, $strOS, 'S3 Server', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
@@ -678,18 +694,60 @@ sub containerBuild
 
             #---------------------------------------------------------------------------------------------------------------------------
             $strScript .= sectionHeader() .
+                "# Create banner to make sure pgBackRest ignores it\n" .
+                "    echo '***********************************************' >  /etc/issue.net && \\\n" .
+                "    echo 'Sample banner to make sure banners are skipped.' >> /etc/issue.net && \\\n" .
+                "    echo ''                                                >> /etc/issue.net && \\\n" .
+                "    echo 'More banner after a blank line.'                 >> /etc/issue.net && \\\n" .
+                "    echo '***********************************************' >> /etc/issue.net && \\\n" .
+                "    echo 'Banner /etc/issue.net'                           >> /etc/ssh/sshd_config";
+
+            $strScript .= sectionHeader() .
+                "# Create test user\n" .
+                '    ' . groupCreate($strOS, TEST_GROUP, TEST_GROUP_ID) . " && \\\n" .
+                '    ' . userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP) . " && \\\n" .
+                '    mkdir -m 750 /home/' . TEST_USER . "/test && \\\n" .
+                '    chown ' . TEST_USER . ':' . TEST_GROUP . ' /home/' . TEST_USER . "/test";
+
+            $strScript .= sectionHeader() .
+                "# Configure sudo\n";
+
+            if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+            {
+                $strScript .=
+                    "    echo '%" . TEST_GROUP . "        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/" . TEST_GROUP . " && \\\n" .
+                    "    sed -i 's/^Defaults    requiretty\$/\\# Defaults    requiretty/' /etc/sudoers";
+            }
+            else
+            {
+                $strScript .=
+                    "    echo '%" . TEST_GROUP . " ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers";
+            }
+
+            $strScript .=
+                sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
+
+            if (!$bDeprecated)
+            {
+                $strScript .= sectionHeader() .
+                    "# Config AWS CLI\n" .
+                    '    sudo -i -u ' . TEST_USER . " aws configure set region us-east-1 && \\\n" .
+                    '    sudo -i -u ' . TEST_USER . " aws configure set aws_access_key_id accessKey1 && \\\n" .
+                    '    sudo -i -u ' . TEST_USER . " aws configure set aws_secret_access_key verySecretKey1";
+            }
+
+            $strScript .= sectionHeader() .
                 "# Create pgbackrest user\n" .
                 '    ' . userCreate($strOS, BACKREST_USER, BACKREST_USER_ID, TEST_GROUP);
 
             $strScript .=
                 sshSetup($strOS, BACKREST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
 
-            $strScript .=
-                sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
-
             $strScript .=  sectionHeader() .
                 "# Make " . TEST_USER . " home dir readable\n" .
                 '    chmod g+r,g+x /home/' . TEST_USER;
+
+            $strScript .= entryPointSetup($strOS);
 
             containerWrite(
                 $oStorageDocker, $strTempPath, $strOS, 'Test', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
