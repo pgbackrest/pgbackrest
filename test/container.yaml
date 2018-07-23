@@ -2,7 +2,7 @@
 # Container Cache
 #
 # Contains hashes for containers that are available on Docker hub.  If present, the container can be pulled instead of being built
-# locally which saves a lot of time.  Note: these are hashes of the Dockerfile not the actually binary image.
+# locally which saves a lot of time.  Note: these are hashes of the Dockerfile not the actual binary image.
 # **********************************************************************************************************************************
 20180721A:
   co6: 0ce34e42667499721f9f02c1b9e886f5f331b4e4
