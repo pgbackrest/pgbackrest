@@ -1,5 +1,5 @@
 <!ELEMENT doc ((description, intro, release-list, contributor-list)|(config, operation)|
-               (description?, variable-list?, block-define*, cleanup?, section+))>
+               (description?, variable-list?, host-define*, block-define*, cleanup?, section+))>
     <!ATTLIST doc title CDATA #REQUIRED>
     <!ATTLIST doc subtitle CDATA "">
     <!ATTLIST doc toc CDATA "y">
@@ -187,6 +187,11 @@
     <!ATTLIST support title CDATA #REQUIRED>
 
 <!-- Host elements -->
+<!ELEMENT host-define (#PCDATA)>
+    <!ATTLIST host-define keyword CDATA "">
+    <!ATTLIST host-define image CDATA #REQUIRED>
+    <!ATTLIST host-define from CDATA #REQUIRED>
+
 <!ELEMENT host-add (execute*)>
     <!ATTLIST host-add id CDATA "">
     <!ATTLIST host-add name CDATA #REQUIRED>

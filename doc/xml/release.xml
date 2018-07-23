@@ -81,6 +81,14 @@
                 </release-development-list>
             </release-core-list>
 
+            <release-doc-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Allow containers to be defined in a document.  The defined containers are built before the document build begins which allows them to be reused.</p>
+                    </release-item>
+                </release-development-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-improvement-list>
                     <release-item>
