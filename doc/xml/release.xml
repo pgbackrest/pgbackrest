@@ -86,6 +86,10 @@
                     <release-item>
                         <p>Allow containers to be defined in a document.  The defined containers are built before the document build begins which allows them to be reused.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Move most host setup to containers defined in the documentation.  This includes <postgres/> installation which had previously been included in the documentation.  This way produces faster builds and there is no need for us to document <postgres/> installation.</p>
+                    </release-item>
                 </release-development-list>
             </release-doc-list>
 

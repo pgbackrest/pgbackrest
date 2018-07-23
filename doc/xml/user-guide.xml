@@ -62,9 +62,6 @@
 
         <variable key="spool-path">/var/spool/pgbackrest</variable>
 
-        <variable key="postgres-install-upgrade" keyword="default">apt-get install postgresql-{[pg-version-upgrade]}</variable>
-        <variable key="postgres-install-upgrade" keyword="co6">yum install postgresql{[pg-version-upgrade-nodot]}-server</variable>
-
         <variable key="postgres-config-demo" keyword="default">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
         <variable key="postgres-config-demo" keyword="co6">{[pg-path]}/postgresql.conf</variable>
 
@@ -93,8 +90,7 @@
         <variable key="host-os" keyword="default">u16</variable>
         <variable key="host-os" keyword="co6">co6</variable>
 
-        <variable key="host-image" keyword="default">ubuntu:16.04</variable>
-        <variable key="host-image" keyword="co6">centos:6</variable>
+        <variable key="host-image">pgbackrest/doc:{[host-os]}-base</variable>
 
         <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
         <variable key="host-mount">{[pgbackrest-base-dir]}:/backrest</variable>
@@ -161,28 +157,86 @@
 
         <!-- Common commands -->
         <variable key="ssh-key-install">
-            mkdir -p -m 700 /root/.ssh &amp;&amp;
-            echo '-----BEGIN RSA PRIVATE KEY-----' > /root/.ssh/id_rsa &amp;&amp;
-            echo 'MIICXwIBAAKBgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ou' >> /root/.ssh/id_rsa &amp;&amp;
-            echo 'X3Q2OyNjsBaDbsRJd+sp9IRq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY' >> /root/.ssh/id_rsa &amp;&amp;
-            echo '/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazwIDAQAB' >> /root/.ssh/id_rsa &amp;&amp;
-            echo 'AoGBAJXa6xzrnFVmwgK5BKzYuX/YF5TPgk2j80ch0ct50buQXH/Cb0/rUH5i4jWS' >> /root/.ssh/id_rsa &amp;&amp;
-            echo 'T6Hy/DFUehnuzpvV6O9auTOhDs3BhEKFRuRLn1nBwTtZny5Hh+cw7azUCEHFCJlz' >> /root/.ssh/id_rsa &amp;&amp;
-            echo 'makCrVbgawtno6oU/pFgQm1FcxD0f+Me5ruNcLHqUZsPQwkRAkEA+8pG+ckOlz6R' >> /root/.ssh/id_rsa &amp;&amp;
-            echo 'AJLIHedmfcrEY9T7sfdo83bzMOz8H5soUUP4aOTLJYCla1LO7JdDnXMGo0KxaHBP' >> /root/.ssh/id_rsa &amp;&amp;
-            echo 'l8j5zDmVewJBANVVPDJr1w37m0FBi37QgUOAijVfLXgyPMxYp2uc9ddjncif0063' >> /root/.ssh/id_rsa &amp;&amp;
-            echo '0Wc0FQefoPszf3CDrHv/RHvhHq97jXDwTb0CQQDgH83NygoS1r57pCw9chzpG/R0' >> /root/.ssh/id_rsa &amp;&amp;
-            echo 'aMEiSPhCvz757fj+qT3aGIal2AJ7/2c/gRZvwrWNETZ3XIZOUKqIkXzJLPjBAkEA' >> /root/.ssh/id_rsa &amp;&amp;
-            echo 'wnP799W2Y8d4/+VX2pMBkF7lG7sSviHEq1sP2BZtPBRQKSQNvw3scM7XcGh/mxmY' >> /root/.ssh/id_rsa &amp;&amp;
-            echo 'yx0qpqfKa8SKbNgI1+4iXQJBAOlg8MJLwkUtrG+p8wf69oCuZsnyv0K6UMDxm6/8' >> /root/.ssh/id_rsa &amp;&amp;
-            echo 'cbvfmvODulYFaIahaqHWEZoRo5CLYZ7gN43WHPOrKxdDL78=' >> /root/.ssh/id_rsa &amp;&amp;
-            echo '-----END RSA PRIVATE KEY-----' >> /root/.ssh/id_rsa &amp;&amp;
-            echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ouX3Q2OyNjsBaDbsRJd+sp9IRq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazw== root@pgbackrest-doc' > /root/.ssh/authorized_keys &amp;&amp;
-            echo 'Host *' > /root/.ssh/config &amp;&amp;
-            echo '    StrictHostKeyChecking no' >> /root/.ssh/config &amp;&amp;
+            mkdir -p -m 700 /root/.ssh &amp;&amp; \
+            echo '-----BEGIN RSA PRIVATE KEY-----' > /root/.ssh/id_rsa &amp;&amp; \
+            echo 'MIICXwIBAAKBgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ou' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'X3Q2OyNjsBaDbsRJd+sp9IRq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo '/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazwIDAQAB' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'AoGBAJXa6xzrnFVmwgK5BKzYuX/YF5TPgk2j80ch0ct50buQXH/Cb0/rUH5i4jWS' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'T6Hy/DFUehnuzpvV6O9auTOhDs3BhEKFRuRLn1nBwTtZny5Hh+cw7azUCEHFCJlz' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'makCrVbgawtno6oU/pFgQm1FcxD0f+Me5ruNcLHqUZsPQwkRAkEA+8pG+ckOlz6R' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'AJLIHedmfcrEY9T7sfdo83bzMOz8H5soUUP4aOTLJYCla1LO7JdDnXMGo0KxaHBP' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'l8j5zDmVewJBANVVPDJr1w37m0FBi37QgUOAijVfLXgyPMxYp2uc9ddjncif0063' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo '0Wc0FQefoPszf3CDrHv/RHvhHq97jXDwTb0CQQDgH83NygoS1r57pCw9chzpG/R0' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'aMEiSPhCvz757fj+qT3aGIal2AJ7/2c/gRZvwrWNETZ3XIZOUKqIkXzJLPjBAkEA' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'wnP799W2Y8d4/+VX2pMBkF7lG7sSviHEq1sP2BZtPBRQKSQNvw3scM7XcGh/mxmY' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'yx0qpqfKa8SKbNgI1+4iXQJBAOlg8MJLwkUtrG+p8wf69oCuZsnyv0K6UMDxm6/8' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'cbvfmvODulYFaIahaqHWEZoRo5CLYZ7gN43WHPOrKxdDL78=' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo '-----END RSA PRIVATE KEY-----' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ouX3Q2OyNjsBaDbsRJd+sp9IRq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazw== root@pgbackrest-doc' > /root/.ssh/authorized_keys &amp;&amp; \
+            echo 'Host *' > /root/.ssh/config &amp;&amp; \
+            echo '    StrictHostKeyChecking no' >> /root/.ssh/config &amp;&amp; \
             chmod 600 /root/.ssh/*
         </variable>
     </variable-list>
+
+    <!-- Setup hosts used to build the documentation
+    ============================================================================================================================ -->
+    <host-define keyword="default" image="{[host-image]}" from="ubuntu:16.04">
+        # Update apt repositories
+        RUN apt-get update
+
+        # Fix root tty
+        RUN sed -i 's/^mesg n/tty -s \&amp;\&amp; mesg n/g' /root/.profile &amp;&amp; \
+
+        # Suppress dpkg interactive output
+            rm /etc/apt/apt.conf.d/70debconf
+
+        # Install base packages
+        RUN apt-get install -y sudo ssh wget vim 2>&amp;1
+
+        # Install PostgreSQL
+        RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main' | \
+                tee -a /etc/apt/sources.list.d/pgdg.list &amp;&amp; \
+            wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - &amp;&amp; \
+            apt-get update &amp;&amp; \
+            apt-get install -y postgresql-common 2>&amp;1 &amp;&amp; \
+            sed -i 's/^\#create\_main\_cluster.*$/create\_main\_cluster \= false/' \
+                /etc/postgresql-common/createcluster.conf &amp;&amp; \
+            apt-get install -y postgresql-{[pg-version]} postgresql-{[pg-version-upgrade]} 2>&amp;1
+
+        # Create an ssh key for root so all hosts can ssh to each other as root
+        RUN \ {[ssh-key-install]}
+
+        # Add doc user with sudo privileges
+        RUN adduser --disabled-password --gecos "" {[host-user]} &amp;&amp; \
+            echo '%{[host-user]} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+
+        ENTRYPOINT service ssh restart &amp;&amp; bash
+    </host-define>
+
+    <host-define keyword="co6" image="{[host-image]}" from="centos:6">
+        # Install packages
+        RUN yum install -y openssh-server openssh-clients sudo wget vim 2>&amp;1
+
+        # Regenerate SSH keys
+        RUN rm -f /etc/ssh/ssh_host_rsa_key* &amp;&amp; \
+            ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key
+
+        # Install PostgreSQL
+        RUN rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-3.noarch.rpm \
+                     http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm &amp;&amp; \
+            yum install -y postgresql{[pg-version-nodot]}-server postgresql{[pg-version-upgrade-nodot]}-server
+
+        # Create an ssh key for root so all hosts can ssh to each other as root
+        RUN \ {[ssh-key-install]}
+
+        # Add doc user with sudo privileges
+        RUN adduser -n {[host-user]} &amp;&amp; \
+            echo '{[host-user]}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/{[host-user]}
+
+        ENTRYPOINT /usr/sbin/sshd -D
+    </host-define>
 
     <!-- ======================================================================================================================= -->
     <block-define id="setup-ssh-intro">
@@ -239,136 +293,6 @@
             <execute user="{[setup-ssh-user]}" err-suppress="y">
                 <exe-cmd>ssh pgbackrest@{[host-repo1]}</exe-cmd>
                 <exe-cmd-extra>-o StrictHostKeyChecking=no ls</exe-cmd-extra>
-            </execute>
-        </execute-list>
-    </block-define>
-
-    <!-- ======================================================================================================================= -->
-    <block-define id="host-install">
-        <execute-list keyword="default" host="{[host-install-host]}" show="n">
-            <title>Update apt repository and install packages</title>
-
-            <!-- Fix root tty -->
-            <execute user="root" user-force="y" load-env="n">
-                <exe-cmd>sed -i 's/^mesg n/tty -s \&amp;\&amp; mesg n/g' /root/.profile</exe-cmd>
-            </execute>
-
-            <!-- Suppress dpkg interactive output -->
-            <execute user="root" user-force="y">
-                <exe-cmd>rm /etc/apt/apt.conf.d/70debconf</exe-cmd>
-            </execute>
-
-            <!-- Update apt repo -->
-            <execute user="root" user-force="y">
-                <exe-cmd>apt-get update</exe-cmd>
-            </execute>
-
-            <!-- Create an ssh key for root so all hosts can ssh to each other as root -->
-            <execute user="root" user-force="y">
-                <exe-cmd>{[ssh-key-install]}</exe-cmd>
-            </execute>
-
-            <!-- Install packages -->
-            <execute user="root" user-force="y">
-                <exe-cmd>apt-get install sudo ssh wget vim</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <!-- Start SSH -->
-            <execute user="root" user-force="y">
-                <exe-cmd>service ssh start</exe-cmd>
-            </execute>
-
-            <!-- add doc user -->
-            <execute user="root" user-force="y">
-                <exe-cmd>adduser --disabled-password --gecos "" {[host-user]}</exe-cmd>
-            </execute>
-            <execute user="root" user-force="y">
-                <exe-cmd>echo '%{[host-user]} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <execute-list keyword="co6" host="{[host-install-host]}" show="n">
-            <title>Update yum repository and install packages</title>
-
-            <!-- Create an ssh key for root so all hosts can ssh to each other as root -->
-            <execute user="root" user-force="y">
-                <exe-cmd>{[ssh-key-install]}</exe-cmd>
-            </execute>
-
-            <!-- Install packages -->
-            <execute user="root" user-force="y">
-                <exe-cmd>yum install openssh-server openssh-clients sudo wget vim</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <!-- add doc user -->
-            <execute user="root" user-force="y">
-                <exe-cmd>adduser -n {[host-user]}</exe-cmd>
-            </execute>
-            <execute user="root" user-force="y">
-                <exe-cmd>echo '{[host-user]}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/{[host-user]}</exe-cmd>
-            </execute>
-
-            <!-- Start SSH -->
-            <execute user="root" user-force="y">
-                <exe-cmd>service sshd start</exe-cmd>
-            </execute>
-        </execute-list>
-    </block-define>
-
-    <!-- ======================================================================================================================= -->
-    <block-define id="pg-install">
-
-        <execute-list host="{[pg-install-host]}">
-            <title>Install <postgres/></title>
-
-            <execute keyword="default" user="root">
-                <exe-cmd>
-                    echo 'deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main 11' |
-                    sudo tee -a /etc/apt/sources.list.d/pgdg.list
-                </exe-cmd>
-            </execute>
-
-            <execute keyword="default" user="root">
-                <exe-cmd>
-                    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc |
-                    sudo apt-key add -
-                </exe-cmd>
-            </execute>
-
-            <execute keyword="co6" user="root">
-                <exe-cmd>
-                    rpm -ivh
-                    http://yum.postgresql.org/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-3.noarch.rpm
-                </exe-cmd>
-                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute keyword="default" user="root">
-                <exe-cmd>apt-get update</exe-cmd>
-            </execute>
-
-            <execute keyword="default" user="root">
-                <exe-cmd>apt-get install postgresql-common</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute keyword="default" user="root">
-                <exe-cmd>
-                    sed -i 's/^\#create\_main\_cluster.*$/create\_main\_cluster \= false/'
-                    /etc/postgresql-common/createcluster.conf
-                </exe-cmd>
-            </execute>
-
-            <execute keyword="default" user="root">
-                <exe-cmd>apt-get install postgresql-{[pg-version]}</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute keyword="co6" user="root">
-                <exe-cmd>yum install postgresql{[pg-version-nodot]}-server</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
         </execute-list>
     </block-define>
@@ -559,10 +483,6 @@
 
         <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[host-os]}" mount="{[host-build-mount]}"/>
 
-        <block id="host-install">
-            <block-variable-replace key="host-install-host">{[host-build]}</block-variable-replace>
-        </block>
-
         <p>When building from source it is best to use a build host rather than building on production.  Many of the tools required for the build should generally not be installed in production.  <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
 
         <execute-list host="{[host-build]}">
@@ -629,14 +549,6 @@
         <p>A new host named <host>pg1</host> is created to contain the demo cluster and run <backrest/> examples.</p>
 
         <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[host-os]}" mount="{[host-pg1-mount]}"/>
-
-        <block id="host-install">
-            <block-variable-replace key="host-install-host">{[host-pg1]}</block-variable-replace>
-        </block>
-
-        <block id="pg-install">
-            <block-variable-replace key="pg-install-host">{[host-pg1]}</block-variable-replace>
-        </block>
 
         <execute-list keyword="pg11" host="{[host-pg1]}">
             <title>Create <user>{[br-user]}</user> user</title>
@@ -2028,10 +1940,6 @@
 
             <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[host-os]}" mount="{[host-repo1-mount]}"/>
 
-            <block id="host-install">
-                <block-variable-replace key="host-install-host">{[host-repo1]}</block-variable-replace>
-            </block>
-
             <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository.  Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
 
             <execute-list host="{[host-repo1]}">
@@ -2370,14 +2278,6 @@
             <p>A new host named <host>{[host-pg2]}</host> is created to run the standby.</p>
 
             <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[host-os]}" mount="{[host-pg2-mount]}"/>
-
-            <block id="host-install">
-                <block-variable-replace key="host-install-host">{[host-pg2]}</block-variable-replace>
-            </block>
-
-            <block id="pg-install">
-                <block-variable-replace key="pg-install-host">{[host-pg2]}</block-variable-replace>
-            </block>
 
             <execute-list keyword="pg11" host="{[host-pg2]}">
                 <title>Create <user>{[br-user]}</user> user</title>
@@ -2925,46 +2825,20 @@
         <p>The following instructions are not meant to be a comprehensive guide for upgrading <postgres/>, rather they outline the general process for upgrading a primary and standby with the intent of demonstrating the steps required to reconfigure <backrest/>. It is recommended that a backup be taken prior to upgrading.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Stop old cluster and install new <postgres/> version</title>
+            <title>Stop old cluster</title>
 
             <execute user="root">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
-            </execute>
-
-            <execute keyword="co6" user="root">
-                <exe-cmd>
-                    rpm -ivh
-                    http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm
-                </exe-cmd>
-                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute user="root" err-suppress="y">
-                <exe-cmd>{[postgres-install-upgrade]}</exe-cmd>
-                <exe-cmd-extra>-y</exe-cmd-extra>
             </execute>
         </execute-list>
 
         <p>Stop the old cluster on the standby since it will be restored from the newly upgraded cluster.</p>
 
         <execute-list host="{[host-pg2]}">
-            <title>Stop old cluster and install new <postgres/> version</title>
+            <title>Stop old cluster</title>
 
             <execute user="root">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
-            </execute>
-
-            <execute keyword="co6" user="root">
-                <exe-cmd>
-                    rpm -ivh
-                    http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm
-                </exe-cmd>
-                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
-            </execute>
-
-            <execute user="root" err-suppress="y">
-                <exe-cmd>{[postgres-install-upgrade]}</exe-cmd>
-                <exe-cmd-extra>-y</exe-cmd-extra>
             </execute>
         </execute-list>
 
