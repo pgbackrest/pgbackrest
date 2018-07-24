@@ -694,18 +694,6 @@ my %hConfigDefine =
         &CFGDEF_NEGATE => false,
     },
 
-    &CFGOPT_DELTA =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_RESTORE =>
-            {
-                &CFGDEF_DEFAULT => false,
-            }
-        }
-    },
-
     &CFGOPT_FORCE =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
@@ -1172,6 +1160,18 @@ my %hConfigDefine =
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
         }
+    },
+
+    &CFGOPT_DELTA =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_RESTORE => {},
+        },
     },
 
     &CFGOPT_NEUTRAL_UMASK =>

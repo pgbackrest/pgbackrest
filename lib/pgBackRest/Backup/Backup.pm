@@ -299,7 +299,7 @@ sub processManifest
         {
             logDebugMisc($strOperation, "reference ${strRepoFile} to ${strReference}");
 
-            # If the option to checksum all files is set - instead of just checking the size and timestamp - then don't skip
+            # If the delta option to checksum all files is set - instead of just checking the size and timestamp - then don't skip
             # checking this file to see if it needs to be copied again.
             if (!cfgOption(CFGOPT_DELTA))
             {
@@ -405,22 +405,25 @@ sub processManifest
     {
         # If the file has a reference, then it was not copied since it can be retrieved from the referenced backup.
         # However, if hard-linking is turned on the link will need to be created.
-        my $strReference = $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE, false);
+        my $strReference = $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE, false);
 
-        # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
-        if ($bHardLink)
+        if ($strReference)
         {
-            &log(DETAIL, "hardlink ${strRepoFile} to ${strReference}");
+            # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
+            if ($bHardLink)
+            {
+                &log(DETAIL, "hardlink ${strFile} to ${strReference}");
 
-            storageRepo()->linkCreate(
-                STORAGE_REPO_BACKUP . "/${strReference}/${strRepoFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
-                STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strRepoFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
-                {bHard => true});
-        }
-        # Else log the reference. With delta, it is possible that references may have been removed if a file needed to be recopied.
-        else
-        {
-            logDebugMisc($strOperation, " after backup, reference ${strRepoFile} to ${strReference}");
+                storageRepo()->linkCreate(
+                    STORAGE_REPO_BACKUP . "/${strReference}/${strFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
+                    STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
+                    {bHard => true});
+            }
+            # Else log the reference. With delta, it is possible that references may have been removed if a file needed to be recopied.
+            else
+            {
+                logDebugMisc($strOperation, " after backup, reference ${strFile} to ${strReference}");
+            }
         }
     }
 

@@ -153,6 +153,17 @@
                         <example>600</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - DELTA OPTION -->
+                    <config-key id="delta" name="Delta">
+                        <summary>Restore or backup using delta.</summary>
+
+                        <text>During a restore, by default the <postgres/> data and tablespace directories are expected to be present but empty.  This option performs a delta restore using checksums.
+
+                        During a backup, this option will checksum compare the database file instead of the timestamp to determine if the file is required to be recopied.</text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - LOCK-PATH KEY -->
                     <config-key id="lock-path" name="Lock Path">
                         <summary>Path where lock files are stored.</summary>
@@ -1005,15 +1016,6 @@
 
                         <text>The backup set to be restored.  <id>latest</id> will restore the latest backup, otherwise provide the name of the backup to restore.</text>
                         <example>20150131-153358F_20150131-153401I</example>
-                    </option>
-
-                    <!-- OPERATION - RESTORE COMMAND - DELTA OPTION -->
-                    <option id="delta" name="Delta">
-                        <summary>Restore using delta.</summary>
-
-                        <text>By default the <postgres/> data and tablespace directories are expected to be present but empty.  This option performs a delta restore using checksums.</text>
-
-                        <example>y</example>
                     </option>
 
                     <!-- OPERATION - RESTORE COMMAND - FORCE OPTION -->

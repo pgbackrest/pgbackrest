@@ -57,9 +57,10 @@ sub backupFile
         $lModificationTime,                         # File modification time
         $bIgnoreMissing,                            # Is it OK if the file is missing?
         $hExtraParam,                               # Parameter to pass to the extra function
-        $strCipherPass,                             # Passphrase to access the repo file (undefined if repo not encrypted)
         $bDelta,                                    # Is the detla option on?
-        $bHasReference,                             # Does a reference exist to the file in a prior backup in the set?
+        $bHasReference,                             # Does the file exist in the repo in a prior backup in the set?
+        $strCipherPass,                             # Passphrase to access the repo file (undefined if repo not encrypted). This
+                                                    # parameter must always be last in the parameter list to this function.
     ) =
         logDebugParam
         (
@@ -75,9 +76,9 @@ sub backupFile
             {name => 'lModificationTime', trace => true},
             {name => 'bIgnoreMissing', default => true, trace => true},
             {name => 'hExtraParam', required => false, trace => true},
-            {name => 'strCipherPass', required => false, trace => true},
             {name => 'bDelta', trace => true},
             {name => 'bHasReference', trace => true},
+            {name => 'strCipherPass', required => false, trace => true},
         );
 
     my $oStorageRepo = storageRepo();               # Repo storage
@@ -107,25 +108,22 @@ sub backupFile
         # If delta, then check the DB checksum and possibly the repo. If the checksum does not match in either case then recopy.
         if ($bDelta)
         {
-            # Get the checksum
-            ($strCopyChecksum, $lCopySize) = storageDb()->hashSize(
-                storageDb()->openRead($strDbFile, {rhyFilter => $rhyFilter, strCipherPass => $strCipherPass}));
+            # Get the checksum from the DB
+            ($strCopyChecksum, $lCopySize) = storageDb()->hashSize(storageDb()->openRead($strDbFile));
 
             $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
 
-            # If checksum matches and not a prior reference, then check the repo
-            if (!$bCopy && !$bHasReference)
+            # If the checksum does not match, that is OK, just copy the DB file and apply the new checksum, otherwise leave
+            # the initial value of $iCopyResult
+            if ($bCopy == true)
             {
-                # Get the checksum
-                ($strCopyChecksum, $lCopySize) = $oStorageRepo->hashSize(
-                    $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-                    {rhyFilter => $rhyFilter, strCipherPass => $strCipherPass}));
-
-                # Determine if the file needs to be recopied
-                $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
+                $iCopyResult = BACKUP_FILE_CHECKSUM;
             }
         }
-        else
+
+        # If this is not a delta backup or it is and the checksum from the DB matches, then also check the checksum of the file in
+        # the repo (unless it is in a prior backup) and if the checksum doesn't match there may be corruption, so recopy
+        if (!$bDelta || (!$bCopy && !$bHasReference))
         {
             # Get the checksum
             ($strCopyChecksum, $lCopySize) = $oStorageRepo->hashSize(
@@ -134,10 +132,10 @@ sub backupFile
 
             # Determine if the file needs to be recopied
             $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
-        }
 
-        # Set copy result
-        $iCopyResult = $bCopy ? BACKUP_FILE_RECOPY : BACKUP_FILE_CHECKSUM;
+            # Set copy result
+            $iCopyResult = $bCopy ? BACKUP_FILE_RECOPY : BACKUP_FILE_CHECKSUM;
+        }
     }
 
     # Copy the file
@@ -279,9 +277,6 @@ sub backupManifestUpdate
             " backup will continue but this may be an issue unless the resumed backup path in the repository is known to be" .
             " corrupted.\n" .
             "NOTE: this does not indicate a problem with the PostgreSQL page checksums.");
-
-        # If the file has been recopied, then remove any reference to the file's existence in a prior backup.
-        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE);
     }
 
     # If copy was successful store the checksum and size
@@ -306,6 +301,9 @@ sub backupManifestUpdate
         {
             $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
         }
+
+        # If the file has been copied, then remove any reference to the file's existence in a prior backup.
+        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE);
 
         # If the file had page checksums calculated during the copy
         if ($bChecksumPage)

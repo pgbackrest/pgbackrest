@@ -895,7 +895,7 @@ sub build
             elsif (defined($oLastManifest) && $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName) &&
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) ==
                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&
-                   (cfgOption(CFGOPT_DELTA) ||
+                   (cfgOptionValid(CFGOPT_DELTA) && cfgOption(CFGOPT_DELTA) ||
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP)))
             {
