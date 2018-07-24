@@ -21,7 +21,7 @@ CODE:
         StringList *paramList = strLstNewSplitZ(strCat(strNew("pgbackrest|"), parseParam), "|");
 
         // Don't use cfgLoad() because it has a lot of side effects that we don't want
-        configParse(strLstSize(paramList), strLstPtr(paramList));
+        configParse(strLstSize(paramList), strLstPtr(paramList), false);
         cfgExeSet(strNew(backrestBin));
         cfgLoadUpdateOption();
 

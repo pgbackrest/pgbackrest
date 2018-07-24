@@ -39,6 +39,8 @@ use pgBackRest::Storage::Local;
 use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Version;
 
+use pgBackRestTest::Common::ExecuteTest;
+
 ####################################################################################################################################
 # Usage
 ####################################################################################################################################
@@ -244,6 +246,36 @@ eval
         }
     }
 
+    # Build host containers
+    if (!$bCacheOnly && !$bNoExe)
+    {
+        foreach my $strSource ($oManifest->sourceList())
+        {
+            if ((@stryInclude == 0 || grep(/$strSource/, @stryInclude)) && !grep(/$strSource/, @stryExclude))
+            {
+                &log(INFO, "source $strSource");
+
+                foreach my $oHostDefine ($oManifest->sourceGet($strSource)->{doc}->nodeList('host-define', false))
+                {
+                    if ($oManifest->keywordMatch($oHostDefine->paramGet('keyword', false)))
+                    {
+                        my $strImage = $oManifest->variableReplace($oHostDefine->paramGet('image'));
+                        my $strFrom = $oManifest->variableReplace($oHostDefine->paramGet('from'));
+                        my $strDockerfile = "${strOutputPath}/doc-host.dockerfile";
+
+                        &log(INFO, "Build vm '${strImage}' from '${strFrom}'");
+
+                        $oStorageDoc->put(
+                            $strDockerfile,
+                            "FROM ${strFrom}\n\n" . trim($oManifest->variableReplace($oHostDefine->valueGet())) . "\n");
+                        executeTest("docker build -f ${strDockerfile} -t ${strImage} ${strBasePath}");
+                    }
+                }
+            }
+        }
+    }
+
+    # Render output
     for my $strOutput (@stryOutput)
     {
         if (!($strOutput eq 'man' && $oManifest->isBackRest()))

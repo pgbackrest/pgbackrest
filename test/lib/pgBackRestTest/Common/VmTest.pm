@@ -126,14 +126,19 @@ my $oyVm =
         [
             PG_VERSION_90,
             PG_VERSION_91,
+            PG_VERSION_92,
+            PG_VERSION_93,
+            PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
+            PG_VERSION_10,
         ],
 
         &VM_DB_TEST =>
         [
             PG_VERSION_90,
             PG_VERSION_91,
+            PG_VERSION_94,
             PG_VERSION_95,
         ],
     },
@@ -152,6 +157,16 @@ my $oyVm =
 
         &VM_DB =>
         [
+            PG_VERSION_92,
+            PG_VERSION_93,
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_96,
+            PG_VERSION_10,
+        ],
+
+        &VM_DB_TEST =>
+        [
             PG_VERSION_96,
         ],
     },
@@ -169,6 +184,20 @@ my $oyVm =
 
         &VM_DB =>
         [
+            PG_VERSION_84,
+            PG_VERSION_90,
+            PG_VERSION_91,
+            PG_VERSION_92,
+            PG_VERSION_93,
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_96,
+            PG_VERSION_10,
+            PG_VERSION_11,
+        ],
+
+        &VM_DB_TEST =>
+        [
             PG_VERSION_95,
         ],
     },
@@ -184,7 +213,18 @@ my $oyVm =
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/i386-linux-gnu/perl/5.24.1',
 
-        &VM_DB =>
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_92,
+            PG_VERSION_93,
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_96,
+            PG_VERSION_10,
+            PG_VERSION_11,
+        ],
+
+        &VM_DB_TEST =>
         [
             PG_VERSION_96,
         ],
@@ -205,6 +245,19 @@ my $oyVm =
         [
             PG_VERSION_83,
             PG_VERSION_84,
+            PG_VERSION_90,
+            PG_VERSION_91,
+            PG_VERSION_92,
+            PG_VERSION_93,
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_96,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_83,
+            PG_VERSION_84,
             PG_VERSION_92,
             PG_VERSION_93,
         ],
@@ -220,6 +273,20 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.18.2',
+
+        &VM_DB =>
+        [
+            PG_VERSION_84,
+            PG_VERSION_90,
+            PG_VERSION_91,
+            PG_VERSION_92,
+            PG_VERSION_93,
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_96,
+            PG_VERSION_10,
+            PG_VERSION_11,
+        ],
 
         &VM_DB =>
         [
@@ -242,8 +309,14 @@ my $oyVm =
 
         &VM_DB =>
         [
+            PG_VERSION_91,
+            PG_VERSION_92,
+            PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
+            PG_VERSION_96,
+            PG_VERSION_10,
+            PG_VERSION_11,
         ],
 
         &VM_DB_TEST =>
@@ -268,15 +341,16 @@ my $oyVm =
 
         &VM_DB =>
         [
+            PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
+            PG_VERSION_96,
             PG_VERSION_10,
             PG_VERSION_11,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_94,
             PG_VERSION_10,
             PG_VERSION_11,
         ],

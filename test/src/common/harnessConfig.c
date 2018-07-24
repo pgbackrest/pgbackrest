@@ -2,7 +2,7 @@
 Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
 #include "common/harnessDebug.h"
-#include "common/logTest.h"
+#include "common/harnessLog.h"
 
 #include "config/load.h"
 #include "config/parse.h"
@@ -10,8 +10,7 @@ Harness for Loading Test Configurations
 /***********************************************************************************************************************************
 Load a test configuration without any side effects
 
-Log testing requires that log levels be set in a certain way but calls to cfgLoad() will reset that.  Also there's no need to open
-log files, acquire locks, etc.
+There's no need to open log files, acquire locks, reset log levels, etc.
 ***********************************************************************************************************************************/
 void
 harnessCfgLoad(unsigned int argListSize, const char *argList[])
@@ -21,8 +20,7 @@ harnessCfgLoad(unsigned int argListSize, const char *argList[])
         FUNCTION_HARNESS_PARAM(CHARPY, argList);
     FUNCTION_HARNESS_END();
 
-    configParse(argListSize, argList);
-    logInit(logLevelInfo, logLevelOff, logLevelDebug, false);
+    configParse(argListSize, argList, false);
     cfgLoadUpdateOption();
 
     FUNCTION_HARNESS_RESULT_VOID();

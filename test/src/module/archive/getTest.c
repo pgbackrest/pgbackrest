@@ -187,7 +187,7 @@ testRun()
             storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment))), NULL);
 
         TEST_RESULT_VOID(cmdArchiveGet(), "successful get of missing WAL");
-        testLogResult("P00   INFO: unable to find WAL segment 000000010000000100000001");
+        harnessLogResult("P00   INFO: unable to find WAL segment 000000010000000100000001");
 
         TEST_RESULT_BOOL(
             storageExistsNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment))), false,
@@ -204,7 +204,7 @@ testRun()
             bufNewStr(strNew("SHOULD-BE-A-REAL-WAL-FILE")));
 
         TEST_RESULT_VOID(cmdArchiveGet(), "successful get");
-        testLogResult("P00   INFO: got WAL segment 000000010000000100000001 asynchronously");
+        harnessLogResult("P00   INFO: got WAL segment 000000010000000100000001 asynchronously");
 
         TEST_RESULT_BOOL(storageExistsNP(storageTest, walFile), true, "check WAL segment was moved");
         storageRemoveP(storageTest, walFile, .errorOnMissing = true);
@@ -228,7 +228,7 @@ testRun()
             bufNewStr(strNew("SHOULD-BE-A-REAL-WAL-FILE")));
 
         TEST_RESULT_VOID(cmdArchiveGet(), "successful get");
-        testLogResult("P00   INFO: got WAL segment 000000010000000100000001 asynchronously");
+        harnessLogResult("P00   INFO: got WAL segment 000000010000000100000001 asynchronously");
 
         TEST_RESULT_BOOL(storageExistsNP(storageTest, walFile), true, "check WAL segment was moved");
 

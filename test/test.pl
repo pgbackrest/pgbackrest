@@ -101,7 +101,8 @@ test.pl [options]
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
    --test-path          path where tests are executed (defaults to ./test)
-   --log-level          log level to use for tests (defaults to INFO)
+   --log-level          log level to use for test harness (and Perl tests) (defaults to INFO)
+   --log-level-test     log level to use for C tests (defaults to OFF)
    --quiet, -q          equivalent to --log-level=off
 
  VM Options:
@@ -120,6 +121,7 @@ test.pl [options]
 # Command line parameters
 ####################################################################################################################################
 my $strLogLevel = lc(INFO);
+my $strLogLevelTest = lc(OFF);
 my $bVmOut = false;
 my @stryModule;
 my @stryModuleTest;
@@ -166,6 +168,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'pgsql-bin=s' => \$strPgSqlBin,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
+            'log-level-test=s' => \$strLogLevelTest,
             'vm=s' => \$strVm,
             'vm-host=s' => \$strVmHost,
             'vm-out' => \$bVmOut,
@@ -1136,7 +1139,7 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut,
-                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry,
+                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry,
                         !$bNoValgrind, !$bNoCoverage, !$bNoOptimize, $bBackTrace, $bProfile, !$bNoDebug);
                     $iTestIdx++;
 

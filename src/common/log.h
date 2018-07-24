@@ -16,21 +16,6 @@ Max size allowed for a single log message including header
 #endif
 
 /***********************************************************************************************************************************
-Expose internal data for unit testing/debugging
-***********************************************************************************************************************************/
-#ifdef DEBUG_UNIT
-    extern LogLevel logLevelStdOut;
-    extern LogLevel logLevelStdErr;
-    extern LogLevel logLevelFile;
-
-    extern int logHandleStdOut;
-    extern int logHandleStdErr;
-    extern int logHandleFile;
-
-    extern bool logTimestamp;
-#endif
-
-/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 void logInit(LogLevel logLevelStdOut, LogLevel logLevelStdErr, LogLevel logLevelFile, bool logTimestamp);

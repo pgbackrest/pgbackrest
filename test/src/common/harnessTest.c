@@ -7,7 +7,7 @@ C Test Harness
 
 #include "common/harnessDebug.h"
 #include "common/harnessTest.h"
-#include "common/logTest.h"
+#include "common/harnessLog.h"
 
 #define TEST_LIST_SIZE                                              64
 
@@ -24,6 +24,14 @@ static bool testFirst = true;
 
 static const char *testExeData = NULL;
 static const char *testPathData = NULL;
+
+/***********************************************************************************************************************************
+Extern functions
+***********************************************************************************************************************************/
+#ifndef NO_LOG
+    void harnessLogInit();
+    void harnessLogFinal();
+#endif
 
 /***********************************************************************************************************************************
 Get and set the test exe
@@ -115,11 +123,9 @@ testBegin(const char *name)
     if (testList[testRun - 1].selected)
     {
 #ifndef NO_LOG
-#ifndef IN_LOG
         // Make sure there is nothing untested left in the log
         if (!testFirst)
-            testLogFinal();
-#endif
+            harnessLogFinal();
 #endif
         // No longer the first test
         testFirst = false;
@@ -131,10 +137,8 @@ testBegin(const char *name)
         fflush(stdout);
 
 #ifndef NO_LOG
-#ifndef IN_LOG
         // Initialize logging
-        testLogInit();
-#endif
+        harnessLogInit();
 #endif
 
         result = true;
@@ -152,10 +156,8 @@ testComplete()
     FUNCTION_HARNESS_VOID();
 
 #ifndef NO_LOG
-#ifndef IN_LOG
     // Make sure there is nothing untested left in the log
-    testLogFinal();
-#endif
+    harnessLogFinal();
 #endif
 
     // Check that all tests ran

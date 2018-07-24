@@ -1219,7 +1219,7 @@ test/src/common/logTest.c:
   class: test/harness
   type: c
 
-test/src/common/logTest.h:
+test/src/common/harnessLog.h:
   class: test/harness
   type: c/h
 

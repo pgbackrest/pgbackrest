@@ -53,7 +53,7 @@ testRun()
         cfgCommandSet(cfgCmdArchivePush);
 
         TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no error")
-        testLogResult("P00   INFO: archive-push command end: completed successfully");
+        harnessLogResult("P00   INFO: archive-push command end: completed successfully");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TRY_BEGIN()
@@ -63,14 +63,14 @@ testRun()
         CATCH_ANY()
         {
             exitSafe(0, true, signalTypeNone);
-            testLogResult(
+            harnessLogResult(
                 "P00  ERROR: [122]: test error message\n"
                 "P00   INFO: archive-push command end: aborted with exception [122]");
         }
         TRY_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        logInit(logLevelDebug, logLevelOff, logLevelOff, false);
+        harnessLogLevelSet(logLevelDebug);
 
         TRY_BEGIN()
         {
@@ -79,7 +79,7 @@ testRun()
         CATCH_ANY()
         {
             exitSafe(0, true, signalTypeNone);
-            testLogResultRegExp(
+            harnessLogResultRegExp(
                 "P00  ERROR\\: \\[122\\]\\: test debug error message\n"
                 "            STACK TRACE\\:\n"
                 "            module\\/common\\/exitTest\\:testRun\\:.*\n"
@@ -87,7 +87,7 @@ testRun()
         }
         TRY_END();
 
-        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+        harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TRY_BEGIN()
@@ -97,7 +97,7 @@ testRun()
         CATCH_ANY()
         {
             exitSafe(0, true, signalTypeNone);
-            testLogResultRegExp(
+            harnessLogResultRegExp(
                 "P00 ASSERT\\: \\[025\\]\\: test assert message\n"
                 "            STACK TRACE\\:\n"
                 "            module/common/exitTest\\:testRun\\:.*\n"
@@ -113,7 +113,7 @@ testRun()
         CATCH_ANY()
         {
             exitSafe(0, true, signalTypeNone);
-            testLogResult(
+            harnessLogResult(
                 "P00   INFO: archive-push command end: aborted with exception [122]");
         }
         TRY_END();
@@ -121,12 +121,12 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(
             exitSafe(errorTypeCode(&TermError), false, signalTypeNone), errorTypeCode(&TermError), "exit on term with no signal");
-        testLogResult("P00   INFO: archive-push command end: terminated on signal from child process");
+        harnessLogResult("P00   INFO: archive-push command end: terminated on signal from child process");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(
             exitSafe(errorTypeCode(&TermError), false, signalTypeTerm), errorTypeCode(&TermError), "exit on term with SIGTERM");
-        testLogResult("P00   INFO: archive-push command end: terminated on signal [SIGTERM]");
+        harnessLogResult("P00   INFO: archive-push command end: terminated on signal [SIGTERM]");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

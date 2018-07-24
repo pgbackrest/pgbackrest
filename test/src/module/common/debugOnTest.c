@@ -3,7 +3,7 @@ Test Debug Macros and Routines
 ***********************************************************************************************************************************/
 #include "common/log.h"
 
-#include "common/logTest.h"
+#include "common/harnessLog.h"
 
 static void
 testFunction3()
@@ -111,22 +111,21 @@ testRun()
     // *****************************************************************************************************************************
     if (testBegin("FUNCTION_DEBUG() and FUNCTION_DEBUG_RESULT()"))
     {
-        logInit(logLevelTrace, logLevelOff, logLevelOff, false);
+        harnessLogLevelSet(logLevelTrace);
         testFunction1(99, false, 1.17, 0755);
 
-        testLogResult(
+        harnessLogResult(
             "P00  DEBUG:     module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false, paramDouble: 1.17"
                 ", paramMode: 0755)\n"
             "P00  TRACE:         module/common/debugOnTest::testFunction2: (void)\n"
             "P00  TRACE:         module/common/debugOnTest::testFunction2: => void\n"
             "P00  DEBUG:     module/common/debugOnTest::testFunction1: => 1");
-        logInit(logLevelTrace, logLevelOff, logLevelOff, false);
+        harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
         testFunction1(55, true, 0.99, 0755);
 
-        testLogResult("");
+        harnessLogResult("");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

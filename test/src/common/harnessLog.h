@@ -1,16 +1,21 @@
 /***********************************************************************************************************************************
 Log Test Harness
 ***********************************************************************************************************************************/
-#ifndef TEST_COMMON_LOG_H
-#define TEST_COMMON_LOG_H
+#ifndef TEST_COMMON_HARNESSLOG_H
+#define TEST_COMMON_HARNESSLOG_H
+
+#include "common/logLevel.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void testLogInit();
-void testLogResult(const char *expected);
-void testLogResultRegExp(const char *expression);
-void testLogErrResult(const char *expected);
-void testLogFinal();
+void harnessLogResult(const char *expected);
+void harnessLogResultRegExp(const char *expression);
+
+/***********************************************************************************************************************************
+Setters
+***********************************************************************************************************************************/
+void harnessLogLevelReset();
+void harnessLogLevelSet(LogLevel logLevel);
 
 #endif

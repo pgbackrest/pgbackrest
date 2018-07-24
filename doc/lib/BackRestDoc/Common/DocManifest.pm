@@ -433,6 +433,32 @@ sub variableTest
 }
 
 ####################################################################################################################################
+# Get list of source documents
+####################################################################################################################################
+sub sourceList
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->sourceList');
+
+    # Check that sources exist
+    my @strySource;
+
+    if (defined(${$self->{oManifest}}{source}))
+    {
+        @strySource = sort(keys(%{${$self->{oManifest}}{source}}));
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strySource', value => \@strySource}
+    );
+}
+
+####################################################################################################################################
 # sourceGet
 ####################################################################################################################################
 sub sourceGet

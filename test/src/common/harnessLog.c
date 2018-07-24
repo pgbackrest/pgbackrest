@@ -15,15 +15,21 @@ Log Test Harness
 #ifndef NO_LOG
 
 /***********************************************************************************************************************************
-Has the log harness been init'd?
+Expose log internal data for unit testing/debugging
 ***********************************************************************************************************************************/
-static bool harnessLogInit = false;
+extern LogLevel logLevelFile;
+extern int logHandleFile;
+extern bool logFileBanner;
+
+/***********************************************************************************************************************************
+Default log level for testing
+***********************************************************************************************************************************/
+LogLevel logLevelTestDefault = logLevelOff;
 
 /***********************************************************************************************************************************
 Name of file where logs are stored for testing
 ***********************************************************************************************************************************/
-static char stdoutFile[1024];
-static char stderrFile[1024];
+static char logFile[1024];
 
 /***********************************************************************************************************************************
 Buffer where log results are loaded for comparison purposes
@@ -56,30 +62,56 @@ harnessLogOpen(const char *logFile, int flags, int mode)
 Initialize log for testing
 ***********************************************************************************************************************************/
 void
-testLogInit()
+harnessLogInit()
 {
     FUNCTION_HARNESS_VOID();
 
-    if (!harnessLogInit)
-    {
-        logInit(logLevelInfo, logLevelOff, logLevelOff, false);
+    logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false);
+    logFileBanner = true;
 
-        snprintf(stdoutFile, sizeof(stdoutFile), "%s/stdout.log", testPath());
-        logHandleStdOut = harnessLogOpen(stdoutFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
-
-        snprintf(stderrFile, sizeof(stderrFile), "%s/stderr.log", testPath());
-        logHandleStdErr = harnessLogOpen(stderrFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
-
-        harnessLogInit = true;
-    }
+    snprintf(logFile, sizeof(logFile), "%s/expect.log", testPath());
+    logHandleFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
-Load log result from file into the log buffer
+Change test log level
+
+This is info by default but it can sometimes be useful to set the log level to something else.
 ***********************************************************************************************************************************/
 void
+harnessLogLevelSet(LogLevel logLevel)
+{
+    logInit(logLevelTestDefault, logLevelOff, logLevel, false);
+}
+
+/***********************************************************************************************************************************
+Reset test log level
+
+Set back to info
+***********************************************************************************************************************************/
+void
+harnessLogLevelReset()
+{
+    logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false);
+}
+
+/***********************************************************************************************************************************
+Change default test log level
+
+Set the default log level for output to the console (for testing).
+***********************************************************************************************************************************/
+void
+harnessLogLevelDefaultSet(LogLevel logLevel)
+{
+    logLevelTestDefault = logLevel;
+}
+
+/***********************************************************************************************************************************
+Load log result from file into the log buffer
+***********************************************************************************************************************************/
+static void
 harnessLogLoad(const char *logFile)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -121,7 +153,7 @@ Compare log to a static string
 After the comparison the log is cleared so the next result can be compared.
 ***********************************************************************************************************************************/
 void
-testLogResult(const char *expected)
+harnessLogResult(const char *expected)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STRINGZ, expected);
@@ -129,13 +161,13 @@ testLogResult(const char *expected)
         FUNCTION_HARNESS_ASSERT(expected != NULL);
     FUNCTION_HARNESS_END();
 
-    harnessLogLoad(stdoutFile);
+    harnessLogLoad(logFile);
 
     if (strcmp(harnessLogBuffer, expected) != 0)
         THROW_FMT(AssertError, "\n\nexpected log:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expected, harnessLogBuffer);
 
-    close(logHandleStdOut);
-    logHandleStdOut = harnessLogOpen(stdoutFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+    close(logHandleFile);
+    logHandleFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -146,7 +178,7 @@ Compare log to a regexp
 After the comparison the log is cleared so the next result can be compared.
 ***********************************************************************************************************************************/
 void
-testLogResultRegExp(const char *expression)
+harnessLogResultRegExp(const char *expression)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STRINGZ, expression);
@@ -158,7 +190,7 @@ testLogResultRegExp(const char *expression)
 
     TRY_BEGIN()
     {
-        harnessLogLoad(stdoutFile);
+        harnessLogLoad(logFile);
 
         // Compile the regexp and process errors
         int result = 0;
@@ -174,8 +206,8 @@ testLogResultRegExp(const char *expression)
         if (regexec(&regExp, harnessLogBuffer, 0, NULL, 0) != 0)
             THROW_FMT(AssertError, "\n\nexpected log regexp:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expression, harnessLogBuffer);
 
-        close(logHandleStdOut);
-        logHandleStdOut = harnessLogOpen(stdoutFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+        close(logHandleFile);
+        logHandleFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
     }
     FINALLY()
     {
@@ -187,47 +219,17 @@ testLogResultRegExp(const char *expression)
 }
 
 /***********************************************************************************************************************************
-Compare error log to a static string
-
-After the comparison the log is cleared so the next result can be compared.
-***********************************************************************************************************************************/
-void
-testLogErrResult(const char *expected)
-{
-    FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STRINGZ, expected);
-
-        FUNCTION_HARNESS_ASSERT(expected != NULL);
-    FUNCTION_HARNESS_END();
-
-    harnessLogLoad(stderrFile);
-
-    if (strcmp(harnessLogBuffer, expected) != 0)
-        THROW_FMT(AssertError, "\n\nexpected error log:\n\n%s\n\nbut actual error log was:\n\n%s\n\n", expected, harnessLogBuffer);
-
-    close(logHandleStdErr);
-    logHandleStdErr = harnessLogOpen(stderrFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
-
-    FUNCTION_HARNESS_RESULT_VOID();
-}
-
-/***********************************************************************************************************************************
 Make sure nothing is left in the log after all tests have completed
 ***********************************************************************************************************************************/
 void
-testLogFinal()
+harnessLogFinal()
 {
     FUNCTION_HARNESS_VOID();
 
-    harnessLogLoad(stdoutFile);
+    harnessLogLoad(logFile);
 
     if (strcmp(harnessLogBuffer, "") != 0)
         THROW_FMT(AssertError, "\n\nexpected log to be empty but actual log was:\n\n%s\n\n", harnessLogBuffer);
-
-    harnessLogLoad(stderrFile);
-
-    if (strcmp(harnessLogBuffer, "") != 0)
-        THROW_FMT(AssertError, "\n\nexpected error log to be empty but actual error log was:\n\n%s\n\n", harnessLogBuffer);
 
     FUNCTION_HARNESS_RESULT_VOID();
 }

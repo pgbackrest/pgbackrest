@@ -8,6 +8,14 @@ Test Configuration Load
 #include "common/harnessConfig.h"
 
 /***********************************************************************************************************************************
+Expose log internal data for unit testing/debugging
+***********************************************************************************************************************************/
+extern LogLevel logLevelStdOut;
+extern LogLevel logLevelStdErr;
+extern LogLevel logLevelFile;
+extern bool logTimestamp;
+
+/***********************************************************************************************************************************
 Test run
 ***********************************************************************************************************************************/
 void
@@ -144,13 +152,12 @@ testRun()
         StringList *argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--log-level-console=info"));
-        strLstAdd(argList, strNew("--log-level-stderr=off"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
         strLstAdd(argList, strNew("expire"));
 
+        harnessLogLevelSet(logLevelWarn);
         TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
-        testLogResult(
+        harnessLogResult(
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option"
                 " 'repo1-retention-full' to the maximum.");
@@ -168,14 +175,12 @@ testRun()
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--log-level-console=info"));
-        strLstAdd(argList, strNew("--log-level-stderr=off"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
         strLstAdd(argList, strNew("--repo1-retention-archive-type=incr"));
         strLstAdd(argList, strNew("expire"));
 
         TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
-        testLogResult(
+        harnessLogResult(
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
                 "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full'"
                 " to the maximum.\n"
@@ -186,14 +191,12 @@ testRun()
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--log-level-console=info"));
-        strLstAdd(argList, strNew("--log-level-stderr=off"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
         strLstAdd(argList, strNew("--repo1-retention-archive-type=diff"));
         strLstAdd(argList, strNew("expire"));
 
         TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
-        testLogResult(
+        harnessLogResult(
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option"
                 " 'repo1-retention-full' to the maximum.\n"
@@ -204,7 +207,7 @@ testRun()
         strLstAdd(argList, strNew("--repo1-retention-diff=2"));
 
         TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
-        testLogResult(
+        harnessLogResult(
             "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option"
                 " 'repo1-retention-full' to the maximum.");
@@ -213,8 +216,6 @@ testRun()
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--log-level-console=info"));
-        strLstAdd(argList, strNew("--log-level-stderr=off"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
         strLstAdd(argList, strNew("--repo1-retention-archive-type=diff"));
         strLstAdd(argList, strNew("--repo1-retention-archive=3"));
@@ -222,7 +223,7 @@ testRun()
         strLstAdd(argList, strNew("expire"));
 
         TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for retention warning");
-        testLogResult(
+        harnessLogResult(
             "P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
                 " to the maximum.");
@@ -244,6 +245,9 @@ testRun()
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--log-level-console=off"));
+        strLstAdd(argList, strNew("--log-level-stderr=off"));
+        strLstAdd(argList, strNew("--log-level-file=off"));
         strLstAdd(argList, strNew("archive-get"));
 
         umask(0111);
@@ -256,6 +260,9 @@ testRun()
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--no-neutral-umask"));
+        strLstAdd(argList, strNew("--log-level-console=off"));
+        strLstAdd(argList, strNew("--log-level-stderr=off"));
+        strLstAdd(argList, strNew("--log-level-file=off"));
         strLstAdd(argList, strNew("archive-get"));
 
         umask(0111);
@@ -285,6 +292,9 @@ testRun()
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("help"));
         strLstAdd(argList, strNew("backup"));
+        strLstAdd(argList, strNew("--log-level-console=off"));
+        strLstAdd(argList, strNew("--log-level-stderr=off"));
+        strLstAdd(argList, strNew("--log-level-file=off"));
         strLstAdd(argList, strNew("--repo1-retention-full=2"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
@@ -298,6 +308,9 @@ testRun()
         strLstAdd(argList, strNew("--pg1-path=/path"));
         strLstAdd(argList, strNew("--repo1-retention-full=1"));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAdd(argList, strNew("--log-level-console=off"));
+        strLstAdd(argList, strNew("--log-level-stderr=off"));
+        strLstAdd(argList, strNew("--log-level-file=off"));
         strLstAdd(argList, strNew("backup"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
