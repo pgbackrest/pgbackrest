@@ -1,62 +1,45 @@
 /***********************************************************************************************************************************
-Cryptographic Hashes
+Filter Group
 ***********************************************************************************************************************************/
-#ifndef CRYPTO_HASH_H
-#define CRYPTO_HASH_H
+#ifndef IO_FILTER_GROUP_H
+#define IO_FILTER_GROUP_H
 
 /***********************************************************************************************************************************
-Hash object
+Storage file read object
 ***********************************************************************************************************************************/
-typedef struct CryptoHash CryptoHash;
+typedef struct IoFilterGroup IoFilterGroup;
 
 #include "common/io/filter/filter.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
-Hash types
-***********************************************************************************************************************************/
-#define HASH_TYPE_MD5                                               "md5"
-#define HASH_TYPE_SHA1                                              "sha1"
-#define HASH_TYPE_SHA256                                            "sha256"
-
-/***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-CryptoHash *cryptoHashNew(const String *type);
+IoFilterGroup *ioFilterGroupNew();
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void cryptoHashProcess(CryptoHash *this, const Buffer *message);
-void cryptoHashProcessC(CryptoHash *this, const unsigned char *message, size_t messageSize);
-void cryptoHashProcessStr(CryptoHash *this, const String *message);
+void ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter);
+void ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input);
+void ioFilterGroupClose(IoFilterGroup *this);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-const Buffer *cryptoHash(CryptoHash *this);
-String *cryptoHashHex(CryptoHash *this);
-IoFilter *cryptoHashFilter(CryptoHash *this);
-const Variant *cryptoHashResult(CryptoHash *this);
+const Variant *ioFilterGroupResult(const IoFilterGroup *this, const String *filterType);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void cryptoHashFree(CryptoHash *this);
-
-/***********************************************************************************************************************************
-Helper functions
-***********************************************************************************************************************************/
-String *cryptoHashOne(const String *type, Buffer *message);
-String *cryptoHashOneC(const String *type, const unsigned char *message, size_t messageSize);
-String *cryptoHashOneStr(const String *type, String *message);
+void ioFilterGroupFree(IoFilterGroup *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_CRYPTO_HASH_TYPE                                                                                           \
-    CryptoHash *
-#define FUNCTION_DEBUG_CRYPTO_HASH_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "CryptoHash", buffer, bufferSize)
+#define FUNCTION_DEBUG_IO_FILTER_GROUP_TYPE                                                                                          \
+    IoFilterGroup *
+#define FUNCTION_DEBUG_IO_FILTER_GROUP_FORMAT(value, buffer, bufferSize)                                                             \
+    objToLog(value, "IoFilterGroup", buffer, bufferSize)
 
 #endif

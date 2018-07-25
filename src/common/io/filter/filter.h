@@ -1,48 +1,46 @@
 /***********************************************************************************************************************************
-Storage File Read
+IO Filter
 ***********************************************************************************************************************************/
-#ifndef STORAGE_FILEREAD_H
-#define STORAGE_FILEREAD_H
+#ifndef IO_FILTER_FILTER_H
+#define IO_FILTER_FILTER_H
 
 /***********************************************************************************************************************************
 Storage file read object
 ***********************************************************************************************************************************/
-typedef struct StorageFileRead StorageFileRead;
+typedef struct IoFilter IoFilter;
 
-#include "common/io/read.h"
-#include "common/type/buffer.h"
 #include "common/type/string.h"
-#include "storage/driver/posix/driverRead.h"
+#include "common/type/variant.h"
+
+/***********************************************************************************************************************************
+Function pointer types
+***********************************************************************************************************************************/
+typedef void (*IoFilterProcessIn)(void *data, const Buffer *);
+typedef Variant *(*IoFilterResult)(void *data);
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-StorageFileRead *storageFileReadNew(const String *name, bool ignoreMissing);
+IoFilter *ioFilterNew(const String *type, void *data, IoFilterProcessIn processIn, IoFilterResult result);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-StorageFileRead *storageFileReadMove(StorageFileRead *this, MemContext *parentNew);
+void ioFilterProcessIn(IoFilter *this, const Buffer *input);
+const Variant *ioFilterResult(IoFilter *this);
+IoFilter *ioFilterMove(IoFilter *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-StorageFileReadPosix *storageFileReadDriver(const StorageFileRead *this);
-IoRead *storageFileReadIo(const StorageFileRead *this);
-bool storageFileReadIgnoreMissing(const StorageFileRead *this);
-const String *storageFileReadName(const StorageFileRead *this);
-
-/***********************************************************************************************************************************
-Destructor
-***********************************************************************************************************************************/
-void storageFileReadFree(StorageFileRead *this);
+const String *ioFilterType(IoFilter *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_FILE_READ_TYPE                                                                                      \
-    StorageFileRead *
-#define FUNCTION_DEBUG_STORAGE_FILE_READ_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageFileRead", buffer, bufferSize)
+#define FUNCTION_DEBUG_IO_FILTER_TYPE                                                                                              \
+    IoFilter *
+#define FUNCTION_DEBUG_IO_FILTER_FORMAT(value, buffer, bufferSize)                                                                 \
+    objToLog(value, "IoFilter", buffer, bufferSize)
 
 #endif

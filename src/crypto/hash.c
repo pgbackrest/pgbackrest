@@ -13,6 +13,11 @@ Cryptographic Hashes
 #include "crypto/hash.h"
 
 /***********************************************************************************************************************************
+Filter type constant
+***********************************************************************************************************************************/
+#define CRYPTO_HASH_FILTER_TYPE                                     "hash"
+
+/***********************************************************************************************************************************
 Track state during block encrypt/decrypt
 ***********************************************************************************************************************************/
 struct CryptoHash
@@ -21,10 +26,11 @@ struct CryptoHash
     const EVP_MD *hashType;                                         // Hash type
     EVP_MD_CTX *hashContext;                                        // Message hash context
     Buffer *hash;                                                   // Hash in binary form
+    IoFilter *filter;                                               // Filter interface
 };
 
 /***********************************************************************************************************************************
-New digest object
+New hash object
 ***********************************************************************************************************************************/
 CryptoHash *
 cryptoHashNew(const String *type)
@@ -61,6 +67,10 @@ cryptoHashNew(const String *type)
 
         // Set free callback to ensure hash context is freed
         memContextCallback(this->memContext, (MemContextCallback)cryptoHashFree, this);
+
+        // Create filter interface
+        this->filter = ioFilterNew(
+            strNew(CRYPTO_HASH_FILTER_TYPE), this, (IoFilterProcessIn)cryptoHashProcess, (IoFilterResult)cryptoHashResult);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -70,7 +80,8 @@ cryptoHashNew(const String *type)
 /***********************************************************************************************************************************
 Add message data to the hash
 ***********************************************************************************************************************************/
-void cryptoHashProcessC(CryptoHash *this, const unsigned char *message, size_t messageSize)
+void
+cryptoHashProcessC(CryptoHash *this, const unsigned char *message, size_t messageSize)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(CRYPTO_HASH, this);
@@ -94,7 +105,8 @@ void cryptoHashProcessC(CryptoHash *this, const unsigned char *message, size_t m
 /***********************************************************************************************************************************
 Add message data to the hash from a Buffer
 ***********************************************************************************************************************************/
-void cryptoHashProcess(CryptoHash *this, Buffer *message)
+void
+cryptoHashProcess(CryptoHash *this, const Buffer *message)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CRYPTO_HASH, this);
@@ -104,7 +116,7 @@ void cryptoHashProcess(CryptoHash *this, Buffer *message)
         FUNCTION_TEST_ASSERT(message != NULL);
     FUNCTION_TEST_END();
 
-    cryptoHashProcessC(this, bufPtr(message), bufSize(message));
+    cryptoHashProcessC(this, bufPtr(message), bufUsed(message));
 
     FUNCTION_TEST_RESULT_VOID();
 }
@@ -112,7 +124,8 @@ void cryptoHashProcess(CryptoHash *this, Buffer *message)
 /***********************************************************************************************************************************
 Add message data to the hash from a String
 ***********************************************************************************************************************************/
-void cryptoHashProcessStr(CryptoHash *this, String *message)
+void
+cryptoHashProcessStr(CryptoHash *this, const String *message)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CRYPTO_HASH, this);
@@ -130,7 +143,8 @@ void cryptoHashProcessStr(CryptoHash *this, String *message)
 /***********************************************************************************************************************************
 Get binary representation of the hash
 ***********************************************************************************************************************************/
-const Buffer *cryptoHash(CryptoHash *this)
+const Buffer *
+cryptoHash(CryptoHash *this)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(CRYPTO_HASH, this);
@@ -164,7 +178,8 @@ const Buffer *cryptoHash(CryptoHash *this)
 /***********************************************************************************************************************************
 Get string representation of the hash
 ***********************************************************************************************************************************/
-String *cryptoHashHex(CryptoHash *this)
+String *
+cryptoHashHex(CryptoHash *this)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(CRYPTO_HASH, this);
@@ -182,9 +197,48 @@ String *cryptoHashHex(CryptoHash *this)
 }
 
 /***********************************************************************************************************************************
+Get filter interface
+***********************************************************************************************************************************/
+IoFilter *
+cryptoHashFilter(CryptoHash *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(CRYPTO_HASH, this);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
+    FUNCTION_DEBUG_RESULT(IO_FILTER, this->filter);
+}
+
+/***********************************************************************************************************************************
+Return filter result
+***********************************************************************************************************************************/
+const Variant *
+cryptoHashResult(CryptoHash *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(CRYPTO_HASH, this);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
+    Variant *result = NULL;
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        result = varNewStr(cryptoHashHex(this));
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_DEBUG_RESULT(VARIANT, result);
+}
+
+/***********************************************************************************************************************************
 Free memory
 ***********************************************************************************************************************************/
-void cryptoHashFree(CryptoHash *this)
+void
+cryptoHashFree(CryptoHash *this)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(CRYPTO_HASH, this);
