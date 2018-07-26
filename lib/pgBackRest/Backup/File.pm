@@ -108,6 +108,7 @@ sub backupFile
         # If delta, then check the DB checksum and possibly the repo. If the checksum does not match in either case then recopy.
         if ($bDelta)
         {
+# CSHANG Is it possible for the DB file at this point NOT to exist? If so, will need to handle!!
             # Get the checksum from the DB
             ($strCopyChecksum, $lCopySize) = storageDb()->hashSize(storageDb()->openRead($strDbFile));
 

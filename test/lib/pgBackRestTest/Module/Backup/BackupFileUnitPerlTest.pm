@@ -111,6 +111,8 @@ sub run
         my $strFileName = "12345";
         my $strFileDb = $self->{strDbPath} . "/$strFileName";
         my $strFileHash = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
+		my $strFileRepo = storageRepo()->pathGet(
+			STORAGE_REPO_BACKUP . "/$strBackupLabel/" . MANIFEST_TARGET_PGDATA . "/$strFileName");
 
 		# Copy file to db path
         executeTest('cp ' . $self->dataPath() . "/filecopy.archive2.bin ${strFileDb}");
@@ -120,11 +122,75 @@ sub run
         my $lFileSize = $hManifest->{$strFileName}{size} + 0;
         my $lFileTime = $hManifest->{$strFileName}{modification_time} + 0;
 
-		# No checksum, no compression, no page checksum, no extra, no delta, no hasReference
+		#---------------------------------------------------------------------------------------------------------------------------
+		# No prior checksum, no compression, no page checksum, no extra, no delta, no hasReference
 		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
-			backupFile($strFileDb, MANIFEST_TARGET_PGDATA . "/" . $strFileName, $lFileSize, undef, false, $strBackupLabel, false,
+			backupFile($strFileDb, MANIFEST_TARGET_PGDATA . "/$strFileName", $lFileSize, undef, false, $strBackupLabel, false,
 			cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, false, false, undef);
 
+		$self->testResult(sub {storageTest()->exists($strFileRepo)}, true, 'non-compressed file exists in repo');
+
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_COPY && $strResultCopyChecksum eq $strFileHash &&
+			$lResultRepoSize == $lFileSize), true, 'file copied to repo successfully');
+
+        $self->testException(sub {storageRepo()->openRead("$strFileRepo.gz")}, ERROR_FILE_MISSING,
+            "unable to open '$strFileRepo.gz': No such file or directory");
+
+		storageTest()->remove($strFileRepo);
+
+		#---------------------------------------------------------------------------------------------------------------------------
+		# No prior checksum, yes compression, yes page checksum, no extra, no delta, no hasReference
+		$self->testException(sub {backupFile($strFileDb, MANIFEST_TARGET_PGDATA . "/$strFileName", $lFileSize, undef, true,
+			$strBackupLabel, true, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, false, false, undef)}, ERROR_ASSERT,
+			"iWalId is required in Backup::Filter::PageChecksum->new");
+
+	    # Build the lsn start parameter to pass to the extra function
+	    my $hStartLsnParam =
+	    {
+	        iWalId => 0xFFFF,
+	        iWalOffset => 0xFFFF,
+	    };
+
+		#---------------------------------------------------------------------------------------------------------------------------
+		# No prior checksum, yes compression, yes page checksum, yes extra, no delta, no hasReference
+		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
+			backupFile($strFileDb, MANIFEST_TARGET_PGDATA . "/$strFileName", $lFileSize, undef, true, $strBackupLabel, true,
+			cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, $hStartLsnParam, false, false, undef);
+
+		$self->testResult(sub {storageTest()->exists("$strFileRepo.gz")}, true, 'compressed file exists in repo');
+
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_COPY && $strResultCopyChecksum eq $strFileHash &&
+			$lResultRepoSize < $lFileSize && $rResultExtra->{bValid}), true, 'file copied to repo successfully');
+
+        $self->testException(sub {storageRepo()->openRead("$strFileRepo")}, ERROR_FILE_MISSING,
+            "unable to open '$strFileRepo': No such file or directory");
+
+		storageTest()->remove("$strFileRepo.gz");
+
+		#---------------------------------------------------------------------------------------------------------------------------
+		# Add a segment number for bChecksumPage code coverage
+		executeTest('cp ' . "$strFileDb $strFileDb.1");
+
+		# No prior checksum, no compression, yes page checksum, yes extra, no delta, no hasReference
+		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
+			backupFile("$strFileDb.1", MANIFEST_TARGET_PGDATA . "/$strFileName.1", $lFileSize, undef, true, $strBackupLabel, false,
+			cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, $hStartLsnParam, false, false, undef);
+
+		$self->testResult(sub {storageTest()->exists("$strFileRepo.1")}, true, 'non-compressed segment file exists in repo');
+
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_COPY && $strResultCopyChecksum eq $strFileHash &&
+			$lResultRepoSize == $lFileSize && $rResultExtra->{bValid}), true, 'segment file copied to repo successfully');
+
+		# Remove the db file and try to back it up
+		storageTest()->remove("$strFileDb.1");
+
+		# No prior checksum, no compression, no page checksum, no extra, no delta, no hasReference
+		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
+			backupFile("$strFileDb.1", MANIFEST_TARGET_PGDATA . "/$strFileName.1", $lFileSize, undef, false, $strBackupLabel, false,
+			cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, false, false, undef);
+
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_SKIP && !defined($strResultCopyChecksum) &&
+			!defined($lResultRepoSize)), true, 'backup file skipped');
     }
 
     ################################################################################################################################

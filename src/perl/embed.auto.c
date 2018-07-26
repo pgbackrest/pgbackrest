@@ -3771,6 +3771,7 @@ static const EmbeddedModule embeddedModule[] =
             "if ($bDelta)\n"
             "{\n"
             "\n"
+            "\n"
             "($strCopyChecksum, $lCopySize) = storageDb()->hashSize(storageDb()->openRead($strDbFile));\n"
             "\n"
             "$bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);\n"
