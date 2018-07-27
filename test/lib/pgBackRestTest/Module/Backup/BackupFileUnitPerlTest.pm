@@ -162,10 +162,12 @@ sub run
 		$self->testResult(($iResultCopyResult == BACKUP_FILE_COPY && $strResultCopyChecksum eq $strFileHash &&
 			$lResultRepoSize < $lFileSize && $rResultExtra->{bValid}), true, 'file copied to repo successfully');
 
+        # Only the compressed version of the file exists
         $self->testException(sub {storageRepo()->openRead("$strFileRepo")}, ERROR_FILE_MISSING,
             "unable to open '$strFileRepo': No such file or directory");
 
-		storageTest()->remove("$strFileRepo.gz");
+        # Save the compressed file for later test
+		executeTest('mv ' . "$strFileRepo.gz $strFileRepo.gz.SAVE");
 
 		#---------------------------------------------------------------------------------------------------------------------------
 		# Add a segment number for bChecksumPage code coverage
@@ -181,16 +183,114 @@ sub run
 		$self->testResult(($iResultCopyResult == BACKUP_FILE_COPY && $strResultCopyChecksum eq $strFileHash &&
 			$lResultRepoSize == $lFileSize && $rResultExtra->{bValid}), true, 'segment file copied to repo successfully');
 
+		#---------------------------------------------------------------------------------------------------------------------------
 		# Remove the db file and try to back it up
 		storageTest()->remove("$strFileDb.1");
 
-		# No prior checksum, no compression, no page checksum, no extra, no delta, no hasReference
+		# No prior checksum, no compression, no page checksum, no extra, No delta, no hasReference, no db file
 		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
-			backupFile("$strFileDb.1", MANIFEST_TARGET_PGDATA . "/$strFileName.1", $lFileSize, undef, false, $strBackupLabel, false,
-			cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, false, false, undef);
+			backupFile("$strFileDb.1", MANIFEST_TARGET_PGDATA . "/$strFileName.1", $lFileSize, undef, false, $strBackupLabel,
+            false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, false, false, undef);
 
 		$self->testResult(($iResultCopyResult == BACKUP_FILE_SKIP && !defined($strResultCopyChecksum) &&
 			!defined($lResultRepoSize)), true, 'backup file skipped');
+
+		# Yes prior checksum, no compression, no page checksum, no extra, yes delta, no hasReference, no db file
+		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
+			backupFile("$strFileDb.1", MANIFEST_TARGET_PGDATA . "/$strFileName.1", $lFileSize, $strFileHash, false, $strBackupLabel,
+            false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, false, undef);
+
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_SKIP && !defined($strResultCopyChecksum) &&
+			!defined($lResultRepoSize)), true, 'backup file skipped - in prior backup');
+
+		#---------------------------------------------------------------------------------------------------------------------------
+        # Restore the compressed file
+        executeTest('mv ' . "$strFileRepo.gz.SAVE $strFileRepo.gz");
+
+		# Yes prior checksum, yes compression, no page checksum, no extra, yes delta, no hasReference
+		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
+			backupFile("$strFileDb", MANIFEST_TARGET_PGDATA . "/$strFileName", $lFileSize, $strFileHash, false, $strBackupLabel,
+            true, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, false, undef);
+
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_CHECKSUM && $strResultCopyChecksum eq $strFileHash &&
+			$lResultCopySize == $lFileSize), true, 'db checksum and repo same - no copy file');
+
+		#---------------------------------------------------------------------------------------------------------------------------
+        # DB Checksum mismatch
+        storageTest()->remove("$strFileRepo", {bIgnoreMissing => true});
+        # Save the compressed file for later test
+		executeTest('mv ' . "$strFileRepo.gz $strFileRepo.gz.SAVE");
+
+		# Yes prior checksum, no compression, no page checksum, no extra, yes delta, no hasReference
+		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
+			backupFile("$strFileDb", MANIFEST_TARGET_PGDATA . "/$strFileName", $lFileSize, $strFileHash . "ff", false,
+            $strBackupLabel, false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, false, undef);
+
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_CHECKSUM && $strResultCopyChecksum eq $strFileHash &&
+			$lResultCopySize == $lFileSize && $lResultRepoSize == $lFileSize), true, 'db checksum mismatch - copy file');
+
+		#---------------------------------------------------------------------------------------------------------------------------
+        # DB file size mismatch
+		# Yes prior checksum, no compression, no page checksum, no extra, yes delta, no hasReference
+		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
+			backupFile("$strFileDb", MANIFEST_TARGET_PGDATA . "/$strFileName", $lFileSize + 1, $strFileHash, false,
+            $strBackupLabel, false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, false, undef);
+
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_CHECKSUM && $strResultCopyChecksum eq $strFileHash &&
+			$lResultCopySize == $lFileSize && $lResultRepoSize == $lFileSize), true, 'db file size mismatch - copy file');
+
+		#---------------------------------------------------------------------------------------------------------------------------
+        # Repo mismatch
+
+        # Restore the compressed file as if non-compressed so checksum won't match
+        executeTest('cp ' . "$strFileRepo.gz.SAVE $strFileRepo");
+
+		# Yes prior checksum, no compression, no page checksum, no extra, yes delta, no hasReference
+		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
+			backupFile("$strFileDb", MANIFEST_TARGET_PGDATA . "/$strFileName", $lFileSize, $strFileHash, false,
+            $strBackupLabel, false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, false, undef);
+
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_RECOPY && $strResultCopyChecksum eq $strFileHash &&
+			$lResultCopySize == $lFileSize && $lResultRepoSize == $lFileSize), true, 'repo checksum mismatch - recopy file');
+
+        # Restore the compressed file
+        executeTest('mv ' . "$strFileRepo.gz.SAVE $strFileRepo.gz");
+
+		# Yes prior checksum, yes compression, no page checksum, no extra, no delta, no hasReference
+		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
+			backupFile("$strFileDb", MANIFEST_TARGET_PGDATA . "/$strFileName", $lFileSize + 1, $strFileHash, false,
+            $strBackupLabel, true, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, false, false, undef);
+
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_RECOPY && $strResultCopyChecksum eq $strFileHash &&
+			$lResultCopySize == $lFileSize), true, 'repo size mismatch - recopy file');
+
+		#---------------------------------------------------------------------------------------------------------------------------
+        # Has reference
+
+		# Yes prior checksum, no compression, no page checksum, no extra, yes delta, yes hasReference
+		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
+			backupFile("$strFileDb", MANIFEST_TARGET_PGDATA . "/$strFileName", $lFileSize + 1, $strFileHash, false,
+            $strBackupLabel, false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, true, undef);
+
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_CHECKSUM && $strResultCopyChecksum eq $strFileHash &&
+			$lResultCopySize == $lFileSize && $lResultRepoSize == $lFileSize), true, 'db file size mismatch has reference - copy');
+
+		# Yes prior checksum, no compression, no page checksum, no extra, yes delta, yes hasReference
+		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
+			backupFile("$strFileDb", MANIFEST_TARGET_PGDATA . "/$strFileName", $lFileSize, $strFileHash, false,
+            $strBackupLabel, false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, true, undef);
+
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_NOP && $strResultCopyChecksum eq $strFileHash &&
+			$lResultCopySize == $lFileSize), true, 'db file same has reference - copy');
+
+		#---------------------------------------------------------------------------------------------------------------------------
+        # Remove file from repo. No reference so should hard error since this means sometime between the building of the manifest
+        # for the aborted backup, the file went missing from the aborted backup dir.
+        storageTest()->remove("$strFileRepo", {bIgnoreMissing => true});
+
+        $self->testException(sub {backupFile("$strFileDb", MANIFEST_TARGET_PGDATA . "/$strFileName", $lFileSize, $strFileHash,
+            false, $strBackupLabel, false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, false, undef)},
+            ERROR_FILE_MISSING, "unable to open '$strFileRepo': No such file or directory");
     }
 
     ################################################################################################################################
