@@ -40,14 +40,6 @@ sub initModule
     $self->{strDbPath} = $self->testPath() . '/db';
     $self->{strRepoPath} = $self->testPath() . '/repo';
     $self->{strBackupPath} = "$self->{strRepoPath}/backup/" . $self->stanza();
-}
-
-####################################################################################################################################
-# initTest
-####################################################################################################################################
-sub initTest
-{
-    my $self = shift;
 
     # Create backup path
     storageTest()->pathCreate($self->{strBackupPath}, {bIgnoreExists => true, bCreateParent => true});
@@ -77,50 +69,34 @@ sub run
 
 	$self->configTestLoad(CFGCMD_BACKUP);
 
+	# Repo
+	my $strRepoBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP);
+    my $strBackupLabel = "20180724-182750F";
+
+	# File
+    my $strFileName = "12345";
+    my $strFileDb = $self->{strDbPath} . "/$strFileName";
+    my $strFileHash = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
+	my $strFileRepo = storageRepo()->pathGet(
+		STORAGE_REPO_BACKUP . "/$strBackupLabel/" . MANIFEST_TARGET_PGDATA . "/$strFileName");
+
+	# Copy file to db path
+    executeTest('cp ' . $self->dataPath() . "/filecopy.archive2.bin ${strFileDb}");
+
+	# Get size and data info for the file in the db path
+    my $hManifest = storageDb()->manifest($self->{strDbPath});
+    my $lFileSize = $hManifest->{$strFileName}{size} + 0;
+    my $lFileTime = $hManifest->{$strFileName}{modification_time} + 0;
+
     ################################################################################################################################
     if ($self->begin('backupFile()'))
     {
-# $strDbFile,                                 # Database file to backup
-# $strRepoFile,                               # Location in the repository to copy to
-# $lSizeFile,                                 # File size
-# $strChecksum,                               # File checksum to be checked
-# $bChecksumPage,                             # Should page checksums be calculated?
-# $strBackupLabel,                            # Label of current backup
-# $bCompress,                                 # Compress destination file
-# $iCompressLevel,                            # Compress level
-# $lModificationTime,                         # File modification time
-# $bIgnoreMissing,                            # Is it OK if the file is missing?
-# $hExtraParam,                               # Parameter to pass to the extra function
-# $bDelta,                                    # Is the detla option on?
-# $bHasReference,                             # Does a reference exist to the file in a prior backup in the set?
-# $strCipherPass,                             # Passphrase to access the repo file (undefined if repo not encrypted). This
-#                                             # parameter must always be last in the parameter list to this function.
-
 		# Result variables
         my $iResultCopyResult;
         my $lResultCopySize;
         my $lResultRepoSize;
         my $strResultCopyChecksum;
         my $rResultExtra;
-
-		# Repo
-		my $strRepoBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP);
-        my $strBackupLabel = "20180724-182750F";
-
-		# File
-        my $strFileName = "12345";
-        my $strFileDb = $self->{strDbPath} . "/$strFileName";
-        my $strFileHash = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
-		my $strFileRepo = storageRepo()->pathGet(
-			STORAGE_REPO_BACKUP . "/$strBackupLabel/" . MANIFEST_TARGET_PGDATA . "/$strFileName");
-
-		# Copy file to db path
-        executeTest('cp ' . $self->dataPath() . "/filecopy.archive2.bin ${strFileDb}");
-
-		# Get size and data info for the file in the db pat
-        my $hManifest = storageDb()->manifest($self->{strDbPath});
-        my $lFileSize = $hManifest->{$strFileName}{size} + 0;
-        my $lFileTime = $hManifest->{$strFileName}{modification_time} + 0;
 
 		#---------------------------------------------------------------------------------------------------------------------------
 		# No prior checksum, no compression, no page checksum, no extra, no delta, no hasReference
@@ -202,6 +178,12 @@ sub run
 
 		$self->testResult(($iResultCopyResult == BACKUP_FILE_SKIP && !defined($strResultCopyChecksum) &&
 			!defined($lResultRepoSize)), true, 'backup file skipped - in prior backup');
+
+		# Yes prior checksum, no compression, no page checksum, no extra, yes delta, no hasReference, no db file,
+        # do not ignoreMissing
+		$self->testException(sub {backupFile("$strFileDb.1", MANIFEST_TARGET_PGDATA . "/$strFileName.1", $lFileSize, $strFileHash,
+            false, $strBackupLabel, false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, false, undef, true, false, undef)},
+            ERROR_FILE_MISSING, "unable to open '$strFileDb.1': No such file or directory");
 
 		#---------------------------------------------------------------------------------------------------------------------------
         # Restore the compressed file
@@ -294,10 +276,41 @@ sub run
     }
 
     ################################################################################################################################
-    # if ($self->begin('backupManifestUpdate()'))
-    # {
-    #
-    # }
+    if ($self->begin('backupManifestUpdate()'))
+    {
+# {name => 'oManifest', trace => true},
+# {name => 'strHost', required => false, trace => true},  -- this is for log statements only so can be undef
+# {name => 'iLocalId', required => false, trace => true}, -- only for a single log statement
+#
+# # Parameters to backupFile()
+# {name => 'strDbFile', trace => true}, -- this is for log statements but is required
+# {name => 'strRepoFile', trace => true},
+# {name => 'lSize', required => false, trace => true},
+# {name => 'strChecksum', required => false, trace => true},
+# {name => 'bChecksumPage', trace => true},
+#
+# # Results from backupFile()
+# {name => 'iCopyResult', trace => true},
+# {name => 'lSizeCopy', required => false, trace => true},
+# {name => 'lSizeRepo', required => false, trace => true},
+# {name => 'strChecksumCopy', required => false, trace => true},
+# {name => 'rExtra', required => false, trace => true},
+#
+# # Accumulators
+# {name => 'lSizeTotal', trace => true},
+# {name => 'lSizeCurrent', trace => true},
+# {name => 'lManifestSaveSize', trace => true},
+# {name => 'lManifestSaveCurrent', trace => true}
+
+        my $strBackupPath = $self->{strBackupPath} . "/$strBackupLabel";
+        my $strHost = "host";
+        my $iLocalId = 1;
+
+        my $oBackupManifest = new pgBackRest::Manifest("$strBackupPath/" . FILE_MANIFEST,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => 201409291});
+        $oBackupManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+
+    }
 }
 
 1;
