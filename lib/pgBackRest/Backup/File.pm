@@ -97,35 +97,46 @@ sub backupFile
     # check the repo.
     if (defined($strChecksum))
     {
-        # Add decompression
-        my $rhyFilter;
-
-        if ($bCompress)
-        {
-            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]});
-        }
-
         # If delta, then check the DB checksum and possibly the repo. If the checksum does not match in either case then recopy.
         if ($bDelta)
         {
-# CSHANG Is it possible for the DB file at this point NOT to exist? If so, will need to handle!!
-            # Get the checksum from the DB
-            ($strCopyChecksum, $lCopySize) = storageDb()->hashSize(storageDb()->openRead($strDbFile));
+	        # Open the DB file
+	        my $oSourceFileIo = storageDb()->openRead($strDbFile, {bIgnoreMissing => $bIgnoreMissing});
 
-            $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
+			# If the DB file exists, then check the checksum
+			if (defined($oSourceFileIo))
+			{
+				($strCopyChecksum, $lCopySize) = storageDb()->hashSize($oSourceFileIo);
+            	$bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
 
-            # If the checksum does not match, that is OK, just copy the DB file and apply the new checksum, otherwise leave
-            # the initial value of $iCopyResult
-            if ($bCopy == true)
-            {
-                $iCopyResult = BACKUP_FILE_CHECKSUM;
-            }
+	            # If the checksum does not match, that is OK, just copy the DB file and apply the new checksum, otherwise leave
+	            # the initial value of $iCopyResult
+	            if ($bCopy == true)
+	            {
+	                $iCopyResult = BACKUP_FILE_CHECKSUM;
+	            }
+			}
+			# Else the source file is missing from the database so skip this file
+			else
+			{
+				$iCopyResult = BACKUP_FILE_SKIP;
+				$bCopy = false;
+			}
         }
 
-        # If this is not a delta backup or it is and the checksum from the DB matches, then also check the checksum of the file in
-        # the repo (unless it is in a prior backup) and if the checksum doesn't match there may be corruption, so recopy
-        if (!$bDelta || (!$bCopy && !$bHasReference))
+        # If this is not a delta backup or it is and the file exists and the checksum from the DB matches, then also check the
+		# checksum of the file in the repo (unless it is in a prior backup) and if the checksum doesn't match there may be
+		# corruption, so recopy
+        if (!$bDelta || (($iCopyResult != BACKUP_FILE_SKIP) && !$bCopy && !$bHasReference))
         {
+	        # Add decompression
+	        my $rhyFilter;
+
+	        if ($bCompress)
+	        {
+	            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]});
+	        }
+
             # Get the checksum
             ($strCopyChecksum, $lCopySize) = $oStorageRepo->hashSize(
                 $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
