@@ -459,22 +459,6 @@ libc/build/lib/pgBackRestLibC/Build.pm:
   class: build
   type: perl
 
-libc/t/sanity.t:
-  class: test/module
-  type: perl
-
-libc/xs/cipher/block.xs:
-  class: core
-  type: xs
-
-libc/xs/cipher/block.xsh:
-  class: core
-  type: c/h
-
-libc/xs/cipher/random.xs:
-  class: core
-  type: xs
-
 libc/xs/common/encode.xs:
   class: core
   type: xs
@@ -499,6 +483,26 @@ libc/xs/config/define.xs:
   class: core
   type: xs
 
+libc/xs/crypto/cipherBlock.xs:
+  class: core
+  type: xs
+
+libc/xs/crypto/cipherBlock.xsh:
+  class: core
+  type: c/h
+
+libc/xs/crypto/hash.xs:
+  class: core
+  type: xs
+
+libc/xs/crypto/hash.xsh:
+  class: core
+  type: c/h
+
+libc/xs/crypto/random.xs:
+  class: core
+  type: xs
+
 libc/xs/postgres/pageChecksum.xs:
   class: core
   type: xs
@@ -510,30 +514,6 @@ libc/xs/storage/storage.xs:
 src/Makefile:
   class: build
   type: make
-
-src/cipher/block.c:
-  class: core
-  type: c
-
-src/cipher/block.h:
-  class: core
-  type: c/h
-
-src/cipher/cipher.c:
-  class: core
-  type: c
-
-src/cipher/cipher.h:
-  class: core
-  type: c/h
-
-src/cipher/random.c:
-  class: core
-  type: c
-
-src/cipher/random.h:
-  class: core
-  type: c/h
 
 src/command/archive/common.c:
   class: core
@@ -643,11 +623,67 @@ src/common/ini.h:
   class: core
   type: c/h
 
+src/common/io/bufferRead.c:
+  class: core
+  type: c
+
+src/common/io/bufferRead.h:
+  class: core
+  type: c/h
+
+src/common/io/bufferWrite.c:
+  class: core
+  type: c
+
+src/common/io/bufferWrite.h:
+  class: core
+  type: c/h
+
+src/common/io/filter/filter.c:
+  class: core
+  type: c
+
+src/common/io/filter/filter.h:
+  class: core
+  type: c/h
+
+src/common/io/filter/group.c:
+  class: core
+  type: c
+
+src/common/io/filter/group.h:
+  class: core
+  type: c/h
+
 src/common/io/handle.c:
   class: core
   type: c
 
 src/common/io/handle.h:
+  class: core
+  type: c/h
+
+src/common/io/io.c:
+  class: core
+  type: c
+
+src/common/io/io.h:
+  class: core
+  type: c/h
+
+src/common/io/read.c:
+  class: core
+  type: c
+
+src/common/io/read.h:
+  class: core
+  type: c/h
+
+src/common/io/write.c:
+  class: core
+  type: c
+
+src/common/io/write.h:
   class: core
   type: c/h
 
@@ -664,6 +700,10 @@ src/common/log.c:
   type: c
 
 src/common/log.h:
+  class: core
+  type: c/h
+
+src/common/logLevel.h:
   class: core
   type: c/h
 
@@ -823,6 +863,42 @@ src/config/parse.h:
   class: core
   type: c/h
 
+src/crypto/cipher.h:
+  class: core
+  type: c/h
+
+src/crypto/cipherBlock.c:
+  class: core
+  type: c
+
+src/crypto/cipherBlock.h:
+  class: core
+  type: c/h
+
+src/crypto/crypto.c:
+  class: core
+  type: c
+
+src/crypto/crypto.h:
+  class: core
+  type: c/h
+
+src/crypto/hash.c:
+  class: core
+  type: c
+
+src/crypto/hash.h:
+  class: core
+  type: c/h
+
+src/crypto/random.c:
+  class: core
+  type: c
+
+src/crypto/random.h:
+  class: core
+  type: c/h
+
 src/main.c:
   class: core
   type: c
@@ -946,6 +1022,10 @@ src/storage/storage.h:
 src/version.h:
   class: core
   type: c/h
+
+test/container.yaml:
+  class: test/harness
+  type: yaml
 
 test/define.yaml:
   class: test/harness
@@ -1207,19 +1287,19 @@ test/src/common/harnessFork.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessLog.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessLog.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessTest.c:
   class: test/harness
   type: c
 
 test/src/common/harnessTest.h:
-  class: test/harness
-  type: c/h
-
-test/src/common/logTest.c:
-  class: test/harness
-  type: c
-
-test/src/common/harnessLog.h:
   class: test/harness
   type: c/h
 
@@ -1232,14 +1312,6 @@ test/src/module/archive/getTest.c:
   type: c
 
 test/src/module/archive/pushTest.c:
-  class: test/module
-  type: c
-
-test/src/module/cipher/blockTest.c:
-  class: test/module
-  type: c
-
-test/src/module/cipher/randomTest.c:
   class: test/module
   type: c
 
@@ -1283,7 +1355,7 @@ test/src/module/common/iniTest.c:
   class: test/module
   type: c
 
-test/src/module/common/ioHandleTest.c:
+test/src/module/common/ioTest.c:
   class: test/module
   type: c
 
@@ -1364,6 +1436,22 @@ test/src/module/config/loadTest.c:
   type: c
 
 test/src/module/config/parseTest.c:
+  class: test/module
+  type: c
+
+test/src/module/crypto/cipherBlockTest.c:
+  class: test/module
+  type: c
+
+test/src/module/crypto/cryptoTest.c:
+  class: test/module
+  type: c
+
+test/src/module/crypto/hashTest.c:
+  class: test/module
+  type: c
+
+test/src/module/crypto/randomTest.c:
   class: test/module
   type: c
 

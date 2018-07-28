@@ -6,7 +6,3 @@ XS
     extension xs
     3rd_gen_scale 0.77
     end_of_line_continuation \\$
-Latex
-    filter remove_inline %.*$
-    extension tex
-    3rd_gen_scale 1

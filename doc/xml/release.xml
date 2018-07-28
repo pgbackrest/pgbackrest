@@ -112,6 +112,10 @@
                     <release-item>
                         <p>Add <setting>--log-level-test</setting> option.  This allows setting the test log level independently from the general test harness setting, but current only works for the C tests.  It is useful for seeing log output from functions on the console while a test is running.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Update code count for new file types and exclusions.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
