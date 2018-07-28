@@ -72,6 +72,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Do nothing in <code>memContextMove()</code> when the context is already in the specified parent.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Show exact log level required for stack trace param output instead of just <quote>debug</quote>.</p>
                     </release-item>
 
