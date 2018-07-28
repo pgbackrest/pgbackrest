@@ -78,6 +78,10 @@
                     <release-item>
                         <p>Rename error-handling variables in <code>Main.pm</code> to conform to standard.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Remove redundant lines from embedded Perl by combining blank lines.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

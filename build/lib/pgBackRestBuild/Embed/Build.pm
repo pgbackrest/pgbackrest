@@ -76,6 +76,8 @@ sub buildEmbed
                 "        .name = \"${strModule}\",\n" .
                 "        .data =\n";
 
+            my $strLfLine = undef;
+
             # Process each line
             foreach my $strLine (split("\n", $strData))
             {
@@ -92,9 +94,20 @@ sub buildEmbed
                 # Remove leading/trailing spaces
                 $strLine = trim($strLine);
 
-                # Output line
-                $strBuildSource .=
-                    "            \"$strLine\\n\"\n";
+                # If empty line then add it to the total empty lines
+                if ($strLine eq "")
+                {
+                    $strLfLine .= "\\n";
+                }
+                # Output line (and empty lines if any)
+                else
+                {
+                    $strBuildSource .=
+                        (defined($strLfLine) ? "            \"$strLfLine\"\n" : '') .
+                        "            \"$strLine\\n\"\n";
+
+                    $strLfLine = undef;
+                }
             }
 
             $strBuildSource .=
