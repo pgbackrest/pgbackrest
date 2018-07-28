@@ -80,6 +80,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>cvtBoolToConstZ()</code> to simplify conversion of boolean to string.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Rename error-handling variables in <code>Main.pm</code> to conform to standard.</p>
                     </release-item>
 

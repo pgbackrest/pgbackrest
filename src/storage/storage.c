@@ -632,7 +632,7 @@ storageToLog(const Storage *this, char *buffer, size_t bufferSize)
         if (this == NULL)
             string = strNew("null");
         else
-            string = strNewFmt("{path: %s, write: %s}", strPtr(strQuoteZ(this->path, "\"")), this->write ? "true" : "false");
+            string = strNewFmt("{path: %s, write: %s}", strPtr(strQuoteZ(this->path, "\"")), cvtBoolToConstZ(this->write));
 
         result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
     }

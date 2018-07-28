@@ -28,6 +28,7 @@ size_t cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize);
 size_t cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize);
 uint64_t cvtZToUInt64(const char *value);
 
+const char *cvtBoolToConstZ(bool value);
 size_t cvtBoolToZ(bool value, char *buffer, size_t bufferSize);
 
 #endif
