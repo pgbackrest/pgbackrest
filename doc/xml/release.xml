@@ -24,6 +24,16 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Exclude temporary and unlogged relation (table/index) files from backup.  Implemented using the same logic as the patches adding this feature to <postgres/>, <link url="https://git.postgresql.org/pg/commitdiff/8694cc96b52a967a49725f32be7aa77fd3b6ac25">8694cc96</link> and <link url="https://git.postgresql.org/pg/commitdiff/920a5e500a119b03356fb1fb64a677eb1aa5fc6f">920a5e50</link>.  Temporary relation exclusion is enabled in <postgres/> &amp;ge; <id>9.0</id>.  Unlogged relation exclusion is enabled in <postgres/> &amp;ge; <id>9.1</id>, where the feature was introduced.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
