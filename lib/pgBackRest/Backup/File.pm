@@ -36,8 +36,8 @@ use constant BACKUP_FILE_RECOPY                                     => 2;
     push @EXPORT, qw(BACKUP_FILE_RECOPY);
 use constant BACKUP_FILE_SKIP                                       => 3;
     push @EXPORT, qw(BACKUP_FILE_SKIP);
-use constant BACKUP_FILE_NOP                                        => 4;
-    push @EXPORT, qw(BACKUP_FILE_NOP);
+use constant BACKUP_FILE_NOOP                                       => 4;
+    push @EXPORT, qw(BACKUP_FILE_NOOP);
 
 ####################################################################################################################################
 # backupFile
@@ -119,7 +119,7 @@ sub backupFile
                 # Else if DB checksum and size are same and the file is in a prior backup, then do nothing with this file
                 elsif ($bHasReference)
                 {
-                    $iCopyResult = BACKUP_FILE_NOP;
+                    $iCopyResult = BACKUP_FILE_NOOP;
                 }
             }
             # Else the source file is missing from the database so skip this file
@@ -285,7 +285,7 @@ sub backupManifestUpdate
         );
 
     # If the file is in a prior backup and nothing changed, then nothing needs to be done, else process the results.
-    if ($iCopyResult != BACKUP_FILE_NOP)
+    if ($iCopyResult != BACKUP_FILE_NOOP)
     {
         # Increment current backup progress
         $lSizeCurrent += $lSize;

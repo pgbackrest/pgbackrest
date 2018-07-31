@@ -16,6 +16,7 @@ use Storable qw(dclone);
 
 use pgBackRest::Backup::File;
 use pgBackRest::Common::Exception;
+use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
@@ -40,6 +41,7 @@ sub initModule
     $self->{strDbPath} = $self->testPath() . '/db';
     $self->{strRepoPath} = $self->testPath() . '/repo';
     $self->{strBackupPath} = "$self->{strRepoPath}/backup/" . $self->stanza();
+    $self->{strPgControl} = $self->{strDbPath} . '/' . DB_FILE_PGCONTROL;
 
     # Create backup path
     storageTest()->pathCreate($self->{strBackupPath}, {bIgnoreExists => true, bCreateParent => true});
@@ -79,17 +81,39 @@ sub run
     my $strFileHash = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
 	my $strFileRepo = storageRepo()->pathGet(
 		STORAGE_REPO_BACKUP . "/$strBackupLabel/" . MANIFEST_TARGET_PGDATA . "/$strFileName");
+    my $strRepoFile = MANIFEST_TARGET_PGDATA . "/$strFileName";
+    my $strRepoPgControl = MANIFEST_FILE_PGCONTROL;
+	my $strPgControlRepo = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/$strBackupLabel/$strRepoPgControl");
+    my $strPgControlHash = 'b4a3adade1e81ebfc7e9a27bca0887a347d81522';
 
 	# Copy file to db path
     executeTest('cp ' . $self->dataPath() . "/filecopy.archive2.bin ${strFileDb}");
 
-	# Get size and data info for the file in the db path
+	# Get size and data info for the files in the db path
     my $hManifest = storageDb()->manifest($self->{strDbPath});
     my $lFileSize = $hManifest->{$strFileName}{size} + 0;
     my $lFileTime = $hManifest->{$strFileName}{modification_time} + 0;
+    my $lPgControlSize = $hManifest->{&DB_FILE_PGCONTROL}{size} + 0;
+    my $lPgControlTime = $hManifest->{&DB_FILE_PGCONTROL}{modification_time} + 0;
+
+    my $strBackupPath = $self->{strBackupPath} . "/$strBackupLabel";
+    my $strHost = "host";
+    my $iLocalId = 1;
+
+    # Initialize the manifest
+    my $oBackupManifest = new pgBackRest::Manifest("$strBackupPath/" . FILE_MANIFEST,
+        {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => 201409291});
+    $oBackupManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+
+    # Set the initial size values for backupManifestUpdate - running size and size for when to save the file
+    my $lSizeCurrent = 0;
+    my $lSizeTotal = 16785408;
+    my $lManifestSaveCurrent = 0;
+    my $lManifestSaveSize = int($lSizeTotal / 100);
+
 
     ################################################################################################################################
-    if ($self->begin('backupFile()'))
+    if ($self->begin('backupFile(), backupManifestUpdate()'))
     {
 		# Result variables
         my $iResultCopyResult;
@@ -97,6 +121,50 @@ sub run
         my $lResultRepoSize;
         my $strResultCopyChecksum;
         my $rResultExtra;
+
+		#---------------------------------------------------------------------------------------------------------------------------
+        # Copy pg_control and confirm manifestUpdate does not save the manifest yet
+		($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
+			backupFile($self->{strPgControl}, MANIFEST_FILE_PGCONTROL, $lPgControlSize, undef, false, $strBackupLabel, false,
+			cfgOption(CFGOPT_COMPRESS_LEVEL), $lPgControlTime, true, undef, false, false, undef);
+
+		$self->testResult(sub {storageTest()->exists($strPgControlRepo)}, true, 'pg_control file exists in repo');
+
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_COPY && $strResultCopyChecksum eq $strPgControlHash &&
+			$lResultCopySize == $lPgControlSize && $lResultRepoSize == $lPgControlSize), true,
+            'pg_control file copied to repo successfully');
+
+        ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
+                $oBackupManifest,
+                $strHost,
+                $iLocalId,
+                $self->{strPgControl},
+                $strRepoPgControl,
+                $lPgControlSize,
+                undef,
+                false,
+                $iResultCopyResult,
+                $lResultCopySize,
+                $lResultRepoSize,
+                $strResultCopyChecksum,
+                $rResultExtra,
+                $lSizeTotal,
+                $lSizeCurrent,
+                $lManifestSaveSize,
+                $lManifestSaveCurrent);
+
+        # Accumulators should be same size as pg_control
+        $self->testResult(($lSizeCurrent == $lPgControlSize && $lManifestSaveCurrent == $lPgControlSize), true,
+            "file size in repo and repo size equal pg_control size");
+
+        $self->testResult(sub {$oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL,
+            MANIFEST_SUBKEY_CHECKSUM, $strPgControlHash)}, true, "manifest updated for pg_control");
+
+        # Neither backup.manifest nor backup.manifest.copy written because size threshold not met
+        $self->testException(sub {storageRepo()->openRead("$strBackupPath/" . FILE_MANIFEST . INI_COPY_EXT)}, ERROR_FILE_MISSING,
+            "unable to open '$strBackupPath/" . FILE_MANIFEST . INI_COPY_EXT . "': No such file or directory");
+        $self->testException(sub {storageRepo()->openRead("$strBackupPath/" . FILE_MANIFEST)}, ERROR_FILE_MISSING,
+            "unable to open '$strBackupPath/" . FILE_MANIFEST . "': No such file or directory");
 
 		#---------------------------------------------------------------------------------------------------------------------------
 		# No prior checksum, no compression, no page checksum, no extra, no delta, no hasReference
@@ -107,12 +175,46 @@ sub run
 		$self->testResult(sub {storageTest()->exists($strFileRepo)}, true, 'non-compressed file exists in repo');
 
 		$self->testResult(($iResultCopyResult == BACKUP_FILE_COPY && $strResultCopyChecksum eq $strFileHash &&
-			$lResultRepoSize == $lFileSize), true, 'file copied to repo successfully');
+			$lResultCopySize == $lFileSize && $lResultRepoSize == $lFileSize), true,
+            'file copied to repo successfully');
 
         $self->testException(sub {storageRepo()->openRead("$strFileRepo.gz")}, ERROR_FILE_MISSING,
             "unable to open '$strFileRepo.gz': No such file or directory");
 
+        ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
+                $oBackupManifest,
+                $strHost,
+                $iLocalId,
+                $strFileDb,
+                $strRepoFile,
+                $lFileSize,
+                $strFileHash,
+                false,
+                $iResultCopyResult,
+                $lResultCopySize,
+                $lResultRepoSize,
+                $strResultCopyChecksum,
+                $rResultExtra,
+                $lSizeTotal,
+                $lSizeCurrent,
+                $lManifestSaveSize,
+                $lManifestSaveCurrent);
+
+        # Accumulator includes size of pg_control and file. Manifest saved so ManifestSaveCurrent returns to 0
+        $self->testResult(($lSizeCurrent == ($lPgControlSize + $lFileSize) && $lManifestSaveCurrent == 0), true,
+            "repo size increased and ManifestSaveCurrent returns to 0");
+
+        $self->testResult(sub {$oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, $strRepoFile,
+            MANIFEST_SUBKEY_CHECKSUM, $strFileHash)}, true, "manifest updated for $strRepoFile");
+
+        # Backup.manifest not written but backup.manifest.copy written because size threshold  met
+		$self->testResult(sub {storageTest()->exists("$strBackupPath/" . FILE_MANIFEST . INI_COPY_EXT)}, true,
+            'backup.manifest.copy exists in repo');
+        $self->testException(sub {storageRepo()->openRead("$strBackupPath/" . FILE_MANIFEST)}, ERROR_FILE_MISSING,
+            "unable to open '$strBackupPath/" . FILE_MANIFEST . "': No such file or directory");
+
 		storageTest()->remove($strFileRepo);
+		storageTest()->remove($strPgControlRepo);
 
 		#---------------------------------------------------------------------------------------------------------------------------
 		# No prior checksum, yes compression, yes page checksum, no extra, no delta, no hasReference
@@ -262,7 +364,7 @@ sub run
 			backupFile("$strFileDb", MANIFEST_TARGET_PGDATA . "/$strFileName", $lFileSize, $strFileHash, false,
             $strBackupLabel, false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, true, undef);
 
-		$self->testResult(($iResultCopyResult == BACKUP_FILE_NOP && $strResultCopyChecksum eq $strFileHash &&
+		$self->testResult(($iResultCopyResult == BACKUP_FILE_NOOP && $strResultCopyChecksum eq $strFileHash &&
 			$lResultCopySize == $lFileSize), true, 'db file same has reference - copy');
 
 		#---------------------------------------------------------------------------------------------------------------------------
@@ -301,14 +403,7 @@ sub run
 # {name => 'lSizeCurrent', trace => true},
 # {name => 'lManifestSaveSize', trace => true},
 # {name => 'lManifestSaveCurrent', trace => true}
-
-        my $strBackupPath = $self->{strBackupPath} . "/$strBackupLabel";
-        my $strHost = "host";
-        my $iLocalId = 1;
-
-        my $oBackupManifest = new pgBackRest::Manifest("$strBackupPath/" . FILE_MANIFEST,
-            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => 201409291});
-        $oBackupManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+$iLocalId = 2;
 
     }
 }
