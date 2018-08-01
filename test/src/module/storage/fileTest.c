@@ -128,7 +128,6 @@ testRun()
 
         TEST_RESULT_BOOL(ioReadOpen(storageFileReadIo(file)), true, "   open file");
         TEST_RESULT_STR(strPtr(storageFileReadName(file)), strPtr(fileName), "    check file name");
-        TEST_RESULT_INT(ioReadSize(storageFileReadIo(file)), 0, "    check size");
 
         TEST_RESULT_VOID(ioRead(storageFileReadIo(file), outBuffer), "    load data");
         bufCat(buffer, outBuffer);
@@ -143,7 +142,6 @@ testRun()
         bufCat(buffer, outBuffer);
         bufUsedZero(outBuffer);
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), false, "    check file contents (not all loaded yet)");
-        TEST_RESULT_INT(ioReadSize(storageFileReadIo(file)), 8, "    check size");
 
         TEST_RESULT_VOID(ioRead(storageFileReadIo(file), outBuffer), "    load data");
         bufCat(buffer, outBuffer);
@@ -156,14 +154,11 @@ testRun()
         TEST_RESULT_INT(bufUsed(outBuffer), 0, "    buffer is empty");
 
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents (all loaded)");
-        TEST_RESULT_INT(ioReadSize(storageFileReadIo(file)), 9, "    check size");
 
         TEST_RESULT_BOOL(ioReadEof(storageFileReadIo(file)), true, "    eof");
         TEST_RESULT_BOOL(ioReadEof(storageFileReadIo(file)), true, "    still eof");
 
         TEST_RESULT_VOID(ioReadClose(storageFileReadIo(file)), "    close file");
-        TEST_RESULT_VOID(ioReadClose(storageFileReadIo(file)), "    close again");
-        TEST_RESULT_INT(ioReadSize(storageFileReadIo(file)), 9, "    check size");
 
         TEST_RESULT_VOID(storageFileReadFree(file), "   free file");
         TEST_RESULT_VOID(storageFileReadFree(NULL), "   free null file");
@@ -210,6 +205,7 @@ testRun()
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileTmp = strNewFmt("%s.pgbackrest.tmp", strPtr(fileName));
+        ioBufferSizeSet(10);
         Buffer *buffer = bufNewStr(strNew("TESTFILE\n"));
 
         TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file");
@@ -221,17 +217,17 @@ testRun()
         storageRemoveP(storageTest, fileTmp, .errorOnMissing = true);
 
         TEST_ERROR_FMT(
-            ioWrite(storageFileWriteIo(file), buffer), FileWriteError,
+            storageFileWritePosix(storageFileWriteFileDriver(file), buffer), FileWriteError,
             "unable to write '%s': [9] Bad file descriptor", strPtr(fileName));
         TEST_ERROR_FMT(
-            ioWriteClose(storageFileWriteIo(file)), FileSyncError,
+            storageFileWritePosixClose(storageFileWriteFileDriver(file)), FileSyncError,
             "unable to sync '%s': [9] Bad file descriptor", strPtr(fileName));
 
         // Disable file sync so the close can be reached
         file->fileDriver->noSyncFile = true;
 
         TEST_ERROR_FMT(
-            ioWriteClose(storageFileWriteIo(file)), FileCloseError,
+            storageFileWritePosixClose(storageFileWriteFileDriver(file)), FileCloseError,
             "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
 
         // Set file handle to -1 so the close on free with not fail
@@ -265,7 +261,6 @@ testRun()
         TEST_RESULT_VOID(ioWrite(storageFileWriteIo(file), bufNew(0)), "   write zero buffer to file");
         TEST_RESULT_VOID(ioWrite(storageFileWriteIo(file), buffer), "   write to file");
         TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
-        TEST_RESULT_SIZE(ioWriteSize(storageFileWriteIo(file)), 9, "   check size");
         TEST_RESULT_VOID(storageFileWriteFree(file), "   free file");
         TEST_RESULT_VOID(storageFileWriteFree(NULL), "   free null file");
         TEST_RESULT_VOID(storageFileWritePosixFree(NULL), "   free null posix file");

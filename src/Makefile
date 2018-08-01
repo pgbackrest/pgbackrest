@@ -67,8 +67,10 @@ SRCS = \
 	common/fork.c \
 	common/io/bufferRead.c \
 	common/io/bufferWrite.c \
+	common/io/filter/buffer.c \
 	common/io/filter/filter.c \
 	common/io/filter/group.c \
+	common/io/filter/size.c \
 	common/io/handle.c \
 	common/io/io.c \
 	common/io/read.c \
@@ -172,11 +174,17 @@ common/io/bufferRead.o: common/io/bufferRead.c common/assert.h common/debug.h co
 common/io/bufferWrite.o: common/io/bufferWrite.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/bufferWrite.h common/io/filter/filter.h common/io/filter/group.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CFLAGS) -c common/io/bufferWrite.c -o common/io/bufferWrite.o
 
+common/io/filter/buffer.o: common/io/filter/buffer.c common/debug.h common/error.auto.h common/error.h common/io/filter/buffer.h common/io/filter/filter.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
+	$(CC) $(CFLAGS) -c common/io/filter/buffer.c -o common/io/filter/buffer.o
+
 common/io/filter/filter.o: common/io/filter/filter.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CFLAGS) -c common/io/filter/filter.c -o common/io/filter/filter.o
 
-common/io/filter/group.o: common/io/filter/group.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/io.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/variant.h common/type/variantList.h
+common/io/filter/group.o: common/io/filter/group.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/buffer.h common/io/filter/filter.h common/io/filter/group.h common/io/io.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CFLAGS) -c common/io/filter/group.c -o common/io/filter/group.o
+
+common/io/filter/size.o: common/io/filter/size.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/size.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
+	$(CC) $(CFLAGS) -c common/io/filter/size.c -o common/io/filter/size.o
 
 common/io/handle.o: common/io/handle.c common/debug.h common/error.auto.h common/error.h common/io/handle.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h
 	$(CC) $(CFLAGS) -c common/io/handle.c -o common/io/handle.o
@@ -187,7 +195,7 @@ common/io/io.o: common/io/io.c common/assert.h common/debug.h common/error.auto.
 common/io/read.o: common/io/read.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/io.h common/io/read.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CFLAGS) -c common/io/read.c -o common/io/read.o
 
-common/io/write.o: common/io/write.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
+common/io/write.o: common/io/write.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/io.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CFLAGS) -c common/io/write.c -o common/io/write.o
 
 common/lock.o: common/lock.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/handle.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/wait.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h version.h

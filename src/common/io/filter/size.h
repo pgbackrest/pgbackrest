@@ -1,46 +1,49 @@
 /***********************************************************************************************************************************
-Buffer IO Read
+IO Size Filter
 
-Read from a Buffer object using the IoWrite interface.
+Count all bytes that pass through the filter.  Useful for getting file/IO size if added first in a FilterGroup with IoRead or last
+in a FilterGroup with IoWrite.
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_BUFFERREAD_H
-#define COMMON_IO_BUFFERREAD_H
+#ifndef COMMON_IO_FILTER_SIZE_H
+#define COMMON_IO_FILTER_SIZE_H
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct IoBufferRead IoBufferRead;
+typedef struct IoSize IoSize;
 
-#include "common/io/read.h"
+#include "common/io/filter/filter.h"
+#include "common/type/buffer.h"
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-IoBufferRead *ioBufferReadNew(const Buffer *buffer);
+IoSize *ioSizeNew();
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-size_t ioBufferRead(IoBufferRead *this, Buffer *buffer);
-IoBufferRead *ioBufferReadMove(IoBufferRead *this, MemContext *parentNew);
+void ioSizeProcess(IoSize *this, const Buffer *input);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-bool ioBufferReadEof(IoBufferRead *this);
-IoRead *ioBufferReadIo(const IoBufferRead *this);
+IoFilter *ioSizeFilter(const IoSize *this);
+const Variant *ioSizeResult(IoSize *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void ioBufferReadFree(IoBufferRead *this);
+void ioSizeFree(IoSize *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_IO_BUFFER_READ_TYPE                                                                                         \
-    IoBufferRead *
-#define FUNCTION_DEBUG_IO_BUFFER_READ_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "IoBufferRead", buffer, bufferSize)
+size_t ioSizeToLog(const IoSize *this, char *buffer, size_t bufferSize);
+
+#define FUNCTION_DEBUG_IO_SIZE_TYPE                                                                                                \
+    IoSize *
+#define FUNCTION_DEBUG_IO_SIZE_FORMAT(value, buffer, bufferSize)                                                                   \
+    ioSizeToLog(value, buffer, bufferSize)
 
 #endif

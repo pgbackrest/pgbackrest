@@ -1,11 +1,15 @@
 /***********************************************************************************************************************************
-IO Write
+IO Write Interface
+
+Objects that write to some IO destination (file, socket, etc.) are implemented using this interface.  All objects are required to
+implement IoWriteProcess and can optionally implement IoWriteOpen or IoWriteClose.  IoWriteOpen and IoWriteClose can be used to
+allocate/open or deallocate/free resources.  An example of an IoWrite object is IoBufferRead.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_WRITE_H
 #define COMMON_IO_WRITE_H
 
 /***********************************************************************************************************************************
-IO write object
+Object type
 ***********************************************************************************************************************************/
 typedef struct IoWrite IoWrite;
 
@@ -36,7 +40,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 const IoFilterGroup *ioWriteFilterGroup(const IoWrite *this);
 void ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup);
-size_t ioWriteSize(const IoWrite *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -8,21 +8,50 @@ Buffer IO Read
 #include "common/memContext.h"
 
 /***********************************************************************************************************************************
-Buffer read object
+Object type
 ***********************************************************************************************************************************/
 struct IoBufferRead
 {
-    MemContext *memContext;
-    IoRead *io;
-    const Buffer *read;
-    size_t readPos;
-    bool eof;
+    MemContext *memContext;                                         // Object memory context
+    IoRead *io;                                                     // IoRead interface
+    const Buffer *read;                                             // Buffer to read data from
+
+    size_t readPos;                                                 // Current position in the read buffer
+    bool eof;                                                       // Has the end of the buffer been reached?
 };
 
 /***********************************************************************************************************************************
-Read from the buffer
+New object
 ***********************************************************************************************************************************/
-static size_t
+IoBufferRead *
+ioBufferReadNew(const Buffer *buffer)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+
+        FUNCTION_TEST_ASSERT(buffer != NULL);
+    FUNCTION_DEBUG_END();
+
+    IoBufferRead *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("IoBufferRead")
+    {
+        this = memNew(sizeof(IoBufferRead));
+        this->memContext = memContextCurrent();
+
+        this->read = buffer;
+        this->io = ioReadNew(this, NULL, (IoReadProcess)ioBufferRead, NULL, (IoReadEof)ioBufferReadEof);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_DEBUG_RESULT(IO_BUFFER_READ, this);
+}
+
+
+/***********************************************************************************************************************************
+Read data from the buffer
+***********************************************************************************************************************************/
+size_t
 ioBufferRead(IoBufferRead *this, Buffer *buffer)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
@@ -54,48 +83,6 @@ ioBufferRead(IoBufferRead *this, Buffer *buffer)
 }
 
 /***********************************************************************************************************************************
-Have all bytes been read from the buffer?
-***********************************************************************************************************************************/
-static bool
-ioBufferReadEof(IoBufferRead *this)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_BUFFER_READ, this);
-
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
-
-    FUNCTION_DEBUG_RESULT(BOOL, this->eof);
-}
-
-/***********************************************************************************************************************************
-Create object
-***********************************************************************************************************************************/
-IoBufferRead *
-ioBufferReadNew(const Buffer *buffer)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
-    FUNCTION_DEBUG_END();
-
-    IoBufferRead *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("IoBufferRead")
-    {
-        this = memNew(sizeof(IoBufferRead));
-        this->memContext = memContextCurrent();
-
-        this->read = buffer;
-        this->io = ioReadNew(this, NULL, (IoReadProcess)ioBufferRead, NULL, (IoReadEof)ioBufferReadEof);
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_DEBUG_RESULT(IO_BUFFER_READ, this);
-}
-
-/***********************************************************************************************************************************
 Move the object to a new context
 ***********************************************************************************************************************************/
 IoBufferRead *
@@ -112,6 +99,21 @@ ioBufferReadMove(IoBufferRead *this, MemContext *parentNew)
         memContextMove(this->memContext, parentNew);
 
     FUNCTION_TEST_RESULT(IO_BUFFER_READ, this);
+}
+
+/***********************************************************************************************************************************
+Have all bytes been read from the buffer?
+***********************************************************************************************************************************/
+bool
+ioBufferReadEof(IoBufferRead *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(IO_BUFFER_READ, this);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
+    FUNCTION_DEBUG_RESULT(BOOL, this->eof);
 }
 
 /***********************************************************************************************************************************

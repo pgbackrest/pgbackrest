@@ -1,46 +1,49 @@
 /***********************************************************************************************************************************
-Buffer IO Read
+IO Buffer Filter
 
-Read from a Buffer object using the IoWrite interface.
+Move data from the input buffer to the output buffer without overflowing the output buffer.  Automatically used as the last filter
+in a FilterGroup if the last filter is not already an InOut filter, so there is no reason to add it manually to a FilterGroup.
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_BUFFERREAD_H
-#define COMMON_IO_BUFFERREAD_H
+#ifndef COMMON_IO_FILTER_BUFFER_H
+#define COMMON_IO_FILTER_BUFFER_H
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct IoBufferRead IoBufferRead;
+typedef struct IoBuffer IoBuffer;
 
-#include "common/io/read.h"
+#include "common/io/filter/filter.h"
+#include "common/type/buffer.h"
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-IoBufferRead *ioBufferReadNew(const Buffer *buffer);
+IoBuffer *ioBufferNew();
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-size_t ioBufferRead(IoBufferRead *this, Buffer *buffer);
-IoBufferRead *ioBufferReadMove(IoBufferRead *this, MemContext *parentNew);
+void ioBufferProcess(IoBuffer *this, const Buffer *input, Buffer *output);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-bool ioBufferReadEof(IoBufferRead *this);
-IoRead *ioBufferReadIo(const IoBufferRead *this);
+IoFilter *ioBufferFilter(const IoBuffer *this);
+bool ioBufferInputSame(const IoBuffer *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void ioBufferReadFree(IoBufferRead *this);
+void ioBufferFree(IoBuffer *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_IO_BUFFER_READ_TYPE                                                                                         \
-    IoBufferRead *
-#define FUNCTION_DEBUG_IO_BUFFER_READ_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "IoBufferRead", buffer, bufferSize)
+size_t ioBufferToLog(const IoBuffer *this, char *buffer, size_t bufferSize);
+
+#define FUNCTION_DEBUG_IO_BUFFER_TYPE                                                                                              \
+    IoBuffer *
+#define FUNCTION_DEBUG_IO_BUFFER_FORMAT(value, buffer, bufferSize)                                                                 \
+    ioBufferToLog(value, buffer, bufferSize)
 
 #endif
