@@ -85,7 +85,7 @@ storageCopy(StorageFileRead *source, StorageFileWrite *destination)
             ioWriteOpen(storageFileWriteIo(destination));
 
             // Copy data from source to destination
-            Buffer *read = bufNew(ioBufferSize(source));
+            Buffer *read = bufNew(ioBufferSize());
 
             do
             {
@@ -183,7 +183,7 @@ storageGet(StorageFileRead *file, StorageGetParam param)
             else
             {
                 result = bufNew(0);
-                Buffer *read = bufNew(ioBufferSize(file));
+                Buffer *read = bufNew(ioBufferSize());
 
                 do
                 {

@@ -71,7 +71,7 @@ exitOnSignal(int signalType)
 Setup signal handlers
 ***********************************************************************************************************************************/
 void
-exitInit()
+exitInit(void)
 {
     FUNCTION_DEBUG_VOID(logLevelTrace);
 

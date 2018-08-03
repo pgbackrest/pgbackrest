@@ -15,9 +15,9 @@ Spool storage path constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-const Storage *storageLocal();
-const Storage *storageLocalWrite();
+const Storage *storageLocal(void);
+const Storage *storageLocalWrite(void);
 
-const Storage *storageSpool();
+const Storage *storageSpool(void);
 
 #endif

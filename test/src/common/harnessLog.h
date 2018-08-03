@@ -15,7 +15,7 @@ void harnessLogResultRegExp(const char *expression);
 /***********************************************************************************************************************************
 Setters
 ***********************************************************************************************************************************/
-void harnessLogLevelReset();
+void harnessLogLevelReset(void);
 void harnessLogLevelSet(LogLevel logLevel);
 
 #endif

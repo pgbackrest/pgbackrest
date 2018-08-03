@@ -20,6 +20,6 @@ Constants describing number of sub-units in an interval
 Functions
 ***********************************************************************************************************************************/
 void sleepMSec(TimeMSec sleepMSec);
-TimeMSec timeMSec();
+TimeMSec timeMSec(void);
 
 #endif

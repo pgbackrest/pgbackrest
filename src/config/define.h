@@ -26,7 +26,7 @@ Define global section name
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-unsigned int cfgDefCommandTotal();
+unsigned int cfgDefCommandTotal(void);
 void cfgDefCommandCheck(ConfigDefineCommand commandDefId);
 const char *cfgDefCommandHelpDescription(ConfigDefineCommand commandDefId);
 const char *cfgDefCommandHelpSummary(ConfigDefineCommand commandDefId);
@@ -59,7 +59,7 @@ const char *cfgDefOptionPrefix(ConfigDefineOption optionDefId);
 bool cfgDefOptionRequired(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
 ConfigDefSection cfgDefOptionSection(ConfigDefineOption optionDefId);
 bool cfgDefOptionSecure(ConfigDefineOption optionDefId);
-unsigned int cfgDefOptionTotal();
+unsigned int cfgDefOptionTotal(void);
 int cfgDefOptionType(ConfigDefineOption optionDefId);
 bool cfgDefOptionValid(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
 

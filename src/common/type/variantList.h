@@ -15,7 +15,7 @@ typedef struct VariantList VariantList;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-VariantList *varLstNew();
+VariantList *varLstNew(void);
 VariantList *varLstNewStrLst(const StringList *stringList);
 VariantList *varLstDup(const VariantList *source);
 VariantList *varLstAdd(VariantList *this, Variant *data);

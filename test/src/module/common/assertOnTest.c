@@ -6,7 +6,7 @@ Test Assert Macros and Routines
 Test Run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 

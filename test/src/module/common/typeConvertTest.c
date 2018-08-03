@@ -7,7 +7,7 @@ Test Convert Base Data Types
 Test Run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 

@@ -21,7 +21,7 @@ static TimeMSec timeBegin;
 Capture time at the very start of main so total time is more accurate
 ***********************************************************************************************************************************/
 void
-cmdInit()
+cmdInit(void)
 {
     FUNCTION_DEBUG_VOID(logLevelTrace);
 

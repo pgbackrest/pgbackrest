@@ -135,7 +135,7 @@ errorTypeParent(const ErrorType *errorType)
 /***********************************************************************************************************************************
 Get the depth of the current try statement (0 if none)
 ***********************************************************************************************************************************/
-unsigned int errorTryDepth()
+unsigned int errorTryDepth(void)
 {
     return (unsigned int)errorContext.tryTotal;
 }
@@ -166,7 +166,7 @@ errorTypeExtends(const ErrorType *child, const ErrorType *parent)
 Error type
 ***********************************************************************************************************************************/
 const ErrorType *
-errorType()
+errorType(void)
 {
     return errorContext.error.errorType;
 }
@@ -175,7 +175,7 @@ errorType()
 Error code (pulled from error type)
 ***********************************************************************************************************************************/
 int
-errorCode()
+errorCode(void)
 {
     return errorTypeCode(errorType());
 }
@@ -184,7 +184,7 @@ errorCode()
 Error filename
 ***********************************************************************************************************************************/
 const char *
-errorFileName()
+errorFileName(void)
 {
     return errorContext.error.fileName;
 }
@@ -193,7 +193,7 @@ errorFileName()
 Error function name
 ***********************************************************************************************************************************/
 const char *
-errorFunctionName()
+errorFunctionName(void)
 {
     return errorContext.error.functionName;
 }
@@ -202,7 +202,7 @@ errorFunctionName()
 Error file line number
 ***********************************************************************************************************************************/
 int
-errorFileLine()
+errorFileLine(void)
 {
     return errorContext.error.fileLine;
 }
@@ -211,7 +211,7 @@ errorFileLine()
 Error message
 ***********************************************************************************************************************************/
 const char *
-errorMessage()
+errorMessage(void)
 {
     return errorContext.error.message;
 }
@@ -220,7 +220,7 @@ errorMessage()
 Error name (pulled from error type)
 ***********************************************************************************************************************************/
 const char *
-errorName()
+errorName(void)
 {
     return errorTypeName(errorType());
 }
@@ -229,7 +229,7 @@ errorName()
 Error stack trace
 ***********************************************************************************************************************************/
 const char *
-errorStackTrace()
+errorStackTrace(void)
 {
     return errorContext.error.stackTrace;
 }
@@ -247,7 +247,7 @@ errorInstanceOf(const ErrorType *errorTypeTest)
 Return current error context state
 ***********************************************************************************************************************************/
 static ErrorState
-errorInternalState()
+errorInternalState(void)
 {
     return errorContext.tryList[errorContext.tryTotal].state;
 }
@@ -256,7 +256,7 @@ errorInternalState()
 True when in try state
 ***********************************************************************************************************************************/
 bool
-errorInternalStateTry()
+errorInternalStateTry(void)
 {
     return errorInternalState() == errorStateTry;
 }
@@ -277,7 +277,7 @@ errorInternalStateCatch(const ErrorType *errorTypeCatch)
 True when in final state
 ***********************************************************************************************************************************/
 bool
-errorInternalStateFinal()
+errorInternalStateFinal(void)
 {
     return errorInternalState() == errorStateFinal;
 }
@@ -286,7 +286,7 @@ errorInternalStateFinal()
 Return jump buffer for current try
 ***********************************************************************************************************************************/
 jmp_buf *
-errorInternalJump()
+errorInternalJump(void)
 {
     return &errorContext.jumpList[errorContext.tryTotal - 1];
 }
@@ -316,7 +316,7 @@ errorInternalTry(const char *fileName, const char *functionName, int fileLine)
 Propogate the error up so it can be caught
 ***********************************************************************************************************************************/
 void
-errorInternalPropagate()
+errorInternalPropagate(void)
 {
     // Mark the error as uncaught
     errorContext.tryList[errorContext.tryTotal].uncaught = true;

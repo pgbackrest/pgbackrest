@@ -6,7 +6,7 @@ Test Cryptographic Hashes
 Test Run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 

@@ -23,7 +23,7 @@ struct IoFilterGroup
 Create new filter group
 ***********************************************************************************************************************************/
 IoFilterGroup *
-ioFilterGroupNew()
+ioFilterGroupNew(void)
 {
     FUNCTION_DEBUG_VOID(logLevelTrace);
 

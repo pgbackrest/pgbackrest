@@ -9,7 +9,7 @@ Perl Configuration
 Build JSON output from options
 ***********************************************************************************************************************************/
 String *
-perlOptionJson()
+perlOptionJson(void)
 {
     FUNCTION_TEST_VOID();
 

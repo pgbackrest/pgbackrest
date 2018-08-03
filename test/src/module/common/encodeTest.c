@@ -6,7 +6,7 @@ Test Binary to String Encode/Decode
 Test Run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 

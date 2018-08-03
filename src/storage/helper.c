@@ -29,7 +29,7 @@ static const String *storageSpoolStanza = NULL;
 Create the storage helper memory context
 ***********************************************************************************************************************************/
 static void
-storageHelperInit()
+storageHelperInit(void)
 {
     FUNCTION_TEST_VOID();
 
@@ -49,7 +49,7 @@ storageHelperInit()
 Get a local storage object
 ***********************************************************************************************************************************/
 const Storage *
-storageLocal()
+storageLocal(void)
 {
     FUNCTION_TEST_VOID();
 
@@ -73,7 +73,7 @@ Get a writable local storage object
 This should be used very sparingly.  If writes are not needed then always use storageLocal() or a specific storage object instead.
 ***********************************************************************************************************************************/
 const Storage *
-storageLocalWrite()
+storageLocalWrite(void)
 {
     FUNCTION_TEST_VOID();
 
@@ -130,7 +130,7 @@ storageSpoolPathExpression(const String *expression, const String *path)
 Get a spool storage object
 ***********************************************************************************************************************************/
 const Storage *
-storageSpool()
+storageSpool(void)
 {
     FUNCTION_TEST_VOID();
 

@@ -14,7 +14,7 @@ typedef struct Ini Ini;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-Ini *iniNew();
+Ini *iniNew(void);
 const Variant *iniGet(const Ini *this, const String *section, const String *key);
 const Variant *iniGetDefault(const Ini *this, const String *section, const String *key, Variant *defaultValue);
 StringList *iniSectionKeyList(const Ini *this, const String *section);

@@ -14,12 +14,12 @@ C Test Harness
 // Functions
 void testAdd(int run, bool selected);
 bool testBegin(const char *name);
-void testComplete();
+void testComplete(void);
 
-const char *testExe();
+const char *testExe(void);
 void testExeSet(const char *testExe);
 
-const char *testPath();
+const char *testPath(void);
 void testPathSet(const char *testPath);
 
 /***********************************************************************************************************************************
