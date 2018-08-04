@@ -371,7 +371,7 @@ sub run
                     # ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 &&
                     #     $self->{oTest}->{&TEST_MODULE} ne 'perl' && $self->{oTest}->{&TEST_NAME} ne 'exec' ?
                     #         "       -Wpedantic \\\n" : '') .
-                    "       -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes\\\n" .
+                    "       -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith\\\n" .
                     "       `perl -MExtUtils::Embed -e ccopts`\n" .
                     "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -lbacktrace' : '') .

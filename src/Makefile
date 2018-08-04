@@ -18,7 +18,7 @@ CINCLUDE = -I. -I../libc
 
 # Compile warnings
 CWARN = -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2 -Wformat-nonliteral \
-		-Wno-clobbered -Wno-missing-field-initializers -Wstrict-prototypes
+		-Wno-clobbered -Wno-missing-field-initializers -Wstrict-prototypes -Wpointer-arith
 
 # Automatically generate Perl compile options for the local system
 CPERL = `perl -MExtUtils::Embed -e ccopts`
