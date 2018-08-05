@@ -364,14 +364,14 @@ sub run
                     "CFLAGS=-I. -std=c99 -fPIC -g" . ($self->{bProfile} ? " -pg" : '') . "\\\n" .
                     "       -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wswitch-enum -Wconversion \\\n" .
                     ($self->{oTest}->{&TEST_VM} eq VM_U16 || $self->{oTest}->{&TEST_VM} eq VM_U18 ?
-                        "       -Wformat-signedness \\\n" : '') .
+                        "       -Wformat-signedness -Wduplicated-branches -Wduplicated-cond \\\n" : '') .
                     # This warning appears to be broken on U12 even though the functionality is fine
                     ($self->{oTest}->{&TEST_VM} eq VM_U12 || $self->{oTest}->{&TEST_VM} eq VM_CO6 ?
                         "       -Wno-missing-field-initializers \\\n" : '') .
                     # ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 &&
                     #     $self->{oTest}->{&TEST_MODULE} ne 'perl' && $self->{oTest}->{&TEST_NAME} ne 'exec' ?
                     #         "       -Wpedantic \\\n" : '') .
-                    "       -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith\\\n" .
+                    "       -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith \\\n" .
                     "       `perl -MExtUtils::Embed -e ccopts`\n" .
                     "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -lbacktrace' : '') .

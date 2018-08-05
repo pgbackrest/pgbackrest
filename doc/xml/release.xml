@@ -94,7 +94,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Enable <id>-Wstrict-prototypes</id> and <id>-Wpointer-arith</id> and update code to conform.</p>
+                        <p>Enable <id>-Wstrict-prototypes</id>, <id>-Wpointer-arith</id>, <id>-Wduplicated-branches</id>, and <id>-Wduplicated-cond</id> and update code to conform.</p>
                     </release-item>
 
                     <release-item>
