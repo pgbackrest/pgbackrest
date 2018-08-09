@@ -1,29 +1,33 @@
 /***********************************************************************************************************************************
-Version Numbers and Names
+Info Handler for pgbackrest information
 ***********************************************************************************************************************************/
-#ifndef VERSION_H
-#define VERSION_H
+#ifndef INFO_INFO_H
+#define INFO_INFO_H
+
+#include "common/ini.h"
+#include "crypto/hash.h"
 
 /***********************************************************************************************************************************
-Official name of the software, also used for Perl package name
+Info object
 ***********************************************************************************************************************************/
-#define PGBACKREST_NAME                                             "pgBackRest"
+typedef struct Info Info;
 
 /***********************************************************************************************************************************
-Standard binary name
+Functions
 ***********************************************************************************************************************************/
-#define PGBACKREST_BIN                                              "pgbackrest"
+Info *infoNew(const String *fileName);
+Ini *infoIni(const Info *this);
+CryptoHash *infoHash(const Ini *ini);
+String * infoFileName(const Info *this);
+
+void infoFree(Info *this);
 
 /***********************************************************************************************************************************
-Format Number - Defines format for info and manifest files as well as on-disk structure.  If this number changes then the
-repository will be invalid unless migration functions are written.
+Macros for function logging
 ***********************************************************************************************************************************/
-#define PGBACKREST_FORMAT                                           5
-
-/***********************************************************************************************************************************
-Version of the software.  ??? Currently this value is maintained in Version.pm and updated by test.pl.
-***********************************************************************************************************************************/
-#define PGBACKREST_VERSION                                          "2.05dev"
-
+#define FUNCTION_DEBUG_INFO_TYPE                                                                                                   \
+    Info *
+#define FUNCTION_DEBUG_INFO_FORMAT(value, buffer, bufferSize)                                                                      \
+    objToLog(value, "Info", buffer, bufferSize)
 
 #endif
