@@ -58,6 +58,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Migrate minimum set of code for reading <file>archive.info</file> files from Perl to C.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow <code>Buffer</code> object <quote>used size</quote> to be different than <quote>allocated size</quote>.  Add functions to manage used size and remaining size and update automatically when possible.</p>
                     </release-item>
 
