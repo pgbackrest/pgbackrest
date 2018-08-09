@@ -27,7 +27,7 @@ IoBufferRead *ioBufferReadMove(IoBufferRead *this, MemContext *parentNew);
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-bool ioBufferReadEof(IoBufferRead *this);
+bool ioBufferReadEof(const IoBufferRead *this);
 IoRead *ioBufferReadIo(const IoBufferRead *this);
 
 /***********************************************************************************************************************************

@@ -37,7 +37,7 @@ Object type
 struct IoFilterGroup
 {
     MemContext *memContext;                                         // Mem context
-    List *filterList;                                               // List of filters to apply to read buffer
+    List *filterList;                                               // List of filters to apply
     unsigned int firstOutputFilter;                                 // Index of the first output filter
     KeyValue *filterResult;                                         // Filter results (if any)
     bool inputSame;                                                 // Same input required again?
@@ -60,7 +60,7 @@ ioFilterGroupNew()
 
     IoFilterGroup *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoFilterHash")
+    MEM_CONTEXT_NEW_BEGIN("IoFilterGroup")
     {
         this = memNew(sizeof(IoFilterGroup));
         this->memContext = memContextCurrent();

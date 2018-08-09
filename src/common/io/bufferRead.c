@@ -47,7 +47,6 @@ ioBufferReadNew(const Buffer *buffer)
     FUNCTION_DEBUG_RESULT(IO_BUFFER_READ, this);
 }
 
-
 /***********************************************************************************************************************************
 Read data from the buffer
 ***********************************************************************************************************************************/
@@ -105,7 +104,7 @@ ioBufferReadMove(IoBufferRead *this, MemContext *parentNew)
 Have all bytes been read from the buffer?
 ***********************************************************************************************************************************/
 bool
-ioBufferReadEof(IoBufferRead *this)
+ioBufferReadEof(const IoBufferRead *this)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(IO_BUFFER_READ, this);
