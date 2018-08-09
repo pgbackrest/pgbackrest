@@ -54,6 +54,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add basic C JSON parser.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow <code>Buffer</code> object <quote>used size</quote> to be different than <quote>allocated size</quote>.  Add functions to manage used size and remaining size and update automatically when possible.</p>
                     </release-item>
 

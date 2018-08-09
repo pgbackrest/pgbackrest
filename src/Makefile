@@ -214,6 +214,9 @@ common/type/buffer.o: common/type/buffer.c common/assert.h common/debug.h common
 common/type/convert.o: common/type/convert.c common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/stackTrace.h common/type/convert.h
 	$(CC) $(CFLAGS) -c common/type/convert.c -o common/type/convert.o
 
+common/type/json.o: common/type/json.c common/debug.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/variantList.h
+	$(CC) $(CFLAGS) -c common/type/json.c -o common/type/json.o
+
 common/type/keyValue.o: common/type/keyValue.c common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CFLAGS) -c common/type/keyValue.c -o common/type/keyValue.o
 
