@@ -21,7 +21,7 @@ static size_t bufferSize = (8 * IO_BUFFER_BLOCK_SIZE);
 Get/set buffer size
 ***********************************************************************************************************************************/
 size_t
-ioBufferSize()
+ioBufferSize(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(SIZE, bufferSize);

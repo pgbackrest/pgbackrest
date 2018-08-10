@@ -54,6 +54,18 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add basic C JSON parser.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Migrate minimum set of code for reading <file>archive.info</file> files from Perl to C.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow <code>Buffer</code> object <quote>used size</quote> to be different than <quote>allocated size</quote>.  Add functions to manage used size and remaining size and update automatically when possible.</p>
                     </release-item>
 
@@ -91,6 +103,10 @@
 
                     <release-item>
                         <p>Add <code>cvtBoolToConstZ()</code> to simplify conversion of boolean to string.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Enable <id>-Wstrict-prototypes</id>, <id>-Wpointer-arith</id>, <id>-Wduplicated-branches</id>, and <id>-Wduplicated-cond</id> and update code to conform.</p>
                     </release-item>
 
                     <release-item>

@@ -28,7 +28,7 @@ storageTestPathExpression(const String *expression, const String *path)
 Test Run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 

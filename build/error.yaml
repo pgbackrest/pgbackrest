@@ -86,6 +86,9 @@ path-close: 97
 # Unable to get info for a file
 file-info: 98
 
+# Invalid JSON format.  Eventually this should be a child of format error and share the same code
+json-format: 99
+
 # This error should not be thrown directly -- it serves as a parent for the C errors
 runtime: 122
 

@@ -72,8 +72,8 @@ void memContextFree(MemContext *this);
 /***********************************************************************************************************************************
 Memory context accessors
 ***********************************************************************************************************************************/
-MemContext *memContextCurrent();
-MemContext *memContextTop();
+MemContext *memContextCurrent(void);
+MemContext *memContextTop(void);
 const char *memContextName(MemContext *this);
 
 /***********************************************************************************************************************************

@@ -37,7 +37,7 @@ typedef struct KeyValuePair
 Create a new key/value store
 ***********************************************************************************************************************************/
 KeyValue *
-kvNew()
+kvNew(void)
 {
     FUNCTION_TEST_VOID();
 

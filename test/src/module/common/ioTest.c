@@ -207,7 +207,7 @@ ioTestFilterDoubleNew(const char *type, unsigned int flushTotal)
 Test Run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 

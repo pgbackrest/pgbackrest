@@ -491,7 +491,7 @@ memContextSwitch(MemContext *this)
 Return the top context
 ***********************************************************************************************************************************/
 MemContext *
-memContextTop()
+memContextTop(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(MEM_CONTEXT, &contextTop);
@@ -501,7 +501,7 @@ memContextTop()
 Return the current context
 ***********************************************************************************************************************************/
 MemContext *
-memContextCurrent()
+memContextCurrent(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(MEM_CONTEXT, contextCurrent);

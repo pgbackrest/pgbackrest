@@ -33,7 +33,7 @@ testOptionFind(const char *option, unsigned int value)
 Test run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 

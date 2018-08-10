@@ -65,20 +65,20 @@ bool errorTypeExtends(const ErrorType *child, const ErrorType *parent);
 /***********************************************************************************************************************************
 Functions to get information about the current error
 ***********************************************************************************************************************************/
-const ErrorType *errorType();
-int errorCode();
-const char *errorFileName();
-const char *errorFunctionName();
-int errorFileLine();
+const ErrorType *errorType(void);
+int errorCode(void);
+const char *errorFileName(void);
+const char *errorFunctionName(void);
+int errorFileLine(void);
 bool errorInstanceOf(const ErrorType *errorTypeTest);
-const char *errorMessage();
-const char *errorName();
-const char *errorStackTrace();
+const char *errorMessage(void);
+const char *errorName(void);
+const char *errorStackTrace(void);
 
 /***********************************************************************************************************************************
 Functions to get information about the try stack
 ***********************************************************************************************************************************/
-unsigned int errorTryDepth();
+unsigned int errorTryDepth(void);
 
 /***********************************************************************************************************************************
 Begin a block where errors can be thrown
@@ -171,12 +171,12 @@ Internal functions
 These functions are used by the macros to implement the error handler and should never be called independently.
 ***********************************************************************************************************************************/
 bool errorInternalTry(const char *fileName, const char *functionName, int fileLine);
-jmp_buf *errorInternalJump();
-bool errorInternalStateTry();
+jmp_buf *errorInternalJump(void);
+bool errorInternalStateTry(void);
 bool errorInternalStateCatch(const ErrorType *errorTypeCatch);
-bool errorInternalStateFinal();
+bool errorInternalStateFinal(void);
 bool errorInternalProcess(bool catch);
-void errorInternalPropagate() __attribute__((__noreturn__));
+void errorInternalPropagate(void) __attribute__((__noreturn__));
 void errorInternalThrow(
     const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
     __attribute__((__noreturn__));

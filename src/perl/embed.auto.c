@@ -5046,6 +5046,8 @@ static const EmbeddedModule embeddedModule[] =
             "push @EXPORT, qw(ERROR_PATH_CLOSE);\n"
             "use constant ERROR_FILE_INFO => 98;\n"
             "push @EXPORT, qw(ERROR_FILE_INFO);\n"
+            "use constant ERROR_JSON_FORMAT => 99;\n"
+            "push @EXPORT, qw(ERROR_JSON_FORMAT);\n"
             "use constant ERROR_RUNTIME => 122;\n"
             "push @EXPORT, qw(ERROR_RUNTIME);\n"
             "use constant ERROR_INVALID => 123;\n"

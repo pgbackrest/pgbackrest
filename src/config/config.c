@@ -119,7 +119,7 @@ static ConfigOptionValue configOptionValue[CFG_OPTION_TOTAL];
 Initialize or reinitialize the configuration data
 ***********************************************************************************************************************************/
 void
-cfgInit()
+cfgInit(void)
 {
     FUNCTION_TEST_VOID();
 
@@ -155,7 +155,7 @@ cfgInit()
 Get/set the current command
 ***********************************************************************************************************************************/
 ConfigCommand
-cfgCommand()
+cfgCommand(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(ENUM, command);
@@ -179,7 +179,7 @@ cfgCommandSet(ConfigCommand commandParam)
 Was help requested?
 ***********************************************************************************************************************************/
 bool
-cfgCommandHelp()
+cfgCommandHelp(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(BOOL, help);
@@ -258,7 +258,7 @@ cfgCommandName(ConfigCommand commandId)
 Command parameters, if any
 ***********************************************************************************************************************************/
 const StringList *
-cfgCommandParam()
+cfgCommandParam(void)
 {
     FUNCTION_TEST_VOID();
 
@@ -296,7 +296,7 @@ cfgCommandParamSet(const StringList *param)
 Command parameters, if any
 ***********************************************************************************************************************************/
 const String *
-cfgExe()
+cfgExe(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(STRING, exe);
@@ -324,7 +324,7 @@ cfgExeSet(const String *exeParam)
 Does this command require an immediate lock?
 ***********************************************************************************************************************************/
 bool
-cfgLockRequired()
+cfgLockRequired(void)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_ASSERT(command != cfgCmdNone);
@@ -337,7 +337,7 @@ cfgLockRequired()
 Get the lock type required for this command
 ***********************************************************************************************************************************/
 LockType
-cfgLockType()
+cfgLockType(void)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_ASSERT(command != cfgCmdNone);
@@ -350,7 +350,7 @@ cfgLockType()
 Does this command log to a file?
 ***********************************************************************************************************************************/
 bool
-cfgLogFile()
+cfgLogFile(void)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_ASSERT(command != cfgCmdNone);
@@ -363,7 +363,7 @@ cfgLogFile()
 Get default log level -- used for log messages that are common to all commands
 ***********************************************************************************************************************************/
 LogLevel
-cfgLogLevelDefault()
+cfgLogLevelDefault(void)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_ASSERT(command != cfgCmdNone);
@@ -376,7 +376,7 @@ cfgLogLevelDefault()
 Get max stderr log level -- used to suppress error output for higher log levels, e.g. local and remote commands
 ***********************************************************************************************************************************/
 LogLevel
-cfgLogLevelStdErrMax()
+cfgLogLevelStdErrMax(void)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_ASSERT(command != cfgCmdNone);

@@ -24,7 +24,7 @@ bool testTryRecurseCatch = false;
 bool testTryRecurseFinally = false;
 
 void
-testTryRecurse()
+testTryRecurse(void)
 {
     TRY_BEGIN()
     {
@@ -48,7 +48,7 @@ testTryRecurse()
 Test Run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 

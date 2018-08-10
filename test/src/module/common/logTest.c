@@ -98,7 +98,7 @@ testLogResult(const char *logFile, const char *expected)
 Test Run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 

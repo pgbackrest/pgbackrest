@@ -15,7 +15,13 @@ Standard binary name
 #define PGBACKREST_BIN                                              "pgbackrest"
 
 /***********************************************************************************************************************************
-Version of the software.  Currently this value is maintained in Version.pm and updated by test.pl.
+Format Number -- defines format for info and manifest files as well as on-disk structure.  If this number changes then the
+repository will be invalid unless migration functions are written.
+***********************************************************************************************************************************/
+#define PGBACKREST_FORMAT                                           5
+
+/***********************************************************************************************************************************
+Software version.  Currently this value is maintained in Version.pm and updated by test.pl.
 ***********************************************************************************************************************************/
 #define PGBACKREST_VERSION                                          "2.05dev"
 

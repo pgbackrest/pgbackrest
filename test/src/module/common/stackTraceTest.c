@@ -7,7 +7,7 @@ Test Stack Trace Handler
 Test Run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 

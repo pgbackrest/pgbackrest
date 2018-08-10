@@ -132,7 +132,7 @@ helpRenderValue(const Variant *value)
 Render help to a string
 ***********************************************************************************************************************************/
 static String *
-helpRender()
+helpRender(void)
 {
     FUNCTION_DEBUG_VOID(logLevelDebug);
 
@@ -383,7 +383,7 @@ helpRender()
 Render help and output to stdout
 ***********************************************************************************************************************************/
 void
-cmdHelp()
+cmdHelp(void)
 {
     FUNCTION_DEBUG_VOID(logLevelDebug);
 

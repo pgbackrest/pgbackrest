@@ -54,7 +54,7 @@ struct IoFilterGroup
 New Object
 ***********************************************************************************************************************************/
 IoFilterGroup *
-ioFilterGroupNew()
+ioFilterGroupNew(void)
 {
     FUNCTION_DEBUG_VOID(logLevelTrace);
 

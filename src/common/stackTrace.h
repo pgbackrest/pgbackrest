@@ -36,22 +36,22 @@ Internal Functions
 #endif
 
 #ifndef NDEBUG
-    void stackTraceTestStart();
-    void stackTraceTestStop();
-    bool stackTraceTest();
+    void stackTraceTestStart(void);
+    void stackTraceTestStop(void);
+    bool stackTraceTest(void);
 #endif
 
 LogLevel stackTracePush(const char *fileName, const char *functionName, LogLevel functionLogLevel);
 
 #ifdef NDEBUG
-    void stackTracePop();
+    void stackTracePop(void);
 #else
     void stackTracePop(const char *fileName, const char *functionName);
 #endif
 
 size_t stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char *functionName, unsigned int fileLine);
-void stackTraceParamLog();
-const char *stackTraceParam();
+void stackTraceParamLog(void);
+const char *stackTraceParam(void);
 char *stackTraceParamBuffer(const char *param);
 void stackTraceParamAdd(size_t bufferSize);
 

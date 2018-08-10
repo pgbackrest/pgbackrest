@@ -16,7 +16,7 @@ Constants describing number of sub-units in an interval
 Epoch time in milliseconds
 ***********************************************************************************************************************************/
 TimeMSec
-timeMSec()
+timeMSec(void)
 {
     FUNCTION_TEST_VOID();
 

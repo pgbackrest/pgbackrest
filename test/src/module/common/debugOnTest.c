@@ -6,14 +6,14 @@ Test Debug Macros and Routines
 #include "common/harnessLog.h"
 
 static void
-testFunction3()
+testFunction3(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT_VOID();
 }
 
 static void
-testFunction2()
+testFunction2(void)
 {
     FUNCTION_DEBUG_VOID(logLevelTrace);
 
@@ -41,7 +41,7 @@ testFunction1(int paramInt, bool paramBool, double paramDouble, mode_t paramMode
 Test Run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 

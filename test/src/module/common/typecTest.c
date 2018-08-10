@@ -4,7 +4,7 @@ Test C Types
 #include <assert.h>
 
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 

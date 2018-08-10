@@ -91,19 +91,19 @@ Flag to enable/disable test function logging
 bool stackTraceTestFlag = true;
 
 void
-stackTraceTestStart()
+stackTraceTestStart(void)
 {
     stackTraceTestFlag = true;
 }
 
 void
-stackTraceTestStop()
+stackTraceTestStop(void)
 {
     stackTraceTestFlag = false;
 }
 
 bool
-stackTraceTest()
+stackTraceTest(void)
 {
     return stackTraceTestFlag;
 }
@@ -248,7 +248,7 @@ stackTraceParamAdd(size_t bufferSize)
 Mark that parameters are being logged -- it none appear then the function is void
 ***********************************************************************************************************************************/
 void
-stackTraceParamLog()
+stackTraceParamLog(void)
 {
     ASSERT_DEBUG(stackSize > 0);
 
@@ -261,7 +261,7 @@ Pop a function from the stack trace
 #ifdef NDEBUG
 
 void
-stackTracePop()
+stackTracePop(void)
 {
     stackSize--;
 }

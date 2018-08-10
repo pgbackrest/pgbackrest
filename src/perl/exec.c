@@ -55,7 +55,7 @@ Constants used to build perl options
 Build list of parameters to use for perl main
 ***********************************************************************************************************************************/
 String *
-perlMain()
+perlMain(void)
 {
     FUNCTION_TEST_VOID();
 
@@ -167,7 +167,7 @@ perlEval(const String *statement)
 Initialize Perl
 ***********************************************************************************************************************************/
 static void
-perlInit()
+perlInit(void)
 {
     FUNCTION_TEST_VOID();
 
@@ -209,7 +209,7 @@ perlInit()
 Execute main function in Perl
 ***********************************************************************************************************************************/
 int
-perlExec()
+perlExec(void)
 {
     FUNCTION_DEBUG_VOID(logLevelDebug);
 

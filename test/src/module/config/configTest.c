@@ -6,7 +6,7 @@ Test Configuration Commands and Options
 Test run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
