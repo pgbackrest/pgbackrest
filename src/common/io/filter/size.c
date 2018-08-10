@@ -28,7 +28,7 @@ struct IoSize
 New object
 ***********************************************************************************************************************************/
 IoSize *
-ioSizeNew()
+ioSizeNew(void)
 {
     FUNCTION_DEBUG_VOID(logLevelTrace);
 

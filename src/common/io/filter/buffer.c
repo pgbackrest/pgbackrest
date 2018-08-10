@@ -29,7 +29,7 @@ struct IoBuffer
 New object
 ***********************************************************************************************************************************/
 IoBuffer *
-ioBufferNew()
+ioBufferNew(void)
 {
     FUNCTION_DEBUG_VOID(logLevelTrace);
 
