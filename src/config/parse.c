@@ -674,17 +674,26 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
             // Phase 3: validate option definitions and load into configuration
             // ---------------------------------------------------------------------------------------------------------------------
-            bool allResolved;
+            bool allResolved = false;
             bool optionResolved[CFG_OPTION_TOTAL] = {false};
+            ConfigOption optionId = 0;
+
+            // If stanza is required but not set then many other options will likely not be set unless they were specified on the
+            // command line, which leads to confusing errors like 'command requires option: pg1-path' when what is really missing is
+            // the stanza.  In this case start start the loop at the stanza option so the user gets a sensible error.
+            if (!parseOptionList[cfgOptStanza].found && cfgDefOptionRequired(commandDefId, cfgDefOptStanza))
+                optionId = cfgOptStanza;
 
             do
             {
-                // Assume that all dependencies will be resolved in this loop.  This probably won't be true the first few times, but
-                // eventually it will be or the do loop would never exit.
-                allResolved = true;
+                // If first loop starts partway through we know that all options cannot possibly be resolved on the first loop.
+                // After that we'll assume that all options will be resolved in the next loop and set allResolved = false if we find
+                // something that can't be resolved yet.
+                if (optionId == 0)
+                    allResolved = true;
 
                 // Loop through all options
-                for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
+                for (; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
                     // Get the option data parsed from the command-line
                     ParseOption *parseOption = &parseOptionList[optionId];
@@ -980,6 +989,9 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     // Option is now resolved
                     optionResolved[optionId] = true;
                 }
+
+                // Restart option loop
+                optionId = 0;
             }
             while (!allResolved);
         }
