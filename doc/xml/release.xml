@@ -34,7 +34,21 @@
                     </release-item>
                 </release-feature-list>
 
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="conway.sarah"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve error message when a command is missing the <br-option>stanza</br-option> option.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
+                    <release-item>
+                        <p>Validate configuration options in a single pass.  By pre-calculating and storing the option dependencies in <file>parse.auto.c</file> validation can be completed in a single pass, which is both simpler and faster.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="frost.stephen"/>
@@ -5047,6 +5061,11 @@
         <contributor id="brusselback.adam">
             <contributor-name-display>Adam Brusselback</contributor-name-display>
             <contributor-id type="github">Tostino</contributor-id>
+        </contributor>
+
+        <contributor id="conway.sarah">
+            <contributor-name-display>Sarah Conway</contributor-name-display>
+            <contributor-id type="github">xenophenes</contributor-id>
         </contributor>
 
         <contributor id="courtois.christophe">
