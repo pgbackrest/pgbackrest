@@ -552,6 +552,10 @@ testRun(void)
         StringList *argList = NULL;
         String *configFile = strNewFmt("%s/test.config", testPath());
 
+        TEST_RESULT_INT(
+            sizeof(optionResolveOrder) / sizeof(ConfigOption), CFG_OPTION_TOTAL,
+            "check that the option resolve list contains an entry for every option");
+
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
@@ -718,6 +722,8 @@ testRun(void)
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-key=xxx"));
+        strLstAdd(argList, strNew("--repo1-s3-bucket=xxx"));
+        strLstAdd(argList, strNew("--repo1-s3-endpoint=xxx"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,

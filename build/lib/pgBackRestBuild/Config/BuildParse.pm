@@ -28,6 +28,7 @@ use pgBackRestBuild::Config::Data;
 use constant BLDLCL_FILE_DEFINE                                     => 'parse';
 
 use constant BLDLCL_DATA_OPTION                                     => '01-dataOption';
+use constant BLDLCL_DATA_OPTION_RESOLVE                             => '01-dataOptionResolve';
 
 ####################################################################################################################################
 # Definitions for constants and data to build
@@ -47,6 +48,11 @@ my $rhBuild =
                 &BLDLCL_DATA_OPTION =>
                 {
                     &BLD_SUMMARY => 'Option parse data',
+                },
+
+                &BLDLCL_DATA_OPTION_RESOLVE =>
+                {
+                    &BLD_SUMMARY => 'Order for option parse resolution',
                 },
             },
         },
@@ -170,6 +176,75 @@ sub buildConfigParse
         "};\n";
 
     $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_OPTION}{&BLD_SOURCE} = $strBuildSource;
+
+    # Build option resolve order list.  This allows the option validation in C to take place in a single pass.
+    #
+    # Always process the stanza option first since confusing error message are produced if it is missing.
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my @stryResolveOrder = (buildConfigOptionEnum(CFGOPT_STANZA));
+    my $rhResolved = {&CFGOPT_STANZA => true};
+    my $bAllResolved;
+
+    do
+    {
+        # Assume that we will finish on this loop
+        $bAllResolved = true;
+
+        # Loop through all options
+        foreach my $strOption (sort(keys(%{$rhConfigDefine})))
+        {
+            my $bSkip = false;
+
+            # Check the default depend
+            my $strOptionDepend =
+                ref($rhConfigDefine->{$strOption}{&CFGDEF_DEPEND}) eq 'HASH' ?
+                    $rhConfigDefine->{$strOption}{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_OPTION} :
+                    $rhConfigDefine->{$strOption}{&CFGDEF_DEPEND};
+
+            if (defined($strOptionDepend) && !$rhResolved->{$strOptionDepend})
+            {
+                # &log(WARN, "$strOptionDepend is not resolved");
+                $bSkip = true;
+            }
+
+            # Check the command depends
+            foreach my $strCommand (sort(keys(%{$rhConfigDefine->{$strOption}{&CFGDEF_COMMAND}})))
+            {
+                my $strOptionDepend =
+                    ref($rhConfigDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_DEPEND}) eq 'HASH' ?
+                        $rhConfigDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_OPTION} :
+                        $rhConfigDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_DEPEND};
+
+                if (defined($strOptionDepend) && !$rhResolved->{$strOptionDepend})
+                {
+                    $bSkip = true;
+                }
+            }
+
+            # If dependency was not found try again on the next loop
+            if ($bSkip)
+            {
+                $bAllResolved = false;
+            }
+            # Else add option to resolve order list
+            elsif (!$rhResolved->{$strOption})
+            {
+                $rhResolved->{$strOption} = true;
+
+                for (my $iIndex = 0; $iIndex < $rhConfigDefine->{$strOption}{&CFGDEF_INDEX_TOTAL}; $iIndex++)
+                {
+                    push(@stryResolveOrder, buildConfigOptionEnum($strOption) . ($iIndex == 0 ? '' : " + $iIndex"));
+                }
+            }
+        }
+    }
+    while (!$bAllResolved);
+
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_OPTION_RESOLVE}{&BLD_SOURCE} =
+        "static const ConfigOption optionResolveOrder[CFG_OPTION_TOTAL] =\n" .
+        "{\n" .
+        "    " . join(",\n    ", @stryResolveOrder) . ",\n" .
+        "};\n";
 
     return $rhBuild;
 }
