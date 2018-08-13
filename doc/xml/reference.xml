@@ -75,7 +75,7 @@
                     <config-key id="log-path" name="Log Path">
                         <summary>Path where log files are stored.</summary>
 
-                        <text>The log path provides a location for <backrest/> to store log files.  Note that if <setting>log-level-file=none</setting> then no log path is required.</text>
+                        <text>The log path provides a location for <backrest/> to store log files.  Note that if <setting>log-level-file=off</setting> then no log path is required.</text>
 
                         <example>/backup/db/log</example>
                     </config-key>

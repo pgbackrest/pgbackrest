@@ -142,6 +142,16 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="camilo.aguilar"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix invalid log level in <br-option>log-path</br-option> option reference.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -5089,6 +5099,11 @@
         <contributor id="brian.faherty">
             <contributor-name-display>Brian Faherty</contributor-name-display>
             <contributor-id type="github">scrummyin</contributor-id>
+        </contributor>
+
+        <contributor id="camilo.aguilar">
+            <contributor-name-display>Camilo Aguilar</contributor-name-display>
+            <contributor-id type="github">c4milo</contributor-id>
         </contributor>
 
         <contributor id="chiranjeevi.ravilla">
