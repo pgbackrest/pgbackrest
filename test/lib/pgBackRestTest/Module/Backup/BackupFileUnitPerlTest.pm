@@ -113,16 +113,16 @@ sub run
     my $lManifestSaveCurrent = 0;
     my $lManifestSaveSize = int($lSizeTotal / 100);
 
+    # Result variables
+    my $iResultCopyResult;
+    my $lResultCopySize;
+    my $lResultRepoSize;
+    my $strResultCopyChecksum;
+    my $rResultExtra;
 
     ################################################################################################################################
     if ($self->begin('backupFile(), backupManifestUpdate()'))
     {
-        # Result variables
-        my $iResultCopyResult;
-        my $lResultCopySize;
-        my $lResultRepoSize;
-        my $strResultCopyChecksum;
-        my $rResultExtra;
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Copy pg_control and confirm manifestUpdate does not save the manifest yet
@@ -468,13 +468,44 @@ sub run
             MANIFEST_SUBKEY_REFERENCE)},
             false, "reference to prior backup in manifest removed");
 
+        #---------------------------------------------------------------------------------------------------------------------------
+        # BACKUP_FILE_NOOP
         # Yes prior checksum, no compression, no page checksum, no extra, yes delta, yes hasReference
         ($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
             backupFile($strFileDb, $strRepoFile, $lFileSize, $strFileHash, false,
             $strBackupLabel, false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, true, undef);
 
         $self->testResult(($iResultCopyResult == BACKUP_FILE_NOOP && $strResultCopyChecksum eq $strFileHash &&
-            $lResultCopySize == $lFileSize), true, 'db file same has reference - copy');
+            $lResultCopySize == $lFileSize), true, 'db file same has reference - noop');
+
+        # Calculate running counts
+        my $lSizeCurrentAfter = $lSizeCurrent + $lFileSize;
+        my $lManifestSaveCurrentAfter = $lManifestSaveCurrent + $lFileSize;
+
+        # Increase manifest save size, so manifest will not be saved so counts can be tested
+        $lManifestSaveSize = $lFileSize * 2;
+
+        ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
+            $oBackupManifest,
+            $strHost,
+            $iLocalId,
+            $strFileDb,
+            $strRepoFile,
+            $lFileSize,
+            $strFileHash,
+            false,
+            $iResultCopyResult,
+            $lResultCopySize,
+            $lResultRepoSize,
+            $strResultCopyChecksum,
+            $rResultExtra,
+            $lSizeTotal,
+            $lSizeCurrent,
+            $lManifestSaveSize,
+            $lManifestSaveCurrent);
+
+        $self->testResult(($lSizeCurrent ==$lSizeCurrentAfter && $lManifestSaveCurrent == $lManifestSaveCurrentAfter),
+            true, '    running counts updated');
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Remove file from repo. No reference so should hard error since this means sometime between the building of the manifest
@@ -487,33 +518,53 @@ sub run
     }
 
     ################################################################################################################################
+    # This section for for code coverage that is not covered in the above tests
     if ($self->begin('backupManifestUpdate()'))
     {
-# {name => 'oManifest', trace => true},
-# {name => 'strHost', required => false, trace => true},  -- this is for log statements only so can be undef
-# {name => 'iLocalId', required => false, trace => true}, -- only for a single log statement
-#
-# # Parameters to backupFile()
-# {name => 'strDbFile', trace => true}, -- this is for log statements but is required
-# {name => 'strRepoFile', trace => true},
-# {name => 'lSize', required => false, trace => true},
-# {name => 'strChecksum', required => false, trace => true},
-# {name => 'bChecksumPage', trace => true},
-#
-# # Results from backupFile()
-# {name => 'iCopyResult', trace => true},
-# {name => 'lSizeCopy', required => false, trace => true},
-# {name => 'lSizeRepo', required => false, trace => true},
-# {name => 'strChecksumCopy', required => false, trace => true},
-# {name => 'rExtra', required => false, trace => true},
-#
-# # Accumulators
-# {name => 'lSizeTotal', trace => true},
-# {name => 'lSizeCurrent', trace => true},
-# {name => 'lManifestSaveSize', trace => true},
-# {name => 'lManifestSaveCurrent', trace => true}
-$iLocalId = 2;
+        $oBackupManifest = new pgBackRest::Manifest("$strBackupPath/" . FILE_MANIFEST,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => 201409291});
 
+        $iResultCopyResult = BACKUP_FILE_RECOPY;
+        $lResultCopySize = 0;
+        $lResultRepoSize = $lResultCopySize + 1;
+        $strResultCopyChecksum = $strFileHash;
+        $lSizeCurrent = 0;
+        $lManifestSaveSize = $lFileSize * 2;
+        $lManifestSaveCurrent = 0;
+
+        $self->testResult(sub {backupManifestUpdate(
+            $oBackupManifest,
+            $strHost,
+            $iLocalId,
+            $strFileDb,
+            $strRepoFile,
+            $lFileSize,
+            $strFileHash,
+            false,
+            $iResultCopyResult,
+            $lResultCopySize,
+            $lResultRepoSize,
+            $strResultCopyChecksum,
+            $rResultExtra,
+            $lSizeTotal,
+            $lSizeCurrent,
+            $lManifestSaveSize,
+            $lManifestSaveCurrent)}, "($lFileSize, $lFileSize)",
+            'backup file recopy warning', {strLogExpect =>
+            "WARN: resumed backup file $strRepoFile does not have expected checksum $strFileHash. The file will be recopied and" .
+            " backup will continue but this may be an issue unless the resumed backup path in the repository is known to be" .
+            " corrupted.\n" .
+            "NOTE: this does not indicate a problem with the PostgreSQL page checksums."});
+
+        $self->testResult(
+            $oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE, $lResultCopySize),
+            true, "    copy size set");
+        $self->testResult(
+            $oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REPO_SIZE, $lResultRepoSize),
+            true, "    repo size set");
+        $self->testResult(
+            $oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strResultCopyChecksum),
+            false, "    checksum not set");
     }
 }
 

@@ -284,12 +284,12 @@ sub backupManifestUpdate
             {name => 'lManifestSaveCurrent', trace => true}
         );
 
+    # Increment current backup progress
+    $lSizeCurrent += $lSize;
+
     # If the file is in a prior backup and nothing changed, then nothing needs to be done, else process the results.
     if ($iCopyResult != BACKUP_FILE_NOOP)
     {
-        # Increment current backup progress
-        $lSizeCurrent += $lSize;
-
         # Log invalid checksum
         if ($iCopyResult == BACKUP_FILE_RECOPY)
         {
@@ -409,23 +409,23 @@ sub backupManifestUpdate
             &log(DETAIL, 'skip file removed by database ' . (defined($strHost) ? "${strHost}:" : '') . $strDbFile);
             $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile);
         }
+    }
 
-        # Determine whether to save the manifest
-        $lManifestSaveCurrent += $lSize;
+    # Determine whether to save the manifest
+    $lManifestSaveCurrent += $lSize;
 
-        if ($lManifestSaveCurrent >= $lManifestSaveSize)
-        {
-            $oManifest->saveCopy();
+    if ($lManifestSaveCurrent >= $lManifestSaveSize)
+    {
+        $oManifest->saveCopy();
 
-            logDebugMisc
-            (
-                $strOperation, 'save manifest',
-                {name => 'lManifestSaveSize', value => $lManifestSaveSize},
-                {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent}
-            );
+        logDebugMisc
+        (
+            $strOperation, 'save manifest',
+            {name => 'lManifestSaveSize', value => $lManifestSaveSize},
+            {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent}
+        );
 
-            $lManifestSaveCurrent = 0;
-        }
+        $lManifestSaveCurrent = 0;
     }
 
     # Return from function and log return values if any
