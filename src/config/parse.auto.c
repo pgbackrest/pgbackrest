@@ -2194,7 +2194,7 @@ static const struct option optionList[] =
 /***********************************************************************************************************************************
 Order for option parse resolution
 ***********************************************************************************************************************************/
-static const ConfigOption optionResolveOrder[CFG_OPTION_TOTAL] =
+static const ConfigOption optionResolveOrder[] =
 {
     cfgOptStanza,
     cfgOptArchiveAsync,
