@@ -279,13 +279,18 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
-            (
-                cfgDefOptOnline,
-                "1"
-            )
-
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdBackup)
+
+                CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
+                (
+                    cfgDefOptOnline,
+                    "1"
+                )
+            )
         )
     )
 
@@ -1601,7 +1606,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
         )
@@ -1623,17 +1627,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                     "\n"
                     "The purpose of this option is to allow offline backups. The pg_xlog/pg_wal directory is copied as-is and "
                         "archive-check is automatically disabled for the backup."
-                )
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdCheck)
-
-                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Check an online cluster.")
-                CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
-                (
-                    "Specifying --no-online prevents pgBackRest from connecting to PostgreSQL and will disable some checks."
                 )
             )
 

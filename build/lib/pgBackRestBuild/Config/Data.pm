@@ -751,7 +751,6 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_UPGRADE => {},
         }
@@ -1917,14 +1916,16 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
         &CFGDEF_DEFAULT => true,
-        &CFGDEF_DEPEND =>
-        {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_ONLINE,
-            &CFGDEF_DEPEND_LIST => [true],
-        },
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_BACKUP => {},
+            &CFGCMD_BACKUP =>
+            {
+                &CFGDEF_DEPEND =>
+                {
+                    &CFGDEF_DEPEND_OPTION => CFGOPT_ONLINE,
+                    &CFGDEF_DEPEND_LIST => [true],
+                },
+            },
             &CFGCMD_CHECK => {},
         },
     },
