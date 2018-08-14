@@ -12,32 +12,13 @@ Buffer write object
 ***********************************************************************************************************************************/
 struct IoBufferWrite
 {
-    MemContext *memContext;
-    IoWrite *io;
-    Buffer *write;
+    MemContext *memContext;                                         // Object memory context
+    IoWrite *io;                                                    // IoWrite interface
+    Buffer *write;                                                  // Buffer to write into
 };
 
 /***********************************************************************************************************************************
-Write to the buffer
-***********************************************************************************************************************************/
-static void
-ioBufferWrite(IoBufferWrite *this, Buffer *buffer)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_BUFFER_WRITE, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(buffer != NULL);
-    FUNCTION_DEBUG_END();
-
-    bufCat(this->write, buffer);
-
-    FUNCTION_DEBUG_RESULT_VOID();
-}
-
-/***********************************************************************************************************************************
-Create object
+New object
 ***********************************************************************************************************************************/
 IoBufferWrite *
 ioBufferWriteNew(Buffer *buffer)
@@ -61,6 +42,25 @@ ioBufferWriteNew(Buffer *buffer)
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_DEBUG_RESULT(IO_BUFFER_WRITE, this);
+}
+
+/***********************************************************************************************************************************
+Write to the buffer
+***********************************************************************************************************************************/
+void
+ioBufferWrite(IoBufferWrite *this, Buffer *buffer)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(IO_BUFFER_WRITE, this);
+        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+        FUNCTION_DEBUG_ASSERT(buffer != NULL);
+    FUNCTION_DEBUG_END();
+
+    bufCat(this->write, buffer);
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************

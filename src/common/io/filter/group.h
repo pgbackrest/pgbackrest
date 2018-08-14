@@ -1,11 +1,17 @@
 /***********************************************************************************************************************************
-Filter Group
+IO Filter Group
+
+Process data through an arbitrary group of filters in the order added by the user using ioFilterGroupAdd().  After processing
+results can be gathered using ioFilterGroupResult() for any filters that produce results.
+
+Processing is complex and asymmetric for read/write so should be done via the IoRead and IoWrite objects.  General users need
+only call ioFilterGroupNew(), ioFilterGroupAdd(), and ioFilterGroupResult().
 ***********************************************************************************************************************************/
-#ifndef IO_FILTER_GROUP_H
-#define IO_FILTER_GROUP_H
+#ifndef COMMON_IO_FILTER_GROUP_H
+#define COMMON_IO_FILTER_GROUP_H
 
 /***********************************************************************************************************************************
-Storage file read object
+Object type
 ***********************************************************************************************************************************/
 typedef struct IoFilterGroup IoFilterGroup;
 
@@ -21,12 +27,15 @@ IoFilterGroup *ioFilterGroupNew(void);
 Functions
 ***********************************************************************************************************************************/
 void ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter);
-void ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input);
+void ioFilterGroupOpen(IoFilterGroup *this);
+void ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output);
 void ioFilterGroupClose(IoFilterGroup *this);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+bool ioFilterGroupDone(const IoFilterGroup *this);
+bool ioFilterGroupInputSame(const IoFilterGroup *this);
 const Variant *ioFilterGroupResult(const IoFilterGroup *this, const String *filterType);
 
 /***********************************************************************************************************************************
@@ -37,9 +46,11 @@ void ioFilterGroupFree(IoFilterGroup *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_IO_FILTER_GROUP_TYPE                                                                                          \
+size_t ioFilterGroupToLog(const IoFilterGroup *this, char *buffer, size_t bufferSize);
+
+#define FUNCTION_DEBUG_IO_FILTER_GROUP_TYPE                                                                                        \
     IoFilterGroup *
-#define FUNCTION_DEBUG_IO_FILTER_GROUP_FORMAT(value, buffer, bufferSize)                                                             \
-    objToLog(value, "IoFilterGroup", buffer, bufferSize)
+#define FUNCTION_DEBUG_IO_FILTER_GROUP_FORMAT(value, buffer, bufferSize)                                                           \
+    ioFilterGroupToLog(value, buffer, bufferSize)
 
 #endif
