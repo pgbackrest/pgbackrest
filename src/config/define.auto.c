@@ -1439,7 +1439,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Path where log files are stored.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "The log path provides a location for pgBackRest to store log files. Note that if log-level-file=none then no log path "
+            "The log path provides a location for pgBackRest to store log files. Note that if log-level-file=off then no log path "
                 "is required."
         )
 
