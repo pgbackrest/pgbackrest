@@ -74,13 +74,12 @@ ioBufferProcess(IoBuffer *this, const Buffer *input, Buffer *output)
     // Copy data to the output buffer
     bufCatSub(output, input, this->inputPos, copySize);
 
-    // If all data was copied the reset inputPos and allow new input
+    // If all data was copied then reset inputPos and allow new input
     if (this->inputPos + copySize == bufUsed(input))
     {
         this->inputSame = false;
         this->inputPos = 0;
     }
-
     // Else update inputPos and indicate that the same input should be passed again
     else
     {

@@ -20,7 +20,7 @@ Contains the filter object and inout/output buffers.
 typedef struct IoFilterData
 {
     const Buffer *input;                                            // Input buffer for filter
-    Buffer *inputLocal;                                             // Locally created buffer than can be modified
+    Buffer *inputLocal;                                             // Non-null if a locally created buffer that can be cleared
     IoFilter *filter;                                               // Filter to apply
     Buffer *output;                                                 // Output buffer for filter
 } IoFilterData;
@@ -152,7 +152,7 @@ ioFilterGroupOpen(IoFilterGroup *this)
             // Is this an output filter?
             if (ioFilterOutput(filterData->filter))
             {
-                // If this is the first input buffer found, store the index
+                // If this is the first output buffer found, store the index so it can be easily found during processing
                 if (lastOutputBuffer == NULL)
                     this->firstOutputFilter = filterIdx;
 
@@ -266,7 +266,6 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
                         bufUsedZero(filterData->inputLocal);
                 }
             }
-
             // Else the filter does not produce output.  No need to flush these filters because they don't buffer data.
             else if (filterData->input != NULL)
                 ioFilterProcessIn(filterData->filter, filterData->input);
@@ -329,7 +328,7 @@ ioFilterGroupClose(IoFilterGroup *this)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            kvPut(this->filterResult, varNewStr(ioFilterType(filterData->filter)), filterResult);
+            kvAdd(this->filterResult, varNewStr(ioFilterType(filterData->filter)), filterResult);
         }
         MEM_CONTEXT_TEMP_END();
     }

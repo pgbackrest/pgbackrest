@@ -260,7 +260,7 @@ testRun(void)
         TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, ioSizeFilter(sizeFilter)), "    add filter to filter group");
         TEST_RESULT_VOID(
             ioFilterGroupAdd(filterGroup, ioTestFilterDoubleNew("double", 1)->filter), "    add filter to filter group");
-        TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, ioTestFilterSizeNew("size2")->filter), "    add filter to filter group");
+        TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, ioSizeFilter(ioSizeNew())), "    add filter to filter group");
         IoBuffer *bufferFilter = ioBufferNew();
         TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, ioBufferFilter(bufferFilter)), "    add filter to filter group");
         TEST_RESULT_VOID(ioReadFilterGroupSet(ioBufferReadIo(bufferRead), filterGroup), "    add filter group to read io");
@@ -290,9 +290,12 @@ testRun(void)
 
         TEST_RESULT_PTR(ioReadFilterGroup(ioBufferReadIo(bufferRead)), filterGroup, "    check filter group");
         TEST_RESULT_UINT(
-            varUInt64(ioFilterGroupResult(filterGroup, ioFilterType(ioSizeFilter(sizeFilter)))), 3, "    check filter result");
+            varUInt64(varLstGet(varVarLst(ioFilterGroupResult(filterGroup, ioFilterType(ioSizeFilter(sizeFilter)))), 0)), 3,
+            "    check filter result");
         TEST_RESULT_PTR(ioFilterGroupResult(filterGroup, strNew("double")), NULL, "    check filter result is NULL");
-        TEST_RESULT_UINT(varUInt64(ioFilterGroupResult(filterGroup, strNew("size2"))), 7, "    check filter result");
+        TEST_RESULT_UINT(
+            varUInt64(varLstGet(varVarLst(ioFilterGroupResult(filterGroup, ioFilterType(ioSizeFilter(sizeFilter)))), 1)), 7,
+            "    check filter result");
 
         TEST_RESULT_VOID(ioBufferReadFree(bufferRead), "    free buffer read object");
         TEST_RESULT_VOID(ioBufferReadFree(NULL), "    free NULL buffer read object");

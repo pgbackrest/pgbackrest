@@ -92,7 +92,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Abstract IO layer out of the storage layer.  This allows the routines to be used for IO objects that do not have a storage representation.  Implement buffer read and write IO objects.  Implement filters and update <code>cryptoHash</code> to use the new interface.</p>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Abstract IO layer out of the storage layer.  This allows the routines to be used for IO objects that do not have a storage representation.  Implement buffer read and write IO objects.  Implement filters and update <code>cryptoHash</code> to use the new interface.  Implement size and buffer filters.</p>
                     </release-item>
 
                     <release-item>

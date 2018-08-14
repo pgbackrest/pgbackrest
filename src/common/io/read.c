@@ -134,8 +134,9 @@ ioRead(IoRead *this, Buffer *buffer)
     {
         // Process input buffer again to get more output
         if (ioFilterGroupInputSame(this->filterGroup))
+        {
             ioFilterGroupProcess(this->filterGroup, this->input, buffer);
-
+        }
         // Else new input can be accepted
         else
         {
@@ -145,6 +146,7 @@ ioRead(IoRead *this, Buffer *buffer)
                 bufUsedZero(this->input);
                 this->read(this->driver, this->input);
             }
+            // Set input to NULL and flush (no need to actually free the buffer here as it will be freed with the mem context)
             else
                 this->input = NULL;
 
