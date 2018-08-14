@@ -1,11 +1,16 @@
 /***********************************************************************************************************************************
-IO Read
+IO Read Interface
+
+Objects that read from some IO source (file, socket, etc.) are implemented using this interface.  All objects are required to
+implement IoReadProcess and can optionally implement IoReadOpen, IoReadClose, or IoReadEof.  IoReadOpen and IoReadClose can be used
+to allocate/open or deallocate/free resources.  If IoReadEof is not implemented then ioReadEof() will always return false.  An
+example of an IoRead object is IoBufferRead.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_READ_H
 #define COMMON_IO_READ_H
 
 /***********************************************************************************************************************************
-IO read object
+Object type
 ***********************************************************************************************************************************/
 typedef struct IoRead IoRead;
 
@@ -37,8 +42,7 @@ Getters/Setters
 ***********************************************************************************************************************************/
 bool ioReadEof(const IoRead *this);
 const IoFilterGroup *ioReadFilterGroup(const IoRead *this);
-void ioReadFilterGroupSet(IoRead *this, IoFilterGroup *FilterGroup);
-size_t ioReadSize(const IoRead *this);
+void ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup);
 
 /***********************************************************************************************************************************
 Macros for function logging

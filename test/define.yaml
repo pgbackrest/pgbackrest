@@ -206,8 +206,10 @@ unit:
         coverage:
           common/io/bufferRead: full
           common/io/bufferWrite: full
+          common/io/filter/buffer: full
           common/io/filter/filter: full
           common/io/filter/group: full
+          common/io/filter/size: full
           common/io/handle: full
           common/io/io: full
           common/io/read: full

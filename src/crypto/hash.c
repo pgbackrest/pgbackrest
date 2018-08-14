@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Cryptographic Hashes
+Cryptographic Hash
 ***********************************************************************************************************************************/
 #include <string.h>
 
@@ -18,19 +18,19 @@ Filter type constant
 #define CRYPTO_HASH_FILTER_TYPE                                     "hash"
 
 /***********************************************************************************************************************************
-Track state during block encrypt/decrypt
+Object type
 ***********************************************************************************************************************************/
 struct CryptoHash
 {
     MemContext *memContext;                                         // Context to store data
-    const EVP_MD *hashType;                                         // Hash type
+    const EVP_MD *hashType;                                         // Hash type (sha1, md5, etc.)
     EVP_MD_CTX *hashContext;                                        // Message hash context
     Buffer *hash;                                                   // Hash in binary form
     IoFilter *filter;                                               // Filter interface
 };
 
 /***********************************************************************************************************************************
-New hash object
+New object
 ***********************************************************************************************************************************/
 CryptoHash *
 cryptoHashNew(const String *type)
@@ -70,7 +70,8 @@ cryptoHashNew(const String *type)
 
         // Create filter interface
         this->filter = ioFilterNew(
-            strNew(CRYPTO_HASH_FILTER_TYPE), this, (IoFilterProcessIn)cryptoHashProcess, (IoFilterResult)cryptoHashResult);
+            strNew(CRYPTO_HASH_FILTER_TYPE), this, NULL, NULL, (IoFilterProcessIn)cryptoHashProcess, NULL,
+            (IoFilterResult)cryptoHashResult);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -212,7 +213,7 @@ cryptoHashFilter(CryptoHash *this)
 }
 
 /***********************************************************************************************************************************
-Return filter result
+Get string representation of the hash as a filter result
 ***********************************************************************************************************************************/
 const Variant *
 cryptoHashResult(CryptoHash *this)
