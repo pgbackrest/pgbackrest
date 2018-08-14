@@ -146,6 +146,10 @@
                     <release-item>
                         <p>Remove redundant lines from embedded Perl by combining blank lines.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Define cipher magic size with <code>sizeof()</code> rather than using a constant.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

@@ -19,7 +19,7 @@ Header constants and sizes
 // Magic constant for salted encrypt.  Only salted encrypt is done here, but this constant is required for compatibility with the
 // openssl command-line tool.
 #define CIPHER_BLOCK_MAGIC                                          "Salted__"
-#define CIPHER_BLOCK_MAGIC_SIZE                                     8
+#define CIPHER_BLOCK_MAGIC_SIZE                                     (sizeof(CIPHER_BLOCK_MAGIC) - 1)
 
 // Total length of cipher header
 #define CIPHER_BLOCK_HEADER_SIZE                                    (CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN)
