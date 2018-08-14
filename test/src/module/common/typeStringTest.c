@@ -150,6 +150,12 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("strReplaceChr()"))
+    {
+        TEST_RESULT_STR(strPtr(strReplaceChr(strNew("ABCD"), 'B', 'R')), "ARCD", "replace chr");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("strSub() and strSubN()"))
     {
         TEST_RESULT_STR(strPtr(strSub(strNew("ABCD"), 2)), "CD", "sub string");

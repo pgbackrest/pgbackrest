@@ -154,6 +154,10 @@
                     <release-item>
                         <p>Add <code>cvtCharToZ()</code> and macro for debugging <code>char</code> params.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <code>strReplaceChr()</code> to <code>String</code> object.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

@@ -39,6 +39,7 @@ String *strPath(const String *this);
 const char *strPtr(const String *this);
 String *strQuote(const String *this, const String *quote);
 String *strQuoteZ(const String *this, const char *quote);
+String *strReplaceChr(String *this, char find, char replace);
 size_t strSize(const String *this);
 String *strSub(const String *this, size_t start);
 String *strSubN(const String *this, size_t start, size_t size);
