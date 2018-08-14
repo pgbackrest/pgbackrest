@@ -42,7 +42,7 @@ LDPERL = `perl -MExtUtils::Embed -e ldopts`
 LDEXTRA =
 
 # Concatenate options for easy usage
-LDFLAGS = -lcrypto $(LDPERL) $(LDEXTRA)
+LDFLAGS = -lcrypto -lz $(LDPERL) $(LDEXTRA)
 
 ####################################################################################################################################
 # Install options
@@ -91,6 +91,9 @@ SRCS = \
 	common/type/variant.c \
 	common/type/variantList.c \
 	common/wait.c \
+	compress/gzip.c \
+	compress/gzipCompress.c \
+	compress/gzipDecompress.c \
 	config/config.c \
 	config/define.c \
 	config/load.c \
@@ -245,6 +248,15 @@ common/type/variantList.o: common/type/variantList.c common/debug.h common/error
 
 common/wait.o: common/wait.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/convert.h common/wait.h
 	$(CC) $(CFLAGS) -c common/wait.c -o common/wait.o
+
+compress/gzip.o: compress/gzip.c common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/convert.h compress/gzip.h
+	$(CC) $(CFLAGS) -c compress/gzip.c -o compress/gzip.o
+
+compress/gzipCompress.o: compress/gzipCompress.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h compress/gzip.h compress/gzipCompress.h
+	$(CC) $(CFLAGS) -c compress/gzipCompress.c -o compress/gzipCompress.o
+
+compress/gzipDecompress.o: compress/gzipDecompress.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h compress/gzip.h compress/gzipDecompress.h
+	$(CC) $(CFLAGS) -c compress/gzipDecompress.c -o compress/gzipDecompress.o
 
 config/config.o: config/config.c common/assert.h common/debug.h common/error.auto.h common/error.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.c config/config.auto.h config/config.h config/define.auto.h config/define.h
 	$(CC) $(CFLAGS) -c config/config.c -o config/config.o

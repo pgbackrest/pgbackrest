@@ -373,7 +373,7 @@ sub run
                     #         "       -Wpedantic \\\n" : '') .
                     "       -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith \\\n" .
                     "       `perl -MExtUtils::Embed -e ccopts`\n" .
-                    "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
+                    "LDFLAGS=-lcrypto -lz" . (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -lbacktrace' : '') .
                         " `perl -MExtUtils::Embed -e ldopts`\n" .
                     'TESTFLAGS=' . ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : "-DDEBUG_UNIT") .
