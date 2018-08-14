@@ -27,7 +27,7 @@ StorageFileRead *storageFileReadMove(StorageFileRead *this, MemContext *parentNe
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-StorageFileReadPosix *storageFileReadFileDriver(const StorageFileRead *this);
+StorageFileReadPosix *storageFileReadDriver(const StorageFileRead *this);
 IoRead *storageFileReadIo(const StorageFileRead *this);
 bool storageFileReadIgnoreMissing(const StorageFileRead *this);
 const String *storageFileReadName(const StorageFileRead *this);

@@ -8,7 +8,7 @@ Test Storage File
 Test Run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
@@ -74,7 +74,7 @@ testRun()
         StorageFileRead *file = NULL;
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm, .ignoreMissing = true), "new read file");
-        TEST_RESULT_PTR(storageFileReadFileDriver(file), file->fileDriver, "    check file driver");
+        TEST_RESULT_PTR(storageFileReadDriver(file), file->fileDriver, "    check file driver");
         TEST_RESULT_BOOL(storageFileReadIgnoreMissing(file), true, "    check ignore missing");
         TEST_RESULT_STR(strPtr(storageFileReadName(file)), strPtr(fileNoPerm), "    check name");
 
@@ -150,6 +150,9 @@ testRun()
         bufUsedZero(outBuffer);
 
         TEST_RESULT_VOID(ioRead(storageFileReadIo(file), outBuffer), "    no data to load");
+        TEST_RESULT_INT(bufUsed(outBuffer), 0, "    buffer is empty");
+
+        TEST_RESULT_VOID(storageFileReadPosix(storageFileReadDriver(file), outBuffer), "    no data to load from driver either");
         TEST_RESULT_INT(bufUsed(outBuffer), 0, "    buffer is empty");
 
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents (all loaded)");

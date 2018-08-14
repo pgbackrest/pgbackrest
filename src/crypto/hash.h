@@ -9,6 +9,7 @@ Hash object
 ***********************************************************************************************************************************/
 typedef struct CryptoHash CryptoHash;
 
+#include "common/io/filter/filter.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -19,16 +20,33 @@ Hash types
 #define HASH_TYPE_SHA256                                            "sha256"
 
 /***********************************************************************************************************************************
-Functions
+Constructor
 ***********************************************************************************************************************************/
 CryptoHash *cryptoHashNew(const String *type);
-void cryptoHashProcess(CryptoHash *this, Buffer *message);
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+void cryptoHashProcess(CryptoHash *this, const Buffer *message);
 void cryptoHashProcessC(CryptoHash *this, const unsigned char *message, size_t messageSize);
-void cryptoHashProcessStr(CryptoHash *this, String *message);
+void cryptoHashProcessStr(CryptoHash *this, const String *message);
+
+/***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
 const Buffer *cryptoHash(CryptoHash *this);
 String *cryptoHashHex(CryptoHash *this);
+IoFilter *cryptoHashFilter(CryptoHash *this);
+const Variant *cryptoHashResult(CryptoHash *this);
+
+/***********************************************************************************************************************************
+Destructor
+***********************************************************************************************************************************/
 void cryptoHashFree(CryptoHash *this);
 
+/***********************************************************************************************************************************
+Helper functions
+***********************************************************************************************************************************/
 String *cryptoHashOne(const String *type, Buffer *message);
 String *cryptoHashOneC(const String *type, const unsigned char *message, size_t messageSize);
 String *cryptoHashOneStr(const String *type, String *message);

@@ -6,14 +6,15 @@ Test Cryptographic Hashes
 Test Run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("cryptoHashNew(), cryptoHashProcess*(), cryptoHashStr(), and cryptoHashFree()"))
+    if (testBegin("CryptoHash"))
     {
         CryptoHash *hash = NULL;
+        IoFilter *hashFilter = NULL;
 
         TEST_ERROR(cryptoHashNew(strNew(BOGUS_STR)), AssertError, "unable to load hash 'BOGUS'");
 
@@ -30,13 +31,15 @@ testRun()
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA1)), "create sha1 hash");
+        TEST_ASSIGN(hashFilter, cryptoHashFilter(hash), "create sha1 hash");
         TEST_RESULT_VOID(cryptoHashProcessC(hash, (const unsigned char *)"1", 1), "    add 1");
         TEST_RESULT_VOID(cryptoHashProcessStr(hash, strNew("2")), "    add 2");
-        TEST_RESULT_VOID(cryptoHashProcess(hash, bufNewStr(strNew("3"))), "    add 3");
-        TEST_RESULT_VOID(cryptoHashProcess(hash, bufNewStr(strNew("4"))), "    add 4");
-        TEST_RESULT_VOID(cryptoHashProcess(hash, bufNewStr(strNew("5"))), "    add 5");
+        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewStr(strNew("3"))), "    add 3");
+        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewStr(strNew("4"))), "    add 4");
+        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewStr(strNew("5"))), "    add 5");
 
-        TEST_RESULT_STR(strPtr(cryptoHashHex(hash)), "8cb2237d0679ca88db6464eac60da96345513964", "    check small hash");
+        TEST_RESULT_STR(
+            strPtr(varStr(ioFilterResult(hashFilter))), "8cb2237d0679ca88db6464eac60da96345513964", "    check small hash");
         TEST_RESULT_VOID(cryptoHashFree(hash), "    free hash");
 
         // -------------------------------------------------------------------------------------------------------------------------

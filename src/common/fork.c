@@ -12,7 +12,7 @@ Fork a new process and detach it so it can continue running after the parent pro
 startup because the parent process may continue to run and perform work for some time.
 ***********************************************************************************************************************************/
 void
-forkDetach()
+forkDetach(void)
 {
     FUNCTION_DEBUG_VOID(logLevelTrace);
 

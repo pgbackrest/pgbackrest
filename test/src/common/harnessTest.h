@@ -14,12 +14,12 @@ C Test Harness
 // Functions
 void testAdd(int run, bool selected);
 bool testBegin(const char *name);
-void testComplete();
+void testComplete(void);
 
-const char *testExe();
+const char *testExe(void);
 void testExeSet(const char *testExe);
 
-const char *testPath();
+const char *testPath(void);
 void testPathSet(const char *testPath);
 
 /***********************************************************************************************************************************
@@ -270,5 +270,12 @@ Macros to ease the use of common data types
 
 #define TEST_RESULT_U16_HEX(statement, resultExpected, ...)                                                                        \
     TEST_RESULT(statement, resultExpected, uint16_t, "%04X", TEST_TYPE_FORMAT, ==, TEST_TYPE_COMPARE, __VA_ARGS__);
+
+#define TEST_RESULT_UINT_PARAM(statement, resultExpected, typeOp, ...)                                                             \
+    TEST_RESULT(statement, resultExpected, uint64_t, "%" PRIu64, TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
+#define TEST_RESULT_UINT(statement, resultExpected, ...)                                                                           \
+    TEST_RESULT_UINT_PARAM(statement, resultExpected, ==, __VA_ARGS__);
+#define TEST_RESULT_UINT_NE(statement, resultExpected, ...)                                                                        \
+    TEST_RESULT_UINT_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
 #endif

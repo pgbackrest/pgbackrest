@@ -14,7 +14,7 @@ typedef struct KeyValue KeyValue;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-KeyValue *kvNew();
+KeyValue *kvNew(void);
 KeyValue *kvDup(const KeyValue *source);
 KeyValue *kvAdd(KeyValue *this, const Variant *key, const Variant *value);
 const VariantList *kvKeyList(const KeyValue *this);

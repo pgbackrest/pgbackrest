@@ -260,14 +260,14 @@ cfgDefDataFind(
 Command and option define totals
 ***********************************************************************************************************************************/
 unsigned int
-cfgDefCommandTotal()
+cfgDefCommandTotal(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(UINT, sizeof(configDefineCommandData) / sizeof(ConfigDefineCommandData));
 }
 
 unsigned int
-cfgDefOptionTotal()
+cfgDefOptionTotal(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(UINT, sizeof(configDefineOptionData) / sizeof(ConfigDefineOptionData));

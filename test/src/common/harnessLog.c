@@ -62,7 +62,7 @@ harnessLogOpen(const char *logFile, int flags, int mode)
 Initialize log for testing
 ***********************************************************************************************************************************/
 void
-harnessLogInit()
+harnessLogInit(void)
 {
     FUNCTION_HARNESS_VOID();
 
@@ -92,7 +92,7 @@ Reset test log level
 Set back to info
 ***********************************************************************************************************************************/
 void
-harnessLogLevelReset()
+harnessLogLevelReset(void)
 {
     logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false);
 }
@@ -222,7 +222,7 @@ harnessLogResultRegExp(const char *expression)
 Make sure nothing is left in the log after all tests have completed
 ***********************************************************************************************************************************/
 void
-harnessLogFinal()
+harnessLogFinal(void)
 {
     FUNCTION_HARNESS_VOID();
 

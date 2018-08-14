@@ -25,7 +25,7 @@ typedef enum
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-StringList *strLstNew();
+StringList *strLstNew(void);
 StringList *strLstNewSplit(const String *string, const String *delimiter);
 StringList *strLstNewSplitZ(const String *string, const char *delimiter);
 StringList *strLstNewSplitSize(const String *string, const String *delimiter, size_t size);

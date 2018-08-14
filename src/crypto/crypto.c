@@ -18,7 +18,7 @@ static bool cryptoInitDone = false;
 Initialize ciphers
 ***********************************************************************************************************************************/
 void
-cryptoInit()
+cryptoInit(void)
 {
     FUNCTION_DEBUG_VOID(logLevelTrace);
 
@@ -37,7 +37,7 @@ cryptoInit()
 Have the ciphers been initialized?
 ***********************************************************************************************************************************/
 bool
-cryptoIsInit()
+cryptoIsInit(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(BOOL, cryptoInitDone);

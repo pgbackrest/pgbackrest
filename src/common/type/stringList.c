@@ -16,7 +16,7 @@ String List Handler
 Wrapper for lstNew()
 ***********************************************************************************************************************************/
 StringList *
-strLstNew()
+strLstNew(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(STRING_LIST, (StringList *)lstNew(sizeof(String *)));

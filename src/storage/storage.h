@@ -13,6 +13,7 @@ typedef struct Storage Storage;
 
 #include "common/type/buffer.h"
 #include "common/type/stringList.h"
+#include "common/io/filter/group.h"
 #include "storage/fileRead.h"
 #include "storage/fileWrite.h"
 #include "storage/info.h"
@@ -129,6 +130,7 @@ storageNewRead
 typedef struct StorageNewReadParam
 {
     bool ignoreMissing;
+    IoFilterGroup *filterGroup;
 } StorageNewReadParam;
 
 #define storageNewReadP(this, pathExp, ...)                                                                                        \
@@ -149,6 +151,7 @@ typedef struct StorageNewWriteParam
     bool noSyncFile;
     bool noSyncPath;
     bool noAtomic;
+    IoFilterGroup *filterGroup;
 } StorageNewWriteParam;
 
 #define storageNewWriteP(this, pathExp, ...)                                                                                       \

@@ -90,14 +90,9 @@ sub process
         $self->stanzaUpgrade();
     }
     # Process stanza delete
-    elsif (cfgCommandTest(CFGCMD_STANZA_DELETE))
-    {
-        $self->stanzaDelete();
-    }
-    # Else error if any other command is found
     else
     {
-        confess &log(ASSERT, "stanza->process() called with invalid command: " . cfgCommandName(cfgCommandGet()));
+        $self->stanzaDelete();
     }
 
     # Return from function and log return values if any

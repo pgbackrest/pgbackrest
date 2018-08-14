@@ -9,6 +9,7 @@ IO read object
 ***********************************************************************************************************************************/
 typedef struct IoRead IoRead;
 
+#include "common/io/filter/group.h"
 #include "common/type/buffer.h"
 
 /***********************************************************************************************************************************
@@ -22,7 +23,7 @@ typedef bool (*IoReadEof)(void *driver);
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-IoRead *ioReadNew(void *driver, IoReadOpen open, IoReadProcess process, IoReadClose close, IoReadEof eof);
+IoRead *ioReadNew(void *driver, IoReadOpen open, IoReadProcess read, IoReadClose close, IoReadEof eof);
 
 /***********************************************************************************************************************************
 Functions
@@ -32,9 +33,11 @@ size_t ioRead(IoRead *this, Buffer *buffer);
 void ioReadClose(IoRead *this);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
 bool ioReadEof(const IoRead *this);
+const IoFilterGroup *ioReadFilterGroup(const IoRead *this);
+void ioReadFilterGroupSet(IoRead *this, IoFilterGroup *FilterGroup);
 size_t ioReadSize(const IoRead *this);
 
 /***********************************************************************************************************************************

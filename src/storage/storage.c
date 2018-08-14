@@ -85,7 +85,7 @@ storageCopy(StorageFileRead *source, StorageFileWrite *destination)
             ioWriteOpen(storageFileWriteIo(destination));
 
             // Copy data from source to destination
-            Buffer *read = bufNew(ioBufferSize(source));
+            Buffer *read = bufNew(ioBufferSize());
 
             do
             {
@@ -183,7 +183,7 @@ storageGet(StorageFileRead *file, StorageGetParam param)
             else
             {
                 result = bufNew(0);
-                Buffer *read = bufNew(ioBufferSize(file));
+                Buffer *read = bufNew(ioBufferSize());
 
                 do
                 {
@@ -285,7 +285,7 @@ storageMove(StorageFileRead *source, StorageFileWrite *destination)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If the file can't be moved it will need to be copied
-        if (!storageDriverPosixMove(storageFileReadFileDriver(source), storageFileWriteFileDriver(destination)))
+        if (!storageDriverPosixMove(storageFileReadDriver(source), storageFileWriteFileDriver(destination)))
         {
             // Perform the copy
             storageCopyNP(source, destination);
@@ -314,6 +314,7 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
         FUNCTION_DEBUG_PARAM(STORAGE, this);
         FUNCTION_DEBUG_PARAM(STRING, fileExp);
         FUNCTION_DEBUG_PARAM(BOOL, param.ignoreMissing);
+        FUNCTION_DEBUG_PARAM(IO_FILTER_GROUP, param.filterGroup);
 
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();
@@ -322,7 +323,12 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = storageFileReadMove(storageFileReadNew(storagePathNP(this, fileExp), param.ignoreMissing), MEM_CONTEXT_OLD());
+        result = storageFileReadNew(storagePathNP(this, fileExp), param.ignoreMissing);
+
+        if (param.filterGroup != NULL)
+            ioReadFilterGroupSet(storageFileReadIo(result), param.filterGroup);
+
+        storageFileReadMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -344,6 +350,7 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
         FUNCTION_DEBUG_PARAM(BOOL, param.noSyncFile);
         FUNCTION_DEBUG_PARAM(BOOL, param.noSyncPath);
         FUNCTION_DEBUG_PARAM(BOOL, param.noAtomic);
+        FUNCTION_DEBUG_PARAM(IO_FILTER_GROUP, param.filterGroup);
 
         FUNCTION_TEST_ASSERT(this != NULL);
         FUNCTION_DEBUG_ASSERT(this->write);
@@ -353,12 +360,15 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = storageFileWriteMove(
-            storageFileWriteNew(
-                storagePathNP(this, fileExp), param.modeFile != 0 ? param.modeFile : this->modeFile,
-                param.modePath != 0 ? param.modePath : this->modePath, param.noCreatePath, param.noSyncFile, param.noSyncPath,
-                param.noAtomic),
-            MEM_CONTEXT_OLD());
+        result = storageFileWriteNew(
+            storagePathNP(this, fileExp), param.modeFile != 0 ? param.modeFile : this->modeFile,
+            param.modePath != 0 ? param.modePath : this->modePath, param.noCreatePath, param.noSyncFile, param.noSyncPath,
+            param.noAtomic);
+
+        if (param.filterGroup != NULL)
+            ioWriteFilterGroupSet(storageFileWriteIo(result), param.filterGroup);
+
+        storageFileWriteMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -622,7 +632,7 @@ storageToLog(const Storage *this, char *buffer, size_t bufferSize)
         if (this == NULL)
             string = strNew("null");
         else
-            string = strNewFmt("{path: %s, write: %s}", strPtr(strQuoteZ(this->path, "\"")), this->write ? "true" : "false");
+            string = strNewFmt("{path: %s, write: %s}", strPtr(strQuoteZ(this->path, "\"")), cvtBoolToConstZ(this->write));
 
         result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
     }

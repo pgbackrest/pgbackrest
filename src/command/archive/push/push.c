@@ -19,7 +19,7 @@ Archive Push Command
 Push a WAL segment to the repository
 ***********************************************************************************************************************************/
 void
-cmdArchivePush()
+cmdArchivePush(void)
 {
     FUNCTION_DEBUG_VOID(logLevelDebug);
 

@@ -18,7 +18,7 @@ Configuration Load
 Load log settings
 ***********************************************************************************************************************************/
 void
-cfgLoadLogSetting()
+cfgLoadLogSetting(void)
 {
     FUNCTION_DEBUG_VOID(logLevelTrace);
 
@@ -55,7 +55,7 @@ cfgLoadLogSetting()
 Update options that have complex rules
 ***********************************************************************************************************************************/
 void
-cfgLoadUpdateOption()
+cfgLoadUpdateOption(void)
 {
     FUNCTION_DEBUG_VOID(logLevelTrace);
 

@@ -9,6 +9,7 @@ IO write object
 ***********************************************************************************************************************************/
 typedef struct IoWrite IoWrite;
 
+#include "common/io/filter/group.h"
 #include "common/type/buffer.h"
 
 /***********************************************************************************************************************************
@@ -21,7 +22,7 @@ typedef void (*IoWriteClose)(void *driver);
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-IoWrite *ioWriteNew(void *driver, IoWriteOpen open, IoWriteProcess process, IoWriteClose close);
+IoWrite *ioWriteNew(void *driver, IoWriteOpen open, IoWriteProcess write, IoWriteClose close);
 
 /***********************************************************************************************************************************
 Functions
@@ -31,8 +32,10 @@ void ioWrite(IoWrite *this, const Buffer *buffer);
 void ioWriteClose(IoWrite *this);
 
 /***********************************************************************************************************************************
-Getters
+Getters/Setters
 ***********************************************************************************************************************************/
+const IoFilterGroup *ioWriteFilterGroup(const IoWrite *this);
+void ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup);
 size_t ioWriteSize(const IoWrite *this);
 
 /***********************************************************************************************************************************

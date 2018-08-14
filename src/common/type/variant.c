@@ -722,7 +722,7 @@ varUInt64Force(const Variant *this)
 New key/value variant
 ***********************************************************************************************************************************/
 Variant *
-varNewKv()
+varNewKv(void)
 {
     FUNCTION_TEST_VOID();
 

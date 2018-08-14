@@ -28,17 +28,17 @@ Command Functions
 
 Access the current command and command parameters.
 ***********************************************************************************************************************************/
-ConfigCommand cfgCommand();
+ConfigCommand cfgCommand(void);
 const char *cfgCommandName(ConfigCommand commandId);
 
-bool cfgLockRequired();
-LockType cfgLockType();
+bool cfgLockRequired(void);
+LockType cfgLockType(void);
 
-bool cfgLogFile();
-LogLevel cfgLogLevelDefault();
-LogLevel cfgLogLevelStdErrMax();
+bool cfgLogFile(void);
+LogLevel cfgLogLevelDefault(void);
+LogLevel cfgLogLevelStdErrMax(void);
 
-const StringList *cfgCommandParam();
+const StringList *cfgCommandParam(void);
 
 /***********************************************************************************************************************************
 Option Functions
@@ -81,16 +81,16 @@ Load Functions
 Used primarily by modules that need to manipulate the configuration.  These modules include, but are not limited to, config/parse.c,
 config/load.c, perl/config.c, and perl/exec.c.
 ***********************************************************************************************************************************/
-void cfgInit();
+void cfgInit(void);
 
 ConfigDefineCommand cfgCommandDefIdFromId(ConfigCommand commandId);
-bool cfgCommandHelp();
+bool cfgCommandHelp(void);
 void cfgCommandHelpSet(bool helpParam);
 ConfigCommand cfgCommandId(const char *commandName);
 void cfgCommandParamSet(const StringList *param);
 void cfgCommandSet(ConfigCommand commandParam);
 
-const String *cfgExe();
+const String *cfgExe(void);
 void cfgExeSet(const String *exeParam);
 
 const Variant *cfgOptionDefault(ConfigOption optionId);

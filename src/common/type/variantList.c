@@ -14,7 +14,7 @@ Variant List Handler
 Wrapper for lstNew()
 ***********************************************************************************************************************************/
 VariantList *
-varLstNew()
+varLstNew(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(VARIANT_LIST, (VariantList *)lstNew(sizeof(Variant *)));

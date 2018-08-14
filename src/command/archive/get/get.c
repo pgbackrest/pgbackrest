@@ -95,7 +95,7 @@ queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegm
 Push a WAL segment to the repository
 ***********************************************************************************************************************************/
 int
-cmdArchiveGet()
+cmdArchiveGet(void)
 {
     FUNCTION_DEBUG_VOID(logLevelDebug);
 

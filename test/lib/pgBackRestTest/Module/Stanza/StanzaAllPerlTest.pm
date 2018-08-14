@@ -107,15 +107,11 @@ sub run
     ################################################################################################################################
     if ($self->begin("Stanza::process()"))
     {
-        #---------------------------------------------------------------------------------------------------------------------------
-        $self->configTestLoad(CFGCMD_CHECK);
+        $self->optionTestSetBool(CFGOPT_ONLINE, false);
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
+
         my $oStanza = new pgBackRest::Stanza();
 
-        $self->testException(sub {$oStanza->process()}, ERROR_ASSERT,
-            "stanza->process() called with invalid command: " . cfgCommandName(CFGCMD_CHECK));
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $self->configTestLoad(CFGCMD_STANZA_CREATE);
         rmdir($self->{strArchivePath});
         rmdir($self->{strBackupPath});
         $self->testResult(sub {$oStanza->process()}, 0, 'parent paths recreated successfully');

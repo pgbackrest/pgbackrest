@@ -57,11 +57,13 @@ sub codeCountScan
                  $strFile =~ '^test/code-count/' ||
                  $strFile =~ '^test/coverage/' ||
                  $strFile =~ '^test/data/' ||
+                 $strFile =~ '^test/docker/' ||
                  $strFile =~ '^test/expect/' ||
                  $strFile =~ '^test/lint/' ||
                  $strFile =~ '^test/package/' ||
                  $strFile =~ '^test/patch/' ||
                  $strFile =~ '^test/profile/' ||
+                 $strFile eq 'test/scratch.txt' ||
                  $strFile eq 'test/src/valgrind.suppress' ||
                  $strFile eq 'test/src/lcov.conf');
 

@@ -89,7 +89,7 @@ cvtZToUInt64Internal(const char *value, const char *type)
 }
 
 /***********************************************************************************************************************************
-Convert uint64 to zero-terminated string
+Convert boolean to zero-terminated string
 ***********************************************************************************************************************************/
 size_t
 cvtBoolToZ(bool value, char *buffer, size_t bufferSize)
@@ -102,12 +102,20 @@ cvtBoolToZ(bool value, char *buffer, size_t bufferSize)
         FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
 
-    size_t result = (size_t)snprintf(buffer, bufferSize, "%s", value ? "true" : "false");
+    size_t result = (size_t)snprintf(buffer, bufferSize, "%s", cvtBoolToConstZ(value));
 
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
     FUNCTION_TEST_RESULT(SIZE, result);
+}
+
+// Since booleans only have two possible values we can return a const with the value.  This is useful when a boolean needs to be
+// output as part of a large string.
+const char *
+cvtBoolToConstZ(bool value)
+{
+    return value ? "true" : "false";
 }
 
 /***********************************************************************************************************************************

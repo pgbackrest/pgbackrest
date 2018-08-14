@@ -95,9 +95,9 @@ sub process
                 $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
                 $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
 
-                $oBackupManifest->build(storageDb({iRemoteIdx => $iRemoteIdx}),
-                    cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iRemoteIdx)), undef, cfgOption(CFGOPT_ONLINE),
-                    $oDb->tablespaceMapGet());
+                $oBackupManifest->build(
+                    storageDb({iRemoteIdx => $iRemoteIdx}), cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iRemoteIdx)), undef,
+                    cfgOptionValid(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE), $oDb->tablespaceMapGet());
 
                 return true;
             }

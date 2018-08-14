@@ -432,8 +432,8 @@ memContextMove(MemContext *this, MemContext *parentNew)
         FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
 
-    // Only move if a valid mem context is provided
-    if (this != NULL)
+    // Only move if a valid mem context is provided and the old and new parents are not the same
+    if (this != NULL && this->contextParent != parentNew)
     {
         // Find context in the old parent and NULL it out
         MemContext *parentOld = this->contextParent;
@@ -491,7 +491,7 @@ memContextSwitch(MemContext *this)
 Return the top context
 ***********************************************************************************************************************************/
 MemContext *
-memContextTop()
+memContextTop(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(MEM_CONTEXT, &contextTop);
@@ -501,7 +501,7 @@ memContextTop()
 Return the current context
 ***********************************************************************************************************************************/
 MemContext *
-memContextCurrent()
+memContextCurrent(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(MEM_CONTEXT, contextCurrent);

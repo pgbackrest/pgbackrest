@@ -33,7 +33,7 @@ testOptionFind(const char *option, unsigned int value)
 Test run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
@@ -429,8 +429,9 @@ testRun()
         parseOptionList[cfgOptConfigPath].source = cfgSourceDefault;
 
         // config default and config-include-path passed - but no config files in the include path - only in the default path
+        // rm command is split below because code counter is confused by what looks like a comment.
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm -rf %s/*", strPtr(configIncludePath)))), 0, "remove all include files");
+        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm -rf %s/" "*", strPtr(configIncludePath)))), 0, "remove all include files");
 
         parseOptionList[cfgOptConfig].found = false;
         parseOptionList[cfgOptConfig].source = cfgSourceDefault;
@@ -551,6 +552,10 @@ testRun()
         StringList *argList = NULL;
         String *configFile = strNewFmt("%s/test.config", testPath());
 
+        TEST_RESULT_INT(
+            sizeof(optionResolveOrder) / sizeof(ConfigOption), CFG_OPTION_TOTAL,
+            "check that the option resolve list contains an entry for every option");
+
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
@@ -629,6 +634,7 @@ testRun()
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--compress-level=3"));
         strLstAdd(argList, strNew("--compress-level=3"));
         TEST_ERROR(
@@ -645,6 +651,7 @@ testRun()
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--manifest-save-threshold=123Q"));
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'123Q' is not valid for 'manifest-save-threshold' option");
@@ -653,6 +660,7 @@ testRun()
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--manifest-save-threshold=199999999999999999999p"));
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'225179981368524800000000000000000000' is out of range for 'manifest-save-threshold' option");
@@ -693,6 +701,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionRequiredError,
@@ -701,7 +710,6 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionRequiredError,
@@ -714,6 +722,8 @@ testRun()
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-key=xxx"));
+        strLstAdd(argList, strNew("--repo1-s3-bucket=xxx"));
+        strLstAdd(argList, strNew("--repo1-s3-endpoint=xxx"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,

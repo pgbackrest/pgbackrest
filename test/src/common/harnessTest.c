@@ -29,15 +29,15 @@ static const char *testPathData = NULL;
 Extern functions
 ***********************************************************************************************************************************/
 #ifndef NO_LOG
-    void harnessLogInit();
-    void harnessLogFinal();
+    void harnessLogInit(void);
+    void harnessLogFinal(void);
 #endif
 
 /***********************************************************************************************************************************
 Get and set the test exe
 ***********************************************************************************************************************************/
 const char *
-testExe()
+testExe(void)
 {
     FUNCTION_HARNESS_VOID();
     FUNCTION_HARNESS_RESULT(STRINGZ, testExeData);
@@ -61,7 +61,7 @@ testExeSet(const char *testExe)
 Get and set the test path, i.e., the path where this test should write its files
 ***********************************************************************************************************************************/
 const char *
-testPath()
+testPath(void)
 {
     FUNCTION_HARNESS_VOID();
     FUNCTION_HARNESS_RESULT(STRINGZ, testPathData);
@@ -151,7 +151,7 @@ testBegin(const char *name)
 testComplete - make sure all expected tests ran
 ***********************************************************************************************************************************/
 void
-testComplete()
+testComplete(void)
 {
     FUNCTION_HARNESS_VOID();
 

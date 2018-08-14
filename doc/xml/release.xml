@@ -17,18 +17,50 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="hunley.douglas"/>
+                            <release-item-ideator id="douglas.j.hunley"/>
                         </release-item-contributor-list>
 
                         <p>Fix issue where errors raised in C were not logged when called from Perl.  <backrest/> properly terminated with the correct error code but lacked an error message to aid in debugging.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="jason.odonnell"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove incompletely implemented <br-option>online</br-option> option from the <cmd>check</cmd> command.  Offline operation runs counter to the purpose of this command, which is to check if archiving and backups are working correctly.</p>
+                    </release-item>
                 </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Exclude temporary and unlogged relation (table/index) files from backup.  Implemented using the same logic as the patches adding this feature to <postgres/>, <link url="https://git.postgresql.org/pg/commitdiff/8694cc96b52a967a49725f32be7aa77fd3b6ac25">8694cc96</link> and <link url="https://git.postgresql.org/pg/commitdiff/920a5e500a119b03356fb1fb64a677eb1aa5fc6f">920a5e50</link>.  Temporary relation exclusion is enabled in <postgres/> &amp;ge; <id>9.0</id>.  Unlogged relation exclusion is enabled in <postgres/> &amp;ge; <id>9.1</id>, where the feature was introduced.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="sarah.conway"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve error message when a command is missing the <br-option>stanza</br-option> option.</p>
+                    </release-item>
+                </release-improvement-list>
 
                 <release-development-list>
                     <release-item>
+                        <p>Validate configuration options in a single pass.  By pre-calculating and storing the option dependencies in <file>parse.auto.c</file> validation can be completed in a single pass, which is both simpler and faster.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
-                            <release-item-reviewer id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
+                            <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Improve performance of string to int conversion.  Use <code>strtoll()</code> instead of <code>sprintf()</code> for conversion.  Also use available integer min/max constants rather than hard-coded values.</p>
@@ -36,11 +68,23 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
-                            <release-item-reviewer id="frost.stephen"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Add <code>uint64</code> variant type and supporting conversion functions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add basic C JSON parser.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Migrate minimum set of code for reading <file>archive.info</file> files from Perl to C.</p>
                     </release-item>
 
                     <release-item>
@@ -48,7 +92,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Abstract IO layer out of the storage layer.  This allows the routines to be used for IO objects that do not have a storage representation.  Implement buffer read and write IO objects.</p>
+                        <p>Abstract IO layer out of the storage layer.  This allows the routines to be used for IO objects that do not have a storage representation.  Implement buffer read and write IO objects.  Implement filters that do not modify the buffer and update <code>cryptoHash</code> to use the new interface.</p>
                     </release-item>
 
                     <release-item>
@@ -57,7 +101,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add <code>iniSectionList()</code> to <code>Ini</code> object and remove dead code.</p>
@@ -65,10 +109,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Require <postgres/> catalog version when instantiating a <code>Manifest</code> object (and not loading it from disk).</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Do nothing in <code>memContextMove()</code> when the context is already in the specified parent.</p>
                     </release-item>
 
                     <release-item>
@@ -76,12 +124,44 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>cvtBoolToConstZ()</code> to simplify conversion of boolean to string.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Enable <id>-Wstrict-prototypes</id>, <id>-Wpointer-arith</id>, <id>-Wduplicated-branches</id>, and <id>-Wduplicated-cond</id> and update code to conform.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Rename error-handling variables in <code>Main.pm</code> to conform to standard.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove redundant lines from embedded Perl by combining blank lines.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
 
             <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="camilo.aguilar"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix invalid log level in <br-option>log-path</br-option> option reference.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="christophe.pettus"/>
+                        </release-item-contributor-list>
+
+                        <p>Stop trying to arrange contributors in <file>release.xml</file> by last/first name.  Contributor names have always been presented in the release notes exactly as given, but we tried to assign internal IDs based on last/first name which can be hard to determine and ultimately doesn't make sense.  Inspired by Christophe's <proper>PostgresOpen 2017</proper> talk, <quote>Human Beings Do Not Have a Primary Key</quote>.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Allow containers to be defined in a document.  The defined containers are built before the document build begins which allows them to be reused.</p>
@@ -112,6 +192,10 @@
                     <release-item>
                         <p>Add <setting>--log-level-test</setting> option.  This allows setting the test log level independently from the general test harness setting, but current only works for the C tests.  It is useful for seeing log output from functions on the console while a test is running.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Update code count for new file types and exclusions.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
@@ -123,9 +207,9 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="youatt.david"/>
-                            <release-item-ideator id="sharma.yogesh"/>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="david.youatt"/>
+                            <release-item-ideator id="yogesh.sharma"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Fix critical bug in resume that resulted in inconsistent backups.  A regression in <id>v0.82</id> removed the timestamp comparison when deciding which files from the aborted backup to keep on resume. See note above for more details.</p>
@@ -134,7 +218,7 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="nj.baliyan"/>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fix error in selective restore when only one user database exists in the cluster.</p>
@@ -142,7 +226,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="schwartz.andrew"/>
+                            <release-item-contributor id="andrew.schwartz"/>
                         </release-item-contributor-list>
 
                         <p>Fix non-compliant ISO-8601 timestamp format in S3 authorization headers.  AWS and some gateways were tolerant of space rather than zero-padded hours while others were not.</p>
@@ -158,7 +242,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="sumner.adam.k"/>
+                            <release-item-ideator id="adam.k.sumner"/>
                         </release-item-contributor-list>
 
                         <p>Improve the HTTP client to set <id>content-length</id> to 0 when not specified by the server.  S3 (and gateways) always set <id>content-length</id> or <id>transfer-encoding</id> but <id>HTTP 1.1</id> does not require it and proxies (e.g. <proper>HAProxy</proper>) may not include either.</p>
@@ -166,7 +250,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Set <code>search_path = 'pg_catalog'</code> on <postgres/> connections.</p>
@@ -196,7 +280,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="gunduz.devrim"/>
+                            <release-item-ideator id="devrim.gunduz"/>
                         </release-item-contributor-list>
 
                         <p>Convert the not very portable <code>uint</code> type to <code>unsigned int</code>.</p>
@@ -212,8 +296,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="hunley.douglas"/>
-                            <release-item-ideator id="odonnell.jason"/>
+                            <release-item-ideator id="douglas.j.hunley"/>
+                            <release-item-ideator id="jason.odonnell"/>
                         </release-item-contributor-list>
 
                         <p>Add sample S3 policy to restrict bucket privileges.</p>
@@ -277,7 +361,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="loxo.lætitia"/>
+                            <release-item-ideator id="laetitia"/>
                         </release-item-contributor-list>
 
                         <p>Fix potential buffer overrun in error message handling.</p>
@@ -299,7 +383,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="floersch.nick"/>
+                            <release-item-ideator id="nick.floersch"/>
                         </release-item-contributor-list>
 
                         <p>Use <code>time_t</code> instead of <code>__time_t</code> for better portability.</p>
@@ -343,7 +427,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="james.craig"/>
+                            <release-item-ideator id="craig.a.james"/>
                         </release-item-contributor-list>
 
                         <p>Fix directory syncs running recursively when only the specified directory should be synced.</p>
@@ -352,7 +436,7 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="yummyliu"/>
-                            <release-item-ideator id="kukharik.vitaliy"/>
+                            <release-item-ideator id="vitaliy.kukharik"/>
                         </release-item-contributor-list>
 
                         <p>Fix <br-option>archive-copy</br-option> throwing <quote>path not found</quote> error for incr/diff backups.</p>
@@ -360,7 +444,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="kukharik.vitaliy"/>
+                            <release-item-ideator id="vitaliy.kukharik"/>
                         </release-item-contributor-list>
 
                         <p>Fix failure in manifest build when two or more files in <id>PGDATA</id> are linked to the same directory.</p>
@@ -372,7 +456,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="adams.clinton"/>
+                            <release-item-ideator id="clinton.adams"/>
                         </release-item-contributor-list>
 
                         <p>Fix rendering of key/value and list options in help.</p>
@@ -386,7 +470,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add support for additional <backrest/> configuration files in the directory specified by the <br-option>--config-include-path</br-option> option. Add <br-option>--config-path</br-option> option for overriding the default base path of the <br-option>--config</br-option> and <br-option>--config-include-path</br-option> option.</p>
@@ -394,7 +478,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="sharma.yogesh"/>
+                            <release-item-contributor id="yogesh.sharma"/>
                         </release-item-contributor-list>
 
                         <p>Add <br-option>repo-s3-token</br-option> option to allow temporary credentials tokens to be configured.  <backrest/> currently has no way to request new credentials so the entire command (e.g. <cmd>backup</cmd>, <cmd>restore</cmd>) must complete before the credentials expire.</p>
@@ -404,7 +488,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Update the <br-option>archive-push-queue-max</br-option>, <br-option>manifest-save-threshold</br-option>, and <br-option>buffer-size</br-option> options to accept values in <id>KB</id>, <id>MB</id>, <id>GB</id>, <id>TB</id>, or <id>PB</id> where the multiplier is a power of <id>1024</id>.</p>
@@ -442,8 +526,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
-                            <release-item-contributor id="steele.david"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Improve <code>String</code> and <code>StringList</code> objects.  Add <code>strUpper()</code>, <code>strLower()</code>, <code>strLstExists()</code>, <code>strLstExistsZ()</code>, <code>strChr()</code>, <code>strSub()</code>, <code>strSubN()</code>, and <code>strTrunc()</code>.</p>
@@ -511,7 +595,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="tabara.viorel"/>
+                            <release-item-ideator id="viorel.tabara"/>
                         </release-item-contributor-list>
 
                         <p>Update docs with 32-bit support and caveats. 32-bit support was added in <proper>v1.26</proper>.</p>
@@ -521,8 +605,8 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
-                            <release-item-ideator id="faherty.brian"/>
+                            <release-item-ideator id="stephen.frost"/>
+                            <release-item-ideator id="brian.faherty"/>
                         </release-item-contributor-list>
 
                         <p>Add monitoring examples using <postgres/> and <proper>jq</proper>.</p>
@@ -530,7 +614,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="courtois.christophe"/>
+                            <release-item-ideator id="christophe.courtois"/>
                         </release-item-contributor-list>
 
                         <p>Add example of command section usage to archiving configuration.</p>
@@ -628,7 +712,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="nicholson.brad"/>
+                            <release-item-ideator id="brad.nicholson"/>
                         </release-item-contributor-list>
 
                         <p>Fix <br-option>--target-action</br-option> and <br-option>--recovery-option</br-option> options being reported as invalid when restoring with <br-option>--type=immediate</br-option>.</p>
@@ -636,7 +720,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="nicholson.brad"/>
+                            <release-item-ideator id="brad.nicholson"/>
                         </release-item-contributor-list>
 
                         <p>Immediately error when a secure option (e.g. <br-option>repo1-s3-key</br-option>) is passed on the command line.  Since <backrest/> would not pass secure options on to sub-processes an obscure error was thrown.  The new error is much clearer and provides hints about how to fix the problem.  Update command documentation to omit secure options that cannot be specified on the command-line.</p>
@@ -644,7 +728,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="kokdemir.ibrahim.edib"/>
+                            <release-item-ideator id="ibrahim.edib.kokdemir"/>
                         </release-item-contributor-list>
 
                         <p>Fix issue passing <br-option>--no-config</br-option> to embedded Perl.</p>
@@ -652,7 +736,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="adams.clinton"/>
+                            <release-item-ideator id="clinton.adams"/>
                         </release-item-contributor-list>
 
                         <p>Fix issue where specifying <br-setting>log-level-stderr</br-setting> > <id>warn</id> would cause a <cmd>local</cmd>/<cmd>remote</cmd> process to error on exit due to output found on stderr when none was expected.  The max value for a <cmd>local</cmd>/<cmd>remote</cmd> process is now <id>error</id> since there is no reason for these processes to emit warnings.</p>
@@ -660,8 +744,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="flatley.thomas"/>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-ideator id="thomas.flatley"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fix manifest test in the <cmd>check</cmd> command when tablespaces are present.</p>
@@ -671,7 +755,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Error when multiple arguments are set in the config file for an option that does not accept multiple arguments.</p>
@@ -679,7 +763,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="vondendriesch.adrian"/>
+                            <release-item-contributor id="adrian.vondendriesch"/>
                         </release-item-contributor-list>
 
                         <p>Remove extraneous sudo commands from <file>src/Makefile</file>.</p>
@@ -697,7 +781,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Port most of <code>Config::Config::configLoad()</code> from Perl to C.</p>
@@ -705,7 +789,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="hunley.douglas"/>
+                            <release-item-ideator id="douglas.j.hunley"/>
                         </release-item-contributor-list>
 
                         <p>Fix incorrect enum types in <file>config.c</file> that throw warnings under clang.</p>
@@ -725,7 +809,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add <code>cfgOptionTest()</code> and update <code>cfgOption()</code> calls that are better implemented as <code>cfgOptionTest()</code>.</p>
@@ -749,7 +833,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Show index in examples for indexed options, i.e. <id>repo-*</id>, <id>pg-*</id>.</p>
@@ -757,7 +841,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Simplify table of contents on command page by only listing commands.</p>
@@ -817,7 +901,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-reviewer id="shang.cynthia"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>The <cmd>archive-push</cmd> command is now partially coded in C which allows the <postgres/> <file>archive_command</file> to run significantly faster when processing status messages from the asynchronous archive process.</p>
@@ -827,7 +911,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Improve <cmd>check</cmd> command to verify that the backup manifest can be built.</p>
@@ -869,7 +953,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-reviewer id="shang.cynthia"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Config parsing implemented in C and passed to Perl as JSON.</p>
@@ -921,7 +1005,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="shang.cynthia"/>
+                            <release-item-ideator id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fix non-compliant formatting for function declarations.</p>
@@ -943,7 +1027,7 @@
 
                      <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="youatt.david"/>
+                            <release-item-ideator id="david.youatt"/>
                         </release-item-contributor-list>
 
                          <p>Clarify that S3 buckets must be created by the user.</p>
@@ -965,7 +1049,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add table render for Markdown format.</p>
@@ -1025,9 +1109,9 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="youatt.david"/>
-                            <release-item-ideator id="sharma.yogesh"/>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="david.youatt"/>
+                            <release-item-ideator id="yogesh.sharma"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Fix critical bug in resume that resulted in inconsistent backups.  A regression in <id>v0.82</id> removed the timestamp comparison when deciding which files from the aborted backup to keep on resume. See note above for more details.</p>
@@ -1035,7 +1119,7 @@
 
                      <release-item>
                          <release-item-contributor-list>
-                             <release-item-contributor id="schwartz.andrew"/>
+                             <release-item-contributor id="andrew.schwartz"/>
                          </release-item-contributor-list>
 
                          <p>Fix non-compliant ISO-8601 timestamp format in S3 authorization headers.  AWS and some gateways were tolerant of space rather than zero-padded hours while others were not.</p>
@@ -1043,7 +1127,7 @@
 
                      <release-item>
                          <release-item-contributor-list>
-                             <release-item-ideator id="james.craig"/>
+                             <release-item-ideator id="craig.a.james"/>
                          </release-item-contributor-list>
 
                          <p>Fix directory syncs running recursively when only the specified directory should be synced.</p>
@@ -1051,7 +1135,7 @@
 
                      <release-item>
                          <release-item-contributor-list>
-                             <release-item-ideator id="nicholson.brad"/>
+                             <release-item-ideator id="brad.nicholson"/>
                          </release-item-contributor-list>
 
                          <p>Fix <br-option>--target-action</br-option> and <br-option>--recovery-option</br-option> options being reported as invalid when restoring with <br-option>--type=immediate</br-option>.</p>
@@ -1060,7 +1144,7 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="yummyliu"/>
-                            <release-item-ideator id="kukharik.vitaliy"/>
+                            <release-item-ideator id="vitaliy.kukharik"/>
                         </release-item-contributor-list>
 
                         <p>Fix <br-option>archive-copy</br-option> throwing <quote>path not found</quote> error for incr/diff backups.</p>
@@ -1068,7 +1152,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="kukharik.vitaliy"/>
+                            <release-item-ideator id="vitaliy.kukharik"/>
                         </release-item-contributor-list>
 
                         <p>Fix failure in manifest build when two or more files in <id>PGDATA</id> are linked to the same directory.</p>
@@ -1081,7 +1165,7 @@
                      <release-item>
                          <release-item-contributor-list>
                              <release-item-ideator id="nj.baliyan"/>
-                             <release-item-contributor id="shang.cynthia"/>
+                             <release-item-contributor id="cynthia.shang"/>
                          </release-item-contributor-list>
 
                          <p>Fix error in selective restore when only one user database exists in the cluster.</p>
@@ -1091,7 +1175,7 @@
                 <release-improvement-list>
                      <release-item>
                          <release-item-contributor-list>
-                             <release-item-ideator id="sumner.adam.k"/>
+                             <release-item-ideator id="adam.k.sumner"/>
                          </release-item-contributor-list>
 
                          <p>Improve the HTTP client to set <id>content-length</id> to 0 when not specified by the server.  S3 (and gateways) always set <id>content-length</id> or <id>transfer-encoding</id> but <id>HTTP 1.1</id> does not require it and proxies (e.g. <proper>HAProxy</proper>) may not include either.</p>
@@ -1125,7 +1209,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="tabara.viorel"/>
+                            <release-item-ideator id="viorel.tabara"/>
                         </release-item-contributor-list>
 
                         <p>Update docs with 32-bit support and caveats. 32-bit support was added in <proper>v1.26</proper>.</p>
@@ -1135,7 +1219,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                        <release-item-ideator id="youatt.david"/>
+                        <release-item-ideator id="david.youatt"/>
                     </release-item-contributor-list>
 
                         <p>Clarify that S3 buckets must be created by the user.</p>
@@ -1191,8 +1275,8 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="ravilla.chiranjeevi"/>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-ideator id="chiranjeevi.ravilla"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fixed inability to restore a single database contained in a tablespace using --db-include.</p>
@@ -1200,8 +1284,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="sumner.adam.k"/>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-ideator id="adam.k.sumner"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Ensure latest <id>db-id</id> is selected on when matching <file>archive.info</file> to <file>backup.info</file>.  This provides correct matching in the event there are <id>system-id</id> and <id>db-version</id> duplicates (e.g. after reverting a <id>pg_upgrade</id>).</p>
@@ -1209,8 +1293,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="odonnell.jason"/>
-                            <release-item-contributor id="steele.david"/>
+                            <release-item-ideator id="jason.odonnell"/>
+                            <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Fixed overly chatty error message when reporting an invalid command.</p>
@@ -1220,8 +1304,8 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="hagander.magnus"/>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-ideator id="magnus.hagander"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add <cmd>stanza-delete</cmd> command to cleanup unused stanzas.</p>
@@ -1231,7 +1315,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Improve <cmd>stanza-create</cmd> command so that it does not error when the stanza already exists.</p>
@@ -1241,7 +1325,7 @@
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Minor changes to <code>Manifest</code> module, mostly for test reproducibility.</p>
@@ -1249,7 +1333,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="shang.cynthia"/>
+                            <release-item-ideator id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fix non-compliant formatting for function declarations.</p>
@@ -1261,7 +1345,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="odonnell.jason"/>
+                            <release-item-ideator id="jason.odonnell"/>
                         </release-item-contributor-list>
 
                         <p>Update <cmd>stanza-create --force</cmd> documentation to urge caution when using.</p>
@@ -1273,7 +1357,7 @@
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add unit tests for the <code>Manifest</code> module.</p>
@@ -1287,7 +1371,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="lardiere.sebastien"/>
+                            <release-item-ideator id="sebastien.lardiere"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue that suppressed locality errors for <cmd>backup</cmd> and <cmd>restore</cmd>.  When a backup host is present, backups should only be allowed on the backup host and restores should only be allowed on the database host unless an alternate configuration is created that ignores the remote host.</p>
@@ -1295,7 +1379,7 @@
 
                      <release-item>
                          <release-item-contributor-list>
-                             <release-item-ideator id="brusselback.adam"/>
+                             <release-item-ideator id="adam.brusselback"/>
                          </release-item-contributor-list>
 
                          <p>Fixed an issue where WAL was not expired on <postgres/> 10.  This was caused by a faulty regex that expected all <postgres/> major versions to be X.X.</p>
@@ -1307,8 +1391,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-ideator id="stephen.frost"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fixed <cmd>info</cmd> command to eliminate <code>"db (prior)"</code> output if no backups or archives exist for a prior version of the cluster.</p>
@@ -1326,7 +1410,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="nullmeier.markus"/>
+                            <release-item-ideator id="markus.nullmeier"/>
                         </release-item-contributor-list>
 
                         <p>Document the relationship between the <br-option>archive-copy</br-option> and <br-option>archive-check</br-option> options.</p>
@@ -1378,7 +1462,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="james.craig"/>
+                            <release-item-ideator id="craig.a.james"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue that could cause copying large manifests to fail during restore.</p>
@@ -1386,7 +1470,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="wilson.javier"/>
+                            <release-item-contributor id="javier.wilson"/>
                         </release-item-contributor-list>
 
                         <p>Fixed incorrect WAL offset for 32-bit architectures.</p>
@@ -1394,8 +1478,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="adams.clinton"/>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-ideator id="clinton.adams"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue retrieving WAL for old database versions.  After a <cmd>stanza-upgrade</cmd> it should still be possible to restore backups from the previous version and perform recovery with <cmd>archive-get</cmd>.  However, archive-get only checked the most recent db version/id and failed.  Also clean up some issues when the same db version/id appears multiple times in the history.</p>
@@ -1403,7 +1487,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="mccormick.jeff"/>
+                            <release-item-ideator id="jeff.mccormick"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue with invalid backup groups being set correctly on restore.  If the backup cannot map a group to a name it stores the group in the manifest as <id>false</id> then uses either the owner of $PGDATA to set the group during restore or failing that the group of the current user.  This logic was not working correctly because the selected group was overwriting the user on restore leaving the group undefined and the user incorrectly set to the group.</p>
@@ -1421,8 +1505,8 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
-                            <release-item-contributor id="steele.david"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Repository encryption support.</p>
@@ -1482,7 +1566,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Add template to improve initial information gathered for issue submissions.</p>
@@ -1492,8 +1576,8 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="fiske.keith"/>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-ideator id="keith.fiske"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Clarify usage of the <br-option>archive-timeout</br-option> option and describe how it is distinct from the <postgres/> <pg-option>archive_timeout</pg-option> setting.</p>
@@ -1555,7 +1639,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Fix custom settings for <br-option>compress-level</br-option> option being ignored.</p>
@@ -1563,7 +1647,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="lobréau.benoit"/>
+                            <release-item-ideator id="benoit.lobréau"/>
                         </release-item-contributor-list>
 
                         <p>Remove error when overlapping timelines are detected.  Overlapping timelines are valid in many Point-in-Time-Recovery (PITR) scenarios.</p>
@@ -1571,8 +1655,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="odonnell.jason"/>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-ideator id="jason.odonnell"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fix instances where <id>database-id</id> was not rendered as an integer in JSON info output.</p>
@@ -1582,7 +1666,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="shvein.mihail"/>
+                            <release-item-ideator id="mihail.shvein"/>
                         </release-item-contributor-list>
 
                         <p>Improve performance of list requests on S3.  Any beginning literal portion of a filter expression is used to generate a search prefix which often helps keep the request small enough to avoid rate limiting.</p>
@@ -1720,7 +1804,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Open log file after async process is completely separated from the main process to prevent the main process from also logging to the file.</p>
@@ -1772,8 +1856,8 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="stjohn.jesper"/>
-                            <release-item-ideator id="rogozin.aleksandr"/>
+                            <release-item-ideator id="jesper.st.john"/>
+                            <release-item-ideator id="aleksandr.rogozin"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue that could cause compression to abort on growing files.</p>
@@ -1781,7 +1865,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="cox.william"/>
+                            <release-item-ideator id="william.cox"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue with keep-alives not being sent to the remote from the local process.</p>
@@ -1791,7 +1875,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Up to seven standbys can be configured for backup from standby.</p>
@@ -1803,7 +1887,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="gdalevich.victor"/>
+                            <release-item-ideator id="victor.gdalevich"/>
                         </release-item-contributor-list>
 
                         <p>Allow <id>content-length</id> (in addition to chunked encoding) when reading XML data to improve compatibility with third-party S3 gateways.</p>
@@ -1831,7 +1915,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fixed document generation to include section summaries on the Configuration page.</p>
@@ -1885,7 +1969,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>The <path>archive_status</path> directory is now recreated on restore to support <postgres/> 8.3 which does not recreate it automatically like more recent versions do.</p>
@@ -1893,7 +1977,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue that could cause the empty archive directory for an old <postgres/> version to be left behind after a <cmd>stanza-upgrade</cmd>.</p>
@@ -1903,7 +1987,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Modified the <cmd>info</cmd> command (both text and JSON output) to display the archive ID and minimum/maximum WAL currently present in the archive for the current and prior, if any, database cluster version.</p>
@@ -1911,7 +1995,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Added <br-option>--backup-ssh-port</br-option> and <br-option>--db-ssh-port</br-option> options to support non-default SSH ports.</p>
@@ -1947,7 +2031,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Move repository options into a separate section in command/command-line help.</p>
@@ -1989,7 +2073,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Consolidate <id>stanza-create</id> and <id>stanza-upgrade</id> tests into new <id>stanza</id> test.</p>
@@ -2009,7 +2093,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vondendriesch.adrian"/>
+                            <release-item-ideator id="adrian.vondendriesch"/>
                         </release-item-contributor-list>
 
                         <p>Fixed missing flag in C library build that resulted in a mismatched binary on 32-bit systems.</p>
@@ -2019,7 +2103,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frazer.scott"/>
+                            <release-item-ideator id="scott.frazer"/>
                         </release-item-contributor-list>
 
                         <p>Add <br-option>s3-repo-ca-path</br-option> and <br-option>s3-repo-ca-file</br-option> options to accommodate systems where CAs are not automatically found by <code>IO::Socket::SSL</code>, i.e. <proper>RHEL7</proper>, or to load custom CAs.</p>
@@ -2157,7 +2241,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fixed the <cmd>info</cmd> command so the WAL archive min/max displayed is for the current database version.</p>
@@ -2165,7 +2249,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fixed the <cmd>backup</cmd> command so the <br-setting>backup-standby</br-setting> option is reset (and the backup proceeds on the primary) if the standby is not configured and/or reachable.</p>
@@ -2173,7 +2257,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fixed config warnings raised from a remote process causing errors in the master process.</p>
@@ -2183,7 +2267,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-reviewer id="shang.cynthia"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p><proper>Amazon S3</proper> repository support.</p>
@@ -2193,7 +2277,7 @@
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-reviewer id="shang.cynthia"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Refactor storage layer to allow for new repository filesystems using drivers.</p>
@@ -2201,7 +2285,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-reviewer id="shang.cynthia"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Refactor IO layer to allow for new compression formats, checksum types, and other capabilities using filters.</p>
@@ -2225,7 +2309,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="loxo.lætitia"/>
+                            <release-item-contributor id="laetitia"/>
                         </release-item-contributor-list>
 
                         <p>Fixed missing <code>sudo</code> in installation section.</p>
@@ -2263,7 +2347,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where read-only operations that used local worker processes (i.e. <cmd>restore</cmd>) were creating write locks that could interfere with parallel <cmd>archive-push</cmd>.</p>
@@ -2273,7 +2357,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Added the stanza-upgrade command to provide a mechanism for upgrading a stanza after upgrading to a new major version of <postgres/>.</p>
@@ -2281,7 +2365,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Added validation of <setting>pgbackrest.conf</setting> to display warnings if options are not valid or are not in the correct section.</p>
@@ -2299,7 +2383,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="sharma.yogesh"/>
+                            <release-item-ideator id="yogesh.sharma"/>
                         </release-item-contributor-list>
 
                         <p>Improved error message when the <cmd>restore</cmd> command detects the presence of <file>postmaster.pid</file>.</p>
@@ -2307,7 +2391,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="sharma.yogesh"/>
+                            <release-item-ideator id="yogesh.sharma"/>
                         </release-item-contributor-list>
 
                         <p>Renumber return codes between 25 and 125 to avoid PostgreSQL interpreting some as fatal signal exceptions.</p>
@@ -2337,7 +2421,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Silence some perl critic warnings.</p>
@@ -2389,7 +2473,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Added ability to test warning messages.</p>
@@ -2403,7 +2487,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where newly initialized (but unused) pages would cause page checksum warnings.</p>
@@ -2417,7 +2501,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where tables over 1GB would report page checksum warnings after the first segment.</p>
@@ -2425,7 +2509,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="lobréau.benoit"/>
+                            <release-item-ideator id="benoit.lobréau"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where databases created with a non-default tablespace would raise bogus warnings about <file>pg_filenode.map</file> and <file>pg_internal.init</file> not being page aligned.</p>
@@ -2507,7 +2591,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="golpayegani.navid"/>
+                            <release-item-ideator id="navid.golpayegani"/>
                         </release-item-contributor-list>
 
                         <p>Fixed a regression introduced in <proper>v1.13</proper> that could cause backups to fail if files were removed (e.g. tables dropped) while the manifest was being built.</p>
@@ -2535,7 +2619,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where an archive-push error would not be retried and would instead return errors to <postgres/> indefinitely (unless the <file>.error</file> file was manually deleted).</p>
@@ -2543,7 +2627,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Fixed a race condition in parallel archiving where creation of new paths generated an error when multiple processes attempted to do so at the same time.</p>
@@ -2553,7 +2637,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Improved performance of <id>wal archive min/max</id> provided by the <cmd>info</cmd> command.</p>
@@ -2565,7 +2649,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Updated async archiving documentation to more accurately describe how the new method works and how it differs from the old method.</p>
@@ -2603,7 +2687,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="vondendriesch.adrian"/>
+                            <release-item-contributor id="adrian.vondendriesch"/>
                         </release-item-contributor-list>
 
                         <p>Fixed const assignment giving compiler warning in C library.</p>
@@ -2615,7 +2699,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="avellar.leonardo"/>
+                            <release-item-ideator id="leonardo.gg.avellar"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where a missing user/group on restore could cause an <quote>uninitialized value</quote> error in <code>File->owner()</code>.</p>
@@ -2637,7 +2721,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Improved <cmd>stanza-create</cmd> command so that it can repair broken repositories in most cases and is robust enough to be made mandatory.</p>
@@ -2645,7 +2729,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Improved <cmd>check</cmd> command to run on a standby, though only basic checks are done because <code>pg_switch_xlog()</code> cannot be executed on a replica.</p>
@@ -2657,7 +2741,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="lobréau.benoit"/>
+                            <release-item-contributor id="benoit.lobréau"/>
                         </release-item-contributor-list>
 
                         <p>Added warning to update <code>pg_tablespace.spclocation</code> when remapping tablespaces in <postgres/> &lt; 9.2.</p>
@@ -2665,7 +2749,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vitale.michael"/>
+                            <release-item-ideator id="michael.vitale"/>
                         </release-item-contributor-list>
 
                         <p>Remove remote lock requirements for the <cmd>archive-get</cmd>, <cmd>restore</cmd>, <cmd>info</cmd>, and <cmd>check</cmd> commands since they are read-only operations.</p>
@@ -2675,7 +2759,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Log file banner is not output until the first log entry is written.</p>
@@ -2687,7 +2771,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="vondendriesch.adrian"/>
+                            <release-item-contributor id="adrian.vondendriesch"/>
                         </release-item-contributor-list>
 
                         <p>Remove Intel-specific optimization from C library build flags.</p>
@@ -2703,7 +2787,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="sharma.yogesh"/>
+                            <release-item-ideator id="yogesh.sharma"/>
                         </release-item-contributor-list>
 
                         <p>Return proper error code when unable to convert a relative path to an absolute path.</p>
@@ -2769,7 +2853,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Added documentation to the User Guide for the <br-option>process-max</br-option> option.</p>
@@ -2839,7 +2923,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="kulkarni.nikhilchandra"/>
+                            <release-item-ideator id="nikhilchandra.kulkarni"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where options that were invalid for the specified command could be provided on the command-line without generating an error.  The options were ignored and did not cause any change in behavior, but it did lead to some confusion.  Invalid options will now generate an error.</p>
@@ -2851,7 +2935,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vondendriesch.adrian"/>
+                            <release-item-ideator id="adrian.vondendriesch"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue that prevented errors from being output to the console before the logging system was initialized, i.e. while parsing options. Error codes were still being returned accurately so this would not have made a process look like it succeeded when it did not.</p>
@@ -2859,7 +2943,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vitale.michael"/>
+                            <release-item-ideator id="michael.vitale"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where the <br-option>db-port</br-option> option specified on the backup server would not be properly passed to the remote unless it was from the first configured database.</p>
@@ -2869,7 +2953,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Added the <br-option>--checksum-page</br-option> option to allow pgBackRest to validate page checksums in data files when checksums are enabled on <postgres/> >= 9.3.  Note that this functionality requires a C library which may not initially be available in OS packages.  The option will automatically be enabled when the library is present and checksums are enabled on the cluster.</p>
@@ -2885,7 +2969,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Added a predictable log entry to signal that a command has completed successfully. For example a backup ends successfully with: <code>INFO: backup command end: completed successfully</code>.</p>
@@ -2901,7 +2985,7 @@
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Abstracted code to determine which database cluster is the primary and which are standbys.</p>
@@ -2929,7 +3013,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Code cleanup in preparation for improved <cmd>stanza-create</cmd> command.</p>
@@ -3009,7 +3093,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Update control and WAL test files to <id>9.4</id> with matching system identifiers.</p>
@@ -3039,7 +3123,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where asynchronous archiving was transferring one file per execution instead of transferring files in batches.  This regression was introduced in <proper>v1.09</proper> and affected efficiency only, all WAL segments were correctly archived in asynchronous mode.</p>
@@ -3057,7 +3141,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="kulkarni.nikhilchandra"/>
+                            <release-item-ideator id="nikhilchandra.kulkarni"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where tablespace paths with the same prefix would cause an invalid link error.</p>
@@ -3067,7 +3151,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Added the <cmd>stanza-create</cmd> command to formalize creation of stanzas in the repository.</p>
@@ -3077,7 +3161,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="gunduz.devrim"/>
+                            <release-item-ideator id="devrim.gunduz"/>
                         </release-item-contributor-list>
 
                         <p>Removed extraneous <code>use lib</code> directives from Perl modules.</p>
@@ -3127,7 +3211,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fixed the <cmd>check</cmd> command to prevent an error message from being logged if the backup directory does not exist.</p>
@@ -3135,7 +3219,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="odonnell.jason"/>
+                            <release-item-ideator id="jason.odonnell"/>
                         </release-item-contributor-list>
 
                         <p>Fixed error message to properly display the archive command when an invalid archive command is detected.</p>
@@ -3143,7 +3227,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where the async archiver would not be started if <cmd>archive-push</cmd> did not have enough space to queue a new WAL segment.  This meant that the queue would never be cleared without manual intervention (such as calling <cmd>archive-push</cmd> directly).  <postgres/> now receives errors when there is not enough space to store new WAL segments but the async process will still be started so that space is eventually freed.</p>
@@ -3151,7 +3235,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Fixed a remote timeout that occurred when a local process generated checksums (during resume or restore) but did not copy files, allowing the remote to go idle.</p>
@@ -3165,7 +3249,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Added the <br-option>cmd-ssh</br-option> option to allow the ssh client to be specified.</p>
@@ -3173,7 +3257,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="biberhofer.sascha"/>
+                            <release-item-ideator id="sascha.biberhofer"/>
                         </release-item-contributor-list>
 
                         <p>Added the <br-option>log-level-stderr</br-option> option to control whether console log messages are sent to <id>stderr</id> or <id>stdout</id>.  By default this is set to <setting>warn</setting> which represents a change in behavior from previous versions, even though it may be more intuitive.  Setting <br-option>log-level-stderr=off</br-option> will preserve the old behavior.</p>
@@ -3181,7 +3265,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Set <id>application_name</id> to <id>"pgBackRest [command]"</id> for database connections.</p>
@@ -3195,7 +3279,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>Clarified error message when unable to acquire <backrest/> advisory lock to make it clear that it is not a <postgres/> backup lock.</p>
@@ -3215,7 +3299,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Added <br-option>archive-timeout</br-option> option documentation to the user guide.</p>
@@ -3259,7 +3343,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vernick.todd"/>
+                            <release-item-ideator id="todd.vernick"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where local processes were not disconnecting when complete and could later timeout.</p>
@@ -3267,7 +3351,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vernick.todd"/>
+                            <release-item-ideator id="todd.vernick"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where the protocol layer could timeout while waiting for WAL segments to arrive in the archive.</p>
@@ -3293,7 +3377,7 @@
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="harvey.john"/>
+                            <release-item-contributor id="john.harvey"/>
                         </release-item-contributor-list>
 
                         <p>Suppress <quote>dpkg-reconfigure: unable to re-open stdin: No file or directory</quote> warning in Vagrant VM build.</p>
@@ -3315,7 +3399,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fixed the <cmd>check</cmd> command so backup info is checked remotely and not just locally.</p>
@@ -3323,7 +3407,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where <br-option>retention-archive</br-option> was not automatically being set when <br-option>retention-archive-type=diff</br-option>, resulting in a less aggressive than intended expiration of archive.</p>
@@ -3341,7 +3425,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
+                            <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
                         <p>The <setting>archive-start</setting> and <setting>archive-stop</setting> settings are now filled in <file>backup.manifest</file> even when <br-option>archive-check=n</br-option>.</p>
@@ -3349,7 +3433,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Additional warnings when archive retention settings may not have the intended effect or would allow indefinite retention.</p>
@@ -3389,7 +3473,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Documentation for archive retention.</p>
@@ -3417,7 +3501,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vitale.michael"/>
+                            <release-item-ideator id="michael.vitale"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where a tablespace link that referenced another link would not produce an error, but instead skip the tablespace entirely.</p>
@@ -3425,7 +3509,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vitale.michael"/>
+                            <release-item-ideator id="michael.vitale"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where options that should not allow multiple values could be specified multiple times in <file>pgbackrest.conf</file> without an error being raised.</p>
@@ -3433,7 +3517,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vernick.todd"/>
+                            <release-item-ideator id="todd.vernick"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where the <br-option>protocol-timeout</br-option> option was not automatically increased when the <br-option>db-timeout</br-option> option was increased.</p>
@@ -3513,7 +3597,7 @@
                  <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="fort.chris"/>
+                            <release-item-ideator id="chris.fort"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where tablespace paths that had $PGDATA as a substring would be identified as a subdirectories of $PGDATA even when they were not.  Also hardened relative path checking a bit.</p>
@@ -3525,7 +3609,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Added documentation for scheduling backups with cron.</p>
@@ -3535,7 +3619,7 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Moved the backlog from the <backrest/> website to the GitHub repository wiki.</p>
@@ -3555,7 +3639,7 @@
                  <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vitale.michael"/>
+                            <release-item-ideator id="michael.vitale"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue an where an extraneous remote was created causing threaded backup/restore to possibly timeout and/or throw a lock conflict.</p>
@@ -3563,7 +3647,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vitale.michael"/>
+                            <release-item-ideator id="michael.vitale"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where db-path was not required for the <cmd>check</cmd> command so an assert was raised when it was missing rather than a polite error message.</p>
@@ -3571,9 +3655,9 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="steele.david"/>
-                            <release-item-contributor id="shang.cynthia"/>
-                            <release-item-reviewer id="steele.david"/>
+                            <release-item-ideator id="david.steele"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Fixed <cmd>check</cmd> command to throw an error when database version/id does not match that of the archive.</p>
@@ -3581,7 +3665,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="lardiere.sebastien"/>
+                            <release-item-ideator id="sebastien.lardiere"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where a remote could try to start its own remote when the <br-option>backup-host</br-option> option was not present in <file>pgbackrest.conf</file> on the database server.</p>
@@ -3643,7 +3727,7 @@
                  <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vitale.michael"/>
+                            <release-item-ideator id="michael.vitale"/>
                         </release-item-contributor-list>
 
                         <p>Added clarification on why the default for the <br-option>backrest-user</br-option> option is <id>backrest</id>.</p>
@@ -3651,7 +3735,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vitale.michael"/>
+                            <release-item-ideator id="michael.vitale"/>
                         </release-item-contributor-list>
 
                         <p>Updated information about package availability on supported platforms.</p>
@@ -3665,8 +3749,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vondendriesch.adrian"/>
-                            <release-item-contributor id="steele.david"/>
+                            <release-item-ideator id="adrian.vondendriesch"/>
+                            <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>HTML footer dates are statically created in English in order to be reproducible.</p>
@@ -3700,8 +3784,8 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="parkinson.janice"/>
-                            <release-item-ideator id="barber.chris"/>
+                            <release-item-ideator id="janice.parkinson"/>
+                            <release-item-ideator id="chris.barber"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where <id>keep-alives</id> could be starved out by lots of small files during multi-threaded <cmd>backup</cmd>.  They were also completely absent from single/multi-threaded <cmd>backup</cmd> resume and <cmd>restore</cmd> checksumming.</p>
@@ -3709,7 +3793,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="barber.chris"/>
+                            <release-item-ideator id="chris.barber"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where the <cmd>expire</cmd> command would refuse to run when explicitly called from the command line if the <br-option>db-host</br-option> option was set.  This was not an issue when <cmd>expire</cmd> was run automatically after a <cmd>backup</cmd></p>
@@ -3723,9 +3807,9 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="steele.david"/>
-                            <release-item-contributor id="shang.cynthia"/>
-                            <release-item-reviewer id="steele.david"/>
+                            <release-item-ideator id="david.steele"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Added <cmd>check</cmd> command to validate that <backrest/> is configured correctly for archiving and backups.</p>
@@ -3769,8 +3853,8 @@
                  <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vondendriesch.adrian"/>
-                            <release-item-contributor id="steele.david"/>
+                            <release-item-ideator id="adrian.vondendriesch"/>
+                            <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Allow a static date to be used for documentation to generate reproducible builds.</p>
@@ -3778,8 +3862,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
-                            <release-item-reviewer id="steele.david"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Added documentation for asynchronous archiving to the user guide.</p>
@@ -3855,8 +3939,8 @@
                  <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="vondendriesch.adrian"/>
-                            <release-item-reviewer id="steele.david"/>
+                            <release-item-contributor id="adrian.vondendriesch"/>
+                            <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Fix usage of sprintf() due to new constraints in Perl 5.22. Parameters not referenced in the format string are no longer allowed.</p>
@@ -3874,9 +3958,9 @@
                  <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="berg.christoph"/>
-                            <release-item-contributor id="vondendriesch.adrian"/>
-                            <release-item-reviewer id="steele.david"/>
+                            <release-item-contributor id="christoph.berg"/>
+                            <release-item-contributor id="adrian.vondendriesch"/>
+                            <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Fixed syntax that was not compatible with Perl 5.2X.</p>
@@ -3884,7 +3968,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="vondendriesch.adrian"/>
+                            <release-item-ideator id="adrian.vondendriesch"/>
                         </release-item-contributor-list>
 
                         <p>Fixed absolute paths that were used for the PDF logo.</p>
@@ -3898,8 +3982,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="vondendriesch.adrian"/>
-                            <release-item-contributor id="steele.david"/>
+                            <release-item-contributor id="adrian.vondendriesch"/>
+                            <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Added man page generation.</p>
@@ -3907,9 +3991,9 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="steele.david"/>
-                            <release-item-contributor id="shang.cynthia"/>
-                            <release-item-reviewer id="steele.david"/>
+                            <release-item-ideator id="david.steele"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>The change log was the last piece of documentation to be rendered in Markdown only.  Wrote a converter so the document can be output by the standard renderers.  The change log will now be located on the website and has been renamed to <quote>Releases</quote>.</p>
@@ -3957,9 +4041,9 @@
                  <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="steele.david"/>
-                            <release-item-contributor id="shang.cynthia"/>
-                            <release-item-reviewer id="steele.david"/>
+                            <release-item-ideator id="david.steele"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Enhanced text output of <cmd>info</cmd> command to include timestamps, sizes, and the reference list for all backups.</p>
@@ -3967,11 +4051,11 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
-                            <!-- <release-item-contributor id="steele.david"/> -->
-                            <release-item-reviewer id="shang.cynthia"/>
-                            <release-item-reviewer id="smith.greg"/>
-                            <release-item-reviewer id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
+                            <!-- <release-item-contributor id="david.steele"/> -->
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="greg.smith"/>
+                            <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Allow selective restore of databases from a cluster backup.  This feature can result in major space and time savings when only specific databases are restored.  Unrestored databases will not be accessible but must be manually dropped before they will be removed from the shared catalogue.</p>
@@ -3979,8 +4063,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <!-- <release-item-contributor id="steele.david"/> -->
-                            <release-item-reviewer id="shang.cynthia"/>
+                            <!-- <release-item-contributor id="david.steele"/> -->
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta1.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
@@ -3996,8 +4080,8 @@
                  <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
-                            <!-- <release-item-contributor id="steele.david"/> -->
+                            <release-item-ideator id="michael.renner"/>
+                            <!-- <release-item-contributor id="david.steele"/> -->
                         </release-item-contributor-list>
 
                         <p>Implemented a new configuration scheme which should be far simpler to use.  See the User Guide and Configuration Reference for details but for a simple configuration all options can now be placed in the <setting>stanza</setting> section. Options that are shared between stanzas can be placed in the <setting>[global]</setting> section.  More complex configurations can still make use of command sections though this should be a rare use case.</p>
@@ -4009,9 +4093,9 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
-                            <release-item-ideator id="frost.stephen"/>
-                            <!-- <release-item-contributor id="steele.david"/> -->
+                            <release-item-ideator id="michael.renner"/>
+                            <release-item-ideator id="stephen.frost"/>
+                            <!-- <release-item-contributor id="david.steele"/> -->
                         </release-item-contributor-list>
 
                         <p>The default configuration filename is now <file>pgbackrest.conf</file> instead of <file>pg_backrest.conf</file>.  This was done for consistency with other naming changes but also to prevent old config files from being loaded accidentally when migrating to <id>1.00</id>.</p>
@@ -4019,9 +4103,9 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
-                            <release-item-ideator id="frost.stephen"/>
-                            <!-- <release-item-contributor id="steele.david"/> -->
+                            <release-item-ideator id="michael.renner"/>
+                            <release-item-ideator id="stephen.frost"/>
+                            <!-- <release-item-contributor id="david.steele"/> -->
                         </release-item-contributor-list>
 
                         <p>The default repository name was changed from <path>/var/lib/backup</path> to <path>/var/lib/pgbackrest</path>.</p>
@@ -4029,7 +4113,7 @@
 
                     <release-item>
                         <!-- <release-item-contributor-list>
-                            <release-item-contributor id="steele.david"/>
+                            <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list> -->
 
                         <p>Lock files are now stored in <path>/tmp/pgbackrest</path> by default. These days <path>/run/pgbackrest</path> is the preferred location but that would require init scripts which are not part of this release.  The <setting>lock-path</setting> option can be used to configure the lock directory.</p>
@@ -4037,8 +4121,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
-                            <!-- <release-item-contributor id="steele.david"/> -->
+                            <release-item-ideator id="stephen.frost"/>
+                            <!-- <release-item-contributor id="david.steele"/> -->
                         </release-item-contributor-list>
 
                         <p>Log files are now stored in <path>/var/log/pgbackrest</path> by default and no longer have the date appended so they can be managed with <id>logrotate</id>.  The <setting>log-path</setting> option can be used to configure the lock directory.</p>
@@ -4046,9 +4130,9 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
-                            <release-item-ideator id="frost.stephen"/>
-                            <!-- <release-item-contributor id="steele.david"/> -->
+                            <release-item-ideator id="michael.renner"/>
+                            <release-item-ideator id="stephen.frost"/>
+                            <!-- <release-item-contributor id="david.steele"/> -->
                         </release-item-contributor-list>
 
                         <p>Executable filename changed from <file>pg_backrest</file> to <file>pgbackrest</file>.</p>
@@ -4074,7 +4158,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="wieck.jan"/>
+                            <release-item-ideator id="jan.wieck"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where the master process was passing <setting>{[dash]}-repo-remote-path</setting> instead of <setting>{[dash]}-repo-path</setting> to the remote and causing the lock files to be created in the default repository directory (<path>/var/lib/backup</path>), generally ending in failure.  This was only an issue when <setting>{[dash]}-repo-remote-path</setting> was defined on the command line rather than in <file>pg_backrest.conf</file>.</p>
@@ -4090,7 +4174,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="benoit.evan"/>
+                            <release-item-ideator id="evan.benoit"/>
                         </release-item-contributor-list>
 
                         <p>Fixed repository incompatibility introduced in <backrest/> 0.90.</p>
@@ -4126,7 +4210,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="odonnell.jason"/>
+                            <release-item-ideator id="jason.odonnell"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where specifying <setting>{[dash]}-no-archive-check</setting> would throw a configuration error.</p>
@@ -4148,8 +4232,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="steele.david"/>
-                            <release-item-contributor id="odonnell.jason"/>
+                            <release-item-ideator id="david.steele"/>
+                            <release-item-contributor id="jason.odonnell"/>
                         </release-item-contributor-list>
 
                         <p>Generate an error when <setting>archive-check=y</setting> but <setting>archive_command</setting> does not execute <file>pg_backrest</file>.</p>
@@ -4185,7 +4269,7 @@
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="harvey.john"/>
+                            <release-item-ideator id="john.harvey"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where document generation failed because some OSs are not tolerant of having multiple installed versions of <postgres/>.  A separate VM is now created for each version.  Also added a sleep after database starts during document generation to ensure the database is running before the next command runs.</p>
@@ -4199,7 +4283,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where longer-running backups/restores would timeout when remote and threaded.  Keepalives are now used to make sure the remote for the main process does not timeout while the thread remotes do all the work.  The error message for timeouts was also improved to make debugging easier.</p>
@@ -4235,7 +4319,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="didovicher.dmitry"/>
+                            <release-item-ideator id="dmitry.didovicher"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where the <cmd>start</cmd>/<cmd>stop</cmd> commands required the <setting>{[dash]}-config</setting> option.</p>
@@ -4243,8 +4327,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
-                            <release-item-ideator id="didovicher.dmitry"/>
+                            <release-item-ideator id="stephen.frost"/>
+                            <release-item-ideator id="dmitry.didovicher"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where log files were being overwritten instead of appended.</p>
@@ -4258,7 +4342,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Symlinks are no longer created in backup directories in the repository.  These symlinks could point virtually anywhere and potentially be dangerous.  Symlinks are still recreated during a restore.</p>
@@ -4296,12 +4380,12 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-contributor id="steele.david"/>
-                            <release-item-contributor id="frost.stephen"/>
-                            <release-item-reviewer id="renner.michael"/>
-                            <release-item-reviewer id="shang.cynthia"/>
-                            <release-item-reviewer id="radman.eric"/>
-                            <release-item-reviewer id="didovicher.dmitry"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-contributor id="stephen.frost"/>
+                            <release-item-reviewer id="michael.renner"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="eric.radman"/>
+                            <release-item-reviewer id="dmitry.didovicher"/>
                         </release-item-contributor-list>
 
                         <p>Added a new user guide that covers <backrest/> basics and some advanced topics including PITR.  Much more to come, but it's a start.</p>
@@ -4371,7 +4455,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where the <cmd>info</cmd> command was throwing an exception when the repository contained no stanzas.</p>
@@ -4379,7 +4463,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where the <postgres/> <code>pg_stop_backup()</code> NOTICEs were being output to <id>stderr</id>.</p>
@@ -4431,7 +4515,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
+                            <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue that caused the formatted timestamp for both the oldest and newest backups to be reported as the current time by the <cmd>info</cmd> command.  Only <id>text</id> output was affected {[dash]}- <id>json</id> output reported the correct epoch values.</p>
@@ -4445,7 +4529,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="shang.cynthia"/>
+                            <release-item-ideator id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>The repository is now created and updated with consistent directory and file modes.  By default <id>umask</id> is set to <id>0000</id> but this can be disabled with the <setting>neutral-umask</setting> setting.</p>
@@ -4538,7 +4622,7 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="freund.andres"/>
+                            <release-item-ideator id="andres.freund"/>
                         </release-item-contributor-list>
 
                         <p>Added file and directory syncs to the <code>File</code> object for additional safety during backup/restore and archiving.</p>
@@ -4546,7 +4630,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="radman.eric"/>
+                            <release-item-ideator id="eric.radman"/>
                         </release-item-contributor-list>
 
                         <p>Added support for Perl 5.10.1 and OpenSSH 5.3 which are default for CentOS/RHEL 6.</p>
@@ -4554,7 +4638,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="radman.eric"/>
+                            <release-item-ideator id="eric.radman"/>
                         </release-item-contributor-list>
 
                         <p>Improved error message when backup is run without <setting>archive_command</setting> set and without <setting>{[dash]}-no-archive-check</setting> specified.</p>
@@ -4568,7 +4652,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
+                            <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
                         <p>Moved version number out of the <file>VERSION</file> file to <file>Version.pm</file> to better support packaging.</p>
@@ -4592,7 +4676,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
+                            <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
                         <p>Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.</p>
@@ -4616,7 +4700,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
+                            <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where <cmd>archive-copy</cmd> would fail on an incr/diff backup when <setting>hardlink=n</setting>.  In this case the <path>pg_xlog</path> path does not already exist and must be created.</p>
@@ -4624,7 +4708,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
+                            <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
                         <p>Fixed an issue in async archiving where <cmd>archive-push</cmd> was not properly returning 0 when <setting>archive-max-mb</setting> was reached and moved the async check after transfer to avoid having to remove the stop file twice.  Also added unit tests for this case and improved error messages to make it clearer to the user what went wrong.</p>
@@ -4632,7 +4716,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
+                            <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
                         <p>Fixed a locking issue that could allow multiple operations of the same type against a single stanza.  This appeared to be benign in terms of data integrity but caused spurious errors while archiving and could lead to errors in backup/restore.</p>
@@ -4646,7 +4730,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
+                            <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
                         <p>Allow comments/disabling in <file>pg_backrest.conf</file> using the <id>#</id> character.  Only <id>#</id> characters in the forst character of the line are honored.</p>
@@ -4654,7 +4738,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
+                            <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
                         <p>Better logging before <id>pg_start_backup()</id> to make it clear when the backup is waiting on a checkpoint.</p>
@@ -4662,8 +4746,8 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
-                            <release-item-reviewer id="renner.michael"/>
+                            <release-item-ideator id="michael.renner"/>
+                            <release-item-reviewer id="michael.renner"/>
                         </release-item-contributor-list>
 
                         <p>Various command behavior and logging fixes.</p>
@@ -4681,8 +4765,8 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="renner.michael"/>
-                            <release-item-reviewer id="renner.michael"/>
+                            <release-item-ideator id="michael.renner"/>
+                            <release-item-reviewer id="michael.renner"/>
                         </release-item-contributor-list>
 
                         <p>Various help fixes.</p>
@@ -4868,7 +4952,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>The <cmd>archive-get</cmd> command now returns a 1 when the archive file is missing to differentiate from hard errors (ssh connection failure, file copy error, etc.)  This lets <postgres/> know that that the archive stream has terminated normally.  However, this does not take into account possible holes in the archive stream.</p>
@@ -4916,7 +5000,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Removed <setting>master_stderr_discard</setting> option on database SSH connections.  There have been occasional lockups and they could be related to issues originally seen in the file code.</p>
@@ -4966,175 +5050,238 @@
 
     <contributor-list>
         <!-- The first contributor is the default for all release items to simplify the xml -->
-        <contributor id="steele.david">
+        <contributor id="david.steele">
             <contributor-name-display>David Steele</contributor-name-display>
             <contributor-id type="github">dwsteele</contributor-id>
         </contributor>
 
         <!-- The order of other contributors is alpha by name -->
-        <contributor id="adams.clinton">
-            <contributor-name-display>Clinton Adams</contributor-name-display>
-            <contributor-id type="github">clad</contributor-id>
-        </contributor>
-
-        <contributor id="avellar.leonardo">
-            <contributor-name-display>Leonardo GG Avellar</contributor-name-display>
-            <contributor-id type="github">L30Bola</contributor-id>
-        </contributor>
-
-        <contributor id="barber.chris">
-            <contributor-name-display>Chris Barber</contributor-name-display>
-            <contributor-id type="github">gamerscomplete</contributor-id>
-        </contributor>
-
-        <contributor id="benoit.evan">
-            <contributor-name-display>Evan Benoit</contributor-name-display>
-            <contributor-id type="github">evanbenoit</contributor-id>
-        </contributor>
-
-        <contributor id="berg.christoph">
-            <contributor-name-display>Christoph Berg</contributor-name-display>
-            <contributor-id type="github">ChristophBerg</contributor-id>
-        </contributor>
-
-        <contributor id="biberhofer.sascha">
-            <contributor-name-display>Sascha Biberhofer</contributor-name-display>
-            <contributor-id type="github">sbiberhofer</contributor-id>
-        </contributor>
-
-        <contributor id="brusselback.adam">
+        <contributor id="adam.brusselback">
             <contributor-name-display>Adam Brusselback</contributor-name-display>
             <contributor-id type="github">Tostino</contributor-id>
         </contributor>
 
-        <contributor id="courtois.christophe">
-            <contributor-name-display>Christophe Courtois</contributor-name-display>
-            <contributor-id type="github">Krysztophe</contributor-id>
+        <contributor id="adam.k.sumner">
+            <contributor-name-display>Adam K. Sumner</contributor-name-display>
+            <contributor-id type="github">Flamacue</contributor-id>
         </contributor>
 
-        <contributor id="cox.william">
-            <contributor-name-display>William Cox</contributor-name-display>
-            <contributor-id type="github">mydimension</contributor-id>
+        <contributor id="adrian.vondendriesch">
+            <contributor-name-display>Adrian Vondendriesch</contributor-name-display>
+            <contributor-id type="github">disco-stu</contributor-id>
         </contributor>
 
-        <contributor id="didovicher.dmitry">
-            <contributor-name-display>Dmitry Didovicher</contributor-name-display>
-            <contributor-id type="github">anarazel</contributor-id>
+        <contributor id="aleksandr.rogozin">
+            <contributor-name-display>Aleksandr Rogozin</contributor-name-display>
+            <contributor-id type="github">arogozin</contributor-id>
         </contributor>
 
-        <contributor id="faherty.brian">
-            <contributor-name-display>Brian Faherty</contributor-name-display>
-            <contributor-id type="github">scrummyin</contributor-id>
-        </contributor>
-
-        <contributor id="fiske.keith">
-            <contributor-name-display>Keith Fiske</contributor-name-display>
-            <contributor-id type="github">keithf4</contributor-id>
-        </contributor>
-
-        <contributor id="flatley.thomas">
-            <contributor-name-display>Thomas Flatley</contributor-name-display>
-            <contributor-id type="github">seadba</contributor-id>
-        </contributor>
-
-        <contributor id="floersch.nick">
-            <contributor-name-display>Nick Floersch</contributor-name-display>
-            <contributor-id type="github">seinick</contributor-id>
-        </contributor>
-
-        <contributor id="fort.chris">
-            <contributor-name-display>Chris Fort</contributor-name-display>
-            <contributor-id type="github">the1forte</contributor-id>
-        </contributor>
-
-        <contributor id="frazer.scott">
-            <contributor-name-display>Scott Frazer</contributor-name-display>
-            <contributor-id type="github">sfrazer</contributor-id>
-        </contributor>
-
-        <contributor id="freund.andres">
+        <contributor id="andres.freund">
             <contributor-name-display>Andres Freund</contributor-name-display>
             <contributor-id type="github">anarazel</contributor-id>
         </contributor>
 
-        <contributor id="frost.stephen">
-            <contributor-name-display>Stephen Frost</contributor-name-display>
-            <contributor-id type="github">sfrost</contributor-id>
+        <contributor id="andrew.schwartz">
+            <contributor-name-display>Andrew Schwartz</contributor-name-display>
+            <contributor-id type="github">trinchan</contributor-id>
         </contributor>
 
-        <contributor id="gdalevich.victor">
-            <contributor-name-display>Victor Gdalevich</contributor-name-display>
-            <contributor-id type="github">ntrvic</contributor-id>
-        </contributor>
-
-        <contributor id="golpayegani.navid">
-            <contributor-name-display>Navid Golpayegani</contributor-name-display>
-            <contributor-id type="github">golpa</contributor-id>
-        </contributor>
-
-        <contributor id="gunduz.devrim">
-            <contributor-name-display>Devrim G&amp;uuml;nd&amp;uuml;z</contributor-name-display>
-            <contributor-id type="github">devrimgunduz</contributor-id>
-        </contributor>
-
-        <contributor id="hagander.magnus">
-            <contributor-name-display>Magnus Hagander</contributor-name-display>
-            <contributor-id type="github">mhagander</contributor-id>
-        </contributor>
-
-        <contributor id="harvey.john">
-            <contributor-name-display>John Harvey</contributor-name-display>
-            <contributor-id type="github">crunchyjohn</contributor-id>
-        </contributor>
-
-        <contributor id="hunley.douglas">
-            <contributor-name-display>Douglas J Hunley</contributor-name-display>
-            <contributor-id type="github">hunleyd</contributor-id>
-        </contributor>
-
-        <contributor id="james.craig">
-            <contributor-name-display>Craig A. James</contributor-name-display>
-            <contributor-id type="github">cjames53</contributor-id>
-        </contributor>
-
-        <contributor id="kukharik.vitaliy">
-            <contributor-name-display>Vitaliy Kukharik</contributor-name-display>
-            <contributor-id type="github">vitabaks</contributor-id>
-        </contributor>
-
-        <contributor id="kulkarni.nikhilchandra">
-            <contributor-name-display>Nikhilchandra Kulkarni</contributor-name-display>
-            <contributor-id type="github">nikhilchandra-kulkarni</contributor-id>
-        </contributor>
-
-        <contributor id="kokdemir.ibrahim.edib">
-            <contributor-name-display>Ibrahim Edib Kokdemir</contributor-name-display>
-            <contributor-id type="github">Edib</contributor-id>
-        </contributor>
-
-        <contributor id="lardiere.sebastien">
-            <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
-            <contributor-id type="github">slardiere</contributor-id>
-        </contributor>
-
-        <contributor id="lobréau.benoit">
+        <contributor id="benoit.lobréau">
             <contributor-name-display>blogh</contributor-name-display>
             <contributor-id type="github">blogh</contributor-id>
         </contributor>
 
-        <contributor id="loxo.lætitia">
-            <contributor-name-display>L&amp;aelig;titia</contributor-name-display>
-            <contributor-id type="github">LaetitiaLoxo</contributor-id>
+        <contributor id="brad.nicholson">
+            <contributor-name-display>Brad Nicholson</contributor-name-display>
+            <contributor-id type="github">bradnicholson</contributor-id>
         </contributor>
 
-        <contributor id="mccormick.jeff">
+        <contributor id="brian.faherty">
+            <contributor-name-display>Brian Faherty</contributor-name-display>
+            <contributor-id type="github">scrummyin</contributor-id>
+        </contributor>
+
+        <contributor id="camilo.aguilar">
+            <contributor-name-display>Camilo Aguilar</contributor-name-display>
+            <contributor-id type="github">c4milo</contributor-id>
+        </contributor>
+
+        <contributor id="chiranjeevi.ravilla">
+            <contributor-name-display>Chiranjeevi Ravilla</contributor-name-display>
+        </contributor>
+
+        <contributor id="chris.barber">
+            <contributor-name-display>Chris Barber</contributor-name-display>
+            <contributor-id type="github">gamerscomplete</contributor-id>
+        </contributor>
+
+        <contributor id="chris.fort">
+            <contributor-name-display>Chris Fort</contributor-name-display>
+            <contributor-id type="github">the1forte</contributor-id>
+        </contributor>
+
+        <contributor id="christoph.berg">
+            <contributor-name-display>Christoph Berg</contributor-name-display>
+            <contributor-id type="github">ChristophBerg</contributor-id>
+        </contributor>
+
+        <contributor id="christophe.courtois">
+            <contributor-name-display>Christophe Courtois</contributor-name-display>
+            <contributor-id type="github">Krysztophe</contributor-id>
+        </contributor>
+
+        <contributor id="christophe.pettus">
+            <contributor-name-display>Christophe Pettus</contributor-name-display>
+            <contributor-id type="github">Xof</contributor-id>
+        </contributor>
+
+        <contributor id="clinton.adams">
+            <contributor-name-display>Clinton Adams</contributor-name-display>
+            <contributor-id type="github">clad</contributor-id>
+        </contributor>
+
+        <contributor id="craig.a.james">
+            <contributor-name-display>Craig A. James</contributor-name-display>
+            <contributor-id type="github">cjames53</contributor-id>
+        </contributor>
+
+        <contributor id="cynthia.shang">
+            <contributor-name-display>Cynthia Shang</contributor-name-display>
+            <contributor-id type="github">cmwshang</contributor-id>
+        </contributor>
+
+        <contributor id="david.youatt">
+            <contributor-name-display>David Youatt</contributor-name-display>
+            <contributor-id type="github">youattd</contributor-id>
+        </contributor>
+
+        <contributor id="devrim.gunduz">
+            <contributor-name-display>Devrim G&amp;uuml;nd&amp;uuml;z</contributor-name-display>
+            <contributor-id type="github">devrimgunduz</contributor-id>
+        </contributor>
+
+        <contributor id="dmitry.didovicher">
+            <contributor-name-display>Dmitry Didovicher</contributor-name-display>
+            <contributor-id type="github">anarazel</contributor-id>
+        </contributor>
+
+        <contributor id="douglas.j.hunley">
+            <contributor-name-display>Douglas J Hunley</contributor-name-display>
+            <contributor-id type="github">hunleyd</contributor-id>
+        </contributor>
+
+        <contributor id="eric.radman">
+            <contributor-name-display>Eric Radman</contributor-name-display>
+            <contributor-id type="github">eradman</contributor-id>
+        </contributor>
+
+        <contributor id="evan.benoit">
+            <contributor-name-display>Evan Benoit</contributor-name-display>
+            <contributor-id type="github">evanbenoit</contributor-id>
+        </contributor>
+
+        <contributor id="greg.smith">
+            <contributor-name-display>Greg Smith</contributor-name-display>
+            <contributor-id type="github">gregscds</contributor-id>
+        </contributor>
+
+        <contributor id="ibrahim.edib.kokdemir">
+            <contributor-name-display>Ibrahim Edib Kokdemir</contributor-name-display>
+            <contributor-id type="github">Edib</contributor-id>
+        </contributor>
+
+        <contributor id="jan.wieck">
+            <contributor-name-display>Jan Wieck</contributor-name-display>
+            <contributor-id type="github">wieck</contributor-id>
+        </contributor>
+
+        <contributor id="janice.parkinson">
+            <contributor-name-display>Janice Parkinson</contributor-name-display>
+            <contributor-id type="github">jpabt</contributor-id>
+        </contributor>
+
+        <contributor id="jason.odonnell">
+            <contributor-name-display>Jason O'Donnell</contributor-name-display>
+            <contributor-id type="github">Dwaligon</contributor-id>
+        </contributor>
+
+        <contributor id="javier.wilson">
+            <contributor-name-display>Javier Wilson</contributor-name-display>
+            <contributor-id type="github">javierwilson</contributor-id>
+        </contributor>
+
+        <contributor id="jeff.mccormick">
             <contributor-name-display>Jeff McCormick</contributor-name-display>
             <contributor-id type="github">jmccormick2001</contributor-id>
         </contributor>
 
-        <contributor id="nicholson.brad">
-            <contributor-name-display>Brad Nicholson</contributor-name-display>
-            <contributor-id type="github">bradnicholson</contributor-id>
+        <contributor id="jens.wilke">
+            <contributor-name-display>Jens Wilke</contributor-name-display>
+        </contributor>
+
+        <contributor id="jesper.st.john">
+            <contributor-name-display>Jesper St John</contributor-name-display>
+            <contributor-id type="github">Underhunden</contributor-id>
+        </contributor>
+
+        <contributor id="john.harvey">
+            <contributor-name-display>John Harvey</contributor-name-display>
+            <contributor-id type="github">crunchyjohn</contributor-id>
+        </contributor>
+
+        <contributor id="keith.fiske">
+            <contributor-name-display>Keith Fiske</contributor-name-display>
+            <contributor-id type="github">keithf4</contributor-id>
+        </contributor>
+
+        <contributor id="laetitia">
+            <contributor-name-display>L&amp;aelig;titia</contributor-name-display>
+            <contributor-id type="github">LaetitiaLoxo</contributor-id>
+        </contributor>
+
+        <contributor id="leonardo.gg.avellar">
+            <contributor-name-display>Leonardo GG Avellar</contributor-name-display>
+            <contributor-id type="github">L30Bola</contributor-id>
+        </contributor>
+
+        <contributor id="magnus.hagander">
+            <contributor-name-display>Magnus Hagander</contributor-name-display>
+            <contributor-id type="github">mhagander</contributor-id>
+        </contributor>
+
+        <contributor id="markus.nullmeier">
+            <contributor-name-display>Markus Nullmeier</contributor-name-display>
+            <contributor-id type="github">mnullmei</contributor-id>
+        </contributor>
+
+        <contributor id="michael.renner">
+            <contributor-name-display>Michael Renner</contributor-name-display>
+            <contributor-id type="github">terrorobe</contributor-id>
+        </contributor>
+
+        <contributor id="michael.vitale">
+            <contributor-name-display>Michael Vitale</contributor-name-display>
+            <contributor-id type="github">MichaelDBA</contributor-id>
+        </contributor>
+
+        <contributor id="mihail.shvein">
+            <contributor-name-display>Mihail Shvein</contributor-name-display>
+            <contributor-id type="github">M1hacka</contributor-id>
+        </contributor>
+
+        <contributor id="navid.golpayegani">
+            <contributor-name-display>Navid Golpayegani</contributor-name-display>
+            <contributor-id type="github">golpa</contributor-id>
+        </contributor>
+
+        <contributor id="nick.floersch">
+            <contributor-name-display>Nick Floersch</contributor-name-display>
+            <contributor-id type="github">seinick</contributor-id>
+        </contributor>
+
+        <contributor id="nikhilchandra.kulkarni">
+            <contributor-name-display>Nikhilchandra Kulkarni</contributor-name-display>
+            <contributor-id type="github">nikhilchandra-kulkarni</contributor-id>
         </contributor>
 
         <contributor id="nj.baliyan">
@@ -5142,116 +5289,68 @@
             <contributor-id type="github">nj3110</contributor-id>
         </contributor>
 
-        <contributor id="nullmeier.markus">
-            <contributor-name-display>Markus Nullmeier</contributor-name-display>
-            <contributor-id type="github">mnullmei</contributor-id>
+        <contributor id="sarah.conway">
+            <contributor-name-display>Sarah Conway</contributor-name-display>
+            <contributor-id type="github">xenophenes</contributor-id>
         </contributor>
 
-        <contributor id="odonnell.jason">
-            <contributor-name-display>Jason O'Donnell</contributor-name-display>
-            <contributor-id type="github">Dwaligon</contributor-id>
+        <contributor id="sascha.biberhofer">
+            <contributor-name-display>Sascha Biberhofer</contributor-name-display>
+            <contributor-id type="github">sbiberhofer</contributor-id>
         </contributor>
 
-        <contributor id="parkinson.janice">
-            <contributor-name-display>Janice Parkinson</contributor-name-display>
-            <contributor-id type="github">jpabt</contributor-id>
+        <contributor id="scott.frazer">
+            <contributor-name-display>Scott Frazer</contributor-name-display>
+            <contributor-id type="github">sfrazer</contributor-id>
         </contributor>
 
-        <contributor id="renner.michael">
-            <contributor-name-display>Michael Renner</contributor-name-display>
-            <contributor-id type="github">terrorobe</contributor-id>
+        <contributor id="sebastien.lardiere">
+            <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
+            <contributor-id type="github">slardiere</contributor-id>
         </contributor>
 
-        <contributor id="radman.eric">
-            <contributor-name-display>Eric Radman</contributor-name-display>
-            <contributor-id type="github">eradman</contributor-id>
+        <contributor id="stephen.frost">
+            <contributor-name-display>Stephen Frost</contributor-name-display>
+            <contributor-id type="github">sfrost</contributor-id>
         </contributor>
 
-        <contributor id="ravilla.chiranjeevi">
-            <contributor-name-display>Chiranjeevi Ravilla</contributor-name-display>
-        </contributor>
-
-        <contributor id="rogozin.aleksandr">
-            <contributor-name-display>Aleksandr Rogozin</contributor-name-display>
-            <contributor-id type="github">arogozin</contributor-id>
-        </contributor>
-
-        <contributor id="schwartz.andrew">
-            <contributor-name-display>Andrew Schwartz</contributor-name-display>
-            <contributor-id type="github">trinchan</contributor-id>
-        </contributor>
-
-        <contributor id="shang.cynthia">
-            <contributor-name-display>Cynthia Shang</contributor-name-display>
-            <contributor-id type="github">cmwshang</contributor-id>
-        </contributor>
-
-        <contributor id="sharma.yogesh">
-            <contributor-name-display>Yogesh Sharma</contributor-name-display>
-            <contributor-id type="github">sharmay</contributor-id>
-        </contributor>
-
-        <contributor id="shvein.mihail">
-            <contributor-name-display>Mihail Shvein</contributor-name-display>
-            <contributor-id type="github">M1hacka</contributor-id>
-        </contributor>
-
-        <contributor id="smith.greg">
-            <contributor-name-display>Greg Smith</contributor-name-display>
-            <contributor-id type="github">gregscds</contributor-id>
-        </contributor>
-
-        <contributor id="stjohn.jesper">
-            <contributor-name-display>Jesper St John</contributor-name-display>
-            <contributor-id type="github">Underhunden</contributor-id>
-        </contributor>
-
-        <contributor id="sumner.adam.k">
-            <contributor-name-display>Adam K. Sumner</contributor-name-display>
-            <contributor-id type="github">Flamacue</contributor-id>
-        </contributor>
-
-        <contributor id="tabara.viorel">
-            <contributor-name-display>Viorel Tabara</contributor-name-display>
-        </contributor>
-
-        <contributor id="uspen">
-            <contributor-name-display>Uspen</contributor-name-display>
-            <contributor-id type="github">uspen</contributor-id>
-        </contributor>
-
-        <contributor id="vernick.todd">
+        <contributor id="todd.vernick">
             <contributor-name-display>Todd Vernick</contributor-name-display>
             <contributor-id type="github">gintoddic</contributor-id>
         </contributor>
 
-        <contributor id="vitale.michael">
-            <contributor-name-display>Michael Vitale</contributor-name-display>
-            <contributor-id type="github">MichaelDBA</contributor-id>
+        <contributor id="thomas.flatley">
+            <contributor-name-display>Thomas Flatley</contributor-name-display>
+            <contributor-id type="github">seadba</contributor-id>
         </contributor>
 
-        <contributor id="vondendriesch.adrian">
-            <contributor-name-display>Adrian Vondendriesch</contributor-name-display>
-            <contributor-id type="github">disco-stu</contributor-id>
+        <contributor id="uspen">
+            <contributor-name-display>uspen</contributor-name-display>
+            <contributor-id type="github">uspen</contributor-id>
         </contributor>
 
-        <contributor id="wieck.jan">
-            <contributor-name-display>Jan Wieck</contributor-name-display>
-            <contributor-id type="github">wieck</contributor-id>
+        <contributor id="victor.gdalevich">
+            <contributor-name-display>Victor Gdalevich</contributor-name-display>
+            <contributor-id type="github">ntrvic</contributor-id>
         </contributor>
 
-        <contributor id="wilke.jens">
-            <contributor-name-display>Jens Wilke</contributor-name-display>
+        <contributor id="viorel.tabara">
+            <contributor-name-display>Viorel Tabara</contributor-name-display>
         </contributor>
 
-        <contributor id="wilson.javier">
-            <contributor-name-display>Javier Wilson</contributor-name-display>
-            <contributor-id type="github">javierwilson</contributor-id>
+        <contributor id="vitaliy.kukharik">
+            <contributor-name-display>Vitaliy Kukharik</contributor-name-display>
+            <contributor-id type="github">vitabaks</contributor-id>
         </contributor>
 
-        <contributor id="youatt.david">
-            <contributor-name-display>David Youatt</contributor-name-display>
-            <contributor-id type="github">youattd</contributor-id>
+        <contributor id="william.cox">
+            <contributor-name-display>William Cox</contributor-name-display>
+            <contributor-id type="github">mydimension</contributor-id>
+        </contributor>
+
+        <contributor id="yogesh.sharma">
+            <contributor-name-display>Yogesh Sharma</contributor-name-display>
+            <contributor-id type="github">sharmay</contributor-id>
         </contributor>
 
         <contributor id="yummyliu">

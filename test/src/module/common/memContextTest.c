@@ -28,7 +28,7 @@ testFree(MemContext *this)
 Test Run
 ***********************************************************************************************************************************/
 void
-testRun()
+testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
@@ -339,9 +339,10 @@ testRun()
                 memContextCurrent()->contextChildList[1] = NULL;
                 TEST_ERROR(memContextMove(memContext, MEM_CONTEXT_OLD()), AssertError, "unable to find mem context in old parent");
 
-                // Set it back so the move will fail
+                // Set it back so the move will succeed
                 memContextCurrent()->contextChildList[1] = memContext;
                 TEST_RESULT_VOID(memContextMove(memContext, MEM_CONTEXT_OLD()), "move context");
+                TEST_RESULT_VOID(memContextMove(memContext, MEM_CONTEXT_OLD()), "move context again");
             }
             MEM_CONTEXT_TEMP_END();
 

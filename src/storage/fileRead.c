@@ -71,7 +71,7 @@ storageFileReadMove(StorageFileRead *this, MemContext *parentNew)
 Get file driver
 ***********************************************************************************************************************************/
 StorageFileReadPosix *
-storageFileReadFileDriver(const StorageFileRead *this)
+storageFileReadDriver(const StorageFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_READ, this);
