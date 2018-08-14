@@ -25,6 +25,17 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("cvtCharToZ()"))
+    {
+        char buffer[STACK_TRACE_PARAM_MAX];
+
+        TEST_ERROR(cvtCharToZ('A', buffer, 1), AssertError, "buffer overflow");
+
+        TEST_RESULT_INT(cvtCharToZ('C', buffer, STACK_TRACE_PARAM_MAX), 1, "convert char to string");
+        TEST_RESULT_STR(buffer, "C", "    check buffer");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cvtDoubleToZ() and cvtZToDouble()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];

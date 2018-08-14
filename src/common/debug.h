@@ -107,6 +107,11 @@ size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
 #define FUNCTION_DEBUG_BOOLP_FORMAT(value, buffer, bufferSize)                                                                     \
     ptrToLog(value, "bool *", buffer, bufferSize)
 
+#define FUNCTION_DEBUG_CHAR_TYPE                                                                                                   \
+    char
+#define FUNCTION_DEBUG_CHAR_FORMAT(value, buffer, bufferSize)                                                                      \
+    cvtCharToZ(value, buffer, bufferSize)
+
 #define FUNCTION_DEBUG_CHARP_TYPE                                                                                                  \
     char *
 #define FUNCTION_DEBUG_CHARP_FORMAT(value, buffer, bufferSize)                                                                     \

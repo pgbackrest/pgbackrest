@@ -10,6 +10,8 @@ Convert Base Data Types
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+size_t cvtCharToZ(char value, char *buffer, size_t bufferSize);
+
 size_t cvtDoubleToZ(double value, char *buffer, size_t bufferSize);
 double cvtZToDouble(const char *value);
 
