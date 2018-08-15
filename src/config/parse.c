@@ -657,7 +657,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             if (strcasecmp(strPtr(varStr(value)), "n") == 0)
                                 parseOptionList[optionId].negate = true;
                             else if (strcasecmp(strPtr(varStr(value)), "y") != 0)
-                                THROW_FMT(OptionInvalidError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
+                                THROW_FMT(OptionInvalidValueError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
                         }
                         // Else add the string value
                         else if (varType(value) == varTypeString)

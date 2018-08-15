@@ -158,6 +158,10 @@
                     <release-item>
                         <p>Add <code>strReplaceChr()</code> to <code>String</code> object.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Correct <id>OptionInvalidError</id> to <id>OptionInvalidValueError</id> in boolean option parsing.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

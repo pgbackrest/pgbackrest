@@ -877,7 +877,8 @@ testRun(void)
         )));
 
         TEST_ERROR(configParse(
-            strLstSize(argList), strLstPtr(argList), false), OptionInvalidError, "boolean option 'compress' must be 'y' or 'n'");
+            strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
+            "boolean option 'compress' must be 'y' or 'n'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
