@@ -673,6 +673,19 @@
             </list>
 
             <p><b>Note:</b> <br-option>--config</br-option>, <br-option>--config-include-path</br-option> and <br-option>--config-path</br-option> are command-line only options.</p>
+
+            <p><backrest/> can also be configured using environment variables as described in the <link url="command.html">command reference</link>.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Configure <br-option>log-path</br-option> using the environment</title>
+
+                <execute user="postgres" output="y" filter="n">
+                    <exe-cmd>bash -c '
+                        export PGBACKREST_LOG_PATH=/path/set/by/env &amp;&amp;
+                        {[project-exe]} --log-level-console=error help backup log-path'</exe-cmd>
+                    <exe-highlight>current\: \/path\/set\/by\/env</exe-highlight>
+                </execute>
+            </execute-list>
         </section>
 
         <!-- SECTION => QUICKSTART - CREATE REPOSITORY -->
