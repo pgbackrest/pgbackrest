@@ -44,6 +44,10 @@
                     <release-item>
                         <p>Allow any option to be set in an environment variable.  This includes options that previously could only be specified on the command line, e.g. <br-option>stanza</br-option>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p><postgres/> 11 Beta 3 support.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>

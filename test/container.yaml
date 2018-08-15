@@ -4,8 +4,10 @@
 # Contains hashes for containers that are available on Docker hub.  If present, the container can be pulled instead of being built
 # locally which saves a lot of time.  Note: these are hashes of the Dockerfile not the actual binary image.
 # **********************************************************************************************************************************
+20180815A:
+  u18: 5e966399a1352880e5bb97a35cda162766da0409
+
 20180721A:
   co6: 0ce34e42667499721f9f02c1b9e886f5f331b4e4
   co7: 58b1f8e80553ea197d54c6b51479d29029a0468d
   u12: 6892bee5d0584c45d12273f687230fbec0b27982
-  u18: 5e966399a1352880e5bb97a35cda162766da0409
