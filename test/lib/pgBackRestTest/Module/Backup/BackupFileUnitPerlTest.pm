@@ -265,7 +265,6 @@ sub run
             $lManifestSaveSize,
             $lManifestSaveCurrent);
 
-# CSHANG May be able to do page-checksums here but is that outside the scope?
         # File is compressed in repo so make sure repo-size added to manifest
         $self->testResult(sub {$oBackupManifest->test(
             MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REPO_SIZE, $lResultRepoSize)},
@@ -524,6 +523,8 @@ sub run
         $oBackupManifest = new pgBackRest::Manifest("$strBackupPath/" . FILE_MANIFEST,
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => 201409291});
 
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Check BACKUP_FILE_RECOPY warning
         $iResultCopyResult = BACKUP_FILE_RECOPY;
         $lResultCopySize = 0;
         $lResultRepoSize = $lResultCopySize + 1;
@@ -534,7 +535,7 @@ sub run
 
         $self->testResult(sub {backupManifestUpdate(
             $oBackupManifest,
-            $strHost,
+            undef,
             $iLocalId,
             $strFileDb,
             $strRepoFile,
@@ -556,6 +557,7 @@ sub run
             " corrupted.\n" .
             "NOTE: this does not indicate a problem with the PostgreSQL page checksums."});
 
+        # Check size code paths
         $self->testResult(
             $oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE, $lResultCopySize),
             true, "    copy size set");
@@ -564,7 +566,120 @@ sub run
             true, "    repo size set");
         $self->testResult(
             $oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strResultCopyChecksum),
-            false, "    checksum not set");
+            false, "    checksum not set since copy size 0");
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Checkum page exception
+        $iResultCopyResult = BACKUP_FILE_COPY;
+
+        $self->testException(sub {backupManifestUpdate(
+            $oBackupManifest,
+            $strHost,
+            $iLocalId,
+            $strFileDb,
+            $strRepoFile,
+            $lFileSize,
+            $strFileHash,
+            true,
+            $iResultCopyResult,
+            $lResultCopySize,
+            $lResultRepoSize,
+            $strResultCopyChecksum,
+            $rResultExtra,
+            $lSizeTotal,
+            $lSizeCurrent,
+            $lManifestSaveSize,
+            $lManifestSaveCurrent)},
+            ERROR_ASSERT, "$strFileDb should have calculated page checksums");
+
+        $rResultExtra->{bValid} = false;
+        $self->testException(sub {backupManifestUpdate(
+            $oBackupManifest,
+            $strHost,
+            $iLocalId,
+            $strFileDb,
+            $strRepoFile,
+            $lFileSize,
+            $strFileHash,
+            true,
+            $iResultCopyResult,
+            $lResultCopySize + 1,
+            $lResultRepoSize,
+            $strResultCopyChecksum,
+            $rResultExtra,
+            $lSizeTotal,
+            $lSizeCurrent,
+            $lManifestSaveSize,
+            $lManifestSaveCurrent)},
+            ERROR_ASSERT, "bAlign flag should have been set for misaligned page");
+
+        $rResultExtra->{bAlign} = true;
+        $self->testException(sub {backupManifestUpdate(
+            $oBackupManifest,
+            $strHost,
+            $iLocalId,
+            $strFileDb,
+            $strRepoFile,
+            $lFileSize,
+            $strFileHash,
+            true,
+            $iResultCopyResult,
+            $lResultCopySize + 1,
+            $lResultRepoSize,
+            $strResultCopyChecksum,
+            $rResultExtra,
+            $lSizeTotal,
+            $lSizeCurrent,
+            $lManifestSaveSize,
+            $lManifestSaveCurrent)},
+            ERROR_ASSERT, "bAlign flag should have been set for misaligned page");
+
+        $rResultExtra->{bAlign} = false;
+        $self->testResult(sub {backupManifestUpdate(
+            $oBackupManifest,
+            $strHost,
+            $iLocalId,
+            $strFileDb,
+            $strRepoFile,
+            $lFileSize,
+            $strFileHash,
+            true,
+            $iResultCopyResult,
+            $lResultCopySize + 1,
+            $lResultRepoSize,
+            $strResultCopyChecksum,
+            $rResultExtra,
+            $lSizeTotal,
+            $lSizeCurrent,
+            $lManifestSaveSize,
+            $lManifestSaveCurrent)},
+            "($lFileSize, $lFileSize)",
+            'page misalignment warning - host defined', {strLogExpect =>
+            "WARN: page misalignment in file $strHost:$strFileDb: file size " . ($lResultCopySize + 1) .
+            " is not divisible by page size " . PG_PAGE_SIZE});
+
+        $self->testResult(sub {backupManifestUpdate(
+            $oBackupManifest,
+            undef,
+            $iLocalId,
+            $strFileDb,
+            $strRepoFile,
+            $lFileSize,
+            $strFileHash,
+            true,
+            $iResultCopyResult,
+            $lResultCopySize + 1,
+            $lResultRepoSize,
+            $strResultCopyChecksum,
+            $rResultExtra,
+            $lSizeTotal,
+            $lSizeCurrent,
+            $lManifestSaveSize,
+            $lManifestSaveCurrent)},
+            "($lFileSize, $lFileSize)",
+            'page misalignment warning - host not defined', {strLogExpect =>
+            "WARN: page misalignment in file $strFileDb: file size " . ($lResultCopySize + 1) .
+            " is not divisible by page size " . PG_PAGE_SIZE});
     }
 }
 
