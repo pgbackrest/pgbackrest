@@ -94,6 +94,23 @@ sub backupFile
     my $strFileOp = $strRepoFile . ($bCompress ? '.' . COMPRESS_EXT : '');
 
     my $bCopy = true;
+# CSHANG PROBLEM: When building the internal manifest passed in here, we may have files that we know are in a prior DB - BUT that does not mean they will have a checksum - the case I see are zero-sized files. These files get copied even though they should be skipped. However, what confuses me is why wouldn't the actual manifest have a reference to the 0 sized file in the FULL directory? So 1) Having a reference means it should NOT have been copied. 2) Why doesn't the actual manifest have a reference?
+# < Expected Manifest
+# > Actual manifest
+# < pg_data/global/6100={"size":0,"timestamp":1534530766}
+# < pg_data/global/6100_vm={"size":0,"timestamp":1534530766}
+# --- BUT this reference only seems to on the restore
+# > pg_data/global/6100={"reference":"20180817-183321F","size":0,"timestamp":1534530766}
+# > pg_data/global/6100_vm={"reference":"20180817-183321F","size":0,"timestamp":1534530766}
+# 3) And lastly, why are we not checking this at backup - the actual and expected - why is it only being flagged on restore?
+# < pg_data/pg_logical/replorigin_checkpoint={"checksum":"347fc8f2df71bd4436e38bd1516ccd7ea0d46532","master":true,"reference":"20180817-183321F","size":8,"timestamp":1534530822}
+# ---
+# > pg_data/pg_logical/replorigin_checkpoint={"checksum":"347fc8f2df71bd4436e38bd1516ccd7ea0d46532","master":true,"size":8,"timestamp":1534530822}
+# What I know for right after the incremental --delta backup:
+# 1) the size:0 files will appear in the FULL manifest and the INCR manifest identically even though a reference
+# should have been made in the INCR manifest AND the file is copied to the INCR directory even though it should NOT have been.
+# (e.g. pg_data/base/1/2620={"checksum-page":true,"size":0,"timestamp":1534532967}). There are NO zero sized fikle with a "reference".
+# 2)
 
     # If checksum is defined then the file needs to be checked. If delta option then check the DB and possibly the repo, else just
     # check the repo.
@@ -111,13 +128,11 @@ sub backupFile
                 ($strCopyChecksum, $lCopySize) = storageDb()->hashSize($oSourceFileIo);
                 $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
 
-                # If the checksum/size does not match, that is OK, just copy the DB file and apply the new checksum
-                if ($bCopy == true)
-                {
-                    $iCopyResult = BACKUP_FILE_CHECKSUM;
-                }
-                # Else if DB checksum and size are same and the file is in a prior backup, then just restore the size and checksum
-                elsif ($bHasReference)
+                # If DB checksum and size are same and the file is in a prior backup, then no need to copy: just restore the size
+                # and checksum
+                # If the checksum/size does not match, that is OK, just leave the copy result as COPY so the DB file will be copied
+                # to this backup as if it never existed here (which it may not have) and apply the new checksum
+                if (!$bCopy && $bHasReference)
                 {
                     $iCopyResult = BACKUP_FILE_NOOP;
                 }
@@ -324,8 +339,11 @@ sub backupManifestUpdate
                 $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
             }
 
-            # If the file has been copied, then remove any reference to the file's existence in a prior backup.
-            $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE);
+            # If the file was copied, then remove any reference to the file's existence in a prior backup.
+            if ($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY)
+            {
+                $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE);
+            }
 
             # If the file had page checksums calculated during the copy
             if ($bChecksumPage)
@@ -410,12 +428,12 @@ sub backupManifestUpdate
             $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile);
         }
     }
-    # else
-    # {
-    #     # File copy was not needed so just restore the size and checksum to the manifest
-    #     $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REPO_SIZE, $lSizeCopy);
-    #     $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
-    # }
+    else
+    {
+        # File copy was not needed so just restore the size and checksum to the manifest
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE, $lSizeCopy);
+        $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
+    }
 
     # Determine whether to save the manifest
     $lManifestSaveCurrent += $lSize;

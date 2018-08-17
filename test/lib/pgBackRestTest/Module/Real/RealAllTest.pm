@@ -619,10 +619,17 @@ sub run
             $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will be restarted', true)");
         }
 
+        # Exercise --delta checksum option
         $oExecuteBackup = $oHostBackup->backupBegin(
             CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup',
             {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
-                strOptionalParam => '--' . cfgOptionName(CFGOPT_STOP_AUTO) . ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=32768'});
+                strOptionalParam => '--' . cfgOptionName(CFGOPT_STOP_AUTO) . ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=32768' .
+                ' --delta'});
+
+        # $oExecuteBackup = $oHostBackup->backupBegin(
+        #     CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup',
+        #     {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
+        #         strOptionalParam => '--' . cfgOptionName(CFGOPT_STOP_AUTO) . ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=32768'}); CSHANG
 
         # Drop a table
         $oHostDbMaster->sqlExecute('drop table test_remove');
@@ -733,12 +740,12 @@ sub run
         storageTest()->pathCreate($oHostDbMaster->dbPath() . qw{/} . $oManifest->walPath(), {strMode => '0700'});
         testPathRemove($oHostDbMaster->tablespacePath(1));
         storageTest()->pathCreate($oHostDbMaster->tablespacePath(1), {strMode => '0700'});
-
+# CSHANG Up to this point, there are no errors AND the INCR backup.manifest does NOT have an reference for "size":0, but the following restore results in errors and then the references to the zero sized files appear - not in the INCR backiup.manifest but in the "actual" vs "expected.
         # Now the restore should work
         $oHostDbMaster->restore(
             undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
             {strOptionalParam => ($bTestLocal ? ' --db-include=test2 --db-include=test3' : '') . ' --buffer-size=16384'});
-
+exit; # CSHANG
         # Test that the first database has not been restored since --db-include did not include test1
         if ($bTestLocal)
         {
