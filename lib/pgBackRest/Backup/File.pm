@@ -116,7 +116,7 @@ sub backupFile
                 {
                     $iCopyResult = BACKUP_FILE_CHECKSUM;
                 }
-                # Else if DB checksum and size are same and the file is in a prior backup, then do nothing with this file
+                # Else if DB checksum and size are same and the file is in a prior backup, then just restore the size and checksum
                 elsif ($bHasReference)
                 {
                     $iCopyResult = BACKUP_FILE_NOOP;
@@ -410,6 +410,12 @@ sub backupManifestUpdate
             $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile);
         }
     }
+    # else
+    # {
+    #     # File copy was not needed so just restore the size and checksum to the manifest
+    #     $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REPO_SIZE, $lSizeCopy);
+    #     $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
+    # }
 
     # Determine whether to save the manifest
     $lManifestSaveCurrent += $lSize;
