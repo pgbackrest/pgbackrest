@@ -125,7 +125,14 @@ sub main
         {
             # Set log levels
             cfgOptionSet(CFGOPT_LOG_LEVEL_STDERR, PROTOCOL, true);
-            logLevelSet(OFF, OFF, cfgOption(CFGOPT_LOG_LEVEL_STDERR));
+            # logLevelSet(OFF, OFF, cfgOption(CFGOPT_LOG_LEVEL_STDERR));
+            logLevelSet(TRACE, OFF, cfgOption(CFGOPT_LOG_LEVEL_STDERR)); # CSHANG
+                            # Open log file
+                            require pgBackRest::Storage::Helper;
+                            pgBackRest::Storage::Helper->import(); # CSHANG
+            logFileSet(
+                storageLocal(),
+                cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())) . '-cynthia'); # CSHANG
 
             # Load module dynamically
             require pgBackRest::Protocol::Local::Minion;

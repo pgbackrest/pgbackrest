@@ -298,7 +298,7 @@ sub processManifest
         if (defined($strReference))
         {
             logDebugMisc($strOperation, "reference ${strRepoFile} to ${strReference}");
-
+# CSHANG Maybe here we should also check OR if delta and size == 0 and timestamp is same? But how do we check timestamp same? Maybe in manifest, when lastManifest, if delta and not checksum and has a reference then we need to somehow skip?
             # If the delta option to checksum all files is set - instead of just checking the size and timestamp - then don't skip
             # checking this file to see if it needs to be copied again.
             if (!cfgOption(CFGOPT_DELTA))

@@ -759,7 +759,7 @@
 
         <!-- SECTION => QUICKSTART - CONFIGURE ENCRYPTION -->
         <!-- Since S3 and repository host require configure-archiving, this section must come after. -->
-        <section id="configure-encryption">
+        <!-- CSHANG <section id="configure-encryption">
             <title>Configure Repository Encryption</title>
 
             <p>The repository will be configured with a cipher type and key to demonstrate encryption.</p>
@@ -774,7 +774,7 @@
             </backrest-config>
 
             <p>Once the repository has been configured and the stanza created and checked, the repository encryption settings cannot be changed.</p>
-        </section>
+        </section> -->
 
         <!-- SECTION => QUICKSTART - STANZA CREATE -->
         <section id="create-stanza">

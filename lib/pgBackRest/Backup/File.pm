@@ -94,23 +94,7 @@ sub backupFile
     my $strFileOp = $strRepoFile . ($bCompress ? '.' . COMPRESS_EXT : '');
 
     my $bCopy = true;
-# CSHANG PROBLEM: When building the internal manifest passed in here, we may have files that we know are in a prior DB - BUT that does not mean they will have a checksum - the case I see are zero-sized files. These files get copied even though they should be skipped. However, what confuses me is why wouldn't the actual manifest have a reference to the 0 sized file in the FULL directory? So 1) Having a reference means it should NOT have been copied. 2) Why doesn't the actual manifest have a reference?
-# < Expected Manifest
-# > Actual manifest
-# < pg_data/global/6100={"size":0,"timestamp":1534530766}
-# < pg_data/global/6100_vm={"size":0,"timestamp":1534530766}
-# --- BUT this reference only seems to on the restore
-# > pg_data/global/6100={"reference":"20180817-183321F","size":0,"timestamp":1534530766}
-# > pg_data/global/6100_vm={"reference":"20180817-183321F","size":0,"timestamp":1534530766}
-# 3) And lastly, why are we not checking this at backup - the actual and expected - why is it only being flagged on restore?
-# < pg_data/pg_logical/replorigin_checkpoint={"checksum":"347fc8f2df71bd4436e38bd1516ccd7ea0d46532","master":true,"reference":"20180817-183321F","size":8,"timestamp":1534530822}
-# ---
-# > pg_data/pg_logical/replorigin_checkpoint={"checksum":"347fc8f2df71bd4436e38bd1516ccd7ea0d46532","master":true,"size":8,"timestamp":1534530822}
-# What I know for right after the incremental --delta backup:
-# 1) the size:0 files will appear in the FULL manifest and the INCR manifest identically even though a reference
-# should have been made in the INCR manifest AND the file is copied to the INCR directory even though it should NOT have been.
-# (e.g. pg_data/base/1/2620={"checksum-page":true,"size":0,"timestamp":1534532967}). There are NO zero sized fikle with a "reference".
-# 2)
+# CSHANG PROBLEM: when --delta is set, the 0 size files get copied and a reference is not set. Previously, the timestamp and size were checked but  we don't store a checksum for 0 files. When we got to backup processing, the file would have a reference so we'd skip putting on the queue. Now we put it on the queue but since there is no checksum, we just blindly copy it and leave the result as BACKUP_FILE_COPY. So the question is do we have to do any additional checks when delta - e.g the timestamp? If so, there still could have been a timeline switch, so that would still fail and so do we recopy? That covers "last manifest" but what about Aborted manifest? Or what if file missing on DB side?
 
     # If checksum is defined then the file needs to be checked. If delta option then check the DB and possibly the repo, else just
     # check the repo.
