@@ -30,6 +30,14 @@
 
                         <p>Remove incompletely implemented <br-option>online</br-option> option from the <cmd>check</cmd> command.  Offline operation runs counter to the purpose of this command, which is to check if archiving and backups are working correctly.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="yogesh.sharma"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue when a boolean option (e.g. <br-option>delta</br-option>) was specified more than once.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>

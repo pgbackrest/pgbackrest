@@ -633,6 +633,15 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--compress"));
+        strLstAdd(argList, strNew("--compress"));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option 'compress' cannot be set multiple times");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--compress-level=3"));

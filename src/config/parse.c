@@ -496,7 +496,10 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             THROW_FMT(OptionInvalidError, "option '%s' cannot be set and reset", cfgOptionName(optionId));
 
                         // Add the argument
-                        strLstAdd(parseOptionList[optionId].valueList, strNew(optarg));
+                        if (optionList[optionListIdx].has_arg == required_argument)
+                            strLstAdd(parseOptionList[optionId].valueList, strNew(optarg));
+                        else
+                            THROW_FMT(OptionInvalidError, "option '%s' cannot be set multiple times", cfgOptionName(optionId));
                     }
 
                     break;
