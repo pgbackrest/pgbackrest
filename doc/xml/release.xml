@@ -234,6 +234,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve error reporting for <code>TEST_ASSIGN()</code> and <code>TEST_RESULT_VOID()</code> macros.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Update code count for new file types and exclusions.</p>
                     </release-item>
                 </release-development-list>

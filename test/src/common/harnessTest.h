@@ -194,7 +194,10 @@ Test that a void statement returns and does not throw an error
     CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
         /* No errors were expected so error */                                                                                     \
-        THROW_FMT(AssertError, "statement '%s' threw error %s, '%s' but void expected", #statement, errorName(), errorMessage());  \
+        THROW_FMT(                                                                                                                 \
+            AssertError, "EXECTED VOID RESULT FROM STATEMENT: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", #statement, errorName(),    \
+            errorMessage(), errorStackTrace());                                                                                    \
+                                                                                                                                   \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
 }
@@ -215,7 +218,9 @@ Test that a statement does not error and assign it to the specified variable if 
     CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
         /* No errors were expected so error */                                                                                     \
-        THROW_FMT(AssertError, "statement '%s' threw error %s, '%s' but result expected", #statement, errorName(), errorMessage());\
+        THROW_FMT(                                                                                                                 \
+            AssertError, "EXECTED ASSIGNMENT FROM STATEMENT: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", #statement, errorName(),     \
+            errorMessage(), errorStackTrace());                                                                                    \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
 }
