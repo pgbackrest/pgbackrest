@@ -361,6 +361,21 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogPath,
     },
 
+    // log-subprocess option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "log-subprocess",
+        .val = PARSE_OPTION_FLAG | cfgOptLogSubprocess,
+    },
+    {
+        .name = "no-log-subprocess",
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLogSubprocess,
+    },
+    {
+        .name = "reset-log-subprocess",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogSubprocess,
+    },
+
     // log-timestamp option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2223,6 +2238,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptLogLevelFile,
     cfgOptLogLevelStderr,
     cfgOptLogPath,
+    cfgOptLogSubprocess,
     cfgOptLogTimestamp,
     cfgOptManifestSaveThreshold,
     cfgOptNeutralUmask,

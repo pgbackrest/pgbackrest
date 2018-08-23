@@ -101,7 +101,7 @@ sub run
             sub {pgBackRest::Protocol::Helper::protocolParam(cfgCommandName(CFGCMD_BACKUP), CFGOPTVAL_REMOTE_TYPE_DB, 2)},
             '(pg-host-2, postgres, [undef], pgbackrest2 --buffer-size=4194304 --command=backup --compress-level=6' .
                 ' --compress-level-network=3 --config=/config2 --config-include-path=/config-include2 --config-path=/config-path2' .
-                ' --pg1-path=/db2 --pg1-port=2222 --protocol-timeout=1830 --stanza=db --type=db remote)',
+                ' --log-level-file=off --pg1-path=/db2 --pg1-port=2222 --protocol-timeout=1830 --stanza=db --type=db remote)',
             'more than one backup db host');
 
         # --------------------------------------------------------------------------------------------------------------------------
@@ -120,8 +120,8 @@ sub run
             sub {pgBackRest::Protocol::Helper::protocolParam(cfgCommandName(CFGCMD_RESTORE), CFGOPTVAL_REMOTE_TYPE_BACKUP)},
             '(repo-host, pgbackrest, [undef], pgbackrest-repo --buffer-size=4194304 --command=restore --compress-level=6' .
                 ' --compress-level-network=3 --config=/config-repo --config-include-path=/config-include-repo' .
-                ' --config-path=/config-path-repo --pg1-path=/db1 --protocol-timeout=1830 --repo1-path=/repo --stanza=db' .
-                ' --type=backup remote)',
+                ' --config-path=/config-path-repo --log-level-file=off --pg1-path=/db1 --protocol-timeout=1830' .
+                ' --repo1-path=/repo --stanza=db --type=backup remote)',
             'config params to repo host');
     }
 

@@ -205,9 +205,10 @@ use constant CFGOPT_LOG_LEVEL_FILE                                  => 'log-leve
     push @EXPORT, qw(CFGOPT_LOG_LEVEL_FILE);
 use constant CFGOPT_LOG_LEVEL_STDERR                                => 'log-level-stderr';
     push @EXPORT, qw(CFGOPT_LOG_LEVEL_STDERR);
+use constant CFGOPT_LOG_SUBPROCESS                                  => 'log-subprocess';
+    push @EXPORT, qw(CFGOPT_LOG_SUBPROCESS);
 use constant CFGOPT_LOG_TIMESTAMP                                   => 'log-timestamp';
     push @EXPORT, qw(CFGOPT_LOG_TIMESTAMP);
-
 
 # Repository options
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -602,13 +603,11 @@ my $rhCommandDefine =
 
     &CFGCMD_LOCAL =>
     {
-        &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOG_LEVEL_STDERR_MAX => ERROR,
     },
 
     &CFGCMD_REMOTE =>
     {
-        &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOG_LEVEL_STDERR_MAX => ERROR,
     },
 
@@ -1831,7 +1830,29 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_DEFAULT => lc(INFO),
         &CFGDEF_ALLOW_LIST => CFGOPT_LOG_LEVEL_CONSOLE,
-        &CFGDEF_COMMAND => CFGOPT_LOG_LEVEL_CONSOLE,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_EXPIRE => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_LOCAL =>
+            {
+                &CFGDEF_DEFAULT => lc(OFF),
+            },
+            &CFGCMD_REMOTE =>
+            {
+                &CFGDEF_DEFAULT => lc(OFF),
+            },
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_START => {},
+            &CFGCMD_STOP => {},
+        }
     },
 
     &CFGOPT_LOG_LEVEL_STDERR =>
@@ -1840,6 +1861,30 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_DEFAULT => lc(WARN),
         &CFGDEF_ALLOW_LIST => CFGOPT_LOG_LEVEL_CONSOLE,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_EXPIRE => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_LOCAL => {},
+            &CFGCMD_REMOTE => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_START => {},
+            &CFGCMD_STOP => {},
+        }
+    },
+
+    &CFGOPT_LOG_SUBPROCESS =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},

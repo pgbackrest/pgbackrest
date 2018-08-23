@@ -155,7 +155,7 @@ sub hostConnect
 
     foreach my $hHost (@{$self->{hyHost}})
     {
-        # If there a no jobs in the queue for this host then no need to connect
+        # If there are no jobs in the queue for this host then no need to connect
         if (!defined($hHost->{hyQueue}))
         {
             logDebugMisc(
@@ -188,6 +188,9 @@ sub hostConnect
                         &CFGOPT_TYPE => {value => $self->{strHostType}},
                         &CFGOPT_HOST_ID => {value => $hHost->{iHostConfigIdx}},
 
+                        # Only enable file logging on the local when requested
+                        &CFGOPT_LOG_LEVEL_FILE =>
+                            {value => cfgOption(CFGOPT_LOG_SUBPROCESS) ? cfgOption(CFGOPT_LOG_LEVEL_FILE) : lc(OFF)},
                         &CFGOPT_LOG_LEVEL_STDERR => {},
                     }),
                 $iLocalIdx + 1

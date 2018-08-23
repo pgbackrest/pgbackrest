@@ -54,6 +54,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <br-option>log-subprocess</br-option> option to allow file logging for <id>local</id> and <id>remote</id> subprocesses.</p>
+                    </release-item>
+
+                    <release-item>
                         <p><postgres/> 11 Beta 3 support.</p>
                     </release-item>
                 </release-feature-list>

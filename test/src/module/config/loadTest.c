@@ -302,6 +302,8 @@ testRun(void)
 
         // Command takes lock and opens log file
         // -------------------------------------------------------------------------------------------------------------------------
+        struct stat statLog;
+
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
@@ -310,10 +312,43 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAdd(argList, strNew("--log-level-console=off"));
         strLstAdd(argList, strNew("--log-level-stderr=off"));
-        strLstAdd(argList, strNew("--log-level-file=off"));
+        strLstAdd(argList, strNew("--log-level-file=warn"));
         strLstAdd(argList, strNew("backup"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
+        TEST_RESULT_INT(lstat(strPtr(strNewFmt("%s/db-backup.log", testPath())), &statLog), 0, "   check log file exists");
+
+        // Local command opens log file with special filename
+        // -------------------------------------------------------------------------------------------------------------------------
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--command=backup"));
+        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAdd(argList, strNew("--process=1"));
+        strLstAdd(argList, strNew("--host-id=1"));
+        strLstAdd(argList, strNew("--type=backup"));
+        strLstAdd(argList, strNew("--log-level-file=warn"));
+        strLstAdd(argList, strNew("local"));
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
+        TEST_RESULT_INT(
+            lstat(strPtr(strNewFmt("%s/db-backup-local-001.log", testPath())), &statLog), 0, "   check log file exists");
+
+        // Remote command opens log file with special filename
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--command=backup"));
+        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAdd(argList, strNew("--type=backup"));
+        strLstAdd(argList, strNew("--log-level-file=warn"));
+        strLstAdd(argList, strNew("remote"));
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
+        TEST_RESULT_INT(
+            lstat(strPtr(strNewFmt("%s/all-backup-remote-000.log", testPath())), &statLog), 0, "   check log file exists");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

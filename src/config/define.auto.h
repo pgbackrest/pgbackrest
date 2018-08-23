@@ -77,6 +77,7 @@ typedef enum
     cfgDefOptLogLevelFile,
     cfgDefOptLogLevelStderr,
     cfgDefOptLogPath,
+    cfgDefOptLogSubprocess,
     cfgDefOptLogTimestamp,
     cfgDefOptManifestSaveThreshold,
     cfgDefOptNeutralUmask,

@@ -88,6 +88,15 @@
 
                         <example>n</example>
                     </config-key>
+
+                    <!-- CONFIG - LOG SECTION - LOG-SUBPROCESS KEY -->
+                    <config-key id="log-subprocess" name="Log Subprocesses">
+                        <summary>Enable logging in subprocesses.</summary>
+
+                        <text>Enable file logging for any subprocesses created by this process using the log level specified by <br-option>log-level-file</br-option>.</text>
+
+                        <example>y</example>
+                    </config-key>
                 </config-key-list>
             </config-section>
 

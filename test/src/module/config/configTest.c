@@ -78,7 +78,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdLocal), "command set to local");
         TEST_RESULT_INT(cfgLogLevelStdErrMax(), logLevelError, "max stderr log level is error");
-        TEST_RESULT_BOOL(cfgLogFile(), false, "log file is off");
+        TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(cfgCommandHelp(), false, "command help defaults to false");
