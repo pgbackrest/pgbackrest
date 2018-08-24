@@ -343,6 +343,24 @@ cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize)
     FUNCTION_TEST_RESULT(SIZE, result);
 }
 
+unsigned int
+cvtZToUInt(const char *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, value);
+
+        FUNCTION_TEST_ASSERT(value != NULL);
+    FUNCTION_TEST_END();
+
+    uint64_t result = cvtZToUInt64Internal(value, "unsigned int");
+
+    // Don't allow negative numbers even though strtoull() does and check max value
+    if (*value == '-' || result > UINT_MAX)
+        THROW_FMT(FormatError, "unable to convert string '%s' to unsigned int", value);
+
+    FUNCTION_TEST_RESULT(UINT, (unsigned int)result);
+}
+
 /***********************************************************************************************************************************
 Convert uint64 to zero-terminated string and visa versa
 ***********************************************************************************************************************************/

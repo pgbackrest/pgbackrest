@@ -168,6 +168,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>cvtZToUInt()</code> to convert string to unsigned int.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Enable <id>-Wstrict-prototypes</id>, <id>-Wpointer-arith</id>, <id>-Wduplicated-branches</id>, <id>-Wvla</id>, and <id>-Wduplicated-cond</id> and update code to conform.</p>
                     </release-item>
 
