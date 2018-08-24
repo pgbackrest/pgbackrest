@@ -181,14 +181,14 @@ sub buildConfig
         my $iOptionIndexTotal = $rhConfigDefine->{$strOption}{&CFGDEF_INDEX_TOTAL};
         my $strOptionPrefix = $rhConfigDefine->{$strOption}{&CFGDEF_PREFIX};
 
-        # Build C enum
-        my $strOptionEnum = buildConfigOptionEnum($strOption);
-        push(@{$rhEnum->{&BLD_LIST}}, $strOptionEnum);
-        $rhEnum->{&BLD_VALUE}{$strOptionEnum} = $iOptionTotal;
-
         # Builds option data
         for (my $iOptionIndex = 1; $iOptionIndex <= $iOptionIndexTotal; $iOptionIndex++)
         {
+            # Build C enum
+            my $strOptionEnum = buildConfigOptionEnum($strOption) . ($iOptionIndex == 1 ? '' : $iOptionIndex);
+            push(@{$rhEnum->{&BLD_LIST}}, $strOptionEnum);
+            $rhEnum->{&BLD_VALUE}{$strOptionEnum} = $iOptionTotal;
+
             # Create the indexed version of the option name
             my $strOptionIndex = defined($strOptionPrefix) ?
                 "${strOptionPrefix}${iOptionIndex}-" . substr($strOption, length($strOptionPrefix) + 1) : $strOption;
@@ -203,9 +203,9 @@ sub buildConfig
                 "        CONFIG_OPTION_INDEX(" . ($iOptionIndex - 1) . ")\n" .
                 "        CONFIG_OPTION_DEFINE_ID(" . buildConfigDefineOptionEnum($strOption) . ")\n" .
                 "    )\n";
-        }
 
-        $iOptionTotal += $iOptionIndexTotal;
+            $iOptionTotal += 1;
+        }
     }
 
     $strBuildSource .=

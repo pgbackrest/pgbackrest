@@ -156,6 +156,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow command/option constants to autonumber in both C and Perl to reduce churn when a new command/option is added.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Show exact log level required for stack trace param output instead of just <quote>debug</quote>.</p>
                     </release-item>
 

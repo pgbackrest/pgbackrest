@@ -199,41 +199,31 @@ sub buildXsAll
     }
 
     # Generate command constants
-    $strConstantBlock .= defined($strConstantBlock) ? "\n" : '';
-    my $iIndex = 0;
-
     foreach my $strCommand (cfgDefineCommandList())
     {
         my $strConstant = "CFGCMD_" . uc($strCommand);
         $strConstant =~ s/\-/\_/g;
 
-        $strConstantBlock .=
-            "        ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> $iIndex,\n";
         push(@{$rhExport->{'config'}{&BLD_EXPORTTYPE_CONSTANT}}, $strConstant);
-
-        $iIndex++;
     }
 
     # Generate option constants
-    $strConstantBlock .= defined($strConstantBlock) ? "\n" : '';
-    $iIndex = 0;
-
     foreach my $strOption (sort(keys(%{$rhConfigDefine})))
     {
         # Build Perl constant
         my $strConstant = "CFGOPT_" . uc($strOption);
         $strConstant =~ s/\-/\_/g;
 
-        $strConstantBlock .=
-            "        ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> $iIndex,\n";
-        push(@{$rhExport->{'config'}{&BLD_EXPORTTYPE_CONSTANT}}, $strConstant);
-
-        $iIndex += $rhConfigDefine->{$strOption}{&CFGDEF_INDEX_TOTAL};
+        # Builds option data
+        for (my $iOptionIndex = 1; $iOptionIndex <= $rhConfigDefine->{$strOption}{&CFGDEF_INDEX_TOTAL}; $iOptionIndex++)
+        {
+            push(@{$rhExport->{'config'}{&BLD_EXPORTTYPE_CONSTANT}}, $strConstant . ($iOptionIndex == 1 ? '' : $iOptionIndex));
+        }
     }
 
     # Generate option type constants
     $strConstantBlock .= defined($strConstantBlock) ? "\n" : '';
-    $iIndex = 0;
+    my $iIndex = 0;
 
     foreach my $strOptionType (cfgDefineOptionTypeList())
     {
