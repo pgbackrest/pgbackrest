@@ -366,6 +366,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_hba.conf={"checksum":"dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -646,6 +647,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changesize.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -836,6 +838,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changesize.txt={"checksum":"3905d5be2ec8d67f41435dab5e0dcda3ae47455d","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -1031,6 +1034,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -1222,6 +1226,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -1435,6 +1440,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -1648,6 +1654,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"reference":"[BACKUP-INCR-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -1840,6 +1847,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -2031,6 +2039,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"reference":"[BACKUP-DIFF-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -2223,6 +2232,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -2411,6 +2421,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -2535,14 +2546,14 @@ stanza: db
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 144KB, backup size: 30B
-            repository size: 144.4KB, repository backup size: 128B
+            repository size: 144.5KB, repository backup size: 128B
             backup reference list: [BACKUP-FULL-2]
 
         full backup: [BACKUP-FULL-3]
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 144KB, backup size: 144KB
-            repository size: 2.2KB, repository backup size: 2.2KB
+            repository size: 2.3KB, repository backup size: 2.3KB
 
 info db stanza - normal output (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=warn --stanza=db --output=json info
@@ -2958,6 +2969,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -3074,7 +3086,7 @@ stanza: db
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 144KB, backup size: 144KB
-            repository size: 2.2KB, repository backup size: 2.2KB
+            repository size: 2.3KB, repository backup size: 2.3KB
 
         diff backup: [BACKUP-DIFF-5]
             timestamp start/stop: [TIMESTAMP-STR]
@@ -3325,6 +3337,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -3519,6 +3532,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/bogus={"master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
