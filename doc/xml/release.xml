@@ -182,6 +182,14 @@
                     <release-item>
                         <p>Correct <id>OptionInvalidError</id> to <id>OptionInvalidValueError</id> in boolean option parsing.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow zero-sized files to be referenced in backup manifest regardless of timestamp.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
