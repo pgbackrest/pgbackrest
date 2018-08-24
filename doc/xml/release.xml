@@ -152,6 +152,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Update <code>Archive::Info->archiveIdList()</code> to return a valid error code instead of unknown.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>cvtBoolToConstZ()</code> to simplify conversion of boolean to string.</p>
                     </release-item>
 

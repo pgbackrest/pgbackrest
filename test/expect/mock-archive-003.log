@@ -72,7 +72,7 @@ P00  ERROR: [044]: raised from remote process on 'backup': WAL segment version 9
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [125]: raised from remote process on 'backup': unable to retrieve the archive id for database version '9.4' and system-id '1000000000000000094'
+P00  ERROR: [044]: raised from remote process on 'backup': unable to retrieve the archive id for database version '9.4' and system-id '1000000000000000094'
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ P00  ERROR: [044]: raised from remote process on 'backup': WAL segment system-id
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [125]: raised from remote process on 'backup': unable to retrieve the archive id for database version '9.4' and system-id '1000000000000000094'
+P00  ERROR: [044]: raised from remote process on 'backup': unable to retrieve the archive id for database version '9.4' and system-id '1000000000000000094'
 
 stop db stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db stop
