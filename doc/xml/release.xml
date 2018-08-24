@@ -144,6 +144,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow zero-size files in backup manifest to reference a prior manifest regardless of timestamp delta.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Do nothing in <code>memContextMove()</code> when the context is already in the specified parent.</p>
                     </release-item>
 
