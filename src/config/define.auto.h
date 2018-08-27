@@ -68,6 +68,7 @@ typedef enum
     cfgDefOptDbInclude,
     cfgDefOptDbTimeout,
     cfgDefOptDelta,
+    cfgDefOptExclude,
     cfgDefOptForce,
     cfgDefOptHostId,
     cfgDefOptLinkAll,

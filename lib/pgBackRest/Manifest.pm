@@ -570,10 +570,11 @@ sub build
         $bOnline,
         $hTablespaceMap,
         $hDatabaseMap,
+        $rhExclude,
         $strLevel,
         $bTablespace,
         $strParentPath,
-        $strFilter
+        $strFilter,
     ) =
         logDebugParam
         (
@@ -584,10 +585,11 @@ sub build
             {name => 'bOnline'},
             {name => 'hTablespaceMap', required => false},
             {name => 'hDatabaseMap', required => false},
+            {name => 'rhExclude', required => false},
             {name => 'strLevel', required => false},
             {name => 'bTablespace', required => false},
             {name => 'strParentPath', required => false},
-            {name => 'strFilter', required => false}
+            {name => 'strFilter', required => false},
         );
 
     if (!defined($strLevel))
@@ -813,6 +815,42 @@ sub build
             }
         }
 
+        # Exclude files requested by the user
+        if (defined($rhExclude))
+        {
+            # Exclusions are based on the name of the file relative to PGDATA
+            my $strPgFile = $self->dbPathGet(undef, $strFile);
+            my $bExclude = false;
+
+            # Iterate through exclusions
+            foreach my $strExclude (sort(keys(%{$rhExclude})))
+            {
+                # If the exclusion ends in / then we must do a prefix match
+                if ($strExclude =~ /\/$/)
+                {
+                    if (index($strPgFile, $strExclude) == 0)
+                    {
+                        $bExclude = true;
+                    }
+                }
+                # Else an exact match or a prefix match with / appended is required
+                elsif ($strPgFile eq $strExclude || index($strPgFile, "${strExclude}/") == 0)
+                {
+                    $bExclude = true;
+                }
+
+                # Log everything that gets excluded at a high level so it will hopefully be seen if wrong
+                if ($bExclude)
+                {
+                    &log(INFO, "exclude ${strPgFile} from backup using '${strExclude}' exclusion");
+                    last;
+                }
+            }
+
+            # Skip the file if it was excluded
+            next if $bExclude;
+        }
+
         # User and group required for all types
         if (defined($hManifest->{$strName}{user}))
         {
@@ -876,8 +914,8 @@ sub build
             $strPath = dirname("${strPath}/${strName}");
 
             $self->build(
-                $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $hTablespaceMap, $hDatabaseMap, $strFile, $bTablespace,
-                $strPath, $strFilter, $strLinkDestination);
+                $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $hTablespaceMap, $hDatabaseMap, $rhExclude, $strFile,
+                $bTablespace, $strPath, $strFilter);
         }
     }
 

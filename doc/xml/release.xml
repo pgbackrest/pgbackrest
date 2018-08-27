@@ -54,6 +54,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow arbitrary directories and/or files to be excluded from a backup.  Misuse of this feature can lead to inconsistent backups so read the <br-option>--exclude</br-option> documentation carefully before using.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <br-option>log-subprocess</br-option> option to allow file logging for <id>local</id> and <id>remote</id> subprocesses.</p>
                     </release-item>
 

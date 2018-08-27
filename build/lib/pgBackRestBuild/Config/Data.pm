@@ -299,6 +299,8 @@ use constant CFGOPT_BACKUP_STANDBY                                  => 'backup-s
     push @EXPORT, qw(CFGOPT_BACKUP_STANDBY);
 use constant CFGOPT_CHECKSUM_PAGE                                   => 'checksum-page';
     push @EXPORT, qw(CFGOPT_CHECKSUM_PAGE);
+use constant CFGOPT_EXCLUDE                                         => 'exclude';
+    push @EXPORT, qw(CFGOPT_EXCLUDE);
 use constant CFGOPT_MANIFEST_SAVE_THRESHOLD                         => 'manifest-save-threshold';
     push @EXPORT, qw(CFGOPT_MANIFEST_SAVE_THRESHOLD);
 use constant CFGOPT_RESUME                                          => 'resume';
@@ -2016,6 +2018,17 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
         }
+    },
+
+    &CFGOPT_EXCLUDE =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_LIST,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+        },
     },
 
     &CFGOPT_MANIFEST_SAVE_THRESHOLD =>

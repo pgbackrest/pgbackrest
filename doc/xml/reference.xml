@@ -534,6 +534,23 @@
                         <example>n</example>
                     </config-key>
 
+                    <!-- CONFIG - BACKUP SECTION - EXCLUDE KEY -->
+                    <config-key id="exclude" name="Path/File Exclusions">
+                        <summary>Exclude paths/files from the backup.</summary>
+
+                        <text>If the exclusion ends with / then only files in the specified directory will be excluded, e.g. <br-option>--exclude=junk/</br-option> will exclude all files in the <path>junk</path> directory but include the directory itself.  If the exclusion does not end with / then the file may match the exclusion exactly or match with / appended to the exclusion, e.g. <br-option>--exclude=junk</br-option> will exclude the <path>junk</path> directory and all the files it contains.
+
+                        <b>Be careful using this feature -- it is very easy to exclude something critical that will make the backup inconsistent.  Be sure to test your restores!</b>
+
+                        All excluded files will be logged at <id>info</id> level along with the exclusion rule.  Be sure to audit the list of excluded files to ensure nothing unexpected is being excluded.
+
+                        Note that exclusions are not honored on delta restores.  Any files/directories that were excluded by the backup will be <i>removed</i> on delta restore.
+
+                        This option should not be used to exclude <postgres/> logs from a backup.  Logs can be moved out of the <id>PGDATA</id> directory using the <postgres/> <setting>log_directory</setting> setting, which has the benefit of allowing logs to be preserved after a restore.</text>
+
+                        <example>junk/</example>
+                    </config-key>
+
                     <!-- CONFIG - BACKUP SECTION - MANIFEST-SAVE-THRESHOLD -->
                     <config-key id="manifest-save-threshold" name="Manifest Save Threshold">
                         <summary>Manifest save threshold during backup.</summary>

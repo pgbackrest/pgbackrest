@@ -266,6 +266,18 @@ sub run
                 '4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f', $lTime);
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/44000', 'IGNORE');
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/t333_44000', 'IGNORE');
+
+            # Create files to be excluded with the --exclude option
+            $oHostBackup->configUpdate(
+                {(CFGDEF_SECTION_GLOBAL . ':backup') =>
+                    {cfgOptionName(CFGOPT_EXCLUDE) => ['postgresql.auto.conf', 'pg_log/', 'pg_log2']}});
+            $oHostDbMaster->dbLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.auto.conf',
+                                              '../pg_config/postgresql.conf', true);
+            $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log');
+            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log/logfile', 'IGNORE');
+            $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2');
+            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_log2/logfile', 'IGNORE');
+
         }
 
         # Help and Version.  These have complete unit tests, so here just make sure there is output from the command line.

@@ -832,6 +832,33 @@ sub run
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'offline passing tablespace map and database map');
 
+        # Exclusions
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Excluded links
+        storageDb()->linkCreate('/dev/null', 'postgresql.auto.conf');
+        storageDb()->linkCreate('/etc/hosts', 'hosts');
+
+        # Exclude log files but not directory
+        storageDb()->pathCreate('pg_log');
+        storageDb()->put(storageDb()->openWrite('pg_log/logfile'), 'EXCLUDE');
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . '/pg_log', undef, $hDefault);
+
+        # Exclude directory and all contents
+        storageDb()->pathCreate('global/exclude');
+        storageDb()->put(storageDb()->openWrite('global/exclude/exclude.txt'), 'EXCLUDE');
+
+        # Test exclusions against the ideal manifest
+        $oManifest->build(
+            storageDb(), $self->{strDbPath}, undef, false, $hTablespaceMap, $hDatabaseMap,
+            {'postgresql.auto.conf' => true, 'hosts' => true, 'pg_log/' => true, 'global/exclude' => true});
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'check exclusions');
+
+        # Remove excluded files to we don't have to pass exclusions to the rest of the tests
+        storageDb()->remove('postgresql.auto.conf');
+        storageDb()->remove('hosts');
+        storageDb()->remove('pg_log/logfile');
+        storageDb()->remove('global/exclude', {bRecurse => true});
+
         # Reload the manifest with version < 9.0
         #---------------------------------------------------------------------------------------------------------------------------
         $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_84,

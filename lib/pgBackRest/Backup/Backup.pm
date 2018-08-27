@@ -803,7 +803,7 @@ sub process
 
     # Build the manifest
     $oBackupManifest->build($oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
-                            $hTablespaceMap, $hDatabaseMap);
+                            $hTablespaceMap, $hDatabaseMap, cfgOption(CFGOPT_EXCLUDE, false));
     &log(TEST, TEST_MANIFEST_BUILD);
 
     # If resuming from an aborted backup
