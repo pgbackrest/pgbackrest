@@ -176,6 +176,7 @@ testRun(void)
             "  --log-level-stderr               level for stderr logging [default=warn]\n"
             "  --log-path                       path where log files are stored\n"
             "                                   [default=/var/log/pgbackrest]\n"
+            "  --log-subprocess                 enable logging in subprocesses [default=n]\n"
             "  --log-timestamp                  enable timestamp in logging [default=y]\n"
             "\n",
             "Repository Options:\n"

@@ -163,7 +163,8 @@ sub run
             {strDbVersion => PG_VERSION_93, ullDbSysId => $self->dbSysId(PG_VERSION_93)})},
             PG_VERSION_93 . "-13", 'archiveId - return only newest archiveId for multiple histories');
 
-        $self->testException(sub {$oArchiveInfo->archiveId({strDbVersion => PG_VERSION_94, ullDbSysId => BOGUS})}, ERROR_UNKNOWN,
+        $self->testException(
+            sub {$oArchiveInfo->archiveId({strDbVersion => PG_VERSION_94, ullDbSysId => BOGUS})}, ERROR_ARCHIVE_MISMATCH,
             "unable to retrieve the archive id for database version '" . PG_VERSION_94 . "' and system-id '" . BOGUS . "'");
 
         $self->testException(sub {$oArchiveInfo->check(PG_VERSION_94, $self->dbSysId(PG_VERSION_94))}, ERROR_ARCHIVE_MISMATCH,
@@ -179,7 +180,8 @@ sub run
         $self->testResult(sub {(@stryArchiveId == 1) && ($stryArchiveId[0] eq PG_VERSION_94 . "-12")}, true,
             'archiveIdList - returns older archiveId');
 
-        $self->testException(sub {$oArchiveInfo->archiveIdList(PG_VERSION_95, $self->dbSysId(PG_VERSION_94))}, ERROR_UNKNOWN,
+        $self->testException(
+            sub {$oArchiveInfo->archiveIdList(PG_VERSION_95, $self->dbSysId(PG_VERSION_94))}, ERROR_ARCHIVE_MISMATCH,
             "unable to retrieve the archive id for database version '" . PG_VERSION_95 . "' and system-id '" .
             $self->dbSysId(PG_VERSION_94) . "'");
     }

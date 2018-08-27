@@ -90,7 +90,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
     (
         CONFIG_COMMAND_NAME("local")
 
-        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelError)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
@@ -101,7 +101,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
     (
         CONFIG_COMMAND_NAME("remote")
 
-        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelError)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
@@ -421,6 +421,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME("log-path")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptLogPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("log-subprocess")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptLogSubprocess)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

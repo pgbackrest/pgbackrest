@@ -527,6 +527,29 @@ strQuoteZ(const String *this, const char *quote)
 }
 
 /***********************************************************************************************************************************
+Replace a character with another character
+***********************************************************************************************************************************/
+String *
+strReplaceChr(String *this, char find, char replace)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(CHAR, find);
+        FUNCTION_TEST_PARAM(CHAR, replace);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    for (unsigned int stringIdx = 0; stringIdx < this->size; stringIdx++)
+    {
+        if (this->buffer[stringIdx] == find)
+            this->buffer[stringIdx] = replace;
+    }
+
+    FUNCTION_TEST_RESULT(STRING, this);
+}
+
+/***********************************************************************************************************************************
 Return a substring given only the start position
 ***********************************************************************************************************************************/
 String *
@@ -636,6 +659,7 @@ strChr(const String *this, char chr)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(CHAR, chr);
 
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();

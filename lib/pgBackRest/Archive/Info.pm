@@ -285,7 +285,9 @@ sub archiveIdList
     # If the archive id has still not been found, then error
     if (@stryArchiveId == 0)
     {
-        confess &log(ERROR, "unable to retrieve the archive id for database version '$strDbVersion' and system-id '$ullDbSysId'");
+        confess &log(
+            ERROR, "unable to retrieve the archive id for database version '$strDbVersion' and system-id '$ullDbSysId'",
+            ERROR_ARCHIVE_MISMATCH);
     }
 
     # Return from function and log return values if any

@@ -25,6 +25,17 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("cvtCharToZ()"))
+    {
+        char buffer[STACK_TRACE_PARAM_MAX];
+
+        TEST_ERROR(cvtCharToZ('A', buffer, 1), AssertError, "buffer overflow");
+
+        TEST_RESULT_INT(cvtCharToZ('C', buffer, STACK_TRACE_PARAM_MAX), 1, "convert char to string");
+        TEST_RESULT_STR(buffer, "C", "    check buffer");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cvtDoubleToZ() and cvtZToDouble()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];
@@ -87,7 +98,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cvtUIntToZ()"))
+    if (testBegin("cvtUIntToZ() and cvtZToUInt()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];
 
@@ -95,6 +106,11 @@ testRun(void)
 
         TEST_RESULT_INT(cvtUIntToZ(4294967295, buffer, STACK_TRACE_PARAM_MAX), 10, "convert unsigned int to string");
         TEST_RESULT_STR(buffer, "4294967295", "    check buffer");
+
+        TEST_ERROR(cvtZToUInt("-1"), FormatError, "unable to convert string '-1' to unsigned int");
+        TEST_ERROR(cvtZToUInt("5000000000"), FormatError, "unable to convert string '5000000000' to unsigned int");
+
+        TEST_RESULT_UINT(cvtZToUInt("3333333333"), 3333333333U, "convert string to unsigned int");
     }
 
     // *****************************************************************************************************************************

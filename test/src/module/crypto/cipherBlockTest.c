@@ -81,12 +81,12 @@ testRun(void)
         encryptSize += cipherBlockProcess(
             blockEncrypt, (unsigned char *)TEST_PLAINTEXT, strlen(TEST_PLAINTEXT), encryptBuffer + encryptSize);
         TEST_RESULT_INT(
-            encryptSize, CIPHER_BLOCK_HEADER_SIZE + EVP_CIPHER_block_size(blockEncrypt->cipher),
+            encryptSize, CIPHER_BLOCK_HEADER_SIZE + (size_t)EVP_CIPHER_block_size(blockEncrypt->cipher),
             "cipher size increases by one block");
 
         encryptSize += cipherBlockFlush(blockEncrypt, encryptBuffer + encryptSize);
         TEST_RESULT_INT(
-            encryptSize, CIPHER_BLOCK_HEADER_SIZE + (EVP_CIPHER_block_size(blockEncrypt->cipher) * 2),
+            encryptSize, CIPHER_BLOCK_HEADER_SIZE + (size_t)(EVP_CIPHER_block_size(blockEncrypt->cipher) * 2),
             "cipher size increases by one block on flush");
 
         cipherBlockFree(blockEncrypt);

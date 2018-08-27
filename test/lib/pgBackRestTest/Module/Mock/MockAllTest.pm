@@ -504,6 +504,10 @@ sub run
             executeTest("sudo chown " . BACKREST_USER . " ${strResumePath}/file.tmp");
         }
 
+        # Add zero-sized file
+        $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'zero_from_start', undef,
+                                              undef, $lTime, undef, true);
+
         $strFullBackup = $oHostBackup->backup(
             $strType, 'resume',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,

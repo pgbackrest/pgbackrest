@@ -241,7 +241,7 @@ sub buildConfigParse
     while (!$bAllResolved);
 
     $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_OPTION_RESOLVE}{&BLD_SOURCE} =
-        "static const ConfigOption optionResolveOrder[CFG_OPTION_TOTAL] =\n" .
+        "static const ConfigOption optionResolveOrder[] =\n" .
         "{\n" .
         "    " . join(",\n    ", @stryResolveOrder) . ",\n" .
         "};\n";

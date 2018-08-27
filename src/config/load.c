@@ -231,9 +231,24 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             // Open the log file if this command logs to a file
             if (cfgLogFile() && !cfgCommandHelp())
             {
-                logFileSet(
-                    strPtr(strNewFmt("%s/%s-%s.log", strPtr(cfgOptionStr(cfgOptLogPath)), strPtr(cfgOptionStr(cfgOptStanza)),
-                    cfgCommandName(cfgCommand()))));
+                // Construct log filename prefix
+                String *logFile = strNewFmt(
+                    "%s/%s-", strPtr(cfgOptionStr(cfgOptLogPath)),
+                    cfgOptionTest(cfgOptStanza) ? strPtr(cfgOptionStr(cfgOptStanza)): "all");
+
+                // If local or remote command add command name and process id
+                if (cfgCommand() == cfgCmdLocal || cfgCommand() == cfgCmdRemote)
+                {
+                    strCatFmt(
+                        logFile, "%s-%s-%03d.log", strPtr(cfgOptionStr(cfgOptCommand)), cfgCommandName(cfgCommand()),
+                        cfgOptionTest(cfgOptProcess) ? cfgOptionInt(cfgOptProcess) : 0);
+                }
+                // Else add command name
+                else
+                    strCatFmt(logFile, "%s.log", cfgCommandName(cfgCommand()));
+
+                // Set the log file name
+                logFileSet(strPtr(logFile));
             }
 
             // Begin the command

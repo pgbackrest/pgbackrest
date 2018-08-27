@@ -226,6 +226,9 @@ sub protocolParam
         &CFGOPT_LOG_PATH => {},
         &CFGOPT_LOCK_PATH => {},
 
+        # Only enable file logging on the remote when requested
+        &CFGOPT_LOG_LEVEL_FILE => {value => cfgOption(CFGOPT_LOG_SUBPROCESS) ? cfgOption(CFGOPT_LOG_LEVEL_FILE) : lc(OFF)},
+
         # Don't pass CFGOPT_LOG_LEVEL_STDERR because in the case of the local process calling the remote process the
         # option will be set to 'protocol' which is not a valid value from the command line.
         &CFGOPT_LOG_LEVEL_STDERR => {},

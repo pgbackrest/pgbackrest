@@ -119,6 +119,28 @@ cvtBoolToConstZ(bool value)
 }
 
 /***********************************************************************************************************************************
+Convert char to zero-terminated string
+***********************************************************************************************************************************/
+size_t
+cvtCharToZ(char value, char *buffer, size_t bufferSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BOOL, value);
+        FUNCTION_TEST_PARAM(CHARP, buffer);
+        FUNCTION_TEST_PARAM(SIZE, bufferSize);
+
+        FUNCTION_TEST_ASSERT(buffer != NULL);
+    FUNCTION_TEST_END();
+
+    size_t result = (size_t)snprintf(buffer, bufferSize, "%c", value);
+
+    if (result >= bufferSize)
+        THROW(AssertError, "buffer overflow");
+
+    FUNCTION_TEST_RESULT(SIZE, result);
+}
+
+/***********************************************************************************************************************************
 Convert double to zero-terminated string and vice versa
 ***********************************************************************************************************************************/
 size_t
@@ -319,6 +341,24 @@ cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize)
         THROW(AssertError, "buffer overflow");
 
     FUNCTION_TEST_RESULT(SIZE, result);
+}
+
+unsigned int
+cvtZToUInt(const char *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, value);
+
+        FUNCTION_TEST_ASSERT(value != NULL);
+    FUNCTION_TEST_END();
+
+    uint64_t result = cvtZToUInt64Internal(value, "unsigned int");
+
+    // Don't allow negative numbers even though strtoull() does and check max value
+    if (*value == '-' || result > UINT_MAX)
+        THROW_FMT(FormatError, "unable to convert string '%s' to unsigned int", value);
+
+    FUNCTION_TEST_RESULT(UINT, (unsigned int)result);
 }
 
 /***********************************************************************************************************************************

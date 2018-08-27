@@ -4,6 +4,7 @@ Command and Option Parse
 #include <getopt.h>
 #include <string.h>
 #include <strings.h>
+#include <unistd.h>
 
 #include "common/assert.h"
 #include "common/debug.h"
@@ -21,6 +22,15 @@ Standard config file name and old default path and name
 ***********************************************************************************************************************************/
 #define PGBACKREST_CONFIG_FILE                                      PGBACKREST_BIN ".conf"
 #define PGBACKREST_CONFIG_ORIG_PATH_FILE                            "/etc/" PGBACKREST_CONFIG_FILE
+
+/***********************************************************************************************************************************
+Prefix for environment variables
+***********************************************************************************************************************************/
+#define PGBACKREST_ENV                                              "PGBACKREST_"
+#define PGBACKREST_ENV_SIZE                                         (sizeof(PGBACKREST_ENV) - 1)
+
+// In some environments this will not be extern'd
+extern char **environ;
 
 /***********************************************************************************************************************************
 Standard config include path name
@@ -486,7 +496,10 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             THROW_FMT(OptionInvalidError, "option '%s' cannot be set and reset", cfgOptionName(optionId));
 
                         // Add the argument
-                        strLstAdd(parseOptionList[optionId].valueList, strNew(optarg));
+                        if (optionList[optionListIdx].has_arg == required_argument)
+                            strLstAdd(parseOptionList[optionId].valueList, strNew(optarg));
+                        else
+                            THROW_FMT(OptionInvalidError, "option '%s' cannot be set multiple times", cfgOptionName(optionId));
                     }
 
                     break;
@@ -516,15 +529,100 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         if (cfgCommand() != cfgCmdLocal && cfgCommand() != cfgCmdRemote && resetLogLevel)
             logInit(logLevelWarn, logLevelWarn, logLevelOff, false);
 
-        // Phase 2: parse config file unless --no-config passed
-        // ---------------------------------------------------------------------------------------------------------------------
+        // Only continue if command options need to be validated, i.e. a real command is running or we are getting help for a
+        // specific command and would like to display actual option values in the help.
         if (cfgCommand() != cfgCmdNone &&
             cfgCommand() != cfgCmdVersion &&
             cfgCommand() != cfgCmdHelp)
         {
-            // Get the command definition id
+            // Phase 2: parse environment variables
+            // ---------------------------------------------------------------------------------------------------------------------
             ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
 
+            unsigned int environIdx = 0;
+
+            // Loop through all environment variables and look for our env vars by matching the prefix
+            while (environ[environIdx] != NULL)
+            {
+                const char *keyValue = environ[environIdx];
+                environIdx++;
+
+                if (strstr(keyValue, PGBACKREST_ENV) == keyValue)
+                {
+                    // Find the first = char
+                    const char *equalPtr = strchr(keyValue, '=');
+                    ASSERT_DEBUG(equalPtr != NULL);
+
+                    // Get key and value
+                    String *key = strReplaceChr(
+                        strLower(strNewN(keyValue + PGBACKREST_ENV_SIZE, (size_t)(equalPtr - (keyValue + PGBACKREST_ENV_SIZE)))),
+                        '_', '-');
+                    String *value = strNew(equalPtr + 1);
+
+                    // Find the option
+                    unsigned int optionIdx = optionFind(key);
+
+                    // Warn if the option not found
+                    if (optionList[optionIdx].name == NULL)
+                    {
+                        LOG_WARN("environment contains invalid option '%s'", strPtr(key));
+                        continue;
+                    }
+                    // Warn if negate option found in env
+                    else if (optionList[optionIdx].val & PARSE_NEGATE_FLAG)
+                    {
+                        LOG_WARN("environment contains invalid negate option '%s'", strPtr(key));
+                        continue;
+                    }
+                    // Warn if reset option found in env
+                    else if (optionList[optionIdx].val & PARSE_RESET_FLAG)
+                    {
+                        LOG_WARN("environment contains invalid reset option '%s'", strPtr(key));
+                        continue;
+                    }
+
+                    ConfigOption optionId = optionList[optionIdx].val & PARSE_OPTION_MASK;
+                    ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
+
+                    // Continue if the option is not valid for this command
+                    if (!cfgDefOptionValid(commandDefId, optionDefId))
+                        continue;
+
+                    if (strSize(value) == 0)
+                        THROW_FMT(OptionInvalidValueError, "environment variable '%s' must have a value", strPtr(key));
+
+                    // Continue if the option has already been specified on the command line
+                    if (parseOptionList[optionId].found)
+                        continue;
+
+                    parseOptionList[optionId].found = true;
+                    parseOptionList[optionId].source = cfgSourceParam;
+
+                    // Convert boolean to string
+                    if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
+                    {
+                        if (strEqZ(value, "n"))
+                            parseOptionList[optionId].negate = true;
+                        else if (!strEqZ(value, "y"))
+                            THROW_FMT(OptionInvalidValueError, "environment boolean option '%s' must be 'y' or 'n'", strPtr(key));
+                    }
+                    // Else split list/hash into separate values
+                    else if (cfgDefOptionType(optionDefId) == cfgDefOptTypeHash ||
+                             cfgDefOptionType(optionDefId) == cfgDefOptTypeList)
+                    {
+                        parseOptionList[optionId].valueList = strLstNewSplitZ(value, ":");
+                    }
+                    // Else add the string value
+                    else
+                    {
+                        parseOptionList[optionId].valueList = strLstNew();
+                        strLstAdd(parseOptionList[optionId].valueList, value);
+                    }
+                }
+            }
+
+            // Phase 3: parse config file unless --no-config passed
+            // ---------------------------------------------------------------------------------------------------------------------
             // Load the configuration file(s)
             String *configString = cfgFileLoad(parseOptionList,
                 strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfig))),
@@ -657,7 +755,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             if (strcasecmp(strPtr(varStr(value)), "n") == 0)
                                 parseOptionList[optionId].negate = true;
                             else if (strcasecmp(strPtr(varStr(value)), "y") != 0)
-                                THROW_FMT(OptionInvalidError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
+                                THROW_FMT(OptionInvalidValueError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
                         }
                         // Else add the string value
                         else if (varType(value) == varTypeString)
@@ -672,7 +770,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 }
             }
 
-            // Phase 3: validate option definitions and load into configuration
+            // Phase 4: validate option definitions and load into configuration
             // ---------------------------------------------------------------------------------------------------------------------
             for (unsigned int optionOrderIdx = 0; optionOrderIdx < CFG_OPTION_TOTAL; optionOrderIdx++)
             {

@@ -26,6 +26,37 @@ our @EXPORT_OK;
 
 foreach my $strSection (keys(%EXPORT_TAGS))
 {
+    # Assign values to serial constants like CFGCMD_* and CFGOPT_*.  New commands and options (especially options) renumber the list
+    # and cause a lot of churn in the commits.  This takes care of the renumbering to cut down on that churn.
+    my $strPrefixLast = 'XXXXXXXX';
+    my $iConstantIdx = 0;
+
+    foreach my $strConstant (@{$EXPORT_TAGS{$strSection}})
+    {
+        my $strPrefix = ($strConstant =~ m/^[A-Z0-9]+/g)[0];
+
+        if (defined($strPrefix))
+        {
+            if ($strPrefix ne $strPrefixLast)
+            {
+                $iConstantIdx = 0;
+            }
+            else
+            {
+                $iConstantIdx++;
+            }
+
+            if ($strPrefix eq 'CFGCMD' || $strPrefix eq 'CFGOPT')
+            {
+                eval        ## no critic (BuiltinFunctions::ProhibitStringyEval, ErrorHandling::RequireCheckingReturnValueOfEval)
+                    "use constant ${strConstant} => ${iConstantIdx}";
+            }
+
+            $strPrefixLast = $strPrefix;
+        }
+    }
+
+    # OK to export everything in the tag
     push(@EXPORT_OK, @{$EXPORT_TAGS{$strSection}});
 }
 

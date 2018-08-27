@@ -138,7 +138,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-convert
-        total: 8
+        total: 9
 
         coverage:
           common/type/convert: full
@@ -152,7 +152,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string
-        total: 13
+        total: 14
 
         coverage:
           common/type/string: full
@@ -206,8 +206,10 @@ unit:
         coverage:
           common/io/bufferRead: full
           common/io/bufferWrite: full
+          common/io/filter/buffer: full
           common/io/filter/filter: full
           common/io/filter/group: full
+          common/io/filter/size: full
           common/io/handle: full
           common/io/io: full
           common/io/read: full
@@ -312,6 +314,19 @@ unit:
 
         coverage:
           crypto/cipherBlock: full
+
+  # ********************************************************************************************************************************
+  - name: compress
+
+    test:
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: gzip
+        total: 4
+
+        coverage:
+          compress/gzip: full
+          compress/gzipCompress: full
+          compress/gzipDecompress: full
 
   # ********************************************************************************************************************************
   - name: postgres

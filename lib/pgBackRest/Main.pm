@@ -18,6 +18,7 @@ use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Helper;
+use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -96,7 +97,13 @@ sub main
         {
             # Set log levels
             cfgOptionSet(CFGOPT_LOG_LEVEL_STDERR, PROTOCOL, true);
-            logLevelSet(OFF, OFF, cfgOption(CFGOPT_LOG_LEVEL_STDERR));
+            logLevelSet(cfgOption(CFGOPT_LOG_LEVEL_FILE), OFF, cfgOption(CFGOPT_LOG_LEVEL_STDERR));
+
+            logFileSet(
+                storageLocal(),
+                cfgOption(CFGOPT_LOG_PATH) . '/' . (cfgOptionTest(CFGOPT_STANZA) ? cfgOption(CFGOPT_STANZA) : 'all') . '-' .
+                    lc(cfgOption(CFGOPT_COMMAND)) . '-' . lc(cfgCommandName(cfgCommandGet())) . '-' .
+                    sprintf("%03d", cfgOptionTest(CFGOPT_PROCESS) ? cfgOption(CFGOPT_PROCESS) : 0));
 
             if (cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) &&
                 !cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3) &&
@@ -125,14 +132,12 @@ sub main
         {
             # Set log levels
             cfgOptionSet(CFGOPT_LOG_LEVEL_STDERR, PROTOCOL, true);
-            # logLevelSet(OFF, OFF, cfgOption(CFGOPT_LOG_LEVEL_STDERR));
-            logLevelSet(TRACE, OFF, cfgOption(CFGOPT_LOG_LEVEL_STDERR)); # CSHANG
-                            # Open log file
-                            require pgBackRest::Storage::Helper;
-                            pgBackRest::Storage::Helper->import(); # CSHANG
+            logLevelSet(cfgOption(CFGOPT_LOG_LEVEL_FILE), OFF, cfgOption(CFGOPT_LOG_LEVEL_STDERR));
+
             logFileSet(
                 storageLocal(),
-                cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())) . '-cynthia'); # CSHANG
+                cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgOption(CFGOPT_COMMAND)) . '-' .
+                    lc(cfgCommandName(cfgCommandGet())) . '-' . sprintf("%03d", cfgOption(CFGOPT_PROCESS)));
 
             # Load module dynamically
             require pgBackRest::Protocol::Local::Minion;
@@ -191,10 +196,6 @@ sub main
             }
             else
             {
-                # Open log file
-                require pgBackRest::Storage::Helper;
-                pgBackRest::Storage::Helper->import();
-
                 logFileSet(
                     storageLocal(),
                     cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())));

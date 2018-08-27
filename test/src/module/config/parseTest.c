@@ -633,6 +633,15 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--compress"));
+        strLstAdd(argList, strNew("--compress"));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option 'compress' cannot be set multiple times");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--compress-level=3"));
@@ -697,6 +706,7 @@ testRun(void)
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "load remote config");
         TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
         TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+        harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -737,11 +747,12 @@ testRun(void)
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--no-config"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--repo1-s3-host=xxx"));
+        setenv("PGBACKREST_REPO1_S3_HOST", "xxx", true);
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'repo1-s3-host' not valid without option 'repo1-type' = 's3'");
+        unsetenv("PGBACKREST_REPO1_S3_HOST");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -867,6 +878,32 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        setenv("PGBACKREST_PROTOCOL_TIMEOUT", "", true);
+        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
+            "environment variable 'protocol-timeout' must have a value");
+
+        unsetenv("PGBACKREST_PROTOCOL_TIMEOUT");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        setenv("PGBACKREST_DELTA", "x", true);
+        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
+            "environment boolean option 'delta' must be 'y' or 'n'");
+
+        unsetenv("PGBACKREST_DELTA");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
@@ -877,7 +914,8 @@ testRun(void)
         )));
 
         TEST_ERROR(configParse(
-            strLstSize(argList), strLstPtr(argList), false), OptionInvalidError, "boolean option 'compress' must be 'y' or 'n'");
+            strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
+            "boolean option 'compress' must be 'y' or 'n'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1025,6 +1063,15 @@ testRun(void)
         strLstAdd(argList, strNew("--reset-backup-standby"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
+        setenv("PGBACKRESTXXX_NOTHING", "xxx", true);
+        setenv("PGBACKREST_BOGUS", "xxx", true);
+        setenv("PGBACKREST_NO_COMPRESS", "xxx", true);
+        setenv("PGBACKREST_RESET_REPO1_HOST", "", true);
+        setenv("PGBACKREST_TARGET", "xxx", true);
+        setenv("PGBACKREST_ONLINE", "y", true);
+        setenv("PGBACKREST_START_FAST", "n", true);
+        setenv("PGBACKREST_PG1_SOCKET_PATH", "/path/to/socket", true);
+
         storagePutNP(storageNewWriteNP(storageLocalWrite(), configFile), bufNewStr(strNew(
             "[global]\n"
             "compress-level=3\n"
@@ -1036,6 +1083,7 @@ testRun(void)
             "no-compress=y\n"
             "reset-compress=y\n"
             "archive-copy=y\n"
+            "start-fast=y\n"
             "online=y\n"
             "pg1-path=/not/path/to/db\n"
             "backup-standby=y\n"
@@ -1055,6 +1103,9 @@ testRun(void)
         harnessLogResult(
             strPtr(
                 strNew(
+                    "P00   WARN: environment contains invalid option 'bogus'\n"
+                    "P00   WARN: environment contains invalid negate option 'no-compress'\n"
+                    "P00   WARN: environment contains invalid reset option 'reset-repo1-host'\n"
                     "P00   WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
                     "P00   WARN: configuration file contains invalid option 'bogus'\n"
                     "P00   WARN: configuration file contains negate option 'no-compress'\n"
@@ -1065,6 +1116,12 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgSocketPath)), "/path/to/socket", "    pg1-socket-path is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptPgSocketPath), cfgSourceParam, "    pg1-socket-path is source param");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online not is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source param");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "    start-fast not is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptStartFast), cfgSourceParam, "    start-fast is source param");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), false, "    compress not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompress), cfgSourceConfig, "    compress is source config");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCheck), false, "    archive-check is not set");
@@ -1077,6 +1134,14 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "    backup-standby is source default");
         TEST_RESULT_BOOL(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
+
+        unsetenv("PGBACKREST_BOGUS");
+        unsetenv("PGBACKREST_NO_COMPRESS");
+        unsetenv("PGBACKREST_RESET_REPO1_HOST");
+        unsetenv("PGBACKREST_TARGET");
+        unsetenv("PGBACKREST_ONLINE");
+        unsetenv("PGBACKREST_START_FAST");
+        unsetenv("PGBACKREST_PG1_SOCKET_PATH");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1174,6 +1239,29 @@ testRun(void)
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
         TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("f"))))), "g", "check recovery option");
         TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("hijk"))))), "l", "check recovery option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+
+        setenv("PGBACKREST_STANZA", "db", true);
+        setenv("PGBACKREST_PG1_PATH", "/path/to/db", true);
+        setenv("PGBACKREST_RECOVERY_OPTION", "f=g:hijk=l", true);
+        setenv("PGBACKREST_DB_INCLUDE", "77", true);
+
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
+
+        TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
+        TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("f"))))), "g", "check recovery option");
+        TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("hijk"))))), "l", "check recovery option");
+        TEST_RESULT_STR(strPtr(varStr(varLstGet(cfgOptionLst(cfgOptDbInclude), 0))), "77", "check db include option");
+        TEST_RESULT_UINT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 1, "check db include option size");
+
+        unsetenv("PGBACKREST_STANZA");
+        unsetenv("PGBACKREST_PG1_PATH");
+        unsetenv("PGBACKREST_RECOVERY_OPTION");
+        unsetenv("PGBACKREST_DB_INCLUDE");
 
         // Stanza options should not be loaded for commands that don't take a stanza
         // -------------------------------------------------------------------------------------------------------------------------

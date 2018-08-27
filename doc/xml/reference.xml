@@ -88,6 +88,15 @@
 
                         <example>n</example>
                     </config-key>
+
+                    <!-- CONFIG - LOG SECTION - LOG-SUBPROCESS KEY -->
+                    <config-key id="log-subprocess" name="Log Subprocesses">
+                        <summary>Enable logging in subprocesses.</summary>
+
+                        <text>Enable file logging for any subprocesses created by this process using the log level specified by <br-option>log-level-file</br-option>.</text>
+
+                        <example>y</example>
+                    </config-key>
                 </config-key-list>
             </config-section>
 
@@ -825,7 +834,11 @@
 
         Non-boolean options configured in <file>pgbackrest.conf</file> can be reset to default on the command-line by using the <id>reset-</id> prefix.  This feature may be used to restore a backup directly on a repository host.  Normally, <backrest/> will error because it can see that the database host is remote and restores cannot be done remotely.  By adding <br-option>--reset-pg1-host</br-option> on the command-line, <backrest/> will ignore the remote database host and restore locally.  It may be necessary to pass a new <br-option>--pg-path</br-option> to force the restore to happen in a specific path, i.e. not the path used on the database host.
 
-        The <id>no-</id> prefix may be used to set a boolean option to false on the command-line.</text>
+        The <id>no-</id> prefix may be used to set a boolean option to false on the command-line.
+
+        Any option may be set in an environment variable using the <id>PGBACKREST_</id> prefix and the option name in all caps replacing <id>-</id> with <id>_</id>, e.g. <br-option>pg1-path</br-option> becomes <id>PGBACKREST_PG1_PATH</id> and <br-option>stanza</br-option> becomes <id>PGBACKREST_STANZA</id>.  Boolean options are represented as they would be in a configuration file, e.g. <id>PGBACKREST_COMPRESS="n"</id>, and <id>reset-*</id> variants are not allowed.  Options that that can be specified multiple times on the command-line or in a config file can be represented by separating the values with colons, e.g. <id>PGBACKREST_DB_INCLUDE="db1:db2"</id>.
+
+        Command-line options override environment options which override config file options.</text>
 
         <operation-general title="General Options">
             <option-list>

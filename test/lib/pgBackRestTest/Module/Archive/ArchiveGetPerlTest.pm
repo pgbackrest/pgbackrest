@@ -113,7 +113,7 @@ sub run
         # db-version, db-sys-id passed but combination doesn't exist in archive.info history
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(sub {archiveGetCheck(
-            PG_VERSION_95, $self->dbSysId(PG_VERSION_94), undef, false)}, ERROR_UNKNOWN,
+            PG_VERSION_95, $self->dbSysId(PG_VERSION_94), undef, false)}, ERROR_ARCHIVE_MISMATCH,
             "unable to retrieve the archive id for database version '" . PG_VERSION_95 . "' and system-id '" .
             $self->dbSysId(PG_VERSION_94) . "'");
 

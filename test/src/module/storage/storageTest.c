@@ -485,8 +485,9 @@ testRun(void)
         TEST_RESULT_VOID(ioReadClose(storageFileReadIo(file)), "    close file");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName, .filterGroup = (IoFilterGroup *)55), "new read file with filters");
-        TEST_RESULT_PTR(ioReadFilterGroup(storageFileReadIo(file)), (IoFilterGroup *)55, "    check filter group is set");
+        IoFilterGroup *filterGroup = ioFilterGroupNew();
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName, .filterGroup = filterGroup), "new read file with filters");
+        TEST_RESULT_PTR(ioReadFilterGroup(storageFileReadIo(file)), filterGroup, "    check filter group is set");
     }
 
     // *****************************************************************************************************************************
@@ -519,9 +520,11 @@ testRun(void)
         TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0600, "    check file mode");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(
-            file, storageNewWriteP(storageTest, fileName, .filterGroup = (IoFilterGroup *)55), "new write file with filters");
-        TEST_RESULT_PTR(ioWriteFilterGroup(storageFileWriteIo(file)), (IoFilterGroup *)55, "    check filter group is set");
+        IoFilterGroup *filterGroup = ioFilterGroupNew();
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .filterGroup = filterGroup), "new write file with filters");
+        TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
+        TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
+        TEST_RESULT_PTR(ioWriteFilterGroup(storageFileWriteIo(file)), filterGroup, "    check filter group is set");
     }
 
     // *****************************************************************************************************************************
