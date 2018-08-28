@@ -943,7 +943,7 @@ sub run
             {'postgresql.auto.conf' => true, 'hosts' => true, 'pg_log/' => true, 'global/exclude' => true});
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'check exclusions');
 
-        # Remove excluded files to we don't have to pass exclusions to the rest of the tests
+        # Remove excluded files so we don't have to pass exclusions to the rest of the tests
         storageDb()->remove('postgresql.auto.conf');
         storageDb()->remove('hosts');
         storageDb()->remove('pg_log/logfile');

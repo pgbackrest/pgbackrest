@@ -54,6 +54,10 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
                         <p>Allow arbitrary directories and/or files to be excluded from a backup.  Misuse of this feature can lead to inconsistent backups so read the <br-option>--exclude</br-option> documentation carefully before using.</p>
                     </release-item>
 
