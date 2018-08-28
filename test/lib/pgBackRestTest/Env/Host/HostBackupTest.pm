@@ -1815,7 +1815,7 @@ sub restoreCompare
             iDbCatalogVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG},
             oStorage => storageTest()});
 
-    $oActualManifest->build(storageTest(), $strDbClusterPath, $oLastManifest, false, $oTablespaceMap);
+    $oActualManifest->build(storageTest(), $strDbClusterPath, $oLastManifest, false, false, $oTablespaceMap);
 
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
 

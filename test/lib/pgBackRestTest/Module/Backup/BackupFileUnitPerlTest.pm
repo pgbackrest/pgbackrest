@@ -105,7 +105,7 @@ sub run
     # Initialize the manifest
     my $oBackupManifest = new pgBackRest::Manifest("$strBackupPath/" . FILE_MANIFEST,
         {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => 201409291});
-    $oBackupManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+    $oBackupManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
 
     # Set the initial size values for backupManifestUpdate - running size and size for when to save the file
     my $lSizeCurrent = 0;

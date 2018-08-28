@@ -117,7 +117,7 @@ sub resumeClean
         # Else if a file
         elsif ($cType eq 'f')
         {
-            # If the original backup was compressed the remove the extension before checking the manifest
+            # If the original backup was compressed then remove the extension before checking the manifest
             my $strFile = $strName;
 
             if ($bCompressed)
@@ -298,10 +298,10 @@ sub processManifest
         if (defined($strReference))
         {
             logDebugMisc($strOperation, "reference ${strRepoFile} to ${strReference}");
-# CSHANG Maybe here we should also check OR if delta and size == 0 and timestamp is same? But how do we check timestamp same? Maybe in manifest, when lastManifest, if delta and not checksum and has a reference then we need to somehow skip?
-            # If the delta option to checksum all files is set - instead of just checking the size and timestamp - then don't skip
-            # checking this file to see if it needs to be copied again.
-            if (!cfgOption(CFGOPT_DELTA))
+
+            # If the delta option to checksum all files is set then only skip checking/copy this file if the size is zero.
+            if (!cfgOption(CFGOPT_DELTA) ||
+                $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE) == 0)
             {
                 # This file will not need to be copied
                 next;
@@ -827,7 +827,8 @@ sub process
 
     # Build the manifest
     $oBackupManifest->build($oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
-                            $hTablespaceMap, $hDatabaseMap);
+        (cfgOptionValid(CFGOPT_DELTA) && cfgOption(CFGOPT_DELTA)), $hTablespaceMap, $hDatabaseMap);
+
     &log(TEST, TEST_MANIFEST_BUILD);
 
     # If resuming from an aborted backup

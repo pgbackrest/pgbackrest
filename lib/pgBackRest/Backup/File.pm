@@ -417,6 +417,11 @@ sub backupManifestUpdate
         # File copy was not needed so just restore the size and checksum to the manifest
         $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE, $lSizeCopy);
         $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
+
+        &log(DETAIL, 'file not copied ' . (defined($strHost) ? "${strHost}:" : '') .
+             "${strDbFile} (" . fileSizeFormat($lSizeCopy) .
+             ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%)' .
+             ($lSizeCopy != 0 ? " checksum ${strChecksumCopy}" : ''), undef, undef, undef, $iLocalId);
     }
 
     # Determine whether to save the manifest

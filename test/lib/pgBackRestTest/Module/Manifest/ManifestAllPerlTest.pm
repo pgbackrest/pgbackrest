@@ -225,12 +225,12 @@ sub run
 
         # Build error if offline = true and no tablespace path
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false)}, ERROR_FILE_MISSING,
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false, false)}, ERROR_FILE_MISSING,
             "unable to stat '" . $self->{strDbPath} . "/" . MANIFEST_TARGET_PGTBLSPC . "': No such file or directory");
 
         # bOnline = true tests - Compare the base manifest
         #---------------------------------------------------------------------------------------------------------------------------
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestBase, $oManifest)}, "", 'base manifest');
 
         # Create expected manifest from base
@@ -264,7 +264,7 @@ sub run
 
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_BASE, MANIFEST_SUBKEY_MODE, MODE_0700);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'paths/files and different modes');
 
         # Master = false (what can be copied from a standby vs the master)
@@ -280,7 +280,7 @@ sub run
             MANIFEST_SUBKEY_SIZE, length($strOidFile));
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE . '/' . $strOidFile,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'master false');
 
         # Create a pg_config path and file link
@@ -347,7 +347,7 @@ sub run
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'link');
 
         # Test skip files/directories
@@ -478,7 +478,7 @@ sub run
             MANIFEST_SUBKEY_MASTER, true);
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL, MANIFEST_SUBKEY_MASTER, true);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'skip directories/files');
 
         # Unskip code path coverage
@@ -506,7 +506,7 @@ sub run
         $oManifestExpectedUnskip->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGREPLSLOT . '/' . BOGUS,
             MANIFEST_SUBKEY_MASTER, true);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 94 directories');
 
         # Change DB version to 91
@@ -523,7 +523,7 @@ sub run
         $oManifestExpectedUnskip->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSNAPSHOTS . '/' . BOGUS,
             MANIFEST_SUBKEY_MASTER, true);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 92 directories');
 
         # Change DB version to 90
@@ -583,7 +583,7 @@ sub run
         $oManifestExpectedUnskip->remove(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strTempNoSkip,
             MANIFEST_SUBKEY_MASTER);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 91 directories');
 
         # Change DB version to 84
@@ -618,7 +618,7 @@ sub run
         $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strDbDataDirBasePath .
             $strTempFileOid . '_vm.12', MANIFEST_SUBKEY_TIMESTAMP, $lTime);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 90 directories');
 
         # Change DB version to 83
@@ -635,7 +635,7 @@ sub run
         $oManifestExpectedUnskip->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSTATTMP . '/' . BOGUS,
             MANIFEST_SUBKEY_MASTER, true);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 84 directories');
 
         # Reset Manifest for next tests
@@ -666,7 +666,7 @@ sub run
         $oManifestExpected->remove(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . $strDbDataDirBasePath .
             $strNotUnlogFileOid . '_init');
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'manifest reset');
 
         # Tablespaces
@@ -677,7 +677,7 @@ sub run
 
         # Create a directory in pg_tblspc
         storageDb()->pathCreate("$strTblSpcPath/" . BOGUS, {strMode => '0700'});
-        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_LINK_EXPECTED,
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_LINK_EXPECTED,
             MANIFEST_TARGET_PGTBLSPC . "/" . BOGUS . " is not a symlink - " . DB_PATH_PGTBLSPC . " should contain only symlinks");
 
         testPathRemove("${strTblSpcPath}/" . BOGUS);
@@ -686,19 +686,19 @@ sub run
 
         # Invalid relative tablespace is ../
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../');
-        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_TABLESPACE_IN_PGDATA,
             'tablespace symlink ../ destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
         # Invalid relative tablespace is ..
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '..');
-        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_TABLESPACE_IN_PGDATA,
             'tablespace symlink .. destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
         # Invalid relative tablespace is ../base - a subdirectory of $PGDATA
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../base');
-        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_TABLESPACE_IN_PGDATA,
             'tablespace symlink ../base destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
@@ -708,14 +708,14 @@ sub run
         # $PGDATA" if an ending slash is added - so maybe the comment in Manifest.pm "# Make sure that DB_PATH_PGTBLSPC contains
         # only absolute links that do not point inside PGDATA" is not exactly correct?
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", $self->{strDbPath} . '/base');
-        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_ASSERT,
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_ASSERT,
             "tablespace with oid ${strTblspcId} not found in tablespace map\n" .
             "HINT: was a tablespace created or dropped during the backup?");
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
         # Invalid relative tablespace is ../../BOGUS - which is not in $PGDATA and does not exist
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../../' . BOGUS);
-        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_ASSERT,
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_ASSERT,
             "tablespace with oid ${strTblspcId} not found in tablespace map\n" .
             "HINT: was a tablespace created or dropped during the backup?");
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
@@ -730,7 +730,7 @@ sub run
         testLinkCreate($strIntermediateLink, $self->testPath() . '/' . $strTablespace);
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", $strIntermediateLink);
 
-        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false)}, ERROR_LINK_DESTINATION,
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false, false)}, ERROR_LINK_DESTINATION,
             "link '${strTblSpcPath}/${strTblspcId}' -> '$strIntermediateLink' cannot reference another link");
 
         testFileRemove($self->{strDbPath} . "/intermediate_link");
@@ -812,7 +812,7 @@ sub run
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/pg_xlog/' . BOGUS,
             MANIFEST_SUBKEY_MASTER, true);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'offline with valid tablespace - do not skip database WAL directory and only copy unlogged init file');
 
@@ -828,7 +828,7 @@ sub run
         $oManifestExpected->numericSet(MANIFEST_SECTION_DB, BOGUS, MANIFEST_KEY_DB_LAST_SYSTEM_ID,
             $hDatabaseMap->{&BOGUS}{&MANIFEST_KEY_DB_LAST_SYSTEM_ID});
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, $hTablespaceMap, $hDatabaseMap);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, false, $hTablespaceMap, $hDatabaseMap);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'offline passing tablespace map and database map');
 
@@ -897,7 +897,7 @@ sub run
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, $strMfTs . '/' . $strTblspcDir . $strTempFileOid,
             MANIFEST_SUBKEY_MASTER, false);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, $hTablespaceMap, $hDatabaseMap);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, false, $hTablespaceMap, $hDatabaseMap);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'tablespace with version < 9.0');
 
@@ -910,7 +910,7 @@ sub run
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/pg_xlog/' . BOGUS,
             MANIFEST_SUBKEY_USER, false);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'undefined user/group');
 
@@ -1116,7 +1116,7 @@ sub run
             $lTime + 20000);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_FUTURE, 'y');
 
-        $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, "[undef]",
+        $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, "[undef]",
             'future timestamp warning', {strLogExpect =>
             "WARN: some files have timestamps in the future - they will be copied to prevent possible race conditions"});
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'manifest future subkey=y');
@@ -1143,11 +1143,11 @@ sub run
         $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
             iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
 
-        $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true)}, "[undef]",
+        $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false)}, "[undef]",
             'last manifest future timestamp warning', {strLogExpect =>
             "WARN: some files have timestamps in the future - they will be copied to prevent possible race conditions"});
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
-        'last manifest future subkey=y, new manifest future subkey removed');
+            'last manifest future subkey=y, new manifest future subkey removed');
 
         # File info in last manifest same as current
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1160,7 +1160,7 @@ sub run
             BOGUS);
 
         # Check reference
-        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
         'reference set to prior backup label');
 
@@ -1207,8 +1207,18 @@ sub run
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTest,
             MANIFEST_SUBKEY_MASTER, true);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
+# use Data::Dumper; # CSHANG
+# syswrite(*STDOUT, "LASTMAN: ".Dumper($oLastManifest));
+# exit;
+        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'updates from last manifest');
+
+# CSHANG Add tests to:
+# 1) Update the timestamp in the lastManifest for $strTestNew so it is different and pass delta=true - expected manifest should not change
+# 2) Set delta to false - the file will not be kept and will instead be recopied and updated in manifest
+# 3) 0 byte file in last manifest with different timestamp with/without delta will always get reference to prior backup - expected manifest should have 'bogus' backup label as reference
+
+
 
         # MANIFEST_SUBKEY_CHECKSUM_PAGE = false and MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR set/not set
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1218,7 +1228,7 @@ sub run
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
             MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'checksum-page false, checksum-page-error not set');
 
@@ -1229,7 +1239,7 @@ sub run
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
             MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR, \@iyChecksumPageError);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'checksum-page false, checksum-page-error set');
     }
@@ -1241,7 +1251,7 @@ sub run
             iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         my $oManifestExpected = dclone($oManifestBase);
 
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
 
         # Add a file after building manifest
         my $lTimeTest = $lTime + 10;

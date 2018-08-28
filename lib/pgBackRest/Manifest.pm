@@ -568,6 +568,7 @@ sub build
         $strPath,
         $oLastManifest,
         $bOnline,
+        $bDelta,
         $hTablespaceMap,
         $hDatabaseMap,
         $strLevel,
@@ -582,6 +583,7 @@ sub build
             {name => 'strPath'},
             {name => 'oLastManifest', required => false},
             {name => 'bOnline'},
+            {name => 'bDelta'},
             {name => 'hTablespaceMap', required => false},
             {name => 'hDatabaseMap', required => false},
             {name => 'strLevel', required => false},
@@ -876,8 +878,8 @@ sub build
             $strPath = dirname("${strPath}/${strName}");
 
             $self->build(
-                $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $hTablespaceMap, $hDatabaseMap, $strFile, $bTablespace,
-                $strPath, $strFilter, $strLinkDestination);
+                $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $bDelta, $hTablespaceMap, $hDatabaseMap, $strFile,
+                $bTablespace, $strPath, $strFilter, $strLinkDestination);
         }
     }
 
@@ -937,8 +939,7 @@ sub build
             elsif (defined($oLastManifest) && $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName) &&
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) ==
                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&
-                   (cfgOptionValid(CFGOPT_DELTA) && cfgOption(CFGOPT_DELTA) ||
-                   ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) == 0 ||
+                   ($bDelta || ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) == 0 ||
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP))))
             {

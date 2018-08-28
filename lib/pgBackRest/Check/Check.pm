@@ -97,7 +97,7 @@ sub process
 
                 $oBackupManifest->build(
                     storageDb({iRemoteIdx => $iRemoteIdx}), cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iRemoteIdx)), undef,
-                    cfgOptionValid(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE), $oDb->tablespaceMapGet());
+                    cfgOptionValid(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE), false, $oDb->tablespaceMapGet());
 
                 return true;
             }
