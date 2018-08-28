@@ -69,6 +69,14 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve asynchronous <cmd>archive-get</cmd>/<cmd>archive-push</cmd> performance by directly checking status files.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="sarah.conway"/>
                         </release-item-contributor-list>
 
