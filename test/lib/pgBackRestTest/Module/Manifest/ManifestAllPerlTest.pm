@@ -220,8 +220,9 @@ sub run
     ################################################################################################################################
     if ($self->begin('build()'))
     {
-        my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
-            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
+        my $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
 
         # Build error if offline = true and no tablespace path
         #---------------------------------------------------------------------------------------------------------------------------
@@ -230,8 +231,14 @@ sub run
 
         # bOnline = true tests - Compare the base manifest
         #---------------------------------------------------------------------------------------------------------------------------
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestBase, $oManifest)}, "", 'base manifest');
+        $self->testException(
+            sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_ASSERT,
+            'manifest has already been built');
 
         # Create expected manifest from base
         my $oManifestExpected = dclone($oManifestBase);
@@ -264,6 +271,9 @@ sub run
 
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_BASE, MANIFEST_SUBKEY_MODE, MODE_0700);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'paths/files and different modes');
 
@@ -280,6 +290,10 @@ sub run
             MANIFEST_SUBKEY_SIZE, length($strOidFile));
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE . '/' . $strOidFile,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'master false');
 
@@ -347,6 +361,9 @@ sub run
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'link');
 
@@ -478,6 +495,9 @@ sub run
             MANIFEST_SUBKEY_MASTER, true);
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL, MANIFEST_SUBKEY_MASTER, true);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'skip directories/files');
 
@@ -486,8 +506,9 @@ sub run
         my $oManifestExpectedUnskip = dclone($oManifestExpected);
 
         # Change DB version to 93
-        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_93,
-            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_93)});
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_93, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_93)});
         $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_93);
         $oManifestExpectedUnskip->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
             $self->dbCatalogVersion(PG_VERSION_93));
@@ -506,12 +527,16 @@ sub run
         $oManifestExpectedUnskip->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGREPLSLOT . '/' . BOGUS,
             MANIFEST_SUBKEY_MASTER, true);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_93, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_93)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 94 directories');
 
         # Change DB version to 91
-        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_91,
-            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_91)});
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_91, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_91)});
         $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_91);
         $oManifestExpectedUnskip->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
             $self->dbCatalogVersion(PG_VERSION_91));
@@ -523,12 +548,16 @@ sub run
         $oManifestExpectedUnskip->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSNAPSHOTS . '/' . BOGUS,
             MANIFEST_SUBKEY_MASTER, true);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_91, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_91)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 92 directories');
 
         # Change DB version to 90
-        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_90,
-            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_90)});
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_90, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_90)});
         $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_90);
         $oManifestExpectedUnskip->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
             $self->dbCatalogVersion(PG_VERSION_90));
@@ -583,12 +612,16 @@ sub run
         $oManifestExpectedUnskip->remove(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strTempNoSkip,
             MANIFEST_SUBKEY_MASTER);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_90, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_90)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 91 directories');
 
         # Change DB version to 84
-        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_84,
-            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_84)});
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_84, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_84)});
         $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_84);
         $oManifestExpectedUnskip->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
             $self->dbCatalogVersion(PG_VERSION_84));
@@ -618,12 +651,16 @@ sub run
         $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strDbDataDirBasePath .
             $strTempFileOid . '_vm.12', MANIFEST_SUBKEY_TIMESTAMP, $lTime);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_84, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_84)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 90 directories');
 
         # Change DB version to 83
-        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_83,
-            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_83)});
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_83, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_83)});
         $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_83);
         $oManifestExpectedUnskip->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
             $self->dbCatalogVersion(PG_VERSION_83));
@@ -635,12 +672,16 @@ sub run
         $oManifestExpectedUnskip->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSTATTMP . '/' . BOGUS,
             MANIFEST_SUBKEY_MASTER, true);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_83, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_83)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 84 directories');
 
         # Reset Manifest for next tests
-        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
-            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
 
         # Remove files and expect manifest entries not necessary for the rest of the tests
         testPathRemove($strDbDataDir);
@@ -666,6 +707,9 @@ sub run
         $oManifestExpected->remove(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . $strDbDataDirBasePath .
             $strNotUnlogFileOid . '_init');
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'manifest reset');
 
@@ -677,6 +721,9 @@ sub run
 
         # Create a directory in pg_tblspc
         storageDb()->pathCreate("$strTblSpcPath/" . BOGUS, {strMode => '0700'});
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_LINK_EXPECTED,
             MANIFEST_TARGET_PGTBLSPC . "/" . BOGUS . " is not a symlink - " . DB_PATH_PGTBLSPC . " should contain only symlinks");
 
@@ -686,18 +733,27 @@ sub run
 
         # Invalid relative tablespace is ../
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../');
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
             'tablespace symlink ../ destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
         # Invalid relative tablespace is ..
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '..');
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
             'tablespace symlink .. destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
         # Invalid relative tablespace is ../base - a subdirectory of $PGDATA
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../base');
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
             'tablespace symlink ../base destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
@@ -708,6 +764,9 @@ sub run
         # $PGDATA" if an ending slash is added - so maybe the comment in Manifest.pm "# Make sure that DB_PATH_PGTBLSPC contains
         # only absolute links that do not point inside PGDATA" is not exactly correct?
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", $self->{strDbPath} . '/base');
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_ASSERT,
             "tablespace with oid ${strTblspcId} not found in tablespace map\n" .
             "HINT: was a tablespace created or dropped during the backup?");
@@ -715,6 +774,9 @@ sub run
 
         # Invalid relative tablespace is ../../BOGUS - which is not in $PGDATA and does not exist
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../../' . BOGUS);
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_ASSERT,
             "tablespace with oid ${strTblspcId} not found in tablespace map\n" .
             "HINT: was a tablespace created or dropped during the backup?");
@@ -730,6 +792,9 @@ sub run
         testLinkCreate($strIntermediateLink, $self->testPath() . '/' . $strTablespace);
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", $strIntermediateLink);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false)}, ERROR_LINK_DESTINATION,
             "link '${strTblSpcPath}/${strTblspcId}' -> '$strIntermediateLink' cannot reference another link");
 
@@ -737,8 +802,9 @@ sub run
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
         # Reload the manifest otherwise it will contain invalid data from the above exception tests
-        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
-            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
 
         # Create a valid symlink pg_tblspc/1 to tablespace/ts1/1 directory
         my $strTablespaceOid = '1';
@@ -812,6 +878,9 @@ sub run
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/pg_xlog/' . BOGUS,
             MANIFEST_SUBKEY_MASTER, true);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'offline with valid tablespace - do not skip database WAL directory and only copy unlogged init file');
@@ -828,6 +897,9 @@ sub run
         $oManifestExpected->numericSet(MANIFEST_SECTION_DB, BOGUS, MANIFEST_KEY_DB_LAST_SYSTEM_ID,
             $hDatabaseMap->{&BOGUS}{&MANIFEST_KEY_DB_LAST_SYSTEM_ID});
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, $hTablespaceMap, $hDatabaseMap);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'offline passing tablespace map and database map');
@@ -848,6 +920,9 @@ sub run
         storageDb()->put(storageDb()->openWrite('global/exclude/exclude.txt'), 'EXCLUDE');
 
         # Test exclusions against the ideal manifest
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(
             storageDb(), $self->{strDbPath}, undef, false, $hTablespaceMap, $hDatabaseMap,
             {'postgresql.auto.conf' => true, 'hosts' => true, 'pg_log/' => true, 'global/exclude' => true});
@@ -861,8 +936,9 @@ sub run
 
         # Reload the manifest with version < 9.0
         #---------------------------------------------------------------------------------------------------------------------------
-        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_84,
-            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_84)});
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_84, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_84)});
 
         # Catalog not stored in < 9.0
         $oManifestExpected->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_84);
@@ -928,6 +1004,8 @@ sub run
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'tablespace with version < 9.0');
 
+        $oManifestExpected->remove(MANIFEST_SECTION_DB);
+
         # Undefined user/group
         #---------------------------------------------------------------------------------------------------------------------------
         executeTest("sudo chgrp 777 " . $self->{strDbPath} . '/pg_xlog/' . BOGUS);
@@ -937,6 +1015,9 @@ sub run
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/pg_xlog/' . BOGUS,
             MANIFEST_SUBKEY_USER, false);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_84, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_84)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'undefined user/group');
@@ -1121,8 +1202,9 @@ sub run
     ################################################################################################################################
     if ($self->begin('future file and last manifest'))
     {
-        my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
-            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
+        my $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
 
         # Create expected manifest from base
         my $oManifestExpected = dclone($oManifestBase);
@@ -1170,6 +1252,9 @@ sub run
         $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
             iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true)}, "[undef]",
             'last manifest future timestamp warning', {strLogExpect =>
             "WARN: some files have timestamps in the future - they will be copied to prevent possible race conditions"});
@@ -1187,6 +1272,9 @@ sub run
             BOGUS);
 
         # Check reference
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
         'reference set to prior backup label');
@@ -1234,6 +1322,9 @@ sub run
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTest,
             MANIFEST_SUBKEY_MASTER, true);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'updates from last manifest');
 
@@ -1245,6 +1336,9 @@ sub run
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
             MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'checksum-page false, checksum-page-error not set');
@@ -1256,6 +1350,9 @@ sub run
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
             MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR, \@iyChecksumPageError);
 
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'checksum-page false, checksum-page-error set');

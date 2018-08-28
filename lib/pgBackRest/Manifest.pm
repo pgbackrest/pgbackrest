@@ -316,6 +316,9 @@ sub new
         $self->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iDbCatalogVersion);
     }
 
+    # Mark the manifest as built if it was loaded from a file
+    $self->{bBuilt} = $bLoad;
+
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -594,6 +597,15 @@ sub build
 
     if (!defined($strLevel))
     {
+        # Don't allow the manifest to be built more than once
+        if ($self->{bBuilt})
+        {
+            confess &log(ASSERT, "manifest has already been built");
+        }
+
+        $self->{bBuilt} = true;
+
+        # Set initial level
         $strLevel = MANIFEST_TARGET_PGDATA;
 
         # If not online then build the tablespace map from pg_tblspc path

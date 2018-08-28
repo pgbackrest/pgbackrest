@@ -149,10 +149,11 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Require <postgres/> catalog version when instantiating a <code>Manifest</code> object (and not loading it from disk).</p>
+                        <p>Manifest improvements.  Require <postgres/> catalog version when instantiating a <code>Manifest</code> object (and not loading it from disk).  Prevent manifest from being built more than once.</p>
                     </release-item>
 
                     <release-item>
