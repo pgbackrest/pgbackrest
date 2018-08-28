@@ -578,6 +578,7 @@ sub build
         $bTablespace,
         $strParentPath,
         $strFilter,
+        $iLevel,
     ) =
         logDebugParam
         (
@@ -593,7 +594,18 @@ sub build
             {name => 'bTablespace', required => false},
             {name => 'strParentPath', required => false},
             {name => 'strFilter', required => false},
+            {name => 'iLevel', required => false, default => 0},
         );
+
+    # Limit recursion to something reasonable (if more then we are very likely in a link loop)
+    if ($iLevel >= 16)
+    {
+        confess &log(
+            ERROR,
+            "recursion in manifest build exceeds depth of ${iLevel}: ${strLevel}\n" .
+                'HINT: is there a link loop in $PGDATA?',
+            ERROR_FORMAT);
+    }
 
     if (!defined($strLevel))
     {
@@ -927,7 +939,7 @@ sub build
 
             $self->build(
                 $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $hTablespaceMap, $hDatabaseMap, $rhExclude, $strFile,
-                $bTablespace, $strPath, $strFilter);
+                $bTablespace, $strPath, $strFilter, $iLevel + 1);
         }
     }
 

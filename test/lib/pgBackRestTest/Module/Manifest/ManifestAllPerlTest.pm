@@ -367,6 +367,21 @@ sub run
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'link');
 
+        # Create a link loop and expect an error
+        #---------------------------------------------------------------------------------------------------------------------------
+        testLinkCreate($self->{strDbPath} . '/pgdata', $self->{strDbPath});
+
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
+        $self->testException(
+            sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_FORMAT,
+            'recursion in manifest build exceeds depth of 16: pg_data/pgdata/pgdata/pgdata/pgdata/pgdata/pgdata/pgdata/pgdata/' .
+                "pgdata/pgdata/pgdata/pgdata/pgdata/pgdata/pgdata/pg_config/postgresql.conf.link\n" .
+                'HINT: is there a link loop in $PGDATA?');
+
+        testFileRemove($self->{strDbPath} . '/pgdata');
+
         # Test skip files/directories
         #---------------------------------------------------------------------------------------------------------------------------
         # Create files to skip

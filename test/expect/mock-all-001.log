@@ -138,18 +138,18 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Manifest->new(): bLoad = false, iDbCatalogVersion = 201409291, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]/backup.manifest
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base/postmaster.pid
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], iLevel = <0>, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/base/pg_tblspc
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/base
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/pg_hba.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/pg_hba.conf
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/pg_hba.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/pg_hba.conf
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/pg_config/pg_hba.conf
 P00   INFO: exclude pg_log/logfile from backup using 'pg_log/' exclusion
 P00   INFO: exclude pg_log2 from backup using 'pg_log2' exclusion
 P00   INFO: exclude pg_log2/logfile from backup using 'pg_log2' exclusion
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_stat
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_stat
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/pg_stat
 P00   INFO: exclude postgresql.auto.conf from backup using 'postgresql.auto.conf' exclusion
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/pg_config/postgresql.conf
 P00  DEBUG:     Backup::Backup->process: create backup path [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = <0750>, strPathExp = <REPO:BACKUP>/[BACKUP-FULL-1]
@@ -589,18 +589,18 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Manifest->new(): bLoad = false, iDbCatalogVersion = 201409291, oStorage = <[object]>, strCipherPass = [undef], strCipherPassSub = [undef], strDbVersion = 9.4, strFileName = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base/postmaster.pid
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], iLevel = <0>, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/base/pg_tblspc
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/base
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/pg_hba.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/pg_hba.conf
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/pg_hba.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/pg_hba.conf
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/pg_config/pg_hba.conf
 P00   INFO: exclude pg_log/logfile from backup using 'pg_log/' exclusion
 P00   INFO: exclude pg_log2 from backup using 'pg_log2' exclusion
 P00   INFO: exclude pg_log2/logfile from backup using 'pg_log2' exclusion
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_stat
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_stat
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/pg_stat
 P00   INFO: exclude postgresql.auto.conf from backup using 'postgresql.auto.conf' exclusion
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/pg_config/postgresql.conf
 P00  DEBUG:     Backup::Backup->process: create backup path [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = <0750>, strPathExp = <REPO:BACKUP>/[BACKUP-FULL-2]
@@ -838,18 +838,18 @@ P00  DEBUG:     Manifest->new(): bLoad = false, iDbCatalogVersion = 201409291, o
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base/postmaster.pid
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like the postmaster is running and the backup will probably not be consistent
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], iLevel = <0>, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/base/pg_tblspc
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/base
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/pg_hba.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/pg_hba.conf
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/pg_hba.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/pg_hba.conf
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/pg_config/pg_hba.conf
 P00   INFO: exclude pg_log/logfile from backup using 'pg_log/' exclusion
 P00   INFO: exclude pg_log2 from backup using 'pg_log2' exclusion
 P00   INFO: exclude pg_log2/logfile from backup using 'pg_log2' exclusion
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_stat
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_stat
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/pg_stat
 P00   INFO: exclude postgresql.auto.conf from backup using 'postgresql.auto.conf' exclusion
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/pg_config/postgresql.conf
 P00   WARN: aborted backup [BACKUP-FULL-2] of same type exists, will be cleaned to remove invalid files and resumed
 P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt
@@ -1992,11 +1992,11 @@ P00  DEBUG:     Manifest->new(): bLoad = false, iDbCatalogVersion = 201409291, o
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base/postmaster.pid
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], oLastManifest = [object], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], iLevel = <0>, oLastManifest = [object], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/base/pg_tblspc
 P00  DEBUG:     Manifest->build: found tablespace 1 in offline mode
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/base
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts1
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts1
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts1
 P00  DEBUG:     Backup::Backup->process: create backup path [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = <0750>, strPathExp = <REPO:BACKUP>/[BACKUP-INCR-1]
@@ -2408,17 +2408,17 @@ P00  DEBUG:     Manifest->new(): bLoad = false, iDbCatalogVersion = 201409291, o
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base/postmaster.pid
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], oLastManifest = [object], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], iLevel = <0>, oLastManifest = [object], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/base/pg_tblspc
 P00  DEBUG:     Manifest->build: found tablespace 1 in offline mode
 P00  DEBUG:     Manifest->build: found tablespace 11 in offline mode
 P00  DEBUG:     Manifest->build: found tablespace 2 in offline mode
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/base
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts1
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts1
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts1
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/11, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts11
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/11, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts11
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts11
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts2
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts2
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts2
 P00   WARN: aborted backup [BACKUP-INCR-2] of same type exists, will be cleaned to remove invalid files and resumed
 P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt

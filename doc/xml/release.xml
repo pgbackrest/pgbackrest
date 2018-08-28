@@ -153,7 +153,7 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Manifest improvements.  Require <postgres/> catalog version when instantiating a <code>Manifest</code> object (and not loading it from disk).  Prevent manifest from being built more than once.</p>
+                        <p>Manifest improvements.  Require <postgres/> catalog version when instantiating a <code>Manifest</code> object (and not loading it from disk).  Prevent manifest from being built more than once.  Limit manifest build recursion (i.e. links followed) to sixteen levels to detect link loops.</p>
                     </release-item>
 
                     <release-item>
