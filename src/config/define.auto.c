@@ -1016,10 +1016,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Exclude paths/files from the backup.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "If the exclusion ends with / then only files in the specified directory will be excluded, e.g. --exclude=junk/ will "
-                "exclude all files in the junk directory but include the directory itself. If the exclusion does not end with / "
-                "then the file may match the exclusion exactly or match with / appended to the exclusion, e.g. --exclude=junk will "
-                "exclude the junk directory and all the files it contains.\n"
+            "All exclusions are relative to $PGDATA. If the exclusion ends with / then only files in the specified directory will "
+                "be excluded, e.g. --exclude=junk/ will exclude all files in the $PGDATA/junk directory but include the directory "
+                "itself. If the exclusion does not end with / then the file may match the exclusion exactly or match with / "
+                "appended to the exclusion, e.g. --exclude=junk will exclude the $PGDATA/junk directory and all the files it "
+                "contains.\n"
             "\n"
             "Be careful using this feature -- it is very easy to exclude something critical that will make the backup "
                 "inconsistent. Be sure to test your restores!\n"
@@ -1032,7 +1033,9 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "\n"
             "This option should not be used to exclude PostgreSQL logs from a backup. Logs can be moved out of the PGDATA "
                 "directory using the PostgreSQL log_directory setting, which has the benefit of allowing logs to be preserved "
-                "after a restore."
+                "after a restore.\n"
+            "\n"
+            "Multiple exclusions may be specified on the command-line or in a configuration file."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
