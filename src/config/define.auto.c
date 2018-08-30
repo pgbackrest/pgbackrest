@@ -1003,6 +1003,50 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("exclude")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeList)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("backup")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Exclude paths/files from the backup.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "All exclusions are relative to $PGDATA. If the exclusion ends with / then only files in the specified directory will "
+                "be excluded, e.g. --exclude=junk/ will exclude all files in the $PGDATA/junk directory but include the directory "
+                "itself. If the exclusion does not end with / then the file may match the exclusion exactly or match with / "
+                "appended to the exclusion, e.g. --exclude=junk will exclude the $PGDATA/junk directory and all the files it "
+                "contains.\n"
+            "\n"
+            "Be careful using this feature -- it is very easy to exclude something critical that will make the backup "
+                "inconsistent. Be sure to test your restores!\n"
+            "\n"
+            "All excluded files will be logged at info level along with the exclusion rule. Be sure to audit the list of excluded "
+                "files to ensure nothing unexpected is being excluded.\n"
+            "\n"
+            "Note that exclusions are not honored on delta restores. Any files/directories that were excluded by the backup will "
+                "be removed on delta restore.\n"
+            "\n"
+            "This option should not be used to exclude PostgreSQL logs from a backup. Logs can be moved out of the PGDATA "
+                "directory using the PostgreSQL log_directory setting, which has the benefit of allowing logs to be preserved "
+                "after a restore.\n"
+            "\n"
+            "Multiple exclusions may be specified on the command-line or in a configuration file."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("force")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)

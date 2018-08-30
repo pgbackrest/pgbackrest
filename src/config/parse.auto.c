@@ -267,6 +267,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDelta,
     },
 
+    // exclude option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "exclude",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptExclude,
+    },
+    {
+        .name = "reset-exclude",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExclude,
+    },
+
     // force option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2238,6 +2250,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptDbInclude,
     cfgOptDbTimeout,
     cfgOptDelta,
+    cfgOptExclude,
     cfgOptHostId,
     cfgOptLinkAll,
     cfgOptLinkMap,

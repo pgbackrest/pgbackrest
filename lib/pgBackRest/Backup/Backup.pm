@@ -827,8 +827,8 @@ sub process
 
     # Build the manifest
     $oBackupManifest->build($oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
-        (cfgOptionValid(CFGOPT_DELTA) && cfgOption(CFGOPT_DELTA)), $hTablespaceMap, $hDatabaseMap);
-
+        (cfgOptionValid(CFGOPT_DELTA) && cfgOption(CFGOPT_DELTA)), $hTablespaceMap, $hDatabaseMap,
+        cfgOption(CFGOPT_EXCLUDE, false));
     &log(TEST, TEST_MANIFEST_BUILD);
 
     # If resuming from an aborted backup

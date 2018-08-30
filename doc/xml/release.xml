@@ -54,6 +54,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow arbitrary directories and/or files to be excluded from a backup.  Misuse of this feature can lead to inconsistent backups so read the <br-option>--exclude</br-option> documentation carefully before using.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <br-option>log-subprocess</br-option> option to allow file logging for <id>local</id> and <id>remote</id> subprocesses.</p>
                     </release-item>
 
@@ -63,6 +71,14 @@
                 </release-feature-list>
 
                 <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve asynchronous <cmd>archive-get</cmd>/<cmd>archive-push</cmd> performance by directly checking status files.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="sarah.conway"/>
@@ -137,10 +153,11 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Require <postgres/> catalog version when instantiating a <code>Manifest</code> object (and not loading it from disk).</p>
+                        <p>Manifest improvements.  Require <postgres/> catalog version when instantiating a <code>Manifest</code> object (and not loading it from disk).  Prevent manifest from being built more than once.  Limit manifest build recursion (i.e. links followed) to sixteen levels to detect link loops.</p>
                     </release-item>
 
                     <release-item>

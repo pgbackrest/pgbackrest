@@ -31,22 +31,25 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
     MEM_CONTEXT_TEMP_BEGIN()
     {
         String *spoolQueue = strNew(archiveMode == archiveModeGet ? STORAGE_SPOOL_ARCHIVE_IN : STORAGE_SPOOL_ARCHIVE_OUT);
+        String *okFile = strNewFmt("%s.ok", strPtr(walSegment));
+        String *errorFile = strNewFmt("%s.error", strPtr(walSegment));
 
-        StringList *fileList = storageListP(
-            storageSpool(), spoolQueue, .expression = strNewFmt("^%s\\.(ok|error)$", strPtr(walSegment)));
+        bool okFileExists = storageExistsNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(okFile)));
+        bool errorFileExists = storageExistsNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
 
-        if (fileList != NULL && strLstSize(fileList) > 0)
+        // If both status files are found then assert - this could be a bug in the async process
+        if (okFileExists && errorFileExists)
         {
-            // If more than one status file was found then assert - this could be a bug in the async process
-            if (strLstSize(fileList) != 1)
-            {
-                THROW_FMT(
-                    AssertError, "multiple status files found in '%s' for WAL segment '%s'",
-                    strPtr(storagePath(storageSpool(), spoolQueue)), strPtr(walSegment));
-            }
+            THROW_FMT(
+                AssertError, "multiple status files found in '%s' for WAL segment '%s'",
+                strPtr(storagePath(storageSpool(), spoolQueue)), strPtr(walSegment));
+        }
 
+        // If either of them exists then check what happened and report back
+        if (okFileExists || errorFileExists)
+        {
             // Get the status file content
-            const String *statusFile = strLstGet(fileList, 0);
+            const String *statusFile = okFileExists ? okFile: errorFile;
 
             String *content = strNewBuf(
                 storageGetNP(storageNewReadNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(statusFile)))));
@@ -74,7 +77,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
             }
 
             // Process OK files
-            if (strEndsWithZ(statusFile, ".ok"))
+            if (okFileExists)
             {
                 // If there is content in the status file it is a warning
                 if (strSize(content) != 0)
