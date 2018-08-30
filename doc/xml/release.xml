@@ -17,6 +17,14 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue where <i>relative</i> links in <path>$PGDATA</path> could be stored in the backup with the wrong path.  This issue did not affect absolute links and relative tablespace links were caught by other checks.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="douglas.j.hunley"/>
                         </release-item-contributor-list>
 
