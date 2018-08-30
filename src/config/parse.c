@@ -460,6 +460,17 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     // Make sure the option id is valid
                     ASSERT_DEBUG(optionId < CFG_OPTION_TOTAL);
 
+                    // Error if this option is secure and cannot be passed on the command line
+                    if (cfgDefOptionSecure(cfgOptionDefIdFromId(optionId)))
+                    {
+                        THROW_FMT(
+                            OptionInvalidError,
+                            "option '%s' is not allowed on the command-line\n"
+                            "HINT: this option could expose secrets in the process list.\n"
+                            "HINT: specify the option in a configuration file or an environment variable instead.",
+                            cfgOptionName(optionId));
+                    }
+
                     // If the the option has not been found yet then set it
                     if (!parseOptionList[optionId].found)
                     {
@@ -596,7 +607,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         continue;
 
                     parseOptionList[optionId].found = true;
-                    parseOptionList[optionId].source = cfgSourceParam;
+                    parseOptionList[optionId].source = cfgSourceConfig;
 
                     // Convert boolean to string
                     if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
@@ -733,7 +744,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             continue;
                         }
 
-                        // Continue if this option has already been found in another section
+                        // Continue if this option has already been found in another section or command-line/environment
                         if (parseOptionList[optionId].found)
                             continue;
 
@@ -790,17 +801,6 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     THROW_FMT(
                         OptionInvalidError, "option '%s' not valid for command '%s'", cfgOptionName(optionId),
                         cfgCommandName(cfgCommand()));
-                }
-
-                // Error if this option is secure and cannot be passed on the command line
-                if (parseOption->found && parseOption->source == cfgSourceParam && cfgDefOptionSecure(optionDefId))
-                {
-                    THROW_FMT(
-                        OptionInvalidError,
-                        "option '%s' is not allowed on the command-line\n"
-                        "HINT: this option could expose secrets in the process list.\n"
-                        "HINT: specify the option in '%s' instead.",
-                        cfgOptionName(optionId), cfgDefOptionDefault(commandDefId, cfgDefOptConfig));
                 }
 
                 // Error if this option does not allow multiple arguments

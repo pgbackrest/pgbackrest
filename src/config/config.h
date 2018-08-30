@@ -72,7 +72,7 @@ typedef enum
 {
     cfgSourceDefault,                                               // Default value
     cfgSourceParam,                                                 // Passed as command-line parameter
-    cfgSourceConfig,                                                // From configuration file
+    cfgSourceConfig,                                                // From configuration file or environment variable
 } ConfigSource;
 
 /***********************************************************************************************************************************

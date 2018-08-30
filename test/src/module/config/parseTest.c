@@ -739,7 +739,7 @@ testRun(void)
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'repo1-s3-key' is not allowed on the command-line\n"
             "HINT: this option could expose secrets in the process list.\n"
-            "HINT: specify the option in '/etc/pgbackrest/pgbackrest.conf' instead.");
+            "HINT: specify the option in a configuration file or an environment variable instead.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -747,12 +747,11 @@ testRun(void)
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--no-config"));
         strLstAdd(argList, strNew("--stanza=db"));
-        setenv("PGBACKREST_REPO1_S3_HOST", "xxx", true);
+        strLstAdd(argList, strNew("--repo1-s3-host=xxx"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'repo1-s3-host' not valid without option 'repo1-type' = 's3'");
-        unsetenv("PGBACKREST_REPO1_S3_HOST");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1032,7 +1031,13 @@ testRun(void)
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--no-online"));
         strLstAdd(argList, strNew("--no-config"));
+        strLstAdd(argList, strNew("--repo1-type=s3"));
+        strLstAdd(argList, strNew("--repo1-s3-bucket=test"));
+        strLstAdd(argList, strNew("--repo1-s3-endpoint=test"));
+        strLstAdd(argList, strNew("--repo1-s3-region=test"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        setenv("PGBACKREST_REPO1_S3_KEY", "xxx", true);
+        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", "xxx", true);
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "    command is " TEST_COMMAND_BACKUP);
 
@@ -1046,12 +1051,17 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "    stanza is source param");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceParam, "    pg1-path is source param");
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoS3KeySecret)), "xxx", "    repo1-s3-secret is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptRepoS3KeySecret), cfgSourceConfig, "    repo1-s3-secret is source env");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source default");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), true, "    compress is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompress), cfgSourceDefault, "    compress is source default");
         TEST_RESULT_INT(cfgOptionInt(cfgOptBufferSize), 4194304, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceDefault, "    buffer-size is source default");
+
+        unsetenv("PGBACKREST_REPO1_S3_KEY");
+        unsetenv("PGBACKREST_REPO1_S3_KEY_SECRET");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1117,11 +1127,11 @@ testRun(void)
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgSocketPath)), "/path/to/socket", "    pg1-socket-path is set");
-        TEST_RESULT_INT(cfgOptionSource(cfgOptPgSocketPath), cfgSourceParam, "    pg1-socket-path is source param");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptPgSocketPath), cfgSourceConfig, "    pg1-socket-path is config param");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source param");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "    start-fast not is set");
-        TEST_RESULT_INT(cfgOptionSource(cfgOptStartFast), cfgSourceParam, "    start-fast is source param");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptStartFast), cfgSourceConfig, "    start-fast is config param");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), false, "    compress not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompress), cfgSourceConfig, "    compress is source config");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCheck), false, "    archive-check is not set");
