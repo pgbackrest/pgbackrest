@@ -299,7 +299,7 @@ sub processManifest
         {
             logDebugMisc($strOperation, "reference ${strRepoFile} to ${strReference}");
 
-            # If the delta option to checksum all files is set then only skip checking/copy this file if the size is zero.
+            # If the delta option to checksum all files is set then only skip checking/copy this referenced file if the size is zero
             if (!cfgOption(CFGOPT_DELTA) ||
                 $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE) == 0)
             {

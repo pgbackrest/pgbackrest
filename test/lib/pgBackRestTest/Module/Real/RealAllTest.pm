@@ -618,7 +618,7 @@ sub run
             # Start a new backup to make the next test restart it
             $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will be restarted', true)");
         }
-
+# CSHANG Need to ensure there are zero-based files - one with reference, one without
         # Exercise --delta checksum option
         $oExecuteBackup = $oHostBackup->backupBegin(
             CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup',

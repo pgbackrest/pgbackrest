@@ -1290,23 +1290,24 @@ sub run
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
         'reference set to prior backup label');
 
-        # Create a new file reference
+        # Create a new file reference and a zero-sized file reference
         my $strTestNew = $strTest . 'new';
+        my $strZeroFile = 'zero-file';
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . $strTestNew,
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strTestNew);
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
-            MANIFEST_SUBKEY_SIZE, length($strTestNew));
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
-            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
-
-        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
-            MANIFEST_SUBKEY_SIZE, length($strTestNew));
-        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
-            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . $strZeroFile,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
+        # Change the size on a file
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . $strTest,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strTest . 'more');
 
         # Set a reference, checksum, repo size, master and page checksum in the last manifest
         my $strCheckSum = '1234567890';
         my $lRepoSize = 10000;
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_SIZE, length($strTestNew));
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
         $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
             MANIFEST_SUBKEY_REFERENCE, BOGUS . BOGUS);
         $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
@@ -1317,8 +1318,20 @@ sub run
             MANIFEST_SUBKEY_MASTER, false);
         $oLastManifest->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
             MANIFEST_SUBKEY_CHECKSUM_PAGE, true);
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oLastManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
+            MANIFEST_SUBKEY_REPO_SIZE, $lRepoSize);
+        $oLastManifest->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
+            MANIFEST_SUBKEY_MASTER, false);
+        $oLastManifest->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
+            MANIFEST_SUBKEY_CHECKSUM_PAGE, true);
 
         # Update expected manifest
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_SIZE, length($strTestNew));
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
             MANIFEST_SUBKEY_REFERENCE, BOGUS . BOGUS);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
@@ -1327,6 +1340,21 @@ sub run
             MANIFEST_SUBKEY_REPO_SIZE, $lRepoSize);
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
             MANIFEST_SUBKEY_CHECKSUM_PAGE, true);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
+            MANIFEST_SUBKEY_REFERENCE, BOGUS);
+        $oManifestExpected->numericSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
+            MANIFEST_SUBKEY_REPO_SIZE, $lRepoSize);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
+            MANIFEST_SUBKEY_CHECKSUM_PAGE, true);
+        # Remove the reference for strTest since the size has changed
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest,
+            MANIFEST_SUBKEY_REFERENCE);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest,
+            MANIFEST_SUBKEY_SIZE, length($strTest . 'more'));
 
         # Default "master" is flipping because it's not something we read from disk
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MASTER, undef, false);
@@ -1339,19 +1367,51 @@ sub run
         $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'updates from last manifest');
 
-# CSHANG Add tests to:
-# 1) Update the timestamp in the lastManifest for $strTestNew so it is different and pass delta=true - expected manifest should not change
-# 2) Set delta to false - the file will not be kept and will instead be recopied and updated in manifest
-# 3) 0 byte file in last manifest with different timestamp with/without delta will always get reference to prior backup - expected manifest should have 'bogus' backup label as reference
-
-
-
-        # MANIFEST_SUBKEY_CHECKSUM_PAGE = false and MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR set/not set
+        # Timestamp in the lastManifest is different than built manifest
         #---------------------------------------------------------------------------------------------------------------------------
-        $oLastManifest->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+        # pass delta=true - expected manifest will use the timestamp set for the file on disk ($lTime)
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime - 10);
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime - 10);
+
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
+        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+            'delta true, size same, timestamp different');
+
+        # With different timestamp in last manifest pass delta=false - the references to the prior backup will be removed for the
+        # non-zero file but the zero file will still have a reference
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_REFERENCE);
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_CHECKSUM);
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_REPO_SIZE);
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_CHECKSUM_PAGE);
+
+        # Default "master" is flipping because it's not something we read from disk
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MASTER, undef, true);
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_MASTER);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
+            MANIFEST_SUBKEY_MASTER, false);
+
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
+        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+            'delta false, size same, timestamp different');
+
+        # MANIFEST_SUBKEY_CHECKSUM_PAGE = false and MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR set/not set from last manifest
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oLastManifest->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
             MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
 
-        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
             MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
 
         $oManifest = new pgBackRest::Manifest(
@@ -1362,10 +1422,10 @@ sub run
             'checksum-page false, checksum-page-error not set');
 
         my @iyChecksumPageError = (1);
-        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
             MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR, \@iyChecksumPageError);
 
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
             MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR, \@iyChecksumPageError);
 
         $oManifest = new pgBackRest::Manifest(
