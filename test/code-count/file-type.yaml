@@ -639,6 +639,14 @@ src/common/io/bufferWrite.h:
   class: core
   type: c/h
 
+src/common/io/filter/buffer.c:
+  class: core
+  type: c
+
+src/common/io/filter/buffer.h:
+  class: core
+  type: c/h
+
 src/common/io/filter/filter.c:
   class: core
   type: c
@@ -652,6 +660,14 @@ src/common/io/filter/group.c:
   type: c
 
 src/common/io/filter/group.h:
+  class: core
+  type: c/h
+
+src/common/io/filter/size.c:
+  class: core
+  type: c
+
+src/common/io/filter/size.h:
   class: core
   type: c/h
 
@@ -755,6 +771,14 @@ src/common/type/convert.h:
   class: core
   type: c/h
 
+src/common/type/json.c:
+  class: core
+  type: c
+
+src/common/type/json.h:
+  class: core
+  type: c/h
+
 src/common/type/keyValue.c:
   class: core
   type: c
@@ -808,6 +832,30 @@ src/common/wait.c:
   type: c
 
 src/common/wait.h:
+  class: core
+  type: c/h
+
+src/compress/gzip.c:
+  class: core
+  type: c
+
+src/compress/gzip.h:
+  class: core
+  type: c/h
+
+src/compress/gzipCompress.c:
+  class: core
+  type: c
+
+src/compress/gzipCompress.h:
+  class: core
+  type: c/h
+
+src/compress/gzipDecompress.c:
+  class: core
+  type: c
+
+src/compress/gzipDecompress.h:
   class: core
   type: c/h
 
@@ -896,6 +944,30 @@ src/crypto/random.c:
   type: c
 
 src/crypto/random.h:
+  class: core
+  type: c/h
+
+src/info/info.c:
+  class: core
+  type: c
+
+src/info/info.h:
+  class: core
+  type: c/h
+
+src/info/infoArchive.c:
+  class: core
+  type: c
+
+src/info/infoArchive.h:
+  class: core
+  type: c/h
+
+src/info/infoPg.c:
+  class: core
+  type: c
+
+src/info/infoPg.h:
   class: core
   type: c/h
 
@@ -1391,6 +1463,10 @@ test/src/module/common/typeConvertTest.c:
   class: test/module
   type: c
 
+test/src/module/common/typeJsonTest.c:
+  class: test/module
+  type: c
+
 test/src/module/common/typeKeyValueTest.c:
   class: test/module
   type: c
@@ -1420,6 +1496,10 @@ test/src/module/common/typecTest.c:
   type: c
 
 test/src/module/common/waitTest.c:
+  class: test/module
+  type: c
+
+test/src/module/compress/gzipTest.c:
   class: test/module
   type: c
 
@@ -1456,6 +1536,18 @@ test/src/module/crypto/randomTest.c:
   type: c
 
 test/src/module/help/helpTest.c:
+  class: test/module
+  type: c
+
+test/src/module/info/infoArchiveTest.c:
+  class: test/module
+  type: c
+
+test/src/module/info/infoPgTest.c:
+  class: test/module
+  type: c
+
+test/src/module/info/infoTest.c:
   class: test/module
   type: c
 
