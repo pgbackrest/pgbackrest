@@ -937,11 +937,9 @@ sub build
                 $strFile = substr($strFile, length(MANIFEST_TARGET_PGDATA) + 1);
             }
 
-            $strPath = dirname("${strPath}/${strName}");
-
             $self->build(
-                $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $bDelta, $hTablespaceMap, $hDatabaseMap, $rhExclude,
-                $strFile, $bTablespace, $strPath, $strFilter, $iLevel + 1);
+                $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $bDelta, $hTablespaceMap, $hDatabaseMap, $rhExclude, $strFile,
+                $bTablespace, dirname("${strPath}/${strName}"), $strFilter, $iLevel + 1);
         }
     }
 

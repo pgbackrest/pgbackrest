@@ -773,18 +773,14 @@ sub run
             'tablespace symlink ../base destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
-        # Invalid absolute tablespace is  $self->{strDbPath} . /base
-        # INVESTIGATE: But this should fail because the link points to a directory in pg_data but instead it passes the
-        # index($hManifest->{$strName}{link_destination}, '/') != 0 and then fails later. It WILL fail "destination must not be in
-        # $PGDATA" if an ending slash is added - so maybe the comment in Manifest.pm "# Make sure that DB_PATH_PGTBLSPC contains
-        # only absolute links that do not point inside PGDATA" is not exactly correct?
+        # Invalid absolute tablespace is $self->{strDbPath} . /base
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", $self->{strDbPath} . '/base');
         $oManifest = new pgBackRest::Manifest(
             $strBackupManifestFile,
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
-        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_ASSERT,
-            "tablespace with oid ${strTblspcId} not found in tablespace map\n" .
-            "HINT: was a tablespace created or dropped during the backup?");
+        $self->testException(
+            sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_TABLESPACE_IN_PGDATA,
+            "tablespace symlink $self->{strDbPath}/base destination must not be in \$PGDATA");
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
         # Invalid relative tablespace is ../../BOGUS - which is not in $PGDATA and does not exist
@@ -801,7 +797,7 @@ sub run
         my $strTablespace = 'tablespace';
         storageTest()->pathCreate($strTablespace);
 
-        my $strIntermediateLink = $self->{strDbPath} . "/intermediate_link";
+        my $strIntermediateLink = $self->testPath() . "/intermediate_link";
 
         # Create a link to a link
         testLinkCreate($strIntermediateLink, $self->testPath() . '/' . $strTablespace);
@@ -813,7 +809,7 @@ sub run
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false, false)}, ERROR_LINK_DESTINATION,
             "link '${strTblSpcPath}/${strTblspcId}' -> '$strIntermediateLink' cannot reference another link");
 
-        testFileRemove($self->{strDbPath} . "/intermediate_link");
+        testFileRemove($strIntermediateLink);
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
         # Reload the manifest otherwise it will contain invalid data from the above exception tests
