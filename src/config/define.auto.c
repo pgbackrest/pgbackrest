@@ -2329,7 +2329,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRemote)
 
-                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(true)
             )
         )
     )

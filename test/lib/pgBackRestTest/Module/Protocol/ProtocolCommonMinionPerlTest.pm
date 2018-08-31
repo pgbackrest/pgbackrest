@@ -106,7 +106,7 @@ sub run
             my $oMinion = new pgBackRest::Protocol::Base::Minion('test', new pgBackRest::Common::Io::Buffered($oIoHandle, 5, 4096));
 
             # Use bogus lock path to ensure a lock is not taken for the archive-get command
-            $oMinion->process($self->testPath(), cfgCommandName(CFGCMD_ARCHIVE_GET), "test");
+            $oMinion->process($self->testPath(), cfgCommandName(CFGCMD_ARCHIVE_GET), "test", 0);
         });
 
         #---------------------------------------------------------------------------------------------------------------------------

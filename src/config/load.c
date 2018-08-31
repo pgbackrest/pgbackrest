@@ -241,7 +241,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
                 {
                     strCatFmt(
                         logFile, "%s-%s-%03d.log", strPtr(cfgOptionStr(cfgOptCommand)), cfgCommandName(cfgCommand()),
-                        cfgOptionTest(cfgOptProcess) ? cfgOptionInt(cfgOptProcess) : 0);
+                        cfgOptionInt(cfgOptProcess));
                 }
                 // Else add command name
                 else

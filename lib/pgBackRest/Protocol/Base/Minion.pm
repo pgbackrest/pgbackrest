@@ -138,6 +138,7 @@ sub process
     my $strLockPath = shift;
     my $strLockCommand = shift;
     my $strLockStanza = shift;
+    my $iProcessId = shift;
 
     # Reset stderr log level so random errors do not get output
     logLevelSet(undef, undef, OFF);
@@ -151,7 +152,7 @@ sub process
     {
         # Acquire a lock if required (this will be determined by lockAcquire()).  This is done here so any errors will be
         # transmitted through the protocol layer and cause a graceful shutdown rather than a remote abort.
-        if (defined($strLockPath) && defined($strLockStanza))
+        if (defined($strLockPath) && defined($strLockStanza) && $iProcessId == 0)
         {
             eval
             {

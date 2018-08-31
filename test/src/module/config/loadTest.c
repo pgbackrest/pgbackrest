@@ -320,7 +320,6 @@ testRun(void)
 
         // Local command opens log file with special filename
         // -------------------------------------------------------------------------------------------------------------------------
-
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
@@ -344,6 +343,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAdd(argList, strNew("--type=backup"));
         strLstAdd(argList, strNew("--log-level-file=warn"));
+        strLstAdd(argList, strNew("--process=0"));
         strLstAdd(argList, strNew("remote"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");

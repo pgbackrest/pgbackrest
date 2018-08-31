@@ -1001,7 +1001,7 @@ my %hConfigDefine =
             },
             &CFGCMD_REMOTE =>
             {
-                &CFGDEF_REQUIRED => false,
+                &CFGDEF_REQUIRED => true,
             },
         },
     },
