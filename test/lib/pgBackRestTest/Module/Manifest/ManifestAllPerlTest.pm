@@ -297,15 +297,15 @@ sub run
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'master false');
 
-        # Create a pg_config path and file link
-        my $strConfFile = '/pg_config/postgresql.conf';
+        # Create pg_config path and postgresql.conf file
+        my $strConfFile = '/postgresql.conf';
         my $strConfContent = "listen_addresses = *\n";
-        storageDb()->pathCreate('pg_config');
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . $strConfFile,
+        storageTest()->pathCreate('pg_config');
+        storageTest()->put(storageTest()->openWrite($self->testPath() . '/pg_config' . $strConfFile,
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strConfContent);
 
-        # link db/pg_config/postgresql.conf.link -> ./postgresql.conf
-        testLinkCreate($self->{strDbPath} . $strConfFile . '.link', './postgresql.conf');
+        # link db/postgresql.conf -> pg_config/postgresql.conf
+        testLinkCreate($self->{strDbPath} . $strConfFile, $self->testPath() . '/pg_config' . $strConfFile);
 
         # INVESTIGATE: on the command line, these links appear to be fine but in the code, a debug line prior to the recursive call to build() produces:
         # STRPATH BEFORE BUILD: /home/ubuntu/test/test-0/db/base, STRLEVEL PASSED: $VAR1 = 'pg_data/base/pg_config_bad';
@@ -340,26 +340,32 @@ sub run
 
         # Update expected manifest
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_BASE, MANIFEST_SUBKEY_MODE, MODE_0700);
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . '/pg_config', undef, $hDefault);
 
         # Section backup:target
-        $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA . $strConfFile . '.link',
-            MANIFEST_SUBKEY_FILE, 'postgresql.conf');
-        $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA . $strConfFile . '.link',
-            MANIFEST_SUBKEY_PATH, '.');
-        $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA . $strConfFile . '.link',
-            MANIFEST_SUBKEY_TYPE, MANIFEST_VALUE_LINK);
+        $oManifestExpected->set(
+            MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA . $strConfFile, MANIFEST_SUBKEY_FILE, 'postgresql.conf');
+        $oManifestExpected->set(
+            MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA . $strConfFile, MANIFEST_SUBKEY_PATH,
+            $self->testPath() . '/pg_config');
+        $oManifestExpected->set(
+            MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA . $strConfFile, MANIFEST_SUBKEY_TYPE, MANIFEST_VALUE_LINK);
         # Section target:file
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strConfFile,
-            MANIFEST_SUBKEY_SIZE, length($strConfContent));
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strConfFile,
-            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpected->set(
+            MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strConfFile, MANIFEST_SUBKEY_SIZE,
+            length($strConfContent));
+        $oManifestExpected->set(
+            MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/postgresql.conf', MANIFEST_SUBKEY_TIMESTAMP, $lTime);
         # Section target:link
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK, MANIFEST_TARGET_PGDATA . $strConfFile . '.link',
-            MANIFEST_SUBKEY_DESTINATION, './postgresql.conf');
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK, MANIFEST_TARGET_PGDATA . '/postgresql.conf',
+            MANIFEST_SUBKEY_DESTINATION, $self->testPath() . '/pg_config' . $strConfFile);
         # Section target:link:default
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
+
+        # Create an unreadable file and path in pg_config to test that we are only reading the files we need to
+        executeTest(
+            "sudo touch " . $self->testPath() . "/pg_config/do_not_read.txt" .
+            " && sudo mkdir -m 700 " . $self->testPath() . "/pg_config/do_not_read");
 
         $oManifest = new pgBackRest::Manifest(
             $strBackupManifestFile,
@@ -377,7 +383,7 @@ sub run
         $self->testException(
             sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_FORMAT,
             'recursion in manifest build exceeds depth of 16: pg_data/pgdata/pgdata/pgdata/pgdata/pgdata/pgdata/pgdata/pgdata/' .
-                "pgdata/pgdata/pgdata/pgdata/pgdata/pgdata/pgdata/pg_config/postgresql.conf.link\n" .
+                "pgdata/pgdata/pgdata/pgdata/pgdata/pgdata/pgdata/pgdata\n" .
                 'HINT: is there a link loop in $PGDATA?');
 
         testFileRemove($self->{strDbPath} . '/pgdata');
@@ -829,6 +835,9 @@ sub run
         my $strTblspcDir = $strTblspcVersion . '/11';
         storageTest()->pathCreate("$strTablespacePath/$strTblspcDir", {bCreateParent => true});
 
+        # Create a file and path that will error if read
+        executeTest("sudo touch ${strTablespacePath}/do_not_read.txt && sudo mkdir -m 700 ${strTablespacePath}/do_not_read");
+
         # Create unlogged and temp files
         storageDb()->put(storageDb()->openWrite($strTablespacePath . '/' . $strTblspcDir . $strUnlogFileOid . '_init',
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
@@ -914,6 +923,9 @@ sub run
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, $hTablespaceMap, $hDatabaseMap);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'offline passing tablespace map and database map');
+
+        # Remove the unreadable file and path because they will not work with tests for PG < 9.0
+        executeTest("sudo rm ${strTablespacePath}/do_not_read.txt && sudo rmdir ${strTablespacePath}/do_not_read");
 
         # Exclusions
         #---------------------------------------------------------------------------------------------------------------------------

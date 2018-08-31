@@ -344,14 +344,16 @@ sub manifest
     (
         $strOperation,
         $strPathExp,
+        $strFilter,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->manifest', \@_,
             {name => 'strPathExp'},
+            {name => 'strFilter', optional => true, trace => true},
         );
 
-    my $hManifest = $self->driver()->manifest($self->pathGet($strPathExp));
+    my $hManifest = $self->driver()->manifest($self->pathGet($strPathExp), {strFilter => $strFilter});
 
     # Return from function and log return values if any
     return logDebugReturn
