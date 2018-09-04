@@ -335,16 +335,16 @@ storageDriverPosixPathSync(const String *path, bool ignoreMissing)
     FUNCTION_DEBUG_END();
 
     // Open directory and handle errors
-    int handle = storageFilePosixOpen(path, O_RDONLY, 0, ignoreMissing, &PathOpenError, "sync");
+    int handle = storageFilePosixOpen(path, O_RDONLY, 0, ignoreMissing, false, "sync");
 
     // On success
     if (handle != -1)
     {
         // Attempt to sync the directory
-        storageFilePosixSync(handle, path, &PathSyncError, true);
+        storageFilePosixSync(handle, path, false, true);
 
         // Close the directory
-        storageFilePosixClose(handle, path, &PathCloseError);
+        storageFilePosixClose(handle, path, false);
     }
 
     FUNCTION_DEBUG_RESULT_VOID();

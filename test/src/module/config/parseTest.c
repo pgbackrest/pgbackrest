@@ -181,7 +181,7 @@ testRun(void)
 
         TEST_ERROR(
             cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-                backupCmdDefConfigInclPathValue, oldConfigDefault), FileOpenError,
+                backupCmdDefConfigInclPathValue, oldConfigDefault), FileMissingError,
                 strPtr(strNewFmt("unable to open '%s/%s' for read: [2] No such file or directory", testPath(), BOGUS_STR)));
 
         strLstFree(parseOptionList[cfgOptConfig].valueList);

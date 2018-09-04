@@ -30,40 +30,40 @@ testRun(void)
     if (testBegin("StorageFile"))
     {
         TEST_ERROR_FMT(
-            storageFilePosixOpen(pathNoPerm, O_RDONLY, 0, false, &PathOpenError, "test"), PathOpenError,
+            storageFilePosixOpen(pathNoPerm, O_RDONLY, 0, false, false, "test"), PathOpenError,
             "unable to open '%s' for test: [13] Permission denied", strPtr(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/test.file", testPath());
 
         TEST_ERROR_FMT(
-            storageFilePosixOpen(fileName, O_RDONLY, 0, false, &FileOpenError, "read"), FileOpenError,
+            storageFilePosixOpen(fileName, O_RDONLY, 0, false, true, "read"), FileMissingError,
             "unable to open '%s' for read: [2] No such file or directory", strPtr(fileName));
 
-        TEST_RESULT_INT(storageFilePosixOpen(fileName, O_RDONLY, 0, true, &FileOpenError, "read"), -1, "missing file ignored");
+        TEST_RESULT_INT(storageFilePosixOpen(fileName, O_RDONLY, 0, true, true, "read"), -1, "missing file ignored");
 
         // -------------------------------------------------------------------------------------------------------------------------
         int handle = -1;
 
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileName)))), 0, "create read file");
-        TEST_ASSIGN(handle, storageFilePosixOpen(fileName, O_RDONLY, 0, false, &FileOpenError, "read"), "open read file");
+        TEST_ASSIGN(handle, storageFilePosixOpen(fileName, O_RDONLY, 0, false, true, "read"), "open read file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            storageFilePosixSync(-99, fileName, &PathSyncError, false), PathSyncError,
+            storageFilePosixSync(-99, fileName, false, false), PathSyncError,
             "unable to sync '%s': [9] Bad file descriptor", strPtr(fileName));
         TEST_ERROR_FMT(
-            storageFilePosixSync(-99, fileName, &FileSyncError, true), FileSyncError,
+            storageFilePosixSync(-99, fileName, true, true), FileSyncError,
             "unable to sync '%s': [9] Bad file descriptor", strPtr(fileName));
 
-        TEST_RESULT_VOID(storageFilePosixSync(handle, fileName, &FileSyncError, false), "sync file");
+        TEST_RESULT_VOID(storageFilePosixSync(handle, fileName, true, false), "sync file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            storageFilePosixClose(-99, fileName, &FileCloseError), FileCloseError,
+            storageFilePosixClose(-99, fileName, true), FileCloseError,
             "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
 
-        TEST_RESULT_VOID(storageFilePosixClose(handle, fileName, &FileSyncError), "close file");
+        TEST_RESULT_VOID(storageFilePosixClose(handle, fileName, true), "close file");
 
         TEST_RESULT_INT(system(strPtr(strNewFmt("rm %s", strPtr(fileName)))), 0, "remove read file");
     }
@@ -89,7 +89,7 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewReadNP(storageTest, fileName), "new missing read file");
         TEST_ERROR_FMT(
-            ioReadOpen(storageFileReadIo(file)), FileOpenError,
+            ioReadOpen(storageFileReadIo(file)), FileMissingError,
             "unable to open '%s' for read: [2] No such file or directory", strPtr(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -200,7 +200,7 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noCreatePath = true, .noAtomic = true), "new write file");
         TEST_ERROR_FMT(
-            ioWriteOpen(storageFileWriteIo(file)), FileOpenError,
+            ioWriteOpen(storageFileWriteIo(file)), FileMissingError,
             "unable to open '%s' for write: [2] No such file or directory", strPtr(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------

@@ -10,9 +10,8 @@ Storage File Routines For Posix
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-int storageFilePosixOpen(
-    const String *name, int flags, mode_t mode, bool ignoreMissing, const ErrorType *errorType, const char *purpose);
-void storageFilePosixSync(int handle, const String *name, const ErrorType *errorType, bool closeOnError);
-void storageFilePosixClose(int handle, const String *name, const ErrorType *errorType);
+int storageFilePosixOpen(const String *name, int flags, mode_t mode, bool ignoreMissing, bool file, const char *purpose);
+void storageFilePosixSync(int handle, const String *name, bool file, bool closeOnError);
+void storageFilePosixClose(int handle, const String *name, bool file);
 
 #endif
