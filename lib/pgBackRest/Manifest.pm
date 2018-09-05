@@ -1015,24 +1015,12 @@ if (defined($oLastManifest) && $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE
                 {
                     $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
                                $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE));
-                    # # CSHANG After a restore, the modification time on the base/pg_multixact/offsets/ file may be different - why?
-                    # if ($bDelta)
-                    # {
-                    #     $self->numericSet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP,
-                    #         $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP));
-                    # }
                 }
                 # Otherwise the reference is to the previous backup
                 else
                 {
                     $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
                                $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
-                    # # CSHANG After a restore, the modification time on the base/pg_multixact/offsets/ file may be different - why?
-                    # if ($bDelta)
-                    # {
-                    #     $self->numericSet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP,
-                    #         $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP));
-                    # }
                 }
 
                 # Copy the checksum from previous manifest (if it exists - zero sized files don't have checksums)

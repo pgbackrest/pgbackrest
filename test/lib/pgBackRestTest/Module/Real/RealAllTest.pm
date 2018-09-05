@@ -747,7 +747,7 @@ sub run
         $oHostDbMaster->restore(
             undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
             {strOptionalParam => ($bTestLocal ? ' --db-include=test2 --db-include=test3' : '') . ' --buffer-size=16384'});
-exit;
+exit; # CSHANG
         # Test that the first database has not been restored since --db-include did not include test1
         if ($bTestLocal)
         {
