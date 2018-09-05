@@ -740,12 +740,14 @@ sub run
         storageTest()->pathCreate($oHostDbMaster->dbPath() . qw{/} . $oManifest->walPath(), {strMode => '0700'});
         testPathRemove($oHostDbMaster->tablespacePath(1));
         storageTest()->pathCreate($oHostDbMaster->tablespacePath(1), {strMode => '0700'});
+# CSHANG After the above remove/reconstruct there are no files in test/test-0/db-master/db/base, test/test-0/db-master/db/pg_xlog or
+# test/test-0/db-master/db/tablespace/ts1/ - but the restore command below rebuilds the actual.manifest from the db dir because it has already performed the restore - so why does the expected manifest have a reference but the actual does not for pg_data/pg_multixact/offsets/0000 - the timestamp, size and checksum are all the same.
 # CSHANG Up to this point, there are no errors AND the INCR backup.manifest does NOT have an reference for "size":0, but the following restore results in errors and then the references to the zero sized files appear - not in the INCR backup.manifest but in the "actual" vs "expected.
         # Now the restore should work
         $oHostDbMaster->restore(
             undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
             {strOptionalParam => ($bTestLocal ? ' --db-include=test2 --db-include=test3' : '') . ' --buffer-size=16384'});
-exit; # CSHANG
+exit;
         # Test that the first database has not been restored since --db-include did not include test1
         if ($bTestLocal)
         {

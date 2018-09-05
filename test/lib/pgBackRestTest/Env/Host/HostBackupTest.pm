@@ -1814,7 +1814,8 @@ sub restoreCompare
         {bLoad => false, strDbVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION},
             iDbCatalogVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG},
             oStorage => storageTest()});
-
+syswrite(*STDOUT, "BUILDING ACTUAL: $strDbClusterPath, LASTMAN: ". storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} .
+            ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} . qw{/} . FILE_MANIFEST)."\n");
     $oActualManifest->build(storageTest(), $strDbClusterPath, $oLastManifest, false, false, $oTablespaceMap);
 
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);

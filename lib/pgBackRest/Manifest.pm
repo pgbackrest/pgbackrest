@@ -978,6 +978,13 @@ sub build
         # Loop though all files
         foreach my $strName ($self->keys(MANIFEST_SECTION_TARGET_FILE))
         {
+
+# if (defined($oLastManifest) && $strName =~ /0000$/) {syswrite(*STDOUT, "TIMEBEGIN: $lTimeBegin, $strName CURRSIZE: ".$self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE).", LASTSIZE: ".$oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE). ", CURRTIME: ".$self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP).", LASTTIME: ".$oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP)."\n");} # CSHANG
+
+if (defined($oLastManifest) && $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName) &&
+    ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) != $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP)))
+    {syswrite(*STDOUT, "TIMEBEGIN: $lTimeBegin, $strName CURRTIME: ".$self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP).", LASTTIME: ".$oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP)."\n");} # CSHANG
+
             # If modification time is in the future (in this backup OR the last backup) set warning flag and do not
             # allow a reference
             if ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) > $lTimeBegin ||
@@ -998,22 +1005,34 @@ sub build
             # else it will need to be copied to the new backup.
             elsif (defined($oLastManifest) && $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName) &&
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) ==
-                       $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&
+                       $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&
                    ($bDelta || ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) == 0 ||
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
-                       $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP))))
+                       $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP))))
             {
                 # Copy reference from previous backup if possible
                 if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE))
                 {
                     $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
                                $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE));
+                    # # CSHANG After a restore, the modification time on the base/pg_multixact/offsets/ file may be different - why?
+                    # if ($bDelta)
+                    # {
+                    #     $self->numericSet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP,
+                    #         $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP));
+                    # }
                 }
                 # Otherwise the reference is to the previous backup
                 else
                 {
                     $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
                                $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
+                    # # CSHANG After a restore, the modification time on the base/pg_multixact/offsets/ file may be different - why?
+                    # if ($bDelta)
+                    # {
+                    #     $self->numericSet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP,
+                    #         $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP));
+                    # }
                 }
 
                 # Copy the checksum from previous manifest (if it exists - zero sized files don't have checksums)
