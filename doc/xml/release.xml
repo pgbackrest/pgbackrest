@@ -14,6 +14,12 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.06dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fix incorrectly reported error return in <id>info</id> logging.  A return code of 1 from the <cmd>archive-get</cmd> was being logged as an error message at <id>info</id> level but otherwise worked correctly.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p>Ignore all files in a linked tablespace directory except the subdirectory for the current version of <postgres/>.  Previously an error would be generated if other files were present and not owned by the <postgres/> user.</p>

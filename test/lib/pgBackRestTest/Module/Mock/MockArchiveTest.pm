@@ -163,6 +163,13 @@ sub run
         storageTest()->remove("${strWalPath}/${strSourceFile}", {bIgnoreMissing => false});
 
         #---------------------------------------------------------------------------------------------------------------------------
+        &log(INFO, '    get missing WAL');
+
+        $oHostDbMaster->executeSimple(
+            $strCommandGet . " ${strLogDebug} 700000007000000070000000 ${strWalPath}/RECOVERYXLOG",
+            {iExpectedExitStatus => 1, oLogTest => $self->expect()});
+
+        #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    get first WAL');
 
         $oHostDbMaster->executeSimple(

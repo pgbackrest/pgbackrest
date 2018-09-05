@@ -158,7 +158,7 @@ exitSafe(int result, bool error, SignalType signalType)
                     strCatFmt(errorMessage, "[SIG%s]", exitSignalName(signalType));
             }
             // Standard error exit message
-            else
+            else if (error)
                 errorMessage = strNewFmt("aborted with exception [%03d]", result);
         }
 

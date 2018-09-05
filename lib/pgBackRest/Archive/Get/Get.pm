@@ -67,7 +67,7 @@ sub process
         (new pgBackRest::Archive::Get::Async(
             storageSpool()->pathGet(STORAGE_SPOOL_ARCHIVE_IN), $self->{strBackRestBin}, $rstryCommandArg))->process();
     }
-    # Else push synchronously
+    # Else get synchronously
     else
     {
         # Make sure the archive file is defined
@@ -89,7 +89,14 @@ sub process
         $iResult = archiveGetFile($strSourceArchive, $strDestinationFile, false);
 
         # Info for the Postgres log
-        &log(INFO, 'got WAL segment ' . $strSourceArchive);
+        if ($iResult == 0)
+        {
+            &log(INFO, 'got WAL segment ' . $strSourceArchive);
+        }
+        else
+        {
+            &log(INFO, "unable to find ${strSourceArchive} in the archive");
+        }
     }
 
     # Return from function and log return values if any

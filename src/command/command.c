@@ -171,7 +171,6 @@ cmdEnd(int code, const String *errorMessage)
         FUNCTION_DEBUG_PARAM(STRING, errorMessage);
 
         FUNCTION_DEBUG_ASSERT(cfgCommand() != cfgCmdNone);
-        FUNCTION_DEBUG_ASSERT(code == 0 || errorMessage != NULL);
     FUNCTION_DEBUG_END();
 
     // Skip this log message if it won't be output.  It's not too expensive but since we skipped cmdBegin(), may as well.
@@ -182,7 +181,7 @@ cmdEnd(int code, const String *errorMessage)
             // Basic info on command end
             String *info = strNewFmt("%s command end: ", cfgCommandName(cfgCommand()));
 
-            if (code == 0)
+            if (errorMessage == NULL)
             {
                 strCat(info, "completed successfully");
 
