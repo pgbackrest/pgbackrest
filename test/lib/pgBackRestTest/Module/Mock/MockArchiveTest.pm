@@ -83,7 +83,7 @@ sub run
     {
     foreach my $bRemote ($bS3 ? (true) : (false, true))
     {
-        my $bRepoEncrypt = !$bRemote && !$bS3 ? true : false;
+        my $bRepoEncrypt = $bRemote && !$bS3 ? true : false;
 
         # Increment the run, log, and decide whether this unit test should be run
         if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bRepoEncrypt}")) {next}
@@ -152,12 +152,12 @@ sub run
         my $strArchiveFile = $self->walGenerate($strWalPath, PG_VERSION_94, 2, $strSourceFile);
 
         $oHostDbMaster->executeSimple(
-            $strCommandPush . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " ${strLogDebug} ${strWalPath}/${strSourceFile}",
+            $strCommandPush . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " --compress ${strLogDebug} ${strWalPath}/${strSourceFile}",
             {oLogTest => $self->expect()});
-        push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}");
+        push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}.gz");
 
         # Test that the WAL was pushed
-        $self->archiveCheck($strSourceFile, $strArchiveChecksum, false);
+        $self->archiveCheck($strSourceFile, $strArchiveChecksum, true);
 
         # Remove WAL
         storageTest()->remove("${strWalPath}/${strSourceFile}", {bIgnoreMissing => false});
