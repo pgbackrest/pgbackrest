@@ -109,6 +109,8 @@ use constant MANIFEST_KEY_COMPRESS                                  => 'option-'
     push @EXPORT, qw(MANIFEST_KEY_COMPRESS);
 use constant MANIFEST_KEY_ONLINE                                    => 'option-' . cfgOptionName(CFGOPT_ONLINE);
     push @EXPORT, qw(MANIFEST_KEY_ONLINE);
+use constant MANIFEST_KEY_DELTA                                     => 'option-' . cfgOptionName(CFGOPT_DELTA);
+    push @EXPORT, qw(MANIFEST_KEY_DELTA);
 
 # Information about the database that was backed up
 use constant MANIFEST_KEY_DB_ID                                     => 'db-id';
@@ -974,7 +976,7 @@ sub build
             $self->numericSet(MANIFEST_SECTION_DB, $strDbName, MANIFEST_KEY_DB_LAST_SYSTEM_ID,
                               $hDatabaseMap->{$strDbName}{&MANIFEST_KEY_DB_LAST_SYSTEM_ID});
         }
-
+# CSHANG Will we need to set the MANIFEST_KEY_DELTA delta option in here on timeInFuture or other condition?
         # Loop though all files
         foreach my $strName ($self->keys(MANIFEST_SECTION_TARGET_FILE))
         {

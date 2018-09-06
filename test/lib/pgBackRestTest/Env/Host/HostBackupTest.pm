@@ -38,6 +38,8 @@ use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::RunTest;
 
+use Data::Dumper;
+
 ####################################################################################################################################
 # Host defaults
 ####################################################################################################################################
@@ -1815,8 +1817,10 @@ sub restoreCompare
             iDbCatalogVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG},
             oStorage => storageTest()});
 syswrite(*STDOUT, "BUILDING ACTUAL: $strDbClusterPath, LASTMAN: ". storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} .
-            ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} . qw{/} . FILE_MANIFEST)."\n");
-    $oActualManifest->build(storageTest(), $strDbClusterPath, $oLastManifest, false, false, $oTablespaceMap);
+            ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} . qw{/} . FILE_MANIFEST).", DELTA? ".$oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA}."\n"); # CSHANG
+# CSHANG Do we also need to consider if last manifest had delta option set?
+    $oActualManifest->build(storageTest(), $strDbClusterPath, $oLastManifest, false,
+        $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA}, $oTablespaceMap);
 
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
 
@@ -1884,6 +1888,20 @@ syswrite(*STDOUT, "BUILDING ACTUAL: $strDbClusterPath, LASTMAN: ". storageRepo()
 
                 $oActualManifest->set(
                     MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM, $strHash);
+
+                # If the delta option was set, need to mimic backupFile() modifications
+                if ($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA})
+                {
+# This is still not working because I don't see some files that should be in the actual manifest at this point - why?
+syswrite(*STDOUT, "NAME: $strName, HASH: $strHash, LAST: ".($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM) ? $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM) : 'undef')."\n"); # CSHANG
+                    # If the actual checksum and last manifest checksum don't match, remove the reference
+                    if (defined($oLastManifest) &&
+                        $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM) &&
+                        $strHash ne $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM))
+                    {
+                        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE);
+                    }
+                }
             }
             else
             {

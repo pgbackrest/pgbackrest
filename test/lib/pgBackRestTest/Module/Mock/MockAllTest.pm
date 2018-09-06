@@ -36,6 +36,8 @@ use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostS3Test;
 use pgBackRestTest::Env::HostEnvTest;
 
+# CSHANG Need to add tests for backup with --delta option
+
 ####################################################################################################################################
 # Build PostgreSQL pages for testing
 ####################################################################################################################################
