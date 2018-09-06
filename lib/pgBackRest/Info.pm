@@ -37,6 +37,7 @@ use constant INFO_SECTION_INFO                                      => 'info';
 use constant INFO_SECTION_REPO                                      => 'repository';
 use constant INFO_SECTION_TIMESTAMP                                 => 'timestamp';
 use constant INFO_SECTION_STATUS                                    => 'status';
+use constant INFO_SECTION_CIPHER                                    => 'cipher';
 
 use constant INFO_STANZA_NAME                                       => 'name';
 
@@ -431,6 +432,9 @@ sub stanzaList
                     &INFO_KEY_MESSAGE => INFO_STANZA_STATUS_OK_MESSAGE
                 };
             }
+# CSHANG - can I use a defined constant for 'none'?
+            $$oStanzaInfo{&INFO_SECTION_STATUS} = defined(storageRepo({strStanza => $strStanzaEncrypt})->cipherType()) ?
+                storageRepo({strStanza => $strStanzaEncrypt})->cipherType() : 'none';
 
             # Array to store tne min/max archive for each database for which there are archives
             my @oyDbArchiveList = ();
