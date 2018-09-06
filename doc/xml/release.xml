@@ -48,6 +48,14 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Fix typo in unit test error messages, EXECTED => EXPECTED.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2018-08-31" version="2.05" title="Environment Variable Options and Exclude Temporary/Unlogged Relations">
