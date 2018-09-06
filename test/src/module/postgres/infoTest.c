@@ -44,6 +44,22 @@ testRun(void)
         TEST_ERROR_FMT(pgVersionMap(1100, 0), VersionNotSupportedError, MAP_ERROR, 1100);
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("pgVersionFromStr() and pgVersionToStr()"))
+    {
+        TEST_ERROR(pgVersionFromStr(strNew("9.3.4")), AssertError, "version 9.3.4 format is invalid");
+        TEST_ERROR(pgVersionFromStr(strNew("abc")), AssertError, "version abc format is invalid");
+        TEST_ERROR(pgVersionFromStr(NULL), AssertError, "function debug assertion 'version != NULL' failed");
+
+        TEST_RESULT_INT(pgVersionFromStr(strNew("10")), PG_VERSION_10, "valid pg version 10");
+        TEST_RESULT_INT(pgVersionFromStr(strNew("9.6")), 90600, "valid pg version 9.6");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_STR(strPtr(pgVersionToStr(PG_VERSION_11)), "11", "infoPgVersionToString 11");
+        TEST_RESULT_STR(strPtr(pgVersionToStr(PG_VERSION_96)), "9.6", "infoPgVersionToString 9.6");
+        TEST_RESULT_STR(strPtr(pgVersionToStr(83456)), "8.34", "infoPgVersionToString 83456");
+    }
+
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("pgControlInfo()"))
     {

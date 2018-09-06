@@ -4,6 +4,8 @@ PostgreSQL Info
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/type/convert.h"
+#include "common/regExp.h"
 #include "postgres/info.h"
 #include "postgres/type.h"
 #include "postgres/version.h"
@@ -60,6 +62,63 @@ pgVersionMap(uint32_t controlVersion, uint32_t catalogVersion)
     }
 
     FUNCTION_TEST_RESULT(UINT, result);
+}
+
+/***********************************************************************************************************************************
+Convert version string to version number
+***********************************************************************************************************************************/
+unsigned int
+pgVersionFromStr(const String *version)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, version);
+
+        FUNCTION_DEBUG_ASSERT(version != NULL);
+    FUNCTION_DEBUG_END();
+
+    unsigned int result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If format is not number.number (9.4) or number only (10) then error
+        if (!regExpMatchOne(strNew("^[0-9]+[.]*[0-9]+$"), version))
+            THROW_FMT(AssertError, "version %s format is invalid", strPtr(version));
+
+        // If there is a dot set the major and minor versions, else just the major
+        int idxStart = strChr(version, '.');
+        unsigned int major;
+        unsigned int minor = 0;
+
+        if (idxStart != -1)
+        {
+            major = cvtZToUInt(strPtr(strSubN(version, 0, (size_t)idxStart)));
+            minor = cvtZToUInt(strPtr(strSub(version, (size_t)idxStart + 1)));
+        }
+        else
+            major = cvtZToUInt(strPtr(version));
+
+        // No check to see if valid/supported PG version is on purpose
+        result = major * 10000 + minor * 100;
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_DEBUG_RESULT(UINT, result);
+}
+
+/***********************************************************************************************************************************
+Convert version number to string
+***********************************************************************************************************************************/
+String *
+pgVersionToStr(unsigned int version)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(UINT, version);
+    FUNCTION_DEBUG_END();
+
+    String *result = version >= PG_VERSION_10 ?
+        strNewFmt("%u", version / 10000) : strNewFmt("%u.%u", version / 10000, version % 10000 / 100);
+
+    FUNCTION_DEBUG_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************

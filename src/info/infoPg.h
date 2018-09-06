@@ -11,6 +11,8 @@ typedef struct InfoPg InfoPg;
 
 #include <stdint.h>
 
+#include "storage/storage.h"
+
 /***********************************************************************************************************************************
 Information about the PostgreSQL cluster
 ***********************************************************************************************************************************/
@@ -36,7 +38,7 @@ typedef enum
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-InfoPg *infoPgNew(const String *fileName, InfoPgType type);
+InfoPg *infoPgNew(const Storage *storage, const String *fileName, InfoPgType type);
 
 /***********************************************************************************************************************************
 Functions
@@ -46,8 +48,11 @@ unsigned int infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+String *infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx);
+
+InfoPgData infoPgData(const InfoPg *this, unsigned int pgDataIdx);
 InfoPgData infoPgDataCurrent(const InfoPg *this);
-String *infoPgVersionToString(unsigned int version);
+unsigned int infoPgDataTotal(const InfoPg *this);
 
 /***********************************************************************************************************************************
 Destructor

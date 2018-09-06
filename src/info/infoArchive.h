@@ -10,11 +10,18 @@ Object type
 typedef struct InfoArchive InfoArchive;
 
 #include "common/type/string.h"
+#include "info/infoPg.h"
+#include "storage/storage.h"
+
+/***********************************************************************************************************************************
+Archive info filename
+***********************************************************************************************************************************/
+#define INFO_ARCHIVE_FILE                                           "archive.info"
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-InfoArchive *infoArchiveNew(const String *fileName, bool ignoreMissing);
+InfoArchive *infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissing);
 
 /***********************************************************************************************************************************
 Functions
@@ -25,6 +32,7 @@ void infoArchiveCheckPg(const InfoArchive *this, unsigned int pgVersion, uint64_
 Getters
 ***********************************************************************************************************************************/
 const String *infoArchiveId(const InfoArchive *this);
+InfoPg *infoArchivePg(const InfoArchive *this);
 
 /***********************************************************************************************************************************
 Destructor

@@ -30,6 +30,10 @@
                     <release-item>
                         <p>Posix file functions now differentiate between open and missing errors.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Info objects now parse JSON and use specified storage.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>

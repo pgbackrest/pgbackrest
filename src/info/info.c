@@ -173,6 +173,7 @@ Internal function to load the copy and check validity
 static bool
 loadInternal(
     Info *this,                                                     // Info object to load parsed buffer into
+    const Storage *storage,
     bool copyFile)                                                  // Is this the copy file?
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
@@ -188,8 +189,8 @@ loadInternal(
     {
         String *fileName = copyFile ? strCat(strDup(this->fileName), INI_COPY_EXT) : this->fileName;
 
-        // ??? Need to replace storageLocal when able
-        Buffer *buffer = storageGetNP(storageNewReadP(storageLocal(), fileName, .ignoreMissing = true));
+        // Attempt to load the file
+        Buffer *buffer = storageGetNP(storageNewReadP(storage, fileName, .ignoreMissing = true));
 
         // If the file exists, parse and validate it
         if (buffer != NULL)
@@ -214,6 +215,7 @@ Load an Info object
 ***********************************************************************************************************************************/
 Info *
 infoNew(
+    const Storage *storage,
     const String *fileName)                                         // Full path/filename to load
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
@@ -234,13 +236,14 @@ infoNew(
         this->fileName = strDup(fileName);
 
         // Attempt to load the main file. If it does not exist or is invalid, try to load the copy.
-        if (!loadInternal(this, false))
+        if (!loadInternal(this, storage, false))
         {
-            if (!loadInternal(this, true))
+            if (!loadInternal(this, storage, true))
             {
                 THROW_FMT(
                     FileMissingError, "unable to open %s or %s",
-                    strPtr(this->fileName), strPtr(strCat(strDup(this->fileName), INI_COPY_EXT)));
+                    strPtr(storagePathNP(storage, this->fileName)),
+                    strPtr(strCat(storagePathNP(storage, this->fileName), INI_COPY_EXT)));
             }
         }
     }

@@ -84,6 +84,7 @@ SRCS = \
 	common/time.c \
 	common/type/buffer.c \
 	common/type/convert.c \
+	common/type/json.c \
 	common/type/keyValue.c \
 	common/type/list.c \
 	common/type/string.c \
@@ -102,6 +103,9 @@ SRCS = \
 	crypto/hash.c \
 	crypto/crypto.c \
 	crypto/random.c \
+	info/info.c \
+	info/infoArchive.c \
+	info/infoPg.c \
 	perl/config.c \
 	perl/exec.c \
 	postgres/info.c \
@@ -288,7 +292,7 @@ info/info.o: info/info.c common/debug.h common/error.auto.h common/error.h commo
 info/infoArchive.o: info/infoArchive.c common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h info/infoArchive.h info/infoPg.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h version.h
 	$(CC) $(CFLAGS) -c info/infoArchive.c -o info/infoArchive.o
 
-info/infoPg.o: info/infoPg.c common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h crypto/hash.h info/info.h info/infoPg.h postgres/info.h postgres/version.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h version.h
+info/infoPg.o: info/infoPg.c common/assert.h common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h crypto/hash.h info/info.h info/infoPg.h postgres/info.h postgres/version.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h version.h
 	$(CC) $(CFLAGS) -c info/infoPg.c -o info/infoPg.o
 
 main.o: main.c command/archive/get/get.h command/archive/push/push.h command/command.h command/help/help.h common/debug.h common/error.auto.h common/error.h common/exit.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h perl/exec.h version.h
@@ -300,7 +304,7 @@ perl/config.o: perl/config.c common/debug.h common/error.auto.h common/error.h c
 perl/exec.o: perl/exec.c ../libc/LibC.h common/debug.h common/encode.h common/error.auto.h common/error.h common/io/filter/filter.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h config/parse.h crypto/cipher.h crypto/cipherBlock.h crypto/hash.h crypto/random.h perl/config.h perl/embed.auto.c perl/exec.h perl/libc.auto.c postgres/pageChecksum.h storage/driver/posix/driver.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/info.h version.h ../libc/xs/common/encode.xsh ../libc/xs/crypto/cipherBlock.xsh ../libc/xs/crypto/hash.xsh
 	$(CC) $(CFLAGS) -c perl/exec.c -o perl/exec.o
 
-postgres/info.o: postgres/info.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h postgres/info.h postgres/type.h postgres/version.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h version.h
+postgres/info.o: postgres/info.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h postgres/info.h postgres/type.h postgres/version.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h version.h
 	$(CC) $(CFLAGS) -c postgres/info.c -o postgres/info.o
 
 postgres/pageChecksum.o: postgres/pageChecksum.c common/assert.h common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h postgres/pageChecksum.h postgres/type.h

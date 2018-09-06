@@ -24,6 +24,8 @@ typedef struct PgControlInfo
 Functions
 ***********************************************************************************************************************************/
 PgControlInfo pgControlInfo(const String *pgPath);
+unsigned int pgVersionFromStr(const String *version);
+String *pgVersionToStr(unsigned int version);
 
 /***********************************************************************************************************************************
 Macros for function logging

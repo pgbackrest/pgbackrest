@@ -16,12 +16,22 @@ testRun(void)
         String *content = NULL;
         String *fileName = strNewFmt("%s/test.ini", testPath());
 
+        TEST_ERROR_FMT(
+            infoArchiveNew(storageLocal(), fileName, true), FileMissingError,
+            "unable to open %s/test.ini or %s/test.ini.copy\n"
+            "HINT: archive.info does not exist but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured in postgresql.conf?\n"
+            "HINT: has a stanza-create been performed?\n"
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
+            testPath(), testPath());
+
+        //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"b34b238ce89d8e1365c9e392ce59e7b03342ceb9\"\n"
+            "backrest-checksum=\"1efa53e0611604ad7d833c5547eb60ff716e758c\"\n"
             "backrest-format=5\n"
-            "backrest-version=\"2.04dev\"\n"
+            "backrest-version=\"2.04\"\n"
             "\n"
             "[db]\n"
             "db-id=1\n"
@@ -37,8 +47,9 @@ testRun(void)
 
         InfoArchive *info = NULL;
 
-        TEST_ASSIGN(info, infoArchiveNew(fileName, true), "    new archive info");
+        TEST_ASSIGN(info, infoArchiveNew(storageLocal(), fileName, true), "    new archive info");
         TEST_RESULT_STR(strPtr(infoArchiveId(info)), "9.4-1", "    archiveId set");
+        TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
 
         // Check PG version
         //--------------------------------------------------------------------------------------------------------------------------
