@@ -42,6 +42,10 @@
                     <release-item>
                         <p>Migrate <code>walIsPartial()</code>, <code>walIsSegment()</code>, and <code>walSegmentFind()</code> from Perl to C.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Migrate control functions to detect stop files to C from Perl.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>

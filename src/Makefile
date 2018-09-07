@@ -59,6 +59,7 @@ SRCS = \
 	command/archive/push/push.c \
 	command/help/help.c \
 	command/command.c \
+	command/control/control.c \
 	common/debug.c \
 	common/encode.c \
 	common/encode/base64.c \
@@ -151,6 +152,9 @@ command/archive/push/push.o: command/archive/push/push.c command/archive/common.
 
 command/command.o: command/command.c common/assert.h common/debug.h common/error.auto.h common/error.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h version.h
 	$(CC) $(CFLAGS) -c command/command.c -o command/command.o
+
+command/control/control.o: command/control/control.c command/control/control.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h version.h
+	$(CC) $(CFLAGS) -c command/control/control.c -o command/control/control.o
 
 command/help/help.o: command/help/help.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/handle.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h version.h
 	$(CC) $(CFLAGS) -c command/help/help.c -o command/help/help.o
