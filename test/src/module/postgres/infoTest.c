@@ -66,6 +66,7 @@ testRun(void)
         String *controlFile = strNew(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
         PgControlFile control = {.systemId = 0xFACEFACE, .controlVersion = 833, .catalogVersion = 200711281};
         Buffer *controlBuffer = bufNew(512);
+        memset(bufPtr(controlBuffer), 0, bufSize(controlBuffer));
         memcpy(bufPtr(controlBuffer), &control, sizeof(PgControlFile));
         bufUsedSet(controlBuffer, bufSize(controlBuffer));
         storagePutNP(storageNewWriteNP(storageTest, controlFile), controlBuffer);

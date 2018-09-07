@@ -175,6 +175,7 @@ testRun(void)
 
         decompress->inputSame = true;
         decompress->done = true;
+        inflateEnd(decompress->stream);
         decompress->stream = NULL;
         TEST_RESULT_INT(gzipDecompressToLog(decompress, buffer, STACK_TRACE_PARAM_MAX), 41, "format object");
         TEST_RESULT_STR(buffer, "{inputSame: true, done: true, availIn: 0}", "    check format");

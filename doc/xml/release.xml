@@ -52,6 +52,10 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>Make Valgrind return an error even when a non-fatal issue is detected.  Update some minor issues discovered in the tests as a result.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Fix typo in unit test error messages, EXECTED => EXPECTED.</p>
                     </release-item>
                 </release-development-list>
