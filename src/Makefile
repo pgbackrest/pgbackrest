@@ -110,6 +110,7 @@ SRCS = \
 	perl/exec.c \
 	postgres/info.c \
 	postgres/pageChecksum.c \
+	protocol/storage/helper.c \
 	storage/driver/posix/driver.c \
 	storage/driver/posix/driverFile.c \
 	storage/driver/posix/driverRead.c \
@@ -309,6 +310,9 @@ postgres/info.o: postgres/info.c common/debug.h common/error.auto.h common/error
 
 postgres/pageChecksum.o: postgres/pageChecksum.c common/assert.h common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h postgres/pageChecksum.h postgres/type.h
 	$(CC) $(CFLAGS) -funroll-loops -ftree-vectorize -c postgres/pageChecksum.c -o postgres/pageChecksum.o
+
+protocol/storage/helper.o: protocol/storage/helper.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h protocol/storage/helper.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/fileRead.h storage/fileWrite.h storage/info.h storage/storage.h version.h
+	$(CC) $(CFLAGS) -c protocol/storage/helper.c -o protocol/storage/helper.o
 
 storage/driver/posix/driver.o: storage/driver/posix/driver.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h storage/driver/posix/driver.h storage/driver/posix/driverFile.h storage/driver/posix/driverRead.h storage/driver/posix/driverWrite.h storage/fileRead.h storage/fileWrite.h storage/info.h storage/storage.h version.h
 	$(CC) $(CFLAGS) -c storage/driver/posix/driver.c -o storage/driver/posix/driver.o

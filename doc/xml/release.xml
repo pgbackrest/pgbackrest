@@ -34,6 +34,10 @@
                     <release-item>
                         <p>Info objects now parse JSON and use specified storage.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add helper for repository storage.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>

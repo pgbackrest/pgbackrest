@@ -94,7 +94,7 @@ storageLocalWrite(void)
 /***********************************************************************************************************************************
 Get a spool storage object
 ***********************************************************************************************************************************/
-String *
+static String *
 storageSpoolPathExpression(const String *expression, const String *path)
 {
     FUNCTION_TEST_BEGIN();
@@ -106,14 +106,14 @@ storageSpoolPathExpression(const String *expression, const String *path)
 
     String *result = NULL;
 
-    if (strcmp(strPtr(expression), STORAGE_SPOOL_ARCHIVE_IN) == 0)
+    if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_IN))
     {
         if (path == NULL)
             result = strNewFmt("archive/%s/in", strPtr(storageSpoolStanza));
         else
             result = strNewFmt("archive/%s/in/%s", strPtr(storageSpoolStanza), strPtr(path));
     }
-    else if (strcmp(strPtr(expression), STORAGE_SPOOL_ARCHIVE_OUT) == 0)
+    else if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_OUT))
     {
         if (path == NULL)
             result = strNewFmt("archive/%s/out", strPtr(storageSpoolStanza));
