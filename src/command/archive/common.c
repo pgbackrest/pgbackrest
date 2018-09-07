@@ -10,8 +10,10 @@ Archive Push Command
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/regExp.h"
 #include "common/wait.h"
 #include "postgres/version.h"
+#include "protocol/storage/helper.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -109,6 +111,102 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_DEBUG_RESULT(BOOL, result);
+}
+
+/***********************************************************************************************************************************
+Is the segment partial?
+***********************************************************************************************************************************/
+bool
+walIsPartial(const String *walSegment)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, walSegment);
+
+        FUNCTION_DEBUG_ASSERT(walSegment != NULL);
+        FUNCTION_DEBUG_ASSERT(walIsSegment(walSegment));
+    FUNCTION_DEBUG_END();
+
+    FUNCTION_DEBUG_RESULT(BOOL, strEndsWithZ(walSegment, WAL_SEGMENT_PARTIAL_EXT));
+}
+
+/***********************************************************************************************************************************
+Is the file a segment or some other file (e.g. .history, .backup, etc)
+***********************************************************************************************************************************/
+bool
+walIsSegment(const String *walSegment)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, walSegment);
+
+        FUNCTION_DEBUG_ASSERT(walSegment != NULL);
+    FUNCTION_DEBUG_END();
+
+    // Create the regular expression to identify WAL segments if it does not already exist
+    static RegExp *regExpSegment = NULL;
+
+    if (regExpSegment == NULL)
+    {
+        MEM_CONTEXT_BEGIN(memContextTop())
+        {
+            regExpSegment = regExpNew(strNew(WAL_SEGMENT_PARTIAL_REGEXP));
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_DEBUG_RESULT(BOOL, regExpMatch(regExpSegment, walSegment));
+}
+
+/***********************************************************************************************************************************
+Find a WAL segment in the repository
+
+The file name can have several things appended such as a hash, compression extension, and partial extension so it is possible to
+have multiple files that match the segment, though more than one match is not a good thing.
+***********************************************************************************************************************************/
+String *
+walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(STORAGE, storage);
+        FUNCTION_DEBUG_PARAM(STRING, archiveId);
+        FUNCTION_DEBUG_PARAM(STRING, walSegment);
+
+        FUNCTION_DEBUG_ASSERT(storage != NULL);
+        FUNCTION_DEBUG_ASSERT(archiveId != NULL);
+        FUNCTION_DEBUG_ASSERT(walSegment != NULL);
+        FUNCTION_DEBUG_ASSERT(walIsSegment(walSegment));
+    FUNCTION_DEBUG_END();
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Get a list of all WAL segments that match
+        StringList *list = storageListP(
+            storage, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(strSubN(walSegment, 0, 16))),
+            .expression = strNewFmt("^%s%s-[0-f]{40}(\\.gz){0,1}$", strPtr(strSubN(walSegment, 0, 24)),
+                walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : ""));
+
+        // If there are results
+        if (list != NULL && strLstSize(list) > 0)
+        {
+            // Error if there is more than one match
+            if (strLstSize(list) > 1)
+            {
+                THROW_FMT(
+                    ArchiveDuplicateError,
+                    "duplicates found in archive for WAL segment %s: %s\n"
+                        "HINT: are multiple primaries archiving to this stanza?",
+                    strPtr(walSegment), strPtr(strLstJoin(strLstSort(list, sortOrderAsc), ", ")));
+            }
+
+            // Copy file name of WAL segment found into the calling context
+            memContextSwitch(MEM_CONTEXT_OLD());
+            result = strDup(strLstGet(list, 0));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_DEBUG_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************
