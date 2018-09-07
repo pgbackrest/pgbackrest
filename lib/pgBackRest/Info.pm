@@ -286,11 +286,12 @@ sub formatTextStanza
             {name => 'oStanzaInfo', trace => true},
         );
 
-    # Output stanza name and status
+    # Output stanza name, status and cipher type
     my $strOutput =
         'stanza: ' . $oStanzaInfo->{&INFO_STANZA_NAME} . "\n" .
         "    status: " . ($oStanzaInfo->{&INFO_SECTION_STATUS}{&INFO_KEY_CODE} == 0 ? INFO_STANZA_STATUS_OK :
-        INFO_STANZA_STATUS_ERROR . ' (' . $oStanzaInfo->{&INFO_SECTION_STATUS}{&INFO_KEY_MESSAGE} . ')');
+        INFO_STANZA_STATUS_ERROR . ' (' . $oStanzaInfo->{&INFO_SECTION_STATUS}{&INFO_KEY_MESSAGE} . ')') .
+        (defined($oStanzaInfo->{&INFO_SECTION_CIPHER}) ? "\n    cipher: " . $oStanzaInfo->{&INFO_SECTION_CIPHER} : '');
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -432,9 +433,9 @@ sub stanzaList
                     &INFO_KEY_MESSAGE => INFO_STANZA_STATUS_OK_MESSAGE
                 };
             }
-# CSHANG - can I use a defined constant for 'none'?
-            $$oStanzaInfo{&INFO_SECTION_STATUS} = defined(storageRepo({strStanza => $strStanzaEncrypt})->cipherType()) ?
-                storageRepo({strStanza => $strStanzaEncrypt})->cipherType() : 'none';
+
+            $$oStanzaInfo{&INFO_SECTION_CIPHER} = defined(storageRepo({strStanza => $strStanzaFound})->cipherType()) ?
+                storageRepo({strStanza => $strStanzaFound})->cipherType() : CFGOPTVAL_REPO_CIPHER_TYPE_NONE;
 
             # Array to store tne min/max archive for each database for which there are archives
             my @oyDbArchiveList = ();

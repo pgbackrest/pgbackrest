@@ -2521,6 +2521,7 @@ info db stanza - normal output (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 stanza: db
     status: ok
+    cipher: aes-256-cbc
 
     db (current)
         wal archive min/max (9.4-1): none present
@@ -2844,6 +2845,7 @@ info db stanza - normal output (backup host)
                 "type" : "full"
             }
         ],
+        "cipher" : "aes-256-cbc",
         "db" : [
             {
                 "id" : 1,
@@ -3104,6 +3106,7 @@ info all stanzas - normal output (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 stanza: db
     status: ok
+    cipher: aes-256-cbc
 
     db (current)
         wal archive min/max (9.4-1): none present
@@ -3198,6 +3201,7 @@ info all stanzas - normal output (db-master host)
                 "type" : "diff"
             }
         ],
+        "cipher" : "aes-256-cbc",
         "db" : [
             {
                 "id" : 1,
