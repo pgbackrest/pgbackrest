@@ -1816,8 +1816,7 @@ sub restoreCompare
         {bLoad => false, strDbVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION},
             iDbCatalogVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG},
             oStorage => storageTest()});
-syswrite(*STDOUT, "BUILDING ACTUAL: $strDbClusterPath, LASTMAN: ". storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} .
-            ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} . qw{/} . FILE_MANIFEST).", DELTA? ".$oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA}."\n"); # CSHANG
+
 # CSHANG Do we also need to consider if last manifest had delta option set?
     $oActualManifest->build(storageTest(), $strDbClusterPath, $oLastManifest, false,
         $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA}, $oTablespaceMap);
@@ -1881,7 +1880,7 @@ syswrite(*STDOUT, "BUILDING ACTUAL: $strDbClusterPath, LASTMAN: ". storageRepo()
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {
             my $oStat = storageTest()->info($oActualManifest->dbPathGet($strSectionPath, $strName));
-
+# CSHANG Need a comment here - what is this doing?
             if ($oStat->blocks > 0 || S_ISLNK($oStat->mode))
             {
                 my ($strHash) = storageTest()->hashSize($oActualManifest->dbPathGet($strSectionPath, $strName));
@@ -1893,7 +1892,7 @@ syswrite(*STDOUT, "BUILDING ACTUAL: $strDbClusterPath, LASTMAN: ". storageRepo()
                 if ($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA})
                 {
 # This is still not working because I don't see some files that should be in the actual manifest at this point - why?
-syswrite(*STDOUT, "NAME: $strName, HASH: $strHash, LAST: ".($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM) ? $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM) : 'undef')."\n"); # CSHANG
+# syswrite(*STDOUT, "NAME: $strName, HASH: $strHash, LAST: ".($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM) ? $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM) : 'undef')."\n"); # CSHANG
                     # If the actual checksum and last manifest checksum don't match, remove the reference
                     if (defined($oLastManifest) &&
                         $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM) &&
@@ -1905,6 +1904,29 @@ syswrite(*STDOUT, "NAME: $strName, HASH: $strHash, LAST: ".($oLastManifest->test
             }
             else
             {
+syswrite(*STDOUT, "NO BLOCK/ISLNK: $strName, BLK: ".$oStat->blocks.", MODE: ".$oStat->mode.", EXPCHKSUM: ".(defined($oExpectedManifestRef->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM)) ? $oExpectedManifestRef->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM) : 'undef')."\n");
+# CSHANG So I have 2 files that get here: pg_data/base/16385/112 and pg_data/base/16385/3455.  112 remains in the FULL dir because its checksum and timestamp did not change but 3455 is copied to the INCR because its checksum and timestamp did change from the FULL. Here we are clearly removing the checksum from the actual and expected manifest - why? In the real incremental abd full manifests, the files HAVE checksums:
+# pg_data/base/16385/112={"checksum":"e10f5974b37fae00437873c06f88afa70b6ea5ed","checksum-page":true,"reference":"20180907-153546F","size":8192,"timestamp":1536334508}
+# vs FULL
+# pg_data/base/16385/112={"checksum":"e10f5974b37fae00437873c06f88afa70b6ea5ed","checksum-page":true,"size":8192,"timestamp":1536334508}
+#  pg_data/base/16385/3455={"checksum":"a8b3fbbc974d2839cd2c056a6b30ede5c8f3eceb","checksum-page":true,"size":32768,"timestamp":1536334569}
+# vs FULL
+# pg_data/base/16385/3455={"checksum":"0e7d09b62f995d2fce58c4d8bf09407be952e0c7","checksum-page":true,"size":32768,"timestamp":1536334508}
+# Other oddities:
+# 1) if I checksum the files after the test, neither match what is in the INCR or FULL manifest
+# 0631457264ff7f8d5fb1edc2c0211992a67c73e6  test/test-0/db-master/db/base/base/16385/112
+# 5188431849b4613152fd7bdba6a3ff0a4fd6424b  test/test-0/db-master/db/base/base/16385/3455
+# so are we removing the chksums here because we know they won't match so we don't want the diff to fail?
+# 2) So how to know when get to this area of the code to remove the reference or not if we're not/can't checksumming?
+# expected.manifest:
+# pg_data/base/16385/112={"reference":"20180907-153546F","size":8192,"timestamp":1536334508}
+# vs actual.manifest:
+# pg_data/base/16385/112={"reference":"20180907-153546F","size":8192,"timestamp":1536334508}
+# expected.manifest:
+# pg_data/base/16385/3455={"size":32768,"timestamp":1536334569}
+# vs actual.manifest:
+# pg_data/base/16385/3455={"reference":"20180907-153546F","size":32768,"timestamp":1536334569}
+
                 $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM);
                 delete(${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_CHECKSUM});
             }
@@ -1931,6 +1953,8 @@ syswrite(*STDOUT, "NAME: $strName, HASH: $strHash, LAST: ".($oLastManifest->test
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef,
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef,
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA});
 
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef,
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION});
