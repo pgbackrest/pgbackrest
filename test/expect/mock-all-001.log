@@ -4635,6 +4635,7 @@ info db stanza - normal output (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 stanza: db
     status: ok
+    cipher: none
 
     db (current)
         wal archive min/max (9.4-1): none present
@@ -4958,6 +4959,7 @@ info db stanza - normal output (db-master host)
                 "type" : "full"
             }
         ],
+        "cipher" : "none",
         "db" : [
             {
                 "id" : 1,
@@ -5313,6 +5315,7 @@ info all stanzas - normal output (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 stanza: db
     status: ok
+    cipher: none
 
     db (current)
         wal archive min/max (9.4-1): none present
@@ -5332,6 +5335,7 @@ stanza: db
 
 stanza: db_empty
     status: error (missing stanza data)
+    cipher: none
 
 info all stanzas - normal output (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --output=json info
@@ -5410,6 +5414,7 @@ info all stanzas - normal output (db-master host)
                 "type" : "diff"
             }
         ],
+        "cipher" : "none",
         "db" : [
             {
                 "id" : 1,
@@ -5426,6 +5431,7 @@ info all stanzas - normal output (db-master host)
     {
         "archive" : [],
         "backup" : [],
+        "cipher" : "none",
         "db" : [],
         "name" : "db_empty",
         "status" : {

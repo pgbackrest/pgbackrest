@@ -24,6 +24,14 @@
                     <release-item>
                         <p>Ignore all files in a linked tablespace directory except the subdirectory for the current version of <postgres/>.  Previously an error would be generated if other files were present and not owned by the <postgres/> user.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Enhance the <cmd>info</cmd> command to display the stanza cipher type.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
