@@ -130,11 +130,13 @@ sub hashSize
     (
         $strOperation,
         $xFileExp,
+        $bIgnoreMissing,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->hashSize', \@_,
             {name => 'xFileExp'},
+            {name => 'bIgnoreMissing', optional => true, default => false},
         );
 
     # Set operation variables
@@ -142,7 +144,8 @@ sub hashSize
     my $lSize;
 
     # Is this an IO object or a file expression?
-    my $oFileIo = defined($xFileExp) ? (ref($xFileExp) ? $xFileExp : $self->openRead($self->pathGet($xFileExp))) : undef;
+    my $oFileIo = defined($xFileExp) ? (ref($xFileExp) ? $xFileExp :
+        $self->openRead($self->pathGet($xFileExp), {bIgnoreMissing => $bIgnoreMissing})) : undef;
 
     if (defined($oFileIo))
     {

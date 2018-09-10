@@ -624,7 +624,11 @@ sub run
             CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup',
             {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
                 strOptionalParam => '--' . cfgOptionName(CFGOPT_STOP_AUTO) . ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=32768' .
-                ' --delta'}); # CSHANG
+                ' --delta'});
+        # $oExecuteBackup = $oHostBackup->backupBegin(
+        #     CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup',
+        #     {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
+        #         strOptionalParam => '--' . cfgOptionName(CFGOPT_STOP_AUTO) . ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=32768'}); # CSHANG
 
         # Drop a table
         $oHostDbMaster->sqlExecute('drop table test_remove');
@@ -647,7 +651,7 @@ sub run
         }
 
         my $strIncrBackup = $oHostBackup->backupEnd(CFGOPTVAL_BACKUP_TYPE_INCR, $oExecuteBackup);
-
+exit;
         # Ensure the check command runs properly with a tablespace unless there is a bogus host
         if (!$oHostBackup->bogusHost())
         {
