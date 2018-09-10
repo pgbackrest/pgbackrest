@@ -16,6 +16,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use POSIX qw(strftime);
 
+use pgBackRest::Common::Http::Common;
 use pgBackRest::Common::Log;
 use pgBackRest::LibC qw(:crypto);
 
@@ -257,7 +258,8 @@ sub s3AuthorizationHeader
     }
 
     # Create authorization string
-    my ($strCanonicalRequest, $strSignedHeaders) = s3CanonicalRequest($strVerb, $strUri, $strQuery, $hHeader, $strPayloadHash);
+    my ($strCanonicalRequest, $strSignedHeaders) = s3CanonicalRequest(
+        $strVerb, httpUriEncode($strUri, true), $strQuery, $hHeader, $strPayloadHash);
     my $strStringToSign = s3StringToSign($strDateTime, $strRegion, cryptoHashOne('sha256', $strCanonicalRequest));
 
     $hHeader->{&S3_HEADER_AUTHORIZATION} =

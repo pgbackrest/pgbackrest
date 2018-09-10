@@ -128,7 +128,7 @@ sub new
             my $strQuery = httpQuery($hQuery);
 
             # Construct the request headers
-            $self->{strRequestHeader} = "${strVerb} ${strUri}?${strQuery} HTTP/1.1" . "\r\n";
+            $self->{strRequestHeader} = "${strVerb} " . httpUriEncode($strUri, true) . "?${strQuery} HTTP/1.1" . "\r\n";
 
             foreach my $strHeader (sort(keys(%{$hRequestHeader})))
             {

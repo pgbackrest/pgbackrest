@@ -16,6 +16,14 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="dan.farrell"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix missing missing URI encoding in S3 driver.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Fix incorrectly reported error return in <id>info</id> logging.  A return code of 1 from the <cmd>archive-get</cmd> was being logged as an error message at <id>info</id> level but otherwise worked correctly.</p>
                     </release-item>
                 </release-bug-list>
@@ -5291,6 +5299,11 @@
         <contributor id="cynthia.shang">
             <contributor-name-display>Cynthia Shang</contributor-name-display>
             <contributor-id type="github">cmwshang</contributor-id>
+        </contributor>
+
+        <contributor id="dan.farrell">
+            <contributor-name-display>Dan Farrell</contributor-name-display>
+            <contributor-id type="github">farrellit</contributor-id>
         </contributor>
 
         <contributor id="david.youatt">
