@@ -1904,8 +1904,7 @@ sub restoreCompare
             }
             else
             {
-syswrite(*STDOUT, "NO BLOCK/ISLNK: $strName, BLK: ".$oStat->blocks.", MODE: ".$oStat->mode.", EXPCHKSUM: ".(defined($oExpectedManifestRef->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM)) ? $oExpectedManifestRef->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM) : 'undef')."\n");
-# CSHANG So I have 2 files that get here: pg_data/base/16385/112 and pg_data/base/16385/3455.  112 remains in the FULL dir because its checksum and timestamp did not change but 3455 is copied to the INCR because its checksum and timestamp did change from the FULL. Here we are clearly removing the checksum from the actual and expected manifest - why? In the real incremental abd full manifests, the files HAVE checksums:
+# CSHANG So I have 2 files that get here: pg_data/base/16385/112 and pg_data/base/16385/3455.  112 remains in the FULL dir because its checksum and timestamp did not change but 3455 is copied to the INCR because its checksum and timestamp did change from the FULL. Here we are clearly removing the checksum from the actual and expected manifest - why? In the real incremental and full manifests, the files HAVE checksums:
 # pg_data/base/16385/112={"checksum":"e10f5974b37fae00437873c06f88afa70b6ea5ed","checksum-page":true,"reference":"20180907-153546F","size":8192,"timestamp":1536334508}
 # vs FULL
 # pg_data/base/16385/112={"checksum":"e10f5974b37fae00437873c06f88afa70b6ea5ed","checksum-page":true,"size":8192,"timestamp":1536334508}
@@ -1916,7 +1915,7 @@ syswrite(*STDOUT, "NO BLOCK/ISLNK: $strName, BLK: ".$oStat->blocks.", MODE: ".$o
 # 1) if I checksum the files after the test, neither match what is in the INCR or FULL manifest
 # 0631457264ff7f8d5fb1edc2c0211992a67c73e6  test/test-0/db-master/db/base/base/16385/112
 # 5188431849b4613152fd7bdba6a3ff0a4fd6424b  test/test-0/db-master/db/base/base/16385/3455
-# so are we removing the chksums here because we know they won't match so we don't want the diff to fail?
+# so are we removing the checksums here because we know they won't match so we don't want the diff to fail?
 # 2) So how to know when get to this area of the code to remove the reference or not if we're not/can't checksumming?
 # expected.manifest:
 # pg_data/base/16385/112={"reference":"20180907-153546F","size":8192,"timestamp":1536334508}
