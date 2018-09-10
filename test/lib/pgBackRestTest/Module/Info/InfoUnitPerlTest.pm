@@ -275,8 +275,8 @@ sub run
         $hyStanza = $oInfo->stanzaList();
 
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
-            "stanza: bogus\n    status: error (missing stanza data)\n\n" .
-            "stanza: db\n    status: error (missing stanza data)\n",
+            "stanza: bogus\n    status: error (missing stanza data)\n    cipher: none\n\n" .
+            "stanza: db\n    status: error (missing stanza data)\n    cipher: none\n",
             'fomatText() multiple stanzas missing data');
 
         # Define the stanza option
@@ -293,14 +293,14 @@ sub run
         $self->configTestLoad(CFGCMD_INFO);
 
         $self->testResult(sub {$oInfo->formatText($oInfo->stanzaList())},
-            "stanza: bogus\n    status: error (missing stanza data)\n\n" .
-            "stanza: db\n    status: error (no valid backups)\n\n" .
+            "stanza: bogus\n    status: error (missing stanza data)\n    cipher: none\n\n" .
+            "stanza: db\n    status: error (no valid backups)\n    cipher: none\n\n" .
             "    db (current)\n        wal archive min/max (9.4-1): none present\n",
             "formatText() multiple stanzas, one missing data");
 
         $hyStanza = $oInfo->stanzaList($self->stanza());
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
-            "stanza: db\n    status: error (no valid backups)\n\n" .
+            "stanza: db\n    status: error (no valid backups)\n    cipher: none\n\n" .
             "    db (current)\n        wal archive min/max (9.4-1): none present\n",
             "formatText() one stanza");
 
@@ -310,7 +310,7 @@ sub run
 
         $hyStanza = $oInfo->stanzaList($self->stanza());
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
-            "stanza: db\n    status: ok\n\n    db (current)\n        wal archive min/max (9.4-1): none present\n\n" .
+            "stanza: db\n    status: ok\n    cipher: none\n\n    db (current)\n        wal archive min/max (9.4-1): none present\n\n" .
             "        full backup: 20161206-155728F\n" .
             "            timestamp start/stop: 2016-12-06 15:57:28 / 2016-12-06 15:57:28\n" .
             "            wal start/stop: n/a\n            database size: 0B, backup size: 0B\n" .
@@ -323,7 +323,7 @@ sub run
         storageTest()->pathCreate($self->{strArchivePath} . "/9.4-1/0000000200000000", {bIgnoreExists => true});
         $hyStanza = $oInfo->stanzaList($self->stanza());
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
-            "stanza: db\n    status: ok\n\n    db (current)\n        wal archive min/max (9.4-1): none present\n\n" .
+            "stanza: db\n    status: ok\n    cipher: none\n\n    db (current)\n        wal archive min/max (9.4-1): none present\n\n" .
             "        full backup: 20161206-155728F\n" .
             "            timestamp start/stop: 2016-12-06 15:57:28 / 2016-12-06 15:57:28\n" .
             "            wal start/stop: n/a\n            database size: 0B, backup size: 0B\n" .
@@ -345,7 +345,7 @@ sub run
 
         $hyStanza = $oInfo->stanzaList($self->stanza());
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
-            "stanza: db\n    status: ok\n" .
+            "stanza: db\n    status: ok\n    cipher: none\n" .
             "\n    db (current)\n" .
             "        wal archive min/max (9.5-2): 000000010000000000000000 / 000000010000000000000003\n\n" .
             "        full backup: 20161207-155728F\n" .
@@ -381,7 +381,7 @@ sub run
 
         $hyStanza = $oInfo->stanzaList($self->stanza());
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
-            "stanza: db\n    status: ok\n" .
+            "stanza: db\n    status: ok\n    cipher: none\n" .
             "\n    db (current)\n" .
             "        wal archive min/max (9.5-2): 000000010000000000000000 / 000000010000000000000003\n\n" .
             "        full backup: 20161207-155728F\n" .
@@ -469,7 +469,7 @@ sub run
         $self->configTestLoad(CFGCMD_INFO);
 
         $self->testResult(sub {$oInfo->formatText($oInfo->stanzaList($self->stanza()))},
-            "stanza: db\n    status: ok\n\n    db (current)\n        wal archive min/max (9.4-1): none present\n\n" .
+            "stanza: db\n    status: ok\n    cipher: none\n\n    db (current)\n        wal archive min/max (9.4-1): none present\n\n" .
             "        full backup: 201612" . $strUnencryptBackup . "-155728F\n" .
             "            timestamp start/stop: 2016-12-" . $strUnencryptBackup . " 15:57:28 / 2016-12-" . $strUnencryptBackup .
             " 15:57:28\n" .
@@ -481,7 +481,7 @@ sub run
         $self->configTestLoad(CFGCMD_INFO);
 
         $self->testResult(sub {$oInfo->formatText($oInfo->stanzaList(STANZA_ENCRYPT))},
-            "stanza: " . STANZA_ENCRYPT ."\n    status: ok\n\n    db (current)" .
+            "stanza: " . STANZA_ENCRYPT ."\n    status: ok\n    cipher: aes-256-cbc\n\n    db (current)" .
             "\n        wal archive min/max (9.4-1): none present\n\n" .
             "        full backup: 201612" . $strEncryptBackup . "-155728F\n" .
             "            timestamp start/stop: 2016-12-" . $strEncryptBackup . " 15:57:28 / 2016-12-" . $strEncryptBackup .
