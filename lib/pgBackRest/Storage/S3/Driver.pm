@@ -472,7 +472,7 @@ sub remove
             while (defined($strFile))
             {
                 $iTotal++;
-                $strXml .= '<Object><Key>' . substr($strFile, 1) . '</Key></Object>';
+                $strXml .= '<Object><Key>' . xmlFromText(substr($strFile, 1)) . '</Key></Object>';
 
                 $strFile = $iTotal < S3_BATCH_MAX ? shift(@{$rstryFileAll}) : undef;
             }

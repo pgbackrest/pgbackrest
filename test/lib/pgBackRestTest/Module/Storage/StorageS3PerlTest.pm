@@ -117,13 +117,13 @@ sub run
         $oStorage->put($strFile, $strFileContent);
         $oStorage->put("/path/to/${strFile}2", $strFileContent);
         $oStorage->put("/path/to/${strFile}3", $strFileContent);
-        $oStorage->put("/path/to/${strFile}4", $strFileContent);
+        $oStorage->put("/path/to/${strFile}4 \@+", $strFileContent);
 
         $self->testResult(
             sub {$oStorage->manifest('/')},
             '{. => {type => d}, file.txt => {size => 8, type => f}, path => {type => d}, path/to => {type => d},' .
                 ' path/to/file.txt2 => {size => 8, type => f}, path/to/file.txt3 => {size => 8, type => f},' .
-                ' path/to/file.txt4 => {size => 8, type => f}}',
+                ' path/to/file.txt4 @+ => {size => 8, type => f}}',
             'check manifest');
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -158,7 +158,7 @@ sub run
     if ($self->begin('openRead() && S3::FileRead'))
     {
         # Create a random 1mb file
-        my $strRandomFile = $self->testPath() . '/random1mb.bin';
+        my $strRandomFile = $self->testPath() . '/random@1mb.bin';
         executeTest("dd if=/dev/urandom of=${strRandomFile} bs=1024k count=1", {bSuppressStdErr => true});
         my $strRandom = ${storageTest()->get($strRandomFile)};
 
@@ -175,7 +175,7 @@ sub run
     }
 
     ################################################################################################################################
-    if ($self->begin('openWrite() S3::FileWrite'))
+    if ($self->begin('openWrite() && S3::FileWrite'))
     {
         # Create a random 1mb file
         my $strRandomFile = $self->testPath() . '/random1mb.bin';
@@ -188,10 +188,10 @@ sub run
         $self->testResult(sub {$oFileWrite->close()}, true, '    close without writing');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $oFileWrite = $self->testResult(sub {$oS3->openWrite("/path/to/${strFile}")}, '[object]', 'open write');
+        $oFileWrite = $self->testResult(sub {$oS3->openWrite("/path/to/${strFile}" . '.@')}, '[object]', 'open write');
         $self->testResult(sub {$oFileWrite->write()}, 0, '    write undef');
         $self->testResult(sub {$oFileWrite->write(\$strFileContent)}, $iFileLength, '    write');
-        $self->testResult(sub {$oFileWrite->close()}, true, '    close');
+        $oFileWrite->close();
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oFileWrite = $self->testResult(sub {$oS3->openWrite("/path/to/${strFile}")}, '[object]', 'open write');

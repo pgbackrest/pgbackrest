@@ -575,7 +575,7 @@ sub manifestDefault
             my $strMaxValue;
             my $iMaxValueTotal = 0;
 
-            foreach my $strValue (keys(%oDefault))
+            foreach my $strValue (sort(keys(%oDefault)))
             {
                 if ($oDefault{$strValue} > $iMaxValueTotal)
                 {
