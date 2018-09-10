@@ -933,6 +933,7 @@ info all stanzas - db upgraded - db-1 and db-2 listed (db-master host)
                 "type" : "full"
             }
         ],
+        "cipher" : "none",
         "db" : [
             {
                 "id" : 1,

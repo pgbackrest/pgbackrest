@@ -775,6 +775,7 @@ info all stanzas - db upgraded - db-1 and db-2 listed (db-master host)
                 "type" : "full"
             }
         ],
+        "cipher" : "aes-256-cbc",
         "db" : [
             {
                 "id" : 1,
