@@ -526,7 +526,7 @@ sub process
 
             # If this is incr or diff warn if certain options have changed
             my $strKey;
-# CSHANG Do we need to warn if delta option changed from last manifest? Does it matter?
+
             # Warn if compress option changed
             if (!$oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, $bCompress))
             {
@@ -630,7 +630,7 @@ sub process
                         $strValueNew = cfgOption(CFGOPT_REPO_HARDLINK);
                         $strValueAborted = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK);
                     }
-# CSHANG Do we care if delta option same or not? We probably do, because it will change the manifest.
+
                     # If key is defined then something didn't match
                     if (defined($strKey))
                     {
@@ -707,9 +707,6 @@ sub process
                               (cfgOption(CFGOPT_ARCHIVE_CHECK) && cfgOption(CFGOPT_ARCHIVE_COPY)));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
                               !cfgOption(CFGOPT_ONLINE) || cfgOption(CFGOPT_ARCHIVE_CHECK));
-
-# CSHANG Should we be setting the delta option in manifest->build? In the next phase we may force the delta option in manifest->build so won't we need to then set it at that time? How will this change the code below?
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef, cfgOption(CFGOPT_DELTA));
 
     # Database settings
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $iDbHistoryId);
@@ -831,6 +828,8 @@ sub process
     # Build the manifest
     $oBackupManifest->build($oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
         cfgOption(CFGOPT_DELTA), $hTablespaceMap, $hDatabaseMap, cfgOption(CFGOPT_EXCLUDE, false));
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef, cfgOption(CFGOPT_DELTA));
+
     &log(TEST, TEST_MANIFEST_BUILD);
 
     # If resuming from an aborted backup

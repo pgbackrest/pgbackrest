@@ -94,7 +94,7 @@ sub process
                 $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, 1);
                 $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
                 $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
-# CSHANG Do we want to allow the delta option? Or should we always use false?
+
                 $oBackupManifest->build(
                     storageDb({iRemoteIdx => $iRemoteIdx}), cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iRemoteIdx)), undef,
                     cfgOptionValid(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE), false, $oDb->tablespaceMapGet());

@@ -976,7 +976,7 @@ sub build
             $self->numericSet(MANIFEST_SECTION_DB, $strDbName, MANIFEST_KEY_DB_LAST_SYSTEM_ID,
                               $hDatabaseMap->{$strDbName}{&MANIFEST_KEY_DB_LAST_SYSTEM_ID});
         }
-# CSHANG Will we need to set the MANIFEST_KEY_DELTA delta option in here on timeInFuture or other condition?
+
         # Loop though all files
         foreach my $strName ($self->keys(MANIFEST_SECTION_TARGET_FILE))
         {

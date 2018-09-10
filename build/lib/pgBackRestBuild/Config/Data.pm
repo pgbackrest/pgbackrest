@@ -1161,11 +1161,10 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
         }
     },
-# CSHANG Should this be negatable? Not all booleans are.
-# CSHANG Do we need to include the check command?
+
     &CFGOPT_DELTA =>
     {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,  # CSHANG Need to remove
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
         &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>

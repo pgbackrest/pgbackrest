@@ -94,7 +94,6 @@ sub backupFile
     my $strFileOp = $strRepoFile . ($bCompress ? '.' . COMPRESS_EXT : '');
 
     my $bCopy = true;
-# CSHANG PROBLEM: when --delta is set, the 0 size files get copied and a reference is not set. Previously, the timestamp and size were checked but  we don't store a checksum for 0 files. When we got to backup processing, the file would have a reference so we'd skip putting on the queue. Now we put it on the queue but since there is no checksum, we just blindly copy it and leave the result as BACKUP_FILE_COPY. So the question is do we have to do any additional checks when delta - e.g the timestamp? If so, there still could have been a timeline switch, so that would still fail and so do we recopy? That covers "last manifest" but what about Aborted manifest? Or what if file missing on DB side?
 
     # If checksum is defined then the file needs to be checked. If delta option then check the DB and possibly the repo, else just
     # check the repo.
