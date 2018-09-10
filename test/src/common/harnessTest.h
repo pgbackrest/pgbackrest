@@ -56,7 +56,7 @@ Test that an expected error is actually thrown and error when it isn't
                                                                                                                                    \
         if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                                \
             THROW_FMT(                                                                                                             \
-                AssertError, "EXECTED %s: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),              \
+                AssertError, "EXPECTED %s: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),             \
                 errorMessageExpected, errorName(), errorMessage(), errorStackTrace());                                             \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
@@ -195,7 +195,7 @@ Test that a void statement returns and does not throw an error
     {                                                                                                                              \
         /* No errors were expected so error */                                                                                     \
         THROW_FMT(                                                                                                                 \
-            AssertError, "EXECTED VOID RESULT FROM STATEMENT: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", #statement, errorName(),    \
+            AssertError, "EXPECTED VOID RESULT FROM STATEMENT: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", #statement, errorName(),   \
             errorMessage(), errorStackTrace());                                                                                    \
                                                                                                                                    \
     }                                                                                                                              \
@@ -219,7 +219,7 @@ Test that a statement does not error and assign it to the specified variable if 
     {                                                                                                                              \
         /* No errors were expected so error */                                                                                     \
         THROW_FMT(                                                                                                                 \
-            AssertError, "EXECTED ASSIGNMENT FROM STATEMENT: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", #statement, errorName(),     \
+            AssertError, "EXPECTED ASSIGNMENT FROM STATEMENT: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", #statement, errorName(),    \
             errorMessage(), errorStackTrace());                                                                                    \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \

@@ -6,12 +6,13 @@ PostgreSQL Info Handler
 #include <stdio.h>
 #include <string.h>
 
+#include "common/assert.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/ini.h"
 #include "common/memContext.h"
-#include "common/regExp.h"
+#include "common/type/json.h"
 #include "common/type/list.h"
 #include "info/info.h"
 #include "info/infoPg.h"
@@ -44,46 +45,6 @@ struct InfoPg
 };
 
 /***********************************************************************************************************************************
-Return the PostgreSQL version constant given a string
-***********************************************************************************************************************************/
-unsigned int
-infoPgVersionToUIntInternal(const String *version)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, version);
-
-        FUNCTION_DEBUG_ASSERT(version != NULL);
-    FUNCTION_DEBUG_END();
-
-    unsigned int result = 0;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // If format is not number.number (9.4) or number only (10) then error
-        if (!regExpMatchOne(strNew("^[0-9]+[.]*[0-9]+$"), version))
-            THROW_FMT(AssertError, "version %s format is invalid", strPtr(version));
-
-        size_t idxStart = (size_t)(strChr(version, '.'));
-        int minor = 0;
-        int major;
-
-        // If there is a dot, then set the major and minor versions, else just the major
-        if ((int)idxStart != -1)
-            minor = atoi(strPtr(strSub(version, idxStart + 1)));
-        else
-            idxStart = strSize(version);
-
-        major = atoi(strPtr(strSubN(version, 0, idxStart)));
-
-        // No check to see if valid/supported PG version is on purpose
-        result = (unsigned int)((major * 10000) + (minor * 100));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_DEBUG_RESULT(UINT, result);
-}
-
-/***********************************************************************************************************************************
 Load an InfoPg object
 ??? Need to consider adding the following parameters in order to throw errors
         $bRequired,                                 # Is archive info required?  --- may not need this if ignoreMissing is enough
@@ -92,7 +53,7 @@ Load an InfoPg object
 ??? Currently this assumes the file exists and loads data from it
 ***********************************************************************************************************************************/
 InfoPg *
-infoPgNew(const String *fileName, InfoPgType type)
+infoPgNew(const Storage *storage, const String *fileName, InfoPgType type)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, fileName);
@@ -107,40 +68,60 @@ infoPgNew(const String *fileName, InfoPgType type)
         // Create object
         this = memNew(sizeof(InfoPg));
         this->memContext = MEM_CONTEXT_NEW();
-        this->info = infoNew(fileName);
+        this->info = infoNew(storage, fileName);
 
-        Ini *infoPgIni = infoIni(this->info);
-
-        // ??? need to get the history list from the file in ascending order (important for ensuring currentIndex set properly in
-        // infoPgAdd) but need json parser so for now just getting current
+        // Get the pg history list
         this->history = lstNew(sizeof(InfoPgData));
-
-        InfoPgData infoPgData = {0};
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            String *dbSection = strNew(INFO_SECTION_DB);
-            infoPgData.systemId = varUInt64Force(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_SYSTEM_ID)));
-            infoPgData.id = (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_ID)));
+            const Ini *infoPgIni = infoIni(this->info);
+            const String *pgHistorySection = strNew(INFO_SECTION_DB_HISTORY);
+            const StringList *pgHistoryKey = iniSectionKeyList(infoPgIni, pgHistorySection);
+            const Variant *idKey = varNewStr(strNew(INFO_KEY_DB_ID));
+            const Variant *systemIdKey = varNewStr(strNew(INFO_KEY_DB_SYSTEM_ID));
+            const Variant *versionKey = varNewStr(strNew(INFO_KEY_DB_VERSION));
 
-            String *pgVersion = varStrForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_VERSION)));
+            // History must include at least one item or the file is corrupt
+            ASSERT(strLstSize(pgHistoryKey) > 0);
 
-            // ??? Temporary hack for removing the leading and trailing quotes from pgVersion until can get json parser
-            infoPgData.version = infoPgVersionToUIntInternal(strSubN(pgVersion, 1, strSize(pgVersion) - 2));
-
-            if ((type == infoPgBackup) || (type == infoPgManifest))
+            // Iterate in reverse because we would like the most recent pg history to be in position 0.  If we need to look at the
+            // history list at all we'll be iterating from newest to oldest and putting newest in position 0 makes for more natural
+            // looping.
+            for (unsigned int pgHistoryIdx = strLstSize(pgHistoryKey) - 1; pgHistoryIdx < strLstSize(pgHistoryKey); pgHistoryIdx--)
             {
-                infoPgData.catalogVersion =
-                    (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_CATALOG_VERSION)));
-                infoPgData.controlVersion =
-                    (unsigned int)varIntForce(iniGet(infoPgIni, dbSection, strNew(INFO_KEY_DB_CONTROL_VERSION)));
+                // Load JSON data into a KeyValue
+                const KeyValue *pgDataKv = jsonToKv(
+                    varStr(iniGet(infoPgIni, pgHistorySection, strLstGet(pgHistoryKey, pgHistoryIdx))));
+
+                // Get db values that are common to all info files
+                InfoPgData infoPgData =
+                {
+                    .id = cvtZToUInt(strPtr(strLstGet(pgHistoryKey, pgHistoryIdx))),
+                    .version = pgVersionFromStr(varStr(kvGet(pgDataKv, versionKey))),
+
+                    // This is different in archive.info due to a typo that can't be fixed without a format version bump
+                    .systemId = varUInt64Force(kvGet(pgDataKv, type == infoPgArchive ? idKey : systemIdKey)),
+                };
+
+                // Get values that are only in backup and manifest files.  These are really vestigial since stanza-create verifies
+                // the control and catalog versions so there is no good reason to store them.  However, for backward compatability
+                // we must write them at least, even if we give up reading them.
+                if (type == infoPgBackup || type == infoPgManifest)
+                {
+                    const Variant *catalogVersionKey = varNewStr(strNew(INFO_KEY_DB_CATALOG_VERSION));
+                    const Variant *controlVersionKey = varNewStr(strNew(INFO_KEY_DB_CONTROL_VERSION));
+
+                    infoPgData.catalogVersion = (unsigned int)varUInt64Force(kvGet(pgDataKv, catalogVersionKey));
+                    infoPgData.controlVersion = (unsigned int)varUInt64Force(kvGet(pgDataKv, controlVersionKey));
+                }
+                else if (type != infoPgArchive)
+                    THROW_FMT(AssertError, "invalid InfoPg type %u", type);
+
+                infoPgAdd(this, &infoPgData);
             }
-            else if (type != infoPgArchive)
-                THROW_FMT(AssertError, "invalid InfoPg type %u", type);
         }
         MEM_CONTEXT_TEMP_END();
-
-        infoPgAdd(this, &infoPgData);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -169,6 +150,40 @@ infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 }
 
 /***********************************************************************************************************************************
+Construct archive id
+***********************************************************************************************************************************/
+String *
+infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO_PG, this);
+        FUNCTION_DEBUG_PARAM(UINT, pgDataIdx);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
+    InfoPgData pgData = infoPgData(this, pgDataIdx);
+
+    FUNCTION_DEBUG_RESULT(STRING, strNewFmt("%s-%u", strPtr(pgVersionToStr(pgData.version)), pgData.id));
+}
+
+/***********************************************************************************************************************************
+Return a structure of the Postgres data from a specific index
+***********************************************************************************************************************************/
+InfoPgData
+infoPgData(const InfoPg *this, unsigned int pgDataIdx)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO_PG, this);
+        FUNCTION_DEBUG_PARAM(UINT, pgDataIdx);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
+    FUNCTION_DEBUG_RESULT(INFO_PG_DATA, *((InfoPgData *)lstGet(this->history, pgDataIdx)));
+}
+
+/***********************************************************************************************************************************
 Return a structure of the current Postgres data
 ***********************************************************************************************************************************/
 InfoPgData
@@ -180,20 +195,22 @@ infoPgDataCurrent(const InfoPg *this)
         FUNCTION_DEBUG_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();
 
-    FUNCTION_DEBUG_RESULT(INFO_PG_DATA, *((InfoPgData *)lstGet(this->history, this->indexCurrent)));
+    FUNCTION_DEBUG_RESULT(INFO_PG_DATA, infoPgData(this, this->indexCurrent));
 }
 
 /***********************************************************************************************************************************
-Return a string representation of the PostgreSQL version
+Return total Postgres data in the history
 ***********************************************************************************************************************************/
-String *
-infoPgVersionToString(unsigned int version)
+unsigned int
+infoPgDataTotal(const InfoPg *this)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(UINT, version);
+        FUNCTION_DEBUG_PARAM(INFO_PG, this);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();
 
-    FUNCTION_DEBUG_RESULT(STRING, strNewFmt("%u.%u", ((unsigned int)(version / 10000)), ((version % 10000) / 100)));
+    FUNCTION_DEBUG_RESULT(UINT, lstSize(this->history));
 }
 
 /***********************************************************************************************************************************

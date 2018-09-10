@@ -1233,8 +1233,8 @@ sub process
     my $lSizeCurrent = 0;
 
     foreach my $strRepoFile (
-        sort {sprintf("%016d-${b}", $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $b, MANIFEST_SUBKEY_SIZE)) cmp
-              sprintf("%016d-${a}", $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $a, MANIFEST_SUBKEY_SIZE))}
+        sort {sprintf("%016d-%s", $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $b, MANIFEST_SUBKEY_SIZE), $b) cmp
+              sprintf("%016d-%s", $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $a, MANIFEST_SUBKEY_SIZE), $a)}
         ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE, INI_SORT_NONE)))
     {
         # Skip the tablespace_map file in versions >= 9.5 so Postgres does not rewrite links in DB_PATH_PGTBLSPC.

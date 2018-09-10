@@ -19,9 +19,9 @@ testRun(void)
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"b34b238ce89d8e1365c9e392ce59e7b03342ceb9\"\n"
+            "backrest-checksum=\"1efa53e0611604ad7d833c5547eb60ff716e758c\"\n"
             "backrest-format=5\n"
-            "backrest-version=\"2.04dev\"\n"
+            "backrest-version=\"2.04\"\n"
             "\n"
             "[db]\n"
             "db-id=1\n"
@@ -36,7 +36,7 @@ testRun(void)
 
         InfoPg *infoPg = NULL;
 
-        TEST_ASSIGN(infoPg, infoPgNew(fileName, infoPgArchive), "new infoPg archive - load file");
+        TEST_ASSIGN(infoPg, infoPgNew(storageLocal(), fileName, infoPgArchive), "new infoPg archive - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
         TEST_RESULT_INT(infoPg->indexCurrent, 0, "    current index set");
@@ -47,17 +47,17 @@ testRun(void)
         TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    system-id set");
         TEST_RESULT_INT(infoPgData.catalogVersion, 0, "    catalog-version not set");
         TEST_RESULT_INT(infoPgData.controlVersion, 0, "    control-version not set");
-
-        TEST_RESULT_STR(strPtr(infoPgVersionToString(infoPgData.version)), "9.4", "    version conversion back to string");
+        TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "    check pg data total");
+        TEST_RESULT_STR(strPtr(infoPgArchiveId(infoPg, 0)), "9.4-1", "    check pg archive id");
 
         // Backup info
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"fc1d9ca71ebf1f5562f1fd21c4959233c9d04b18\"\n"
+            "backrest-checksum=\"5c17df9523543f5283efdc3c5aa7eb933c63ea0b\"\n"
             "backrest-format=5\n"
-            "backrest-version=\"2.04dev\"\n"
+            "backrest-version=\"2.04\"\n"
             "\n"
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -68,12 +68,12 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-            "\"db-version\":\"9.4\"}\n"
+                "\"db-version\":\"9.4\"}\n"
         );
 
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put info to file");
 
-        TEST_ASSIGN(infoPg, infoPgNew(fileName, infoPgBackup), "new infoPg backup - load file");
+        TEST_ASSIGN(infoPg, infoPgNew(storageLocal(), fileName, infoPgBackup), "new infoPg backup - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
         TEST_RESULT_INT(infoPg->indexCurrent, 0, "    current index set");
@@ -87,7 +87,7 @@ testRun(void)
 
         // Manifest info
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(infoPg, infoPgNew(fileName, infoPgManifest), "new infoPg manifest - load file");
+        TEST_ASSIGN(infoPg, infoPgNew(storageLocal(), fileName, infoPgManifest), "new infoPg manifest - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "history record added");
         TEST_RESULT_INT(infoPg->indexCurrent, 0, "current index set");
@@ -117,8 +117,9 @@ testRun(void)
 
         // Errors
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(infoPgNew(fileName, 10), AssertError, "invalid InfoPg type 10");
-        TEST_ERROR(infoPgNew(NULL, infoPgManifest), AssertError, "function debug assertion 'fileName != NULL' failed");
+        TEST_ERROR(infoPgNew(storageLocal(), fileName, 10), AssertError, "invalid InfoPg type 10");
+        TEST_ERROR(
+            infoPgNew(storageLocal(), NULL, infoPgManifest), AssertError, "function debug assertion 'fileName != NULL' failed");
 
         TEST_ERROR(infoPgDataCurrent(NULL), AssertError, "function debug assertion 'this != NULL' failed");
 
@@ -149,33 +150,5 @@ testRun(void)
         TEST_RESULT_STR(buffer,
             "{\"id: 4294967295, version: 4294967295, systemId 18446744073709551615, catalog 4294967295, control 4294967295\"}",
             "    check max format");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("infoPgVersionToUIntInternal(), infoPgVersionToString()"))
-    {
-        String *version = NULL;
-
-        // infoPgVersionToUIntInternal
-        //--------------------------------------------------------------------------------------------------------------------------
-        version = strNew("10");
-        TEST_RESULT_INT(infoPgVersionToUIntInternal(version), PG_VERSION_10, "Valid pg version 10 integer identifier");
-
-        // Internal function - doesn't check for validity since requested not to
-        version = strNew("15");
-        TEST_RESULT_INT(infoPgVersionToUIntInternal(version), 150000, "version 15 is converted");
-
-        version = strNew("9.3.4");
-        TEST_ERROR(infoPgVersionToUIntInternal(version), AssertError, "version 9.3.4 format is invalid");
-
-        version = strNew("abc");
-        TEST_ERROR(infoPgVersionToUIntInternal(version), AssertError, "version abc format is invalid");
-        TEST_ERROR(infoPgVersionToUIntInternal(NULL), AssertError, "function debug assertion 'version != NULL' failed");
-
-        // infoPgVersionToString
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(strPtr(infoPgVersionToString(PG_VERSION_11)), "11.0", "infoPgVersionToString 11.0");
-        TEST_RESULT_STR(strPtr(infoPgVersionToString(PG_VERSION_96)), "9.6", "infoPgVersionToString 9.6");
-        TEST_RESULT_STR(strPtr(infoPgVersionToString(123456)), "12.34", "infoPgVersionToString 123456");
     }
 }

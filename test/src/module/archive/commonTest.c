@@ -5,6 +5,8 @@ Test Archive Common
 
 #include "common/harnessConfig.h"
 
+#include "protocol/storage/helper.h"
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -12,6 +14,9 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // Create default storage object for testing
+    Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("archiveAsyncStatus()"))
@@ -96,6 +101,62 @@ testRun(void)
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "suppress error");
 
         unlink(strPtr(storagePathNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment)))));
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("walIsPartial()"))
+    {
+        TEST_RESULT_BOOL(walIsPartial(strNew("000000010000000100000001")), false, "not partial");
+        TEST_RESULT_BOOL(walIsPartial(strNew("FFFFFFFFFFFFFFFFFFFFFFFF.partial")), true, "partial");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("walIsSegment()"))
+    {
+        TEST_RESULT_BOOL(walIsSegment(strNew("000000010000000100000001")), true, "wal segment");
+        TEST_RESULT_BOOL(walIsSegment(strNew("FFFFFFFFFFFFFFFFFFFFFFFF.partial")), true, "partial wal segment");
+        TEST_RESULT_BOOL(walIsSegment(strNew("0000001A.history")), false, "history file");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("walSegmentFind()"))
+    {
+        // Load configuration to set repo-path and stanza
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
+        strLstAddZ(argList, "archive-get");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678")), NULL, "no path");
+
+        storagePathCreateNP(storageTest, strNew("archive/db/9.6-2/1234567812345678"));
+        TEST_RESULT_PTR(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678")), NULL, "no segment");
+
+        storagePutNP(
+            storageNewWriteNP(
+                storageTest,
+                strNew("archive/db/9.6-2/1234567812345678/123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+            NULL);
+
+        TEST_RESULT_STR(
+            strPtr(walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"))),
+            "123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "found segment");
+
+        storagePutNP(
+            storageNewWriteNP(
+                storageTest,
+                strNew("archive/db/9.6-2/1234567812345678/123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz")),
+            NULL);
+
+        TEST_ERROR(
+            walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678")),
+            ArchiveDuplicateError,
+            "duplicates found in archive for WAL segment 123456781234567812345678:"
+                " 123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                ", 123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz"
+                "\nHINT: are multiple primaries archiving to this stanza?");
     }
 
     // *****************************************************************************************************************************

@@ -157,7 +157,8 @@ sub protocolParam
             {name => 'strRemoteType'},
             {name => 'iRemoteIdx', default => cfgOptionValid(CFGOPT_HOST_ID) ? cfgOption(CFGOPT_HOST_ID) : 1},
             {name => 'strBackRestBin', optional => true},
-            {name => 'iProcessIdx', optional => true},
+            {name => 'iProcessIdx', optional => true,
+                default => cfgOptionValid(CFGOPT_PROCESS) ? cfgOption(CFGOPT_PROCESS, false) : undef},
         );
 
     # Return the remote when required
@@ -211,7 +212,7 @@ sub protocolParam
     my $rhCommandOption =
     {
         &CFGOPT_COMMAND => {value => $strCommand},
-        &CFGOPT_PROCESS => {value => $iProcessIdx},
+        &CFGOPT_PROCESS => {value => defined($iProcessIdx) ? $iProcessIdx : 0},
         &CFGOPT_CONFIG =>
             {value => cfgOptionValid($iOptionIdConfig) && cfgOptionSource($iOptionIdConfig) eq CFGDEF_SOURCE_DEFAULT ?
                 undef : cfgOption($iOptionIdConfig)},
@@ -306,7 +307,8 @@ sub protocolGet
             {name => 'bCache', optional => true, default => true},
             {name => 'strBackRestBin', optional => true},
             {name => 'iProcessIdx', optional => true},
-            {name => 'strCommand', optional => true, default => cfgCommandName(cfgCommandGet())},
+            {name => 'strCommand', optional => true,
+                default => cfgOptionValid(CFGOPT_COMMAND) ? cfgOption(CFGOPT_COMMAND) : cfgCommandName(cfgCommandGet())},
         );
 
     # Protocol object

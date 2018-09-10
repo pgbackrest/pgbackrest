@@ -320,17 +320,19 @@ sub manifest
         $strOperation,
         $strPath,
         $bIgnoreMissing,
+        $strFilter,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->manifest', \@_,
             {name => 'strPath', trace => true},
             {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
+            {name => 'strFilter', optional => true, trace => true},
         );
 
     # Generate the manifest
     my $hManifest = {};
-    $self->manifestRecurse($strPath, undef, 0, $hManifest, $bIgnoreMissing);
+    $self->manifestRecurse($strPath, undef, 0, $hManifest, $bIgnoreMissing, $strFilter);
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -353,6 +355,7 @@ sub manifestRecurse
         $iDepth,
         $hManifest,
         $bIgnoreMissing,
+        $strFilter,
     ) =
         logDebugParam
         (
@@ -362,45 +365,42 @@ sub manifestRecurse
             {name => 'iDepth', default => 0, trace => true},
             {name => 'hManifest', required => false, trace => true},
             {name => 'bIgnoreMissing', required => false, default => false, trace => true},
+            {name => 'strFilter', required => false, trace => true},
         );
 
     # Set operation and debug strings
     my $strPathRead = $strPath . (defined($strSubPath) ? "/${strSubPath}" : '');
     my $hPath;
-    my $strFilter;
 
     # If this is the top level stat the path to discover if it is actually a file
     my $oPathInfo = $self->info($strPathRead, {bIgnoreMissing => $bIgnoreMissing});
 
     if (defined($oPathInfo))
     {
+        # If the initial path passed is a file then generate the manifest for just that file
         if ($iDepth == 0 && !S_ISDIR($oPathInfo->mode()))
         {
-            $strFilter = basename($strPathRead);
-            $strPathRead = dirname($strPathRead);
+            $hManifest->{basename($strPathRead)} = $self->manifestStat($strPathRead);
         }
-
-        # Get a list of all files in the path (including .)
-        my @stryFileList = @{$self->list($strPathRead, {bIgnoreMissing => $iDepth != 0})};
-        unshift(@stryFileList, '.');
-        my $hFileStat = $self->manifestList($strPathRead, \@stryFileList);
-
-        # Loop through all subpaths/files in the path
-        foreach my $strFile (keys(%{$hFileStat}))
+        # Else read as a normal directory
+        else
         {
-            # Skip this file if it does not match the filter
-            if (defined($strFilter) && $strFile ne $strFilter)
-            {
-                next;
-            }
+            # Get a list of all files in the path (including .)
+            my @stryFileList = @{$self->list($strPathRead, {bIgnoreMissing => $iDepth != 0})};
+            unshift(@stryFileList, '.');
+            my $hFileStat = $self->manifestList($strPathRead, \@stryFileList, $strFilter);
 
-            my $strManifestFile = $iDepth == 0 ? $strFile : ($strSubPath . ($strFile eq qw(.) ? '' : "/${strFile}"));
-            $hManifest->{$strManifestFile} = $hFileStat->{$strFile};
-
-            # Recurse into directories
-            if ($hManifest->{$strManifestFile}{type} eq 'd' && $strFile ne qw(.))
+            # Loop through all subpaths/files in the path
+            foreach my $strFile (keys(%{$hFileStat}))
             {
-                $self->manifestRecurse($strPath, $strManifestFile, $iDepth + 1, $hManifest);
+                my $strManifestFile = $iDepth == 0 ? $strFile : ($strSubPath . ($strFile eq qw(.) ? '' : "/${strFile}"));
+                $hManifest->{$strManifestFile} = $hFileStat->{$strFile};
+
+                # Recurse into directories
+                if ($hManifest->{$strManifestFile}{type} eq 'd' && $strFile ne qw(.))
+                {
+                    $self->manifestRecurse($strPath, $strManifestFile, $iDepth + 1, $hManifest);
+                }
             }
         }
     }
@@ -419,18 +419,25 @@ sub manifestList
         $strOperation,
         $strPath,
         $stryFile,
+        $strFilter,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->manifestList', \@_,
             {name => 'strPath', trace => true},
             {name => 'stryFile', trace => true},
+            {name => 'strFilter', required => false, trace => true},
         );
 
     my $hFileStat = {};
 
     foreach my $strFile (@{$stryFile})
     {
+        if ($strFile ne '.' && defined($strFilter) && $strFilter ne $strFile)
+        {
+            next;
+        }
+
         $hFileStat->{$strFile} = $self->manifestStat("${strPath}" . ($strFile eq qw(.) ? '' : "/${strFile}"));
 
         if (!defined($hFileStat->{$strFile}))

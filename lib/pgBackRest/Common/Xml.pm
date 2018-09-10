@@ -22,6 +22,18 @@ use constant XML_HEADER                                             => '<?xml ve
     push @EXPORT, qw(XML_HEADER);
 
 ####################################################################################################################################
+# Convert a string to xml so that it is suitable to be appended into xml
+####################################################################################################################################
+sub xmlFromText
+{
+    my $strText = shift;
+
+    return XML::LibXML::Text->new($strText)->toString();
+}
+
+push @EXPORT, qw(xmlFromText);
+
+####################################################################################################################################
 # xmlParse - parse a string into an xml document and return the root node
 ####################################################################################################################################
 sub xmlParse

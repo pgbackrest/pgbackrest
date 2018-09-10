@@ -36,7 +36,7 @@ testLogLoad(const char *logFile, char *buffer, size_t bufferSize)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STRINGZ, logFile);
-        FUNCTION_HARNESS_PARAM(STRINGZ, buffer);
+        FUNCTION_HARNESS_PARAM(CHARP, buffer);
         FUNCTION_HARNESS_PARAM(SIZE, bufferSize);
 
         FUNCTION_HARNESS_ASSERT(logFile != NULL);

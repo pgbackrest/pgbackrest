@@ -16,3 +16,12 @@
     ...
     obj:*/libperl.so*
 }
+
+# This only seems to be an issue on Ubuntu 12.04 -- probably due to the old version of Valgrind
+{
+    ignore_libz_uninit_cond_jump
+    Memcheck:Cond
+    fun:inflateReset2
+    ...
+    obj:*/libz.so*
+}

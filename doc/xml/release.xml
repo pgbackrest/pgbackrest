@@ -12,7 +12,91 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.05dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.06dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="dan.farrell"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix missing missing URI encoding in S3 driver.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fix incorrectly reported error return in <id>info</id> logging.  A return code of 1 from the <cmd>archive-get</cmd> was being logged as an error message at <id>info</id> level but otherwise worked correctly.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <p>Ignore all files in a linked tablespace directory except the subdirectory for the current version of <postgres/>.  Previously an error would be generated if other files were present and not owned by the <postgres/> user.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="douglas.j.hunley"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve <cmd>info</cmd> command to display the stanza cipher type.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improve support for special characters in filenames.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Posix file functions now differentiate between open and missing errors.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Info objects now parse JSON and use specified storage.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add helper for repository storage.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Migrate <code>walIsPartial()</code>, <code>walIsSegment()</code>, and <code>walSegmentFind()</code> from Perl to C.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Migrate control functions to detect stop files to C from Perl.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephane.schildknecht"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>List allowable values for the <br-option>buffer-size</br-option> option in the configuration reference.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Make Valgrind return an error even when a non-fatal issue is detected.  Update some minor issues discovered in the tests as a result.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fix typo in unit test error messages, EXECTED => EXPECTED.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
+        </release>
+
+        <release date="2018-08-31" version="2.05" title="Environment Variable Options and Exclude Temporary/Unlogged Relations">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -25,18 +109,18 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="douglas.j.hunley"/>
-                        </release-item-contributor-list>
-
-                        <p>Fix issue where errors raised in C were not logged when called from Perl.  <backrest/> properly terminated with the correct error code but lacked an error message to aid in debugging.</p>
-                    </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
                             <release-item-ideator id="jason.odonnell"/>
                         </release-item-contributor-list>
 
                         <p>Remove incompletely implemented <br-option>online</br-option> option from the <cmd>check</cmd> command.  Offline operation runs counter to the purpose of this command, which is to check if archiving and backups are working correctly.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="douglas.j.hunley"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue where errors raised in C were not logged when called from Perl.  <backrest/> properly terminated with the correct error code but lacked an error message to aid in debugging.</p>
                     </release-item>
 
                     <release-item>
@@ -50,15 +134,15 @@
 
                 <release-feature-list>
                     <release-item>
+                        <p>Allow any option to be set in an environment variable.  This includes options that previously could only be specified on the command line, e.g. <br-option>stanza</br-option>, and secret options that could not be specified on the command-line, e.g. <br-option>repo1-s3-key-secret</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Exclude temporary and unlogged relation (table/index) files from backup.  Implemented using the same logic as the patches adding this feature to <postgres/>, <link url="https://git.postgresql.org/pg/commitdiff/8694cc96b52a967a49725f32be7aa77fd3b6ac25">8694cc96</link> and <link url="https://git.postgresql.org/pg/commitdiff/920a5e500a119b03356fb1fb64a677eb1aa5fc6f">920a5e50</link>.  Temporary relation exclusion is enabled in <postgres/> &amp;ge; <id>9.0</id>.  Unlogged relation exclusion is enabled in <postgres/> &amp;ge; <id>9.1</id>, where the feature was introduced.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Allow any option to be set in an environment variable.  This includes options that previously could only be specified on the command line, e.g. <br-option>stanza</br-option>.</p>
                     </release-item>
 
                     <release-item>
@@ -79,6 +163,14 @@
                 </release-feature-list>
 
                 <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow zero-size files in backup manifest to reference a prior manifest regardless of timestamp delta.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="stephen.frost"/>
@@ -169,14 +261,6 @@
                     </release-item>
 
                     <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="cynthia.shang"/>
-                        </release-item-contributor-list>
-
-                        <p>Allow zero-size files in backup manifest to reference a prior manifest regardless of timestamp delta.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Do nothing in <code>memContextMove()</code> when the context is already in the specified parent.</p>
                     </release-item>
 
@@ -201,7 +285,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Enable <id>-Wstrict-prototypes</id>, <id>-Wpointer-arith</id>, <id>-Wduplicated-branches</id>, <id>-Wvla</id>, and <id>-Wduplicated-cond</id> and update code to conform.</p>
+                        <p>Enable <id>-Wstrict-prototypes</id>, <id>-Wpointer-arith</id>, <id>-Wduplicated-branches</id>, <id>-Wvla</id>, and <id>-Wduplicated-cond</id> and update code to conform where necessary.</p>
                     </release-item>
 
                     <release-item>
@@ -5243,6 +5327,11 @@
             <contributor-id type="github">cmwshang</contributor-id>
         </contributor>
 
+        <contributor id="dan.farrell">
+            <contributor-name-display>Dan Farrell</contributor-name-display>
+            <contributor-id type="github">farrellit</contributor-id>
+        </contributor>
+
         <contributor id="david.youatt">
             <contributor-name-display>David Youatt</contributor-name-display>
             <contributor-id type="github">youattd</contributor-id>
@@ -5400,6 +5489,11 @@
         <contributor id="sebastien.lardiere">
             <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
             <contributor-id type="github">slardiere</contributor-id>
+        </contributor>
+
+        <contributor id="stephane.schildknecht">
+            <contributor-name-display>St&amp;eacute;phane Schildknecht</contributor-name-display>
+            <contributor-id type="github">saspg</contributor-id>
         </contributor>
 
         <contributor id="stephen.frost">

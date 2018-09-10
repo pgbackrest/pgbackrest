@@ -55,6 +55,9 @@ testRun(void)
         TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no error")
         harnessLogResult("P00   INFO: archive-push command end: completed successfully");
 
+        TEST_RESULT_INT(exitSafe(1, false, signalTypeNone), 1, "exit with no error")
+        harnessLogResult("P00   INFO: archive-push command end: completed successfully");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TRY_BEGIN()
         {

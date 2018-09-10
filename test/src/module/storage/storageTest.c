@@ -217,7 +217,7 @@ testRun(void)
         StorageFileWrite *destination = storageNewWriteNP(storageTest, destinationFile);
 
         TEST_ERROR_FMT(
-            storageCopyNP(source, destination), FileOpenError,
+            storageCopyNP(source, destination), FileMissingError,
             "unable to open '%s' for read: [2] No such file or directory", strPtr(sourceFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -457,7 +457,7 @@ testRun(void)
         String *pathName = strNewFmt("%s/testpath", testPath());
 
         TEST_ERROR_FMT(
-            storagePathSyncNP(storageTest, pathName), PathOpenError,
+            storagePathSyncNP(storageTest, pathName), PathMissingError,
             "unable to open '%s' for sync: [2] No such file or directory", strPtr(pathName));
 
         TEST_RESULT_VOID(storagePathSyncP(storageTest, pathName, .ignoreMissing = true), "ignore missing path");
@@ -475,7 +475,7 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewReadNP(storageTest, fileName), "new read file (defaults)");
         TEST_ERROR_FMT(
-            ioReadOpen(storageFileReadIo(file)), FileOpenError,
+            ioReadOpen(storageFileReadIo(file)), FileMissingError,
             "unable to open '%s' for read: [2] No such file or directory", strPtr(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------

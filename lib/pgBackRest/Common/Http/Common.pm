@@ -68,6 +68,7 @@ push @EXPORT, qw(httpQuery);
 sub httpUriEncode
 {
     my $strString = shift;
+    my $bPath = shift;
 
     # Only encode if source string is defined
     my $strEncodedString;
@@ -81,7 +82,7 @@ sub httpUriEncode
 
             # These characters are reproduced verbatim
             if (($cChar ge 'A' && $cChar le 'Z') || ($cChar ge 'a' && $cChar le 'z') || ($cChar ge '0' && $cChar le '9') ||
-                $cChar eq '_' || $cChar eq '-' || $cChar eq '~' || $cChar eq '.')
+                $cChar eq '_' || $cChar eq '-' || $cChar eq '~' || $cChar eq '.' || ($bPath && $cChar eq '/'))
             {
                 $strEncodedString .= $cChar;
             }

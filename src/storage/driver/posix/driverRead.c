@@ -71,7 +71,7 @@ storageFileReadPosixOpen(StorageFileReadPosix *this)
     bool result = false;
 
     // Open the file and handle errors
-    this->handle = storageFilePosixOpen(this->name, O_RDONLY, 0, this->ignoreMissing, &FileOpenError, "read");
+    this->handle = storageFilePosixOpen(this->name, O_RDONLY, 0, this->ignoreMissing, true, "read");
 
     // On success set free callback to ensure file handle is freed
     if (this->handle != -1)
@@ -138,7 +138,7 @@ storageFileReadPosixClose(StorageFileReadPosix *this)
     if (this->handle != -1)
     {
         // Close the file
-        storageFilePosixClose(this->handle, this->name, &FileCloseError);
+        storageFilePosixClose(this->handle, this->name, true);
 
         this->handle = -1;
     }

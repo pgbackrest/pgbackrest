@@ -170,8 +170,6 @@ sub archiveGetFile
 
     if (!defined($strArchiveFile))
     {
-        &log(INFO, "unable to find ${strSourceArchive} in the archive");
-
         $iResult = 1;
     }
     else

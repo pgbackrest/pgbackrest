@@ -41,7 +41,6 @@ Since open is called more than once use constants to make sure these parameters 
 ***********************************************************************************************************************************/
 #define FILE_OPEN_FLAGS                                             (O_CREAT | O_TRUNC | O_WRONLY)
 #define FILE_OPEN_PURPOSE                                           "write"
-#define FILE_OPEN_ERROR                                             &FileOpenError
 
 /***********************************************************************************************************************************
 Create a new file
@@ -103,7 +102,7 @@ storageFileWritePosixOpen(StorageFileWritePosix *this)
 
     // Open the file and handle errors
     this->handle = storageFilePosixOpen(
-        this->nameTmp, FILE_OPEN_FLAGS, this->modeFile, !this->noCreatePath, FILE_OPEN_ERROR, FILE_OPEN_PURPOSE);
+        this->nameTmp, FILE_OPEN_FLAGS, this->modeFile, !this->noCreatePath, true, FILE_OPEN_PURPOSE);
 
     // If path is missing
     if (this->handle == -1)
@@ -113,7 +112,7 @@ storageFileWritePosixOpen(StorageFileWritePosix *this)
 
         // Try the open again
         this->handle = storageFilePosixOpen(
-            this->nameTmp, FILE_OPEN_FLAGS, this->modeFile, false, FILE_OPEN_ERROR, FILE_OPEN_PURPOSE);
+            this->nameTmp, FILE_OPEN_FLAGS, this->modeFile, false, true, FILE_OPEN_PURPOSE);
     }
     // On success set free callback to ensure file handle is freed
     else
@@ -161,10 +160,10 @@ storageFileWritePosixClose(StorageFileWritePosix *this)
     {
         // Sync the file
         if (!this->noSyncFile)
-            storageFilePosixSync(this->handle, this->name, &FileSyncError, false);
+            storageFilePosixSync(this->handle, this->name, true, false);
 
         // Close the file
-        storageFilePosixClose(this->handle, this->name, &FileCloseError);
+        storageFilePosixClose(this->handle, this->name, true);
 
         // Rename from temp file
         if (!this->noAtomic)

@@ -1,38 +1,26 @@
 /***********************************************************************************************************************************
-PostgreSQL Info
+Protocol Storage Helper
 ***********************************************************************************************************************************/
-#ifndef POSTGRES_INFO_H
-#define POSTGRES_INFO_H
+#ifndef PROTOCOL_STORAGE_HELPER_H
+#define PROTOCOL_STORAGE_HELPER_H
 
-#include <stdint.h>
-#include <sys/types.h>
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
-PostgreSQL Control File Info
+Repo storage path constants
 ***********************************************************************************************************************************/
-typedef struct PgControlInfo
-{
-    uint64_t systemId;
-    uint32_t controlVersion;
-    uint32_t catalogVersion;
-    unsigned int version;
-} PgControlInfo;
+#define STORAGE_REPO_ARCHIVE                                        "<REPO:ARCHIVE>"
 
-#include "common/type/string.h"
+/***********************************************************************************************************************************
+Repository storage types
+***********************************************************************************************************************************/
+#define STORAGE_TYPE_CIFS                                           "cifs"
+#define STORAGE_TYPE_POSIX                                          "posix"
+#define STORAGE_TYPE_S3                                             "s3"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-PgControlInfo pgControlInfo(const String *pgPath);
-unsigned int pgVersionFromStr(const String *version);
-String *pgVersionToStr(unsigned int version);
-
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_PG_CONTROL_INFO_TYPE                                                                                        \
-    PgControlInfo
-#define FUNCTION_DEBUG_PG_CONTROL_INFO_FORMAT(value, buffer, bufferSize)                                                           \
-    objToLog(&value, "PgControlInfo", buffer, bufferSize)
+const Storage *storageRepo(void);
 
 #endif

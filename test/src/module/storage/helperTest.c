@@ -26,6 +26,7 @@ testRun(void)
 
         TEST_ERROR(storageNewWriteNP(storage, writeFile), AssertError, "function debug assertion 'this->write' failed");
     }
+
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("storageLocalWrite()"))
     {

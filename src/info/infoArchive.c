@@ -29,7 +29,7 @@ Create a new InfoArchive object
 // ??? Need loadFile parameter
 ***********************************************************************************************************************************/
 InfoArchive *
-infoArchiveNew(const String *fileName, bool ignoreMissing)
+infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissing)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, fileName);
@@ -45,13 +45,27 @@ infoArchiveNew(const String *fileName, bool ignoreMissing)
         // Create object
         this = memNew(sizeof(InfoArchive));
         this->memContext = MEM_CONTEXT_NEW();
-        this->infoPg = infoPgNew(fileName, infoPgArchive);
+
+        // Catch file missing error and add archive-specific hints before rethrowing
+        TRY_BEGIN()
+        {
+            this->infoPg = infoPgNew(storage, fileName, infoPgArchive);
+        }
+        CATCH(FileMissingError)
+        {
+            THROW_FMT(
+                FileMissingError,
+                "%s\n"
+                "HINT: archive.info does not exist but is required to push/get WAL segments.\n"
+                "HINT: is archive_command configured in postgresql.conf?\n"
+                "HINT: has a stanza-create been performed?\n"
+                "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
+                errorMessage());
+        }
+        TRY_END();
 
         // Store the archiveId for the current PG db-version db-id
-        InfoPgData currentPg = infoPgDataCurrent(this->infoPg);
-
-        this->archiveId = strNew("");
-        strCatFmt(this->archiveId, "%s-%u", strPtr(infoPgVersionToString(currentPg.version)), currentPg.id);
+        this->archiveId = infoPgArchiveId(this->infoPg, 0);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -111,6 +125,21 @@ infoArchiveId(const InfoArchive *this)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(STRING, this->archiveId);
+}
+
+/***********************************************************************************************************************************
+Get PostgreSQL info
+***********************************************************************************************************************************/
+InfoPg *
+infoArchivePg(const InfoArchive *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(INFO_PG, this->infoPg);
 }
 
 /***********************************************************************************************************************************

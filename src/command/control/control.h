@@ -1,17 +1,15 @@
 /***********************************************************************************************************************************
-Storage File Routines For Posix
+Command Control
 ***********************************************************************************************************************************/
-#ifndef STORAGE_DRIVER_POSIX_DRIVERFILE_H
-#define STORAGE_DRIVER_POSIX_DRIVERFILE_H
+#ifndef COMMAND_CONTROL_CONTROL_H
+#define COMMAND_CONTROL_CONTROL_H
 
-#include "common/error.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-int storageFilePosixOpen(const String *name, int flags, mode_t mode, bool ignoreMissing, bool file, const char *purpose);
-void storageFilePosixSync(int handle, const String *name, bool file, bool closeOnError);
-void storageFilePosixClose(int handle, const String *name, bool file);
+String *lockStopFileName(const String *stanza);
+void lockStopTest(void);
 
 #endif

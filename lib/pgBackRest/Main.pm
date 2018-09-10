@@ -103,7 +103,7 @@ sub main
                 storageLocal(),
                 cfgOption(CFGOPT_LOG_PATH) . '/' . (cfgOptionTest(CFGOPT_STANZA) ? cfgOption(CFGOPT_STANZA) : 'all') . '-' .
                     lc(cfgOption(CFGOPT_COMMAND)) . '-' . lc(cfgCommandName(cfgCommandGet())) . '-' .
-                    sprintf("%03d", cfgOptionTest(CFGOPT_PROCESS) ? cfgOption(CFGOPT_PROCESS) : 0));
+                    sprintf("%03d", cfgOption(CFGOPT_PROCESS)));
 
             if (cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) &&
                 !cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3) &&
@@ -123,7 +123,8 @@ sub main
                 cfgOption(CFGOPT_BUFFER_SIZE), cfgOption(CFGOPT_PROTOCOL_TIMEOUT));
 
             # Process remote requests
-            $oRemote->process(cfgOption(CFGOPT_LOCK_PATH), cfgOption(CFGOPT_COMMAND), cfgOption(CFGOPT_STANZA, false));
+            $oRemote->process(
+                cfgOption(CFGOPT_LOCK_PATH), cfgOption(CFGOPT_COMMAND), cfgOption(CFGOPT_STANZA, false), cfgOption(CFGOPT_PROCESS));
         }
 
         # Process local command

@@ -510,6 +510,10 @@
         <execute-list host="{[host-build]}">
             <title>Install build dependencies</title>
 
+            <execute keyword="default" user="root" show="n">
+                <exe-cmd>apt-get update</exe-cmd>
+            </execute>
+
             <execute keyword="default" user="root">
                 <exe-cmd>apt-get install build-essential libssl-dev libperl-dev</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
