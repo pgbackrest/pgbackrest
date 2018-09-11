@@ -183,10 +183,6 @@ testRun(void)
             storageExistsNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment))), false,
             "check OK file was removed");
 
-        // Wait for the lock to be released
-        lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30, true);
-        lockRelease(true);
-
         // Write out a WAL segment for success
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
@@ -198,10 +194,6 @@ testRun(void)
 
         TEST_RESULT_BOOL(storageExistsNP(storageTest, walFile), true, "check WAL segment was moved");
         storageRemoveP(storageTest, walFile, .errorOnMissing = true);
-
-        // Wait for the lock to be released
-        lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30, true);
-        lockRelease(true);
 
         // Write more WAL segments (in this case queue should be full)
         // -------------------------------------------------------------------------------------------------------------------------
@@ -221,10 +213,6 @@ testRun(void)
         harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive");
 
         TEST_RESULT_BOOL(storageExistsNP(storageTest, walFile), true, "check WAL segment was moved");
-
-        // Wait for the lock to be released
-        lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30, true);
-        lockRelease(true);
 
         // Make sure the process times out when it can't get a lock
         // -------------------------------------------------------------------------------------------------------------------------

@@ -195,21 +195,28 @@ cmdArchiveGet(void)
                 }
 
                 // If the WAL segment has not already been found then start the async process to get it.  There's no point in
-                // forking the async process off more than once so track that as well.  Use an archive lock to prevent more than
-                // one async process being launched.
+                // forking the async process off more than once so track that as well.  Use an archive lock to prevent forking if
+                // the async process was launched by another process.
                 if (!forked && (!found || !queueFull)  &&
                     lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
                 {
+                    // Release the lock and mark the async process as forked
+                    lockRelease(true);
+                    forked = true;
+
                     // Fork off the async process
                     if (fork() == 0)
                     {
-                        // Execute async process and catch exceptions
-                        TRY_BEGIN()
-                        {
-                            // In the async server
-                            asyncServer = true;
-                            result = 0;
+                        // In the async server
+                        asyncServer = true;
+                        result = 0;
 
+                        // Only run async if the lock can be reacquired.  We just held it so this should not be an issue unless
+                        // another process sneaks in.  In general there should be only one archive-get process running but in
+                        // theory there could be more than one.
+                        if (lockAcquire(                                // {uncoverable - almost impossible to make this lock fail}
+                                cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
+                        {
                             // Get the version of PostgreSQL
                             unsigned int pgVersion = pgControlInfo(cfgOptionStr(cfgOptPgPath)).version;
 
@@ -244,24 +251,8 @@ cmdArchiveGet(void)
 
                             perlExec();
                         }
-                        CATCH_ANY()
-                        {
-                            RETHROW();
-                        }
-                        FINALLY()
-                        {
-                            // Release the lock (mostly here for testing since it would be freed in exitSafe() anyway)
-                            lockRelease(true);
-                        }
-                        TRY_END();
 
                         break;                                          // {uncovered - async calls always return errors for now}
-                    }
-                    // Else mark async process as forked
-                    else
-                    {
-                        lockClear(true);
-                        forked = true;
                     }
                 }
 

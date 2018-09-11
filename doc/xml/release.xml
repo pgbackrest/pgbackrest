@@ -71,6 +71,10 @@
                     <release-item>
                         <p>Make archive-get info messages consistent between C and Perl implementations.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Change locking around async process forking to be more test friendly.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
