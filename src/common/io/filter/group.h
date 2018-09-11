@@ -46,11 +46,11 @@ void ioFilterGroupFree(IoFilterGroup *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-size_t ioFilterGroupToLog(const IoFilterGroup *this, char *buffer, size_t bufferSize);
+String *ioFilterGroupToLog(const IoFilterGroup *this);
 
 #define FUNCTION_DEBUG_IO_FILTER_GROUP_TYPE                                                                                        \
     IoFilterGroup *
 #define FUNCTION_DEBUG_IO_FILTER_GROUP_FORMAT(value, buffer, bufferSize)                                                           \
-    ioFilterGroupToLog(value, buffer, bufferSize)
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, ioFilterGroupToLog, buffer, bufferSize)
 
 #endif

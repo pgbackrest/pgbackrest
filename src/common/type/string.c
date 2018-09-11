@@ -708,10 +708,9 @@ strTrunc(String *this, int idx)
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Convert an object to a zero-terminated string for logging
 ***********************************************************************************************************************************/
-size_t
-strToLog(const String *this, char *buffer, size_t bufferSize)
+size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffer, size_t bufferSize)
 {
     size_t result = 0;
 
@@ -719,16 +718,25 @@ strToLog(const String *this, char *buffer, size_t bufferSize)
     {
         String *string = NULL;
 
-        if (this == NULL)
+        if (object == NULL)
             string = strNew("null");
         else
-            string = strNewFmt("{\"%s\"}", strPtr(this));
+            string = formatFunc(object);
 
         result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
     }
     MEM_CONTEXT_TEMP_END();
 
     return result;
+}
+
+/***********************************************************************************************************************************
+Convert to a zero-terminated string for logging
+***********************************************************************************************************************************/
+String *
+strToLog(const String *this)
+{
+    return strNewFmt("{\"%s\"}", strPtr(this));
 }
 
 /***********************************************************************************************************************************

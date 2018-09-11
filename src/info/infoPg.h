@@ -62,7 +62,7 @@ void infoPgFree(InfoPg *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-size_t infoPgDataToLog(const InfoPgData *this, char *buffer, size_t bufferSize);
+String *infoPgDataToLog(const InfoPgData *this);
 
 #define FUNCTION_DEBUG_INFO_PG_TYPE                                                                                                \
     InfoPg *
@@ -71,11 +71,11 @@ size_t infoPgDataToLog(const InfoPgData *this, char *buffer, size_t bufferSize);
 #define FUNCTION_DEBUG_INFO_PG_DATA_TYPE                                                                                           \
     InfoPgData
 #define FUNCTION_DEBUG_INFO_PG_DATA_FORMAT(value, buffer, bufferSize)                                                              \
-    infoPgDataToLog(&value, buffer, bufferSize)
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(&value, infoPgDataToLog, buffer, bufferSize)
 #define FUNCTION_DEBUG_INFO_PG_DATAP_TYPE                                                                                          \
     InfoPgData *
 #define FUNCTION_DEBUG_INFO_PG_DATAP_FORMAT(value, buffer, bufferSize)                                                             \
-    infoPgDataToLog(value, buffer, bufferSize)
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, infoPgDataToLog, buffer, bufferSize)
 
 
 #endif

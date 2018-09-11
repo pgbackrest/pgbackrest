@@ -201,16 +201,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strToLog()"))
     {
-        char buffer[STACK_TRACE_PARAM_MAX];
-
-        TEST_RESULT_INT(strToLog(NULL, buffer, 4), 4, "format null string with too small buffer");
-        TEST_RESULT_STR(buffer, "nul", "    check format");
-
-        TEST_RESULT_INT(strToLog(NULL, buffer, STACK_TRACE_PARAM_MAX), 4, "format null string");
-        TEST_RESULT_STR(buffer, "null", "    check format");
-
-        TEST_RESULT_INT(strToLog(strNew("test"), buffer, STACK_TRACE_PARAM_MAX), 8, "format string");
-        TEST_RESULT_STR(buffer, "{\"test\"}", "    check format");
+        TEST_RESULT_STR(strPtr(strToLog(strNew("test"))), "{\"test\"}", "format string");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

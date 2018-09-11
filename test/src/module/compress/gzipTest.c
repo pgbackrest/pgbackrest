@@ -164,21 +164,15 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("gzipDecompressToLog() and gzipCompressToLog()"))
     {
-        char buffer[STACK_TRACE_PARAM_MAX];
         GzipDecompress *decompress = gzipDecompressNew(false);
 
-        TEST_RESULT_INT(gzipDecompressToLog(NULL, buffer, 4), 4, "format object with too small buffer");
-        TEST_RESULT_STR(buffer, "nul", "    check format");
-
-        TEST_RESULT_INT(gzipDecompressToLog(decompress, buffer, STACK_TRACE_PARAM_MAX), 43, "format object");
-        TEST_RESULT_STR(buffer, "{inputSame: false, done: false, availIn: 0}", "    check format");
+        TEST_RESULT_STR(strPtr(gzipDecompressToLog(decompress)), "{inputSame: false, done: false, availIn: 0}", "format object");
 
         decompress->inputSame = true;
         decompress->done = true;
         inflateEnd(decompress->stream);
         decompress->stream = NULL;
-        TEST_RESULT_INT(gzipDecompressToLog(decompress, buffer, STACK_TRACE_PARAM_MAX), 41, "format object");
-        TEST_RESULT_STR(buffer, "{inputSame: true, done: true, availIn: 0}", "    check format");
+        TEST_RESULT_STR(strPtr(gzipDecompressToLog(decompress)), "{inputSame: true, done: true, availIn: 0}", "format object");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

@@ -216,26 +216,12 @@ infoPgDataTotal(const InfoPg *this)
 /***********************************************************************************************************************************
 Convert to a zero-terminated string for logging
 ***********************************************************************************************************************************/
-size_t
-infoPgDataToLog(const InfoPgData *this, char *buffer, size_t bufferSize)
+String *
+infoPgDataToLog(const InfoPgData *this)
 {
-    size_t result = 0;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        String *string = NULL;
-
-        if (this == NULL)
-            string = strNew("null");
-        else
-            string = strNewFmt("{\"id: %u, version: %u, systemId %" PRIu64 ", catalog %"PRIu32", control %"PRIu32"\"}",
-                this->id, this->version, this->systemId, this->catalogVersion, this->controlVersion);
-
-        result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    return result;
+    return strNewFmt(
+        "{id: %u, version: %u, systemId: %" PRIu64 ", catalogVersion: %" PRIu32 ", controlVersion: %" PRIu32 "}",
+        this->id, this->version, this->systemId, this->catalogVersion, this->controlVersion);
 }
 
 /***********************************************************************************************************************************

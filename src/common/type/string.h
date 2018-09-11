@@ -50,9 +50,19 @@ String *strTrunc(String *this, int idx);
 void strFree(String *this);
 
 /***********************************************************************************************************************************
+Helper function/macro for object logging
+***********************************************************************************************************************************/
+typedef String *(*StrObjToLogFormat)(const void *object);
+
+size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffer, size_t bufferSize);
+
+#define FUNCTION_DEBUG_STRING_OBJECT_FORMAT(object, formatFunc, buffer, bufferSize)                                                                    \
+    strObjToLog(object, (StrObjToLogFormat)formatFunc, buffer, bufferSize)
+
+/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-size_t strToLog(const String *this, char *buffer, size_t bufferSize);
+String *strToLog(const String *this);
 
 #define FUNCTION_DEBUG_CONST_STRING_TYPE                                                                                           \
     const String *
@@ -62,7 +72,7 @@ size_t strToLog(const String *this, char *buffer, size_t bufferSize);
 #define FUNCTION_DEBUG_STRING_TYPE                                                                                                 \
     String *
 #define FUNCTION_DEBUG_STRING_FORMAT(value, buffer, bufferSize)                                                                    \
-    strToLog(value, buffer, bufferSize)
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, strToLog, buffer, bufferSize)
 
 #define FUNCTION_DEBUG_STRINGP_TYPE                                                                                                \
     const String **

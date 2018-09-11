@@ -39,11 +39,11 @@ void ioSizeFree(IoSize *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-size_t ioSizeToLog(const IoSize *this, char *buffer, size_t bufferSize);
+String *ioSizeToLog(const IoSize *this);
 
 #define FUNCTION_DEBUG_IO_SIZE_TYPE                                                                                                \
     IoSize *
 #define FUNCTION_DEBUG_IO_SIZE_FORMAT(value, buffer, bufferSize)                                                                   \
-    ioSizeToLog(value, buffer, bufferSize)
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, ioSizeToLog, buffer, bufferSize)
 
 #endif

@@ -79,6 +79,10 @@
                     <release-item>
                         <p>Change locking around async process forking to be more test friendly.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Simplify debug logging by allowing log functions to return <code>String</code> objects.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

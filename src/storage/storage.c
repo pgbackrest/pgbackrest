@@ -620,25 +620,10 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
 /***********************************************************************************************************************************
 Convert to a zero-terminated string for logging
 ***********************************************************************************************************************************/
-size_t
-storageToLog(const Storage *this, char *buffer, size_t bufferSize)
+String *
+storageToLog(const Storage *this)
 {
-    size_t result = 0;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        String *string = NULL;
-
-        if (this == NULL)
-            string = strNew("null");
-        else
-            string = strNewFmt("{path: %s, write: %s}", strPtr(strQuoteZ(this->path, "\"")), cvtBoolToConstZ(this->write));
-
-        result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    return result;
+    return strNewFmt("{path: %s, write: %s}", strPtr(strQuoteZ(this->path, "\"")), cvtBoolToConstZ(this->write));
 }
 
 /***********************************************************************************************************************************

@@ -307,22 +307,10 @@ testRun(void)
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("varToLog"))
     {
-        char buffer[STACK_TRACE_PARAM_MAX];
-
-        TEST_RESULT_INT(varToLog(NULL, buffer, 4), 4, "format truncated null");
-        TEST_RESULT_STR(buffer, "nul", "    check buffer");
-
-        TEST_RESULT_INT(varToLog(varNewStrZ("testme"), buffer, STACK_TRACE_PARAM_MAX), 10, "format String");
-        TEST_RESULT_STR(buffer, "{\"testme\"}", "    check buffer");
-
-        TEST_RESULT_INT(varToLog(varNewBool(false), buffer, STACK_TRACE_PARAM_MAX), 7, "format bool");
-        TEST_RESULT_STR(buffer, "{false}", "    check buffer");
-
-        TEST_RESULT_INT(varToLog(varNewKv(), buffer, STACK_TRACE_PARAM_MAX), 10, "format KeyValue");
-        TEST_RESULT_STR(buffer, "{KeyValue}", "    check buffer");
-
-        TEST_RESULT_INT(varToLog(varNewVarLst(varLstNew()), buffer, STACK_TRACE_PARAM_MAX), 13, "format VariantList");
-        TEST_RESULT_STR(buffer, "{VariantList}", "    check buffer");
+        TEST_RESULT_STR(strPtr(varToLog(varNewStrZ("testme"))), "{\"testme\"}", "format String");
+        TEST_RESULT_STR(strPtr(varToLog(varNewBool(false))), "{false}", "format bool");
+        TEST_RESULT_STR(strPtr(varToLog(varNewKv())), "{KeyValue}", "format KeyValue");
+        TEST_RESULT_STR(strPtr(varToLog(varNewVarLst(varLstNew()))), "{VariantList}", "format VariantList");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

@@ -137,7 +137,7 @@ P00  DEBUG:     info/info::infoNew: (fileName: {"<REPO:ARCHIVE>/archive.info"})
 P00  DEBUG:     info/info::infoNew: => {Info}
 P00  DEBUG:     info/info::infoIni: (this: {Info})
 P00  DEBUG:     info/info::infoIni: => {Ini}
-P00  DEBUG:     info/infoPg::infoPgAdd: (this: {InfoPg}, infoPgData: {"id: 1, version: 90400, systemId 1000000000000000094, catalog 0, control 0"})
+P00  DEBUG:     info/infoPg::infoPgAdd: (this: {InfoPg}, infoPgData: {id: 1, version: 90400, systemId: 1000000000000000094, catalogVersion: 0, controlVersion: 0})
 P00  DEBUG:     info/infoPg::infoPgAdd: => 0
 P00  DEBUG:     info/infoPg::infoPgNew: => {InfoPg}
 P00  DEBUG:     info/infoArchive::infoArchiveNew: => {InfoArchive}
@@ -181,7 +181,7 @@ P00  DEBUG:     info/info::infoNew: (fileName: {"<REPO:ARCHIVE>/archive.info"})
 P00  DEBUG:     info/info::infoNew: => {Info}
 P00  DEBUG:     info/info::infoIni: (this: {Info})
 P00  DEBUG:     info/info::infoIni: => {Ini}
-P00  DEBUG:     info/infoPg::infoPgAdd: (this: {InfoPg}, infoPgData: {"id: 1, version: 90400, systemId 1000000000000000094, catalog 0, control 0"})
+P00  DEBUG:     info/infoPg::infoPgAdd: (this: {InfoPg}, infoPgData: {id: 1, version: 90400, systemId: 1000000000000000094, catalogVersion: 0, controlVersion: 0})
 P00  DEBUG:     info/infoPg::infoPgAdd: => 0
 P00  DEBUG:     info/infoPg::infoPgNew: => {InfoPg}
 P00  DEBUG:     info/infoArchive::infoArchiveNew: => {InfoArchive}
