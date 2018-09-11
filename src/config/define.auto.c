@@ -510,7 +510,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Set the buffer size used for copy, compress, and uncompress functions. A maximum of 3 buffers will be in use at a "
                 "time per process. An additional maximum of 256K per process may be used for zlib buffers.\n"
             "\n"
-            "Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024."
+            "Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024. For example, "
+                "the case-insensitive value 32k (or 32KB) can be used instead of 32768.\n"
+            "\n"
+            "Allowed values, in bytes, are 16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, and "
+                "16777216."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST

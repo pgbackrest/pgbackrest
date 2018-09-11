@@ -260,7 +260,11 @@ testRun(void)
             "maximum of 256K per process may be used for zlib buffers.\n"
             "\n"
             "Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the\n"
-            "multiplier is a power of 1024.\n",
+            "multiplier is a power of 1024. For example, the case-insensitive value 32k (or\n"
+            "32KB) can be used instead of 32768.\n"
+            "\n"
+            "Allowed values, in bytes, are 16384, 32768, 65536, 131072, 262144, 524288,\n"
+            "1048576, 2097152, 4194304, 8388608, and 16777216.\n",
             helpVersion));
 
         argList = strLstNew();
