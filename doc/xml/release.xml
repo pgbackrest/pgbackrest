@@ -49,6 +49,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Migrate local, unencrypted, non-S3 <cmd>archive-get</cmd> command to C.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Posix file functions now differentiate between open and missing errors.</p>
                     </release-item>
 

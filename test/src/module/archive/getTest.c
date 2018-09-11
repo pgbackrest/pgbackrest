@@ -6,6 +6,20 @@ Test Archive Get Command
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "compress/gzipCompress.h"
+
+/***********************************************************************************************************************************
+Create test pg_control file
+***********************************************************************************************************************************/
+static void
+testPgControlCreate(const Storage *storage, const String *controlFile, PgControlFile control)
+{
+    Buffer *controlBuffer = bufNew(8192);
+    memset(bufPtr(controlBuffer), 0, bufSize(controlBuffer));
+    memcpy(bufPtr(controlBuffer), &control, sizeof(PgControlFile));
+    bufUsedSet(controlBuffer, bufSize(controlBuffer));
+    storagePutNP(storageNewWriteNP(storage, controlFile), controlBuffer);
+}
 
 /***********************************************************************************************************************************
 Test Run
@@ -16,6 +30,181 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
+
+    // *****************************************************************************************************************************
+    if (testBegin("archiveGetCheck()"))
+    {
+        // Load Parameters
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
+        strLstAddZ(argList, "archive-get");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // Create pg_control file
+        testPgControlCreate(
+            storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL),
+            (PgControlFile){.systemId = 0xFACEFACEFACEFACE, .controlVersion = 1002, .catalogVersion = 201707211});
+
+        // Control and archive info mismatch
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
+            bufNewStr(
+                strNew(
+                    "[backrest]\n"
+                    "backrest-checksum=\"0a415a03fa3faccb4ac171759895478469e9e19e\"\n"
+                    "backrest-format=5\n"
+                    "backrest-version=\"2.06\"\n"
+                    "\n"
+                    "[db:history]\n"
+                    "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n")));
+
+        TEST_ERROR(
+            archiveGetCheck(strNew("876543218765432187654321")), ArchiveMismatchError,
+            "unable to retrieve the archive id for database version '10' and system-id '18072658121562454734'");
+
+        // Nothing to find in empty archive dir
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
+            bufNewStr(
+                strNew(
+                    "[backrest]\n"
+                    "backrest-checksum=\"f7617b5c4c9f212f40b9bc3d8ec7f97edbbf96af\"\n"
+                    "backrest-format=5\n"
+                    "backrest-version=\"2.06\"\n"
+                    "\n"
+                    "[db:history]\n"
+                    "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"
+                    "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
+                    "3={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n"
+                    "4={\"db-id\":18072658121562454734,\"db-version\":\"10\"}")));
+
+        TEST_RESULT_PTR(archiveGetCheck(strNew("876543218765432187654321")), NULL, "no segment found");
+
+        // Write segment into an older archive path
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePutNP(
+            storageNewWriteNP(
+                storageTest,
+                strNew(
+                    "repo/archive/test1/10-2/8765432187654321/876543218765432187654321-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+            NULL);
+
+        TEST_RESULT_STR(
+            strPtr(archiveGetCheck(strNew("876543218765432187654321"))),
+            "10-2/8765432187654321/876543218765432187654321-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "segment found");
+
+        // Write segment into an newer archive path
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePutNP(
+            storageNewWriteNP(
+                storageTest,
+                strNew(
+                    "repo/archive/test1/10-4/8765432187654321/876543218765432187654321-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
+            NULL);
+
+        TEST_RESULT_STR(
+            strPtr(archiveGetCheck(strNew("876543218765432187654321"))),
+            "10-4/8765432187654321/876543218765432187654321-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "newer segment found");
+
+        // Get history file
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_PTR(archiveGetCheck(strNew("00000009.history")), NULL, "history file not found");
+
+        storagePutNP(storageNewWriteNP(storageTest, strNew("repo/archive/test1/10-4/00000009.history")), NULL);
+
+        TEST_RESULT_STR(strPtr(archiveGetCheck(strNew("00000009.history"))), "10-4/00000009.history", "history file found");
+
+        // Clear data
+        storagePathRemoveP(storageTest, strNew("repo"), .recurse = true);
+        storagePathRemoveP(storageTest, strNew("db"), .recurse = true);
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("archiveGetFile()"))
+    {
+        // Load Parameters
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
+        strLstAddZ(argList, "archive-get");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // Create pg_control file
+        testPgControlCreate(
+            storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL),
+            (PgControlFile){.systemId = 0xFACEFACEFACEFACE, .controlVersion = 1002, .catalogVersion = 201707211});
+
+        // Create archive.info
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
+            bufNewStr(
+                strNew(
+                    "[backrest]\n"
+                    "backrest-checksum=\"8a041a4128eaa2c08a23dd1f04934627795946ff\"\n"
+                    "backrest-format=5\n"
+                    "backrest-version=\"2.06\"\n"
+                    "\n"
+                    "[db:history]\n"
+                    "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}")));
+
+        // Nothing to copy
+        // -------------------------------------------------------------------------------------------------------------------------
+        String *archiveFile = strNew("01ABCDEF01ABCDEF01ABCDEF");
+        String *walDestination = strNewFmt("%s/db/pg_wal/RECOVERYXLOG", testPath());
+        storagePathCreateNP(storageTest, strPath(walDestination));
+
+        TEST_RESULT_INT(archiveGetFile(archiveFile, walDestination), 1, "WAL segment missing");
+
+        // Create a WAL segment to copy
+        // -------------------------------------------------------------------------------------------------------------------------
+        Buffer *buffer = bufNew(16 * 1024 * 1024);
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+        bufUsedSet(buffer, bufSize(buffer));
+
+        storagePutNP(
+            storageNewWriteNP(
+                storageTest,
+                strNew(
+                    "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+            buffer);
+
+        TEST_RESULT_INT(archiveGetFile(archiveFile, walDestination), 0, "WAL segment copied");
+        TEST_RESULT_BOOL(storageExistsNP(storageTest, walDestination), true, "  check exists");
+        TEST_RESULT_INT(storageInfoNP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
+
+        storageRemoveP(
+            storageTest,
+            strNew("repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+            .errorOnMissing = true);
+        storageRemoveP(storageTest, walDestination, .errorOnMissing = true);
+
+        // Create a compressed WAL segment to copy
+        // -------------------------------------------------------------------------------------------------------------------------
+        StorageFileWrite *destination = storageNewWriteNP(
+            storageTest,
+            strNew(
+                "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
+
+        IoFilterGroup *filterGroup = ioFilterGroupNew();
+        ioFilterGroupAdd(filterGroup, gzipCompressFilter(gzipCompressNew(3, false)));
+        ioWriteFilterGroupSet(storageFileWriteIo(destination), filterGroup);
+        storagePutNP(destination, buffer);
+
+        TEST_RESULT_INT(archiveGetFile(archiveFile, walDestination), 0, "WAL segment copied");
+        TEST_RESULT_BOOL(storageExistsNP(storageTest, walDestination), true, "  check exists");
+        TEST_RESULT_INT(storageInfoNP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
+
+        // Clear data
+        storagePathRemoveP(storageTest, strNew("repo"), .recurse = true);
+        storagePathRemoveP(storageTest, strNew("db"), .recurse = true);
+    }
 
     // *****************************************************************************************************************************
     if (testBegin("queueNeed()"))
@@ -99,7 +288,8 @@ testRun(void)
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAdd(argList, strNewFmt("--log-level-file=debug"));
-        strLstAddZ(argList, "--stanza=db");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "archive-get");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -114,13 +304,9 @@ testRun(void)
         TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "path to copy WAL segment required");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        String *controlFile = strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
-        PgControlFile control = {.systemId = 0xFACEFACE, .controlVersion = 1002, .catalogVersion = 201707211};
-        Buffer *controlBuffer = bufNew(512);
-        memset(bufPtr(controlBuffer), 0, bufSize(controlBuffer));
-        memcpy(bufPtr(controlBuffer), &control, sizeof(PgControlFile));
-        bufUsedSet(controlBuffer, bufSize(controlBuffer));
-        storagePutNP(storageNewWriteNP(storageTest, controlFile), controlBuffer);
+        testPgControlCreate(
+            storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL),
+            (PgControlFile){.systemId = 0xFACEFACEFACEFACE, .controlVersion = 1002, .catalogVersion = 201707211});
 
         storagePathCreateNP(storageTest, strNewFmt("%s/db/pg_wal", testPath()));
 
@@ -134,7 +320,15 @@ testRun(void)
         {
             HARNESS_FORK_CHILD()
             {
-                TEST_ERROR(cmdArchiveGet(), FileMissingError, "!!!EMBEDDEDPERLERROR!!!");
+                TEST_ERROR_FMT(
+                    cmdArchiveGet(), FileMissingError,
+                    "unable to open %s/archive/test1/archive.info or %s/archive/test1/archive.info.copy\n"
+                    "HINT: archive.info does not exist but is required to push/get WAL segments.\n"
+                    "HINT: is archive_command configured in postgresql.conf?\n"
+                    "HINT: has a stanza-create been performed?\n"
+                    "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
+                        " scheme.",
+                    strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)));
             }
         }
         HARNESS_FORK_END();
@@ -152,7 +346,15 @@ testRun(void)
         {
             HARNESS_FORK_CHILD()
             {
-                TEST_ERROR(cmdArchiveGet(), FileMissingError, "!!!EMBEDDEDPERLERROR!!!");
+                TEST_ERROR_FMT(
+                    cmdArchiveGet(), FileMissingError,
+                    "unable to open %s/archive/test1/archive.info or %s/archive/test1/archive.info.copy\n"
+                    "HINT: archive.info does not exist but is required to push/get WAL segments.\n"
+                    "HINT: is archive_command configured in postgresql.conf?\n"
+                    "HINT: has a stanza-create been performed?\n"
+                    "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
+                        " scheme.",
+                    strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)));
             }
         }
         HARNESS_FORK_END();

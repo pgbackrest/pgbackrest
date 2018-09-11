@@ -5,6 +5,7 @@ Archive Get Command
 #include <unistd.h>
 
 #include "command/archive/common.h"
+#include "command/archive/get/file.h"
 #include "command/command.h"
 #include "common/assert.h"
 #include "common/debug.h"
@@ -17,6 +18,7 @@ Archive Get Command
 #include "config/load.h"
 #include "perl/exec.h"
 #include "postgres/info.h"
+#include "protocol/storage/helper.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -271,8 +273,15 @@ cmdArchiveGet(void)
             // Disable async if it was enabled
             cfgOptionSet(cfgOptArchiveAsync, cfgOptionSource(cfgOptArchiveAsync), varNewBool(false));
 
-            // Call synchronous get
-            result = perlExec();
+            // If repo type is not s3 and repo server is not remote and not encrypted then this can be done entirely in C
+            if (!strEqZ(cfgOptionStr(cfgOptRepoType), STORAGE_TYPE_S3) && !cfgOptionTest(cfgOptRepoHost) &&
+                strEqZ(cfgOptionStr(cfgOptRepoCipherType), "none"))
+            {
+                result = archiveGetFile(walSegment, walDestination);
+            }
+            // Else do it in Perl
+            else
+                result = perlExec();                                            // {uncovered - Perl code is covered in unit tests}
         }
 
         // Log whether or not the file was found
