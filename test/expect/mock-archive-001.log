@@ -148,8 +148,8 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::Common::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::Get::File::archiveGetCheck=>: strArchiveFile = [undef], strArchiveId = 9.4-1, strCipherPass = [undef]
 P00  DEBUG:     Archive::Get::File::archiveGetFile=>: iResult = 1
-P00   INFO: unable to find 700000007000000070000000 in the archive
 P00  DEBUG:     perl/exec::perlExec: => 1
+P00   INFO: unable to find 700000007000000070000000 in the archive
 P00  DEBUG:     command/archive/get/get::cmdArchiveGet: => 1
 P00  DEBUG:     common/exit::exitSafe: (result: 1, error: false, signalType: 0)
 P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
@@ -202,8 +202,8 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = false, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = ({rxyParam => ({strCompressType => decompress}), strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::Get::File::archiveGetFile=>: iResult = 0
-P00   INFO: got WAL segment 000000010000000100000001
 P00  DEBUG:     perl/exec::perlExec: => 0
+P00   INFO: found 000000010000000100000001 in the archive
 P00  DEBUG:     command/archive/get/get::cmdArchiveGet: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
 P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
@@ -231,7 +231,7 @@ P00   INFO: archive-push command end: aborted with exception [044]
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000001, [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
-P00   INFO: got WAL segment 000000010000000100000001
+P00   INFO: found 000000010000000100000001 in the archive
 P00   INFO: archive-get command end: completed successfully
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
@@ -294,7 +294,7 @@ P00   INFO: archive-push command end: aborted with exception [045]
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get --archive-async --archive-timeout=5 000000010000000100000002 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000002, [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG] --archive-async --archive-timeout=5 --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/spool --stanza=db
-P00   INFO: got WAL segment 000000010000000100000002 asynchronously
+P00   INFO: found 000000010000000100000002 in the archive
 P00   INFO: archive-get command end: completed successfully
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002.partial

@@ -67,6 +67,10 @@
                     <release-item>
                         <p>Migrate control functions to detect stop files to C from Perl.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Make archive-get info messages consistent between C and Perl implementations.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
