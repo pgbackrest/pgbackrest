@@ -214,7 +214,7 @@ infoPgDataTotal(const InfoPg *this)
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
 String *
 infoPgDataToLog(const InfoPgData *this)

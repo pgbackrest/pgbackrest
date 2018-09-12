@@ -124,7 +124,7 @@ ioBufferFilter(const IoBuffer *this)
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
 String *
 ioBufferToLog(const IoBuffer *this)

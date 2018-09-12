@@ -518,7 +518,7 @@ strLstSort(StringList *this, SortOrder sortOrder)
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
 String *
 strLstToLog(const StringList *this)

@@ -731,7 +731,7 @@ size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffe
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
 String *
 strToLog(const String *this)

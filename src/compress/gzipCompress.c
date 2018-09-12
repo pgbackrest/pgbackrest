@@ -175,7 +175,7 @@ gzipCompressInputSame(const GzipCompress *this)
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
 String *
 gzipCompressToLog(const GzipCompress *this)

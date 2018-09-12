@@ -150,7 +150,7 @@ gzipDecompressInputSame(const GzipDecompress *this)
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
 String *
 gzipDecompressToLog(const GzipDecompress *this)

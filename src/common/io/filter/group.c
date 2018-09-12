@@ -402,7 +402,7 @@ ioFilterGroupResult(const IoFilterGroup *this, const String *filterType)
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
 String *
 ioFilterGroupToLog(const IoFilterGroup *this)

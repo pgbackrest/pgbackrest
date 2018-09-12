@@ -618,7 +618,7 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
 String *
 storageToLog(const Storage *this)

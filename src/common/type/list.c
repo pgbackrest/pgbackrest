@@ -174,7 +174,7 @@ lstSort(List *this, int (*comparator)(const void *, const void*))
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
 String *
 lstToLog(const List *this)
