@@ -236,8 +236,8 @@ sub run
             $strCommand =
                 'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
                 "cd $self->{strGCovPath} && " .
-                "make -s 2>&1 && " .
-                ($self->{oTest}->{&TEST_VM} ne VM_CO6 ?
+                "make -s 2>&1 &&" .
+                ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{bValgrindUnit}?
                     " valgrind -q --gen-suppressions=all --suppressions=$self->{strBackRestBase}/test/src/valgrind.suppress" .
                     " --leak-check=full --leak-resolution=high --error-exitcode=25" : '') .
                 " ./test 2>&1'";

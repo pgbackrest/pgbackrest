@@ -106,6 +106,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Don't perform valgrind when requested.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Fix typo in unit test error messages, EXECTED => EXPECTED.</p>
                     </release-item>
                 </release-development-list>
