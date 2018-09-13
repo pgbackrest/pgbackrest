@@ -974,13 +974,6 @@ sub build
         # Loop though all files
         foreach my $strName ($self->keys(MANIFEST_SECTION_TARGET_FILE))
         {
-
-# if (defined($oLastManifest) && $strName =~ /0000$/) {syswrite(*STDOUT, "TIMEBEGIN: $lTimeBegin, $strName CURRSIZE: ".$self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE).", LASTSIZE: ".$oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE). ", CURRTIME: ".$self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP).", LASTTIME: ".$oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP)."\n");} # CSHANG
-
-if (defined($oLastManifest) && $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName) &&
-    ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) != $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP)))
-    {syswrite(*STDOUT, "TIMEBEGIN: $lTimeBegin, $strName CURRTIME: ".$self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP).", LASTTIME: ".$oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP)."\n");} # CSHANG
-
             # If modification time is in the future (in this backup OR the last backup) set warning flag and do not
             # allow a reference
             if ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) > $lTimeBegin ||
@@ -998,7 +991,8 @@ if (defined($oLastManifest) && $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE
             # Else check if the size and timestamp match OR if the size matches and the delta option is set, then keep the file.
             # In the latter case, if there had been a timeline switch then rather than removing and recopying the file, the file
             # will be tested in backupFile to see if the db/repo checksum still matches: if so, it is not necessary to recopy,
-            # else it will need to be copied to the new backup.
+            # else it will need to be copied to the new backup. For zero sized files, the reference will be set and copying
+            # will be skipped later.
             elsif (defined($oLastManifest) && $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName) &&
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) ==
                        $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&

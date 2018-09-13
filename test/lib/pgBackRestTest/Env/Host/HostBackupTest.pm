@@ -478,6 +478,10 @@ sub backupCompare
             $oActualManifest->get(INI_SECTION_CIPHER, INI_KEY_CIPHER_PASS);
     }
 
+    # Update the expected manifest with whether the --delta option was used or not to perform the backup.
+    $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA} =
+        $oActualManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA) ? INI_TRUE : INI_FALSE;
+
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
 
     foreach my $strFileKey ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
@@ -520,7 +524,7 @@ sub backupCompare
                 (isChecksumPage($strFileKey) ? 'set' : 'undef') . '.';
         }
     }
-
+    storageTest()->put($self->testPath() . "/expected.manifest.before", iniRender($oExpectedManifest)); # CSHANG
     $self->manifestDefault($oExpectedManifest);
 
     my $strTestPath = $self->testPath();
@@ -544,7 +548,7 @@ sub manifestDefault
 {
     my $self = shift;
     my $oExpectedManifest = shift;
-
+syswrite(*STDOUT, "CALLING MANIFESTDEFAULT\n"); # CSHANG
     # Set defaults for subkeys that tend to repeat
     foreach my $strSection (&MANIFEST_SECTION_TARGET_FILE, &MANIFEST_SECTION_TARGET_PATH, &MANIFEST_SECTION_TARGET_LINK)
     {
@@ -561,6 +565,7 @@ sub manifestDefault
 
                 if (defined($strValue))
                 {
+syswrite(*STDOUT, "STRFILE: $strFile STRVALUE: $strValue\n"); # CSHANG
                     if (defined($oDefault{$strValue}))
                     {
                         $oDefault{$strValue}++;
@@ -588,9 +593,11 @@ sub manifestDefault
 
             if (defined($strMaxValue) > 0 && $iMaxValueTotal > $iSectionTotal * MANIFEST_DEFAULT_MATCH_FACTOR)
             {
+syswrite(*STDOUT, "STRMAX: $strMaxValue, MAXTOT: $iMaxValueTotal > ".($iSectionTotal * MANIFEST_DEFAULT_MATCH_FACTOR) . "\n"); # CSHANG
                 if ($strSubKey eq MANIFEST_SUBKEY_MASTER)
                 {
                     $oExpectedManifest->{"${strSection}:default"}{$strSubKey} = $strMaxValue ? JSON::PP::true : JSON::PP::false;
+syswrite(*STDOUT, "MASTER DEFAULT: ". ($strMaxValue ? $strMaxValue : 'false') . "\n"); # CSHANG
                 }
                 else
                 {
@@ -1754,6 +1761,10 @@ sub restoreCompare
                         '/'. FILE_MANIFEST),
             {strCipherPass => $oHostBackup->cipherPassManifest()});
 
+        # Get the --delta option from the backup manifest so the actual manifest can be built the same way for comparison
+        $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA} =
+            $oExpectedManifest->get(MANIFEST_SECTION_BACKUP_OPTION, &MANIFEST_KEY_DELTA);
+
         $oLastManifest =
             new pgBackRest::Manifest(
                 storageRepo()->pathGet(
@@ -1817,8 +1828,11 @@ sub restoreCompare
             iDbCatalogVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG},
             oStorage => storageTest()});
 
+    # Build the actual manifest using the delta setting that was actually used by the latest backup if one exists
     $oActualManifest->build(storageTest(), $strDbClusterPath, $oLastManifest, false,
         $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA}, $oTablespaceMap);
+    $oActualManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef,
+        $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA});
 
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
 
@@ -1935,7 +1949,7 @@ sub restoreCompare
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef,
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE});
-    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef,
+    $oActualManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef,
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA});
 
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef,

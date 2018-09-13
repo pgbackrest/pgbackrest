@@ -299,7 +299,8 @@ sub processManifest
         {
             logDebugMisc($strOperation, "reference ${strRepoFile} to ${strReference}");
 
-            # If the delta option to checksum all files is set then only skip checking/copy this referenced file if the size is zero
+            # If the delta option to checksum all files is not set or it is set and the file size of the referenced file is zero
+            # then skip checking/copying this file
             if (!cfgOption(CFGOPT_DELTA) ||
                 $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE) == 0)
             {
@@ -828,6 +829,8 @@ sub process
     # Build the manifest
     $oBackupManifest->build($oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
         cfgOption(CFGOPT_DELTA), $hTablespaceMap, $hDatabaseMap, cfgOption(CFGOPT_EXCLUDE, false));
+
+    # Set the delta option after the build in the event it was set during the build
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef, cfgOption(CFGOPT_DELTA));
 
     &log(TEST, TEST_MANIFEST_BUILD);

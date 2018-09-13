@@ -102,17 +102,13 @@ sub backupFile
         # If delta, then check the DB checksum and possibly the repo. If the checksum does not match in either case then recopy.
         if ($bDelta)
         {
-&log(DEBUG, "BEFORE OPEN $strDbFile\n"); # CSHANG
-            # Open the DB file
-            my $oSourceFileIo = storageDb()->openRead($strDbFile, {bIgnoreMissing => $bIgnoreMissing});
-&log(DEBUG, "AFTER OPEN $strDbFile\n"); # CSHANG
+            ($strCopyChecksum, $lCopySize) = storageDb()->hashSize($strDbFile, {bIgnoreMissing => $bIgnoreMissing});
+
             # If the DB file exists, then check the checksum
-            if (defined($oSourceFileIo))
+            if (defined($strCopyChecksum))
             {
-&log(DEBUG, "BEFORE HASHSIZE $strDbFile\n"); # CSHANG
-                ($strCopyChecksum, $lCopySize) = storageDb()->hashSize($strDbFile, {bIgnoreMissing => $bIgnoreMissing});
                 $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
-&log(DEBUG, "AFTER HASHSIZE $strDbFile\n"); # CSHANG
+
                 # If DB checksum and size are same and the file is in a prior backup, then no need to copy: just restore the size
                 # and checksum
                 # If the checksum/size does not match, that is OK, just leave the copy result as COPY so the DB file will be copied

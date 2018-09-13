@@ -1164,7 +1164,7 @@ my %hConfigDefine =
 
     &CFGOPT_DELTA =>
     {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,  # CSHANG Need to remove
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
         &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
