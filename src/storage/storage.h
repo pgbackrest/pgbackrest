@@ -21,8 +21,8 @@ typedef struct Storage Storage;
 /***********************************************************************************************************************************
 Default file and path modes
 ***********************************************************************************************************************************/
-#define STORAGE_FILE_MODE_DEFAULT                                   0640
-#define STORAGE_PATH_MODE_DEFAULT                                   0750
+#define STORAGE_MODE_FILE_DEFAULT                                   0640
+#define STORAGE_MODE_PATH_DEFAULT                                   0750
 
 /***********************************************************************************************************************************
 Path expression callback function type - used to modify paths based on expressions enclosed in <>

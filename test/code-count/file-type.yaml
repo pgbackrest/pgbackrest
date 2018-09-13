@@ -1023,35 +1023,35 @@ src/postgres/version.h:
   class: core
   type: c/h
 
-src/storage/driver/posix/driver.c:
+src/storage/driver/posix/storage.c:
   class: core
   type: c
 
-src/storage/driver/posix/driver.h:
+src/storage/driver/posix/storage.h:
   class: core
   type: c/h
 
-src/storage/driver/posix/driverFile.c:
+src/storage/driver/posix/common.c:
   class: core
   type: c
 
-src/storage/driver/posix/driverFile.h:
+src/storage/driver/posix/common.h:
   class: core
   type: c/h
 
-src/storage/driver/posix/driverRead.c:
+src/storage/driver/posix/fileRead.c:
   class: core
   type: c
 
-src/storage/driver/posix/driverRead.h:
+src/storage/driver/posix/fileRead.h:
   class: core
   type: c/h
 
-src/storage/driver/posix/driverWrite.c:
+src/storage/driver/posix/fileWrite.c:
   class: core
   type: c
 
-src/storage/driver/posix/driverWrite.h:
+src/storage/driver/posix/fileWrite.h:
   class: core
   type: c/h
 

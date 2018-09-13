@@ -13,7 +13,7 @@ Storage file structure
 struct StorageFileRead
 {
     MemContext *memContext;
-    StorageFileReadPosix *fileDriver;
+    StorageDriverPosixFileRead *fileDriver;
     IoRead *io;
 };
 
@@ -37,11 +37,11 @@ storageFileReadNew(const String *name, bool ignoreMissing)
         this = memNew(sizeof(StorageFileRead));
         this->memContext = memContextCurrent();
 
-        this->fileDriver = storageFileReadPosixNew(name, ignoreMissing);
+        this->fileDriver = storageDriverPosixFileReadNew(name, ignoreMissing);
 
         this->io = ioReadNew(
-            this->fileDriver, (IoReadOpen)storageFileReadPosixOpen, (IoReadProcess)storageFileReadPosix,
-            (IoReadClose)storageFileReadPosixClose, (IoReadEof)storageFileReadPosixEof);
+            this->fileDriver, (IoReadOpen)storageDriverPosixFileReadOpen, (IoReadProcess)storageDriverPosixFileRead,
+            (IoReadClose)storageDriverPosixFileReadClose, (IoReadEof)storageDriverPosixFileReadEof);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -70,7 +70,7 @@ storageFileReadMove(StorageFileRead *this, MemContext *parentNew)
 /***********************************************************************************************************************************
 Get file driver
 ***********************************************************************************************************************************/
-StorageFileReadPosix *
+StorageDriverPosixFileRead *
 storageFileReadDriver(const StorageFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -79,7 +79,7 @@ storageFileReadDriver(const StorageFileRead *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STORAGE_FILE_READ_POSIX, this->fileDriver);
+    FUNCTION_TEST_RESULT(STORAGE_DRIVER_POSIX_FILE_READ, this->fileDriver);
 }
 
 /***********************************************************************************************************************************
@@ -109,7 +109,7 @@ storageFileReadIgnoreMissing(const StorageFileRead *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, storageFileReadPosixIgnoreMissing(this->fileDriver));
+    FUNCTION_TEST_RESULT(BOOL, storageDriverPosixFileReadIgnoreMissing(this->fileDriver));
 }
 
 /***********************************************************************************************************************************
@@ -124,7 +124,7 @@ storageFileReadName(const StorageFileRead *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, storageFileReadPosixName(this->fileDriver));
+    FUNCTION_TEST_RESULT(CONST_STRING, storageDriverPosixFileReadName(this->fileDriver));
 }
 
 /***********************************************************************************************************************************

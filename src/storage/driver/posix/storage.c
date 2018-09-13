@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Storage Driver Posix
+Posix Storage Driver
 ***********************************************************************************************************************************/
 // So lstat() will work on older glib versions
 #ifndef _POSIX_C_SOURCE
@@ -17,8 +17,8 @@ Storage Driver Posix
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
-#include "storage/driver/posix/driver.h"
-#include "storage/driver/posix/driverFile.h"
+#include "storage/driver/posix/storage.h"
+#include "storage/driver/posix/common.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -171,11 +171,11 @@ storageDriverPosixList(const String *path, bool errorOnMissing, const String *ex
 Move a file
 ***********************************************************************************************************************************/
 bool
-storageDriverPosixMove(StorageFileReadPosix *source, StorageFileWritePosix *destination)
+storageDriverPosixMove(StorageDriverPosixFileRead *source, StorageDriverPosixFileWrite *destination)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ_POSIX, source);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE_POSIX, destination);
+        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, source);
+        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, destination);
 
         FUNCTION_TEST_ASSERT(source != NULL);
         FUNCTION_TEST_ASSERT(destination != NULL);
@@ -185,9 +185,9 @@ storageDriverPosixMove(StorageFileReadPosix *source, StorageFileWritePosix *dest
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *sourceFile = storageFileReadPosixName(source);
-        const String *destinationFile = storageFileWritePosixName(destination);
-        const String *destinationPath = storageFileWritePosixPath(destination);
+        const String *sourceFile = storageDriverPosixFileReadName(source);
+        const String *destinationFile = storageDriverPosixFileWriteName(destination);
+        const String *destinationPath = storageDriverPosixFileWritePath(destination);
 
         // Attempt to move the file
         if (rename(strPtr(sourceFile), strPtr(destinationFile)) == -1)
@@ -198,13 +198,13 @@ storageDriverPosixMove(StorageFileReadPosix *source, StorageFileWritePosix *dest
                 if (!storageDriverPosixExists(sourceFile))
                     THROW_SYS_ERROR_FMT(FileMissingError, "unable to move missing file '%s'", strPtr(sourceFile));
 
-                if (!storageFileWritePosixCreatePath(destination))
+                if (!storageDriverPosixFileWriteCreatePath(destination))
                 {
                     THROW_SYS_ERROR_FMT(
                         PathMissingError, "unable to move '%s' to missing path '%s'", strPtr(sourceFile), strPtr(destinationPath));
                 }
 
-                storageDriverPosixPathCreate(destinationPath, false, false, storageFileWritePosixModePath(destination));
+                storageDriverPosixPathCreate(destinationPath, false, false, storageDriverPosixFileWriteModePath(destination));
                 result = storageDriverPosixMove(source, destination);
             }
             // Else the destination is on a different device so a copy will be needed
@@ -219,7 +219,7 @@ storageDriverPosixMove(StorageFileReadPosix *source, StorageFileWritePosix *dest
         else
         {
             // Sync source path if the destination path was synced and the paths are not equal
-            if (storageFileWritePosixSyncPath(destination))
+            if (storageDriverPosixFileWriteSyncPath(destination))
             {
                 String *sourcePath = strPath(sourceFile);
 
@@ -335,16 +335,16 @@ storageDriverPosixPathSync(const String *path, bool ignoreMissing)
     FUNCTION_DEBUG_END();
 
     // Open directory and handle errors
-    int handle = storageFilePosixOpen(path, O_RDONLY, 0, ignoreMissing, false, "sync");
+    int handle = storageDriverPosixFileOpen(path, O_RDONLY, 0, ignoreMissing, false, "sync");
 
     // On success
     if (handle != -1)
     {
         // Attempt to sync the directory
-        storageFilePosixSync(handle, path, false, true);
+        storageDriverPosixFileSync(handle, path, false, true);
 
         // Close the directory
-        storageFilePosixClose(handle, path, false);
+        storageDriverPosixFileClose(handle, path, false);
     }
 
     FUNCTION_DEBUG_RESULT_VOID();

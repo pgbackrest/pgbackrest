@@ -30,40 +30,40 @@ testRun(void)
     if (testBegin("StorageFile"))
     {
         TEST_ERROR_FMT(
-            storageFilePosixOpen(pathNoPerm, O_RDONLY, 0, false, false, "test"), PathOpenError,
+            storageDriverPosixFileOpen(pathNoPerm, O_RDONLY, 0, false, false, "test"), PathOpenError,
             "unable to open '%s' for test: [13] Permission denied", strPtr(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/test.file", testPath());
 
         TEST_ERROR_FMT(
-            storageFilePosixOpen(fileName, O_RDONLY, 0, false, true, "read"), FileMissingError,
+            storageDriverPosixFileOpen(fileName, O_RDONLY, 0, false, true, "read"), FileMissingError,
             "unable to open '%s' for read: [2] No such file or directory", strPtr(fileName));
 
-        TEST_RESULT_INT(storageFilePosixOpen(fileName, O_RDONLY, 0, true, true, "read"), -1, "missing file ignored");
+        TEST_RESULT_INT(storageDriverPosixFileOpen(fileName, O_RDONLY, 0, true, true, "read"), -1, "missing file ignored");
 
         // -------------------------------------------------------------------------------------------------------------------------
         int handle = -1;
 
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileName)))), 0, "create read file");
-        TEST_ASSIGN(handle, storageFilePosixOpen(fileName, O_RDONLY, 0, false, true, "read"), "open read file");
+        TEST_ASSIGN(handle, storageDriverPosixFileOpen(fileName, O_RDONLY, 0, false, true, "read"), "open read file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            storageFilePosixSync(-99, fileName, false, false), PathSyncError,
+            storageDriverPosixFileSync(-99, fileName, false, false), PathSyncError,
             "unable to sync '%s': [9] Bad file descriptor", strPtr(fileName));
         TEST_ERROR_FMT(
-            storageFilePosixSync(-99, fileName, true, true), FileSyncError,
+            storageDriverPosixFileSync(-99, fileName, true, true), FileSyncError,
             "unable to sync '%s': [9] Bad file descriptor", strPtr(fileName));
 
-        TEST_RESULT_VOID(storageFilePosixSync(handle, fileName, true, false), "sync file");
+        TEST_RESULT_VOID(storageDriverPosixFileSync(handle, fileName, true, false), "sync file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            storageFilePosixClose(-99, fileName, true), FileCloseError,
+            storageDriverPosixFileClose(-99, fileName, true), FileCloseError,
             "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
 
-        TEST_RESULT_VOID(storageFilePosixClose(handle, fileName, true), "close file");
+        TEST_RESULT_VOID(storageDriverPosixFileClose(handle, fileName, true), "close file");
 
         TEST_RESULT_INT(system(strPtr(strNewFmt("rm %s", strPtr(fileName)))), 0, "remove read file");
     }
@@ -150,7 +150,8 @@ testRun(void)
         TEST_RESULT_VOID(ioRead(storageFileReadIo(file), outBuffer), "    no data to load");
         TEST_RESULT_INT(bufUsed(outBuffer), 0, "    buffer is empty");
 
-        TEST_RESULT_VOID(storageFileReadPosix(storageFileReadDriver(file), outBuffer), "    no data to load from driver either");
+        TEST_RESULT_VOID(
+            storageDriverPosixFileRead(storageFileReadDriver(file), outBuffer), "    no data to load from driver either");
         TEST_RESULT_INT(bufUsed(outBuffer), 0, "    buffer is empty");
 
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents (all loaded)");
@@ -162,7 +163,7 @@ testRun(void)
 
         TEST_RESULT_VOID(storageFileReadFree(file), "   free file");
         TEST_RESULT_VOID(storageFileReadFree(NULL), "   free null file");
-        TEST_RESULT_VOID(storageFileReadPosixFree(NULL), "   free null file");
+        TEST_RESULT_VOID(storageDriverPosixFileReadFree(NULL), "   free null file");
 
         TEST_RESULT_VOID(storageFileReadMove(NULL, memContextTop()), "   move null file");
     }
@@ -217,17 +218,17 @@ testRun(void)
         storageRemoveP(storageTest, fileTmp, .errorOnMissing = true);
 
         TEST_ERROR_FMT(
-            storageFileWritePosix(storageFileWriteFileDriver(file), buffer), FileWriteError,
+            storageDriverPosixFileWrite(storageFileWriteFileDriver(file), buffer), FileWriteError,
             "unable to write '%s': [9] Bad file descriptor", strPtr(fileName));
         TEST_ERROR_FMT(
-            storageFileWritePosixClose(storageFileWriteFileDriver(file)), FileSyncError,
+            storageDriverPosixFileWriteClose(storageFileWriteFileDriver(file)), FileSyncError,
             "unable to sync '%s': [9] Bad file descriptor", strPtr(fileName));
 
         // Disable file sync so the close can be reached
         file->fileDriver->syncFile = false;
 
         TEST_ERROR_FMT(
-            storageFileWritePosixClose(storageFileWriteFileDriver(file)), FileCloseError,
+            storageDriverPosixFileWriteClose(storageFileWriteFileDriver(file)), FileCloseError,
             "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
 
         // Set file handle to -1 so the close on free with not fail
@@ -263,7 +264,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
         TEST_RESULT_VOID(storageFileWriteFree(file), "   free file");
         TEST_RESULT_VOID(storageFileWriteFree(NULL), "   free null file");
-        TEST_RESULT_VOID(storageFileWritePosixFree(NULL), "   free null posix file");
+        TEST_RESULT_VOID(storageDriverPosixFileWriteFree(NULL), "   free null posix file");
         TEST_RESULT_VOID(storageFileWriteMove(NULL, memContextTop()), "   move null file");
 
         Buffer *expectedBuffer = storageGetNP(storageNewReadNP(storageTest, fileName));

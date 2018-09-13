@@ -60,7 +60,7 @@ lockAcquireFile(const String *lockFile, double lockTimeout, bool failOnNoLock)
         do
         {
             // Attempt to open the file
-            if ((result = open(strPtr(lockFile), O_WRONLY | O_CREAT, STORAGE_FILE_MODE_DEFAULT)) == -1)
+            if ((result = open(strPtr(lockFile), O_WRONLY | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1)
             {
                 // Save the error for reporting outside the loop
                 errNo = errno;

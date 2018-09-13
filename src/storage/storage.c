@@ -10,7 +10,7 @@ Storage Manager
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/wait.h"
-#include "storage/driver/posix/driver.h"
+#include "storage/driver/posix/storage.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -50,8 +50,8 @@ storageNew(const String *path, StorageNewParam param)
         this = (Storage *)memNew(sizeof(Storage));
         this->memContext = MEM_CONTEXT_NEW();
         this->path = strDup(path);
-        this->modeFile = param.modeFile == 0 ? STORAGE_FILE_MODE_DEFAULT : param.modeFile;
-        this->modePath = param.modePath == 0 ? STORAGE_PATH_MODE_DEFAULT : param.modePath;
+        this->modeFile = param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile;
+        this->modePath = param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath;
         this->write = param.write;
         this->pathExpressionFunction = param.pathExpressionFunction;
     }

@@ -12,7 +12,7 @@ typedef struct StorageFileRead StorageFileRead;
 #include "common/io/read.h"
 #include "common/type/buffer.h"
 #include "common/type/string.h"
-#include "storage/driver/posix/driverRead.h"
+#include "storage/driver/posix/fileRead.h"
 
 /***********************************************************************************************************************************
 Constructor
@@ -27,7 +27,7 @@ StorageFileRead *storageFileReadMove(StorageFileRead *this, MemContext *parentNe
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-StorageFileReadPosix *storageFileReadDriver(const StorageFileRead *this);
+StorageDriverPosixFileRead *storageFileReadDriver(const StorageFileRead *this);
 IoRead *storageFileReadIo(const StorageFileRead *this);
 bool storageFileReadIgnoreMissing(const StorageFileRead *this);
 const String *storageFileReadName(const StorageFileRead *this);

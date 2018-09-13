@@ -53,7 +53,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Storage refactoring.  Posix file functions now differentiate between open and missing errors.  Don't use negations in objects below Storage.</p>
+                        <p>Storage refactoring.  Posix file functions now differentiate between open and missing errors.  Don't use negations in objects below Storage.  Rename posix driver files/functions for consistency.</p>
                     </release-item>
 
                     <release-item>

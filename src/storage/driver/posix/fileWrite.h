@@ -1,15 +1,15 @@
 /***********************************************************************************************************************************
-Storage File Write Driver For Posix
+Posix Storage File Write Driver
 ***********************************************************************************************************************************/
-#ifndef STORAGE_DRIVER_POSIX_DRIVERWRITE_H
-#define STORAGE_DRIVER_POSIX_DRIVERWRITE_H
+#ifndef STORAGE_DRIVER_POSIX_FILEWRITE_H
+#define STORAGE_DRIVER_POSIX_FILEWRITE_H
 
 #include <sys/types.h>
 
 /***********************************************************************************************************************************
 Write file object
 ***********************************************************************************************************************************/
-typedef struct StorageFileWritePosix StorageFileWritePosix;
+typedef struct StorageDriverPosixFileWrite StorageDriverPosixFileWrite;
 
 #include "common/type/buffer.h"
 #include "common/type/string.h"
@@ -17,39 +17,39 @@ typedef struct StorageFileWritePosix StorageFileWritePosix;
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-StorageFileWritePosix *storageFileWritePosixNew(
+StorageDriverPosixFileWrite *storageDriverPosixFileWriteNew(
     const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool syncPath, bool atomic);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void storageFileWritePosixOpen(StorageFileWritePosix *this);
-void storageFileWritePosix(StorageFileWritePosix *this, const Buffer *buffer);
-void storageFileWritePosixClose(StorageFileWritePosix *this);
+void storageDriverPosixFileWriteOpen(StorageDriverPosixFileWrite *this);
+void storageDriverPosixFileWrite(StorageDriverPosixFileWrite *this, const Buffer *buffer);
+void storageDriverPosixFileWriteClose(StorageDriverPosixFileWrite *this);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-bool storageFileWritePosixAtomic(StorageFileWritePosix *this);
-bool storageFileWritePosixCreatePath(StorageFileWritePosix *this);
-mode_t storageFileWritePosixModeFile(StorageFileWritePosix *this);
-mode_t storageFileWritePosixModePath(StorageFileWritePosix *this);
-const String *storageFileWritePosixName(StorageFileWritePosix *this);
-const String *storageFileWritePosixPath(StorageFileWritePosix *this);
-bool storageFileWritePosixSyncFile(StorageFileWritePosix *this);
-bool storageFileWritePosixSyncPath(StorageFileWritePosix *this);
+bool storageDriverPosixFileWriteAtomic(const StorageDriverPosixFileWrite *this);
+bool storageDriverPosixFileWriteCreatePath(const StorageDriverPosixFileWrite *this);
+mode_t storageDriverPosixFileWriteModeFile(const StorageDriverPosixFileWrite *this);
+mode_t storageDriverPosixFileWriteModePath(const StorageDriverPosixFileWrite *this);
+const String *storageDriverPosixFileWriteName(const StorageDriverPosixFileWrite *this);
+const String *storageDriverPosixFileWritePath(const StorageDriverPosixFileWrite *this);
+bool storageDriverPosixFileWriteSyncFile(const StorageDriverPosixFileWrite *this);
+bool storageDriverPosixFileWriteSyncPath(const StorageDriverPosixFileWrite *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void storageFileWritePosixFree(StorageFileWritePosix *this);
+void storageDriverPosixFileWriteFree(StorageDriverPosixFileWrite *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_FILE_WRITE_POSIX_TYPE                                                                               \
-    StorageFileWritePosix *
-#define FUNCTION_DEBUG_STORAGE_FILE_WRITE_POSIX_FORMAT(value, buffer, bufferSize)                                                  \
-    objToLog(value, "StorageFileWritePosix", buffer, bufferSize)
+#define FUNCTION_DEBUG_STORAGE_DRIVER_POSIX_FILE_WRITE_TYPE                                                                        \
+    StorageDriverPosixFileWrite *
+#define FUNCTION_DEBUG_STORAGE_DRIVER_POSIX_FILE_WRITE_FORMAT(value, buffer, bufferSize)                                           \
+    objToLog(value, "StorageDriverPosixFileWrite", buffer, bufferSize)
 
 #endif
