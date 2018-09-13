@@ -224,7 +224,7 @@ testRun(void)
             "unable to sync '%s': [9] Bad file descriptor", strPtr(fileName));
 
         // Disable file sync so the close can be reached
-        file->fileDriver->noSyncFile = true;
+        file->fileDriver->syncFile = false;
 
         TEST_ERROR_FMT(
             storageFileWritePosixClose(storageFileWriteFileDriver(file)), FileCloseError,

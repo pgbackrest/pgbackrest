@@ -362,8 +362,8 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
     {
         result = storageFileWriteNew(
             storagePathNP(this, fileExp), param.modeFile != 0 ? param.modeFile : this->modeFile,
-            param.modePath != 0 ? param.modePath : this->modePath, param.noCreatePath, param.noSyncFile, param.noSyncPath,
-            param.noAtomic);
+            param.modePath != 0 ? param.modePath : this->modePath, !param.noCreatePath, !param.noSyncFile, !param.noSyncPath,
+            !param.noAtomic);
 
         if (param.filterGroup != NULL)
             ioWriteFilterGroupSet(storageFileWriteIo(result), param.filterGroup);

@@ -26,10 +26,10 @@ struct StorageFileWritePosix
     String *nameTmp;
     mode_t modeFile;
     mode_t modePath;
-    bool noCreatePath;
-    bool noSyncFile;
-    bool noSyncPath;
-    bool noAtomic;
+    bool createPath;
+    bool syncFile;
+    bool syncPath;
+    bool atomic;
 
     int handle;
 };
@@ -47,16 +47,16 @@ Create a new file
 ***********************************************************************************************************************************/
 StorageFileWritePosix *
 storageFileWritePosixNew(
-    const String *name, mode_t modeFile, mode_t modePath, bool noCreatePath, bool noSyncFile, bool noSyncPath, bool noAtomic)
+    const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool syncPath, bool atomic)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(STRING, name);
         FUNCTION_DEBUG_PARAM(MODE, modeFile);
         FUNCTION_DEBUG_PARAM(MODE, modePath);
-        FUNCTION_DEBUG_PARAM(BOOL, noCreatePath);
-        FUNCTION_DEBUG_PARAM(BOOL, noSyncFile);
-        FUNCTION_DEBUG_PARAM(BOOL, noSyncPath);
-        FUNCTION_DEBUG_PARAM(BOOL, noAtomic);
+        FUNCTION_DEBUG_PARAM(BOOL, createPath);
+        FUNCTION_DEBUG_PARAM(BOOL, syncFile);
+        FUNCTION_DEBUG_PARAM(BOOL, syncPath);
+        FUNCTION_DEBUG_PARAM(BOOL, atomic);
 
         FUNCTION_TEST_ASSERT(name != NULL);
     FUNCTION_DEBUG_END();
@@ -72,13 +72,13 @@ storageFileWritePosixNew(
         this->memContext = MEM_CONTEXT_NEW();
         this->path = strPath(name);
         this->name = strDup(name);
-        this->nameTmp = noAtomic ? this->name : strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(name));
+        this->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(name)) : this->name;
         this->modeFile = modeFile;
         this->modePath = modePath;
-        this->noCreatePath = noCreatePath;
-        this->noSyncFile = noSyncFile;
-        this->noSyncPath = noSyncPath;
-        this->noAtomic = noAtomic;
+        this->createPath = createPath;
+        this->syncFile = syncFile;
+        this->syncPath = syncPath;
+        this->atomic = atomic;
 
         this->handle = -1;
     }
@@ -102,7 +102,7 @@ storageFileWritePosixOpen(StorageFileWritePosix *this)
 
     // Open the file and handle errors
     this->handle = storageFilePosixOpen(
-        this->nameTmp, FILE_OPEN_FLAGS, this->modeFile, !this->noCreatePath, true, FILE_OPEN_PURPOSE);
+        this->nameTmp, FILE_OPEN_FLAGS, this->modeFile, this->createPath, true, FILE_OPEN_PURPOSE);
 
     // If path is missing
     if (this->handle == -1)
@@ -159,21 +159,21 @@ storageFileWritePosixClose(StorageFileWritePosix *this)
     if (this->handle != -1)
     {
         // Sync the file
-        if (!this->noSyncFile)
+        if (this->syncFile)
             storageFilePosixSync(this->handle, this->name, true, false);
 
         // Close the file
         storageFilePosixClose(this->handle, this->name, true);
 
         // Rename from temp file
-        if (!this->noAtomic)
+        if (this->atomic)
         {
             if (rename(strPtr(this->nameTmp), strPtr(this->name)) == -1)
                 THROW_SYS_ERROR_FMT(FileMoveError, "unable to move '%s' to '%s'", strPtr(this->nameTmp), strPtr(this->name));
         }
 
         // Sync the path
-        if (!this->noSyncPath)
+        if (this->syncPath)
             storageDriverPosixPathSync(this->path, false);
 
         // This marks the file as closed
@@ -197,7 +197,7 @@ storageFileWritePosixAtomic(StorageFileWritePosix *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, !this->noAtomic);
+    FUNCTION_TEST_RESULT(BOOL, this->atomic);
 }
 
 /***********************************************************************************************************************************
@@ -212,7 +212,7 @@ storageFileWritePosixCreatePath(StorageFileWritePosix *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, !this->noCreatePath);
+    FUNCTION_TEST_RESULT(BOOL, this->createPath);
 }
 
 /***********************************************************************************************************************************
@@ -287,7 +287,7 @@ storageFileWritePosixSyncFile(StorageFileWritePosix *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, !this->noSyncFile);
+    FUNCTION_TEST_RESULT(BOOL, this->syncFile);
 }
 
 /***********************************************************************************************************************************
@@ -302,7 +302,7 @@ storageFileWritePosixSyncPath(StorageFileWritePosix *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, !this->noSyncPath);
+    FUNCTION_TEST_RESULT(BOOL, this->syncPath);
 }
 
 /***********************************************************************************************************************************

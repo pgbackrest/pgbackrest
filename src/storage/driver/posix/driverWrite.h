@@ -18,7 +18,7 @@ typedef struct StorageFileWritePosix StorageFileWritePosix;
 Constructor
 ***********************************************************************************************************************************/
 StorageFileWritePosix *storageFileWritePosixNew(
-    const String *name, mode_t modeFile, mode_t modePath, bool noCreatePath, bool noSyncFile, bool noSyncPath, bool noAtomic);
+    const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool syncPath, bool atomic);
 
 /***********************************************************************************************************************************
 Functions
