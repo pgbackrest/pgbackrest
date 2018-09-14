@@ -524,7 +524,7 @@ sub backupCompare
                 (isChecksumPage($strFileKey) ? 'set' : 'undef') . '.';
         }
     }
-    storageTest()->put($self->testPath() . "/expected.manifest.before", iniRender($oExpectedManifest)); # CSHANG
+
     $self->manifestDefault($oExpectedManifest);
 
     my $strTestPath = $self->testPath();
@@ -548,7 +548,7 @@ sub manifestDefault
 {
     my $self = shift;
     my $oExpectedManifest = shift;
-syswrite(*STDOUT, "CALLING MANIFESTDEFAULT\n"); # CSHANG
+
     # Set defaults for subkeys that tend to repeat
     foreach my $strSection (&MANIFEST_SECTION_TARGET_FILE, &MANIFEST_SECTION_TARGET_PATH, &MANIFEST_SECTION_TARGET_LINK)
     {
@@ -565,7 +565,6 @@ syswrite(*STDOUT, "CALLING MANIFESTDEFAULT\n"); # CSHANG
 
                 if (defined($strValue))
                 {
-syswrite(*STDOUT, "STRFILE: $strFile STRVALUE: $strValue\n"); # CSHANG
                     if (defined($oDefault{$strValue}))
                     {
                         $oDefault{$strValue}++;
@@ -593,11 +592,9 @@ syswrite(*STDOUT, "STRFILE: $strFile STRVALUE: $strValue\n"); # CSHANG
 
             if (defined($strMaxValue) > 0 && $iMaxValueTotal > $iSectionTotal * MANIFEST_DEFAULT_MATCH_FACTOR)
             {
-syswrite(*STDOUT, "STRMAX: $strMaxValue, MAXTOT: $iMaxValueTotal > ".($iSectionTotal * MANIFEST_DEFAULT_MATCH_FACTOR) . "\n"); # CSHANG
                 if ($strSubKey eq MANIFEST_SUBKEY_MASTER)
                 {
                     $oExpectedManifest->{"${strSection}:default"}{$strSubKey} = $strMaxValue ? JSON::PP::true : JSON::PP::false;
-syswrite(*STDOUT, "MASTER DEFAULT: ". ($strMaxValue ? $strMaxValue : 'false') . "\n"); # CSHANG
                 }
                 else
                 {

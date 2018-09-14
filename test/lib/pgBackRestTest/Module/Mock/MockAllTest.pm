@@ -998,8 +998,11 @@ sub run
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
                 strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
 
-        # Remove the size-changed test file to avoid expect log churn
-        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt');
+        if (!$bRemote)
+        {
+            # Remove the size-changed test file to avoid expect log churn
+            $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt');
+        }
 
         # Resume Diff Backup
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1217,7 +1220,7 @@ sub run
             'dfcb8679956b734706cf87259d50c88f83e80e66', $lTime, undef, undef, false);
 
         $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', true);
-# CSHANG This backupEnd is failing on --run=2 because the actual and expected manifest master default is different - why?
+
         $strBackup = $oHostBackup->backupEnd($strType, $oBackupExecute, {oExpectedManifest => \%oManifest});
 
         # Full Backup
