@@ -33,8 +33,10 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
-    Storage *storageTmp = storageNewP(strNew("/tmp"), .write = true);
+    Storage *storageTest = storageDriverPosixInterface(
+        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    Storage *storageTmp = storageDriverPosixInterface(
+        storageDriverPosixNew(strNew("/tmp"), 0, 0, true, NULL));
     ioBufferSizeSet(2);
 
     // Create a directory and file that cannot be accessed to test permissions errors
@@ -51,10 +53,8 @@ testRun(void)
     if (testBegin("storageNew() and storageFree()"))
     {
         Storage *storageTest = NULL;
-
-        TEST_ERROR(storageNewNP(NULL), AssertError, "function debug assertion 'path != NULL' failed");
-
-        TEST_ASSIGN(storageTest, storageNewNP(strNew("/")), "new storage (defaults)");
+        TEST_ASSIGN(
+            storageTest, storageDriverPosixInterface(storageDriverPosixNew(strNew("/"), 0640, 0750, false, NULL)), "new storage (defaults)");
         TEST_RESULT_STR(strPtr(storageTest->path), "/", "    check path");
         TEST_RESULT_INT(storageTest->modeFile, 0640, "    check file mode");
         TEST_RESULT_INT(storageTest->modePath, 0750, "     check path mode");
@@ -62,10 +62,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageTest->pathExpressionFunction == NULL, true, "    check expression function is not set");
 
         TEST_ASSIGN(
-            storageTest,
-            storageNewP(
-                strNew("/path/to"), .modeFile = 0600, .modePath = 0700, .write = true,
-                .pathExpressionFunction = storageTestPathExpression),
+            storageTest, storageDriverPosixInterface(storageDriverPosixNew(strNew("/path/to"), 0600, 0700, true, storageTestPathExpression)),
             "new storage (non-default)");
         TEST_RESULT_STR(strPtr(storageTest->path), "/path/to", "    check path");
         TEST_RESULT_INT(storageTest->modeFile, 0600, "    check file mode");
@@ -75,6 +72,9 @@ testRun(void)
 
         TEST_RESULT_VOID(storageFree(storageTest), "free storage");
         TEST_RESULT_VOID(storageFree(NULL), "free null storage");
+
+        TEST_RESULT_VOID(storageDriverPosixFree(storageDriverPosixNew(strNew("/"), 0640, 0750, false, NULL)), "free posix storage");
+        TEST_RESULT_VOID(storageDriverPosixFree(NULL), "free null posix storage");
     }
 
     // *****************************************************************************************************************************
@@ -248,14 +248,14 @@ testRun(void)
         StorageFileWrite *destination = storageNewWriteNP(storageTest, destinationFile);
 
         TEST_ERROR_FMT(
-            storageMoveNP(source, destination), FileMissingError,
+            storageMoveNP(storageTest, source, destination), FileMissingError,
             "unable to move missing file '%s': [2] No such file or directory", strPtr(sourceFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
         source = storageNewReadNP(storageTest, fileNoPerm);
 
         TEST_ERROR_FMT(
-            storageMoveNP(source, destination), FileMoveError,
+            storageMoveNP(storageTest, source, destination), FileMoveError,
             "unable to move '%s' to '%s': [13] Permission denied", strPtr(fileNoPerm), strPtr(destinationFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -266,14 +266,14 @@ testRun(void)
         destination = storageNewWriteP(storageTest, destinationFile, .noCreatePath = true);
 
         TEST_ERROR_FMT(
-            storageMoveNP(source, destination), PathMissingError,
+            storageMoveNP(storageTest, source, destination), PathMissingError,
             "unable to move '%s' to missing path '%s': [2] No such file or directory", strPtr(sourceFile),
             strPtr(strPath(destinationFile)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         destination = storageNewWriteNP(storageTest, destinationFile);
 
-        TEST_RESULT_VOID(storageMoveNP(source, destination), "move file to subpath");
+        TEST_RESULT_VOID(storageMoveNP(storageTest, source, destination), "move file to subpath");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, sourceFile), false, "check source file not exists");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, destinationFile), true, "check destination file exists");
         TEST_RESULT_STR(
@@ -286,7 +286,7 @@ testRun(void)
         destinationFile = strNewFmt("%s/sub/destination2.txt", testPath());
         destination = storageNewWriteNP(storageTest, destinationFile);
 
-        TEST_RESULT_VOID(storageMoveNP(source, destination), "move file to same path");
+        TEST_RESULT_VOID(storageMoveNP(storageTest, source, destination), "move file to same path");
 
         // -------------------------------------------------------------------------------------------------------------------------
         sourceFile = destinationFile;
@@ -294,7 +294,7 @@ testRun(void)
         destinationFile = strNewFmt("%s/source.txt", testPath());
         destination = storageNewWriteP(storageTest, destinationFile, .noSyncPath = true);
 
-        TEST_RESULT_VOID(storageMoveNP(source, destination), "move file to parent path (no sync)");
+        TEST_RESULT_VOID(storageMoveNP(storageTest, source, destination), "move file to parent path (no sync)");
 
         // Move across filesystems
         // -------------------------------------------------------------------------------------------------------------------------
@@ -303,7 +303,7 @@ testRun(void)
         destinationFile = strNewFmt("/tmp/destination.txt");
         destination = storageNewWriteNP(storageTmp, destinationFile);
 
-        TEST_RESULT_VOID(storageMoveNP(source, destination), "move file to another filesystem");
+        TEST_RESULT_VOID(storageMoveNP(storageTest, source, destination), "move file to another filesystem");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, sourceFile), false, "check source file not exists");
         TEST_RESULT_BOOL(storageExistsNP(storageTmp, destinationFile), true, "check destination file exists");
 
@@ -314,7 +314,7 @@ testRun(void)
         destinationFile = strNewFmt("%s/source.txt", testPath());
         destination = storageNewWriteP(storageTest, destinationFile, .noSyncPath = true);
 
-        TEST_RESULT_VOID(storageMoveNP(source, destination), "move file to another filesystem without path sync");
+        TEST_RESULT_VOID(storageMoveNP(storageTest, source, destination), "move file to another filesystem without path sync");
         TEST_RESULT_BOOL(storageExistsNP(storageTmp, sourceFile), false, "check source file not exists");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, destinationFile), true, "check destination file exists");
 
@@ -326,7 +326,7 @@ testRun(void)
     {
         Storage *storageTest = NULL;
 
-        TEST_ASSIGN(storageTest, storageNewNP(strNew("/")), "new storage /");
+        TEST_ASSIGN(storageTest, storageDriverPosixInterface(storageDriverPosixNew(strNew("/"), 0640, 0750, false, NULL)), "new storage /");
         TEST_RESULT_STR(strPtr(storagePathNP(storageTest, NULL)), "/", "    root dir");
         TEST_RESULT_STR(strPtr(storagePathNP(storageTest, strNew("/"))), "/", "    same as root dir");
         TEST_RESULT_STR(strPtr(storagePathNP(storageTest, strNew("subdir"))), "/subdir", "    simple subdir");
@@ -336,8 +336,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            storageTest,
-            storageNewP(strNew("/path/to"), .pathExpressionFunction = storageTestPathExpression),
+            storageTest, storageDriverPosixInterface(storageDriverPosixNew(strNew("/path/to"), 0640, 0750, false, storageTestPathExpression)),
             "new storage /path/to with expression");
         TEST_RESULT_STR(strPtr(storagePathNP(storageTest, NULL)), "/path/to", "    root dir");
         TEST_RESULT_STR(strPtr(storagePathNP(storageTest, strNew("/path/to"))), "/path/to", "    absolute root dir");
@@ -530,7 +529,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storagePut() and storageGet()"))
     {
-        Storage *storageTest = storageNewP(strNew("/"), .write = true);
+        Storage *storageTest = storageDriverPosixInterface(storageDriverPosixNew(strNew("/"), 0640, 0750, true, NULL));
 
         TEST_ERROR_FMT(
             storageGetNP(storageNewReadNP(storageTest, strNew(testPath()))), FileReadError,

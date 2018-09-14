@@ -1,38 +1,36 @@
 /***********************************************************************************************************************************
-Storage Info
+Storage File Read Interface Internal
 ***********************************************************************************************************************************/
-#ifndef STORAGE_INFO_H
-#define STORAGE_INFO_H
+#ifndef STORAGE_FILEREAD_INTERN_H
+#define STORAGE_FILEREAD_INTERN_H
 
-#include <sys/types.h>
-
-/***********************************************************************************************************************************
-Storage type
-***********************************************************************************************************************************/
-typedef enum
-{
-    storageTypeFile,
-    storageTypePath,
-    storageTypeLink,
-} StorageType;
+#include "storage/fileRead.h"
 
 /***********************************************************************************************************************************
-Object type
+Interface
 ***********************************************************************************************************************************/
-typedef struct StorageInfo
+typedef bool (*StorageFileReadIgnoreMissing)(const void *driver);
+typedef IoRead *(*StorageFileReadIo)(const void *driver);
+typedef const String *(*StorageFileReadName)(const void *driver);
+
+typedef struct StorageFileReadInterface
 {
-    bool exists;                                                    // Does the path/file/link exist?
-    StorageType type;                                               // Type file/path/link)
-    size_t size;                                                    // Size (path/link is 0)
-    mode_t mode;                                                    // Mode of path/file/link
-} StorageInfo;
+    StorageFileReadIgnoreMissing ignoreMissing;
+    StorageFileReadIo io;
+    StorageFileReadName name;
+} StorageFileReadInterface;
+
+/***********************************************************************************************************************************
+Constructor
+***********************************************************************************************************************************/
+StorageFileRead *storageFileReadNew(const String *type, void *driver, const StorageFileReadInterface *interface);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_INFO_TYPE                                                                                           \
-    StorageInfo
-#define FUNCTION_DEBUG_STORAGE_INFO_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(&value, "StorageInfo", buffer, bufferSize)
+#define FUNCTION_DEBUG_STORAGE_FILE_READ_INTERFACE_TYPE                                                                            \
+    StorageFileReadInterface *
+#define FUNCTION_DEBUG_STORAGE_FILE_READ_INTERFACE_FORMAT(value, buffer, bufferSize)                                               \
+    objToLog(value, "StorageFileReadInterface", buffer, bufferSize)
 
 #endif

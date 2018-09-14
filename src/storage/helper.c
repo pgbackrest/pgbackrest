@@ -6,6 +6,7 @@ Storage Helper
 #include "common/debug.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "storage/driver/posix/storage.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -59,7 +60,9 @@ storageLocal(void)
 
         MEM_CONTEXT_BEGIN(memContextStorageHelper)
         {
-            storageLocalData = storageNewNP(strNew("/"));
+            storageLocalData = storageDriverPosixInterface(
+                storageDriverPosixNew(
+                    strNew("/"), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL));
         }
         MEM_CONTEXT_END();
     }
@@ -83,7 +86,9 @@ storageLocalWrite(void)
 
         MEM_CONTEXT_BEGIN(memContextStorageHelper)
         {
-            storageLocalWriteData = storageNewP(strNew("/"), .write = true);
+            storageLocalWriteData = storageDriverPosixInterface(
+                storageDriverPosixNew(
+                    strNew("/"), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
         }
         MEM_CONTEXT_END();
     }
@@ -141,8 +146,10 @@ storageSpool(void)
         MEM_CONTEXT_BEGIN(memContextStorageHelper)
         {
             storageSpoolStanza = strDup(cfgOptionStr(cfgOptStanza));
-            storageSpoolData = storageNewP(
-                cfgOptionStr(cfgOptSpoolPath), .pathExpressionFunction = storageSpoolPathExpression, .write = true);
+            storageSpoolData = storageDriverPosixInterface(
+                storageDriverPosixNew(
+                    cfgOptionStr(cfgOptSpoolPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true,
+                    storageSpoolPathExpression));
         }
         MEM_CONTEXT_END();
     }

@@ -13,7 +13,8 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storageDriverPosixInterface(
+        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
     ioBufferSizeSet(2);
 
     // Create a directory and file that cannot be accessed to test permissions errors
@@ -27,7 +28,7 @@ testRun(void)
         0, "create no perm path/file");
 
     // *****************************************************************************************************************************
-    if (testBegin("StorageFile"))
+    if (testBegin("storageDriverPosixFile*()"))
     {
         TEST_ERROR_FMT(
             storageDriverPosixFileOpen(pathNoPerm, O_RDONLY, 0, false, false, "test"), PathOpenError,
@@ -74,7 +75,7 @@ testRun(void)
         StorageFileRead *file = NULL;
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm, .ignoreMissing = true), "new read file");
-        TEST_RESULT_PTR(storageFileReadDriver(file), file->fileDriver, "    check file driver");
+        TEST_RESULT_PTR(storageFileReadDriver(file), file->driver, "    check driver");
         TEST_RESULT_BOOL(storageFileReadIgnoreMissing(file), true, "    check ignore missing");
         TEST_RESULT_STR(strPtr(storageFileReadName(file)), strPtr(fileNoPerm), "    check name");
 
@@ -105,7 +106,7 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadOpen(storageFileReadIo(file)), true, "   open file");
 
         // Close the file handle so operations will fail
-        close(file->fileDriver->handle);
+        close(((StorageDriverPosixFileRead *)file->driver)->handle);
 
         TEST_ERROR_FMT(
             ioRead(storageFileReadIo(file), outBuffer), FileReadError,
@@ -115,7 +116,7 @@ testRun(void)
             "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
 
         // Set file handle to -1 so the close on free with not fail
-        file->fileDriver->handle = -1;
+        ((StorageDriverPosixFileRead *)file->driver)->handle = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *buffer = bufNew(0);
@@ -128,6 +129,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(ioReadOpen(storageFileReadIo(file)), true, "   open file");
         TEST_RESULT_STR(strPtr(storageFileReadName(file)), strPtr(fileName), "    check file name");
+        TEST_RESULT_STR(strPtr(storageFileReadType(file)), "posix", "    check file type");
 
         TEST_RESULT_VOID(ioRead(storageFileReadIo(file), outBuffer), "    load data");
         bufCat(buffer, outBuffer);
@@ -161,9 +163,9 @@ testRun(void)
 
         TEST_RESULT_VOID(ioReadClose(storageFileReadIo(file)), "    close file");
 
-        TEST_RESULT_VOID(storageFileReadFree(file), "   free file");
+        TEST_RESULT_VOID(storageFileReadFree(storageNewReadNP(storageTest, fileName)), "   free file");
         TEST_RESULT_VOID(storageFileReadFree(NULL), "   free null file");
-        TEST_RESULT_VOID(storageDriverPosixFileReadFree(NULL), "   free null file");
+        TEST_RESULT_VOID(storageDriverPosixFileReadFree(NULL), "   free null posix file");
 
         TEST_RESULT_VOID(storageFileReadMove(NULL, memContextTop()), "   move null file");
     }
@@ -182,11 +184,10 @@ testRun(void)
 
         TEST_RESULT_BOOL(storageFileWriteAtomic(file), false, "    check atomic");
         TEST_RESULT_BOOL(storageFileWriteCreatePath(file), false, "    check create path");
-        TEST_RESULT_PTR(storageFileWriteFileDriver(file), file->fileDriver, "    check file driver");
+        TEST_RESULT_PTR(storageFileWriteFileDriver(file), file->driver, "    check file driver");
         TEST_RESULT_INT(storageFileWriteModeFile(file), 0444, "    check mode file");
         TEST_RESULT_INT(storageFileWriteModePath(file), 0555, "    check mode path");
         TEST_RESULT_STR(strPtr(storageFileWriteName(file)), strPtr(fileNoPerm), "    check name");
-        TEST_RESULT_STR(strPtr(storageFileWritePath(file)), strPtr(strPath(fileNoPerm)), "    check path");
         TEST_RESULT_BOOL(storageFileWriteSyncPath(file), false, "    check sync path");
         TEST_RESULT_BOOL(storageFileWriteSyncFile(file), false, "    check sync file");
 
@@ -214,7 +215,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
 
         // Close the file handle so operations will fail
-        close(file->fileDriver->handle);
+        close(((StorageDriverPosixFileWrite *)file->driver)->handle);
         storageRemoveP(storageTest, fileTmp, .errorOnMissing = true);
 
         TEST_ERROR_FMT(
@@ -225,18 +226,19 @@ testRun(void)
             "unable to sync '%s': [9] Bad file descriptor", strPtr(fileName));
 
         // Disable file sync so the close can be reached
-        file->fileDriver->syncFile = false;
+        ((StorageDriverPosixFileWrite *)file->driver)->syncFile = false;
 
         TEST_ERROR_FMT(
             storageDriverPosixFileWriteClose(storageFileWriteFileDriver(file)), FileCloseError,
             "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
 
         // Set file handle to -1 so the close on free with not fail
-        file->fileDriver->handle = -1;
+        ((StorageDriverPosixFileWrite *)file->driver)->handle = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file");
         TEST_RESULT_STR(strPtr(storageFileWriteName(file)), strPtr(fileName), "    check file name");
+        TEST_RESULT_STR(strPtr(storageFileWriteType(file)), "posix", "    check file type");
         TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
 
         // Rename the file back to original name from tmp -- this will cause the rename in close to fail
@@ -246,7 +248,7 @@ testRun(void)
             "unable to move '%s' to '%s': [2] No such file or directory", strPtr(fileTmp), strPtr(fileName));
 
         // Set file handle to -1 so the close on free with not fail
-        file->fileDriver->handle = -1;
+        ((StorageDriverPosixFileWrite *)file->driver)->handle = -1;
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 
@@ -262,7 +264,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWrite(storageFileWriteIo(file), bufNew(0)), "   write zero buffer to file");
         TEST_RESULT_VOID(ioWrite(storageFileWriteIo(file), buffer), "   write to file");
         TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
-        TEST_RESULT_VOID(storageFileWriteFree(file), "   free file");
+        TEST_RESULT_VOID(storageFileWriteFree(storageNewWriteNP(storageTest, fileName)), "   free file");
         TEST_RESULT_VOID(storageFileWriteFree(NULL), "   free null file");
         TEST_RESULT_VOID(storageDriverPosixFileWriteFree(NULL), "   free null posix file");
         TEST_RESULT_VOID(storageFileWriteMove(NULL, memContextTop()), "   move null file");

@@ -1,23 +1,15 @@
 /***********************************************************************************************************************************
-Storage File Read
+Storage File Read Interface
 ***********************************************************************************************************************************/
 #ifndef STORAGE_FILEREAD_H
 #define STORAGE_FILEREAD_H
 
 /***********************************************************************************************************************************
-Storage file read object
+Object type
 ***********************************************************************************************************************************/
 typedef struct StorageFileRead StorageFileRead;
 
 #include "common/io/read.h"
-#include "common/type/buffer.h"
-#include "common/type/string.h"
-#include "storage/driver/posix/fileRead.h"
-
-/***********************************************************************************************************************************
-Constructor
-***********************************************************************************************************************************/
-StorageFileRead *storageFileReadNew(const String *name, bool ignoreMissing);
 
 /***********************************************************************************************************************************
 Functions
@@ -27,22 +19,25 @@ StorageFileRead *storageFileReadMove(StorageFileRead *this, MemContext *parentNe
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-StorageDriverPosixFileRead *storageFileReadDriver(const StorageFileRead *this);
+void *storageFileReadDriver(const StorageFileRead *this);
 IoRead *storageFileReadIo(const StorageFileRead *this);
 bool storageFileReadIgnoreMissing(const StorageFileRead *this);
 const String *storageFileReadName(const StorageFileRead *this);
+const String *storageFileReadType(const StorageFileRead *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void storageFileReadFree(StorageFileRead *this);
+void storageFileReadFree(const StorageFileRead *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+String *storageFileReadToLog(const StorageFileRead *this);
+
 #define FUNCTION_DEBUG_STORAGE_FILE_READ_TYPE                                                                                      \
     StorageFileRead *
 #define FUNCTION_DEBUG_STORAGE_FILE_READ_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageFileRead", buffer, bufferSize)
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, storageFileReadToLog, buffer, bufferSize)
 
 #endif

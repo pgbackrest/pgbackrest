@@ -7,18 +7,20 @@ Posix Storage File Write Driver
 #include <sys/types.h>
 
 /***********************************************************************************************************************************
-Write file object
+Object type
 ***********************************************************************************************************************************/
 typedef struct StorageDriverPosixFileWrite StorageDriverPosixFileWrite;
 
 #include "common/type/buffer.h"
-#include "common/type/string.h"
+#include "storage/driver/posix/storage.h"
+#include "storage/fileWrite.h"
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
 StorageDriverPosixFileWrite *storageDriverPosixFileWriteNew(
-    const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool syncPath, bool atomic);
+    const StorageDriverPosix *storage, const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile,
+    bool syncPath, bool atomic);
 
 /***********************************************************************************************************************************
 Functions
@@ -33,9 +35,11 @@ Getters
 bool storageDriverPosixFileWriteAtomic(const StorageDriverPosixFileWrite *this);
 bool storageDriverPosixFileWriteCreatePath(const StorageDriverPosixFileWrite *this);
 mode_t storageDriverPosixFileWriteModeFile(const StorageDriverPosixFileWrite *this);
+StorageFileWrite* storageDriverPosixFileWriteInterface(const StorageDriverPosixFileWrite *this);
+IoWrite *storageDriverPosixFileWriteIo(const StorageDriverPosixFileWrite *this);
 mode_t storageDriverPosixFileWriteModePath(const StorageDriverPosixFileWrite *this);
 const String *storageDriverPosixFileWriteName(const StorageDriverPosixFileWrite *this);
-const String *storageDriverPosixFileWritePath(const StorageDriverPosixFileWrite *this);
+const StorageDriverPosix *storageDriverPosixFileWriteStorage(const StorageDriverPosixFileWrite *this);
 bool storageDriverPosixFileWriteSyncFile(const StorageDriverPosixFileWrite *this);
 bool storageDriverPosixFileWriteSyncPath(const StorageDriverPosixFileWrite *this);
 

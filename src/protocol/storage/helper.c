@@ -8,6 +8,8 @@ Protocol Storage Helper
 #include "common/regExp.h"
 #include "config/config.h"
 #include "protocol/storage/helper.h"
+#include "storage/driver/posix/storage.h"
+#include "storage/storage.intern.h"
 
 /***********************************************************************************************************************************
 Local variables
@@ -92,8 +94,10 @@ storageRepo(void)
         {
             protocolStorageHelper.stanza = strDup(cfgOptionStr(cfgOptStanza));
             protocolStorageHelper.walRegExp = regExpNew(strNew("^[0-F]{24}"));
-            protocolStorageHelper.storageRepo = storageNewP(
-                cfgOptionStr(cfgOptRepoPath), .pathExpressionFunction = storageRepoPathExpression);
+            protocolStorageHelper.storageRepo = storageDriverPosixInterface(
+                storageDriverPosixNew(
+                    cfgOptionStr(cfgOptRepoPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false,
+                    storageRepoPathExpression));
         }
         MEM_CONTEXT_END();
     }

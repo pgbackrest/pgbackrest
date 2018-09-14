@@ -15,6 +15,7 @@ Lock Handler
 #include "common/memContext.h"
 #include "common/wait.h"
 #include "storage/helper.h"
+#include "storage/storage.intern.h"
 #include "version.h"
 
 /***********************************************************************************************************************************

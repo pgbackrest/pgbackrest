@@ -7,6 +7,7 @@ Test Archive Get Command
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "compress/gzipCompress.h"
+#include "storage/driver/posix/storage.h"
 
 /***********************************************************************************************************************************
 Create test pg_control file
@@ -29,7 +30,8 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storageDriverPosixInterface(
+        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
 
     // *****************************************************************************************************************************
     if (testBegin("archiveGetCheck()"))

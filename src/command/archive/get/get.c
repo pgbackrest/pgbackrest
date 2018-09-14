@@ -176,7 +176,7 @@ cmdArchiveGet(void)
                         .noAtomic = true);
 
                     // Move (or copy if required) the file
-                    storageMoveNP(source, destination);
+                    storageMoveNP(storageSpool(), source, destination);
 
                     // Return success
                     result = 0;

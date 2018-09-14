@@ -3,9 +3,10 @@ Test Archive Common
 ***********************************************************************************************************************************/
 #include <unistd.h>
 
-#include "common/harnessConfig.h"
-
 #include "protocol/storage/helper.h"
+#include "storage/driver/posix/storage.h"
+
+#include "common/harnessConfig.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -16,7 +17,8 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storageDriverPosixInterface(
+        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
 
     // *****************************************************************************************************************************
     if (testBegin("archiveAsyncStatus()"))
