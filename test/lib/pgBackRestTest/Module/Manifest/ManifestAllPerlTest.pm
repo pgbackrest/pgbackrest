@@ -1379,13 +1379,25 @@ sub run
         $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'updates from last manifest');
 
-        # Timestamp in the lastManifest is different than built manifest
+        # Timestamp in the lastManifest is different than built manifest (size and content the same)
         #---------------------------------------------------------------------------------------------------------------------------
         # pass delta=true - expected manifest will use the timestamp set for the file on disk ($lTime)
         $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime - 10);
         $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime - 10);
+
+        # Add a file not in the last manifest
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . $strTest . '2',
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strTest);
+
+        # Update expected manifest
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest . '2',
+            MANIFEST_SUBKEY_SIZE, length($strTest));
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest . '2',
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTest . '2',
+            MANIFEST_SUBKEY_MASTER, true);
 
         $oManifest = new pgBackRest::Manifest(
             $strBackupManifestFile,
@@ -1408,6 +1420,8 @@ sub run
         # Default "master" is flipping because it's not something we read from disk
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MASTER, undef, true);
         $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_MASTER);
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTest . '2',
+            MANIFEST_SUBKEY_MASTER);
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strZeroFile,
             MANIFEST_SUBKEY_MASTER, false);
 

@@ -388,7 +388,7 @@ sub run
             backupFile($strFileDb, $strRepoFile, $lFileSize, $strFileHash . "ff", false,
             $strBackupLabel, false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, false, undef);
 
-        $self->testResult(($iResultCopyResult == BACKUP_FILE_CHECKSUM && $strResultCopyChecksum eq $strFileHash &&
+        $self->testResult(($iResultCopyResult == BACKUP_FILE_COPY && $strResultCopyChecksum eq $strFileHash &&
             $lResultCopySize == $lFileSize && $lResultRepoSize == $lFileSize), true, 'db checksum mismatch - copy file');
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -398,7 +398,7 @@ sub run
             backupFile($strFileDb, $strRepoFile, $lFileSize + 1, $strFileHash, false, $strBackupLabel, false,
             cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, false, undef);
 
-        $self->testResult(($iResultCopyResult == BACKUP_FILE_CHECKSUM && $strResultCopyChecksum eq $strFileHash &&
+        $self->testResult(($iResultCopyResult == BACKUP_FILE_COPY && $strResultCopyChecksum eq $strFileHash &&
             $lResultCopySize == $lFileSize && $lResultRepoSize == $lFileSize), true, 'db file size mismatch - copy file');
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -439,7 +439,7 @@ sub run
             backupFile($strFileDb, $strRepoFile, $lFileSize + 1, $strFileHash, false,
             $strBackupLabel, false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, true, undef);
 
-        $self->testResult(($iResultCopyResult == BACKUP_FILE_CHECKSUM && $strResultCopyChecksum eq $strFileHash &&
+        $self->testResult(($iResultCopyResult == BACKUP_FILE_COPY && $strResultCopyChecksum eq $strFileHash &&
             $lResultCopySize == $lFileSize && $lResultRepoSize == $lFileSize), true, 'db file size mismatch has reference - copy');
 
         # Code path to ensure reference is removed
