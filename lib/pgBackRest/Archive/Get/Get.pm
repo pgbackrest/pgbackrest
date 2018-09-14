@@ -75,7 +75,7 @@ sub process
 
         if (!defined($strSourceArchive))
         {
-            confess &log(ERROR, 'WAL segment not provided', ERROR_PARAM_REQUIRED);
+            confess &log(ERROR, 'WAL segment not provided', ERROR_ASSERT);
         }
 
         # Make sure the destination file is defined
@@ -83,20 +83,10 @@ sub process
 
         if (!defined($strDestinationFile))
         {
-            confess &log(ERROR, 'WAL segment destination not provided', ERROR_PARAM_REQUIRED);
+            confess &log(ERROR, 'WAL segment destination not provided', ERROR_ASSERT);
         }
 
         $iResult = archiveGetFile($strSourceArchive, $strDestinationFile, false);
-
-        # Info for the Postgres log
-        if ($iResult == 0)
-        {
-            &log(INFO, 'got WAL segment ' . $strSourceArchive);
-        }
-        else
-        {
-            &log(INFO, "unable to find ${strSourceArchive} in the archive");
-        }
     }
 
     # Return from function and log return values if any

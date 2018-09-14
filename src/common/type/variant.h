@@ -73,7 +73,7 @@ void varFree(Variant *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-size_t varToLog(const Variant *this, char *buffer, size_t bufferSize);
+String *varToLog(const Variant *this);
 
 #define FUNCTION_DEBUG_CONST_VARIANT_TYPE                                                                                          \
     const FUNCTION_DEBUG_VARIANT_TYPE
@@ -83,6 +83,6 @@ size_t varToLog(const Variant *this, char *buffer, size_t bufferSize);
 #define FUNCTION_DEBUG_VARIANT_TYPE                                                                                                \
     Variant *
 #define FUNCTION_DEBUG_VARIANT_FORMAT(value, buffer, bufferSize)                                                                   \
-    varToLog(value, buffer, bufferSize)
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, varToLog, buffer, bufferSize)
 
 #endif

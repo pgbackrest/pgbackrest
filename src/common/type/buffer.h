@@ -41,11 +41,11 @@ void bufFree(Buffer *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-size_t bufToLog(const Buffer *this, char *buffer, size_t bufferSize);
+String *bufToLog(const Buffer *this);
 
 #define FUNCTION_DEBUG_BUFFER_TYPE                                                                                                 \
     Buffer *
 #define FUNCTION_DEBUG_BUFFER_FORMAT(value, buffer, bufferSize)                                                                    \
-    bufToLog(value, buffer, bufferSize)
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, bufToLog, buffer, bufferSize)
 
 #endif

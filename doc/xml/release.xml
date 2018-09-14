@@ -49,7 +49,11 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Posix file functions now differentiate between open and missing errors.</p>
+                        <p>Migrate local, unencrypted, non-S3 <cmd>archive-get</cmd> command to C.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Storage refactoring.  Posix file functions now differentiate between open and missing errors.  Don't use negations in objects below Storage.  Rename posix driver files/functions for consistency.</p>
                     </release-item>
 
                     <release-item>
@@ -66,6 +70,18 @@
 
                     <release-item>
                         <p>Migrate control functions to detect stop files to C from Perl.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Make archive-get info messages consistent between C and Perl implementations.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Change locking around async process forking to be more test friendly.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Simplify debug logging by allowing log functions to return <code>String</code> objects.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -87,6 +103,10 @@
                 <release-development-list>
                     <release-item>
                         <p>Make Valgrind return an error even when a non-fatal issue is detected.  Update some minor issues discovered in the tests as a result.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Don't perform valgrind when requested.</p>
                     </release-item>
 
                     <release-item>

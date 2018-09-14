@@ -82,27 +82,12 @@ ioSizeFilter(const IoSize *this)
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
-size_t
-ioSizeToLog(const IoSize *this, char *buffer, size_t bufferSize)
+String *
+ioSizeToLog(const IoSize *this)
 {
-    size_t result = 0;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        String *string = NULL;
-
-        if (this == NULL)
-            string = strNew("null");
-        else
-            string = strNewFmt("{size: %" PRIu64 "}", this->size);
-
-        result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    return result;
+    return strNewFmt("{size: %" PRIu64 "}", this->size);
 }
 
 /***********************************************************************************************************************************

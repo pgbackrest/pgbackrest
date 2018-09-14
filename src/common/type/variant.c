@@ -926,61 +926,43 @@ varVarLst(const Variant *this)
 /***********************************************************************************************************************************
 Convert variant to a zero-terminated string for logging
 ***********************************************************************************************************************************/
-size_t
-varToLog(const Variant *this, char *buffer, size_t bufferSize)
+String *
+varToLog(const Variant *this)
 {
-    size_t result = 0;
+    String *string = NULL;
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    switch (varType(this))
     {
-        String *string = NULL;
-
-        if (this == NULL)
+        case varTypeString:
         {
-            string = strNew("null");
-            result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
+            string = strNewFmt("\"%s\"", strPtr(varStrForce(this)));
+            break;
         }
-        else
+
+        case varTypeKeyValue:
         {
-            switch (varType(this))
-            {
-                case varTypeString:
-                {
-                    String *temp = varStrForce(this);
-                    string = strNewFmt("\"%s\"", strPtr(temp));
-                    strFree(temp);
-                    break;
-                }
+            string = strNew("KeyValue");
+            break;
+        }
 
-                case varTypeKeyValue:
-                {
-                    string = strNew("KeyValue");
-                    break;
-                }
+        case varTypeVariantList:
+        {
+            string = strNew("VariantList");
+            break;
+        }
 
-                case varTypeVariantList:
-                {
-                    string = strNew("VariantList");
-                    break;
-                }
-
-                case varTypeBool:
-                case varTypeDouble:
-                case varTypeInt:
-                case varTypeInt64:
-                case varTypeUInt64:
-                {
-                    string = varStrForce(this);
-                    break;
-                }
-            }
-
-            result = (size_t)snprintf(buffer, bufferSize, "{%s}", strPtr(string));
+        case varTypeBool:
+        case varTypeDouble:
+        case varTypeInt:
+        case varTypeInt64:
+        case varTypeUInt64:
+        {
+            string = varStrForce(this);
+            break;
         }
     }
-    MEM_CONTEXT_TEMP_END();
 
-    return result;
+    return strNewFmt("{%s}", strPtr(string));
 }
 
 /***********************************************************************************************************************************

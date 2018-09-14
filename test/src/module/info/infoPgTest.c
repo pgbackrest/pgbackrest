@@ -133,22 +133,16 @@ testRun(void)
 
         // infoPgDataToLog
         //--------------------------------------------------------------------------------------------------------------------------
-        char buffer[STACK_TRACE_PARAM_MAX];
-
-        TEST_RESULT_INT(infoPgDataToLog(NULL, buffer, 4), 4, "infoPgDataToLog - format null string with too small buffer");
-
-        TEST_RESULT_INT(strToLog(NULL, buffer, STACK_TRACE_PARAM_MAX), 4, "infoPgDataToLog - format null string");
-        TEST_RESULT_STR(buffer, "null", "    check format");
-
         // test max values
         infoPgDataTest.id = (unsigned int)4294967295;
         infoPgDataTest.version = (unsigned int)4294967295;
         infoPgDataTest.systemId = 18446744073709551615U;
         infoPgDataTest.catalogVersion = (uint32_t)4294967295;
         infoPgDataTest.controlVersion = (uint32_t)4294967295;
-        TEST_RESULT_INT(infoPgDataToLog(&infoPgDataTest, buffer, STACK_TRACE_PARAM_MAX), 110, "infoPgDataToLog - format string");
-        TEST_RESULT_STR(buffer,
-            "{\"id: 4294967295, version: 4294967295, systemId 18446744073709551615, catalog 4294967295, control 4294967295\"}",
+        TEST_RESULT_STR(
+            strPtr(infoPgDataToLog(&infoPgDataTest)),
+            "{id: 4294967295, version: 4294967295, systemId: 18446744073709551615, catalogVersion: 4294967295, controlVersion:"
+                " 4294967295}",
             "    check max format");
     }
 }

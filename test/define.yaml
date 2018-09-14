@@ -166,7 +166,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-buffer
-        total: 4
+        total: 5
 
         coverage:
           common/type/buffer: full
@@ -498,9 +498,9 @@ unit:
         total: 3
 
         coverage:
-          storage/driver/posix/driverFile: full
-          storage/driver/posix/driverRead: full
-          storage/driver/posix/driverWrite: full
+          storage/driver/posix/common: full
+          storage/driver/posix/fileRead: full
+          storage/driver/posix/fileWrite: full
           storage/fileRead: full
           storage/fileWrite: full
 
@@ -509,7 +509,7 @@ unit:
         total: 14
 
         coverage:
-          storage/driver/posix/driver: full
+          storage/driver/posix/storage: full
           storage/storage: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
@@ -640,10 +640,11 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: get
-        total: 2
+        total: 4
         perlReq: true
 
         coverage:
+          command/archive/get/file: full
           command/archive/get/get: full
 
       # ----------------------------------------------------------------------------------------------------------------------------

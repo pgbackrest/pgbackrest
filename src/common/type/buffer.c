@@ -399,27 +399,12 @@ bufUsedZero(Buffer *this)
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
-size_t
-bufToLog(const Buffer *this, char *buffer, size_t bufferSize)
+String *
+bufToLog(const Buffer *this)
 {
-    size_t result = 0;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        String *string = NULL;
-
-        if (this == NULL)
-            string = strNew("null");
-        else
-            string = strNewFmt("{used: %zu, size: %zu}", this->used, this->size);
-
-        result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    return result;
+    return strNewFmt("{used: %zu, size: %zu}", this->used, this->size);
 }
 
 /***********************************************************************************************************************************

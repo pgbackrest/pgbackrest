@@ -175,31 +175,14 @@ gzipCompressInputSame(const GzipCompress *this)
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
-size_t
-gzipCompressToLog(const GzipCompress *this, char *buffer, size_t bufferSize)
+String *
+gzipCompressToLog(const GzipCompress *this)
 {
-    size_t result = 0;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        String *string = NULL;
-
-        if (this == NULL)
-            string = strNew("null");
-        else
-        {
-            string = strNewFmt(
-                "{inputSame: %s, done: %s, flushing: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame),
-                cvtBoolToConstZ(this->done), cvtBoolToConstZ(this->done), this->stream != NULL ? this->stream->avail_in : 0);
-        }
-
-        result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    return result;
+    return strNewFmt(
+        "{inputSame: %s, done: %s, flushing: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
+        cvtBoolToConstZ(this->done), this->stream != NULL ? this->stream->avail_in : 0);
 }
 
 /***********************************************************************************************************************************

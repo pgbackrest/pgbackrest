@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Storage File Routines For Posix
+Posix Common File Routines
 ***********************************************************************************************************************************/
 // So fsync() will work on older glib versions
 #ifndef _POSIX_C_SOURCE
@@ -11,7 +11,7 @@ Storage File Routines For Posix
 
 #include "common/assert.h"
 #include "common/debug.h"
-#include "storage/driver/posix/driverFile.h"
+#include "storage/driver/posix/common.h"
 
 /***********************************************************************************************************************************
 Open a file
@@ -19,7 +19,7 @@ Open a file
 Returns the handle of the open file, or -1 for reads if the file is missing and -1 for writes if the path is mssing.
 ***********************************************************************************************************************************/
 int
-storageFilePosixOpen(
+storageDriverPosixFileOpen(
     const String *name, int flags, mode_t mode, bool ignoreMissing, bool file, const char *purpose)
 {
     FUNCTION_TEST_BEGIN();
@@ -55,7 +55,7 @@ storageFilePosixOpen(
 Sync a file/directory handle
 ***********************************************************************************************************************************/
 void
-storageFilePosixSync(int handle, const String *name, bool file, bool closeOnError)
+storageDriverPosixFileSync(int handle, const String *name, bool file, bool closeOnError)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, handle);
@@ -85,7 +85,7 @@ storageFilePosixSync(int handle, const String *name, bool file, bool closeOnErro
 Close a file/directory handle
 ***********************************************************************************************************************************/
 void
-storageFilePosixClose(int handle, const String *name, bool file)
+storageDriverPosixFileClose(int handle, const String *name, bool file)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, handle);

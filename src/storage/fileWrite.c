@@ -13,7 +13,7 @@ Storage file structure
 struct StorageFileWrite
 {
     MemContext *memContext;
-    StorageFileWritePosix *fileDriver;
+    StorageDriverPosixFileWrite *fileDriver;
     IoWrite *io;
 };
 
@@ -48,11 +48,11 @@ storageFileWriteNew(
         this = memNew(sizeof(StorageFileWrite));
         this->memContext = MEM_CONTEXT_NEW();
 
-        this->fileDriver = storageFileWritePosixNew(name, modeFile, modePath, noCreatePath, noSyncFile, noSyncPath, noAtomic);
+        this->fileDriver = storageDriverPosixFileWriteNew(name, modeFile, modePath, noCreatePath, noSyncFile, noSyncPath, noAtomic);
 
         this->io = ioWriteNew(
-            this->fileDriver, (IoWriteOpen)storageFileWritePosixOpen, (IoWriteProcess)storageFileWritePosix,
-            (IoWriteClose)storageFileWritePosixClose);
+            this->fileDriver, (IoWriteOpen)storageDriverPosixFileWriteOpen, (IoWriteProcess)storageDriverPosixFileWrite,
+            (IoWriteClose)storageDriverPosixFileWriteClose);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -92,7 +92,7 @@ storageFileWriteAtomic(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, storageFileWritePosixAtomic(this->fileDriver));
+    FUNCTION_TEST_RESULT(BOOL, storageDriverPosixFileWriteAtomic(this->fileDriver));
 }
 
 /***********************************************************************************************************************************
@@ -107,13 +107,13 @@ storageFileWriteCreatePath(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, storageFileWritePosixCreatePath(this->fileDriver));
+    FUNCTION_TEST_RESULT(BOOL, storageDriverPosixFileWriteCreatePath(this->fileDriver));
 }
 
 /***********************************************************************************************************************************
 Get file driver
 ***********************************************************************************************************************************/
-StorageFileWritePosix *
+StorageDriverPosixFileWrite *
 storageFileWriteFileDriver(const StorageFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -122,7 +122,7 @@ storageFileWriteFileDriver(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STORAGE_FILE_WRITE_POSIX, this->fileDriver);
+    FUNCTION_TEST_RESULT(STORAGE_DRIVER_POSIX_FILE_WRITE, this->fileDriver);
 }
 
 /***********************************************************************************************************************************
@@ -152,7 +152,7 @@ storageFileWriteModeFile(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(MODE, storageFileWritePosixModeFile(this->fileDriver));
+    FUNCTION_TEST_RESULT(MODE, storageDriverPosixFileWriteModeFile(this->fileDriver));
 }
 
 /***********************************************************************************************************************************
@@ -167,7 +167,7 @@ storageFileWriteModePath(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(MODE, storageFileWritePosixModePath(this->fileDriver));
+    FUNCTION_TEST_RESULT(MODE, storageDriverPosixFileWriteModePath(this->fileDriver));
 }
 
 /***********************************************************************************************************************************
@@ -182,7 +182,7 @@ storageFileWriteName(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, storageFileWritePosixName(this->fileDriver));
+    FUNCTION_TEST_RESULT(CONST_STRING, storageDriverPosixFileWriteName(this->fileDriver));
 }
 
 /***********************************************************************************************************************************
@@ -197,7 +197,7 @@ storageFileWritePath(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, storageFileWritePosixPath(this->fileDriver));
+    FUNCTION_TEST_RESULT(CONST_STRING, storageDriverPosixFileWritePath(this->fileDriver));
 }
 
 /***********************************************************************************************************************************
@@ -212,7 +212,7 @@ storageFileWriteSyncFile(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, storageFileWritePosixSyncFile(this->fileDriver));
+    FUNCTION_TEST_RESULT(BOOL, storageDriverPosixFileWriteSyncFile(this->fileDriver));
 }
 
 /***********************************************************************************************************************************
@@ -227,7 +227,7 @@ storageFileWriteSyncPath(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, storageFileWritePosixSyncPath(this->fileDriver));
+    FUNCTION_TEST_RESULT(BOOL, storageDriverPosixFileWriteSyncPath(this->fileDriver));
 }
 
 /***********************************************************************************************************************************

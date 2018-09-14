@@ -518,27 +518,12 @@ strLstSort(StringList *this, SortOrder sortOrder)
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
-size_t
-strLstToLog(const StringList *this, char *buffer, size_t bufferSize)
+String *
+strLstToLog(const StringList *this)
 {
-    size_t result = 0;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        String *string = NULL;
-
-        if (this == NULL)
-            string = strNew("null");
-        else
-            string = strNewFmt("{[%s]}", strPtr(strLstJoinQuote(this, ", ", "\"")));
-
-        result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    return result;
+    return strNewFmt("{[%s]}", strPtr(strLstJoinQuote(this, ", ", "\"")));
 }
 
 /***********************************************************************************************************************************

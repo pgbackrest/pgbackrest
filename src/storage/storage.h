@@ -21,8 +21,8 @@ typedef struct Storage Storage;
 /***********************************************************************************************************************************
 Default file and path modes
 ***********************************************************************************************************************************/
-#define STORAGE_FILE_MODE_DEFAULT                                   0640
-#define STORAGE_PATH_MODE_DEFAULT                                   0750
+#define STORAGE_MODE_FILE_DEFAULT                                   0640
+#define STORAGE_MODE_PATH_DEFAULT                                   0750
 
 /***********************************************************************************************************************************
 Path expression callback function type - used to modify paths based on expressions enclosed in <>
@@ -251,11 +251,11 @@ void storageFree(const Storage *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-size_t storageToLog(const Storage *this, char *buffer, size_t bufferSize);
+String *storageToLog(const Storage *this);
 
 #define FUNCTION_DEBUG_STORAGE_TYPE                                                                                                \
     Storage *
 #define FUNCTION_DEBUG_STORAGE_FORMAT(value, buffer, bufferSize)                                                                   \
-    (size_t)storageToLog(value, buffer, bufferSize)
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, storageToLog, buffer, bufferSize)
 
 #endif

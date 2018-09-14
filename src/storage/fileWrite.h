@@ -14,7 +14,7 @@ typedef struct StorageFileWrite StorageFileWrite;
 #include "common/io/write.h"
 #include "common/type/buffer.h"
 #include "common/type/string.h"
-#include "storage/driver/posix/driverWrite.h"
+#include "storage/driver/posix/fileWrite.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -38,7 +38,7 @@ Getters
 ***********************************************************************************************************************************/
 bool storageFileWriteAtomic(const StorageFileWrite *this);
 bool storageFileWriteCreatePath(const StorageFileWrite *this);
-StorageFileWritePosix *storageFileWriteFileDriver(const StorageFileWrite *this);
+StorageDriverPosixFileWrite *storageFileWriteFileDriver(const StorageFileWrite *this);
 IoWrite *storageFileWriteIo(const StorageFileWrite *this);
 mode_t storageFileWriteModeFile(const StorageFileWrite *this);
 mode_t storageFileWriteModePath(const StorageFileWrite *this);

@@ -50,11 +50,11 @@ void strLstFree(StringList *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-size_t strLstToLog(const StringList *this, char *buffer, size_t bufferSize);
+String *strLstToLog(const StringList *this);
 
 #define FUNCTION_DEBUG_STRING_LIST_TYPE                                                                                            \
     StringList *
 #define FUNCTION_DEBUG_STRING_LIST_FORMAT(value, buffer, bufferSize)                                                               \
-    strLstToLog(value, buffer, bufferSize)
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, strLstToLog, buffer, bufferSize)
 
 #endif

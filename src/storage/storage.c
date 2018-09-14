@@ -10,7 +10,7 @@ Storage Manager
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/wait.h"
-#include "storage/driver/posix/driver.h"
+#include "storage/driver/posix/storage.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -50,8 +50,8 @@ storageNew(const String *path, StorageNewParam param)
         this = (Storage *)memNew(sizeof(Storage));
         this->memContext = MEM_CONTEXT_NEW();
         this->path = strDup(path);
-        this->modeFile = param.modeFile == 0 ? STORAGE_FILE_MODE_DEFAULT : param.modeFile;
-        this->modePath = param.modePath == 0 ? STORAGE_PATH_MODE_DEFAULT : param.modePath;
+        this->modeFile = param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile;
+        this->modePath = param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath;
         this->write = param.write;
         this->pathExpressionFunction = param.pathExpressionFunction;
     }
@@ -362,8 +362,8 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
     {
         result = storageFileWriteNew(
             storagePathNP(this, fileExp), param.modeFile != 0 ? param.modeFile : this->modeFile,
-            param.modePath != 0 ? param.modePath : this->modePath, param.noCreatePath, param.noSyncFile, param.noSyncPath,
-            param.noAtomic);
+            param.modePath != 0 ? param.modePath : this->modePath, !param.noCreatePath, !param.noSyncFile, !param.noSyncPath,
+            !param.noAtomic);
 
         if (param.filterGroup != NULL)
             ioWriteFilterGroupSet(storageFileWriteIo(result), param.filterGroup);
@@ -618,27 +618,12 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
 }
 
 /***********************************************************************************************************************************
-Convert to a zero-terminated string for logging
+Render as string for logging
 ***********************************************************************************************************************************/
-size_t
-storageToLog(const Storage *this, char *buffer, size_t bufferSize)
+String *
+storageToLog(const Storage *this)
 {
-    size_t result = 0;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        String *string = NULL;
-
-        if (this == NULL)
-            string = strNew("null");
-        else
-            string = strNewFmt("{path: %s, write: %s}", strPtr(strQuoteZ(this->path, "\"")), cvtBoolToConstZ(this->write));
-
-        result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    return result;
+    return strNewFmt("{path: %s, write: %s}", strPtr(strQuoteZ(this->path, "\"")), cvtBoolToConstZ(this->write));
 }
 
 /***********************************************************************************************************************************

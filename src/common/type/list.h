@@ -32,11 +32,11 @@ void lstFree(List *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-size_t lstToLog(const List *this, char *buffer, size_t bufferSize);
+String *lstToLog(const List *this);
 
 #define FUNCTION_DEBUG_LIST_TYPE                                                                                                   \
     List *
 #define FUNCTION_DEBUG_LIST_FORMAT(value, buffer, bufferSize)                                                                      \
-    lstToLog(value, buffer, bufferSize)
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, lstToLog, buffer, bufferSize)
 
 #endif

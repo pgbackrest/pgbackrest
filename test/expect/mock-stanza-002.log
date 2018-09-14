@@ -427,8 +427,8 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = false, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = ({rxyParam => ({strCompressType => decompress}), strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::Get::File::archiveGetFile=>: iResult = 0
-P00   INFO: got WAL segment 000000010000000100000002
 P00  DEBUG:     perl/exec::perlExec: => 0
+P00   INFO: found 000000010000000100000002 in the archive
 P00  DEBUG:     command/archive/get/get::cmdArchiveGet: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
 P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)

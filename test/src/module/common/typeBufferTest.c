@@ -126,5 +126,11 @@ testRun(void)
         TEST_RESULT_STR(strPtr(strNewBuf(bufCat(buffer, bufNewStr(strNew("AB"))))), "AB", "cat buffer with space");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("bufToLog()"))
+    {
+        TEST_RESULT_STR(strPtr(bufToLog(bufNew(100))), "{used: 0, size: 100}", "buf to log");
+    }
+
     FUNCTION_HARNESS_RESULT_VOID();
 }

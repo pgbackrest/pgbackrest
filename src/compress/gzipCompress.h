@@ -39,11 +39,11 @@ void gzipCompressFree(GzipCompress *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-size_t gzipCompressToLog(const GzipCompress *this, char *buffer, size_t bufferSize);
+String *gzipCompressToLog(const GzipCompress *this);
 
 #define FUNCTION_DEBUG_GZIP_COMPRESS_TYPE                                                                                          \
     GzipCompress *
 #define FUNCTION_DEBUG_GZIP_COMPRESS_FORMAT(value, buffer, bufferSize)                                                             \
-    gzipCompressToLog(value, buffer, bufferSize)
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, gzipCompressToLog, buffer, bufferSize)
 
 #endif

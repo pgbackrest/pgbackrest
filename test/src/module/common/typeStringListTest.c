@@ -177,27 +177,15 @@ testRun(void)
     if (testBegin("strLstToLog()"))
     {
         StringList *list = strLstNew();
-        char buffer[STACK_TRACE_PARAM_MAX];
 
-        TEST_RESULT_INT(strLstToLog(NULL, buffer, 4), 4, "format null list with too small buffer");
-        TEST_RESULT_STR(buffer, "nul", "    check format");
-
-        TEST_RESULT_INT(strLstToLog(NULL, buffer, STACK_TRACE_PARAM_MAX), 4, "format null list");
-        TEST_RESULT_STR(buffer, "null", "    check format");
-
-        TEST_RESULT_INT(strLstToLog(list, buffer, STACK_TRACE_PARAM_MAX), 4, "format empty list");
-        TEST_RESULT_STR(buffer, "{[]}", "    check format");
+        TEST_RESULT_STR(strPtr(strLstToLog(list)), "{[]}", "format empty list");
 
         strLstAddZ(list, "item1");
-
-        TEST_RESULT_INT(strLstToLog(list, buffer, STACK_TRACE_PARAM_MAX), 11, "format 1 item list");
-        TEST_RESULT_STR(buffer, "{[\"item1\"]}", "    check format");
+        TEST_RESULT_STR(strPtr(strLstToLog(list)), "{[\"item1\"]}", "format 1 item list");
 
         strLstAddZ(list, "item2");
         strLstAddZ(list, "item3");
-
-        TEST_RESULT_INT(strLstToLog(list, buffer, STACK_TRACE_PARAM_MAX), 29, "format 3 item list");
-        TEST_RESULT_STR(buffer, "{[\"item1\", \"item2\", \"item3\"]}", "    check format");
+        TEST_RESULT_STR(strPtr(strLstToLog(list)), "{[\"item1\", \"item2\", \"item3\"]}", "format 3 item list");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
