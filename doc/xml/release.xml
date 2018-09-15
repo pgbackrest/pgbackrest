@@ -106,6 +106,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow C or Perl coverage to run on more than one VM.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Don't perform valgrind when requested.</p>
                     </release-item>
 

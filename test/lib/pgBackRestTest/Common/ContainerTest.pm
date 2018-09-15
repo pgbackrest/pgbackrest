@@ -421,6 +421,11 @@ sub containerBuild
             {
                 $strScript .= ' perl-JSON-PP';
             }
+
+            if (vmCoverageC($strOS))
+            {
+                $strScript .= ' lcov';
+            }
         }
         else
         {
@@ -439,9 +444,15 @@ sub containerBuild
             {
                 $strScript .= ' libperl5.14';
             }
-            elsif ($strOS eq VM_U18)
+
+            if (vmLintC($strOS))
             {
-                $strScript .= ' clang-6.0 clang-tools-6.0 lcov';
+                $strScript .= ' clang-6.0 clang-tools-6.0';
+            }
+
+            if (vmCoverageC($strOS))
+            {
+                $strScript .= ' lcov';
             }
         }
 
@@ -580,7 +591,7 @@ sub containerBuild
         $strCopy = undef;
 
         my $strPkgDevelCover = packageDevelCover($oVm->{$strOS}{&VM_ARCH});
-        my $bPkgDevelCoverBuild = vmCoverage($strOS) && !$oStorageDocker->exists("test/package/${strOS}-${strPkgDevelCover}");
+        my $bPkgDevelCoverBuild = vmCoveragePerl($strOS) && !$oStorageDocker->exists("test/package/${strOS}-${strPkgDevelCover}");
 
         $strScript = sectionHeader() .
             "# Create test user\n" .
@@ -599,7 +610,7 @@ sub containerBuild
             {
                 $strScript .=  sectionHeader() .
                     "# Install Devel::Cover package source & build\n" .
-                    "    git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git" .
+                    "    git clone https://salsa.debian.org/perl-team/modules/packages/libdevel-cover-perl.git" .
                         " /root/libdevel-cover-perl && \\\n" .
                     "    cd /root/libdevel-cover-perl && \\\n" .
                     "    git checkout debian/" . LIB_COVER_VERSION . " && \\\n" .
@@ -669,7 +680,7 @@ sub containerBuild
             $strImageParent = containerRepo() . ":${strOS}-base";
             $strImage = "${strOS}-test";
 
-            if (vmCoverage($strOS))
+            if (vmCoveragePerl($strOS))
             {
                 $oStorageDocker->copy(
                     "test/package/${strOS}-${strPkgDevelCover}", "test/.vagrant/docker/${strOS}-${strPkgDevelCover}");

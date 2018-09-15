@@ -247,7 +247,7 @@ sub run
             $strCommand =
                 ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                 testRunExe(
-                    vmCoverage($self->{oTest}->{&TEST_VM}), undef, abs_path($0), dirname($self->{strCoveragePath}),
+                    vmCoverageC($self->{oTest}->{&TEST_VM}), undef, abs_path($0), dirname($self->{strCoveragePath}),
                     $self->{strBackRestBase}, $self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME}) .
                 " --test-path=${strVmTestPath}" .
                 " --vm=$self->{oTest}->{&TEST_VM}" .
@@ -375,7 +375,7 @@ sub run
                     #         "       -Wpedantic \\\n" : '') .
                     "       -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla \\\n" .
                     "       `perl -MExtUtils::Embed -e ccopts`\n" .
-                    "LDFLAGS=-lcrypto -lz" . (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
+                    "LDFLAGS=-lcrypto -lz" . (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -lbacktrace' : '') .
                         " `perl -MExtUtils::Embed -e ldopts`\n" .
                     'TESTFLAGS=' . ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : "-DDEBUG_UNIT") .
@@ -391,7 +391,7 @@ sub run
                     "\n" .
                     "test.o: test.c\n" .
 	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) -O0" .
-                        (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
+                        (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
                             ' -fprofile-arcs -ftest-coverage' : '') .
                         " -c test.c\n" .
                     "\n" .
@@ -467,7 +467,7 @@ sub end
         }
 
         # If C code generate coverage info
-        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit})
+        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit})
         {
             # Generate a list of files to cover
             my $hTestCoverage =
@@ -512,7 +512,6 @@ sub end
                 my $strLCovTotal = $self->{strBackRestBase} . "/test/.vagrant/code/all.lcov";
 
                 executeTest(
-                    'docker exec -i -u ' . TEST_USER . " ${strImage} " .
                     "${strLCovExe} --extract=${strLCovOut} */${strModuleName}.c --o=${strLCovOutTmp}");
 
                 # Combine with prior run if there was one
@@ -523,7 +522,6 @@ sub end
                     $self->{oStorageTest}->put($strLCovOutTmp, $strCoverage);
 
                     executeTest(
-                        'docker exec -i -u ' . TEST_USER . " ${strImage} " .
                         "${strLCovExe} --add-tracefile=${strLCovOutTmp} --add-tracefile=${strLCovFile} --o=${strLCovOutTmp}");
                 }
 
@@ -564,7 +562,6 @@ sub end
                         if ($self->{oStorageTest}->exists($strLCovTotal))
                         {
                             executeTest(
-                                'docker exec -i -u ' . TEST_USER . " ${strImage} " .
                                 "${strLCovExe} --add-tracefile=${strLCovFile} --add-tracefile=${strLCovTotal} --o=${strLCovTotal}");
                         }
                         else
