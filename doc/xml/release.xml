@@ -110,6 +110,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Remove compiler warnings that are not valid for u16.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Fix typo in unit test error messages, EXECTED => EXPECTED.</p>
                     </release-item>
                 </release-development-list>
