@@ -142,7 +142,8 @@ harnessLogLoad(const char *logFile)
         THROW_SYS_ERROR_FMT(FileOpenError, "unable to close log file '%s'", logFile);
 
     // Remove final linefeed
-    harnessLogBuffer[totalBytes - 1] = 0;
+    if (totalBytes > 0)
+        harnessLogBuffer[totalBytes - 1] = 0;
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
