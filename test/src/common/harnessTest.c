@@ -24,6 +24,7 @@ static bool testFirst = true;
 
 static const char *testExeData = NULL;
 static const char *testPathData = NULL;
+static const char *testExpectPathData = NULL;
 
 /***********************************************************************************************************************************
 Extern functions
@@ -77,6 +78,30 @@ testPathSet(const char *testPath)
     FUNCTION_HARNESS_END();
 
     testPathData = testPath;
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Get and set the expect path, i.e., the path where expect logs will be stored by the harnessLog module
+***********************************************************************************************************************************/
+const char *
+testExpectPath(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RESULT(STRINGZ, testExpectPathData);
+}
+
+void
+testExpectPathSet(const char *testExpectPath)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, testExpectPath);
+
+        FUNCTION_HARNESS_ASSERT(testExpectPath != NULL);
+    FUNCTION_HARNESS_END();
+
+    testExpectPathData = testExpectPath;
 
     FUNCTION_HARNESS_RESULT_VOID();
 }

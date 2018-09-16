@@ -107,6 +107,7 @@ sub new
 
     # Setup the path where gcc coverage will be performed
     $self->{strGCovPath} = "$self->{strTestPath}/gcov-$self->{oTest}->{&TEST_VM}-$self->{iVmIdx}";
+    $self->{strExpectPath} = "$self->{strTestPath}/expect-$self->{iVmIdx}";
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -178,6 +179,12 @@ sub run
                 $bGCovExists = false;
             }
 
+            # Create expect directory
+            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($self->{strExpectPath}))
+            {
+                $self->{oStorageTest}->pathCreate($self->{strExpectPath}, {strMode => '0770'});
+            }
+
             if ($self->{oTest}->{&TEST_CONTAINER})
             {
                 executeTest(
@@ -185,6 +192,7 @@ sub run
                     " -v $self->{strCoveragePath}:$self->{strCoveragePath} " .
                     " -v ${strHostTestPath}:${strVmTestPath}" .
                     ($self->{oTest}->{&TEST_C} ? " -v $self->{strGCovPath}:$self->{strGCovPath}" : '') .
+                    ($self->{oTest}->{&TEST_C} ? " -v $self->{strExpectPath}:$self->{strExpectPath}" : '') .
                     " -v $self->{strBackRestBase}:$self->{strBackRestBase} " .
                     containerRepo() . ':' . $self->{oTest}->{&TEST_VM} .
                     "-test",
@@ -330,6 +338,7 @@ sub run
 
                 # Set globals
                 $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strVmTestPath/g;
+                $strTestC =~ s/\{\[C\_TEST\_EXPECT_PATH\]\}/$self->{strExpectPath}/g;
 
                 # Set defalt log level
                 my $strLogLevelTestC = "logLevel" . ucfirst($self->{strLogLevelTest});

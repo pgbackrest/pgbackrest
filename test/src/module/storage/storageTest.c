@@ -198,7 +198,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageTest, strNew("aaa.txt")), bufNewStr(strNew("aaa"))), "write aaa.text");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(storageListNP(storageTest, NULL), ", ")), "aaa.txt, expect.log, noperm",
+            strPtr(strLstJoin(storageListNP(storageTest, NULL), ", ")), "aaa.txt, noperm",
             "dir list");
 
         TEST_RESULT_VOID(
