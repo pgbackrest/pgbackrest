@@ -18,7 +18,7 @@ testIoReadOpen(void *driver)
 }
 
 static size_t
-testIoReadProcess(void *driver, Buffer *buffer)
+testIoRead(void *driver, Buffer *buffer)
 {
     ASSERT(driver == (void *)999);
     bufCat(buffer, bufNewStr(strNew("Z")));
@@ -47,7 +47,7 @@ testIoWriteOpen(void *driver)
 }
 
 static void
-testIoWriteProcess(void *driver, const Buffer *buffer)
+testIoWrite(void *driver, const Buffer *buffer)
 {
     ASSERT(driver == (void *)999);
     ASSERT(strEq(strNewBuf(buffer), strNew("ABC")));
@@ -106,9 +106,9 @@ ioTestFilterSizeNew(const char *type)
         this = memNew(sizeof(IoTestFilterSize));
         this->memContext = MEM_CONTEXT_NEW();
 
-        this->filter = ioFilterNew(
-            strNew(type), this, NULL, NULL, (IoFilterProcessIn)ioTestFilterSizeProcess, NULL,
-            (IoFilterResult)ioTestFilterSizeResult);
+        this->filter = ioFilterNewP(
+            strNew(type), this, .in = (IoFilterInterfaceProcessIn)ioTestFilterSizeProcess,
+            .result = (IoFilterInterfaceResult)ioTestFilterSizeResult);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -194,9 +194,10 @@ ioTestFilterDoubleNew(const char *type, unsigned int flushTotal)
         this->bufferFilter = ioBufferFilter(ioBufferNew());
         this->flushTotal = flushTotal;
 
-        this->filter = ioFilterNew(
-            strNew(type), this, (IoFilterDone)ioTestFilterDoubleDone, (IoFilterInputSame)ioTestFilterDoubleInputSame, NULL,
-            (IoFilterProcessInOut)ioTestFilterDoubleProcess, NULL);
+        this->filter = ioFilterNewP(
+            strNew(type), this, .done = (IoFilterInterfaceDone)ioTestFilterDoubleDone,
+            .inOut = (IoFilterInterfaceProcessInOut)ioTestFilterDoubleProcess,
+            .inputSame = (IoFilterInterfaceInputSame)ioTestFilterDoubleInputSame);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -227,12 +228,18 @@ testRun(void)
         ioBufferSizeSet(2);
 
         TEST_ASSIGN(
-            read, ioReadNew((void *)998, testIoReadOpen, testIoReadProcess, testIoReadClose, NULL), "create io read object");
+            read,
+            ioReadNewP((void *)998, .close = (IoReadInterfaceClose)testIoReadClose, .open = (IoReadInterfaceOpen)testIoReadOpen,
+                .read = (IoReadInterfaceRead)testIoRead),
+            "create io read object");
 
         TEST_RESULT_BOOL(ioReadOpen(read), false, "    open io object");
 
         TEST_ASSIGN(
-            read, ioReadNew((void *)999, testIoReadOpen, testIoReadProcess, testIoReadClose, NULL), "create io read object");
+            read,
+            ioReadNewP((void *)999, .close = (IoReadInterfaceClose)testIoReadClose, .open = (IoReadInterfaceOpen)testIoReadOpen,
+                .read = (IoReadInterfaceRead)testIoRead),
+            "create io read object");
 
         TEST_RESULT_BOOL(ioReadOpen(read), true, "    open io object");
         TEST_RESULT_SIZE(ioRead(read, buffer), 2, "    read 2 bytes");
@@ -317,7 +324,11 @@ testRun(void)
         ioBufferSizeSet(3);
 
         TEST_ASSIGN(
-            write, ioWriteNew((void *)999, testIoWriteOpen, testIoWriteProcess, testIoWriteClose), "create io write object");
+            write,
+            ioWriteNewP(
+                (void *)999, .close = (IoWriteInterfaceClose)testIoWriteClose, .open = (IoWriteInterfaceOpen)testIoWriteOpen,
+                .write = (IoWriteInterfaceWrite)testIoWrite),
+            "create io write object");
 
         TEST_RESULT_VOID(ioWriteOpen(write), "    open io object");
         TEST_RESULT_BOOL(testIoWriteOpenCalled, true, "    check io object open");

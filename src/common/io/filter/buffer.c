@@ -5,6 +5,7 @@ IO Buffer Filter
 
 #include "common/debug.h"
 #include "common/io/filter/buffer.h"
+#include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 
@@ -40,9 +41,10 @@ ioBufferNew(void)
         this = memNew(sizeof(IoBuffer));
         this->memContext = memContextCurrent();
 
-        this->filter = ioFilterNew(
-            strNew(BUFFER_FILTER_TYPE), this, NULL, (IoFilterInputSame)ioBufferInputSame, NULL,
-            (IoFilterProcessInOut)ioBufferProcess, NULL);
+        // Create filter interface
+        this->filter = ioFilterNewP(
+            strNew(BUFFER_FILTER_TYPE), this, .inOut = (IoFilterInterfaceProcessInOut)ioBufferProcess,
+            .inputSame = (IoFilterInterfaceInputSame)ioBufferInputSame);
     }
     MEM_CONTEXT_NEW_END();
 

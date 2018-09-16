@@ -5,6 +5,7 @@ Gzip Decompress
 #include <zlib.h>
 
 #include "common/debug.h"
+#include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "compress/gzip.h"
@@ -55,9 +56,10 @@ gzipDecompressNew(bool raw)
         memContextCallback(this->memContext, (MemContextCallback)gzipDecompressFree, this);
 
         // Create filter interface
-        this->filter = ioFilterNew(
-            strNew(GZIP_DECOMPRESS_FILTER_TYPE), this, (IoFilterDone)gzipDecompressDone, (IoFilterInputSame)gzipDecompressInputSame,
-            NULL, (IoFilterProcessInOut)gzipDecompressProcess, NULL);
+        this->filter = ioFilterNewP(
+            strNew(GZIP_DECOMPRESS_FILTER_TYPE), this, .done = (IoFilterInterfaceDone)gzipDecompressDone,
+            .inOut = (IoFilterInterfaceProcessInOut)gzipDecompressProcess,
+            .inputSame = (IoFilterInterfaceInputSame)gzipDecompressInputSame);
     }
     MEM_CONTEXT_NEW_END();
 

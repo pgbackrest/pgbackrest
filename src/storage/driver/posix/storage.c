@@ -30,23 +30,6 @@ struct StorageDriverPosix
 };
 
 /***********************************************************************************************************************************
-Interface definition
-***********************************************************************************************************************************/
-static const StorageInterface storageInterface =
-{
-    .exists = (StorageExistsFn)storageDriverPosixExists,
-    .info = (StorageInfoFn)storageDriverPosixInfo,
-    .list = (StorageListFn)storageDriverPosixList,
-    .move = (StorageMoveFn)storageDriverPosixMove,
-    .newRead = (StorageNewReadFn)storageDriverPosixNewRead,
-    .newWrite = (StorageNewWriteFn)storageDriverPosixNewWrite,
-    .pathCreate = (StoragePathCreateFn)storageDriverPosixPathCreate,
-    .pathRemove = (StoragePathRemoveFn)storageDriverPosixPathRemove,
-    .pathSync = (StoragePathSyncFn)storageDriverPosixPathSync,
-    .remove = (StorageRemoveFn)storageDriverPosixRemove,
-};
-
-/***********************************************************************************************************************************
 New object
 ***********************************************************************************************************************************/
 StorageDriverPosix *
@@ -71,8 +54,16 @@ storageDriverPosixNew(
         this = memNew(sizeof(StorageDriverPosix));
         this->memContext = MEM_CONTEXT_NEW();
 
-        this->interface = storageNew(
-            strNew(STORAGE_DRIVER_POSIX_TYPE), path, modeFile, modePath, write, pathExpressionFunction, this, &storageInterface);
+        this->interface = storageNewP(
+            strNew(STORAGE_DRIVER_POSIX_TYPE), path, modeFile, modePath, write, pathExpressionFunction, this,
+            .exists = (StorageInterfaceExists)storageDriverPosixExists, .info = (StorageInterfaceInfo)storageDriverPosixInfo,
+            .list = (StorageInterfaceList)storageDriverPosixList, .move = (StorageInterfaceMove)storageDriverPosixMove,
+            .newRead = (StorageInterfaceNewRead)storageDriverPosixNewRead,
+            .newWrite = (StorageInterfaceNewWrite)storageDriverPosixNewWrite,
+            .pathCreate = (StorageInterfacePathCreate)storageDriverPosixPathCreate,
+            .pathRemove = (StorageInterfacePathRemove)storageDriverPosixPathRemove,
+            .pathSync = (StorageInterfacePathSync)storageDriverPosixPathSync,
+            .remove = (StorageInterfaceRemove)storageDriverPosixRemove);
     }
     MEM_CONTEXT_NEW_END();
 

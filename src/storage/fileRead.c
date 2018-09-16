@@ -14,19 +14,15 @@ struct StorageFileRead
 {
     MemContext *memContext;
     const String *type;
-    const StorageFileReadInterface *interface;
     void *driver;
-
-    StorageFileReadIgnoreMissing ignoreMissing;
-    StorageFileReadIo io;
-    StorageFileReadName name;
+    StorageFileReadInterface interface;
 };
 
 /***********************************************************************************************************************************
 Create a new storage file
 ***********************************************************************************************************************************/
 StorageFileRead *
-storageFileReadNew(const String *type, void *driver, const StorageFileReadInterface *interface)
+storageFileReadNew(const String *type, void *driver, StorageFileReadInterface interface)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(STRING, type);
@@ -35,9 +31,9 @@ storageFileReadNew(const String *type, void *driver, const StorageFileReadInterf
 
         FUNCTION_TEST_ASSERT(type != NULL);
         FUNCTION_TEST_ASSERT(driver != NULL);
-        FUNCTION_TEST_ASSERT(interface->ignoreMissing != NULL);
-        FUNCTION_TEST_ASSERT(interface->io != NULL);
-        FUNCTION_TEST_ASSERT(interface->name != NULL);
+        FUNCTION_TEST_ASSERT(interface.ignoreMissing != NULL);
+        FUNCTION_TEST_ASSERT(interface.io != NULL);
+        FUNCTION_TEST_ASSERT(interface.name != NULL);
     FUNCTION_DEBUG_END();
 
     StorageFileRead *this = NULL;
@@ -97,7 +93,7 @@ storageFileReadIgnoreMissing(const StorageFileRead *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->interface->ignoreMissing(this->driver));
+    FUNCTION_TEST_RESULT(BOOL, this->interface.ignoreMissing(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -112,7 +108,7 @@ storageFileReadIo(const StorageFileRead *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_READ, this->interface->io(this->driver));
+    FUNCTION_TEST_RESULT(IO_READ, this->interface.io(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -127,7 +123,7 @@ storageFileReadName(const StorageFileRead *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, this->interface->name(this->driver));
+    FUNCTION_TEST_RESULT(CONST_STRING, this->interface.name(this->driver));
 }
 
 /***********************************************************************************************************************************

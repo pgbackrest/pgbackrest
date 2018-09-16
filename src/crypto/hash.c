@@ -7,6 +7,7 @@ Cryptographic Hash
 #include <openssl/err.h>
 
 #include "common/debug.h"
+#include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "crypto/crypto.h"
@@ -69,9 +70,9 @@ cryptoHashNew(const String *type)
         memContextCallback(this->memContext, (MemContextCallback)cryptoHashFree, this);
 
         // Create filter interface
-        this->filter = ioFilterNew(
-            strNew(CRYPTO_HASH_FILTER_TYPE), this, NULL, NULL, (IoFilterProcessIn)cryptoHashProcess, NULL,
-            (IoFilterResult)cryptoHashResult);
+        this->filter = ioFilterNewP(
+            strNew(CRYPTO_HASH_FILTER_TYPE), this, .in = (IoFilterInterfaceProcessIn)cryptoHashProcess,
+            .result = (IoFilterInterfaceResult)cryptoHashResult);
     }
     MEM_CONTEXT_NEW_END();
 

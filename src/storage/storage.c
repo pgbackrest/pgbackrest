@@ -19,7 +19,7 @@ struct Storage
 {
     MemContext *memContext;
     const void *driver;
-    const StorageInterface *interface;
+    StorageInterface interface;
     const String *type;
 
     const String *path;
@@ -35,7 +35,7 @@ New storage object
 Storage *
 storageNew(
     const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
-    StoragePathExpressionCallback pathExpressionFunction, const void *driver, const StorageInterface *interface)
+    StoragePathExpressionCallback pathExpressionFunction, const void *driver, StorageInterface interface)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(STRING, type);
@@ -50,17 +50,16 @@ storageNew(
         FUNCTION_TEST_ASSERT(type != NULL);
         FUNCTION_TEST_ASSERT(path != NULL);
         FUNCTION_TEST_ASSERT(driver != NULL);
-        FUNCTION_TEST_ASSERT(interface != NULL);
-        FUNCTION_TEST_ASSERT(interface->exists != NULL);
-        FUNCTION_TEST_ASSERT(interface->info != NULL);
-        FUNCTION_TEST_ASSERT(interface->list != NULL);
-        FUNCTION_TEST_ASSERT(interface->move != NULL);
-        FUNCTION_TEST_ASSERT(interface->newRead != NULL);
-        FUNCTION_TEST_ASSERT(interface->newWrite != NULL);
-        FUNCTION_TEST_ASSERT(interface->pathCreate != NULL);
-        FUNCTION_TEST_ASSERT(interface->pathRemove != NULL);
-        FUNCTION_TEST_ASSERT(interface->pathSync != NULL);
-        FUNCTION_TEST_ASSERT(interface->remove != NULL);
+        FUNCTION_TEST_ASSERT(interface.exists != NULL);
+        FUNCTION_TEST_ASSERT(interface.info != NULL);
+        FUNCTION_TEST_ASSERT(interface.list != NULL);
+        FUNCTION_TEST_ASSERT(interface.move != NULL);
+        FUNCTION_TEST_ASSERT(interface.newRead != NULL);
+        FUNCTION_TEST_ASSERT(interface.newWrite != NULL);
+        FUNCTION_TEST_ASSERT(interface.pathCreate != NULL);
+        FUNCTION_TEST_ASSERT(interface.pathRemove != NULL);
+        FUNCTION_TEST_ASSERT(interface.pathSync != NULL);
+        FUNCTION_TEST_ASSERT(interface.remove != NULL);
     FUNCTION_DEBUG_END();
 
     Storage *this = NULL;
@@ -156,7 +155,7 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
         do
         {
             // Call driver function
-            result = this->interface->exists(this->driver, path);
+            result = this->interface.exists(this->driver, path);
         }
         while (!result && wait != NULL && waitMore(wait));
     }
@@ -249,7 +248,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         String *file = storagePathNP(this, fileExp);
 
         // Call driver function
-        result = this->interface->info(this->driver, file, param.ignoreMissing);
+        result = this->interface.info(this->driver, file, param.ignoreMissing);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -279,7 +278,7 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
         String *path = storagePathNP(this, pathExp);
 
         // Move list up to the old context
-        result = strLstMove(this->interface->list(this->driver, path, param.errorOnMissing, param.expression), MEM_CONTEXT_OLD());
+        result = strLstMove(this->interface.list(this->driver, path, param.errorOnMissing, param.expression), MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -306,19 +305,19 @@ storageMove(const Storage *this, StorageFileRead *source, StorageFileWrite *dest
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If the file can't be moved it will need to be copied
-        if (!this->interface->move(this->driver, storageFileReadDriver(source), storageFileWriteFileDriver(destination)))
+        if (!this->interface.move(this->driver, storageFileReadDriver(source), storageFileWriteFileDriver(destination)))
         {
             // Perform the copy
             storageCopyNP(source, destination);
 
             // Remove the source file
-            this->interface->remove(this->driver, storageFileReadName(source), false);
+            this->interface.remove(this->driver, storageFileReadName(source), false);
 
             // Sync source path if the destination path was synced.  We know the source and destination paths are different because
             // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented becaue there's
             // no way to get coverage on it now.
             if (storageFileWriteSyncPath(destination))
-                this->interface->pathSync(this->driver, strPath(storageFileReadName(source)), false);
+                this->interface.pathSync(this->driver, strPath(storageFileReadName(source)), false);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -345,7 +344,7 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = this->interface->newRead(this->driver, storagePathNP(this, fileExp), param.ignoreMissing);
+        result = this->interface.newRead(this->driver, storagePathNP(this, fileExp), param.ignoreMissing);
 
         if (param.filterGroup != NULL)
             ioReadFilterGroupSet(storageFileReadIo(result), param.filterGroup);
@@ -382,7 +381,7 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = this->interface->newWrite(
+        result = this->interface.newWrite(
             this->driver, storagePathNP(this, fileExp), param.modeFile != 0 ? param.modeFile : this->modeFile,
             param.modePath != 0 ? param.modePath : this->modePath, !param.noCreatePath, !param.noSyncFile, !param.noSyncPath,
             !param.noAtomic);
@@ -527,7 +526,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
         String *path = storagePathNP(this, pathExp);
 
         // Call driver function
-        this->interface->pathCreate(
+        this->interface.pathCreate(
             this->driver, path, param.errorOnExists, param.noParentCreate, param.mode != 0 ? param.mode : this->modePath);
     }
     MEM_CONTEXT_TEMP_END();
@@ -557,7 +556,7 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
         String *path = storagePathNP(this, pathExp);
 
         // Call driver function
-        this->interface->pathRemove(this->driver, path, param.errorOnMissing, param.recurse);
+        this->interface.pathRemove(this->driver, path, param.errorOnMissing, param.recurse);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -584,7 +583,7 @@ void storagePathSync(const Storage *this, const String *pathExp, StoragePathSync
         String *path = storagePathNP(this, pathExp);
 
         // Call driver function
-        this->interface->pathSync(this->driver, path, param.ignoreMissing);
+        this->interface.pathSync(this->driver, path, param.ignoreMissing);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -632,7 +631,7 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
         String *file = storagePathNP(this, fileExp);
 
         // Call driver function
-        this->interface->remove(this->driver, file, param.errorOnMissing);
+        this->interface.remove(this->driver, file, param.errorOnMissing);
     }
     MEM_CONTEXT_TEMP_END();
 

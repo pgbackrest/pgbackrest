@@ -57,6 +57,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Update all interfaces to use variable parameter constructors.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Info objects now parse JSON and use specified storage.</p>
                     </release-item>
 

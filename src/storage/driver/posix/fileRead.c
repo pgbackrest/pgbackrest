@@ -6,6 +6,7 @@ Posix Storage File Read Driver
 
 #include "common/assert.h"
 #include "common/debug.h"
+#include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "storage/driver/posix/common.h"
@@ -26,16 +27,6 @@ struct StorageDriverPosixFileRead
 
     int handle;
     bool eof;
-};
-
-/***********************************************************************************************************************************
-Interface definition
-***********************************************************************************************************************************/
-static const StorageFileReadInterface storageFileReadInterface =
-{
-    .ignoreMissing = (StorageFileReadIgnoreMissing)storageDriverPosixFileReadIgnoreMissing,
-    .io = (StorageFileReadIo)storageDriverPosixFileReadIo,
-    .name = (StorageFileReadName)storageDriverPosixFileReadName,
 };
 
 /***********************************************************************************************************************************
@@ -64,10 +55,16 @@ storageDriverPosixFileReadNew(const StorageDriverPosix *storage, const String *n
 
         this->handle = -1;
 
-        this->interface = storageFileReadNew(strNew(STORAGE_DRIVER_POSIX_TYPE), this, &storageFileReadInterface);
-        this->io = ioReadNew(
-            this, (IoReadOpen)storageDriverPosixFileReadOpen, (IoReadProcess)storageDriverPosixFileRead,
-            (IoReadClose)storageDriverPosixFileReadClose, (IoReadEof)storageDriverPosixFileReadEof);
+        this->interface = storageFileReadNewP(
+            strNew(STORAGE_DRIVER_POSIX_TYPE), this,
+            .ignoreMissing = (StorageFileReadInterfaceIgnoreMissing)storageDriverPosixFileReadIgnoreMissing,
+            .io = (StorageFileReadInterfaceIo)storageDriverPosixFileReadIo,
+            .name = (StorageFileReadInterfaceName)storageDriverPosixFileReadName);
+
+        this->io = ioReadNewP(
+            this, .eof = (IoReadInterfaceEof)storageDriverPosixFileReadEof,
+            .close = (IoReadInterfaceClose)storageDriverPosixFileReadClose,
+            .open = (IoReadInterfaceOpen)storageDriverPosixFileReadOpen, .read = (IoReadInterfaceRead)storageDriverPosixFileRead);
     }
     MEM_CONTEXT_NEW_END();
 

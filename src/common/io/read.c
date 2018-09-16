@@ -3,7 +3,7 @@ IO Read Interface
 ***********************************************************************************************************************************/
 #include "common/debug.h"
 #include "common/io/io.h"
-#include "common/io/read.h"
+#include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 
@@ -14,13 +14,9 @@ struct IoRead
 {
     MemContext *memContext;                                         // Mem context of driver
     void *driver;                                                   // Driver object
+    IoReadInterface interface;                                      // Driver interface
     IoFilterGroup *filterGroup;                                     // IO filters
     Buffer *input;                                                  // Input buffer
-
-    IoReadOpen open;                                                // Driver open
-    IoReadProcess read;                                             // Driver read
-    IoReadClose close;                                              // Driver close
-    IoReadEof eof;                                                  // Driver eof
 
     bool eofAll;                                                    // Is the read done (read and filters complete)?
 
@@ -36,28 +32,21 @@ New object
 Allocations will be in the memory context of the caller.
 ***********************************************************************************************************************************/
 IoRead *
-ioReadNew(void *driver, IoReadOpen open, IoReadProcess read, IoReadClose close, IoReadEof eof)
+ioReadNew(void *driver, IoReadInterface interface)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(VOIDP, driver);
-        FUNCTION_DEBUG_PARAM(FUNCTIONP, open);
-        FUNCTION_DEBUG_PARAM(FUNCTIONP, read);
-        FUNCTION_DEBUG_PARAM(FUNCTIONP, close);
-        FUNCTION_DEBUG_PARAM(FUNCTIONP, eof);
+        FUNCTION_DEBUG_PARAM(IO_READ_INTERFACE, interface);
 
         FUNCTION_TEST_ASSERT(driver != NULL);
-        FUNCTION_TEST_ASSERT(read != NULL);
+        FUNCTION_TEST_ASSERT(interface.read != NULL);
     FUNCTION_DEBUG_END();
 
     IoRead *this = memNew(sizeof(IoRead));
     this->memContext = memContextCurrent();
-    this->input = bufNew(ioBufferSize());
-
     this->driver = driver;
-    this->open = open;
-    this->read = read;
-    this->close = close;
-    this->eof = eof;
+    this->interface = interface;
+    this->input = bufNew(ioBufferSize());
 
     FUNCTION_DEBUG_RESULT(IO_READ, this);
 }
@@ -76,7 +65,7 @@ ioReadOpen(IoRead *this)
     FUNCTION_DEBUG_END();
 
     // Open if the driver has an open function
-    bool result = this->open != NULL ? this->open(this->driver) : true;
+    bool result = this->interface.open != NULL ? this->interface.open(this->driver) : true;
 
     // Only open the filter group if the read was opened
     if (result)
@@ -110,7 +99,7 @@ ioReadEofDriver(const IoRead *this)
         FUNCTION_TEST_ASSERT(this->opened && !this->closed);
     FUNCTION_DEBUG_END();
 
-    FUNCTION_DEBUG_RESULT(BOOL, this->eof != NULL ? this->eof(this->driver) : false);
+    FUNCTION_DEBUG_RESULT(BOOL, this->interface.eof != NULL ? this->interface.eof(this->driver) : false);
 }
 
 /***********************************************************************************************************************************
@@ -144,7 +133,7 @@ ioRead(IoRead *this, Buffer *buffer)
             if (!ioReadEofDriver(this))
             {
                 bufUsedZero(this->input);
-                this->read(this->driver, this->input);
+                this->interface.read(this->driver, this->input);
             }
             // Set input to NULL and flush (no need to actually free the buffer here as it will be freed with the mem context)
             else
@@ -178,8 +167,8 @@ ioReadClose(IoRead *this)
     ioFilterGroupClose(this->filterGroup);
 
     // Close the driver if there is a close function
-    if (this->close != NULL)
-        this->close(this->driver);
+    if (this->interface.close != NULL)
+        this->interface.close(this->driver);
 
 #ifdef DEBUG
     this->closed = true;

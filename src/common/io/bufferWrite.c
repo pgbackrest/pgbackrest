@@ -4,6 +4,7 @@ Buffer IO Write
 #include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 
@@ -35,9 +36,8 @@ ioBufferWriteNew(Buffer *buffer)
     {
         this = memNew(sizeof(IoBufferWrite));
         this->memContext = memContextCurrent();
-
+        this->io = ioWriteNewP(this, .write = (IoWriteInterfaceWrite)ioBufferWrite);
         this->write = buffer;
-        this->io = ioWriteNew(this, NULL, (IoWriteProcess)ioBufferWrite, NULL);
     }
     MEM_CONTEXT_NEW_END();
 

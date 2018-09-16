@@ -6,6 +6,7 @@ Gzip Compress
 
 #include "common/assert.h"
 #include "common/debug.h"
+#include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "compress/gzip.h"
@@ -64,9 +65,10 @@ gzipCompressNew(int level, bool raw)
         memContextCallback(this->memContext, (MemContextCallback)gzipCompressFree, this);
 
         // Create filter interface
-        this->filter = ioFilterNew(
-            strNew(GZIP_COMPRESS_FILTER_TYPE), this, (IoFilterDone)gzipCompressDone, (IoFilterInputSame)gzipCompressInputSame,
-            NULL, (IoFilterProcessInOut)gzipCompressProcess, NULL);
+        this->filter = ioFilterNewP(
+            strNew(GZIP_COMPRESS_FILTER_TYPE), this, .done = (IoFilterInterfaceDone)gzipCompressDone,
+            .inOut = (IoFilterInterfaceProcessInOut)gzipCompressProcess,
+            .inputSame = (IoFilterInterfaceInputSame)gzipCompressInputSame);
     }
     MEM_CONTEXT_NEW_END();
 

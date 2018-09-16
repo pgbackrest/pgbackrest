@@ -7,6 +7,7 @@ Posix Storage File Write Driver
 
 #include "common/assert.h"
 #include "common/debug.h"
+#include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "storage/driver/posix/common.h"
@@ -34,21 +35,6 @@ struct StorageDriverPosixFileWrite
     bool atomic;
 
     int handle;
-};
-
-/***********************************************************************************************************************************
-Interface definition
-***********************************************************************************************************************************/
-static const StorageFileWriteInterface storageFileWriteInterface =
-{
-    .atomic = (StorageFileWriteAtomic)storageDriverPosixFileWriteAtomic,
-    .createPath = (StorageFileWriteCreatePath)storageDriverPosixFileWriteCreatePath,
-    .io = (StorageFileWriteIo)storageDriverPosixFileWriteIo,
-    .modeFile = (StorageFileWriteModeFile)storageDriverPosixFileWriteModeFile,
-    .modePath = (StorageFileWriteModePath)storageDriverPosixFileWriteModePath,
-    .name = (StorageFileWriteName)storageDriverPosixFileWriteName,
-    .syncFile = (StorageFileWriteSyncFile)storageDriverPosixFileWriteSyncFile,
-    .syncPath = (StorageFileWriteSyncPath)storageDriverPosixFileWriteSyncPath,
 };
 
 /***********************************************************************************************************************************
@@ -88,12 +74,22 @@ storageDriverPosixFileWriteNew(
     {
         this = memNew(sizeof(StorageDriverPosixFileWrite));
         this->memContext = MEM_CONTEXT_NEW();
-
         this->storage = storage;
-        this->interface = storageFileWriteNew(strNew(STORAGE_DRIVER_POSIX_TYPE), this, &storageFileWriteInterface);
-        this->io = ioWriteNew(
-            this, (IoWriteOpen)storageDriverPosixFileWriteOpen, (IoWriteProcess)storageDriverPosixFileWrite,
-            (IoWriteClose)storageDriverPosixFileWriteClose);
+
+        this->interface = storageFileWriteNewP(
+            strNew(STORAGE_DRIVER_POSIX_TYPE), this, .atomic = (StorageFileWriteInterfaceAtomic)storageDriverPosixFileWriteAtomic,
+            .createPath = (StorageFileWriteInterfaceCreatePath)storageDriverPosixFileWriteCreatePath,
+            .io = (StorageFileWriteInterfaceIo)storageDriverPosixFileWriteIo,
+            .modeFile = (StorageFileWriteInterfaceModeFile)storageDriverPosixFileWriteModeFile,
+            .modePath = (StorageFileWriteInterfaceModePath)storageDriverPosixFileWriteModePath,
+            .name = (StorageFileWriteInterfaceName)storageDriverPosixFileWriteName,
+            .syncFile = (StorageFileWriteInterfaceSyncFile)storageDriverPosixFileWriteSyncFile,
+            .syncPath = (StorageFileWriteInterfaceSyncPath)storageDriverPosixFileWriteSyncPath);
+
+        this->io = ioWriteNewP(
+            this, .close = (IoWriteInterfaceClose)storageDriverPosixFileWriteClose,
+            .open = (IoWriteInterfaceOpen)storageDriverPosixFileWriteOpen,
+            .write = (IoWriteInterfaceWrite)storageDriverPosixFileWrite);
 
         this->path = strPath(name);
         this->name = strDup(name);
