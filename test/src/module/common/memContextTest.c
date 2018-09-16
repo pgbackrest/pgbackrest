@@ -32,7 +32,7 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("memAllocInternal(), memReAllocInternal(), and memFreeInternal()"))
     {
         // Test too large allocation -- only test this on 64-bit systems since 32-bit systems tend to work with any value that
@@ -85,7 +85,7 @@ testRun(void)
         memFreeInternal(buffer2);
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("memContextNew() and memContextFree()"))
     {
         // Make sure top context was created
@@ -163,7 +163,7 @@ testRun(void)
         TEST_RESULT_VOID(memContextFree(noAllocation), "free context with no allocations");
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("memContextAlloc(), memNew*(), memGrow(), and memFree()"))
     {
         memContextSwitch(memContextTop());
@@ -219,7 +219,7 @@ testRun(void)
         memContextFree(memContext);
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("memContextCallback()"))
     {
         TEST_ERROR(
@@ -236,7 +236,7 @@ testRun(void)
         TEST_RESULT_PTR(memContextCallbackArgument, memContext, "callback argument is context");
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("MEM_CONTEXT_BEGIN() and MEM_CONTEXT_END()"))
     {
         memContextSwitch(memContextTop());
@@ -264,7 +264,7 @@ testRun(void)
         TEST_RESULT_STR(memContextName(memContextCurrent()), "TOP", "context is now top");
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("MEM_CONTEXT_NEW_BEGIN() and MEM_CONTEXT_NEW_END()"))
     {
         // ------------------------------------------------------------------------------------------------------------------------
@@ -310,7 +310,7 @@ testRun(void)
         TEST_RESULT_BOOL(memContext->state == memContextStateFree, true, "new mem context is not active");
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("memContextMove()"))
     {
         TEST_RESULT_VOID(memContextMove(NULL, memContextTop()), "move NULL context");

@@ -13,7 +13,7 @@ testRun(void)
     // Static tests against known values -- these may break as options change so will need to be kept up to date.  The tests have
     // generally been selected to favor values that are not expected to change but adjustments are welcome as long as the type of
     // test is not drastically changed.
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("check known values"))
     {
         TEST_ERROR(cfgCommandId(BOGUS_STR), AssertError, "invalid command 'BOGUS'");
@@ -48,7 +48,7 @@ testRun(void)
         TEST_RESULT_STR(cfgOptionName(cfgOptBackupStandby), "backup-standby", "option id from name");
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("configuration"))
     {
         TEST_RESULT_VOID(cfgInit(), "config init");
