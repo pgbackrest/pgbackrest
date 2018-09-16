@@ -13,7 +13,7 @@ Archive Push Command
 #include "common/regExp.h"
 #include "common/wait.h"
 #include "postgres/version.h"
-#include "protocol/storage/helper.h"
+#include "storage/helper.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************

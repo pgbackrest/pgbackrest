@@ -60,7 +60,7 @@ testRun(void)
         storagePathRemoveNP(storageTest, strNewFmt("%s/db/archive_status", testPath()));
 
         String *errorFile = storagePathNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error"));
-        storagePutNP(storageNewWriteNP(storageSpool(), errorFile), bufNewStr(strNew("25\n" BOGUS_STR)));
+        storagePutNP(storageNewWriteNP(storageSpoolWrite(), errorFile), bufNewStr(strNew("25\n" BOGUS_STR)));
 
         TEST_ERROR(cmdArchivePush(), AssertError, BOGUS_STR);
 
@@ -69,13 +69,14 @@ testRun(void)
         // Write out a valid ok file and test for success
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
-            storageNewWriteNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok")),
+            storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok")),
             bufNewStr(strNew("")));
 
         TEST_RESULT_VOID(cmdArchivePush(), "successful push");
         harnessLogResult("P00   INFO: pushed WAL segment 000000010000000100000001 asynchronously");
 
-        storageRemoveP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok"), .errorOnMissing = true);
+        storageRemoveP(
+            storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok"), .errorOnMissing = true);
 
         // Make sure the process times out when there is nothing to archive and it can't get a lock.  This test MUST go last since
         // the lock is lost and cannot be closed by the main process.

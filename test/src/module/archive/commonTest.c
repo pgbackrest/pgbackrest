@@ -3,7 +3,7 @@ Test Archive Common
 ***********************************************************************************************************************************/
 #include <unistd.h>
 
-#include "protocol/storage/helper.h"
+#include "storage/helper.h"
 #include "storage/driver/posix/storage.h"
 
 #include "common/harnessConfig.h"
@@ -47,34 +47,34 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
-            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewStr(strNew(BOGUS_STR)));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false), FormatError,
             "000000010000000100000001.ok content must have at least two lines");
 
         storagePutNP(
-            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewStr(strNew(BOGUS_STR "\n")));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false), FormatError, "000000010000000100000001.ok message must be > 0");
 
         storagePutNP(
-            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewStr(strNew(BOGUS_STR "\nmessage")));
         TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, false), FormatError, "unable to convert string 'BOGUS' to int");
 
-        storagePutNP(storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))), NULL);
+        storagePutNP(storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))), NULL);
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "ok file");
 
         storagePutNP(
-            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewStr(strNew("0\nwarning")));
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "ok file with warning");
         harnessLogResult("P00   WARN: warning");
 
         storagePutNP(
-            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
+            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewStr(strNew("25\nerror")));
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "error status renamed to ok");
         harnessLogResult(
@@ -82,7 +82,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
-            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
+            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
             bufNewStr(strNew("")));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false), AssertError,
@@ -96,7 +96,7 @@ testRun(void)
             "status file '000000010000000100000001.error' has no content");
 
         storagePutNP(
-            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
+            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
             bufNewStr(strNew("25\nmessage")));
         TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, true), AssertError, "message");
 
