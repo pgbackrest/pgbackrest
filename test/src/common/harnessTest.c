@@ -148,9 +148,22 @@ testBegin(const char *name)
     if (testList[testRun - 1].selected)
     {
 #ifndef NO_LOG
-        // Make sure there is nothing untested left in the log
         if (!testFirst)
+        {
+            // Make sure there is nothing untested left in the log
             harnessLogFinal();
+
+            // Clear out the test directory so the next test starts clean
+            char buffer[2048];
+            snprintf(buffer, sizeof(buffer), "sudo rm -rf %s/" "*", testPath());
+
+            if (system(buffer) != 0)
+            {
+                fprintf(stderr, "ERROR: unable to clear test path '%s'\n", testPath());
+                fflush(stderr);
+                exit(255);
+            }
+        }
 #endif
         // No longer the first test
         testFirst = false;

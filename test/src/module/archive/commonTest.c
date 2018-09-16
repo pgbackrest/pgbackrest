@@ -101,8 +101,6 @@ testRun(void)
         TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, true), AssertError, "message");
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "suppress error");
-
-        unlink(strPtr(storagePathNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment)))));
     }
 
     // *****************************************************************************************************************************

@@ -122,6 +122,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Clear test directory between test runs.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow C or Perl coverage to run on more than one VM.</p>
                     </release-item>
 

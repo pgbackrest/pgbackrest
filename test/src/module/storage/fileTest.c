@@ -5,6 +5,16 @@ Test Storage File
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
+Macro to create a path and file that cannot be accessed
+***********************************************************************************************************************************/
+#define TEST_CREATE_NOPERM()                                                                                                       \
+    TEST_RESULT_INT(                                                                                                               \
+        system(                                                                                                                    \
+            strPtr(strNewFmt("sudo mkdir -m 700 %s && sudo touch %s && sudo chmod 600 %s", strPtr(pathNoPerm), strPtr(fileNoPerm), \
+            strPtr(fileNoPerm)))),                                                                                                 \
+        0, "create no perm path/file");
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -17,19 +27,15 @@ testRun(void)
         storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
     ioBufferSizeSet(2);
 
-    // Create a directory and file that cannot be accessed to test permissions errors
+    // Directory and file that cannot be accessed to test permissions errors
     String *fileNoPerm = strNewFmt("%s/noperm/noperm", testPath());
     String *pathNoPerm = strPath(fileNoPerm);
-
-    TEST_RESULT_INT(
-        system(
-            strPtr(strNewFmt("sudo mkdir -m 700 %s && sudo touch %s && sudo chmod 600 %s", strPtr(pathNoPerm), strPtr(fileNoPerm),
-            strPtr(fileNoPerm)))),
-        0, "create no perm path/file");
 
     // *****************************************************************************************************************************
     if (testBegin("storageDriverPosixFile*()"))
     {
+        TEST_CREATE_NOPERM();
+
         TEST_ERROR_FMT(
             storageDriverPosixFileOpen(pathNoPerm, O_RDONLY, 0, false, false, "test"), PathOpenError,
             "unable to open '%s' for test: [13] Permission denied", strPtr(pathNoPerm));
@@ -72,6 +78,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("StorageFileRead"))
     {
+        TEST_CREATE_NOPERM();
         StorageFileRead *file = NULL;
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm, .ignoreMissing = true), "new read file");
@@ -173,6 +180,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("StorageFileWrite"))
     {
+        TEST_CREATE_NOPERM();
         StorageFileWrite *file = NULL;
 
         TEST_ASSIGN(

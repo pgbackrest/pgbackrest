@@ -120,10 +120,6 @@ testRun(void)
         storagePutNP(storageNewWriteNP(storageTest, strNew("repo/archive/test1/10-4/00000009.history")), NULL);
 
         TEST_RESULT_STR(strPtr(archiveGetCheck(strNew("00000009.history"))), "10-4/00000009.history", "history file found");
-
-        // Clear data
-        storagePathRemoveP(storageTest, strNew("repo"), .recurse = true);
-        storagePathRemoveP(storageTest, strNew("db"), .recurse = true);
     }
 
     // *****************************************************************************************************************************
@@ -202,10 +198,6 @@ testRun(void)
         TEST_RESULT_INT(archiveGetFile(archiveFile, walDestination), 0, "WAL segment copied");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, walDestination), true, "  check exists");
         TEST_RESULT_INT(storageInfoNP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
-
-        // Clear data
-        storagePathRemoveP(storageTest, strNew("repo"), .recurse = true);
-        storagePathRemoveP(storageTest, strNew("db"), .recurse = true);
     }
 
     // *****************************************************************************************************************************
@@ -278,8 +270,6 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(strLstJoin(strLstSort(storageListNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), sortOrderAsc), "|")),
             "000000010000000A00000FFE|000000010000000A00000FFF", "check queue");
-
-        storagePathRemoveP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN), .recurse = true);
     }
 
     // *****************************************************************************************************************************

@@ -25,6 +25,16 @@ storageTestPathExpression(const String *expression, const String *path)
 }
 
 /***********************************************************************************************************************************
+Macro to create a path and file that cannot be accessed
+***********************************************************************************************************************************/
+#define TEST_CREATE_NOPERM()                                                                                                       \
+    TEST_RESULT_INT(                                                                                                               \
+        system(                                                                                                                    \
+            strPtr(strNewFmt("sudo mkdir -m 700 %s && sudo touch %s && sudo chmod 600 %s", strPtr(pathNoPerm), strPtr(fileNoPerm), \
+            strPtr(fileNoPerm)))),                                                                                                 \
+        0, "create no perm path/file");
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -39,15 +49,9 @@ testRun(void)
         storageDriverPosixNew(strNew("/tmp"), 0, 0, true, NULL));
     ioBufferSizeSet(2);
 
-    // Create a directory and file that cannot be accessed to test permissions errors
+    // Directory and file that cannot be accessed to test permissions errors
     String *fileNoPerm = strNewFmt("%s/noperm/noperm", testPath());
     String *pathNoPerm = strPath(fileNoPerm);
-
-    TEST_RESULT_INT(
-        system(
-            strPtr(strNewFmt("sudo mkdir -m 700 %s && sudo touch %s && sudo chmod 600 %s", strPtr(pathNoPerm), strPtr(fileNoPerm),
-            strPtr(fileNoPerm)))),
-        0, "create no perm path/file");
 
     // *****************************************************************************************************************************
     if (testBegin("storageNew() and storageFree()"))
@@ -80,6 +84,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageExists()"))
     {
+        TEST_CREATE_NOPERM();
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(storageExistsNP(storageTest, strNew("missing")), false, "file does not exist");
         TEST_RESULT_BOOL(storageExistsP(storageTest, strNew("missing"), .timeout = .1), false, "file does not exist");
@@ -118,6 +124,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageInfo()"))
     {
+        TEST_CREATE_NOPERM();
+
         TEST_ERROR_FMT(
             storageInfoNP(storageTest, fileNoPerm), FileOpenError,
             "unable to get info for '%s': [13] Permission denied", strPtr(fileNoPerm));
@@ -177,6 +185,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageList()"))
     {
+        TEST_CREATE_NOPERM();
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             storageListP(storageTest, strNew(BOGUS_STR), .errorOnMissing = true), PathOpenError,
@@ -241,6 +251,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageMove()"))
     {
+        TEST_CREATE_NOPERM();
+
         String *sourceFile = strNewFmt("%s/source.txt", testPath());
         String *destinationFile = strNewFmt("%s/sub/destination.txt", testPath());
 
@@ -448,6 +460,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storagePathSync()"))
     {
+        TEST_CREATE_NOPERM();
+
         TEST_ERROR_FMT(
             storagePathSyncNP(storageTest, fileNoPerm), PathOpenError,
             "unable to open '%s' for sync: [13] Permission denied", strPtr(fileNoPerm));
@@ -492,6 +506,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageNewWrite()"))
     {
+        TEST_CREATE_NOPERM();
         StorageFileWrite *file = NULL;
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true), "new write file (defaults)");
@@ -581,6 +596,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageRemove()"))
     {
+        TEST_CREATE_NOPERM();
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storageRemoveNP(storageTest, strNew("missing")), "remove missing file");
         TEST_ERROR_FMT(
