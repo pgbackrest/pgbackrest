@@ -39,10 +39,8 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageRepo()"))
+    if (testBegin("storageRepoGet() and storageRepo()"))
     {
-        const Storage *storage = NULL;
-
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
@@ -50,6 +48,12 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
         strLstAddZ(argList, "archive-get");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(storageRepoGet(strNew(STORAGE_TYPE_CIFS), false), "get cifs repo storage");
+        TEST_ERROR(storageRepoGet(strNew(BOGUS_STR), false), AssertError, "invalid storage type 'BOGUS'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        const Storage *storage = NULL;
 
         TEST_RESULT_PTR(storageHelper.storageRepo, NULL, "repo storage not cached");
         TEST_ASSIGN(storage, storageRepo(), "new storage");

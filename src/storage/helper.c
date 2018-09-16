@@ -159,6 +159,37 @@ storageRepoPathExpression(const String *expression, const String *path)
 }
 
 /***********************************************************************************************************************************
+Get the repo storage
+***********************************************************************************************************************************/
+static Storage *
+storageRepoGet(const String *type, bool write)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, type);
+        FUNCTION_TEST_PARAM(BOOL, write);
+
+        FUNCTION_TEST_ASSERT(type != NULL);
+        FUNCTION_TEST_ASSERT(write == false);                       // ??? Need to create cifs driver before storage can be writable
+    FUNCTION_TEST_END();
+
+    Storage *result = NULL;
+
+    // For now treat posix and cifs drivers as if they are the same.  This won't be true once the repository storage becomes
+    // writable but for now it's OK.  The assertion above should pop if we try to create writable repo storage.
+    if (strEqZ(type, STORAGE_TYPE_POSIX) || strEqZ(type, STORAGE_TYPE_CIFS))
+    {
+        result = storageDriverPosixInterface(
+            storageDriverPosixNew(
+                cfgOptionStr(cfgOptRepoPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write,
+                storageRepoPathExpression));
+    }
+    else
+        THROW_FMT(AssertError, "invalid storage type '%s'", strPtr(type));
+
+    FUNCTION_TEST_RESULT(STORAGE, result);
+}
+
+/***********************************************************************************************************************************
 Get a read-only repository storage object
 ***********************************************************************************************************************************/
 const Storage *
@@ -174,11 +205,7 @@ storageRepo(void)
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
             storageHelper.walRegExp = regExpNew(strNew("^[0-F]{24}"));
-
-            storageHelper.storageRepo = storageDriverPosixInterface(
-                storageDriverPosixNew(
-                    cfgOptionStr(cfgOptRepoPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false,
-                    storageRepoPathExpression));
+            storageHelper.storageRepo = storageRepoGet(cfgOptionStr(cfgOptRepoType), false);
         }
         MEM_CONTEXT_END();
     }
