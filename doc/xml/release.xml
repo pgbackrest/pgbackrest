@@ -122,6 +122,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <id>-ftree-coalesce-vars</id> option to unit test compilation.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Clear test directory between test runs.</p>
                     </release-item>
 

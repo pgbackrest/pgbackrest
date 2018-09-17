@@ -400,6 +400,7 @@ sub run
                     "\n" .
                     "test.o: test.c\n" .
 	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) -O0" .
+                        ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
                         (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
                             ' -fprofile-arcs -ftest-coverage' : '') .
                         " -c test.c\n" .
