@@ -258,6 +258,14 @@ static const struct option optionList[] =
         .name = "delta",
         .val = PARSE_OPTION_FLAG | cfgOptDelta,
     },
+    {
+        .name = "no-delta",
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptDelta,
+    },
+    {
+        .name = "reset-delta",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDelta,
+    },
 
     // exclude option
     // -----------------------------------------------------------------------------------------------------------------------------
