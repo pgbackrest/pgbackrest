@@ -142,6 +142,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Merge all posix storage tests into a single unit.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Fix typo in unit test error messages, EXECTED => EXPECTED.</p>
                     </release-item>
 
