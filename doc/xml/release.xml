@@ -53,6 +53,13 @@
 
                         <p>Implement <br-option>delta</br-option> for backups to verify file checksums in determing if a file has changed and needs to be copied to the repository for the new backup.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+                        <p>Allow <br-option>delta</br-option> option to be specified in the <backrest/> configuration file.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -61,7 +68,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Storage refactoring.  Posix file functions now differentiate between open and missing errors.  Don't use negations in objects below Storage.  Rename posix driver files/functions for consistency.</p>
+                        <p>Storage refactoring.  Posix file functions now differentiate between open and missing errors.  Don't use negations in objects below Storage.  Rename posix driver files/functions for consistency.  Full abstraction of storage driver interface.  Merge protocol storage helper into storage helper.  Add CIFS driver to storage helper for read-only repositories.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Update all interfaces to use variable parameter constructors.</p>
                     </release-item>
 
                     <release-item>
@@ -70,6 +81,22 @@
 
                     <release-item>
                         <p>Add helper for repository storage.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <code>hashSize()</code> to run on remote storage.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Restore <code>bIgnoreMissing</code> flag in <code>backupFile()</code> lost in storage refactor.</p>
                     </release-item>
 
                     <release-item>
@@ -110,7 +137,31 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>Move test expect log out of the regular test directory.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fix buffer underrun in configuration test harness.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fix missing test caused by a misplaced YAML tag.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Make Valgrind return an error even when a non-fatal issue is detected.  Update some minor issues discovered in the tests as a result.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <id>-ftree-coalesce-vars</id> option to unit test compilation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Clear test directory between test runs.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Allow C or Perl coverage to run on more than one VM.</p>
                     </release-item>
 
                     <release-item>
@@ -118,7 +169,19 @@
                     </release-item>
 
                     <release-item>
+                        <p>Remove compiler warnings that are not valid for u16.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Merge all posix storage tests into a single unit.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Fix typo in unit test error messages, EXECTED => EXPECTED.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Make comment blocks consistent across all tests.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>

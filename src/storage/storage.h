@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Storage Manager
+Storage Interface
 ***********************************************************************************************************************************/
 #ifndef STORAGE_STORAGE_H
 #define STORAGE_STORAGE_H
@@ -7,7 +7,7 @@ Storage Manager
 #include <sys/types.h>
 
 /***********************************************************************************************************************************
-Storage object
+Object type
 ***********************************************************************************************************************************/
 typedef struct Storage Storage;
 
@@ -17,35 +17,6 @@ typedef struct Storage Storage;
 #include "storage/fileRead.h"
 #include "storage/fileWrite.h"
 #include "storage/info.h"
-
-/***********************************************************************************************************************************
-Default file and path modes
-***********************************************************************************************************************************/
-#define STORAGE_MODE_FILE_DEFAULT                                   0640
-#define STORAGE_MODE_PATH_DEFAULT                                   0750
-
-/***********************************************************************************************************************************
-Path expression callback function type - used to modify paths based on expressions enclosed in <>
-***********************************************************************************************************************************/
-typedef String *(*StoragePathExpressionCallback)(const String *expression, const String *path);
-
-/***********************************************************************************************************************************
-storageNew
-***********************************************************************************************************************************/
-typedef struct StorageNewParam
-{
-    mode_t modeFile;
-    mode_t modePath;
-    bool write;
-    StoragePathExpressionCallback pathExpressionFunction;
-} StorageNewParam;
-
-#define storageNewP(path, ...)                                                                                                     \
-    storageNew(path, (StorageNewParam){__VA_ARGS__})
-#define storageNewNP(path)                                                                                                         \
-    storageNew(path, (StorageNewParam){0})
-
-Storage *storageNew(const String *path, StorageNewParam param);
 
 /***********************************************************************************************************************************
 storageCopy
@@ -78,7 +49,7 @@ typedef struct StorageGetParam
     size_t exactSize;
 } StorageGetParam;
 
-#define storageGetP(file, ...)                                                                                               \
+#define storageGetP(file, ...)                                                                                                     \
     storageGet(file, (StorageGetParam){__VA_ARGS__})
 #define storageGetNP(file)                                                                                                         \
     storageGet(file, (StorageGetParam){0})
@@ -119,10 +90,10 @@ StringList *storageList(const Storage *this, const String *pathExp, StorageListP
 /***********************************************************************************************************************************
 storageMove
 ***********************************************************************************************************************************/
-#define storageMoveNP(source, destination)                                                                                         \
-    storageMove(source, destination)
+#define storageMoveNP(this, source, destination)                                                                                   \
+    storageMove(this, source, destination)
 
-void storageMove(StorageFileRead *source, StorageFileWrite *destination);
+void storageMove(const Storage *this, StorageFileRead *source, StorageFileWrite *destination);
 
 /***********************************************************************************************************************************
 storageNewRead
@@ -239,14 +210,6 @@ typedef struct StorageRemoveParam
     storageRemove(this, fileExp, (StorageRemoveParam){0})
 
 void storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param);
-
-/***********************************************************************************************************************************
-storageFree
-***********************************************************************************************************************************/
-#define storageFreeNP(this)                                                                                                        \
-    storageFree(this)
-
-void storageFree(const Storage *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -1,20 +1,21 @@
 /***********************************************************************************************************************************
-Storage File Write
+Storage File Write Interface
 ***********************************************************************************************************************************/
 #include "common/assert.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "storage/fileWrite.h"
+#include "storage/fileWrite.intern.h"
 
 /***********************************************************************************************************************************
-Storage file structure
+Object type
 ***********************************************************************************************************************************/
 struct StorageFileWrite
 {
     MemContext *memContext;
-    StorageDriverPosixFileWrite *fileDriver;
-    IoWrite *io;
+    const String *type;
+    void *driver;
+    StorageFileWriteInterface interface;
 };
 
 /***********************************************************************************************************************************
@@ -24,37 +25,31 @@ This object expects its context to be created in advance.  This is so the callin
 required multiple functions and contexts to make it safe.
 ***********************************************************************************************************************************/
 StorageFileWrite *
-storageFileWriteNew(
-    const String *name, mode_t modeFile, mode_t modePath, bool noCreatePath, bool noSyncFile, bool noSyncPath, bool noAtomic)
+storageFileWriteNew(const String *type, void *driver, StorageFileWriteInterface interface)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, name);
-        FUNCTION_DEBUG_PARAM(MODE, modeFile);
-        FUNCTION_DEBUG_PARAM(MODE, modePath);
-        FUNCTION_DEBUG_PARAM(BOOL, noCreatePath);
-        FUNCTION_DEBUG_PARAM(BOOL, noSyncFile);
-        FUNCTION_DEBUG_PARAM(BOOL, noSyncPath);
-        FUNCTION_DEBUG_PARAM(BOOL, noAtomic);
+        FUNCTION_DEBUG_PARAM(STRING, type);
+        FUNCTION_DEBUG_PARAM(VOIDP, driver);
+        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE_INTERFACE, interface);
 
-        FUNCTION_TEST_ASSERT(name != NULL);
+        FUNCTION_TEST_ASSERT(type != NULL);
+        FUNCTION_TEST_ASSERT(driver != NULL);
+        FUNCTION_TEST_ASSERT(interface.atomic != NULL);
+        FUNCTION_TEST_ASSERT(interface.createPath != NULL);
+        FUNCTION_TEST_ASSERT(interface.io != NULL);
+        FUNCTION_TEST_ASSERT(interface.modeFile != NULL);
+        FUNCTION_TEST_ASSERT(interface.modePath != NULL);
+        FUNCTION_TEST_ASSERT(interface.name != NULL);
+        FUNCTION_TEST_ASSERT(interface.syncFile != NULL);
+        FUNCTION_TEST_ASSERT(interface.syncPath != NULL);
     FUNCTION_DEBUG_END();
 
-    StorageFileWrite *this = NULL;
+    StorageFileWrite *this = memNew(sizeof(StorageFileWrite));
+    this->memContext = memContextCurrent();
 
-    ASSERT_DEBUG(name != NULL);
-
-    MEM_CONTEXT_NEW_BEGIN("StorageFileWrite")
-    {
-        this = memNew(sizeof(StorageFileWrite));
-        this->memContext = MEM_CONTEXT_NEW();
-
-        this->fileDriver = storageDriverPosixFileWriteNew(name, modeFile, modePath, noCreatePath, noSyncFile, noSyncPath, noAtomic);
-
-        this->io = ioWriteNew(
-            this->fileDriver, (IoWriteOpen)storageDriverPosixFileWriteOpen, (IoWriteProcess)storageDriverPosixFileWrite,
-            (IoWriteClose)storageDriverPosixFileWriteClose);
-    }
-    MEM_CONTEXT_NEW_END();
+    this->type = type;
+    this->driver = driver;
+    this->interface = interface;
 
     FUNCTION_DEBUG_RESULT(STORAGE_FILE_WRITE, this);
 }
@@ -92,7 +87,7 @@ storageFileWriteAtomic(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, storageDriverPosixFileWriteAtomic(this->fileDriver));
+    FUNCTION_TEST_RESULT(BOOL, this->interface.atomic(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -107,13 +102,13 @@ storageFileWriteCreatePath(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, storageDriverPosixFileWriteCreatePath(this->fileDriver));
+    FUNCTION_TEST_RESULT(BOOL, this->interface.createPath(this->driver));
 }
 
 /***********************************************************************************************************************************
 Get file driver
 ***********************************************************************************************************************************/
-StorageDriverPosixFileWrite *
+void *
 storageFileWriteFileDriver(const StorageFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -122,7 +117,7 @@ storageFileWriteFileDriver(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STORAGE_DRIVER_POSIX_FILE_WRITE, this->fileDriver);
+    FUNCTION_TEST_RESULT(VOIDP, this->driver);
 }
 
 /***********************************************************************************************************************************
@@ -137,7 +132,7 @@ storageFileWriteIo(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_WRITE, this->io);
+    FUNCTION_TEST_RESULT(IO_WRITE, this->interface.io(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -152,7 +147,7 @@ storageFileWriteModeFile(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(MODE, storageDriverPosixFileWriteModeFile(this->fileDriver));
+    FUNCTION_TEST_RESULT(MODE, this->interface.modeFile(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -167,7 +162,7 @@ storageFileWriteModePath(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(MODE, storageDriverPosixFileWriteModePath(this->fileDriver));
+    FUNCTION_TEST_RESULT(MODE, this->interface.modePath(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -182,22 +177,7 @@ storageFileWriteName(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, storageDriverPosixFileWriteName(this->fileDriver));
-}
-
-/***********************************************************************************************************************************
-Get file path
-***********************************************************************************************************************************/
-const String *
-storageFileWritePath(const StorageFileWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RESULT(CONST_STRING, storageDriverPosixFileWritePath(this->fileDriver));
+    FUNCTION_TEST_RESULT(CONST_STRING, this->interface.name(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -212,7 +192,7 @@ storageFileWriteSyncFile(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, storageDriverPosixFileWriteSyncFile(this->fileDriver));
+    FUNCTION_TEST_RESULT(BOOL, this->interface.syncFile(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -227,7 +207,36 @@ storageFileWriteSyncPath(const StorageFileWrite *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, storageDriverPosixFileWriteSyncPath(this->fileDriver));
+    FUNCTION_TEST_RESULT(BOOL, this->interface.syncPath(this->driver));
+}
+
+/***********************************************************************************************************************************
+Get file type
+***********************************************************************************************************************************/
+const String *
+storageFileWriteType(const StorageFileWrite *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(CONST_STRING, this->type);
+}
+
+/***********************************************************************************************************************************
+Render as string for logging
+***********************************************************************************************************************************/
+String *
+storageFileWriteToLog(const StorageFileWrite *this)
+{
+    return strNewFmt(
+        "{type: %s, name: %s, modeFile: %04o, modePath: %04o, createPath: %s, syncFile: %s, syncPath: %s, atomic: %s}",
+        strPtr(this->type), strPtr(strToLog(storageFileWriteName(this))), storageFileWriteModeFile(this),
+        storageFileWriteModePath(this), cvtBoolToConstZ(storageFileWriteCreatePath(this)),
+        cvtBoolToConstZ(storageFileWriteSyncFile(this)), cvtBoolToConstZ(storageFileWriteSyncPath(this)),
+        cvtBoolToConstZ(storageFileWriteAtomic(this)));
 }
 
 /***********************************************************************************************************************************

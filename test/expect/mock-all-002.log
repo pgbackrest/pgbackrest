@@ -2054,26 +2054,10 @@ P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = 
 P00  DEBUG:     Protocol::Helper::protocolGet: found cached protocol
 P00  DEBUG:     Protocol::Local::Process->new(): bConfessError = <true>, iSelectTimeout = <30>, strBackRestBin = <[BACKREST-BIN]>, strHostType = db
 P00  DEBUG:     Protocol::Local::Process->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/global/pg_control to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/badchecksum.txt, pg_data/badchecksum.txt, 11, [undef], 0, [BACKUP-INCR-1], 0, 3, [MODIFICATION-TIME-1], 1, [undef], 0, 0), rParamSecure = [undef], strKey = pg_data/badchecksum.txt, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, [undef], 1, [BACKUP-INCR-1], 0, 3, [MODIFICATION-TIME-2], 1, {iWalId => 65535, iWalOffset => 65535}, 0, 0), rParamSecure = [undef], strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/changecontent.txt to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/changetime.txt to [BACKUP-FULL-2]
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/changesize.txt, pg_data/changesize.txt, 4, [undef], 0, [BACKUP-INCR-1], 0, 3, [MODIFICATION-TIME-1], 1, [undef], 0, 0), rParamSecure = [undef], strKey = pg_data/changesize.txt, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/zerosize.txt, pg_data/zerosize.txt, 0, [undef], 0, [BACKUP-INCR-1], 0, 3, [MODIFICATION-TIME-2], 1, [undef], 0, 0), rParamSecure = [undef], strKey = pg_data/zerosize.txt, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/zero_from_start to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/special-@!#$^&*()-_+~`{}[]\|:;"<>',.?% to [BACKUP-FULL-2]
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
 P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --host-id=1 --lock-path=[TEST_PATH]/backup/lock --log-level-file=trace --log-path=[TEST_PATH]/backup/log --log-subprocess --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --process=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --host-id=1 --lock-path=[TEST_PATH]/backup/lock --log-level-file=trace --log-path=[TEST_PATH]/backup/log --log-subprocess --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --process=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --type=db local, strId = local-1 process, strName = local
@@ -2096,22 +2080,22 @@ P00  DEBUG:     Protocol::Command::Master->close=>: iExitStatus = 0
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum 14c44cef6287269b08d41de489fd492bb9fc795d
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
 P00  DEBUG:     Protocol::Local::Process->process: all jobs complete
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/1/12000 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/changecontent.txt to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/changetime.txt to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/global/pg_control to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/postgresql.conf to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/special-@!#$^&*()-_+~`{}[]\|:;"<>',.?% to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/zero_from_start to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/changecontent.txt to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/changetime.txt to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/special-@!#$^&*()-_+~`{}[]\|:;"<>',.?% to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest=>: lSizeTotal = 22
 P00   INFO: incr backup size = 22B
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
@@ -2517,27 +2501,12 @@ P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = 
 P00  DEBUG:     Protocol::Helper::protocolGet: found cached protocol
 P00  DEBUG:     Protocol::Local::Process->new(): bConfessError = <true>, iSelectTimeout = <30>, strBackRestBin = <[BACKREST-BIN]>, strHostType = db
 P00  DEBUG:     Protocol::Local::Process->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/global/pg_control to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/badchecksum.txt, pg_data/badchecksum.txt, 11, bogus, 0, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-1], 1, [undef], 0, 0), rParamSecure = [undef], strKey = pg_data/badchecksum.txt, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/changesize.txt, pg_data/changesize.txt, 9, [undef], 0, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-1], 1, [undef], 0, 0), rParamSecure = [undef], strKey = pg_data/changesize.txt, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, 7, [undef], 1, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}, 0, 0), rParamSecure = [undef], strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strOp = backupFile, strQueue = pg_tblspc/2
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, [undef], 1, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}, 0, 0), rParamSecure = [undef], strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/changecontent.txt to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/changetime.txt, pg_data/changetime.txt, 4, [undef], 0, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-2], 1, [undef], 0, 0), rParamSecure = [undef], strKey = pg_data/changetime.txt, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/zerosize.txt, pg_data/zerosize.txt, 0, [undef], 0, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-2], 1, [undef], 0, 0), rParamSecure = [undef], strKey = pg_data/zerosize.txt, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/zero_from_start to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/special-@!#$^&*()-_+~`{}[]\|:;"<>',.?% to [BACKUP-FULL-2]
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
 P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --host-id=1 --lock-path=[TEST_PATH]/backup/lock --log-level-file=trace --log-path=[TEST_PATH]/backup/log --log-subprocess --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --process=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --host-id=1 --lock-path=[TEST_PATH]/backup/lock --log-level-file=trace --log-path=[TEST_PATH]/backup/log --log-subprocess --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --process=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --stanza=db --type=db local, strId = local-1 process, strName = local
@@ -2569,21 +2538,21 @@ P00  DEBUG:     Protocol::Command::Master->close=>: iExitStatus = 0
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
 P00  DEBUG:     Protocol::Local::Process->process: all jobs complete
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/1/12000 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/changecontent.txt to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/global/pg_control to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/postgresql.conf to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/special-@!#$^&*()-_+~`{}[]\|:;"<>',.?% to [BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->processManifest:  after backup, reference pg_data/zero_from_start to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/17000 to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/33000 to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/33001 to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/changecontent.txt to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/global/pg_control to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/special-@!#$^&*()-_+~`{}[]\|:;"<>',.?% to [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest=>: lSizeTotal = 38
 P00   INFO: incr backup size = 38B
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]

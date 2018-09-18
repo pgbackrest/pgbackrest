@@ -355,8 +355,8 @@ sub run
         &log(INFO, "    get second WAL (${strSourceFile})");
 
         $oHostDbMaster->executeSimple(
-            $strCommandGet . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
-                " --archive-async --archive-timeout=5 ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
+            $strCommandGet . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " --archive-async" . (!$bS3 ? " --repo-type=cifs" : '') .
+                " --archive-timeout=5 ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
             {oLogTest => $self->expect()});
 
         # Check that the destination file exists

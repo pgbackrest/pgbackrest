@@ -69,7 +69,7 @@ harnessLogInit(void)
     logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false);
     logFileBanner = true;
 
-    snprintf(logFile, sizeof(logFile), "%s/expect.log", testPath());
+    snprintf(logFile, sizeof(logFile), "%s/expect.log", testExpectPath());
     logHandleFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
     FUNCTION_HARNESS_RESULT_VOID();
@@ -142,7 +142,8 @@ harnessLogLoad(const char *logFile)
         THROW_SYS_ERROR_FMT(FileOpenError, "unable to close log file '%s'", logFile);
 
     // Remove final linefeed
-    harnessLogBuffer[totalBytes - 1] = 0;
+    if (totalBytes > 0)
+        harnessLogBuffer[totalBytes - 1] = 0;
 
     FUNCTION_HARNESS_RESULT_VOID();
 }

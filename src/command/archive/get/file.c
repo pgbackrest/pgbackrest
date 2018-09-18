@@ -12,7 +12,7 @@ Archive Get File
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "postgres/info.h"
-#include "protocol/storage/helper.h"
+#include "storage/helper.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************

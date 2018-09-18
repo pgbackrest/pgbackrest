@@ -321,7 +321,7 @@ eval
         {
             confess &log(ERROR, "select a single Debian-based VM for coverage testing");
         }
-        elsif (!vmCoverage($strVm))
+        elsif (!vmCoveragePerl($strVm))
         {
             confess &log(ERROR, "only Debian-based VMs can be used for coverage testing");
         }
@@ -587,7 +587,7 @@ eval
             executeTest("rm -rf ${strBackRestBase}/test/coverage/perl/*");
 
             # Copy C code for coverage tests
-            if (vmCoverage($strVm) && !$bDryRun)
+            if (vmCoverageC($strVm) && !$bDryRun)
             {
                 $oStorageTest->pathCreate("${strCodePath}/test", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
@@ -721,7 +721,7 @@ eval
                             " --include=" . join('/*** --include=', @stryBinSrcPath) . '/*** --exclude=*' .
                             " ${strBackRestBase}/ ${strBinPath}/${strBuildVM}");
 
-                        if (vmCoverage($strVm) && !$bNoLint)
+                        if (vmLintC($strVm) && !$bNoLint)
                         {
                             &log(INFO, "    clang static analyzer ${strBuildVM} (${strBuildPath})");
                         }
@@ -734,7 +734,7 @@ eval
 
                         executeTest(
                             'docker exec -i test-build' .
-                            (vmCoverage($strVm) && !$bNoLint ? ' scan-build-6.0' : '') .
+                            (vmLintC($strVm) && !$bNoLint ? ' scan-build-6.0' : '') .
                             " make --silent --directory ${strBuildPath} CEXTRA=${strCExtra} LDEXTRA=${strLdExtra} ${strCDebug}",
                             {bShowOutputAsync => $bLogDetail});
 
@@ -1158,82 +1158,85 @@ eval
         #---------------------------------------------------------------------------------------------------------------------------
         my $iUncoveredCodeModuleTotal = 0;
 
-        if (vmCoverage($strVm) && !$bNoCoverage && !$bDryRun)
+        if ((vmCoverageC($strVm) || vmCoveragePerl($strVm)) && !$bNoCoverage && !$bDryRun && $iTestFail == 0)
         {
-            &log(INFO, 'writing coverage report');
-            executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
-            executeTest(
-                "cd ${strCoveragePath}_temp && " .
-                LIB_COVER_EXE . " -report json -outputdir ${strBackRestBase}/test/coverage/perl ${strCoveragePath}_temp",
-                {bSuppressStdErr => true});
-            executeTest("sudo rm -rf ${strCoveragePath}_temp");
-            executeTest("sudo cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
-            executeTest(
-                "cd ${strCoveragePath}_temp && " .
-                LIB_COVER_EXE . " -outputdir ${strBackRestBase}/test/coverage/perl ${strCoveragePath}_temp",
-                {bSuppressStdErr => true});
-            executeTest("sudo rm -rf ${strCoveragePath}_temp");
-
             # Determine which modules were covered (only check coverage if all tests were successful)
             #-----------------------------------------------------------------------------------------------------------------------
-            if ($iTestFail == 0)
+            my $hModuleTest;                                        # Everything that was run
+
+            # Build a hash of all modules, tests, and runs that were executed
+            foreach my $hTestRun (@{$oyTestRun})
             {
-                my $hModuleTest;                                        # Everything that was run
+                # Get coverage for the module
+                my $strModule = $hTestRun->{&TEST_MODULE};
+                my $hModule = testDefModule($strModule);
 
-                # Build a hash of all modules, tests, and runs that were executed
-                foreach my $hTestRun (@{$oyTestRun})
+                # Get coverage for the test
+                my $strTest = $hTestRun->{&TEST_NAME};
+                my $hTest = testDefModuleTest($strModule, $strTest);
+
+                # If no tests are listed it means all of them were run
+                if (@{$hTestRun->{&TEST_RUN}} == 0)
                 {
-                    # Get coverage for the module
-                    my $strModule = $hTestRun->{&TEST_MODULE};
-                    my $hModule = testDefModule($strModule);
+                    $hModuleTest->{$strModule}{$strTest} = true;
+                }
+            }
 
-                    # Get coverage for the test
-                    my $strTest = $hTestRun->{&TEST_NAME};
-                    my $hTest = testDefModuleTest($strModule, $strTest);
+            # Now compare against code modules that should have full coverage
+            my $hCoverageList = testDefCoverageList();
+            my $hCoverageType = testDefCoverageType();
+            my $hCoverageActual;
 
-                    # If no tests are listed it means all of them were run
-                    if (@{$hTestRun->{&TEST_RUN}} == 0)
+            foreach my $strCodeModule (sort(keys(%{$hCoverageList})))
+            {
+                if (@{$hCoverageList->{$strCodeModule}} > 0)
+                {
+                    my $iCoverageTotal = 0;
+
+                    foreach my $hTest (@{$hCoverageList->{$strCodeModule}})
                     {
-                        $hModuleTest->{$strModule}{$strTest} = true;
+                        if (!defined($hModuleTest->{$hTest->{strModule}}{$hTest->{strTest}}))
+                        {
+                            next;
+                        }
+
+                        $iCoverageTotal++;
+                    }
+
+                    if (@{$hCoverageList->{$strCodeModule}} == $iCoverageTotal)
+                    {
+                        $hCoverageActual->{testRunName($strCodeModule, false)} = $hCoverageType->{$strCodeModule};
                     }
                 }
+            }
+
+            if (keys(%{$hCoverageActual}) == 0)
+            {
+                &log(INFO, 'no code modules had all tests run required for coverage');
+            }
+
+            # Generate Perl coverage report
+            #-----------------------------------------------------------------------------------------------------------------------
+            if (vmCoveragePerl($strVm))
+            {
+                &log(INFO, 'writing Perl coverage report');
+
+                executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
+                executeTest(
+                    "cd ${strCoveragePath}_temp && " .
+                    LIB_COVER_EXE . " -report json -outputdir ${strBackRestBase}/test/coverage/perl ${strCoveragePath}_temp",
+                    {bSuppressStdErr => true});
+                executeTest("sudo rm -rf ${strCoveragePath}_temp");
+                executeTest("sudo cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
+                executeTest(
+                    "cd ${strCoveragePath}_temp && " .
+                    LIB_COVER_EXE . " -outputdir ${strBackRestBase}/test/coverage/perl ${strCoveragePath}_temp",
+                    {bSuppressStdErr => true});
+                executeTest("sudo rm -rf ${strCoveragePath}_temp");
 
                 # Load the results of coverage testing from JSON
                 my $oJSON = JSON::PP->new()->allow_nonref();
                 my $hCoverageResult = $oJSON->decode(${$oStorageBackRest->get('test/coverage/perl/cover.json')});
-
-                # Now compare against code modules that should have full coverage
-                my $hCoverageList = testDefCoverageList();
-                my $hCoverageType = testDefCoverageType();
-                my $hCoverageActual;
-
-                foreach my $strCodeModule (sort(keys(%{$hCoverageList})))
-                {
-                    if (@{$hCoverageList->{$strCodeModule}} > 0)
-                    {
-                        my $iCoverageTotal = 0;
-
-                        foreach my $hTest (@{$hCoverageList->{$strCodeModule}})
-                        {
-                            if (!defined($hModuleTest->{$hTest->{strModule}}{$hTest->{strTest}}))
-                            {
-                                next;
-                            }
-
-                            $iCoverageTotal++;
-                        }
-
-                        if (@{$hCoverageList->{$strCodeModule}} == $iCoverageTotal)
-                        {
-                            $hCoverageActual->{testRunName($strCodeModule, false)} = $hCoverageType->{$strCodeModule};
-                        }
-                    }
-                }
-
-                if (keys(%{$hCoverageActual}) == 0)
-                {
-                    &log(INFO, 'no code modules had all tests run required for coverage');
-                }
 
                 foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
                 {
@@ -1308,9 +1311,14 @@ eval
                         }
                     }
                 }
+            }
 
-                # Generate C coverage with lcov
-                #---------------------------------------------------------------------------------------------------------------------------
+            # Generate C coverage report
+            #---------------------------------------------------------------------------------------------------------------------------
+            if (vmCoverageC($strVm))
+            {
+                &log(INFO, 'writing C coverage report');
+
                 my $strLCovFile = "${strBackRestBase}/test/.vagrant/code/all.lcov";
 
                 if ($oStorageBackRest->exists($strLCovFile))

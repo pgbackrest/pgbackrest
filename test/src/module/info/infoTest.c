@@ -52,7 +52,8 @@ testRun(void)
 
         // Remove the copy and store only the main info file. One is required.
         //--------------------------------------------------------------------------------------------------------------------------
-        storageMoveNP(storageNewReadNP(storageLocal(), fileNameCopy), storageNewWriteNP(storageLocalWrite(), fileName));
+        storageMoveNP(
+            storageLocal(), storageNewReadNP(storageLocal(), fileNameCopy), storageNewWriteNP(storageLocalWrite(), fileName));
 
         // Only main info exists and is required
         TEST_ASSIGN(info, infoNew(storageLocal(), fileName), "infoNew() - load file");

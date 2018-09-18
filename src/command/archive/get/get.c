@@ -18,7 +18,7 @@ Archive Get Command
 #include "config/load.h"
 #include "perl/exec.h"
 #include "postgres/info.h"
-#include "protocol/storage/helper.h"
+#include "storage/helper.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -78,7 +78,7 @@ queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegm
 
             // Else delete it
             else
-                storageRemoveNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(file)));
+                storageRemoveNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(file)));
         }
 
         // Generate a list of the WAL that are needed by removing kept WAL from the ideal queue
@@ -150,7 +150,8 @@ cmdArchiveGet(void)
                 if (archiveAsyncStatus(archiveModeGet, walSegment, confessOnError))
                 {
                     storageRemoveP(
-                        storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment)), .errorOnMissing = true);
+                        storageSpoolWrite(),
+                        strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment)), .errorOnMissing = true);
                     break;
                 }
 
@@ -176,7 +177,7 @@ cmdArchiveGet(void)
                         .noAtomic = true);
 
                     // Move (or copy if required) the file
-                    storageMoveNP(source, destination);
+                    storageMoveNP(storageSpoolWrite(), source, destination);
 
                     // Return success
                     result = 0;
@@ -226,7 +227,7 @@ cmdArchiveGet(void)
                             unsigned int walSegmentSize = WAL_SEGMENT_DEFAULT_SIZE;
 
                             // Create the queue
-                            storagePathCreateNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
+                            storagePathCreateNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
 
                             // Clean the current queue using the list of WAL that we ideally want in the queue.  queueNeed()
                             // will return the list of WAL needed to fill the queue and this will be passed to the async process.

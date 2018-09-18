@@ -287,7 +287,7 @@ XS_EUPXS(XS_pgBackRest__LibC_storageDriverPosixPathRemove)
 ;
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        storageDriverPosixPathRemove(strNew(path), errorOnMissing, recurse);
+        storageDriverPosixPathRemove(storageDriverPosixNew(strNew("/"), 0640, 750, true, NULL), strNew(path), errorOnMissing, recurse);
     }
     MEM_CONTEXT_XS_TEMP_END();
     }

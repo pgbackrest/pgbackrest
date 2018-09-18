@@ -5,17 +5,19 @@ Posix Storage File Read Driver
 #define STORAGE_DRIVER_POSIX_FILEREAD_H
 
 /***********************************************************************************************************************************
-Read file object
+Object type
 ***********************************************************************************************************************************/
 typedef struct StorageDriverPosixFileRead StorageDriverPosixFileRead;
 
 #include "common/type/buffer.h"
 #include "common/type/string.h"
+#include "storage/driver/posix/storage.h"
+#include "storage/fileRead.h"
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-StorageDriverPosixFileRead *storageDriverPosixFileReadNew(const String *name, bool ignoreMissing);
+StorageDriverPosixFileRead *storageDriverPosixFileReadNew(const StorageDriverPosix *storage, const String *name, bool ignoreMissing);
 
 /***********************************************************************************************************************************
 Functions
@@ -29,6 +31,8 @@ Getters
 ***********************************************************************************************************************************/
 bool storageDriverPosixFileReadEof(const StorageDriverPosixFileRead *this);
 bool storageDriverPosixFileReadIgnoreMissing(const StorageDriverPosixFileRead *this);
+StorageFileRead *storageDriverPosixFileReadInterface(const StorageDriverPosixFileRead *this);
+IoRead *storageDriverPosixFileReadIo(const StorageDriverPosixFileRead *this);
 const String *storageDriverPosixFileReadName(const StorageDriverPosixFileRead *this);
 
 /***********************************************************************************************************************************

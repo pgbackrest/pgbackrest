@@ -4,6 +4,7 @@ IO Size Filter
 #include <stdio.h>
 
 #include "common/debug.h"
+#include "common/io/filter/filter.intern.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -39,8 +40,10 @@ ioSizeNew(void)
         this = memNew(sizeof(IoSize));
         this->memContext = memContextCurrent();
 
-        this->filter = ioFilterNew(
-            strNew(SIZE_FILTER_TYPE), this, NULL, NULL, (IoFilterProcessIn)ioSizeProcess, NULL, (IoFilterResult)ioSizeResult);
+        // Create filter interface
+        this->filter = ioFilterNewP(
+            strNew(SIZE_FILTER_TYPE), this, .in = (IoFilterInterfaceProcessIn)ioSizeProcess,
+            .result = (IoFilterInterfaceResult)ioSizeResult);
     }
     MEM_CONTEXT_NEW_END();
 

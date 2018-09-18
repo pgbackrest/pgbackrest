@@ -4,6 +4,7 @@ Buffer IO Read
 #include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/bufferRead.h"
+#include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 
@@ -38,9 +39,8 @@ ioBufferReadNew(const Buffer *buffer)
     {
         this = memNew(sizeof(IoBufferRead));
         this->memContext = memContextCurrent();
-
+        this->io = ioReadNewP(this, .eof = (IoReadInterfaceEof)ioBufferReadEof, .read = (IoReadInterfaceRead)ioBufferRead);
         this->read = buffer;
-        this->io = ioReadNew(this, NULL, (IoReadProcess)ioBufferRead, NULL, (IoReadEof)ioBufferReadEof);
     }
     MEM_CONTEXT_NEW_END();
 

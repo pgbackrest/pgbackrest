@@ -29,10 +29,16 @@ use constant VMDEF_DEBUG_INTEGRATION                                => 'debug-in
     push @EXPORT, qw(VMDEF_DEBUG_INTEGRATION);
 use constant VM_CONTROL_MASTER                                      => 'control-master';
     push @EXPORT, qw(VM_CONTROL_MASTER);
+# Will coverage testing be run for C?
+use constant VMDEF_COVERAGE_C                                       => 'coverage-c';
+# Will coverage testing be run for Perl?
+use constant VMDEF_COVERAGE_PERL                                    => 'coverage-perl';
 use constant VM_DEPRECATED                                          => 'deprecated';
     push @EXPORT, qw(VM_DEPRECATED);
 use constant VM_IMAGE                                               => 'image';
     push @EXPORT, qw(VM_IMAGE);
+# Will static code analysis be run for C?
+use constant VMDEF_LINT_C                                           => 'lint-c';
 use constant VM_OS                                                  => 'os';
     push @EXPORT, qw(VM_OS);
 use constant VM_OS_BASE                                             => 'os-base';
@@ -102,9 +108,6 @@ use constant VM_EXPECT                                              => VM_CO7;
 # Defines the host VM (the VM that the containers run in)
 use constant VM_HOST_DEFAULT                                        => VM_U18;
     push @EXPORT, qw(VM_HOST_DEFAULT);
-
-# Defines the VM that will do coverage testing
-use constant VM_COVERAGE                                            => VM_U18;
 
 # Lists valid VMs
 use constant VM_LIST                                                => (VM_U18, VM_CO6, VM_CO7, VM_U12);
@@ -334,6 +337,9 @@ my $oyVm =
         &VM_OS_REPO => 'bionic',
         &VM_IMAGE => 'ubuntu:18.04',
         &VM_ARCH => VM_ARCH_AMD64,
+        &VMDEF_COVERAGE_C => true,
+        &VMDEF_COVERAGE_PERL => true,
+        &VMDEF_LINT_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.26.1',
 
@@ -374,13 +380,19 @@ foreach my $strVm (sort(keys(%{$oyVm})))
 foreach my $strPgVersion (versionSupport())
 {
     my $strVmPgVersionRun;
-    my $strVmCoverage;
+    my $bVmCoveragePerl = false;
+    my $bVmCoverageC = false;
 
     foreach my $strVm (VM_LIST)
     {
-        if ($strVm eq VM_COVERAGE)
+        if (vmCoverageC($strVm))
         {
-            $strVmCoverage = $strVm;
+            $bVmCoverageC = true;
+        }
+
+        if (vmCoveragePerl($strVm))
+        {
+            $bVmCoveragePerl = true;
         }
 
         foreach my $strVmPgVersion (@{$oyVm->{$strVm}{&VM_DB_TEST}})
@@ -399,9 +411,14 @@ foreach my $strPgVersion (versionSupport())
 
     my $strErrorSuffix = 'is not configured to run on a default vm';
 
-    if (!defined($strVmCoverage))
+    if (!$bVmCoverageC)
     {
-        confess &log(ASSERT, 'vm designated for coverage testing (' . VM_COVERAGE . ") ${strErrorSuffix}");
+        confess &log(ASSERT, "C coverage ${strErrorSuffix}");
+    }
+
+    if (!$bVmCoveragePerl)
+    {
+        confess &log(ASSERT, "Perl coverage ${strErrorSuffix}");
     }
 
     if (!defined($strVmPgVersionRun))
@@ -434,16 +451,40 @@ sub vmBaseTest
 push @EXPORT, qw(vmBaseTest);
 
 ####################################################################################################################################
-# vmCoverage
+# vmCoverageC
 ####################################################################################################################################
-sub vmCoverage
+sub vmCoverageC
 {
     my $strVm = shift;
 
-    return ($strVm eq VM_COVERAGE ? true : false)
+    return $oyVm->{$strVm}{&VMDEF_COVERAGE_C} ? true : false;
 }
 
-push @EXPORT, qw(vmCoverage);
+push @EXPORT, qw(vmCoverageC);
+
+####################################################################################################################################
+# vmCoveragePerl
+####################################################################################################################################
+sub vmCoveragePerl
+{
+    my $strVm = shift;
+
+    return $oyVm->{$strVm}{&VMDEF_COVERAGE_PERL} ? true : false;
+}
+
+push @EXPORT, qw(vmCoveragePerl);
+
+####################################################################################################################################
+# vmLintC
+####################################################################################################################################
+sub vmLintC
+{
+    my $strVm = shift;
+
+    return $oyVm->{$strVm}{&VMDEF_LINT_C} ? true : false;
+}
+
+push @EXPORT, qw(vmLintC);
 
 ####################################################################################################################################
 # Get vm architecture bits

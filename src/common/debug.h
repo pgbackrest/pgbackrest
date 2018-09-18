@@ -200,6 +200,11 @@ size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
 #define FUNCTION_DEBUG_VOIDP_FORMAT(value, buffer, bufferSize)                                                                     \
     ptrToLog(value, "void *", buffer, bufferSize)
 
+#define FUNCTION_DEBUG_CONST_VOIDP_TYPE                                                                                            \
+    const void *
+#define FUNCTION_DEBUG_CONST_VOIDP_FORMAT(value, buffer, bufferSize)                                                               \
+    FUNCTION_DEBUG_VOIDP_FORMAT(value, buffer, bufferSize)
+
 #define FUNCTION_DEBUG_VOIDPP_TYPE                                                                                                 \
     void **
 #define FUNCTION_DEBUG_VOIDPP_FORMAT(value, buffer, bufferSize)                                                                    \

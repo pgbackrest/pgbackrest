@@ -7,6 +7,7 @@ Test Archive Get Command
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "compress/gzipCompress.h"
+#include "storage/driver/posix/storage.h"
 
 /***********************************************************************************************************************************
 Create test pg_control file
@@ -29,7 +30,8 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storageDriverPosixInterface(
+        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
 
     // *****************************************************************************************************************************
     if (testBegin("archiveGetCheck()"))
@@ -118,10 +120,6 @@ testRun(void)
         storagePutNP(storageNewWriteNP(storageTest, strNew("repo/archive/test1/10-4/00000009.history")), NULL);
 
         TEST_RESULT_STR(strPtr(archiveGetCheck(strNew("00000009.history"))), "10-4/00000009.history", "history file found");
-
-        // Clear data
-        storagePathRemoveP(storageTest, strNew("repo"), .recurse = true);
-        storagePathRemoveP(storageTest, strNew("db"), .recurse = true);
     }
 
     // *****************************************************************************************************************************
@@ -200,10 +198,6 @@ testRun(void)
         TEST_RESULT_INT(archiveGetFile(archiveFile, walDestination), 0, "WAL segment copied");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, walDestination), true, "  check exists");
         TEST_RESULT_INT(storageInfoNP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
-
-        // Clear data
-        storagePathRemoveP(storageTest, strNew("repo"), .recurse = true);
-        storagePathRemoveP(storageTest, strNew("db"), .recurse = true);
     }
 
     // *****************************************************************************************************************************
@@ -211,7 +205,7 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--archive-async");
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
         strLstAddZ(argList, "archive-get");
@@ -222,10 +216,10 @@ testRun(void)
 
         TEST_ERROR_FMT(
             queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
-            PathOpenError, "unable to open path '%s/spool/archive/db/in' for read: [2] No such file or directory", testPath());
+            PathOpenError, "unable to open path '%s/spool/archive/test1/in' for read: [2] No such file or directory", testPath());
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePathCreateNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
+        storagePathCreateNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92), "|")),
@@ -244,30 +238,30 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(
-                storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE")), walSegmentBuffer);
+                storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE")), walSegmentBuffer);
         storagePutNP(
             storageNewWriteNP(
-                storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF")), walSegmentBuffer);
+                storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF")), walSegmentBuffer);
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(queueNeed(strNew("0000000100000001000000FE"), false, queueSize, walSegmentSize, PG_VERSION_92), "|")),
             "000000010000000200000000|000000010000000200000001", "queue has wal < 9.3");
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(storageListNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), "|")),
+            strPtr(strLstJoin(storageListNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), "|")),
             "0000000100000001000000FE", "check queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
         walSegmentSize = 1024 * 1024;
         queueSize = walSegmentSize * 5;
 
-        storagePutNP(storageNewWriteNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/junk")), bufNewStr(strNew("JUNK")));
+        storagePutNP(storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/junk")), bufNewStr(strNew("JUNK")));
         storagePutNP(
             storageNewWriteNP(
-                storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFE")), walSegmentBuffer);
+                storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFE")), walSegmentBuffer);
         storagePutNP(
             storageNewWriteNP(
-                storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFF")), walSegmentBuffer);
+                storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFF")), walSegmentBuffer);
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(queueNeed(strNew("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11), "|")),
@@ -276,8 +270,6 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(strLstJoin(strLstSort(storageListNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), sortOrderAsc), "|")),
             "000000010000000A00000FFE|000000010000000A00000FFF", "check queue");
-
-        storagePathRemoveP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN), .recurse = true);
     }
 
     // *****************************************************************************************************************************
@@ -376,7 +368,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         storagePutNP(
-            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment))), NULL);
+            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment))), NULL);
 
         TEST_RESULT_VOID(cmdArchiveGet(), "successful get of missing WAL");
         harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive");
@@ -388,7 +380,7 @@ testRun(void)
         // Write out a WAL segment for success
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
-            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
+            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
             bufNewStr(strNew("SHOULD-BE-A-REAL-WAL-FILE")));
 
         TEST_RESULT_VOID(cmdArchiveGet(), "successful get");
@@ -405,10 +397,10 @@ testRun(void)
         String *walSegment2 = strNew("000000010000000100000002");
 
         storagePutNP(
-            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
+            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
             bufNewStr(strNew("SHOULD-BE-A-REAL-WAL-FILE")));
         storagePutNP(
-            storageNewWriteNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment2))),
+            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment2))),
             bufNewStr(strNew("SHOULD-BE-A-REAL-WAL-FILE")));
 
         TEST_RESULT_VOID(cmdArchiveGet(), "successful get");

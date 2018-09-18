@@ -494,30 +494,18 @@ unit:
           Storage/Helper: partial
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: file
-        total: 3
+      - name: posix
+        total: 20
 
         coverage:
           storage/driver/posix/common: full
           storage/driver/posix/fileRead: full
           storage/driver/posix/fileWrite: full
+          storage/driver/posix/storage: full
           storage/fileRead: full
           storage/fileWrite: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: storage
-        total: 14
-
-        coverage:
-          storage/driver/posix/storage: full
-          storage/storage: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: helper
-        total: 3
-
-        coverage:
           storage/helper: full
+          storage/storage: full
 
   # ********************************************************************************************************************************
   - name: protocol
@@ -529,13 +517,6 @@ unit:
 
         coverage:
           Protocol/Base/Minion: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: storage-helper
-        total: 2
-
-        coverage:
-          protocol/storage/helper: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: helper-perl
@@ -587,7 +568,6 @@ unit:
         coverage:
           command/command: full
 
-    test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: control
         total: 2

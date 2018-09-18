@@ -107,6 +107,7 @@ sub new
 
     # Setup the path where gcc coverage will be performed
     $self->{strGCovPath} = "$self->{strTestPath}/gcov-$self->{oTest}->{&TEST_VM}-$self->{iVmIdx}";
+    $self->{strExpectPath} = "$self->{strTestPath}/expect-$self->{iVmIdx}";
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -178,6 +179,12 @@ sub run
                 $bGCovExists = false;
             }
 
+            # Create expect directory
+            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($self->{strExpectPath}))
+            {
+                $self->{oStorageTest}->pathCreate($self->{strExpectPath}, {strMode => '0770'});
+            }
+
             if ($self->{oTest}->{&TEST_CONTAINER})
             {
                 executeTest(
@@ -185,6 +192,7 @@ sub run
                     " -v $self->{strCoveragePath}:$self->{strCoveragePath} " .
                     " -v ${strHostTestPath}:${strVmTestPath}" .
                     ($self->{oTest}->{&TEST_C} ? " -v $self->{strGCovPath}:$self->{strGCovPath}" : '') .
+                    ($self->{oTest}->{&TEST_C} ? " -v $self->{strExpectPath}:$self->{strExpectPath}" : '') .
                     " -v $self->{strBackRestBase}:$self->{strBackRestBase} " .
                     containerRepo() . ':' . $self->{oTest}->{&TEST_VM} .
                     "-test",
@@ -247,7 +255,7 @@ sub run
             $strCommand =
                 ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                 testRunExe(
-                    vmCoverage($self->{oTest}->{&TEST_VM}), undef, abs_path($0), dirname($self->{strCoveragePath}),
+                    vmCoverageC($self->{oTest}->{&TEST_VM}), undef, abs_path($0), dirname($self->{strCoveragePath}),
                     $self->{strBackRestBase}, $self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME}) .
                 " --test-path=${strVmTestPath}" .
                 " --vm=$self->{oTest}->{&TEST_VM}" .
@@ -330,6 +338,7 @@ sub run
 
                 # Set globals
                 $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strVmTestPath/g;
+                $strTestC =~ s/\{\[C\_TEST\_EXPECT_PATH\]\}/$self->{strExpectPath}/g;
 
                 # Set defalt log level
                 my $strLogLevelTestC = "logLevel" . ucfirst($self->{strLogLevelTest});
@@ -364,7 +373,9 @@ sub run
                     "CFLAGS=-I. -std=c99 -fPIC -g" . ($self->{bProfile} ? " -pg" : '') . "\\\n" .
                     "       -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wswitch-enum -Wconversion \\\n" .
                     ($self->{oTest}->{&TEST_VM} eq VM_U16 || $self->{oTest}->{&TEST_VM} eq VM_U18 ?
-                        "       -Wformat-signedness -Wduplicated-branches -Wduplicated-cond \\\n" : '') .
+                        "       -Wformat-signedness \\\n" : '') .
+                    ($self->{oTest}->{&TEST_VM} eq VM_U18 ?
+                        "       -Wduplicated-branches -Wduplicated-cond \\\n" : '') .
                     # This warning appears to be broken on U12 even though the functionality is fine
                     ($self->{oTest}->{&TEST_VM} eq VM_U12 || $self->{oTest}->{&TEST_VM} eq VM_CO6 ?
                         "       -Wno-missing-field-initializers \\\n" : '') .
@@ -373,7 +384,7 @@ sub run
                     #         "       -Wpedantic \\\n" : '') .
                     "       -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla \\\n" .
                     "       `perl -MExtUtils::Embed -e ccopts`\n" .
-                    "LDFLAGS=-lcrypto -lz" . (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
+                    "LDFLAGS=-lcrypto -lz" . (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -lbacktrace' : '') .
                         " `perl -MExtUtils::Embed -e ldopts`\n" .
                     'TESTFLAGS=' . ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : "-DDEBUG_UNIT") .
@@ -389,7 +400,8 @@ sub run
                     "\n" .
                     "test.o: test.c\n" .
 	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) -O0" .
-                        (vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
+                        ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
+                        (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
                             ' -fprofile-arcs -ftest-coverage' : '') .
                         " -c test.c\n" .
                     "\n" .
@@ -465,7 +477,7 @@ sub end
         }
 
         # If C code generate coverage info
-        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverage($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit})
+        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit})
         {
             # Generate a list of files to cover
             my $hTestCoverage =
@@ -510,7 +522,6 @@ sub end
                 my $strLCovTotal = $self->{strBackRestBase} . "/test/.vagrant/code/all.lcov";
 
                 executeTest(
-                    'docker exec -i -u ' . TEST_USER . " ${strImage} " .
                     "${strLCovExe} --extract=${strLCovOut} */${strModuleName}.c --o=${strLCovOutTmp}");
 
                 # Combine with prior run if there was one
@@ -521,7 +532,6 @@ sub end
                     $self->{oStorageTest}->put($strLCovOutTmp, $strCoverage);
 
                     executeTest(
-                        'docker exec -i -u ' . TEST_USER . " ${strImage} " .
                         "${strLCovExe} --add-tracefile=${strLCovOutTmp} --add-tracefile=${strLCovFile} --o=${strLCovOutTmp}");
                 }
 
@@ -562,7 +572,6 @@ sub end
                         if ($self->{oStorageTest}->exists($strLCovTotal))
                         {
                             executeTest(
-                                'docker exec -i -u ' . TEST_USER . " ${strImage} " .
                                 "${strLCovExe} --add-tracefile=${strLCovFile} --add-tracefile=${strLCovTotal} --o=${strLCovTotal}");
                         }
                         else

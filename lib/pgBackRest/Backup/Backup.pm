@@ -422,7 +422,7 @@ sub processManifest
             # recopied.
             else
             {
-                logDebugMisc($strOperation, "reference ${strRepoFile} to ${strReference}");
+                logDebugMisc($strOperation, "reference ${strFile} to ${strReference}");
             }
         }
     }

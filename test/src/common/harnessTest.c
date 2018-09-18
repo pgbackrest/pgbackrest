@@ -24,6 +24,7 @@ static bool testFirst = true;
 
 static const char *testExeData = NULL;
 static const char *testPathData = NULL;
+static const char *testExpectPathData = NULL;
 
 /***********************************************************************************************************************************
 Extern functions
@@ -82,6 +83,30 @@ testPathSet(const char *testPath)
 }
 
 /***********************************************************************************************************************************
+Get and set the expect path, i.e., the path where expect logs will be stored by the harnessLog module
+***********************************************************************************************************************************/
+const char *
+testExpectPath(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RESULT(STRINGZ, testExpectPathData);
+}
+
+void
+testExpectPathSet(const char *testExpectPath)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, testExpectPath);
+
+        FUNCTION_HARNESS_ASSERT(testExpectPath != NULL);
+    FUNCTION_HARNESS_END();
+
+    testExpectPathData = testExpectPath;
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
 testAdd - add a new test
 ***********************************************************************************************************************************/
 void
@@ -123,9 +148,22 @@ testBegin(const char *name)
     if (testList[testRun - 1].selected)
     {
 #ifndef NO_LOG
-        // Make sure there is nothing untested left in the log
         if (!testFirst)
+        {
+            // Make sure there is nothing untested left in the log
             harnessLogFinal();
+
+            // Clear out the test directory so the next test starts clean
+            char buffer[2048];
+            snprintf(buffer, sizeof(buffer), "sudo rm -rf %s/" "*", testPath());
+
+            if (system(buffer) != 0)
+            {
+                fprintf(stderr, "ERROR: unable to clear test path '%s'\n", testPath());
+                fflush(stderr);
+                exit(255);
+            }
+        }
 #endif
         // No longer the first test
         testFirst = false;

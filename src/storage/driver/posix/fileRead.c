@@ -6,10 +6,12 @@ Posix Storage File Read Driver
 
 #include "common/assert.h"
 #include "common/debug.h"
+#include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "storage/driver/posix/common.h"
 #include "storage/driver/posix/fileRead.h"
+#include "storage/fileRead.intern.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -17,7 +19,9 @@ Object type
 struct StorageDriverPosixFileRead
 {
     MemContext *memContext;
-
+    const StorageDriverPosix *storage;
+    StorageFileRead *interface;
+    IoRead *io;
     String *name;
     bool ignoreMissing;
 
@@ -29,7 +33,7 @@ struct StorageDriverPosixFileRead
 Create a new file
 ***********************************************************************************************************************************/
 StorageDriverPosixFileRead *
-storageDriverPosixFileReadNew(const String *name, bool ignoreMissing)
+storageDriverPosixFileReadNew(const StorageDriverPosix *storage, const String *name, bool ignoreMissing)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(STRING, name);
@@ -45,10 +49,22 @@ storageDriverPosixFileReadNew(const String *name, bool ignoreMissing)
     {
         this = memNew(sizeof(StorageDriverPosixFileRead));
         this->memContext = MEM_CONTEXT_NEW();
+        this->storage = storage;
         this->name = strDup(name);
         this->ignoreMissing = ignoreMissing;
 
         this->handle = -1;
+
+        this->interface = storageFileReadNewP(
+            strNew(STORAGE_DRIVER_POSIX_TYPE), this,
+            .ignoreMissing = (StorageFileReadInterfaceIgnoreMissing)storageDriverPosixFileReadIgnoreMissing,
+            .io = (StorageFileReadInterfaceIo)storageDriverPosixFileReadIo,
+            .name = (StorageFileReadInterfaceName)storageDriverPosixFileReadName);
+
+        this->io = ioReadNewP(
+            this, .eof = (IoReadInterfaceEof)storageDriverPosixFileReadEof,
+            .close = (IoReadInterfaceClose)storageDriverPosixFileReadClose,
+            .open = (IoReadInterfaceOpen)storageDriverPosixFileReadOpen, .read = (IoReadInterfaceRead)storageDriverPosixFileRead);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -174,6 +190,36 @@ storageDriverPosixFileReadIgnoreMissing(const StorageDriverPosixFileRead *this)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(BOOL, this->ignoreMissing);
+}
+
+/***********************************************************************************************************************************
+Get the interface
+***********************************************************************************************************************************/
+StorageFileRead *
+storageDriverPosixFileReadInterface(const StorageDriverPosixFileRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(STORAGE_FILE_READ, this->interface);
+}
+
+/***********************************************************************************************************************************
+Get the I/O interface
+***********************************************************************************************************************************/
+IoRead *
+storageDriverPosixFileReadIo(const StorageDriverPosixFileRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(IO_READ, this->io);
 }
 
 /***********************************************************************************************************************************

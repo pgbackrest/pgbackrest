@@ -3,7 +3,7 @@ IO Write Interface
 ***********************************************************************************************************************************/
 #include "common/debug.h"
 #include "common/io/io.h"
-#include "common/io/write.h"
+#include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 
@@ -14,12 +14,9 @@ struct IoWrite
 {
     MemContext *memContext;                                         // Mem context of driver
     void *driver;                                                   // Driver object
+    IoWriteInterface interface;                                     // Driver interface
     IoFilterGroup *filterGroup;                                     // IO filters
     Buffer *output;                                                 // Output buffer
-
-    IoWriteOpen open;                                               // Driver open
-    IoWriteProcess write;                                           // Driver write
-    IoWriteClose close;                                             // Driver close
 
 #ifdef DEBUG
     bool opened;                                                    // Has the io been opened?
@@ -33,26 +30,21 @@ New object
 Allocations will be in the memory context of the caller.
 ***********************************************************************************************************************************/
 IoWrite *
-ioWriteNew(void *driver, IoWriteOpen open, IoWriteProcess write, IoWriteClose close)
+ioWriteNew(void *driver, IoWriteInterface interface)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(VOIDP, driver);
-        FUNCTION_DEBUG_PARAM(FUNCTIONP, open);
-        FUNCTION_DEBUG_PARAM(FUNCTIONP, write);
-        FUNCTION_DEBUG_PARAM(FUNCTIONP, close);
+        FUNCTION_DEBUG_PARAM(IO_WRITE_INTERFACE, interface);
 
         FUNCTION_TEST_ASSERT(driver != NULL);
-        FUNCTION_TEST_ASSERT(write != NULL);
+        FUNCTION_TEST_ASSERT(interface.write != NULL);
     FUNCTION_DEBUG_END();
 
     IoWrite *this = memNew(sizeof(IoWrite));
     this->memContext = memContextCurrent();
-    this->output = bufNew(ioBufferSize());
-
     this->driver = driver;
-    this->open = open;
-    this->write = write;
-    this->close = close;
+    this->interface = interface;
+    this->output = bufNew(ioBufferSize());
 
     FUNCTION_DEBUG_RESULT(IO_WRITE, this);
 }
@@ -70,8 +62,8 @@ ioWriteOpen(IoWrite *this)
         FUNCTION_TEST_ASSERT(!this->opened && !this->closed);
     FUNCTION_DEBUG_END();
 
-    if (this->open != NULL)
-        this->open(this->driver);
+    if (this->interface.open != NULL)
+        this->interface.open(this->driver);
 
     // If no filter group exists create one to do buffering
     if (this->filterGroup == NULL)
@@ -110,7 +102,7 @@ ioWrite(IoWrite *this, const Buffer *buffer)
             // Write data if the buffer is full
             if (bufRemains(this->output) == 0)
             {
-                this->write(this->driver, this->output);
+                this->interface.write(this->driver, this->output);
                 bufUsedZero(this->output);
             }
         }
@@ -141,7 +133,7 @@ ioWriteClose(IoWrite *this)
         // Write data if the buffer is full or if this is the last buffer to be written
         if (bufRemains(this->output) == 0 || (ioFilterGroupDone(this->filterGroup) && bufUsed(this->output) > 0))
         {
-            this->write(this->driver, this->output);
+            this->interface.write(this->driver, this->output);
             bufUsedZero(this->output);
         }
     }
@@ -151,8 +143,8 @@ ioWriteClose(IoWrite *this)
     ioFilterGroupClose(this->filterGroup);
 
     // Close the driver if there is a close function
-    if (this->close != NULL)
-        this->close(this->driver);
+    if (this->interface.close != NULL)
+        this->interface.close(this->driver);
 
 #ifdef DEBUG
     this->closed = true;

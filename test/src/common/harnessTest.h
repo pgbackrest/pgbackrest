@@ -21,6 +21,8 @@ void testExeSet(const char *testExe);
 
 const char *testPath(void);
 void testPathSet(const char *testPath);
+const char *testExpectPath(void);
+void testExpectPathSet(const char *testExpectPath);
 
 /***********************************************************************************************************************************
 Convert a macro to a string -- handy for testing debug macros

@@ -283,6 +283,9 @@ sub run
         $self->testResult(
             sub {$self->storageLocal()->hashSize($strFile)},
             qw{(} . cryptoHashOne('sha1', $strFileContent) . ', ' . $iFileSize . qw{)}, '    check hash/size');
+        $self->testResult(
+            sub {$self->storageLocal()->hashSize(BOGUS, {bIgnoreMissing => true})}, "([undef], [undef])",
+            '    check missing hash/size');
     }
 
     ################################################################################################################################

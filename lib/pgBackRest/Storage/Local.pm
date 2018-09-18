@@ -144,8 +144,9 @@ sub hashSize
     my $lSize;
 
     # Is this an IO object or a file expression?
-    my $oFileIo = defined($xFileExp) ? (ref($xFileExp) ? $xFileExp :
-        $self->openRead($self->pathGet($xFileExp), {bIgnoreMissing => $bIgnoreMissing})) : undef;
+    my $oFileIo =
+        defined($xFileExp) ? (ref($xFileExp) ? $xFileExp :
+            $self->openRead($self->pathGet($xFileExp), {bIgnoreMissing => $bIgnoreMissing})) : undef;
 
     if (defined($oFileIo))
     {

@@ -186,8 +186,7 @@ sub backupFile
         }
 
         # Open the file
-        my $oSourceFileIo = storageDb()->openRead(
-            $strDbFile, {rhyFilter => $rhyFilter, bIgnoreMissing => $bIgnoreMissing});
+        my $oSourceFileIo = storageDb()->openRead($strDbFile, {rhyFilter => $rhyFilter, bIgnoreMissing => $bIgnoreMissing});
 
         # If source file exists
         if (defined($oSourceFileIo))

@@ -27,22 +27,6 @@ typedef struct IoFilter IoFilter;
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
-Function pointer types
-***********************************************************************************************************************************/
-typedef bool (*IoFilterDone)(const void *data);
-typedef bool (*IoFilterInputSame)(const void *data);
-typedef void (*IoFilterProcessIn)(void *data, const Buffer *);
-typedef void (*IoFilterProcessInOut)(void *data, const Buffer *, Buffer *);
-typedef Variant *(*IoFilterResult)(const void *data);
-
-/***********************************************************************************************************************************
-Constructor
-***********************************************************************************************************************************/
-IoFilter *ioFilterNew(
-    const String *type, void *data, IoFilterDone done, IoFilterInputSame input, IoFilterProcessIn processIn,
-    IoFilterProcessInOut processInOut, IoFilterResult result);
-
-/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 void ioFilterProcessIn(IoFilter *this, const Buffer *input);

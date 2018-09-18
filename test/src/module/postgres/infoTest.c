@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test PostgreSQL Info
 ***********************************************************************************************************************************/
+#include "storage/driver/posix/storage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -10,9 +11,10 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storageNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storageDriverPosixInterface(
+        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("pgVersionMap()"))
     {
         TEST_RESULT_INT(pgVersionMap( 833, 200711281), PG_VERSION_83, "   check version 8.3");
@@ -60,7 +62,7 @@ testRun(void)
         TEST_RESULT_STR(strPtr(pgVersionToStr(83456)), "8.34", "infoPgVersionToString 83456");
     }
 
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // *****************************************************************************************************************************
     if (testBegin("pgControlInfo()"))
     {
         String *controlFile = strNew(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
