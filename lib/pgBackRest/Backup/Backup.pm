@@ -133,7 +133,7 @@ sub resumeClean
                 my $strChecksum = $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
 
                 # If the size and timestamp match OR if the size matches and the delta option is set, then keep the file.
-                # In the latter case, if there had been a timeline switch then rather than removing and recopying the file, the file
+                # In the latter case, if the timestamp had changed then rather than removing and recopying the file, the file
                 # will be tested in backupFile to see if the db/repo checksum still matches: if so, it is not necessary to recopy,
                 # else it will need to be copied to the new backup.
                 if (defined($strChecksum) &&
@@ -297,8 +297,6 @@ sub processManifest
 
         if (defined($strReference))
         {
-            logDebugMisc($strOperation, "reference ${strRepoFile} to ${strReference}");
-
             # If the delta option to checksum all files is not set or it is set and the file size of the referenced file is zero
             # then skip checking/copying this file
             if (!cfgOption(CFGOPT_DELTA) ||
@@ -420,10 +418,11 @@ sub processManifest
                     STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
                     {bHard => true});
             }
-            # Else log the reference. With delta, it is possible that references may have been removed if a file needed to be recopied.
+            # Else log the reference. With delta, it is possible that references may have been removed if a file needed to be
+            # recopied.
             else
             {
-                logDebugMisc($strOperation, " after backup, reference ${strFile} to ${strReference}");
+                logDebugMisc($strOperation, "reference ${strRepoFile} to ${strReference}");
             }
         }
     }
@@ -830,7 +829,7 @@ sub process
     $oBackupManifest->build($oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
         cfgOption(CFGOPT_DELTA), $hTablespaceMap, $hDatabaseMap, cfgOption(CFGOPT_EXCLUDE, false));
 
-    # Set the delta option after the build in the event it was set during the build
+    # Set the delta option.
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef, cfgOption(CFGOPT_DELTA));
 
     &log(TEST, TEST_MANIFEST_BUILD);

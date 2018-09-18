@@ -59,7 +59,7 @@ sub backupFile
         $lModificationTime,                         # File modification time
         $bIgnoreMissing,                            # Is it OK if the file is missing?
         $hExtraParam,                               # Parameter to pass to the extra function
-        $bDelta,                                    # Is the detla option on?
+        $bDelta,                                    # Is the delta option on?
         $bHasReference,                             # Does the file exist in the repo in a prior backup in the set?
         $strCipherPass,                             # Passphrase to access the repo file (undefined if repo not encrypted). This
                                                     # parameter must always be last in the parameter list to this function.
@@ -127,28 +127,37 @@ sub backupFile
         }
 
         # If this is not a delta backup or it is and the file exists and the checksum from the DB matches, then also check the
-        # checksum of the file in the repo (unless it is in a prior backup) and if the checksum doesn't match there may be
+        # checksum of the file in the repo (unless it is in a prior backup) and if the checksum doesn't match, then there may be
         # corruption, so recopy
-        if (!$bDelta || ($iCopyResult != BACKUP_FILE_SKIP && !$bCopy && !$bHasReference))
+        if (!$bDelta || !$bHasReference)
         {
-            # Add decompression
-            my $rhyFilter;
-
-            if ($bCompress)
+            # If this is a delta backup and the file is missing from the DB, then remove it from the repo (backupManifestUpdate will
+            # remove it from the manifest)
+            if ($iCopyResult == BACKUP_FILE_SKIP)
             {
-                push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]});
+                $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}");
             }
+            elsif (!$bDelta || !$bCopy)
+            {
+                # Add decompression
+                my $rhyFilter;
 
-            # Get the checksum
-            ($strCopyChecksum, $lCopySize) = $oStorageRepo->hashSize(
-                $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-                {rhyFilter => $rhyFilter, strCipherPass => $strCipherPass}));
+                if ($bCompress)
+                {
+                    push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]});
+                }
 
-            # Determine if the file needs to be recopied
-            $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
+                # Get the checksum
+                ($strCopyChecksum, $lCopySize) = $oStorageRepo->hashSize(
+                    $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
+                    {rhyFilter => $rhyFilter, strCipherPass => $strCipherPass}));
 
-            # Set copy result
-            $iCopyResult = $bCopy ? BACKUP_FILE_RECOPY : BACKUP_FILE_CHECKSUM;
+                # Determine if the file needs to be recopied
+                $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
+
+                # Set copy result
+                $iCopyResult = $bCopy ? BACKUP_FILE_RECOPY : BACKUP_FILE_CHECKSUM;
+            }
         }
     }
 

@@ -307,7 +307,10 @@ sub run
             false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, false, false, undef);
 
         $self->testResult(($iResultCopyResult == BACKUP_FILE_SKIP && !defined($strResultCopyChecksum) &&
-            !defined($lResultRepoSize) && !defined($lResultCopySize)), true, "$strRepoFile.1 file skipped");
+            !defined($lResultRepoSize) && !defined($lResultCopySize)), true, "db file missing - $strRepoFile.1 file skipped");
+
+        # Delta not set so file still exists in repo
+        $self->testResult(sub {storageTest()->exists("$strFileRepo.1")}, true, '    delta not set - file exists in repo');
 
         ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
             $oBackupManifest,
@@ -329,7 +332,7 @@ sub run
             $lManifestSaveCurrent);
 
         $self->testResult(sub {$oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, "$strRepoFile.1")},
-            false, "$strRepoFile.1 section removed from manifest");
+            false, "    $strRepoFile.1 section removed from manifest");
 
         # Yes prior checksum, no compression, no page checksum, no extra, yes delta, no hasReference, no db file
         ($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =
@@ -337,7 +340,9 @@ sub run
             false, cfgOption(CFGOPT_COMPRESS_LEVEL), $lFileTime, true, undef, true, false, undef);
 
         $self->testResult(($iResultCopyResult == BACKUP_FILE_SKIP && !defined($strResultCopyChecksum) &&
-            !defined($lResultRepoSize)), true, 'backup file skipped - in prior backup');
+            !defined($lResultRepoSize)), true, "db file missing - delta $strRepoFile.1 file skipped");
+
+        $self->testResult(sub {storageTest()->exists("$strFileRepo.1")}, false, '   delta set - file removed from repo');
 
         # Code path for host not defined for logged message of skipped file
         ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
