@@ -164,6 +164,17 @@
                         <example>600</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - DELTA OPTION -->
+                    <config-key id="delta" name="Delta">
+                        <summary>Restore or backup using delta.</summary>
+
+                        <text>During a restore, by default the <postgres/> data and tablespace directories are expected to be present but empty.  This option performs a delta restore using checksums.
+
+                        During a backup, this option will checksum compare the database file instead of the timestamp to determine if the file is required to be recopied.</text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - LOCK-PATH KEY -->
                     <config-key id="lock-path" name="Lock Path">
                         <summary>Path where lock files are stored.</summary>
@@ -675,15 +686,6 @@
                         The <setting>{[dash]}-db-include</setting> option can be passed multiple times to specify more than one database to include.</text>
 
                         <example>db_main</example>
-                    </config-key>
-
-                    <!-- CONFIG - RESTORE SECTION - DELTA OPTION -->
-                    <config-key id="delta" name="Delta">
-                        <summary>Restore using delta.</summary>
-
-                        <text>By default the <postgres/> data and tablespace directories are expected to be present but empty.  This option performs a delta restore using checksums.</text>
-
-                        <example>y</example>
                     </config-key>
 
                     <!-- CONFIG - RESTORE SECTION - LINK-ALL KEY -->

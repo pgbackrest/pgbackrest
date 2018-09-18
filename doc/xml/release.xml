@@ -51,6 +51,13 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
+                        <p>Implement <br-option>delta</br-option> for backups to verify file checksums in determing if a file has changed and needs to be copied to the repository for the new backup.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
                         <p>Allow <br-option>delta</br-option> option to be specified in the <backrest/> configuration file.</p>
                     </release-item>
                 </release-improvement-list>

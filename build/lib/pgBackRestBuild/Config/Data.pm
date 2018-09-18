@@ -1108,13 +1108,12 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_RESTORE =>
-            {
-                &CFGDEF_DEFAULT => false,
-            }
-        }
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_RESTORE => {},
+        },
     },
 
     &CFGOPT_COMPRESS =>
