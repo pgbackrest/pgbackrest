@@ -69,6 +69,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Restore <code>bIgnoreMissing</code> flag in <code>backupFile()</code> lost in storage refactor.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Migrate <code>walIsPartial()</code>, <code>walIsSegment()</code>, and <code>walSegmentFind()</code> from Perl to C.</p>
                     </release-item>
 

@@ -3188,7 +3188,7 @@ static const EmbeddedModule embeddedModule[] =
             "push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{iLevel => $iCompressLevel}]});\n"
             "}\n"
             "\n\n"
-            "my $oSourceFileIo = storageDb()->openRead($strDbFile, {rhyFilter => $rhyFilter, bIgnoreMissing => true});\n"
+            "my $oSourceFileIo = storageDb()->openRead($strDbFile, {rhyFilter => $rhyFilter, bIgnoreMissing => $bIgnoreMissing});\n"
             "\n\n"
             "if (defined($oSourceFileIo))\n"
             "{\n"
