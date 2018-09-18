@@ -81,6 +81,38 @@ sub exists
 }
 
 ####################################################################################################################################
+# hashSize
+####################################################################################################################################
+sub hashSize
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathExp,
+        $rhParam,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->hashSize', \@_,
+            {name => 'strPathExp'},
+            {name => 'rhParam', required => false},
+        );
+
+    my ($strHash, $lSize) = $self->{oProtocol}->cmdExecute(OP_STORAGE_HASH_SIZE, [$strPathExp, $rhParam]);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strHash', value => $strHash},
+        {name => 'lSize', value => $lSize}
+    );
+}
+
+####################################################################################################################################
 # list
 ####################################################################################################################################
 sub list

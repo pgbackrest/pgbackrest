@@ -55,6 +55,8 @@ use constant OP_STORAGE_CIPHER_PASS_USER                            => 'storageC
     push @EXPORT, qw(OP_STORAGE_CIPHER_PASS_USER);
 use constant OP_STORAGE_EXISTS                                      => 'storageExists';
     push @EXPORT, qw(OP_STORAGE_EXISTS);
+use constant OP_STORAGE_HASH_SIZE                                   => 'storageHashSize';
+    push @EXPORT, qw(OP_STORAGE_HASH_SIZE);
 use constant OP_STORAGE_LIST                                        => 'storageList';
     push @EXPORT, qw(OP_STORAGE_LIST);
 use constant OP_STORAGE_MANIFEST                                    => 'storageManifest';

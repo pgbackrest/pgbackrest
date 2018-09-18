@@ -120,6 +120,7 @@ sub init
         &OP_STORAGE_MANIFEST => sub {$oStorage->manifest(@{shift()})},
         &OP_STORAGE_MOVE => sub {$oStorage->move(@{shift()})},
         &OP_STORAGE_PATH_GET => sub {$oStorage->pathGet(@{shift()})},
+        &OP_STORAGE_HASH_SIZE => sub {$oStorage->hashSize(@{shift()})},
 
         # Info commands
         &OP_INFO_STANZA_LIST => sub {$oInfo->stanzaList(@{shift()})},

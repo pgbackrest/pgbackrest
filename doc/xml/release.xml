@@ -73,6 +73,14 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
+                        <p>Allow <code>hashSize()</code> to run on remote storage.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
                         <p>Restore <code>bIgnoreMissing</code> flag in <code>backupFile()</code> lost in storage refactor.</p>
                     </release-item>
 
