@@ -109,6 +109,8 @@ use constant MANIFEST_KEY_COMPRESS                                  => 'option-'
     push @EXPORT, qw(MANIFEST_KEY_COMPRESS);
 use constant MANIFEST_KEY_ONLINE                                    => 'option-' . cfgOptionName(CFGOPT_ONLINE);
     push @EXPORT, qw(MANIFEST_KEY_ONLINE);
+use constant MANIFEST_KEY_DELTA                                     => 'option-' . cfgOptionName(CFGOPT_DELTA);
+    push @EXPORT, qw(MANIFEST_KEY_DELTA);
 
 # Information about the database that was backed up
 use constant MANIFEST_KEY_DB_ID                                     => 'db-id';
@@ -571,6 +573,7 @@ sub build
         $strPath,
         $oLastManifest,
         $bOnline,
+        $bDelta,
         $hTablespaceMap,
         $hDatabaseMap,
         $rhExclude,
@@ -587,6 +590,7 @@ sub build
             {name => 'strPath'},
             {name => 'oLastManifest', required => false},
             {name => 'bOnline'},
+            {name => 'bDelta'},
             {name => 'hTablespaceMap', required => false},
             {name => 'hDatabaseMap', required => false},
             {name => 'rhExclude', required => false},
@@ -930,7 +934,7 @@ sub build
             }
 
             $self->build(
-                $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $hTablespaceMap, $hDatabaseMap, $rhExclude, $strFile,
+                $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $bDelta, $hTablespaceMap, $hDatabaseMap, $rhExclude, $strFile,
                 $bTablespace, dirname("${strPath}/${strName}"), $strFilter, $iLevel + 1);
         }
     }
@@ -984,13 +988,17 @@ sub build
                     $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_FUTURE, 'y');
                 }
             }
-            # Else check if modification time and size are unchanged since last backup
+            # Else check if the size and timestamp match OR if the size matches and the delta option is set, then keep the file.
+            # In the latter case, if there had been a timestamp change then rather than removing and recopying the file, the file
+            # will be tested in backupFile to see if the db/repo checksum still matches: if so, it is not necessary to recopy,
+            # else it will need to be copied to the new backup. For zero sized files, the reference will be set and copying
+            # will be skipped later.
             elsif (defined($oLastManifest) && $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName) &&
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) ==
-                       $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&
-                   ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) == 0 ||
+                       $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&
+                   ($bDelta || ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) == 0 ||
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
-                       $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP)))
+                       $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP))))
             {
                 # Copy reference from previous backup if possible
                 if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE))
@@ -1005,14 +1013,14 @@ sub build
                                $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
                 }
 
-                # Copy the checksum from previous manifest
+                # Copy the checksum from previous manifest (if it exists - zero sized files don't have checksums)
                 if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM))
                 {
                     $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM,
                                $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM));
                 }
 
-                # Copy repo size from the previous manifest
+                # Copy repo size from the previous manifest (if it exists)
                 if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE))
                 {
                     $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE,

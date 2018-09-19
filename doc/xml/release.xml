@@ -28,6 +28,16 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add checksum delta for incremental backups which uses checksums rather than timestamps to determine if files have changed.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p>Ignore all files in a linked tablespace directory except the subdirectory for the current version of <postgres/>.  Previously an error would be generated if other files were present and not owned by the <postgres/> user.</p>

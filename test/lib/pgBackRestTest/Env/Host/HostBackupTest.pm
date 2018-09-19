@@ -476,6 +476,10 @@ sub backupCompare
             $oActualManifest->get(INI_SECTION_CIPHER, INI_KEY_CIPHER_PASS);
     }
 
+    # Update the expected manifest with whether the --delta option was used or not to perform the backup.
+    $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA} =
+        $oActualManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA) ? INI_TRUE : INI_FALSE;
+
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
 
     foreach my $strFileKey ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
@@ -1752,6 +1756,10 @@ sub restoreCompare
                         '/'. FILE_MANIFEST),
             {strCipherPass => $oHostBackup->cipherPassManifest()});
 
+        # Get the --delta option from the backup manifest so the actual manifest can be built the same way for comparison
+        $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA} =
+            $oExpectedManifest->get(MANIFEST_SECTION_BACKUP_OPTION, &MANIFEST_KEY_DELTA);
+
         $oLastManifest =
             new pgBackRest::Manifest(
                 storageRepo()->pathGet(
@@ -1815,7 +1823,11 @@ sub restoreCompare
             iDbCatalogVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG},
             oStorage => storageTest()});
 
-    $oActualManifest->build(storageTest(), $strDbClusterPath, $oLastManifest, false, $oTablespaceMap);
+    # Build the actual manifest using the delta setting that was actually used by the latest backup if one exists
+    $oActualManifest->build(storageTest(), $strDbClusterPath, $oLastManifest, false,
+        $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA}, $oTablespaceMap);
+    $oActualManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef,
+        $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA});
 
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
 
@@ -1877,17 +1889,37 @@ sub restoreCompare
         {
             my $oStat = storageTest()->info($oActualManifest->dbPathGet($strSectionPath, $strName));
 
+            # When performing a selective restore, the files for the database(s) that are not restored are still copied but as empty
+            # sparse files (blocks == 0). If the file is not a sparse file or is a link, then get the actual checksum for comparison
             if ($oStat->blocks > 0 || S_ISLNK($oStat->mode))
             {
                 my ($strHash) = storageTest()->hashSize($oActualManifest->dbPathGet($strSectionPath, $strName));
 
                 $oActualManifest->set(
                     MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM, $strHash);
+
+                # If the delta option was set, it is possible that the checksum on the file changed from the last manifest. If so,
+                # then the file was expected to be copied by the backup and therefore the reference would have been removed.
+                if ($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA})
+                {
+                    # If the actual checksum and last manifest checksum don't match, remove the reference
+                    if (defined($oLastManifest) &&
+                        $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM) &&
+                        $strHash ne $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM))
+                    {
+                        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE);
+                    }
+                }
             }
             else
             {
+                # If there is a sparse file, remove the checksum and reference since they may or may not match. In this case, it is
+                # not important to check them since it is known that the file was intentionally not restored.
                 $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM);
                 delete(${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_CHECKSUM});
+
+                $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE);
+                delete(${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_REFERENCE});
             }
         }
     }
@@ -1912,6 +1944,8 @@ sub restoreCompare
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef,
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE});
+    $oActualManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef,
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA});
 
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef,
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION});

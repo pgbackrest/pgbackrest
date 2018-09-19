@@ -619,10 +619,12 @@ sub run
             $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will be restarted', true)");
         }
 
+        # Exercise --delta checksum option
         $oExecuteBackup = $oHostBackup->backupBegin(
             CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup',
             {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
-                strOptionalParam => '--' . cfgOptionName(CFGOPT_STOP_AUTO) . ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=32768'});
+                strOptionalParam => '--' . cfgOptionName(CFGOPT_STOP_AUTO) . ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=32768' .
+                ' --delta'});
 
         # Drop a table
         $oHostDbMaster->sqlExecute('drop table test_remove');

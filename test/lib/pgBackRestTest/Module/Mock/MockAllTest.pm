@@ -64,6 +64,7 @@ sub run
     foreach my $bRemote ($bS3 ? (true) : (false, true))
     {
         my $bRepoEncrypt = $bS3 ? true : false;
+        my $bDeltaBackup = !$bRemote || ($bRepoEncrypt && $bRemote) ? true : false;
 
         # Increment the run, log, and decide whether this unit test should be run
         if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bRepoEncrypt}")) {next}
@@ -103,6 +104,7 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} = JSON::PP::false;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA} = JSON::PP::false;
 
         if ($bRepoEncrypt)
         {
@@ -524,10 +526,18 @@ sub run
         $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'zero_from_start', undef,
                                               undef, $lTime, undef, true);
 
+        # Add files for testing backups when time changes but content doesn't, and when content changes but time and size don't
+        $oHostDbMaster->manifestFileCreate(
+            \%oManifest, MANIFEST_TARGET_PGDATA, 'changetime.txt', 'SIZE', '88087292ed82e26f3eb824d0bffc05ccf7a30f8d', $lTime,
+            undef, true);
+        $oHostDbMaster->manifestFileCreate(
+            \%oManifest, MANIFEST_TARGET_PGDATA, 'changecontent.txt', 'CONTENT', '238a131a3e8eb98d1fc5b27d882ca40b7618fd2a', $lTime,
+            undef, true);
+
         $strFullBackup = $oHostBackup->backup(
             $strType, 'resume',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
-                strOptionalParam => '--force --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE)});
+                strOptionalParam => '--force --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE) . ($bDeltaBackup ? ' --delta' : '')});
 
         # Remove postmaster.pid so restore will succeed (the rest will be cleaned up by the delta)
         storageDb->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
@@ -956,13 +966,43 @@ sub run
         # Also create tablespace 11 to be sure it does not conflict with path of tablespace 1
         $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 11);
 
+        # Change only the time on a valid file and update the timestamp in the expected manifest
+        utime($lTime - 100, $lTime - 100, $oHostDbMaster->dbBasePath() . '/changetime.txt')
+            or confess &log(ERROR, "unable to set time for file ".$oHostDbMaster->dbBasePath() . '/changetime.txt');
+        $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changetime.txt'}{&MANIFEST_SUBKEY_TIMESTAMP} = $lTime - 100;
+
+        # Change the content of the changecontent file to be the same size but not the timestamp on the file
+        storageDb()->put($oHostDbMaster->dbBasePath() . '/changecontent.txt', 'CHGCONT');
+        utime($lTime, $lTime, $oHostDbMaster->dbBasePath() . '/changecontent.txt')
+            or confess &log(ERROR, "unable to set time for file ".$oHostDbMaster->dbBasePath() . '/changecontent.txt');
+
+        if ($bDeltaBackup)
+        {
+            # With --delta, the changetime file will not be recopied and the reference will remain to the last backup however,
+            # the changecontent file will be recopied since the checksum has changed so update the checksum and remove the reference
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changecontent.txt'}{&MANIFEST_SUBKEY_CHECKSUM} =
+                "a094d94583e209556d03c3c5da33131a065f1689";
+            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changecontent.txt'}{&MANIFEST_SUBKEY_REFERENCE});
+        }
+        else
+        {
+            # Without --delta, the changetime reference will be removed since the timestamp has changed but since the timestamp on
+            # the changecontent did not change even though the contents did, it will still reference the prior backup - this may be
+            # a rare occurrence and not good but it is one reason to use --delta
+            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changetime.txt'}{&MANIFEST_SUBKEY_REFERENCE});
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changetime.txt'}{&MANIFEST_SUBKEY_TIMESTAMP} = $lTime - 100;
+        }
+
         $strBackup = $oHostBackup->backup(
             $strType, 'resume and add tablespace 2',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
-                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
+                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
 
-        # Remove the size-changed test file to avoid expect log churn
-        $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt');
+        if (!$bRemote)
+        {
+            # Remove the size-changed test file to avoid expect log churn
+            $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt');
+        }
 
         # Resume Diff Backup
         #---------------------------------------------------------------------------------------------------------------------------
@@ -974,13 +1014,15 @@ sub run
         # Create resumable backup from last backup
         $strResumePath = storageRepo()->pathGet('backup/' . $self->stanza() . "/${strBackup}");
 
-        # Remove the main manifest so the backup appears aborted
+        # Remove the main manifest from the last backup so the backup appears aborted
         forceStorageRemove(storageRepo(), "${strResumePath}/" . FILE_MANIFEST);
 
+        # The aborted backup is of a different type so is not resumable and is removed. A differential is created.
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - new diff',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
-                strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
+                strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
+                ($bDeltaBackup ? ' --delta' : '')});
 
         # Resume Diff Backup
         #---------------------------------------------------------------------------------------------------------------------------
@@ -992,10 +1034,13 @@ sub run
         # Remove the main manifest so the backup appears aborted
         forceStorageRemove(storageRepo(), "${strResumePath}/" . FILE_MANIFEST);
 
+        # The aborted backup is of the same type so it is resumable but passing --no-resume. Pass --delta same as before to avoid
+        # expect log churn and to test restore with a --delta manifest.
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - disabled / no repo link',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
-                strOptionalParam => "--no-resume ${strLogReduced} --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
+                strOptionalParam => "--no-resume ${strLogReduced} --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
+                ($bDeltaBackup ? ' --delta' : '')});
 
         # Restore
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1118,7 +1163,8 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'updates since last full', {oExpectedManifest => \%oManifest,
-                strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
+                strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
+                ($bDeltaBackup ? ' --delta' : '')});
 
         # Incr Backup
         #
@@ -1166,7 +1212,8 @@ sub run
         $oBackupExecute = $oHostBackup->backupBegin(
             $strType, 'remove files during backup',
             {oExpectedManifest => \%oManifest, strTest => TEST_MANIFEST_BUILD, fTestDelay => 1,
-                strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
+                strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
+                ($bDeltaBackup ? ' --delta' : '')});
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt', 'TBLSPCBIGGER',
