@@ -144,6 +144,12 @@
                         <p>List allowable values for the <br-option>buffer-size</br-option> option in the configuration reference.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Update introduction to be pithy.</p>
+                    </release-item>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>

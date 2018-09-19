@@ -407,15 +407,10 @@ sub manGet
 
     foreach my $oPara ($oIndexDoc->nodeGetById('section', 'introduction')->nodeList('p'))
     {
-        if ($iParaTotal >= 2)
-        {
-            last;
-        }
-
         $strManPage .= ($iParaTotal == 0 ? "\n" : "\n\n") . '  ' .
             manGetFormatText($oManifest->variableReplace($self->{oDocRender}->processText($oPara->textGet())), 80, 2);
 
-        $iParaTotal++;
+        last;
     }
 
     # Build command and config hashes
