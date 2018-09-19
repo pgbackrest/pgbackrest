@@ -42,6 +42,7 @@
         <variable key="backrest-repo-path">/var/lib/pgbackrest</variable>
         <variable key="backrest-repo-cipher-type">aes-256-cbc</variable>
         <variable key="backrest-repo-cipher-pass">zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</variable>
+        <variable key="br-bin">{[perl-bin-path]}/pgbackrest</variable>
         <variable key="br-user">pgbackrest</variable>
         <variable key="br-group">{[br-user]}</variable>
         <variable key="br-home-path">/home/{[br-user]}</variable>
@@ -240,7 +241,7 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="setup-ssh-intro">
-        <p><backrest/> requires trusted (no password) SSH to enable communication between the hosts.</p>
+        <p><backrest/> requires passwordless SSH to enable communication between the hosts.</p>
     </block-define>
 
     <block-define id="setup-ssh">
@@ -261,18 +262,26 @@
         <execute-list host="{[host-repo1]}">
             <title>Copy <host>{[setup-ssh-host]}</host> public key to <host>{[host-repo1]}</host></title>
 
-            <execute user="root" err-suppress="y">
-                <exe-cmd>ssh root@{[setup-ssh-host]} cat {[setup-ssh-user-home-path]}/.ssh/id_rsa.pub |
-                    sudo -u pgbackrest tee -a {[br-home-path]}/.ssh/authorized_keys</exe-cmd>
+            <execute user="root" err-suppress="y" user-force="y">
+                <exe-cmd>
+                    (echo -n 'no-agent-forwarding,no-X11-forwarding,no-port-forwarding,' &amp;&amp;
+                    echo -n 'command="{[br-bin]} ${SSH_ORIGINAL_COMMAND#* }" ' &amp;&amp;
+                    sudo ssh root@{[setup-ssh-host]} cat {[setup-ssh-user-home-path]}/.ssh/id_rsa.pub) |
+                    sudo -u pgbackrest tee -a {[br-home-path]}/.ssh/authorized_keys
+                </exe-cmd>
             </execute>
         </execute-list>
 
         <execute-list host="{[setup-ssh-host]}">
             <title>Copy <host>{[host-repo1]}</host> public key to <host>{[setup-ssh-host]}</host></title>
 
-            <execute user="root" err-suppress="y">
-                <exe-cmd>ssh root@{[host-repo1]} cat {[br-home-path]}/.ssh/id_rsa.pub |
-                    sudo -u {[setup-ssh-user]} tee -a {[setup-ssh-user-home-path]}/.ssh/authorized_keys</exe-cmd>
+            <execute user="root" err-suppress="y" user-force="y">
+                <exe-cmd>
+                    (echo -n 'no-agent-forwarding,no-X11-forwarding,no-port-forwarding,' &amp;&amp;
+                    echo -n 'command="{[br-bin]} ${SSH_ORIGINAL_COMMAND#* }" ' &amp;&amp;
+                    sudo ssh root@{[host-repo1]} cat {[br-home-path]}/.ssh/id_rsa.pub) |
+                    sudo -u {[setup-ssh-user]} tee -a {[setup-ssh-user-home-path]}/.ssh/authorized_keys
+                </exe-cmd>
             </execute>
         </execute-list>
 
@@ -283,7 +292,7 @@
 
             <execute user="{[br-user]}" err-suppress="y">
                 <exe-cmd>ssh {[setup-ssh-user]}@{[setup-ssh-host]}</exe-cmd>
-                <exe-cmd-extra>-o StrictHostKeyChecking=no ls</exe-cmd-extra>
+                <exe-cmd-extra>-o StrictHostKeyChecking=no</exe-cmd-extra>
             </execute>
         </execute-list>
 
@@ -292,7 +301,7 @@
 
             <execute user="{[setup-ssh-user]}" err-suppress="y">
                 <exe-cmd>ssh pgbackrest@{[host-repo1]}</exe-cmd>
-                <exe-cmd-extra>-o StrictHostKeyChecking=no ls</exe-cmd-extra>
+                <exe-cmd-extra>-o StrictHostKeyChecking=no</exe-cmd-extra>
             </execute>
         </execute-list>
     </block-define>
@@ -1987,7 +1996,7 @@
         </section>
 
         <section id="setup-ssh">
-            <title>Setup Trusted SSH</title>
+            <title>Setup Passwordless SSH</title>
 
             <block id="setup-ssh-intro">
                 <block-variable-replace key="bogus">bogus !!!</block-variable-replace>
@@ -2010,6 +2019,8 @@
                 <block-variable-replace key="setup-ssh-user">postgres</block-variable-replace>
                 <block-variable-replace key="setup-ssh-user-home-path">{[pg-home-path]}</block-variable-replace>
             </block>
+
+            <p>Note that ssh has been configured to only allow <backrest/> to be run via passwordless ssh.  This enhances security in the event that one of the service accounts is hijacked.</p>
 
             <!-- <block keyword="pg11" id="setup-ssh">
                 <block-variable-replace key="setup-ssh-host">{[host-pg1]}</block-variable-replace>
@@ -2316,7 +2327,7 @@
 
         <!-- SECTION => REPLICATION - SETUP-SSH -->
         <section id="setup-ssh">
-            <title>Setup Trusted SSH</title>
+            <title>Setup Passwordless SSH</title>
 
             <block id="setup-ssh-intro">
                 <block-variable-replace key="bogus">bogus !!!</block-variable-replace>
