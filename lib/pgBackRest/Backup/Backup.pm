@@ -504,6 +504,7 @@ sub process
     # Find the previous backup based on the type
     my $oLastManifest;
     my $strBackupLastPath;
+    my $strTimelineLast;
 
     if ($strType ne CFGOPTVAL_BACKUP_TYPE_FULL)
     {
@@ -519,6 +520,12 @@ sub process
 
             # If the repo is encrypted then use the passphrase in this manifest for the backup set
             $strCipherPassBackupSet = $oLastManifest->cipherPassSub();
+
+            # Get archive segment timeline for determining if a timeline switch has occurred. Only defined for prior online backup.
+            if ($oLastManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP)
+            {
+                $strTimelineLast = substr($oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP), 0, 8);
+            }
 
             &log(INFO, 'last backup label = ' . $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL) .
                        ', version = ' . $oLastManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION));
@@ -541,6 +548,13 @@ sub process
                            "', reset to value in ${strBackupLastPath}");
                 $bHardLink = $oLastManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK);
             }
+
+            # If there is a change in the online option, then set delta option
+            if (!$oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, cfgOption(CFGOPT_ONLINE)))
+            {
+                &log(WARN, 'the online option has changed since the last backup, delta checksumming has been enabled');
+                cfgOptionSet(CFGOPT_DELTA, true);
+            }
         }
         else
         {
@@ -554,6 +568,7 @@ sub process
     my $strBackupLabel;
     my $oAbortedManifest;
     my $strBackupPath;
+    my $strTimelineAborted;
 
     foreach my $strAbortedBackup ($oStorageRepo->list(
         STORAGE_REPO_BACKUP, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))
@@ -659,6 +674,25 @@ sub process
                 {
                     $strCipherPassBackupSet = $oAbortedManifest->cipherPassSub();
                 }
+
+                # Get the archive segment timeline for determining if a timeline switch has occurred. Only defined for prior online
+                # backup.
+                if ($oAbortedManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP))
+                {
+                    $strTimelineAborted = substr($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP), 0, 8);
+                }
+                elsif ($oAbortedManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START))
+                {
+                    $strTimelineAborted = substr($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START);
+                }
+
+                # If there is a change in the online option, then set delta option
+                if (!$oAbortedManifest->boolTest(
+                    MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, cfgOption(CFGOPT_ONLINE)))
+                {
+                    &log(WARN, 'the online option has changed since the last backup, delta checksumming has been enabled');
+                    cfgOptionSet(CFGOPT_DELTA, true);
+                }
             }
             else
             {
@@ -725,6 +759,7 @@ sub process
     my $strLsnStart = undef;
     my $hTablespaceMap = undef;
 	my $hDatabaseMap = undef;
+    my $strTimelineCurrent = undef;
 
     # If this is an offline backup
     if (!cfgOption(CFGOPT_ONLINE))
@@ -765,6 +800,9 @@ sub process
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strLsnStart);
         &log(INFO, "backup start archive = ${strArchiveStart}, lsn = ${strLsnStart}");
+
+        # Get the timeline from the archive
+        $strTimelineCurrent = substr($strArchiveStart, 0, 8);
 
         # Get tablespace map
         $hTablespaceMap = $oDbMaster->tablespaceMapGet();
@@ -825,10 +863,15 @@ sub process
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE, undef, cfgOption(CFGOPT_CHECKSUM_PAGE));
 
     # Build the manifest
-    $oBackupManifest->build($oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
-        cfgOption(CFGOPT_DELTA), $hTablespaceMap, $hDatabaseMap, cfgOption(CFGOPT_EXCLUDE, false));
+    my $bDelta = $oBackupManifest->build($oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
+        cfgOption(CFGOPT_DELTA), $hTablespaceMap, $hDatabaseMap, cfgOption(CFGOPT_EXCLUDE, false),
+        $strTimelineCurrent, $strTimelineLast);
 
-    # Set the delta option.
+    # The delta option may have changed from false to true during the manifest build, if so, enable the delta option.
+    if ($bDelta && !cfgOptionTest(CFGOPT_DELTA, $bDelta))
+    {
+        cfgOptionSet(CFGOPT_DELTA, $bDelta);
+    }
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef, cfgOption(CFGOPT_DELTA));
 
     &log(TEST, TEST_MANIFEST_BUILD);
