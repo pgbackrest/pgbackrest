@@ -72,7 +72,10 @@ sub resumeClean
         $oStorageRepo,
         $strBackupLabel,
         $oManifest,
-        $oAbortedManifest
+        $oAbortedManifest,
+        $bDelta,
+        $strTimelineCurrent,
+        $strTimelineLast,
     ) =
         logDebugParam
         (
@@ -80,10 +83,18 @@ sub resumeClean
             {name => 'oStorageRepo'},
             {name => 'strBackupLabel'},
             {name => 'oManifest'},
-            {name => 'oAbortedManifest'}
+            {name => 'oAbortedManifest'},
+            {name => 'bDelta'},
+            {name => 'strTimelineCurrent', required => false},
+            {name => 'strTimelineLast', required => false},
         );
 
     &log(DETAIL, 'clean resumed backup path: ' . $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}"));
+
+    # Check to see if delta checksum should be enabled
+    $bDelta = $oAbortedManifest->checkDelta($bDelta,
+        $oAbortedManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, cfgOption(CFGOPT_ONLINE)),
+        $strTimelineCurrent, $strTimelineLast);
 
     # Build manifest for aborted backup path
     my $hFile = $oStorageRepo->manifest(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
@@ -139,7 +150,7 @@ sub resumeClean
                 if (defined($strChecksum) &&
                     $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) ==
                     $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE)  &&
-                    (cfgOption(CFGOPT_DELTA) ||
+                    ($bDelta ||
                     $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
                     $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP)))
                 {
@@ -165,6 +176,22 @@ sub resumeClean
 
                     next;
                 }
+                # If the new timestamp is in the past relative to the aborted manifest or the size has changed but the timestamp
+                # did not, then enable delta. The file will be removed and checksums will be validated for all remaining files.
+                elsif ($oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) <
+                    $oAbortedManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ||
+                    ($oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) !=
+                    $oAbortedManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) &&
+                    $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
+                    $oAbortedManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP)))
+                {
+                    # If delta checksumming is not enabled, then set it and emit a warning
+                    if (!$bDelta)
+                    {
+                        &log(WARN, 'timestamp in the past or size changed but timestamp did not, enabling delta checksum');
+                        $bDelta = true;
+                    }
+                }
             }
         }
 
@@ -189,7 +216,11 @@ sub resumeClean
     }
 
     # Return from function and log return values if any
-    return logDebugReturn($strOperation);
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bDelta', value => $bDelta, trace => true},
+    );
 }
 
 ####################################################################################################################################
@@ -548,13 +579,6 @@ sub process
                            "', reset to value in ${strBackupLastPath}");
                 $bHardLink = $oLastManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK);
             }
-
-            # If there is a change in the online option, then set delta option
-            if (!$oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, cfgOption(CFGOPT_ONLINE)))
-            {
-                &log(WARN, 'the online option has changed since the last backup, delta checksumming has been enabled');
-                cfgOptionSet(CFGOPT_DELTA, true);
-            }
         }
         else
         {
@@ -684,14 +708,6 @@ sub process
                 elsif ($oAbortedManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START))
                 {
                     $strTimelineAborted = substr($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START);
-                }
-
-                # If there is a change in the online option, then set delta option
-                if (!$oAbortedManifest->boolTest(
-                    MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, cfgOption(CFGOPT_ONLINE)))
-                {
-                    &log(WARN, 'the online option has changed since the last backup, delta checksumming has been enabled');
-                    cfgOptionSet(CFGOPT_DELTA, true);
                 }
             }
             else
@@ -862,17 +878,10 @@ sub process
     # Record checksum-page option in the manifest
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE, undef, cfgOption(CFGOPT_CHECKSUM_PAGE));
 
-    # Build the manifest
-    my $bDelta = $oBackupManifest->build($oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
-        cfgOption(CFGOPT_DELTA), $hTablespaceMap, $hDatabaseMap, cfgOption(CFGOPT_EXCLUDE, false),
-        $strTimelineCurrent, $strTimelineLast);
-
-    # The delta option may have changed from false to true during the manifest build, if so, enable the delta option.
-    if ($bDelta && !cfgOptionTest(CFGOPT_DELTA, $bDelta))
-    {
-        cfgOptionSet(CFGOPT_DELTA, $bDelta);
-    }
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef, cfgOption(CFGOPT_DELTA));
+    # Build the manifest. The delta option may have changed from false to true during the manifest build so set it to the result.
+    cfgOptionSet(CFGOPT_DELTA, $oBackupManifest->build(
+        $oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE), cfgOption(CFGOPT_DELTA), $hTablespaceMap,
+        $hDatabaseMap, cfgOption(CFGOPT_EXCLUDE, false), $strTimelineCurrent, $strTimelineLast));
 
     &log(TEST, TEST_MANIFEST_BUILD);
 
@@ -882,8 +891,10 @@ sub process
         &log(WARN, "aborted backup ${strBackupLabel} of same type exists, will be cleaned to remove invalid files and resumed");
         &log(TEST, TEST_BACKUP_RESUME);
 
-        # Clean the backup path before resuming
-        $self->resumeClean($oStorageRepo, $strBackupLabel, $oBackupManifest, $oAbortedManifest);
+        # Clean the backup path before resuming. The delta option may have changed from false to true during the reseume clean
+        # so set it to the result.
+        cfgOptionSet(CFGOPT_DELTA, $self->resumeClean($oStorageRepo, $strBackupLabel, $oBackupManifest, $oAbortedManifest,
+            cfgOption(CFGOPT_DELTA), $strTimelineCurrent, $strTimelineAborted);
     }
     # Else create the backup path
     else
@@ -891,6 +902,9 @@ sub process
         logDebugMisc($strOperation, "create backup path ${strBackupPath}");
         $oStorageRepo->pathCreate(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
     }
+
+    # Set the delta option in the manifest
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef, cfgOption(CFGOPT_DELTA));
 
     # Save the backup manifest
     $oBackupManifest->saveCopy();

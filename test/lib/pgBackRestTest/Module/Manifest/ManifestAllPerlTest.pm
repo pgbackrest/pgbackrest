@@ -1250,7 +1250,7 @@ sub run
 
         $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, true,
             'future timestamp warning and change to delta checksumming', {strLogExpect =>
-            "WARN: file has timestamp in the future, delta checksumming has been enabled\n" .
+            "WARN: file has timestamp in the future, enabling delta checksum\n" .
             "WARN: some files have timestamps in the future - they will be copied to prevent possible race conditions"});
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'manifest future subkey=y');
 
@@ -1281,7 +1281,7 @@ sub run
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false)}, true,
             'last manifest future timestamp warning', {strLogExpect =>
-            "WARN: file has timestamp in the future, delta checksumming has been enabled\n" .
+            "WARN: file has timestamp in the future, enabling delta checksum\n" .
             "WARN: some files have timestamps in the future - they will be copied to prevent possible race conditions"});
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'last manifest future subkey=y, new manifest future subkey removed');

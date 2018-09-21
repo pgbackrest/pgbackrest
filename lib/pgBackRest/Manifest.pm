@@ -557,6 +557,63 @@ sub isTargetTablespace
 }
 
 ####################################################################################################################################
+# checkDelta
+#
+# Determine if the delta option should be enabled.
+####################################################################################################################################
+sub checkDelta
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $bDelta,
+        $bOnlineSame,
+        $strTimelineCurrent,
+        $strTimelineLast,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->checkDelta', \@_,
+            {name => 'bDelta'},
+            {name => 'bOnlineSame'},
+            {name => 'strTimelineCurrent', required => false},
+            {name => 'strTimelineLast', required => false},
+        );
+
+    # If the delta checksum option is not enabled, then check to see if it should be
+    if (!$bDelta)
+    {
+        # Determine if a timeline switch has occurred
+        if (defined($strTimelineLast) && defined($strTimelineCurrent))
+        {
+            # If there is a prior backup, check if a timeline switch has occurred since then
+            if ($strTimelineLast ne $strTimelineCurrent)
+            {
+                &log(WARN, 'a timeline switch has occurred since the last backup, enabling delta checksum');
+                $bDelta = true;
+            }
+        }
+
+        # If delta was not set above and there is a change in the online option, then set delta option
+        if (!$bDelta && !$bOnlineSame)
+        {
+            &log(WARN, 'the online option has changed since the last backup, enabling delta checksum');
+            $bDelta = true;
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bDelta', value => $bDelta, trace => true},
+    );
+}
+
+####################################################################################################################################
 # build
 #
 # Build the manifest object.
@@ -647,19 +704,12 @@ sub build
             }
         }
 
-        # If the delta checksum option is not enabled, then check to see if it should be
-        if (!$bDelta && defined($strTimelineCurrent))
+        # If there is a last manifest, then check to see if delta checksum should be enabled
+        if (defined($oLastManifest))
         {
-            # Determine if a timeline switch has occurred
-            if (defined($strTimelineLast))
-            {
-                # If there is a prior backup, check if a timeline switch has occurred since then
-                if ($strTimelineLast ne $strTimelineCurrent)
-                {
-                    $bDelta = true;
-                    &log(WARN, 'a timeline switch has occurred since the last backup, delta checksumming has been enabled');
-                }
-            }
+            $bDelta = $self->checkDelta($bDelta,
+                $oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, $bOnline),
+                $strTimelineCurrent, $strTimelineLast);
         }
     }
 
@@ -1004,8 +1054,8 @@ sub build
                 # If delta checksumming is not enabled, then set it and emit a warning
                 if (!$bDelta)
                 {
+                    &log(WARN, 'file has timestamp in the future, enabling delta checksum');
                     $bDelta = true;
-                    &log(WARN, 'file has timestamp in the future, delta checksumming has been enabled');
                 }
 
                 # Only mark as future if still in the future in the current backup
@@ -1091,9 +1141,8 @@ sub build
                     # If delta checksumming is not enabled, then set it and emit a warning
                     if (!$bDelta)
                     {
+                        &log(WARN, 'timestamp in the past or size changed but timestamp did not, enabling delta checksum');
                         $bDelta = true;
-                        &log(WARN, 'timestamp in the past or size changed but timestamp did not, ' .
-                            'delta checksumming has been enabled');
                     }
                 }
             }
