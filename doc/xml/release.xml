@@ -36,6 +36,10 @@
 
                         <p>Add checksum delta for incremental backups which uses checksums rather than timestamps to determine if files have changed.</p>
                     </release-item>
+
+                    <release-item>
+                        <p><postgres/> 11 Beta 4 support.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>

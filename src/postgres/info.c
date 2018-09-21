@@ -30,7 +30,7 @@ pgVersionMap(uint32_t controlVersion, uint32_t catalogVersion)
 
     unsigned int result = 0;
 
-    if (controlVersion == 1100 && catalogVersion == 201806231)
+    if (controlVersion == 1100 && catalogVersion == 201809051)
         result = PG_VERSION_11;
     else if (controlVersion == 1002 && catalogVersion == 201707211)
         result = PG_VERSION_10;
