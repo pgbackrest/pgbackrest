@@ -11,7 +11,7 @@ Archive Get File
 #include "compress/gzipDecompress.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
-#include "postgres/info.h"
+#include "postgres/interface.h"
 #include "storage/helper.h"
 #include "storage/helper.h"
 
@@ -32,7 +32,7 @@ archiveGetCheck(const String *archiveFile)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get pg control info
-        PgControlInfo controlInfo = pgControlInfo(cfgOptionStr(cfgOptPgPath));
+        PgControl controlInfo = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
 
         // Attempt to load the archive info file
         InfoArchive *info = infoArchiveNew(storageRepo(), strNew(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false);

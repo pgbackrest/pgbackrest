@@ -207,8 +207,10 @@ sub run
         # Create global path
         $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global');
 
-        $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGCONTROL, '[replaceme]',
-                                              'b4a3adade1e81ebfc7e9a27bca0887a347d81522', $lTime - 100, undef, true);
+        $oHostDbMaster->manifestFileCreate(
+            \%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGCONTROL, '[replaceme]',
+            $self->archBits() == 32 ? '8107e546c59c72a8c1818fc3610d7cc1e5623660' : '4c77c900f7af0d9ab13fa9982051a42e0b637f6c',
+            $lTime - 100, undef, true);
 
         # Copy pg_control
         $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);

@@ -84,7 +84,8 @@ sub run
     my $strRepoFile = MANIFEST_TARGET_PGDATA . "/$strFileName";
     my $strRepoPgControl = MANIFEST_FILE_PGCONTROL;
     my $strPgControlRepo = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/$strBackupLabel/$strRepoPgControl");
-    my $strPgControlHash = 'b4a3adade1e81ebfc7e9a27bca0887a347d81522';
+    my $strPgControlHash =
+        $self->archBits() == 32 ? '8107e546c59c72a8c1818fc3610d7cc1e5623660' : '4c77c900f7af0d9ab13fa9982051a42e0b637f6c';
 
     # Copy file to db path
     executeTest('cp ' . $self->dataPath() . "/filecopy.archive2.bin ${strFileDb}");
@@ -123,7 +124,6 @@ sub run
     ################################################################################################################################
     if ($self->begin('backupFile(), backupManifestUpdate()'))
     {
-
         #---------------------------------------------------------------------------------------------------------------------------
         # Copy pg_control and confirm manifestUpdate does not save the manifest yet
         ($iResultCopyResult, $lResultCopySize, $lResultRepoSize, $strResultCopyChecksum, $rResultExtra) =

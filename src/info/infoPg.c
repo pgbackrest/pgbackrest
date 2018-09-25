@@ -16,7 +16,7 @@ PostgreSQL Info Handler
 #include "common/type/list.h"
 #include "info/info.h"
 #include "info/infoPg.h"
-#include "postgres/info.h"
+#include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
 

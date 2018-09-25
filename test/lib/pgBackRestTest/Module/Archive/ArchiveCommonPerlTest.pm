@@ -17,6 +17,7 @@ use pgBackRest::Archive::Common;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::DbVersion;
 use pgBackRest::Protocol::Storage::Helper;
 
 use pgBackRestTest::Env::Host::HostBackupTest;
@@ -28,6 +29,26 @@ sub run
 {
     my $self = shift;
     my $strModule = 'ArchiveCommon';
+
+    ################################################################################################################################
+    if ($self->begin("${strModule}::lsnFileRange()"))
+    {
+        $self->testResult(sub {lsnFileRange("1/60", "1/60", PG_VERSION_92, 16 * 1024 * 1024)}, "0000000100000000", 'get single');
+        $self->testResult(
+            sub {lsnFileRange("1/FD000000", "2/1000000", PG_VERSION_92, 16 * 1024 * 1024)},
+            "(00000001000000FD, 00000001000000FE, 0000000200000000, 0000000200000001)", 'get range < 9.3');
+        $self->testResult(
+            sub {lsnFileRange("1/FD000000", "2/60", PG_VERSION_93, 16 * 1024 * 1024)},
+            "(00000001000000FD, 00000001000000FE, 00000001000000FF, 0000000200000000)", 'get range >= 9.3');
+        $self->testResult(
+            sub {lsnFileRange("A/800", "B/C0000000", PG_VERSION_11, 1024 * 1024 * 1024)},
+            '(0000000A00000000, 0000000A00000001, 0000000A00000002, 0000000A00000003, 0000000B00000000, 0000000B00000001, ' .
+                '0000000B00000002, 0000000B00000003)',
+            'get range >= 11/1GB');
+        $self->testResult(
+            sub {lsnFileRange("7/FFEFFFFF", "8/001AAAAA", PG_VERSION_11, 1024 * 1024)},
+            '(0000000700000FFE, 0000000700000FFF, 0000000800000000, 0000000800000001)', 'get range >= 11/1MB');
+    }
 
     ################################################################################################################################
     if ($self->begin("${strModule}::walPath()"))

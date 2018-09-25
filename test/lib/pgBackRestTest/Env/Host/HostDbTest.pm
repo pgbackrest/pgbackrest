@@ -351,6 +351,7 @@ sub clusterCreate
         $self->pgBinPath() . '/initdb ' .
         ($self->pgVersion() >= PG_VERSION_93 ? ' -k' : '') .
         ($self->pgVersion() >= PG_VERSION_92 ? ' --' . $self->walId() . "dir=${strWalPath}" : '') .
+        ($self->pgVersion() >= PG_VERSION_11 ? ' --wal-segsize=1' : '') .
         ' --pgdata=' . $self->dbBasePath() . ' --auth=trust');
 
     if (!$self->standby() && $self->pgVersion() >= PG_VERSION_HOT_STANDBY)

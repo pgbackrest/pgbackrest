@@ -1,26 +1,13 @@
 /***********************************************************************************************************************************
 Test Archive Get Command
 ***********************************************************************************************************************************/
-#include "postgres/type.h"
+#include "postgres/interface.h"
 #include "postgres/version.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "compress/gzipCompress.h"
 #include "storage/driver/posix/storage.h"
-
-/***********************************************************************************************************************************
-Create test pg_control file
-***********************************************************************************************************************************/
-static void
-testPgControlCreate(const Storage *storage, const String *controlFile, PgControlFile control)
-{
-    Buffer *controlBuffer = bufNew(8192);
-    memset(bufPtr(controlBuffer), 0, bufSize(controlBuffer));
-    memcpy(bufPtr(controlBuffer), &control, sizeof(PgControlFile));
-    bufUsedSet(controlBuffer, bufSize(controlBuffer));
-    storagePutNP(storageNewWriteNP(storage, controlFile), controlBuffer);
-}
 
 /***********************************************************************************************************************************
 Test Run
@@ -46,9 +33,9 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // Create pg_control file
-        testPgControlCreate(
-            storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL),
-            (PgControlFile){.systemId = 0xFACEFACEFACEFACE, .controlVersion = 1002, .catalogVersion = 201707211});
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
         // Control and archive info mismatch
         // -------------------------------------------------------------------------------------------------------------------------
@@ -135,9 +122,9 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // Create pg_control file
-        testPgControlCreate(
-            storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL),
-            (PgControlFile){.systemId = 0xFACEFACEFACEFACE, .controlVersion = 1002, .catalogVersion = 201707211});
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
         // Create archive.info
         storagePutNP(
@@ -211,8 +198,8 @@ testRun(void)
         strLstAddZ(argList, "archive-get");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        size_t queueSize = WAL_SEGMENT_DEFAULT_SIZE;
-        size_t walSegmentSize = WAL_SEGMENT_DEFAULT_SIZE;
+        size_t queueSize = 16 * 1024 * 1024;
+        size_t walSegmentSize = 16 * 1024 * 1024;
 
         TEST_ERROR_FMT(
             queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
@@ -226,7 +213,7 @@ testRun(void)
             "000000010000000100000001|000000010000000100000002", "queue size smaller than min");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        queueSize = WAL_SEGMENT_DEFAULT_SIZE * 3;
+        queueSize = (16 * 1024 * 1024) * 3;
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92), "|")),
@@ -296,9 +283,9 @@ testRun(void)
         TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "path to copy WAL segment required");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        testPgControlCreate(
-            storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL),
-            (PgControlFile){.systemId = 0xFACEFACEFACEFACE, .controlVersion = 1002, .catalogVersion = 201707211});
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
         storagePathCreateNP(storageTest, strNewFmt("%s/db/pg_wal", testPath()));
 

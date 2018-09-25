@@ -69,7 +69,6 @@ minimize register spilling. For less sophisticated compilers it might be benefic
 #include "common/error.h"
 #include "common/log.h"
 #include "postgres/pageChecksum.h"
-#include "postgres/type.h"
 
 /***********************************************************************************************************************************
 For historical reasons, the 64-bit LSN value is stored as two 32-bit values.
@@ -143,7 +142,6 @@ pageChecksumBlock(const unsigned char *page, unsigned int pageSize)
         FUNCTION_TEST_PARAM(UINT, pageSize);
 
         FUNCTION_TEST_ASSERT(page != NULL);
-        FUNCTION_TEST_ASSERT(pageSize == PG_PAGE_SIZE);
     FUNCTION_TEST_END();
 
     uint32_t sums[N_SUMS];
@@ -186,7 +184,6 @@ pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageS
         FUNCTION_TEST_PARAM(UINT, pageSize);
 
         FUNCTION_TEST_ASSERT(page != NULL);
-        FUNCTION_TEST_ASSERT(pageSize == PG_PAGE_SIZE);
     FUNCTION_TEST_END();
 
     // Save pd_checksum and temporarily set it to zero, so that the checksum calculation isn't affected by the old checksum stored
@@ -220,7 +217,6 @@ pageChecksumTest(
         FUNCTION_TEST_PARAM(UINT32, ignoreWalOffset);
 
         FUNCTION_TEST_ASSERT(page != NULL);
-        FUNCTION_TEST_ASSERT(pageSize == PG_PAGE_SIZE);
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(
@@ -251,7 +247,6 @@ pageChecksumBufferTest(
 
         FUNCTION_TEST_ASSERT(pageBuffer != NULL);
         FUNCTION_DEBUG_ASSERT(pageBufferSize > 0);
-        FUNCTION_DEBUG_ASSERT(pageSize == PG_PAGE_SIZE);
         FUNCTION_DEBUG_ASSERT(pageBufferSize % pageSize == 0);
     FUNCTION_DEBUG_END();
 
