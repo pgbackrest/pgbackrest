@@ -966,7 +966,7 @@ sub run
         # Also create tablespace 11 to be sure it does not conflict with path of tablespace 1
         $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 11);
 
-        # Change only the time on a valid file and update the timestamp in the expected manifest
+        # Change only the time to be in the past on a valid file and update the timestamp in the expected manifest
         utime($lTime - 100, $lTime - 100, $oHostDbMaster->dbBasePath() . '/changetime.txt')
             or confess &log(ERROR, "unable to set time for file ".$oHostDbMaster->dbBasePath() . '/changetime.txt');
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changetime.txt'}{&MANIFEST_SUBKEY_TIMESTAMP} = $lTime - 100;
@@ -986,6 +986,7 @@ sub run
         }
         else
         {
+syswrite(*STDOUT, "REMOVE REF AND UPDATE TIMESTAMP\n");
             # Without --delta, the changetime reference will be removed since the timestamp has changed but since the timestamp on
             # the changecontent did not change even though the contents did, it will still reference the prior backup - this may be
             # a rare occurrence and not good but it is one reason to use --delta

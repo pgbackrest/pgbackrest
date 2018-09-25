@@ -1141,8 +1141,9 @@ sub build
                     # If delta checksumming is not enabled, then set it and emit a warning
                     if (!$bDelta)
                     {
-                        &log(WARN, 'timestamp in the past or size changed but timestamp did not, enabling delta checksum');
+                        &log(WARN, "timestamp in the past or size changed but timestamp did not, enabling delta checksum");
                         $bDelta = true;
+# CSHANG Tests are flapping because at this point we should treat the file as if delta had been set, so if size is equal but timestamp is not, then set all the above reference stuff.
                     }
                 }
             }
