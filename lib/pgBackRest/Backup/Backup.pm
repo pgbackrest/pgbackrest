@@ -141,56 +141,33 @@ sub resumeClean
                 !$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE))
             {
                 # To be preserved the checksum must be defined
-                my $strChecksum = $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
-
-                # If the size and timestamp match OR if the size matches and the delta option is set, then keep the file.
-                # In the latter case, if the timestamp had changed then rather than removing and recopying the file, the file
-                # will be tested in backupFile to see if the db/repo checksum still matches: if so, it is not necessary to recopy,
-                # else it will need to be copied to the new backup.
-                if (defined($strChecksum) &&
-                    $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) ==
-                    $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE)  &&
-                    ($bDelta ||
-                    $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
-                    $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP)))
+                if ($oAbortedManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM))
                 {
-                    $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
-
-                    # Also copy page checksum results if they exist
-                    my $bChecksumPage =
-                        $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
-
-                    if (defined($bChecksumPage))
+                    # If the size and timestamp match OR if the size matches and the delta option is set, then keep the file.
+                    # In the latter case, if the timestamp had changed then rather than removing and recopying the file, the file
+                    # will be tested in backupFile to see if the db/repo checksum still matches: if so, it is not necessary to recopy,
+                    # else it will need to be copied to the new backup.
+                    if ($oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) ==
+                        $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE)  &&
+                        ($bDelta ||
+                        $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
+                        $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP)))
                     {
-                        $oManifest->boolSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE, $bChecksumPage);
-
-                        if (!$bChecksumPage &&
-                            $oAbortedManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR))
-                        {
-                            $oManifest->set(
-                                MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR,
-                                $oAbortedManifest->get(
-                                    MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR));
-                        }
+                        $oManifest->copyPriorChecksum($strFile, $oAbortedManifest);
+                        next;
                     }
-
-                    next;
-                }
-                # If the new timestamp is in the past relative to the aborted manifest or the size has changed but the timestamp
-                # did not, then enable delta. The file will be removed and checksums will be validated for all remaining files.
-                elsif ($oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) <
-                    $oAbortedManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ||
-                    ($oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) !=
-                    $oAbortedManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) &&
-                    $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
-                    $oAbortedManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP)))
-                {
-                    # If delta checksumming is not enabled, then set it and emit a warning
-                    if (!$bDelta)
+                    # If the new timestamp is in the past relative to the aborted manifest or the size has changed but the timestamp
+                    # did not, then enable delta. The file will be removed from the repo and recopied.
+                    elsif (!$bDelta &&
+                        ($oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) <
+                        $oAbortedManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ||
+                        ($oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) !=
+                        $oAbortedManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) &&
+                        $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
+                        $oAbortedManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP))))
                     {
                         &log(WARN, 'timestamp in the past or size changed but timestamp did not, enabling delta checksum');
                         $bDelta = true;
-# CSHANG At this point we should probably treat the file as if delta had been set, so if size is equal but timestamp is not, then set all the above reference stuff.
                     }
                 }
             }

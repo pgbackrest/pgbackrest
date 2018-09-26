@@ -614,6 +614,119 @@ sub checkDelta
 }
 
 ####################################################################################################################################
+# copyPriorChecksum
+#
+# Set checksum and checksum-page if necessary.
+####################################################################################################################################
+sub copyPriorChecksum
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strName,
+        $oPriorManifest,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->copyPriorChecksum', \@_,
+            {name => 'strName'},
+            {name => 'oPriorManifest'},
+        );
+
+    # Copy the checksum from previous manifest (if it exists - zero sized files don't have checksums)
+    if ($oPriorManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM))
+    {
+        $self->set(
+            MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM,
+            $oPriorManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM));
+    }
+
+    # Copy checksum page from the previous manifest (if it exists)
+    my $bChecksumPage = $oPriorManifest->get(
+        MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
+
+    if (defined($bChecksumPage))
+    {
+        $self->boolSet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE, $bChecksumPage);
+
+        if (!$bChecksumPage &&
+            $oPriorManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR))
+        {
+            $self->set(
+                MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR,
+                $oPriorManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR));
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# copyPriorManifest
+#
+# Copy selected data from prior manifest.
+####################################################################################################################################
+sub copyPriorManifest
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strName,
+        $oPriorManifest,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->copyPriorManifest', \@_,
+            {name => 'strName'},
+            {name => 'oPriorManifest'},
+        );
+
+    # Copy prior checksum/checkum-page
+    $self->copyPriorChecksum($strName, $oPriorManifest);
+
+    # Copy reference from previous backup if possible
+    if ($oPriorManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE))
+    {
+        $self->set(
+            MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
+            $oPriorManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE));
+    }
+    # Otherwise the reference is to the previous backup
+    else
+    {
+        $self->set(
+            MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
+            $oPriorManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
+    }
+
+    # Copy repo size from the previous manifest (if it exists)
+    if ($oPriorManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE))
+    {
+        $self->set(
+            MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE,
+            $oPriorManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE));
+    }
+
+    # Copy master flag from the previous manifest (if it exists)
+    if ($oPriorManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER))
+    {
+        $self->set(
+            MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER,
+            $oPriorManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER));
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
 # build
 #
 # Build the manifest object.
@@ -1077,74 +1190,23 @@ sub build
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
                        $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP))))
                 {
-                    # Copy reference from previous backup if possible
-                    if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE))
-                    {
-                        $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
-                                   $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE));
-                    }
-                    # Otherwise the reference is to the previous backup
-                    else
-                    {
-                        $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
-                                   $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
-                    }
-
-                    # Copy the checksum from previous manifest (if it exists - zero sized files don't have checksums)
-                    if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM))
-                    {
-                        $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM,
-                                   $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM));
-                    }
-
-                    # Copy repo size from the previous manifest (if it exists)
-                    if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE))
-                    {
-                        $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE,
-                                   $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE));
-                    }
-
-                    # Copy master flag from the previous manifest (if it exists)
-                    if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER))
-                    {
-                        $self->set(
-                            MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER,
-                            $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER));
-                    }
-
-                    # Copy checksum page from the previous manifest (if it exists)
-                    my $bChecksumPage = $oLastManifest->get(
-                        MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
-
-                    if (defined($bChecksumPage))
-                    {
-                        $self->boolSet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE, $bChecksumPage);
-
-                        if (!$bChecksumPage &&
-                            $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR))
-                        {
-                            $self->set(
-                                MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR,
-                                $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR));
-                        }
-                    }
+                    # Copy pertinent data from last manifest
+                    $self->copyPriorManifest($strName, $oLastManifest);
                 }
                 # If the new timestamp is in the past relative to the last manifest or the size has changed but the timestamp
                 # did not, then enable delta
-                elsif ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) <
+                elsif (!$bDelta &&
+                    ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) <
                     $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ||
                     ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) !=
                     $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&
                     $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
-                    $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP)))
+                    $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP))))
                 {
-                    # If delta checksumming is not enabled, then set it and emit a warning
-                    if (!$bDelta)
-                    {
-                        &log(WARN, "timestamp in the past or size changed but timestamp did not, enabling delta checksum");
-                        $bDelta = true;
-# CSHANG Tests are flapping because at this point we should treat the file as if delta had been set, so if size is equal but timestamp is not, then set all the above reference stuff.
-                    }
+                    &log(WARN, "timestamp in the past or size changed but timestamp did not, enabling delta checksum");
+                    $bDelta = true;
+# CSHANG Need this for flapping tests, but one test is still not working but I think I just need to put a conditional here if size same then copy.
+                    $self->copyPriorManifest($strName, $oLastManifest);
                 }
             }
         }
