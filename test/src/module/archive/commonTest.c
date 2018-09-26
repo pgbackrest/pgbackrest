@@ -48,20 +48,20 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
-            bufNewStr(strNew(BOGUS_STR)));
+            bufNewZ(BOGUS_STR));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false), FormatError,
             "000000010000000100000001.ok content must have at least two lines");
 
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
-            bufNewStr(strNew(BOGUS_STR "\n")));
+            bufNewZ(BOGUS_STR "\n"));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false), FormatError, "000000010000000100000001.ok message must be > 0");
 
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
-            bufNewStr(strNew(BOGUS_STR "\nmessage")));
+            bufNewZ(BOGUS_STR "\nmessage"));
         TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, false), FormatError, "unable to convert string 'BOGUS' to int");
 
         storagePutNP(storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))), NULL);
@@ -69,21 +69,20 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
-            bufNewStr(strNew("0\nwarning")));
+            bufNewZ("0\nwarning"));
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "ok file with warning");
         harnessLogResult("P00   WARN: warning");
 
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
-            bufNewStr(strNew("25\nerror")));
+            bufNewZ("25\nerror"));
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "error status renamed to ok");
         harnessLogResult(
             "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
-            bufNewStr(strNew("")));
+            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))), bufNew(0));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false), AssertError,
             strPtr(
@@ -97,7 +96,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))),
-            bufNewStr(strNew("25\nmessage")));
+            bufNewZ("25\nmessage"));
         TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, true), AssertError, "message");
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "suppress error");

@@ -41,15 +41,14 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
-            bufNewStr(
-                strNew(
-                    "[backrest]\n"
-                    "backrest-checksum=\"0a415a03fa3faccb4ac171759895478469e9e19e\"\n"
-                    "backrest-format=5\n"
-                    "backrest-version=\"2.06\"\n"
-                    "\n"
-                    "[db:history]\n"
-                    "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n")));
+            bufNewZ(
+                "[backrest]\n"
+                "backrest-checksum=\"0a415a03fa3faccb4ac171759895478469e9e19e\"\n"
+                "backrest-format=5\n"
+                "backrest-version=\"2.06\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"));
 
         TEST_ERROR(
             archiveGetCheck(strNew("876543218765432187654321")), ArchiveMismatchError,
@@ -59,18 +58,17 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
-            bufNewStr(
-                strNew(
-                    "[backrest]\n"
-                    "backrest-checksum=\"f7617b5c4c9f212f40b9bc3d8ec7f97edbbf96af\"\n"
-                    "backrest-format=5\n"
-                    "backrest-version=\"2.06\"\n"
-                    "\n"
-                    "[db:history]\n"
-                    "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"
-                    "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
-                    "3={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n"
-                    "4={\"db-id\":18072658121562454734,\"db-version\":\"10\"}")));
+            bufNewZ(
+                "[backrest]\n"
+                "backrest-checksum=\"f7617b5c4c9f212f40b9bc3d8ec7f97edbbf96af\"\n"
+                "backrest-format=5\n"
+                "backrest-version=\"2.06\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"
+                "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
+                "3={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n"
+                "4={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
 
         TEST_RESULT_PTR(archiveGetCheck(strNew("876543218765432187654321")), NULL, "no segment found");
 
@@ -129,15 +127,14 @@ testRun(void)
         // Create archive.info
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
-            bufNewStr(
-                strNew(
-                    "[backrest]\n"
-                    "backrest-checksum=\"8a041a4128eaa2c08a23dd1f04934627795946ff\"\n"
-                    "backrest-format=5\n"
-                    "backrest-version=\"2.06\"\n"
-                    "\n"
-                    "[db:history]\n"
-                    "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}")));
+            bufNewZ(
+                "[backrest]\n"
+                "backrest-checksum=\"8a041a4128eaa2c08a23dd1f04934627795946ff\"\n"
+                "backrest-format=5\n"
+                "backrest-version=\"2.06\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
 
         // Nothing to copy
         // -------------------------------------------------------------------------------------------------------------------------
@@ -242,7 +239,7 @@ testRun(void)
         walSegmentSize = 1024 * 1024;
         queueSize = walSegmentSize * 5;
 
-        storagePutNP(storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/junk")), bufNewStr(strNew("JUNK")));
+        storagePutNP(storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/junk")), bufNewZ("JUNK"));
         storagePutNP(
             storageNewWriteNP(
                 storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFE")), walSegmentBuffer);
@@ -368,7 +365,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
-            bufNewStr(strNew("SHOULD-BE-A-REAL-WAL-FILE")));
+            bufNewZ("SHOULD-BE-A-REAL-WAL-FILE"));
 
         TEST_RESULT_VOID(cmdArchiveGet(), "successful get");
         harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive");
@@ -385,10 +382,10 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
-            bufNewStr(strNew("SHOULD-BE-A-REAL-WAL-FILE")));
+            bufNewZ("SHOULD-BE-A-REAL-WAL-FILE"));
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment2))),
-            bufNewStr(strNew("SHOULD-BE-A-REAL-WAL-FILE")));
+            bufNewZ("SHOULD-BE-A-REAL-WAL-FILE"));
 
         TEST_RESULT_VOID(cmdArchiveGet(), "successful get");
         harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive");

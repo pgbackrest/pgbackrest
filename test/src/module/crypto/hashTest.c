@@ -34,9 +34,9 @@ testRun(void)
         TEST_ASSIGN(hashFilter, cryptoHashFilter(hash), "create sha1 hash");
         TEST_RESULT_VOID(cryptoHashProcessC(hash, (const unsigned char *)"1", 1), "    add 1");
         TEST_RESULT_VOID(cryptoHashProcessStr(hash, strNew("2")), "    add 2");
-        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewStr(strNew("3"))), "    add 3");
-        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewStr(strNew("4"))), "    add 4");
-        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewStr(strNew("5"))), "    add 5");
+        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewZ("3")), "    add 3");
+        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewZ("4")), "    add 4");
+        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewZ("5")), "    add 5");
 
         TEST_RESULT_STR(
             strPtr(varStr(ioFilterResult(hashFilter))), "8cb2237d0679ca88db6464eac60da96345513964", "    check small hash");
@@ -57,7 +57,7 @@ testRun(void)
     if (testBegin("cryptoHashOne*()"))
     {
         TEST_RESULT_STR(
-            strPtr(cryptoHashOne(strNew(HASH_TYPE_SHA1), bufNewStr(strNew("12345")))), "8cb2237d0679ca88db6464eac60da96345513964",
+            strPtr(cryptoHashOne(strNew(HASH_TYPE_SHA1), bufNewZ("12345"))), "8cb2237d0679ca88db6464eac60da96345513964",
             "    check small hash");
         TEST_RESULT_STR(
             strPtr(cryptoHashOneStr(strNew(HASH_TYPE_SHA1), strNew("12345"))), "8cb2237d0679ca88db6464eac60da96345513964",

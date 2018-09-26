@@ -18,6 +18,7 @@ Functions
 Buffer *bufNew(size_t size);
 Buffer *bufNewC(size_t size, const void *buffer);
 Buffer *bufNewStr(const String *string);
+Buffer *bufNewZ(const char *string);
 
 Buffer *bufCat(Buffer *this, const Buffer *cat);
 Buffer *bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize);
