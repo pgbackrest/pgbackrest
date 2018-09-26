@@ -37,7 +37,6 @@ void cryptoHashProcessStr(CryptoHash *this, const String *message);
 Getters
 ***********************************************************************************************************************************/
 const Buffer *cryptoHash(CryptoHash *this);
-String *cryptoHashHex(CryptoHash *this);
 IoFilter *cryptoHashFilter(CryptoHash *this);
 const Variant *cryptoHashResult(CryptoHash *this);
 
@@ -49,9 +48,9 @@ void cryptoHashFree(CryptoHash *this);
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
-String *cryptoHashOne(const String *type, Buffer *message);
-String *cryptoHashOneC(const String *type, const unsigned char *message, size_t messageSize);
-String *cryptoHashOneStr(const String *type, String *message);
+Buffer *cryptoHashOne(const String *type, Buffer *message);
+Buffer *cryptoHashOneC(const String *type, const unsigned char *message, size_t messageSize);
+Buffer *cryptoHashOneStr(const String *type, String *message);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -208,6 +208,26 @@ bufEq(const Buffer *this, const Buffer *compare)
 }
 
 /***********************************************************************************************************************************
+Convert the buffer to a hex string
+***********************************************************************************************************************************/
+String *
+bufHex(const Buffer *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    String *result = strNew("");
+
+    for (unsigned int bufferIdx = 0; bufferIdx < this->size; bufferIdx++)
+        strCatFmt(result, "%02x", this->buffer[bufferIdx]);
+
+    FUNCTION_TEST_RESULT(STRING, result);
+}
+
+/***********************************************************************************************************************************
 Move buffer to a new mem context
 ***********************************************************************************************************************************/
 Buffer *

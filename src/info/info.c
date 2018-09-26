@@ -126,11 +126,11 @@ infoValidInternal(
         CryptoHash *hash = infoHash(this->ini);
 
         // ??? Temporary hack until get json parser: add quotes around hash before comparing
-        if (!strEq(infoChecksum, strQuoteZ(cryptoHashHex(hash), "\"")))
+        if (!strEq(infoChecksum, strQuoteZ(bufHex(cryptoHash(hash)), "\"")))
         {
             // ??? Temporary hack until get json parser: remove quotes around hash before displaying in messsage & check < 3
             String *chksumMsg = strNewFmt("invalid checksum in '%s', expected '%s' but found '%s'",
-            strPtr(this->fileName), strPtr(cryptoHashHex(hash)), (strSize(infoChecksum) < 3) ?
+            strPtr(this->fileName), strPtr(bufHex(cryptoHash(hash))), (strSize(infoChecksum) < 3) ?
                 "[undef]" : strPtr(strSubN(infoChecksum, 1, strSize(infoChecksum) - 2)));
 
             if (!ignoreError)

@@ -91,7 +91,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <code>bufNewZ()</code> to <code>Buffer</code> object.</p>
+                        <p>Add <code>bufNewZ()</code> and <code>bufHex()</code>to <code>Buffer</code> object.</p>
                     </release-item>
 
                     <release-item>

@@ -178,27 +178,6 @@ cryptoHash(CryptoHash *this)
 }
 
 /***********************************************************************************************************************************
-Get string representation of the hash
-***********************************************************************************************************************************/
-String *
-cryptoHashHex(CryptoHash *this)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(CRYPTO_HASH, this);
-
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
-
-    const Buffer *hash = cryptoHash(this);
-    String *hashStr = strNew("");
-
-    for (unsigned int hashIdx = 0; hashIdx < bufSize(hash); hashIdx++)
-        strCatFmt(hashStr, "%02x", bufPtr(hash)[hashIdx]);
-
-    FUNCTION_DEBUG_RESULT(STRING, hashStr);
-}
-
-/***********************************************************************************************************************************
 Get filter interface
 ***********************************************************************************************************************************/
 IoFilter *
@@ -229,7 +208,7 @@ cryptoHashResult(CryptoHash *this)
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
-        result = varNewStr(cryptoHashHex(this));
+        result = varNewStr(bufHex(cryptoHash(this)));
     }
     MEM_CONTEXT_END();
 
@@ -263,7 +242,7 @@ cryptoHashFree(CryptoHash *this)
 /***********************************************************************************************************************************
 Get hash for one C buffer
 ***********************************************************************************************************************************/
-String *
+Buffer *
 cryptoHashOneC(const String *type, const unsigned char *message, size_t messageSize)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
@@ -274,7 +253,7 @@ cryptoHashOneC(const String *type, const unsigned char *message, size_t messageS
         FUNCTION_DEBUG_ASSERT(message != NULL);
     FUNCTION_DEBUG_END();
 
-    String *result = NULL;
+    Buffer *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -282,18 +261,18 @@ cryptoHashOneC(const String *type, const unsigned char *message, size_t messageS
         cryptoHashProcessC(hash, message, messageSize);
 
         memContextSwitch(MEM_CONTEXT_OLD());
-        result = cryptoHashHex(hash);
+        result = bufNewC(bufSize(cryptoHash(hash)), bufPtr(cryptoHash(hash)));
         memContextSwitch(MEM_CONTEXT_TEMP());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING, result);
+    FUNCTION_DEBUG_RESULT(BUFFER, result);
 }
 
 /***********************************************************************************************************************************
 Get hash for one Buffer
 ***********************************************************************************************************************************/
-String *
+Buffer *
 cryptoHashOne(const String *type, Buffer *message)
 {
     FUNCTION_TEST_BEGIN();
@@ -304,13 +283,13 @@ cryptoHashOne(const String *type, Buffer *message)
         FUNCTION_TEST_ASSERT(message != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING, cryptoHashOneC(type, bufPtr(message), bufSize(message)));
+    FUNCTION_TEST_RESULT(BUFFER, cryptoHashOneC(type, bufPtr(message), bufSize(message)));
 }
 
 /***********************************************************************************************************************************
 Get hash for one String
 ***********************************************************************************************************************************/
-String *
+Buffer *
 cryptoHashOneStr(const String *type, String *message)
 {
     FUNCTION_TEST_BEGIN();
@@ -321,5 +300,5 @@ cryptoHashOneStr(const String *type, String *message)
         FUNCTION_TEST_ASSERT(message != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING, cryptoHashOneC(type, (const unsigned char *)strPtr(message), strSize(message)));
+    FUNCTION_TEST_RESULT(BUFFER, cryptoHashOneC(type, (const unsigned char *)strPtr(message), strSize(message)));
 }

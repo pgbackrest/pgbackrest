@@ -25,8 +25,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA1)), "create sha1 hash");
-        TEST_RESULT_STR(strPtr(cryptoHashHex(hash)), "da39a3ee5e6b4b0d3255bfef95601890afd80709", "    check empty hash");
-        TEST_RESULT_STR(strPtr(cryptoHashHex(hash)), "da39a3ee5e6b4b0d3255bfef95601890afd80709", "    check empty hash again");
+        TEST_RESULT_STR(strPtr(bufHex(cryptoHash(hash))), "da39a3ee5e6b4b0d3255bfef95601890afd80709", "    check empty hash");
+        TEST_RESULT_STR(strPtr(bufHex(cryptoHash(hash))), "da39a3ee5e6b4b0d3255bfef95601890afd80709", "    check empty hash again");
         TEST_RESULT_VOID(cryptoHashFree(hash), "    free hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -44,12 +44,12 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
-        TEST_RESULT_STR(strPtr(cryptoHashHex(hash)), "d41d8cd98f00b204e9800998ecf8427e", "    check empty hash");
+        TEST_RESULT_STR(strPtr(bufHex(cryptoHash(hash))), "d41d8cd98f00b204e9800998ecf8427e", "    check empty hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA256)), "create sha256 hash");
         TEST_RESULT_STR(
-            strPtr(cryptoHashHex(hash)), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            strPtr(bufHex(cryptoHash(hash))), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             "    check empty hash");
     }
 
@@ -57,10 +57,10 @@ testRun(void)
     if (testBegin("cryptoHashOne*()"))
     {
         TEST_RESULT_STR(
-            strPtr(cryptoHashOne(strNew(HASH_TYPE_SHA1), bufNewZ("12345"))), "8cb2237d0679ca88db6464eac60da96345513964",
+            strPtr(bufHex(cryptoHashOne(strNew(HASH_TYPE_SHA1), bufNewZ("12345")))), "8cb2237d0679ca88db6464eac60da96345513964",
             "    check small hash");
         TEST_RESULT_STR(
-            strPtr(cryptoHashOneStr(strNew(HASH_TYPE_SHA1), strNew("12345"))), "8cb2237d0679ca88db6464eac60da96345513964",
+            strPtr(bufHex(cryptoHashOneStr(strNew(HASH_TYPE_SHA1), strNew("12345")))), "8cb2237d0679ca88db6464eac60da96345513964",
             "    check small hash");
     }
 
