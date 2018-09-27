@@ -5,7 +5,9 @@ Cryptographic Hash
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/hmac.h>
 
+#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
@@ -301,4 +303,33 @@ cryptoHashOneStr(const String *type, String *message)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(BUFFER, cryptoHashOneC(type, (const unsigned char *)strPtr(message), strSize(message)));
+}
+
+
+/***********************************************************************************************************************************
+Get hmac for one message/key
+***********************************************************************************************************************************/
+Buffer *
+cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, type);
+        FUNCTION_DEBUG_PARAM(BUFFER, key);
+        FUNCTION_DEBUG_PARAM(BUFFER, message);
+
+        FUNCTION_TEST_ASSERT(type != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+        FUNCTION_TEST_ASSERT(message != NULL);
+    FUNCTION_DEBUG_END();
+
+    const EVP_MD *hashType = EVP_get_digestbyname(strPtr(type));
+    ASSERT(hashType != NULL);
+
+    // Allocate a buffer to hold the hmac
+    Buffer *result = bufNew((size_t)EVP_MD_size(hashType));
+
+    // Calculate the HMAC
+    HMAC(hashType, bufPtr(key), (int)bufSize(key), bufPtr(message), bufSize(message), bufPtr(result), NULL);
+
+    FUNCTION_TEST_RESULT(BUFFER, result);
 }

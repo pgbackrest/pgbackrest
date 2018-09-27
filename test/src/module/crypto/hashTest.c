@@ -64,5 +64,19 @@ testRun(void)
             "    check small hash");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("cryptoHmacOne()"))
+    {
+        TEST_RESULT_STR(
+            strPtr(
+                bufHex(
+                    cryptoHmacOne(
+                        strNew(HASH_TYPE_SHA256),
+                        bufNewZ("AWS4wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"),
+                        bufNewZ("20170412")))),
+            "8b05c497afe9e1f42c8ada4cb88392e118649db1e5c98f0f0fb0a158bdd2dd76",
+            "    check hmac");
+    }
+
     FUNCTION_HARNESS_RESULT_VOID();
 }
