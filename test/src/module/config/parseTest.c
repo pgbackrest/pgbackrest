@@ -646,7 +646,7 @@ testRun(void)
         strLstAdd(argList, strNew("--compress-level=3"));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "option 'compress-level' cannot have multiple arguments");
+            "option 'compress-level' cannot be set multiple times");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -966,7 +966,19 @@ testRun(void)
 
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false),
             OptionInvalidError,
-            "option 'pg1-path' cannot have multiple arguments");
+            "option 'pg1-path' cannot be set multiple times");
+
+        // Also test with a boolean option since this gets converted immediately and will blow up if it is multi
+        storagePutNP(
+            storageNewWriteNP(storageLocalWrite(), configFile),
+            bufNewZ(
+                "[db]\n"
+                "start-fast=y\n"
+                "start-fast=n\n"));
+
+        TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false),
+            OptionInvalidError,
+            "option 'start-fast' cannot be set multiple times");
 
         // Test that log levels are set correctly when reset is enabled, then set them back to harness defaults
         // -------------------------------------------------------------------------------------------------------------------------

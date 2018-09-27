@@ -24,6 +24,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="jesper.st.john"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix incorrect error message for duplicate options in configuration files.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Fix incorrectly reported error return in <id>info</id> logging.  A return code of 1 from the <cmd>archive-get</cmd> was being logged as an error message at <id>info</id> level but otherwise worked correctly.</p>
                     </release-item>
                 </release-bug-list>
