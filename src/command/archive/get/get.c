@@ -17,7 +17,7 @@ Archive Get Command
 #include "config/config.h"
 #include "config/load.h"
 #include "perl/exec.h"
-#include "postgres/info.h"
+#include "postgres/interface.h"
 #include "storage/helper.h"
 #include "storage/helper.h"
 
@@ -220,11 +220,8 @@ cmdArchiveGet(void)
                         if (lockAcquire(                                // {uncoverable - almost impossible to make this lock fail}
                                 cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
                         {
-                            // Get the version of PostgreSQL
-                            unsigned int pgVersion = pgControlInfo(cfgOptionStr(cfgOptPgPath)).version;
-
-                            // Determine WAL segment size -- for now this is the default but for PG11 it will be configurable
-                            unsigned int walSegmentSize = WAL_SEGMENT_DEFAULT_SIZE;
+                            // Get control info
+                            PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
 
                             // Create the queue
                             storagePathCreateNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
@@ -233,8 +230,8 @@ cmdArchiveGet(void)
                             // will return the list of WAL needed to fill the queue and this will be passed to the async process.
                             cfgCommandParamSet(
                                 queueNeed(
-                                    walSegment, found, (size_t)cfgOptionInt64(cfgOptArchiveGetQueueMax), walSegmentSize,
-                                    pgVersion));
+                                    walSegment, found, (size_t)cfgOptionInt64(cfgOptArchiveGetQueueMax), pgControl.walSegmentSize,
+                                    pgControl.version));
 
                             // The async process should not output on the console at all
                             cfgOptionSet(cfgOptLogLevelConsole, cfgSourceParam, varNewStrZ("off"));

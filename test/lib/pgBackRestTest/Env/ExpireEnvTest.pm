@@ -62,6 +62,8 @@ sub new
             {name => 'oRunTest', required => false, trace => true},
         );
 
+    $self->{strVm} = $self->{oRunTest}->vm();
+
     # Return from function and log return values if any
     return logDebugReturn
     (

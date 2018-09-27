@@ -51,7 +51,7 @@ CODE:
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        String *hash = cryptoHashHex(self->pxPayload);
+        String *hash = bufHex(cryptoHash(self->pxPayload));
 
         RETVAL = newSV(strSize(hash));
         SvPOK_only(RETVAL);
@@ -84,7 +84,7 @@ CODE:
         STRLEN messageSize;
         const unsigned char *messagePtr = (const unsigned char *)SvPV(message, messageSize);
 
-        String *hash = cryptoHashOneC(strNew(type), messagePtr, messageSize);
+        String *hash = bufHex(cryptoHashOneC(strNew(type), messagePtr, messageSize));
 
         RETVAL = newSV(strSize(hash));
         SvPOK_only(RETVAL);

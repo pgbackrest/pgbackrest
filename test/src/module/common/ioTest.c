@@ -21,7 +21,7 @@ static size_t
 testIoRead(void *driver, Buffer *buffer)
 {
     ASSERT(driver == (void *)999);
-    bufCat(buffer, bufNewStr(strNew("Z")));
+    bufCat(buffer, bufNewZ("Z"));
     return 1;
 }
 
@@ -251,7 +251,7 @@ testRun(void)
         IoBufferRead *bufferRead = NULL;
         ioBufferSizeSet(2);
         buffer = bufNew(2);
-        Buffer *bufferOriginal = bufNewStr(strNew("123"));
+        Buffer *bufferOriginal = bufNewZ("123");
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -332,7 +332,7 @@ testRun(void)
 
         TEST_RESULT_VOID(ioWriteOpen(write), "    open io object");
         TEST_RESULT_BOOL(testIoWriteOpenCalled, true, "    check io object open");
-        TEST_RESULT_VOID(ioWrite(write, bufNewStr(strNew("ABC"))), "    write 3 bytes");
+        TEST_RESULT_VOID(ioWrite(write, bufNewZ("ABC")), "    write 3 bytes");
         TEST_RESULT_VOID(ioWriteClose(write), "    close io object");
         TEST_RESULT_BOOL(testIoWriteCloseCalled, true, "    check io object closed");
 
@@ -359,12 +359,12 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteFilterGroupSet(ioBufferWriteIo(bufferWrite), filterGroup), "    add filter group to write io");
 
         TEST_RESULT_VOID(ioWriteOpen(ioBufferWriteIo(bufferWrite)), "    open buffer write object");
-        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNewStr(strNew("ABC"))), "    write 3 bytes");
-        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNewStr(strNew(""))), "    write 0 bytes");
+        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNewZ("ABC")), "    write 3 bytes");
+        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNew(0)), "    write 0 bytes");
         TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), NULL), "    write 0 bytes");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABBCC", "    check write");
 
-        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNewStr(strNew("12345"))), "    write 4 bytes");
+        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNewZ("12345")), "    write 4 bytes");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABBCC112233445", "    check write");
 
         TEST_RESULT_VOID(ioWriteClose(ioBufferWriteIo(bufferWrite)), " close buffer write object");

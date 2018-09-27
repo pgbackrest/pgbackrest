@@ -110,7 +110,18 @@ SRCS = \
 	info/infoPg.c \
 	perl/config.c \
 	perl/exec.c \
-	postgres/info.c \
+	postgres/interface.c \
+	postgres/interface/v083.c \
+	postgres/interface/v084.c \
+	postgres/interface/v090.c \
+	postgres/interface/v091.c \
+	postgres/interface/v092.c \
+	postgres/interface/v093.c \
+	postgres/interface/v094.c \
+	postgres/interface/v095.c \
+	postgres/interface/v096.c \
+	postgres/interface/v100.c \
+	postgres/interface/v110.c \
 	postgres/pageChecksum.c \
 	storage/driver/posix/storage.c \
 	storage/driver/posix/common.c \
@@ -144,10 +155,10 @@ install: pgbackrest
 command/archive/common.o: command/archive/common.c command/archive/common.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/wait.h postgres/version.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
 	$(CC) $(CFLAGS) -c command/archive/common.c -o command/archive/common.o
 
-command/archive/get/file.o: command/archive/get/file.c command/archive/common.h command/archive/get/file.h command/control/control.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h compress/gzip.h compress/gzipDecompress.h config/config.auto.h config/config.h config/define.auto.h config/define.h info/infoArchive.h info/infoPg.h postgres/info.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
+command/archive/get/file.o: command/archive/get/file.c command/archive/common.h command/archive/get/file.h command/control/control.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h compress/gzip.h compress/gzipDecompress.h config/config.auto.h config/config.h config/define.auto.h config/define.h info/infoArchive.h info/infoPg.h postgres/interface.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
 	$(CC) $(CFLAGS) -c command/archive/get/file.c -o command/archive/get/file.o
 
-command/archive/get/get.o: command/archive/get/get.c command/archive/common.h command/archive/get/file.h command/command.h common/assert.h common/debug.h common/error.auto.h common/error.h common/fork.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/wait.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h perl/exec.h postgres/info.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
+command/archive/get/get.o: command/archive/get/get.c command/archive/common.h command/archive/get/file.h command/command.h common/assert.h common/debug.h common/error.auto.h common/error.h common/fork.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/wait.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h perl/exec.h postgres/interface.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
 	$(CC) $(CFLAGS) -c command/archive/get/get.c -o command/archive/get/get.o
 
 command/archive/push/push.o: command/archive/push/push.c command/archive/common.h command/command.h common/debug.h common/error.auto.h common/error.h common/fork.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/wait.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h perl/exec.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
@@ -288,7 +299,7 @@ crypto/cipherBlock.o: crypto/cipherBlock.c common/debug.h common/error.auto.h co
 crypto/crypto.o: crypto/crypto.c common/debug.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h crypto/crypto.h
 	$(CC) $(CFLAGS) -c crypto/crypto.c -o crypto/crypto.o
 
-crypto/hash.o: crypto/hash.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h crypto/crypto.h crypto/hash.h
+crypto/hash.o: crypto/hash.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h crypto/crypto.h crypto/hash.h
 	$(CC) $(CFLAGS) -c crypto/hash.c -o crypto/hash.o
 
 crypto/random.o: crypto/random.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h crypto/random.h
@@ -300,10 +311,10 @@ info/info.o: info/info.c common/debug.h common/error.auto.h common/error.h commo
 info/infoArchive.o: info/infoArchive.c common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h info/infoArchive.h info/infoPg.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
 	$(CC) $(CFLAGS) -c info/infoArchive.c -o info/infoArchive.o
 
-info/infoPg.o: info/infoPg.c common/assert.h common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h crypto/hash.h info/info.h info/infoPg.h postgres/info.h postgres/version.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
+info/infoPg.o: info/infoPg.c common/assert.h common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h crypto/hash.h info/info.h info/infoPg.h postgres/interface.h postgres/version.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
 	$(CC) $(CFLAGS) -c info/infoPg.c -o info/infoPg.o
 
-main.o: main.c command/archive/get/get.h command/archive/push/push.h command/command.h command/help/help.h common/debug.h common/error.auto.h common/error.h common/exit.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h perl/exec.h version.h
+main.o: main.c command/archive/get/get.h command/archive/push/push.h command/command.h command/help/help.h common/debug.h common/error.auto.h common/error.h common/exit.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h perl/exec.h postgres/interface.h version.h
 	$(CC) $(CFLAGS) -c main.c -o main.o
 
 perl/config.o: perl/config.c common/debug.h common/error.auto.h common/error.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h
@@ -312,10 +323,43 @@ perl/config.o: perl/config.c common/debug.h common/error.auto.h common/error.h c
 perl/exec.o: perl/exec.c ../libc/LibC.h common/debug.h common/encode.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h config/parse.h crypto/cipher.h crypto/cipherBlock.h crypto/hash.h crypto/random.h perl/config.h perl/embed.auto.c perl/exec.h perl/libc.auto.c postgres/pageChecksum.h storage/driver/posix/fileRead.h storage/driver/posix/fileWrite.h storage/driver/posix/storage.h storage/fileRead.h storage/fileWrite.h storage/info.h storage/storage.h storage/storage.intern.h version.h ../libc/xs/common/encode.xsh ../libc/xs/crypto/cipherBlock.xsh ../libc/xs/crypto/hash.xsh
 	$(CC) $(CFLAGS) -c perl/exec.c -o perl/exec.o
 
-postgres/info.o: postgres/info.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h postgres/info.h postgres/type.h postgres/version.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
-	$(CC) $(CFLAGS) -c postgres/info.c -o postgres/info.o
+postgres/interface.o: postgres/interface.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h postgres/interface.h postgres/interface/v083.h postgres/interface/v084.h postgres/interface/v090.h postgres/interface/v091.h postgres/interface/v092.h postgres/interface/v093.h postgres/interface/v094.h postgres/interface/v095.h postgres/interface/v096.h postgres/interface/v100.h postgres/interface/v110.h postgres/version.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
+	$(CC) $(CFLAGS) -c postgres/interface.c -o postgres/interface.o
 
-postgres/pageChecksum.o: postgres/pageChecksum.c common/assert.h common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h postgres/pageChecksum.h postgres/type.h
+postgres/interface/v083.o: postgres/interface/v083.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h postgres/interface.h postgres/interface/v083.auto.c postgres/interface/v083.h
+	$(CC) $(CFLAGS) -c postgres/interface/v083.c -o postgres/interface/v083.o
+
+postgres/interface/v084.o: postgres/interface/v084.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h postgres/interface.h postgres/interface/v084.auto.c postgres/interface/v084.h
+	$(CC) $(CFLAGS) -c postgres/interface/v084.c -o postgres/interface/v084.o
+
+postgres/interface/v090.o: postgres/interface/v090.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h postgres/interface.h postgres/interface/v090.auto.c postgres/interface/v090.h
+	$(CC) $(CFLAGS) -c postgres/interface/v090.c -o postgres/interface/v090.o
+
+postgres/interface/v091.o: postgres/interface/v091.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h postgres/interface.h postgres/interface/v091.auto.c postgres/interface/v091.h
+	$(CC) $(CFLAGS) -c postgres/interface/v091.c -o postgres/interface/v091.o
+
+postgres/interface/v092.o: postgres/interface/v092.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h postgres/interface.h postgres/interface/v092.auto.c postgres/interface/v092.h
+	$(CC) $(CFLAGS) -c postgres/interface/v092.c -o postgres/interface/v092.o
+
+postgres/interface/v093.o: postgres/interface/v093.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h postgres/interface.h postgres/interface/v093.auto.c postgres/interface/v093.h
+	$(CC) $(CFLAGS) -c postgres/interface/v093.c -o postgres/interface/v093.o
+
+postgres/interface/v094.o: postgres/interface/v094.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h postgres/interface.h postgres/interface/v094.auto.c postgres/interface/v094.h
+	$(CC) $(CFLAGS) -c postgres/interface/v094.c -o postgres/interface/v094.o
+
+postgres/interface/v095.o: postgres/interface/v095.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h postgres/interface.h postgres/interface/v095.auto.c postgres/interface/v095.h
+	$(CC) $(CFLAGS) -c postgres/interface/v095.c -o postgres/interface/v095.o
+
+postgres/interface/v096.o: postgres/interface/v096.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h postgres/interface.h postgres/interface/v096.auto.c postgres/interface/v096.h
+	$(CC) $(CFLAGS) -c postgres/interface/v096.c -o postgres/interface/v096.o
+
+postgres/interface/v100.o: postgres/interface/v100.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h postgres/interface.h postgres/interface/v100.auto.c postgres/interface/v100.h
+	$(CC) $(CFLAGS) -c postgres/interface/v100.c -o postgres/interface/v100.o
+
+postgres/interface/v110.o: postgres/interface/v110.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h postgres/interface.h postgres/interface/v110.auto.c postgres/interface/v110.h
+	$(CC) $(CFLAGS) -c postgres/interface/v110.c -o postgres/interface/v110.o
+
+postgres/pageChecksum.o: postgres/pageChecksum.c common/assert.h common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h postgres/pageChecksum.h
 	$(CC) $(CFLAGS) -funroll-loops -ftree-vectorize -c postgres/pageChecksum.c -o postgres/pageChecksum.o
 
 storage/driver/posix/common.o: storage/driver/posix/common.c common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h storage/driver/posix/common.h

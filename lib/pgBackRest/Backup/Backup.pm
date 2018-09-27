@@ -802,6 +802,7 @@ sub process
     # Start backup (unless --no-online is set)
     my $strArchiveStart = undef;
     my $strLsnStart = undef;
+    my $iWalSegmentSize = undef;
     my $hTablespaceMap = undef;
 	my $hDatabaseMap = undef;
     my $strTimelineCurrent = undef;
@@ -837,7 +838,7 @@ sub process
     else
     {
         # Start the backup
-        ($strArchiveStart, $strLsnStart) =
+        ($strArchiveStart, $strLsnStart, $iWalSegmentSize) =
             $oDbMaster->backupStart(
                 BACKREST_NAME . ' backup started at ' . timestampFormat(undef, $lTimestampStart), cfgOption(CFGOPT_START_FAST));
 
@@ -1015,7 +1016,7 @@ sub process
 
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true);
         my $strArchiveId = $oArchiveInfo->archiveId();
-        my @stryArchive = lsnFileRange($strLsnStart, $strLsnStop, $strDbVersion);
+        my @stryArchive = lsnFileRange($strLsnStart, $strLsnStop, $strDbVersion, $iWalSegmentSize);
 
         foreach my $strArchive (@stryArchive)
         {

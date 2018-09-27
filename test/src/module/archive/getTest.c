@@ -1,26 +1,13 @@
 /***********************************************************************************************************************************
 Test Archive Get Command
 ***********************************************************************************************************************************/
-#include "postgres/type.h"
+#include "postgres/interface.h"
 #include "postgres/version.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "compress/gzipCompress.h"
 #include "storage/driver/posix/storage.h"
-
-/***********************************************************************************************************************************
-Create test pg_control file
-***********************************************************************************************************************************/
-static void
-testPgControlCreate(const Storage *storage, const String *controlFile, PgControlFile control)
-{
-    Buffer *controlBuffer = bufNew(8192);
-    memset(bufPtr(controlBuffer), 0, bufSize(controlBuffer));
-    memcpy(bufPtr(controlBuffer), &control, sizeof(PgControlFile));
-    bufUsedSet(controlBuffer, bufSize(controlBuffer));
-    storagePutNP(storageNewWriteNP(storage, controlFile), controlBuffer);
-}
 
 /***********************************************************************************************************************************
 Test Run
@@ -46,23 +33,22 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // Create pg_control file
-        testPgControlCreate(
-            storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL),
-            (PgControlFile){.systemId = 0xFACEFACEFACEFACE, .controlVersion = 1002, .catalogVersion = 201707211});
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
         // Control and archive info mismatch
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
-            bufNewStr(
-                strNew(
-                    "[backrest]\n"
-                    "backrest-checksum=\"0a415a03fa3faccb4ac171759895478469e9e19e\"\n"
-                    "backrest-format=5\n"
-                    "backrest-version=\"2.06\"\n"
-                    "\n"
-                    "[db:history]\n"
-                    "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n")));
+            bufNewZ(
+                "[backrest]\n"
+                "backrest-checksum=\"0a415a03fa3faccb4ac171759895478469e9e19e\"\n"
+                "backrest-format=5\n"
+                "backrest-version=\"2.06\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"));
 
         TEST_ERROR(
             archiveGetCheck(strNew("876543218765432187654321")), ArchiveMismatchError,
@@ -72,18 +58,17 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
-            bufNewStr(
-                strNew(
-                    "[backrest]\n"
-                    "backrest-checksum=\"f7617b5c4c9f212f40b9bc3d8ec7f97edbbf96af\"\n"
-                    "backrest-format=5\n"
-                    "backrest-version=\"2.06\"\n"
-                    "\n"
-                    "[db:history]\n"
-                    "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"
-                    "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
-                    "3={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n"
-                    "4={\"db-id\":18072658121562454734,\"db-version\":\"10\"}")));
+            bufNewZ(
+                "[backrest]\n"
+                "backrest-checksum=\"f7617b5c4c9f212f40b9bc3d8ec7f97edbbf96af\"\n"
+                "backrest-format=5\n"
+                "backrest-version=\"2.06\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"
+                "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
+                "3={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n"
+                "4={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
 
         TEST_RESULT_PTR(archiveGetCheck(strNew("876543218765432187654321")), NULL, "no segment found");
 
@@ -135,22 +120,21 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // Create pg_control file
-        testPgControlCreate(
-            storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL),
-            (PgControlFile){.systemId = 0xFACEFACEFACEFACE, .controlVersion = 1002, .catalogVersion = 201707211});
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
         // Create archive.info
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
-            bufNewStr(
-                strNew(
-                    "[backrest]\n"
-                    "backrest-checksum=\"8a041a4128eaa2c08a23dd1f04934627795946ff\"\n"
-                    "backrest-format=5\n"
-                    "backrest-version=\"2.06\"\n"
-                    "\n"
-                    "[db:history]\n"
-                    "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}")));
+            bufNewZ(
+                "[backrest]\n"
+                "backrest-checksum=\"8a041a4128eaa2c08a23dd1f04934627795946ff\"\n"
+                "backrest-format=5\n"
+                "backrest-version=\"2.06\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
 
         // Nothing to copy
         // -------------------------------------------------------------------------------------------------------------------------
@@ -211,8 +195,8 @@ testRun(void)
         strLstAddZ(argList, "archive-get");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        size_t queueSize = WAL_SEGMENT_DEFAULT_SIZE;
-        size_t walSegmentSize = WAL_SEGMENT_DEFAULT_SIZE;
+        size_t queueSize = 16 * 1024 * 1024;
+        size_t walSegmentSize = 16 * 1024 * 1024;
 
         TEST_ERROR_FMT(
             queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
@@ -226,7 +210,7 @@ testRun(void)
             "000000010000000100000001|000000010000000100000002", "queue size smaller than min");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        queueSize = WAL_SEGMENT_DEFAULT_SIZE * 3;
+        queueSize = (16 * 1024 * 1024) * 3;
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92), "|")),
@@ -255,7 +239,7 @@ testRun(void)
         walSegmentSize = 1024 * 1024;
         queueSize = walSegmentSize * 5;
 
-        storagePutNP(storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/junk")), bufNewStr(strNew("JUNK")));
+        storagePutNP(storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/junk")), bufNewZ("JUNK"));
         storagePutNP(
             storageNewWriteNP(
                 storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFE")), walSegmentBuffer);
@@ -296,9 +280,9 @@ testRun(void)
         TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "path to copy WAL segment required");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        testPgControlCreate(
-            storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL),
-            (PgControlFile){.systemId = 0xFACEFACEFACEFACE, .controlVersion = 1002, .catalogVersion = 201707211});
+        storagePutNP(
+            storageNewWriteNP(storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
         storagePathCreateNP(storageTest, strNewFmt("%s/db/pg_wal", testPath()));
 
@@ -381,7 +365,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
-            bufNewStr(strNew("SHOULD-BE-A-REAL-WAL-FILE")));
+            bufNewZ("SHOULD-BE-A-REAL-WAL-FILE"));
 
         TEST_RESULT_VOID(cmdArchiveGet(), "successful get");
         harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive");
@@ -398,10 +382,10 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
-            bufNewStr(strNew("SHOULD-BE-A-REAL-WAL-FILE")));
+            bufNewZ("SHOULD-BE-A-REAL-WAL-FILE"));
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment2))),
-            bufNewStr(strNew("SHOULD-BE-A-REAL-WAL-FILE")));
+            bufNewZ("SHOULD-BE-A-REAL-WAL-FILE"));
 
         TEST_RESULT_VOID(cmdArchiveGet(), "successful get");
         harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive");

@@ -65,7 +65,7 @@ my $oPgControlVersionHash =
     },
     1100 =>
     {
-        201806231 => PG_VERSION_11,
+        201809051 => PG_VERSION_11,
     },
 };
 
@@ -680,8 +680,13 @@ sub backupStart
                "exclusive pg_start_backup() with label \"${strLabel}\": backup begins after " .
                ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
 
-    my ($strTimestampDbStart, $strArchiveStart, $strLsnStart) = $self->executeSqlRow(
-        "select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_" . $self->walId() . "file_name(lsn), lsn::text" .
+    my ($strTimestampDbStart, $strArchiveStart, $strLsnStart, $iWalSegmentSize) = $self->executeSqlRow(
+        "select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_" . $self->walId() . "file_name(lsn), lsn::text," .
+            ($self->{strDbVersion} < PG_VERSION_84 ? PG_WAL_SIZE :
+                " (select setting::int8 from pg_settings where name = 'wal_segment_size')" .
+                # In Pre-11 versions the wal_segment_sise was expressed in terms of blocks rather than total size
+                ($self->{strDbVersion} < PG_VERSION_11 ?
+                    " * (select setting::int8 from pg_settings where name = 'wal_block_size')" : '')) .
             " from pg_start_backup('${strLabel}'" .
             ($bStartFast ? ', true' : $self->{strDbVersion} >= PG_VERSION_84 ? ', false' : '') .
             ($self->{strDbVersion} >= PG_VERSION_96 ? ', false' : '') . ') as lsn');
@@ -692,6 +697,7 @@ sub backupStart
         $strOperation,
         {name => 'strArchiveStart', value => $strArchiveStart},
         {name => 'strLsnStart', value => $strLsnStart},
+        {name => 'iWalSegmentSize', value => $iWalSegmentSize},
         {name => 'strTimestampDbStart', value => $strTimestampDbStart}
     );
 }

@@ -60,7 +60,7 @@ testRun(void)
         storagePathRemoveNP(storageTest, strNewFmt("%s/db/archive_status", testPath()));
 
         String *errorFile = storagePathNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error"));
-        storagePutNP(storageNewWriteNP(storageSpoolWrite(), errorFile), bufNewStr(strNew("25\n" BOGUS_STR)));
+        storagePutNP(storageNewWriteNP(storageSpoolWrite(), errorFile), bufNewZ("25\n" BOGUS_STR));
 
         TEST_ERROR(cmdArchivePush(), AssertError, BOGUS_STR);
 
@@ -69,8 +69,7 @@ testRun(void)
         // Write out a valid ok file and test for success
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok")),
-            bufNewStr(strNew("")));
+            storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok")), bufNew(0));
 
         TEST_RESULT_VOID(cmdArchivePush(), "successful push");
         harnessLogResult("P00   INFO: pushed WAL segment 000000010000000100000001 asynchronously");

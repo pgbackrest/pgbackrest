@@ -46,7 +46,7 @@ storageDriverPosixNew(
         FUNCTION_TEST_ASSERT(path != NULL);
     FUNCTION_DEBUG_END();
 
-    // Create the file
+    // Create the object
     StorageDriverPosix *this = NULL;
 
     MEM_CONTEXT_NEW_BEGIN("StorageDriverPosix")

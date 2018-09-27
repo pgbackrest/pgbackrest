@@ -523,6 +523,14 @@ src/command/archive/common.h:
   class: core
   type: c/h
 
+src/command/archive/get/file.c:
+  class: core
+  type: c
+
+src/command/archive/get/file.h:
+  class: core
+  type: c/h
+
 src/command/archive/get/get.c:
   class: core
   type: c
@@ -544,6 +552,14 @@ src/command/command.c:
   type: c
 
 src/command/command.h:
+  class: core
+  type: c/h
+
+src/command/control/control.c:
+  class: core
+  type: c
+
+src/command/control/control.h:
   class: core
   type: c/h
 
@@ -655,6 +671,10 @@ src/common/io/filter/filter.h:
   class: core
   type: c/h
 
+src/common/io/filter/filter.intern.h:
+  class: core
+  type: c/h
+
 src/common/io/filter/group.c:
   class: core
   type: c
@@ -695,11 +715,19 @@ src/common/io/read.h:
   class: core
   type: c/h
 
+src/common/io/read.intern.h:
+  class: core
+  type: c/h
+
 src/common/io/write.c:
   class: core
   type: c
 
 src/common/io/write.h:
+  class: core
+  type: c/h
+
+src/common/io/write.intern.h:
   class: core
   type: c/h
 
@@ -999,11 +1027,143 @@ src/perl/libc.auto.c:
   class: core/auto
   type: c
 
-src/postgres/info.c:
+src/postgres/interface.c:
   class: core
   type: c
 
-src/postgres/info.h:
+src/postgres/interface.h:
+  class: core
+  type: c/h
+
+src/postgres/interface/v083.auto.c:
+  class: core/auto
+  type: c
+
+src/postgres/interface/v083.c:
+  class: core
+  type: c
+
+src/postgres/interface/v083.h:
+  class: core
+  type: c/h
+
+src/postgres/interface/v084.auto.c:
+  class: core/auto
+  type: c
+
+src/postgres/interface/v084.c:
+  class: core
+  type: c
+
+src/postgres/interface/v084.h:
+  class: core
+  type: c/h
+
+src/postgres/interface/v090.auto.c:
+  class: core/auto
+  type: c
+
+src/postgres/interface/v090.c:
+  class: core
+  type: c
+
+src/postgres/interface/v090.h:
+  class: core
+  type: c/h
+
+src/postgres/interface/v091.auto.c:
+  class: core/auto
+  type: c
+
+src/postgres/interface/v091.c:
+  class: core
+  type: c
+
+src/postgres/interface/v091.h:
+  class: core
+  type: c/h
+
+src/postgres/interface/v092.auto.c:
+  class: core/auto
+  type: c
+
+src/postgres/interface/v092.c:
+  class: core
+  type: c
+
+src/postgres/interface/v092.h:
+  class: core
+  type: c/h
+
+src/postgres/interface/v093.auto.c:
+  class: core/auto
+  type: c
+
+src/postgres/interface/v093.c:
+  class: core
+  type: c
+
+src/postgres/interface/v093.h:
+  class: core
+  type: c/h
+
+src/postgres/interface/v094.auto.c:
+  class: core/auto
+  type: c
+
+src/postgres/interface/v094.c:
+  class: core
+  type: c
+
+src/postgres/interface/v094.h:
+  class: core
+  type: c/h
+
+src/postgres/interface/v095.auto.c:
+  class: core/auto
+  type: c
+
+src/postgres/interface/v095.c:
+  class: core
+  type: c
+
+src/postgres/interface/v095.h:
+  class: core
+  type: c/h
+
+src/postgres/interface/v096.auto.c:
+  class: core/auto
+  type: c
+
+src/postgres/interface/v096.c:
+  class: core
+  type: c
+
+src/postgres/interface/v096.h:
+  class: core
+  type: c/h
+
+src/postgres/interface/v100.auto.c:
+  class: core/auto
+  type: c
+
+src/postgres/interface/v100.c:
+  class: core
+  type: c
+
+src/postgres/interface/v100.h:
+  class: core
+  type: c/h
+
+src/postgres/interface/v110.auto.c:
+  class: core/auto
+  type: c
+
+src/postgres/interface/v110.c:
+  class: core
+  type: c
+
+src/postgres/interface/v110.h:
   class: core
   type: c/h
 
@@ -1015,19 +1175,7 @@ src/postgres/pageChecksum.h:
   class: core
   type: c/h
 
-src/postgres/type.h:
-  class: core
-  type: c/h
-
 src/postgres/version.h:
-  class: core
-  type: c/h
-
-src/storage/driver/posix/storage.c:
-  class: core
-  type: c
-
-src/storage/driver/posix/storage.h:
   class: core
   type: c/h
 
@@ -1055,6 +1203,14 @@ src/storage/driver/posix/fileWrite.h:
   class: core
   type: c/h
 
+src/storage/driver/posix/storage.c:
+  class: core
+  type: c
+
+src/storage/driver/posix/storage.h:
+  class: core
+  type: c/h
+
 src/storage/fileRead.c:
   class: core
   type: c
@@ -1063,11 +1219,19 @@ src/storage/fileRead.h:
   class: core
   type: c/h
 
+src/storage/fileRead.intern.h:
+  class: core
+  type: c/h
+
 src/storage/fileWrite.c:
   class: core
   type: c
 
 src/storage/fileWrite.h:
+  class: core
+  type: c/h
+
+src/storage/fileWrite.intern.h:
   class: core
   type: c/h
 
@@ -1088,6 +1252,10 @@ src/storage/storage.c:
   type: c
 
 src/storage/storage.h:
+  class: core
+  type: c/h
+
+src/storage/storage.intern.h:
   class: core
   type: c/h
 
@@ -1212,6 +1380,10 @@ test/lib/pgBackRestTest/Module/Archive/ArchiveInfoUnitPerlTest.pm:
   type: perl
 
 test/lib/pgBackRestTest/Module/Archive/ArchivePushPerlTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Backup/BackupFileUnitPerlTest.pm:
   class: test/module
   type: perl
 
@@ -1391,6 +1563,10 @@ test/src/module/command/commandTest.c:
   class: test/module
   type: c
 
+test/src/module/command/controlTest.c:
+  class: test/module
+  type: c
+
 test/src/module/common/assertOffTest.c:
   class: test/module
   type: c
@@ -1559,7 +1735,7 @@ test/src/module/perl/execTest.c:
   class: test/module
   type: c
 
-test/src/module/postgres/infoTest.c:
+test/src/module/postgres/interfaceTest.c:
   class: test/module
   type: c
 
@@ -1567,15 +1743,7 @@ test/src/module/postgres/pageChecksumTest.c:
   class: test/module
   type: c
 
-test/src/module/storage/fileTest.c:
-  class: test/module
-  type: c
-
-test/src/module/storage/helperTest.c:
-  class: test/module
-  type: c
-
-test/src/module/storage/storageTest.c:
+test/src/module/storage/posixTest.c:
   class: test/module
   type: c
 

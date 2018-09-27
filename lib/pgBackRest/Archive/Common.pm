@@ -125,6 +125,7 @@ sub lsnFileRange
         $strLsnStart,
         $strLsnStop,
         $strDbVersion,
+        $iWalSegmentSize,
     ) =
         logDebugParam
         (
@@ -132,6 +133,7 @@ sub lsnFileRange
             {name => 'strLsnStart'},
             {name => 'strLsnStop'},
             {name => '$strDbVersion'},
+            {name => '$iWalSegmentSize'},
         );
 
     # Working variables
@@ -142,11 +144,11 @@ sub lsnFileRange
     # Iterate through all archive logs between start and stop
     my @stryArchiveSplit = split('/', $strLsnStart);
     my $iStartMajor = hex($stryArchiveSplit[0]);
-    my $iStartMinor = hex(substr(sprintf("%08s", $stryArchiveSplit[1]), 0, 2));
+    my $iStartMinor = int(hex($stryArchiveSplit[1]) / $iWalSegmentSize);
 
     @stryArchiveSplit = split('/', $strLsnStop);
     my $iStopMajor = hex($stryArchiveSplit[0]);
-    my $iStopMinor = hex(substr(sprintf("%08s", $stryArchiveSplit[1]), 0, 2));
+    my $iStopMinor = int(hex($stryArchiveSplit[1]) / $iWalSegmentSize);
 
     $stryArchive[$iArchiveIdx] = uc(sprintf("%08x%08x", $iStartMajor, $iStartMinor));
     $iArchiveIdx += 1;
@@ -155,7 +157,7 @@ sub lsnFileRange
     {
         $iStartMinor += 1;
 
-        if ($bSkipFF && $iStartMinor == 255 || !$bSkipFF && $iStartMinor == 256)
+        if ($bSkipFF && $iStartMinor == 255 || !$bSkipFF && $iStartMinor > int(0xFFFFFFFF / $iWalSegmentSize))
         {
             $iStartMajor += 1;
             $iStartMinor = 0;

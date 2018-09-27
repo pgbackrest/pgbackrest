@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Storage Manager
+Test Posix Storage Driver
 ***********************************************************************************************************************************/
 #include "common/io/io.h"
 #include "common/time.h"
@@ -198,7 +198,7 @@ testRun(void)
         TEST_RESULT_INT(info.mode, 0770, "    check mode");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        Buffer *buffer = bufNewStr(strNew("TESTFILE"));
+        Buffer *buffer = bufNewZ("TESTFILE");
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, fileName), buffer), "put test file");
 
         TEST_ASSIGN(info, storageInfoNP(storageTest, fileName), "get file info");
@@ -254,13 +254,13 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNew("aaa.txt")), bufNewStr(strNew("aaa"))), "write aaa.text");
+            storagePutNP(storageNewWriteNP(storageTest, strNew("aaa.txt")), bufNewZ("aaa")), "write aaa.text");
         TEST_RESULT_STR(
             strPtr(strLstJoin(storageListNP(storageTest, NULL), ", ")), "aaa.txt, noperm",
             "dir list");
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNew("bbb.txt")), bufNewStr(strNew("bbb"))), "write bbb.text");
+            storagePutNP(storageNewWriteNP(storageTest, strNew("bbb.txt")), bufNewZ("bbb")), "write bbb.text");
         TEST_RESULT_STR(
             strPtr(strLstJoin(storageListP(storageTest, NULL, .expression = strNew("^bbb")), ", ")), "bbb.txt", "dir list");
     }
@@ -284,7 +284,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageCopyNP(source, destination), false, "copy and ignore missing file");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        Buffer *expectedBuffer = bufNewStr(strNew("TESTFILE\n"));
+        Buffer *expectedBuffer = bufNewZ("TESTFILE\n");
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, sourceFile), expectedBuffer), "write source file");
 
         source = storageNewReadNP(storageTest, sourceFile);
@@ -319,7 +319,7 @@ testRun(void)
             "unable to move '%s' to '%s': [13] Permission denied", strPtr(fileNoPerm), strPtr(destinationFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        Buffer *buffer = bufNewStr(strNew("TESTFILE"));
+        Buffer *buffer = bufNewZ("TESTFILE");
         storagePutNP(storageNewWriteNP(storageTest, sourceFile), buffer);
 
         source = storageNewReadNP(storageTest, sourceFile);
@@ -604,7 +604,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsNP(storageTest, emptyFile), true, "check empty file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        Buffer *buffer = bufNewStr(strNew("TESTFILE\n"));
+        Buffer *buffer = bufNewZ("TESTFILE\n");
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/test.txt", testPath())), buffer), "put test file");
@@ -695,7 +695,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *outBuffer = bufNew(2);
-        Buffer *expectedBuffer = bufNewStr(strNew("TESTFILE\n"));
+        Buffer *expectedBuffer = bufNewZ("TESTFILE\n");
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, fileName), expectedBuffer), "write test file");
 
         TEST_ASSIGN(file, storageNewReadNP(storageTest, fileName), "new read file");
@@ -805,7 +805,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileTmp = strNewFmt("%s.pgbackrest.tmp", strPtr(fileName));
         ioBufferSizeSet(10);
-        Buffer *buffer = bufNewStr(strNew("TESTFILE\n"));
+        Buffer *buffer = bufNewZ("TESTFILE\n");
 
         TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file");
         TEST_RESULT_STR(strPtr(storageFileWriteName(file)), strPtr(fileName), "    check file name");

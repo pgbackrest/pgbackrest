@@ -90,6 +90,26 @@ bufNewStr(const String *string)
 }
 
 /***********************************************************************************************************************************
+Create a new buffer from a zero-terminated string
+***********************************************************************************************************************************/
+Buffer *
+bufNewZ(const char *string)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, string);
+
+        FUNCTION_TEST_ASSERT(string != NULL);
+    FUNCTION_TEST_END();
+
+    // Create object and copy string
+    Buffer *this = bufNew(strlen(string));
+    memcpy(this->buffer, string, strlen(string));
+    this->used = this->size;
+
+    FUNCTION_TEST_RESULT(BUFFER, this);
+}
+
+/***********************************************************************************************************************************
 Append the contents of another buffer
 ***********************************************************************************************************************************/
 Buffer *
@@ -185,6 +205,26 @@ bufEq(const Buffer *this, const Buffer *compare)
         result = memcmp(this->buffer, compare->buffer, compare->used) == 0;
 
     FUNCTION_TEST_RESULT(BOOL, result);
+}
+
+/***********************************************************************************************************************************
+Convert the buffer to a hex string
+***********************************************************************************************************************************/
+String *
+bufHex(const Buffer *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    String *result = strNew("");
+
+    for (unsigned int bufferIdx = 0; bufferIdx < this->size; bufferIdx++)
+        strCatFmt(result, "%02x", this->buffer[bufferIdx]);
+
+    FUNCTION_TEST_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************

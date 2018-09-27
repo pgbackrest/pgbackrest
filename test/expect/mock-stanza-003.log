@@ -647,7 +647,7 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --config
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum e40de8cea99dd469c3efb47f5f33a73c7390fb9c
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum b4a3adade1e81ebfc7e9a27bca0887a347d81522
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000002.ready (0B, 100%)
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
 P00   INFO: full backup size = 48MB
@@ -810,7 +810,7 @@ P00   WARN: no prior backup exists, diff backup has been changed to full
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 65b64687e7bfd1a918c6144f84a133f03e50ac57
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum b03a64b1be549a32d53d41dd40ab394ba82fa1c1
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 4969435f3b36bfaa0f5a486bef97f1988a135520
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000002.ready (0B, 100%)
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
 P00   INFO: full backup size = 48MB

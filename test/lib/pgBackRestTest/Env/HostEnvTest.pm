@@ -319,6 +319,48 @@ sub controlGenerateContent
     $tControlContent .= pack('L', $self->dbControlVersion($strPgVersion));
     $tControlContent .= pack('L', $self->dbCatalogVersion($strPgVersion));
 
+    # Offset to page size by archecture bits and version
+    my $rhOffsetToPageSize =
+    {
+        32 =>
+        {
+            '8.3' =>  96 - length($tControlContent),
+            '8.4' => 104 - length($tControlContent),
+            '9.0' => 140 - length($tControlContent),
+            '9.1' => 140 - length($tControlContent),
+            '9.2' => 156 - length($tControlContent),
+            '9.3' => 180 - length($tControlContent),
+            '9.4' => 188 - length($tControlContent),
+            '9.5' => 200 - length($tControlContent),
+            '9.6' => 200 - length($tControlContent),
+             '10' => 200 - length($tControlContent),
+             '11' => 192 - length($tControlContent),
+        },
+
+        64 =>
+        {
+            '8.3' => 112 - length($tControlContent),
+            '8.4' => 112 - length($tControlContent),
+            '9.0' => 152 - length($tControlContent),
+            '9.1' => 152 - length($tControlContent),
+            '9.2' => 168 - length($tControlContent),
+            '9.3' => 192 - length($tControlContent),
+            '9.4' => 200 - length($tControlContent),
+            '9.5' => 216 - length($tControlContent),
+            '9.6' => 216 - length($tControlContent),
+             '10' => 216 - length($tControlContent),
+             '11' => 208 - length($tControlContent),
+        },
+    };
+
+    # Fill up to page size and set page size
+    $tControlContent .= ('C' x $rhOffsetToPageSize->{$self->archBits()}{$strPgVersion});
+    $tControlContent .= pack('L', 8192);
+
+    # Fill up to wal segment size and set wal segment size
+    $tControlContent .= ('C' x 8);
+    $tControlContent .= pack('L', 16 * 1024 * 1024);
+
     # Pad bytes
     $tControlContent .= ('C' x (8192 - length($tControlContent)));
 
