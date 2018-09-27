@@ -2100,7 +2100,7 @@ static const EmbeddedModule embeddedModule[] =
             "\n\n\n"
             "if ($oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile) &&\n"
             "!$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE) &&\n"
-            "($oAbortedManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM))\n"
+            "$oAbortedManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM))\n"
             "{\n"
             "push(@stryFileList, $strFile);\n"
             "}\n"

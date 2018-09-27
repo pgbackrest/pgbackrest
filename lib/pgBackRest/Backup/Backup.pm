@@ -132,7 +132,7 @@ sub resumeClean
                     # checksum
                     if ($oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile) &&
                         !$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE) &&
-                        ($oAbortedManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM))
+                        $oAbortedManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM))
                     {
                         push(@stryFileList, $strFile);
                     }
