@@ -91,16 +91,61 @@ sub resumeClean
 
     &log(DETAIL, 'clean resumed backup path: ' . $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}"));
 
-    # Check to see if delta checksum should be enabled
-    $bDelta = $oAbortedManifest->checkDelta($bDelta,
-        $oAbortedManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, cfgOption(CFGOPT_ONLINE)),
-        $strTimelineCurrent, $strTimelineLast);
-
     # Build manifest for aborted backup path
     my $hFile = $oStorageRepo->manifest(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
 
     # Get compress flag
     my $bCompressed = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
+
+    if (!$bDelta)
+    {
+        # Check to see if delta checksum should be enabled
+        $bDelta = $oAbortedManifest->checkDelta(
+            $oAbortedManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, cfgOption(CFGOPT_ONLINE)),
+            $strTimelineCurrent, $strTimelineLast);
+
+        # If delta is still false, check the files for anomalies
+        if (!$bDelta)
+        {
+            my @stryFileList = ();
+
+            foreach my $strName (sort(keys(%{$hFile})))
+            {
+                # Ignore files that will never be in the manifest but should be preserved
+                if ($strName eq FILE_MANIFEST_COPY ||
+                    $strName eq '.')
+                {
+                    next;
+                }
+
+                if ($hFile->{$strName}{type} eq 'f')
+                {
+                    # If the original backup was compressed then remove the extension before checking the manifest
+                    my $strFile = $strName;
+
+                    if ($bCompressed)
+                    {
+                        $strFile = substr($strFile, 0, length($strFile) - 3);
+                    }
+
+                    # To be preserved the file must exist in the new manifest and not be a reference to a previous backup and must have a
+                    # checksum
+                    if ($oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile) &&
+                        !$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE) &&
+                        ($oAbortedManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM))
+                    {
+                        push(@stryFileList, $strFile);
+                    }
+                }
+            }
+
+            # If there are files in the list then check if delta should be enabled
+            if (@stryFileList)
+            {
+                $bDelta = $oManifest->checkDeltaFile(\@stryFileList, $oAbortedManifest, undef);
+            }
+        }
+    }
 
     # Find paths and files to delete
     my @stryFile;
@@ -140,35 +185,41 @@ sub resumeClean
             if ($oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile) &&
                 !$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE))
             {
-                # To be preserved the checksum must be defined
-                if ($oAbortedManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM))
+               # To be preserved the checksum must be defined
+                my $strChecksum = $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
+
+                # If the size and timestamp match OR if the size matches and the delta option is set, then keep the file.
+                # In the latter case, if the timestamp had changed then rather than removing and recopying the file, the file
+                # will be tested in backupFile to see if the db/repo checksum still matches: if so, it is not necessary to recopy,
+                # else it will need to be copied to the new backup.
+                if (defined($strChecksum) &&
+                    $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) ==
+                    $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE)  &&
+                    (cfgOption(CFGOPT_DELTA) ||
+                    $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
+                    $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP)))
                 {
-                    # If the size and timestamp match OR if the size matches and the delta option is set, then keep the file.
-                    # In the latter case, if the timestamp had changed then rather than removing and recopying the file, the file
-                    # will be tested in backupFile to see if the db/repo checksum still matches: if so, it is not necessary to recopy,
-                    # else it will need to be copied to the new backup.
-                    if ($oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) ==
-                        $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE)  &&
-                        ($bDelta ||
-                        $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
-                        $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP)))
+                    $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+
+                    # Also copy page checksum results if they exist
+                    my $bChecksumPage =
+                        $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
+
+                    if (defined($bChecksumPage))
                     {
-                        $oManifest->copyPriorChecksum($strFile, $oAbortedManifest);
-                        next;
+                        $oManifest->boolSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE, $bChecksumPage);
+
+                        if (!$bChecksumPage &&
+                            $oAbortedManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR))
+                        {
+                            $oManifest->set(
+                                MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR,
+                                $oAbortedManifest->get(
+                                    MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR));
+                        }
                     }
-                    # If the new timestamp is in the past relative to the aborted manifest or the size has changed but the timestamp
-                    # did not, then enable delta. The file will be removed from the repo and recopied.
-                    elsif (!$bDelta &&
-                        ($oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) <
-                        $oAbortedManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ||
-                        ($oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) !=
-                        $oAbortedManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) &&
-                        $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
-                        $oAbortedManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP))))
-                    {
-                        &log(WARN, 'timestamp in the past or size changed but timestamp did not, enabling delta checksum');
-                        $bDelta = true;
-                    }
+
+                    next;
                 }
             }
         }

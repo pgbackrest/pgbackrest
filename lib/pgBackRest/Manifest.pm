@@ -559,7 +559,7 @@ sub isTargetTablespace
 ####################################################################################################################################
 # checkDelta
 #
-# Determine if the delta option should be enabled.
+# Determine if the delta option should be enabled. Only called if delta has not yet been enabled.
 ####################################################################################################################################
 sub checkDelta
 {
@@ -569,7 +569,6 @@ sub checkDelta
     my
     (
         $strOperation,
-        $bDelta,
         $bOnlineSame,
         $strTimelineCurrent,
         $strTimelineLast,
@@ -577,31 +576,94 @@ sub checkDelta
         logDebugParam
         (
             __PACKAGE__ . '->checkDelta', \@_,
-            {name => 'bDelta'},
             {name => 'bOnlineSame'},
             {name => 'strTimelineCurrent', required => false},
             {name => 'strTimelineLast', required => false},
         );
 
-    # If the delta checksum option is not enabled, then check to see if it should be
-    if (!$bDelta)
+    my $bDelta = false;
+
+    # Determine if a timeline switch has occurred
+    if (defined($strTimelineLast) && defined($strTimelineCurrent))
     {
-        # Determine if a timeline switch has occurred
-        if (defined($strTimelineLast) && defined($strTimelineCurrent))
+        # If there is a prior backup, check if a timeline switch has occurred since then
+        if ($strTimelineLast ne $strTimelineCurrent)
         {
-            # If there is a prior backup, check if a timeline switch has occurred since then
-            if ($strTimelineLast ne $strTimelineCurrent)
-            {
-                &log(WARN, 'a timeline switch has occurred since the last backup, enabling delta checksum');
-                $bDelta = true;
-            }
+            &log(WARN, 'a timeline switch has occurred since the last backup, enabling delta checksum');
+            $bDelta = true;
+        }
+    }
+
+    # If delta was not set above and there is a change in the online option, then set delta option
+    if (!$bDelta && !$bOnlineSame)
+    {
+        &log(WARN, 'the online option has changed since the last backup, enabling delta checksum');
+        $bDelta = true;
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bDelta', value => $bDelta, trace => true},
+    );
+}
+
+####################################################################################################################################
+# checkDeltaFile
+#
+# Determine if the delta option should be enabled. Only called if delta has not yet been enabled.
+####################################################################################################################################
+sub checkDeltaFile
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $stryFileList,
+        $oPriorManifest,
+        $lTimeBegin,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->checkDeltaFile', \@_,
+            {name => 'stryFileList'},
+            {name => 'oPriorManifest', required => false},
+            {name => 'lTimeBegin', required => false},
+        );
+
+    my $bDelta = false;
+
+    # Loop though all files
+    foreach my $strName (@{$stryFileList})
+    {
+        # If $lTimeBegin is defined, then this is not an aborted manifest so check if modification time is in the future (in this
+        # backup OR the last backup) then enable delta and exit
+        if (defined($lTimeBegin) &&
+            ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) > $lTimeBegin ||
+            (defined($oPriorManifest) &&
+             $oPriorManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_FUTURE, 'y'))))
+        {
+            &log(WARN, "file has timestamp in the future, enabling delta checksum");
+            $bDelta = true;
+            last;
         }
 
-        # If delta was not set above and there is a change in the online option, then set delta option
-        if (!$bDelta && !$bOnlineSame)
+        # If the time on the file is earlier than the last manifest time or the size is different but the timestamp is the
+        # same, then enable delta and exit
+        if (defined($oPriorManifest) && $oPriorManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName) &&
+            ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) <
+            $oPriorManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ||
+            ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) !=
+            $oPriorManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&
+            $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
+            $oPriorManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP))))
         {
-            &log(WARN, 'the online option has changed since the last backup, enabling delta checksum');
+            &log(WARN, "timestamp in the past or size changed but timestamp did not, enabling delta checksum");
             $bDelta = true;
+            last;
         }
     }
 
@@ -659,67 +721,6 @@ sub copyPriorChecksum
                 MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR,
                 $oPriorManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR));
         }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# copyPriorManifest
-#
-# Copy selected data from prior manifest.
-####################################################################################################################################
-sub copyPriorManifest
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strName,
-        $oPriorManifest,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->copyPriorManifest', \@_,
-            {name => 'strName'},
-            {name => 'oPriorManifest'},
-        );
-
-    # Copy prior checksum/checkum-page
-    $self->copyPriorChecksum($strName, $oPriorManifest);
-
-    # Copy reference from previous backup if possible
-    if ($oPriorManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE))
-    {
-        $self->set(
-            MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
-            $oPriorManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE));
-    }
-    # Otherwise the reference is to the previous backup
-    else
-    {
-        $self->set(
-            MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
-            $oPriorManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
-    }
-
-    # Copy repo size from the previous manifest (if it exists)
-    if ($oPriorManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE))
-    {
-        $self->set(
-            MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE,
-            $oPriorManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE));
-    }
-
-    # Copy master flag from the previous manifest (if it exists)
-    if ($oPriorManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER))
-    {
-        $self->set(
-            MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER,
-            $oPriorManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER));
     }
 
     # Return from function and log return values if any
@@ -818,9 +819,9 @@ sub build
         }
 
         # If there is a last manifest, then check to see if delta checksum should be enabled
-        if (defined($oLastManifest))
+        if (defined($oLastManifest) && !$bDelta)
         {
-            $bDelta = $self->checkDelta($bDelta,
+            $bDelta = $self->checkDelta(
                 $oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, $bOnline),
                 $strTimelineCurrent, $strTimelineLast);
         }
@@ -1153,6 +1154,22 @@ sub build
                               $hDatabaseMap->{$strDbName}{&MANIFEST_KEY_DB_LAST_SYSTEM_ID});
         }
 
+        # Determine if delta checksum should be enabled
+        if (!$bDelta)
+        {
+            my @stryFileList = $self->keys(MANIFEST_SECTION_TARGET_FILE);
+            if (@stryFileList)
+            {
+                $bDelta = $self->checkDeltaFile(\@stryFileList, $oLastManifest, $lTimeBegin);
+            }
+            else
+            {
+                confess &log(ERROR, "there are no target files in '" .
+                    $self->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH) . "'",
+                    ERROR_FILE_MISSING);
+            }
+        }
+
         # Loop though all files
         foreach my $strName ($self->keys(MANIFEST_SECTION_TARGET_FILE))
         {
@@ -1163,13 +1180,6 @@ sub build
                  $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_FUTURE, 'y')))
             {
                 $bTimeInFuture = true;
-
-                # If delta checksumming is not enabled, then set it and emit a warning
-                if (!$bDelta)
-                {
-                    &log(WARN, 'file has timestamp in the future, enabling delta checksum');
-                    $bDelta = true;
-                }
 
                 # Only mark as future if still in the future in the current backup
                 if ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) > $lTimeBegin)
@@ -1182,31 +1192,45 @@ sub build
             # will be tested in backupFile to see if the db/repo checksum still matches: if so, it is not necessary to recopy,
             # else it will need to be copied to the new backup. For zero sized files, the reference will be set and copying
             # will be skipped later.
-            elsif (defined($oLastManifest) && $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName))
-            {
-                if ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) ==
+            elsif (defined($oLastManifest) && $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName) &&
+                   $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) ==
                        $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&
                    ($bDelta || ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) == 0 ||
                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
                        $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP))))
+            {
+                # Copy prior checksum/checkum-page
+                $self->copyPriorChecksum($strName, $oLastManifest);
+
+                # Copy reference from previous backup if possible
+                if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE))
                 {
-                    # Copy pertinent data from last manifest
-                    $self->copyPriorManifest($strName, $oLastManifest);
+                    $self->set(
+                        MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
+                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE));
                 }
-                # If the new timestamp is in the past relative to the last manifest or the size has changed but the timestamp
-                # did not, then enable delta
-                elsif (!$bDelta &&
-                    ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) <
-                    $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ||
-                    ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) !=
-                    $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&
-                    $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
-                    $oLastManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP))))
+                # Otherwise the reference is to the previous backup
+                else
                 {
-                    &log(WARN, "timestamp in the past or size changed but timestamp did not, enabling delta checksum");
-                    $bDelta = true;
-# CSHANG Need this for flapping tests, but one test is still not working but I think I just need to put a conditional here if size same then copy.
-                    $self->copyPriorManifest($strName, $oLastManifest);
+                    $self->set(
+                        MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
+                        $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
+                }
+
+                # Copy repo size from the previous manifest (if it exists)
+                if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE))
+                {
+                    $self->set(
+                        MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE,
+                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE));
+                }
+
+                # Copy master flag from the previous manifest (if it exists)
+                if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER))
+                {
+                    $self->set(
+                        MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER,
+                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER));
                 }
             }
         }
