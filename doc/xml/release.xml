@@ -95,6 +95,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>cfgDefOptionMulti()</code> to identify multi-value options.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>bufNewZ()</code> and <code>bufHex()</code>to <code>Buffer</code> object.</p>
                     </release-item>
 

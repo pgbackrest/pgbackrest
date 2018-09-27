@@ -618,8 +618,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             THROW_FMT(OptionInvalidValueError, "environment boolean option '%s' must be 'y' or 'n'", strPtr(key));
                     }
                     // Else split list/hash into separate values
-                    else if (cfgDefOptionType(optionDefId) == cfgDefOptTypeHash ||
-                             cfgDefOptionType(optionDefId) == cfgDefOptTypeList)
+                    else if (cfgDefOptionMulti(optionDefId))
                     {
                         parseOptionList[optionId].valueList = strLstNewSplitZ(value, ":");
                     }
@@ -805,8 +804,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                 // Error if this option does not allow multiple arguments
                 if (parseOption->valueList != NULL && strLstSize(parseOption->valueList) > 1 &&
-                    !(cfgDefOptionType(cfgOptionDefIdFromId(optionId)) == cfgDefOptTypeHash ||
-                      cfgDefOptionType(cfgOptionDefIdFromId(optionId)) == cfgDefOptTypeList))
+                    !cfgDefOptionMulti(cfgOptionDefIdFromId(optionId)))
                 {
                     THROW_FMT(OptionInvalidError, "option '%s' cannot have multiple arguments", cfgOptionName(optionId));
                 }

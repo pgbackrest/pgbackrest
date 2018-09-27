@@ -723,6 +723,24 @@ cfgDefOptionInternal(ConfigDefineCommand commandDefId, ConfigDefineOption option
 }
 
 /***********************************************************************************************************************************
+Does the option accept multiple values?
+***********************************************************************************************************************************/
+bool
+cfgDefOptionMulti(ConfigDefineOption optionDefId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionDefId);
+
+        FUNCTION_TEST_ASSERT(optionDefId < cfgDefOptionTotal());
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(
+        BOOL,
+        configDefineOptionData[optionDefId].type == cfgDefOptTypeHash ||
+            configDefineOptionData[optionDefId].type == cfgDefOptTypeList);
+}
+
+/***********************************************************************************************************************************
 Name of the option
 ***********************************************************************************************************************************/
 const char *
