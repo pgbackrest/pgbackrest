@@ -101,9 +101,9 @@ bufNewZ(const char *string)
         FUNCTION_TEST_ASSERT(string != NULL);
     FUNCTION_TEST_END();
 
-    // Create object and copy string
+    // Create a new buffer and then copy the string into it.
     Buffer *this = bufNew(strlen(string));
-    memcpy(this->buffer, string, strlen(string));
+    memcpy(this->buffer, string, this->size);
     this->used = this->size;
 
     FUNCTION_TEST_RESULT(BUFFER, this);
