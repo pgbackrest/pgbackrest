@@ -2511,7 +2511,7 @@ P00  DEBUG:     Protocol::Storage::Remote->manifest(): rhParam = [hash], strPath
 P00  DEBUG:     Manifest->build(): bDelta = false, bOnline = false, bTablespace = true, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [undef], strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts2, strTimelineCurrent = [undef], strTimelineLast = [undef]
 P00  DEBUG:     Protocol::Storage::Remote->manifest(): rhParam = [hash], strPathExp = [TEST_PATH]/db-master/db/tablespace/ts2
 P00  DEBUG:     Manifest->checkDeltaFile(): lTimeBegin = [MODIFICATION-TIME-8], oPriorManifest = [object], stryFileList = (pg_data/PG_VERSION, pg_data/badchecksum.txt, pg_data/base/1/12000, pg_data/base/1/PG_VERSION, pg_data/base/16384/17000, pg_data/base/16384/PG_VERSION, pg_data/base/32768/33000, pg_data/base/32768/33000.32767, pg_data/base/32768/33001, pg_data/base/32768/PG_VERSION, pg_data/changecontent.txt, pg_data/changesize.txt, pg_data/changetime.txt, pg_data/global/pg_control, pg_data/pg_stat/global.stat, pg_data/postgresql.conf, pg_data/special-@!#$^&*()-_+~`{}[]\|:;"<>',.?%, pg_data/zero_from_start, pg_data/zerosize.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt)
-P00   WARN: timestamp in the past or size changed but timestamp did not, enabling delta checksum
+P00   WARN: file pg_data/changetime.txt timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/PG_VERSION
 P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/1/12000
 P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/1/PG_VERSION
@@ -2954,7 +2954,7 @@ P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: aborted backup [BACKUP-INCR-2] cannot be resumed: new backup-type 'diff' does not match aborted backup-type 'incr'
 P00   TEST:         PgBaCkReStTeSt-BACKUP-NORESUME-PgBaCkReStTeSt
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: timestamp in the past or size changed but timestamp did not, enabling delta checksum
+P00   WARN: file pg_data/changetime.txt timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 39%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 59%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base/base/32768/33000 (32KB, 79%) checksum 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f
@@ -3164,7 +3164,7 @@ P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: aborted backup [BACKUP-DIFF-1] cannot be resumed: resume is disabled
 P00   TEST:         PgBaCkReStTeSt-BACKUP-NORESUME-PgBaCkReStTeSt
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: timestamp in the past or size changed but timestamp did not, enabling delta checksum
+P00   WARN: file pg_data/changetime.txt timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 39%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 59%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base/base/32768/33000 (32KB, 79%) checksum 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f
@@ -3697,7 +3697,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-INCR-3], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-INCR-3]
-P00   WARN: timestamp in the past or size changed but timestamp did not, enabling delta checksum
+P00   WARN: file pg_data/base/16384/17000 timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 44%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 66%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33000 (32KB, 88%) checksum 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f
@@ -3905,7 +3905,7 @@ P00   WARN: option repo1-retention-full is not set, the repository may run out o
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: timestamp in the past or size changed but timestamp did not, enabling delta checksum
+P00   WARN: file pg_data/base/16384/17000 timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 44%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 66%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33000 (32KB, 88%) checksum 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f
@@ -4311,7 +4311,7 @@ P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter compress option to 'true', reset to value in [BACKUP-FULL-2]
 P00   WARN: diff backup cannot alter hardlink option to 'true', reset to value in [BACKUP-FULL-2]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: timestamp in the past or size changed but timestamp did not, enabling delta checksum
+P00   WARN: file pg_data/changetime.txt timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P00   TEST:         PgBaCkReStTeSt-MANIFEST-BUILD-PgBaCkReStTeSt
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 44%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 66%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5

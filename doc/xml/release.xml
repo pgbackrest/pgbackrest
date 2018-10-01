@@ -46,6 +46,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Enable checksum delta automatically in cases where anomalies have been detected (e.g. a timeline switch).</p>
+                    </release-item>
+
+                    <release-item>
                         <p><postgres/> 11 Beta 4 support, including configurable WAL segment size.</p>
                     </release-item>
                 </release-feature-list>

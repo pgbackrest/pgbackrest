@@ -1578,7 +1578,7 @@ incr backup - update files (backup host)
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-INCR-3]
-P00   WARN: timestamp in the past or size changed but timestamp did not, enabling delta checksum
+P00   WARN: file pg_data/base/16384/17000 timestamp in the past or size changed but timestamp did not, enabling delta checksum
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/base/16384/17000: file size 8 is not divisible by page size 8192
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
