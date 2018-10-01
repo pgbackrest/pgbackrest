@@ -646,7 +646,7 @@ sub checkDeltaFile
             (defined($oPriorManifest) &&
              $oPriorManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_FUTURE, 'y'))))
         {
-            &log(WARN, "file has timestamp in the future, enabling delta checksum");
+            &log(WARN, "file $strName has timestamp in the future, enabling delta checksum");
             $bDelta = true;
             last;
         }
@@ -661,7 +661,7 @@ sub checkDeltaFile
             $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
             $oPriorManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP))))
         {
-            &log(WARN, "timestamp in the past or size changed but timestamp did not, enabling delta checksum");
+            &log(WARN, "file $strName timestamp in the past or size changed but timestamp did not, enabling delta checksum");
             $bDelta = true;
             last;
         }

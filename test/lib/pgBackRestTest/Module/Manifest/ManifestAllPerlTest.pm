@@ -1252,7 +1252,7 @@ sub run
 
         $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, true,
             'future timestamp warning, enable delta checksum', {strLogExpect =>
-            "WARN: file has timestamp in the future, enabling delta checksum\n" .
+            "WARN: file " . MANIFEST_TARGET_PGDATA . "/$strTest has timestamp in the future, enabling delta checksum\n" .
             "WARN: some files have timestamps in the future - they will be copied to prevent possible race conditions"});
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", '    manifest future subkey=y');
 
@@ -1391,7 +1391,8 @@ sub run
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false)}, true,
             'timestamp same, contents different, delta is enabled', {strLogExpect =>
-            "WARN: timestamp in the past or size changed but timestamp did not, enabling delta checksum"});
+            "WARN: file " . MANIFEST_TARGET_PGDATA .
+            "/$strTest timestamp in the past or size changed but timestamp did not, enabling delta checksum"});
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", '    updates from last manifest');
 
         # new timestamp less than last manifest timestamp for referenced file
@@ -1406,7 +1407,8 @@ sub run
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false)}, true,
             'time in past, delta enabled', {strLogExpect =>
-            "WARN: timestamp in the past or size changed but timestamp did not, enabling delta checksum"});
+            "WARN: file " . MANIFEST_TARGET_PGDATA .
+            "/$strTest timestamp in the past or size changed but timestamp did not, enabling delta checksum"});
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             '    manifest compare');
 
@@ -1681,21 +1683,27 @@ sub run
         my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
             iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         my $strFile = MANIFEST_TARGET_PGDATA . '/' . BOGUS;
-        my @stryFileList = ($strFile);
+        my @stryFileList = ($strFile . '1');
+        push(@stryFileList, $strFile);
 
         $self->testResult(sub {$oManifest->checkDeltaFile(\@stryFileList, undef, undef)}, false,
             "no prior manifest, no time begin, delta not enabled");
 
         my $oManifestPrior = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
             iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile . '1', MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile . '1', MANIFEST_SUBKEY_SIZE, 0);
         $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP, $lTime);
         $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestPrior->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile . '1', MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestPrior->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile . '1', MANIFEST_SUBKEY_SIZE, 0);
         $oManifestPrior->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP, $lTime);
         $oManifestPrior->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE, 0);
         $oManifestPrior->set(MANIFEST_SECTION_TARGET_FILE, $strFile,  MANIFEST_SUBKEY_FUTURE, 'y');
 
         $self->testResult(sub {$oManifest->checkDeltaFile(\@stryFileList, $oManifestPrior, $lTime)}, true,
-            "prior manifest, time begin same, prior future is set, delta enabled");
+            "prior manifest, time begin same, prior future is set, delta enabled", {strLogExpect =>
+            "WARN: file $strFile has timestamp in the future, enabling delta checksum"});
 
         $oManifestPrior->remove(MANIFEST_SECTION_TARGET_FILE, $strFile,  MANIFEST_SUBKEY_FUTURE);
 

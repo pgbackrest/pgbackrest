@@ -128,8 +128,8 @@ sub resumeClean
                         $strFile = substr($strFile, 0, length($strFile) - 3);
                     }
 
-                    # To be preserved the file must exist in the new manifest and not be a reference to a previous backup and must have a
-                    # checksum
+                    # To be preserved the file must exist in the new manifest and not be a reference to a previous backup and must
+                    # have a checksum
                     if ($oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile) &&
                         !$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE) &&
                         $oAbortedManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM))
@@ -185,7 +185,7 @@ sub resumeClean
             if ($oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile) &&
                 !$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE))
             {
-               # To be preserved the checksum must be defined
+                # To be preserved the checksum must be defined
                 my $strChecksum = $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
 
                 # If the size and timestamp match OR if the size matches and the delta option is set, then keep the file.
@@ -804,7 +804,7 @@ sub process
     my $strLsnStart = undef;
     my $iWalSegmentSize = undef;
     my $hTablespaceMap = undef;
-	my $hDatabaseMap = undef;
+    my $hDatabaseMap = undef;
     my $strTimelineCurrent = undef;
 
     # If this is an offline backup
