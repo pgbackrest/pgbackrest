@@ -54,6 +54,7 @@ const char *cfgDefOptionHelpSummary(ConfigDefineCommand commandDefId, ConfigDefi
 int cfgDefOptionId(const char *optionName);
 unsigned int cfgDefOptionIndexTotal(ConfigDefineOption optionDefId);
 bool cfgDefOptionInternal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
+bool cfgDefOptionMulti(ConfigDefineOption optionDefId);
 const char *cfgDefOptionName(ConfigDefineOption optionDefId);
 const char *cfgDefOptionPrefix(ConfigDefineOption optionDefId);
 bool cfgDefOptionRequired(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);

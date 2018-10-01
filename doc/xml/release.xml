@@ -24,6 +24,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="jesper.st.john"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix incorrect error message for duplicate options in configuration files.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Fix incorrectly reported error return in <id>info</id> logging.  A return code of 1 from the <cmd>archive-get</cmd> was being logged as an error message at <id>info</id> level but otherwise worked correctly.</p>
                     </release-item>
                 </release-bug-list>
@@ -95,6 +103,15 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>cfgDefOptionMulti()</code> to identify multi-value options.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-contributor id="stephen.frost"/>
+                        </release-item-contributor-list>
+
                         <p>Add <code>bufNewZ()</code> and <code>bufHex()</code>to <code>Buffer</code> object.</p>
                     </release-item>
 
@@ -204,6 +221,14 @@
 
                     <release-item>
                         <p>Merge all posix storage tests into a single unit.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <file>.gitignore</file> to C <path>src</path> directory.</p>
                     </release-item>
 
                     <release-item>

@@ -507,8 +507,12 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             THROW_FMT(OptionInvalidError, "option '%s' cannot be set and reset", cfgOptionName(optionId));
 
                         // Add the argument
-                        if (optionList[optionListIdx].has_arg == required_argument)
+                        if (optionList[optionListIdx].has_arg == required_argument &&
+                            cfgDefOptionMulti(cfgOptionDefIdFromId(optionId)))
+                        {
                             strLstAdd(parseOptionList[optionId].valueList, strNew(optarg));
+                        }
+                        // Error if the option does not accept multiple arguments
                         else
                             THROW_FMT(OptionInvalidError, "option '%s' cannot be set multiple times", cfgOptionName(optionId));
                     }
@@ -618,8 +622,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             THROW_FMT(OptionInvalidValueError, "environment boolean option '%s' must be 'y' or 'n'", strPtr(key));
                     }
                     // Else split list/hash into separate values
-                    else if (cfgDefOptionType(optionDefId) == cfgDefOptTypeHash ||
-                             cfgDefOptionType(optionDefId) == cfgDefOptTypeList)
+                    else if (cfgDefOptionMulti(optionDefId))
                     {
                         parseOptionList[optionId].valueList = strLstNewSplitZ(value, ":");
                     }
@@ -760,8 +763,16 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         parseOptionList[optionId].found = true;
                         parseOptionList[optionId].source = cfgSourceConfig;
 
-                        // Convert boolean to string
-                        if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
+                        if (varType(value) == varTypeVariantList)
+                        {
+                            // Error if the option cannot be specified multiple times
+                            if (!cfgDefOptionMulti(optionDefId))
+                                THROW_FMT(OptionInvalidError, "option '%s' cannot be set multiple times", cfgOptionName(optionId));
+
+                            parseOptionList[optionId].valueList = strLstNewVarLst(varVarLst(value));
+                        }
+                        // Convert boolean
+                        else if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
                         {
                             if (strcasecmp(strPtr(varStr(value)), "n") == 0)
                                 parseOptionList[optionId].negate = true;
@@ -769,14 +780,11 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                 THROW_FMT(OptionInvalidValueError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
                         }
                         // Else add the string value
-                        else if (varType(value) == varTypeString)
+                        else
                         {
                             parseOptionList[optionId].valueList = strLstNew();
                             strLstAdd(parseOptionList[optionId].valueList, varStr(value));
                         }
-                        // Else add the string list
-                        else
-                            parseOptionList[optionId].valueList = strLstNewVarLst(varVarLst(value));
                     }
                 }
             }
@@ -801,14 +809,6 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     THROW_FMT(
                         OptionInvalidError, "option '%s' not valid for command '%s'", cfgOptionName(optionId),
                         cfgCommandName(cfgCommand()));
-                }
-
-                // Error if this option does not allow multiple arguments
-                if (parseOption->valueList != NULL && strLstSize(parseOption->valueList) > 1 &&
-                    !(cfgDefOptionType(cfgOptionDefIdFromId(optionId)) == cfgDefOptTypeHash ||
-                      cfgDefOptionType(cfgOptionDefIdFromId(optionId)) == cfgDefOptTypeList))
-                {
-                    THROW_FMT(OptionInvalidError, "option '%s' cannot have multiple arguments", cfgOptionName(optionId));
                 }
 
                 // Is the option valid for this command?  If not, there is nothing more to do.
