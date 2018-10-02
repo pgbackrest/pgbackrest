@@ -73,6 +73,7 @@ sub resumeClean
         $strBackupLabel,
         $oManifest,
         $oAbortedManifest,
+        $bOnline,
         $bDelta,
         $strTimelineCurrent,
         $strTimelineLast,
@@ -84,6 +85,7 @@ sub resumeClean
             {name => 'strBackupLabel'},
             {name => 'oManifest'},
             {name => 'oAbortedManifest'},
+            {name => 'bOnline'},
             {name => 'bDelta'},
             {name => 'strTimelineCurrent', required => false},
             {name => 'strTimelineLast', required => false},
@@ -101,7 +103,7 @@ sub resumeClean
     {
         # Check to see if delta checksum should be enabled
         $bDelta = $oAbortedManifest->checkDelta(
-            $oAbortedManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, cfgOption(CFGOPT_ONLINE)),
+            $oAbortedManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, $bOnline),
             $strTimelineCurrent, $strTimelineLast);
 
         # If delta is still false, check the files for anomalies
@@ -924,7 +926,7 @@ sub process
         # Clean the backup path before resuming. The delta option may have changed from false to true during the reseume clean
         # so set it to the result.
         cfgOptionSet(CFGOPT_DELTA, $self->resumeClean($oStorageRepo, $strBackupLabel, $oBackupManifest, $oAbortedManifest,
-            cfgOption(CFGOPT_DELTA), $strTimelineCurrent, $strTimelineAborted));
+            cfgOption(CFGOPT_ONLINE), cfgOption(CFGOPT_DELTA), $strTimelineCurrent, $strTimelineAborted));
     }
     # Else create the backup path
     else
