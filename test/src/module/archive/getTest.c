@@ -269,7 +269,14 @@ testRun(void)
         strLstAddZ(argList, "archive-get");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "WAL segment to get required");
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD()
+            {
+                TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "WAL segment to get required");
+            }
+        }
+        HARNESS_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListTemp = strLstDup(argList);
@@ -277,7 +284,14 @@ testRun(void)
         strLstAdd(argListTemp, walSegment);
         harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
 
-        TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "path to copy WAL segment required");
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD()
+            {
+                TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "path to copy WAL segment required");
+            }
+        }
+        HARNESS_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
@@ -343,7 +357,15 @@ testRun(void)
         strLstAddZ(argList, "pg_wal/RECOVERYXLOG");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout getting WAL segment");
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD()
+            {
+                TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout getting WAL segment");
+            }
+        }
+        HARNESS_FORK_END();
+
         harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive");
 
         // Check for missing WAL
@@ -354,7 +376,15 @@ testRun(void)
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment))), NULL);
 
-        TEST_RESULT_VOID(cmdArchiveGet(), "successful get of missing WAL");
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD()
+            {
+                TEST_RESULT_INT(cmdArchiveGet(), 1, "successful get of missing WAL");
+            }
+        }
+        HARNESS_FORK_END();
+
         harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive");
 
         TEST_RESULT_BOOL(
@@ -367,10 +397,21 @@ testRun(void)
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
             bufNewZ("SHOULD-BE-A-REAL-WAL-FILE"));
 
-        TEST_RESULT_VOID(cmdArchiveGet(), "successful get");
-        harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive");
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD()
+            {
+                TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
+            }
+        }
+        HARNESS_FORK_END();
 
-        TEST_RESULT_BOOL(storageExistsNP(storageTest, walFile), true, "check WAL segment was moved");
+        TEST_RESULT_VOID(harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive"), "check log");
+
+        TEST_RESULT_BOOL(
+            storageExistsNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))), false,
+            "check WAL segment was removed from source");
+        TEST_RESULT_BOOL(storageExistsNP(storageTest, walFile), true, "check WAL segment was moved to destination");
         storageRemoveP(storageTest, walFile, .errorOnMissing = true);
 
         // Write more WAL segments (in this case queue should be full)
@@ -387,8 +428,16 @@ testRun(void)
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment2))),
             bufNewZ("SHOULD-BE-A-REAL-WAL-FILE"));
 
-        TEST_RESULT_VOID(cmdArchiveGet(), "successful get");
-        harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive");
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD()
+            {
+                TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
+            }
+        }
+        HARNESS_FORK_END();
+
+        TEST_RESULT_VOID(harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive"), "check log");
 
         TEST_RESULT_BOOL(storageExistsNP(storageTest, walFile), true, "check WAL segment was moved");
 
@@ -398,7 +447,15 @@ testRun(void)
             lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30, true), "acquire lock");
         TEST_RESULT_VOID(lockClear(true), "clear lock");
 
-        TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout waiting for lock");
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD()
+            {
+                TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout waiting for lock");
+            }
+        }
+        HARNESS_FORK_END();
+
         harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive");
 
         // -------------------------------------------------------------------------------------------------------------------------

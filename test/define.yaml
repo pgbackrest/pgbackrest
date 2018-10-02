@@ -627,6 +627,18 @@ unit:
           command/archive/get/file: full
           command/archive/get/get: full
 
+        # This test is flapping on co6 which seems to be due to some race condition.  The tests are under active development, so for
+        # now we are disabling the co6 tests in the hopes that the cause will be caught later.  It seems fairly certain that this is
+        # some sort of issue with the test and not the underlying code.  No flakiness has been seen in the integration tests and
+        # this issue has never happened on another vm.
+        vm:
+          - co7
+          - u12
+          - u14
+          - u16
+          - u18
+          - d8
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: get-perl
         total: 3
