@@ -694,8 +694,8 @@ sub copyPriorChecksum
         logDebugParam
         (
             __PACKAGE__ . '->copyPriorChecksum', \@_,
-            {name => 'strName'},
-            {name => 'oPriorManifest'},
+            {name => 'strName', trace => true},
+            {name => 'oPriorManifest', trace => true},
         );
 
     # Copy the checksum from previous manifest (if it exists - zero sized files don't have checksums)

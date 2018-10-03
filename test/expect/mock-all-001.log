@@ -2055,23 +2055,6 @@ P00  DEBUG:     Storage::Local->manifest(): strFilter = [undef], strPathExp = [T
 P00  DEBUG:     Manifest->build(): bDelta = false, bOnline = false, bTablespace = true, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts1, strTimelineCurrent = [undef], strTimelineLast = [undef]
 P00  DEBUG:     Storage::Local->manifest(): strFilter = [TS_PATH-1], strPathExp = [TEST_PATH]/db-master/db/tablespace/ts1
 P00  DEBUG:     Manifest->checkDeltaFile(): lTimeBegin = [MODIFICATION-TIME-6], oPriorManifest = [object], stryFileList = (pg_data/PG_VERSION, pg_data/badchecksum.txt, pg_data/base/1/12000, pg_data/base/1/PG_VERSION, pg_data/base/16384/17000, pg_data/base/16384/PG_VERSION, pg_data/base/32768/33000, pg_data/base/32768/33000.32767, pg_data/base/32768/33001, pg_data/base/32768/44000_init, pg_data/base/32768/PG_VERSION, pg_data/changecontent.txt, pg_data/changesize.txt, pg_data/changetime.txt, pg_data/global/pg_control, pg_data/pg_stat/global.stat, pg_data/postgresql.conf, pg_data/special-@!#$^&*()-_+~`{}[]\|:;"<>',.?%, pg_data/zero_from_start, pg_data/zerosize.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt)
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/PG_VERSION
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/1/12000
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/1/PG_VERSION
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/16384/17000
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/16384/PG_VERSION
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/32768/33000
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/32768/33000.32767
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/32768/33001
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/32768/44000_init
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/32768/PG_VERSION
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/changecontent.txt
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/changetime.txt
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/global/pg_control
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/pg_stat/global.stat
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/postgresql.conf
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/special-@!#$^&*()-_+~`{}[]\|:;"<>',.?%
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/zero_from_start
 P00  DEBUG:     Backup::Backup->process: create backup path [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = <false>, strMode = <0750>, strPathExp = <REPO:BACKUP>/[BACKUP-INCR-1]
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]/backup.manifest
@@ -2501,23 +2484,6 @@ P00  DEBUG:     Manifest->build(): bDelta = true, bOnline = false, bTablespace =
 P00  DEBUG:     Storage::Local->manifest(): strFilter = [TS_PATH-1], strPathExp = [TEST_PATH]/db-master/db/tablespace/ts11
 P00  DEBUG:     Manifest->build(): bDelta = true, bOnline = false, bTablespace = true, hDatabaseMap = [undef], hTablespaceMap = [hash], iLevel = 1, oLastManifest = [undef], oStorageDbMaster = [object], rhExclude = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts2, strTimelineCurrent = [undef], strTimelineLast = [undef]
 P00  DEBUG:     Storage::Local->manifest(): strFilter = [TS_PATH-1], strPathExp = [TEST_PATH]/db-master/db/tablespace/ts2
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/PG_VERSION
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/1/12000
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/1/PG_VERSION
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/16384/17000
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/16384/PG_VERSION
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/32768/33000
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/32768/33000.32767
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/32768/33001
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/32768/44000_init
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/base/32768/PG_VERSION
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/changecontent.txt
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/changetime.txt
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/global/pg_control
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/pg_stat/global.stat
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/postgresql.conf
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/special-@!#$^&*()-_+~`{}[]\|:;"<>',.?%
-P00  DEBUG:     Manifest->copyPriorChecksum(): oPriorManifest = [object], strName = pg_data/zero_from_start
 P00   WARN: aborted backup [BACKUP-INCR-2] of same type exists, will be cleaned to remove invalid files and resumed
 P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt
 P00  DEBUG:     Backup::Backup->resumeClean(): bDelta = true, bOnline = false, oAbortedManifest = [object], oManifest = [object], oStorageRepo = [object], strBackupLabel = [BACKUP-INCR-2], strTimelineCurrent = [undef], strTimelineLast = [undef]
