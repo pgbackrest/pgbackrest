@@ -29,6 +29,7 @@ use pgBackRest::Storage::Helper;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 
@@ -205,8 +206,12 @@ sub run
         storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/${strFullLabel}", {bCreateParent => true});
         my $strBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strFullLabel}");
         my $strBackupManifestFile = "$strBackupPath/" . FILE_MANIFEST;
+
         my $strPath = "path";
         my $strSubPath = "$strBackupPath/$strPath";
+        my $strInManifestNoChecksum = 'in_manifest_no_checksum';
+        my $strInManifestWithChecksum = 'in_manifest_with_checksum';
+        my $strInManifestWithReference = 'in_manifest_with_reference';
 
         my $strExpectedManifest = $self->testPath() . '/expected.manifest';
         my $strAbortedManifest = $self->testPath() . '/aborted.manifest';
@@ -268,56 +273,136 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         storageRepo()->put(storageRepo()->openWrite($strBackupPath . '/' . BOGUS,
             {strMode => '0750', strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}));
-        storageRepo()->put(storageRepo()->openWrite($strBackupPath . '/in_manifest_with_reference',
+        storageRepo()->put(storageRepo()->openWrite($strBackupPath . "/$strInManifestWithReference",
             {strMode => '0750', strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}));
-        storageRepo()->put(storageRepo()->openWrite($strBackupPath . '/in_manifest_no_checksum',
+        storageRepo()->put(storageRepo()->openWrite($strBackupPath . "/$strInManifestNoChecksum",
             {strMode => '0750', strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}));
-        storageRepo()->put(storageRepo()->openWrite($strBackupPath . '/in_manifest_with_checksum',
+        storageRepo()->put(storageRepo()->openWrite($strBackupPath . "/$strInManifestWithChecksum",
             {strMode => '0750', strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), 'test');
-        my ($strHash, $strSize) = storageRepo()->hashSize(storageRepo()->openRead($strBackupPath . '/in_manifest_with_checksum'));
+        my ($strHash, $iSize) = storageRepo()->hashSize(storageRepo()->openRead($strBackupPath . "/$strInManifestWithChecksum"));
 
-        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_no_checksum',
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestNoChecksum,
             MANIFEST_SUBKEY_SIZE, 0);
-        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_no_checksum',
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestNoChecksum,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
-        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_with_checksum',
-            MANIFEST_SUBKEY_SIZE, $strSize);
-        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_with_checksum',
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_SIZE, $iSize);
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
-        $oManifest->set(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_with_checksum',
-            MANIFEST_SUBKEY_CHECKSUM, $strHash);
-        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_with_reference',
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithReference,
             MANIFEST_SUBKEY_SIZE, 0);
-        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_with_reference',
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithReference,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
-        $oManifest->set(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_with_reference',
+        $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithReference,
             MANIFEST_SUBKEY_REFERENCE, BOGUS);
 
-        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_no_checksum',
+        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestNoChecksum,
             MANIFEST_SUBKEY_SIZE, 0);
-        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_no_checksum',
+        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestNoChecksum,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
-        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_with_checksum',
-            MANIFEST_SUBKEY_SIZE, $strSize);
-        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_with_checksum',
+        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_SIZE, $iSize);
+        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
-        $oAbortedManifest->set(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_with_checksum',
+        $oAbortedManifest->set(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
             MANIFEST_SUBKEY_CHECKSUM, $strHash);
-        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_with_reference',
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithReference,
             MANIFEST_SUBKEY_SIZE, 0);
-        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_with_reference',
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithReference,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
-        $oManifest->set(MANIFEST_SECTION_TARGET_FILE, 'in_manifest_with_reference',
+        $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithReference,
             MANIFEST_SUBKEY_REFERENCE, BOGUS);
 
         $self->testResult(sub {$oBackup->resumeClean(storageRepo(), $strFullLabel, $oManifest, $oAbortedManifest, false, false,
             undef, undef)}, false, 'resumeClean, online not changed, delta not enabled');
         $self->testResult(sub {!storageRepo()->exists($strBackupPath . "/" . BOGUS) &&
-            !storageRepo()->exists($strBackupPath .  '/in_manifest_no_checksum') &&
-            !storageRepo()->exists($strBackupPath .  '/in_manifest_with_reference') &&
-            storageRepo()->exists($strBackupPath .  '/in_manifest_with_checksum') &&
+            !storageRepo()->exists($strBackupPath .  "/$strInManifestNoChecksum") &&
+            !storageRepo()->exists($strBackupPath .  "/$strInManifestWithReference") &&
+            storageRepo()->exists($strBackupPath .  "/$strInManifestWithChecksum") &&
             storageRepo()->exists($strBackupPath . "/" . FILE_MANIFEST_COPY)}, true,
-            '    file not in manifest or in manifest but no checksum removed, file in manifest and manifest copy remains');
+            '    file not in manifest or in manifest but no-checksum removed, file in manifest and manifest.copy remains');
+        $self->testResult(sub {$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum, MANIFEST_SUBKEY_CHECKSUM,
+            $strHash)}, true, '    checksum copied to manifest');
+
+        # Timestamp in the past for same-sized file with checksum.
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum, MANIFEST_SUBKEY_CHECKSUM);
+        $self->testResult(sub {$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_CHECKSUM)}, false, 'manifest checksum does not exist');
+
+        # Set the timestamp so that the new manifest appears to have a time in the past. This should enable delta.
+        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime + 100);
+
+        # Set checksum page for code coverage
+        $oAbortedManifest->set(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum, MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
+
+        $self->testResult(sub {$oBackup->resumeClean(storageRepo(), $strFullLabel, $oManifest, $oAbortedManifest, false, false,
+            undef, undef)}, true, '    resumeClean, timestamp in past, delta enabled');
+        $self->testResult(sub {$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum, MANIFEST_SUBKEY_CHECKSUM,
+            $strHash) && $oManifest->boolTest(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_CHECKSUM_PAGE, false)}, true, '    checksum copied to manifest');
+
+        # Timestamp different for same-sized file with checksum.
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum, MANIFEST_SUBKEY_CHECKSUM);
+        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime - 100);
+
+        $self->testResult(sub {$oBackup->resumeClean(storageRepo(), $strFullLabel, $oManifest, $oAbortedManifest, false, false,
+            undef, undef)}, false, 'resumeClean, timestamp different but size the same, delta not enabled');
+        $self->testResult(sub {$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_CHECKSUM) && !storageRepo()->exists($strBackupPath .  "/$strInManifestWithChecksum")},
+            false, '    checksum not copied to manifest, file removed');
+
+        # Size different, timestamp same for file with checksum.
+        #---------------------------------------------------------------------------------------------------------------------------
+        storageRepo()->put(storageRepo()->openWrite($strBackupPath . "/$strInManifestWithChecksum",
+            {strMode => '0750', strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), 'test');
+
+        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_SIZE, $iSize - 1);
+        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        $self->testResult(sub {$oBackup->resumeClean(storageRepo(), $strFullLabel, $oManifest, $oAbortedManifest, false, false,
+            undef, undef)}, true, 'resumeClean, size different, timestamp same, delta enabled');
+        $self->testResult(sub {$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_CHECKSUM) && !storageRepo()->exists($strBackupPath .  "/$strInManifestWithChecksum")},
+            false, '    checksum not copied to manifest, file removed');
+
+        # Checksum page error and link to file.
+        #---------------------------------------------------------------------------------------------------------------------------
+        storageRepo()->put(storageRepo()->openWrite($strBackupPath . "/$strInManifestWithChecksum",
+            {strMode => '0750', strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), 'test');
+        testLinkCreate($strBackupPath . "/testlink", $strBackupPath . "/$strInManifestWithChecksum");
+        $self->testResult(sub {storageRepo()->exists($strBackupPath . "/testlink")}, true, 'link exists');
+
+        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_SIZE, $iSize);
+        $oAbortedManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        # Set checksum page for code coverage
+        $oAbortedManifest->boolSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum, MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
+        $oAbortedManifest->set(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR, 'E');
+
+        $self->testResult(sub {$oBackup->resumeClean(storageRepo(), $strFullLabel, $oManifest, $oAbortedManifest, false, false,
+            undef, undef)}, false, '    resumeClean, delta not enabled');
+
+        $self->testResult(sub {$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR, 'E') && !storageRepo()->exists($strBackupPath .  "/testlink")},
+            true, '    checksum page error copied to manifest, link removed');
+
+        # Checksum page=true
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oAbortedManifest->boolSet(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum, MANIFEST_SUBKEY_CHECKSUM_PAGE, true);
+
+        $self->testResult(sub {$oBackup->resumeClean(storageRepo(), $strFullLabel, $oManifest, $oAbortedManifest, false, false,
+            undef, undef)}, false, '    resumeClean, checksum page = true');
+
+        $self->testResult(sub {$oManifest->boolTest(MANIFEST_SECTION_TARGET_FILE, $strInManifestWithChecksum,
+            MANIFEST_SUBKEY_CHECKSUM_PAGE, true)}, true, '    checksum page set true in manifest');
     }
 }
 

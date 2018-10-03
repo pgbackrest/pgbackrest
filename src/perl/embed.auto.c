@@ -2158,7 +2158,7 @@ static const EmbeddedModule embeddedModule[] =
             "if (defined($strChecksum) &&\n"
             "$oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) ==\n"
             "$oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE)  &&\n"
-            "(cfgOption(CFGOPT_DELTA) ||\n"
+            "($bDelta ||\n"
             "$oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==\n"
             "$oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP)))\n"
             "{\n"
