@@ -122,7 +122,7 @@ storageDriverPosixFileRead(StorageDriverPosixFileRead *this, Buffer *buffer)
         size_t expectedBytes = bufRemains(buffer);
         actualBytes = read(this->handle, bufRemainsPtr(buffer), expectedBytes);
 
-        // Error occurred during write
+        // Error occurred during read
         if (actualBytes == -1)
             THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strPtr(this->name));
 

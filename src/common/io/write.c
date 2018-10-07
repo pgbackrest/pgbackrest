@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 IO Write Interface
 ***********************************************************************************************************************************/
+#include <string.h>
+
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/io/write.intern.h"
@@ -108,6 +110,37 @@ ioWrite(IoWrite *this, const Buffer *buffer)
         }
         while (ioFilterGroupInputSame(this->filterGroup));
     }
+
+    FUNCTION_DEBUG_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Write linefeed-terminated string
+***********************************************************************************************************************************/
+void
+ioWriteLine(IoWrite *this, const String *string)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(IO_WRITE, this);
+        FUNCTION_DEBUG_PARAM(STRING, string);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(string != NULL);
+        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
+    FUNCTION_DEBUG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Load a buffer with the linefeed-terminated string
+        Buffer *buffer = bufNew(strSize(string) + 1);
+        memcpy(bufPtr(buffer), strPtr(string), strSize(string));
+        bufPtr(buffer)[strSize(string)] = '\n';
+        bufUsedSet(buffer, bufSize(buffer));
+
+        // Write the string
+        ioWrite(this, buffer);
+    }
+    MEM_CONTEXT_TEMP_END()
 
     FUNCTION_DEBUG_RESULT_VOID();
 }

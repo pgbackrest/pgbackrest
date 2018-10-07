@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 IO Read Interface
 ***********************************************************************************************************************************/
+#include <string.h>
+
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/io/read.intern.h"
@@ -17,6 +19,7 @@ struct IoRead
     IoReadInterface interface;                                      // Driver interface
     IoFilterGroup *filterGroup;                                     // IO filters
     Buffer *input;                                                  // Input buffer
+    Buffer *output;                                                 // Output buffer (holds extra data from line read)
 
     bool eofAll;                                                    // Is the read done (read and filters complete)?
 
@@ -105,11 +108,12 @@ ioReadEofDriver(const IoRead *this)
 /***********************************************************************************************************************************
 Read data from IO and process filters
 ***********************************************************************************************************************************/
-size_t
-ioRead(IoRead *this, Buffer *buffer)
+static void
+ioReadInternal(IoRead *this, Buffer *buffer)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(IO_READ, this);
+        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
 
         FUNCTION_TEST_ASSERT(this != NULL);
         FUNCTION_TEST_ASSERT(buffer != NULL);
@@ -117,8 +121,6 @@ ioRead(IoRead *this, Buffer *buffer)
     FUNCTION_DEBUG_END();
 
     // Loop until EOF or the output buffer is full
-    size_t outputRemains = bufRemains(buffer);
-
     while (!this->eofAll && bufRemains(buffer) > 0)
     {
         // Process input buffer again to get more output
@@ -147,7 +149,101 @@ ioRead(IoRead *this, Buffer *buffer)
         this->eofAll = ioReadEofDriver(this) && ioFilterGroupDone(this->filterGroup);
     }
 
+    FUNCTION_DEBUG_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Read data and use buffered line read output when present
+***********************************************************************************************************************************/
+size_t
+ioRead(IoRead *this, Buffer *buffer)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(IO_READ, this);
+        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+        FUNCTION_DEBUG_PARAM(BUFFER, this->output);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(buffer != NULL);
+        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
+    FUNCTION_DEBUG_END();
+
+    // Store size of remaining portion of buffer to calculate total read at the end
+    size_t outputRemains = bufRemains(buffer);
+
+    // Use any data in the output buffer left over from a line read
+    if (this->output != NULL && bufUsed(this->output) > 0 && bufRemains(buffer) > 0)
+    {
+        // Determine how much data should be copied
+        size_t size = bufUsed(this->output) > bufRemains(buffer) ? bufRemains(buffer) : bufUsed(this->output);
+
+        // Copy data to the user buffer
+        bufCatSub(buffer, this->output, 0, size);
+
+        // Remove copied data from the output buffer
+        memmove(bufPtr(this->output), bufPtr(this->output) + size, bufUsed(this->output) - size);
+        bufUsedSet(this->output, bufUsed(this->output) - size);
+    }
+
+    // Read data
+    ioReadInternal(this, buffer);
+
     FUNCTION_DEBUG_RESULT(SIZE, outputRemains - bufRemains(buffer));
+}
+
+/***********************************************************************************************************************************
+Read linefeed-terminated string
+***********************************************************************************************************************************/
+String *
+ioReadLine(IoRead *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(IO_READ, this);
+        FUNCTION_DEBUG_PARAM(BUFFER, this->output);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
+    FUNCTION_DEBUG_END();
+
+    // Allocate the output buffer if it has not already been allocated.  This buffer is not allocated at object creation because it
+    // is not always used.
+    if (this->output == NULL)
+    {
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->output = bufNew(ioBufferSize());
+        }
+        MEM_CONTEXT_END();
+    }
+
+    // Read more data if there is any.  The entire string we are searching for must fit within the buffer so we'll make sure that
+    // the buffer is full
+    ioReadInternal(this, this->output);
+
+    // If some data was read search for a linefeed
+    String *result = NULL;
+
+    if (bufUsed(this->output) > 0)
+    {
+        // Search for a linefeed in the buffer
+        char *linefeed = memchr(bufPtr(this->output), '\n', bufUsed(this->output));
+
+        // A linefeed was found so get the string
+        if (linefeed != NULL)
+        {
+            // Get the string size
+            size_t size = (size_t)(linefeed - (char *)bufPtr(this->output) + 1);
+
+            // Create the string
+            result = strNewN((char *)bufPtr(this->output), size - 1);
+
+            // Remove string from the output buffer
+            memmove(bufPtr(this->output), bufPtr(this->output) + size, bufUsed(this->output) - size);
+            bufUsedSet(this->output, bufUsed(this->output) - size);
+        }
+    }
+
+    FUNCTION_DEBUG_RESULT(STRING, result);
 }
 
 /***********************************************************************************************************************************

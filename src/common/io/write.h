@@ -21,6 +21,7 @@ Functions
 ***********************************************************************************************************************************/
 void ioWriteOpen(IoWrite *this);
 void ioWrite(IoWrite *this, const Buffer *buffer);
+void ioWriteLine(IoWrite *this, const String *string);
 void ioWriteClose(IoWrite *this);
 
 /***********************************************************************************************************************************

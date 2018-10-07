@@ -315,6 +315,46 @@ testRun(void)
 
         TEST_RESULT_VOID(ioFilterGroupFree(filterGroup), "    free filter group object");
         TEST_RESULT_VOID(ioFilterGroupFree(NULL), "    free NULL filter group object");
+
+        // Mixed line and buffer read
+        // -------------------------------------------------------------------------------------------------------------------------
+        ioBufferSizeSet(5);
+        read = ioBufferReadIo(ioBufferReadNew(bufNewZ("AAA123\n1234\n\n12\nBDDDEFF")));
+        ioReadOpen(read);
+        buffer = bufNew(3);
+
+        // Start with a buffer read
+        TEST_RESULT_INT(ioRead(read, buffer), 3, "read buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AAA", "    check buffer");
+
+        // Do line reads of various lengths
+        TEST_RESULT_STR(strPtr(ioReadLine(read)), "123", "read line");
+        TEST_RESULT_STR(strPtr(ioReadLine(read)), "1234", "read line");
+        TEST_RESULT_STR(strPtr(ioReadLine(read)), "", "read line");
+        TEST_RESULT_STR(strPtr(ioReadLine(read)), "12", "read line");
+
+        // Read what was left in the line buffer
+        TEST_RESULT_INT(ioRead(read, buffer), 0, "read buffer");
+        bufUsedSet(buffer, 2);
+        TEST_RESULT_INT(ioRead(read, buffer), 1, "read buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AAB", "    check buffer");
+        bufUsedSet(buffer, 0);
+
+        // Now do a full buffer read from the input
+        TEST_RESULT_INT(ioRead(read, buffer), 3, "read buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "DDD", "    check buffer");
+
+        // Read line doesn't work without a linefeed
+        TEST_RESULT_STR(strPtr(ioReadLine(read)), NULL, "read line");
+
+        // But those bytes can be picked up by a buffer read
+        bufUsedSet(buffer, 0);
+        TEST_RESULT_INT(ioRead(read, buffer), 3, "read buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "EFF", "    check buffer");
+
+        // Nothing left to read
+        TEST_RESULT_STR(strPtr(ioReadLine(read)), NULL, "read line");
+        TEST_RESULT_INT(ioRead(read, buffer), 0, "read buffer");
     }
 
     // *****************************************************************************************************************************
@@ -359,16 +399,16 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteFilterGroupSet(ioBufferWriteIo(bufferWrite), filterGroup), "    add filter group to write io");
 
         TEST_RESULT_VOID(ioWriteOpen(ioBufferWriteIo(bufferWrite)), "    open buffer write object");
-        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNewZ("ABC")), "    write 3 bytes");
+        TEST_RESULT_VOID(ioWriteLine(ioBufferWriteIo(bufferWrite), strNew("AB")), "    write string");
         TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNew(0)), "    write 0 bytes");
         TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), NULL), "    write 0 bytes");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABBCC", "    check write");
+        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\n", "    check write");
 
         TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNewZ("12345")), "    write 4 bytes");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABBCC112233445", "    check write");
+        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\n112233445", "    check write");
 
         TEST_RESULT_VOID(ioWriteClose(ioBufferWriteIo(bufferWrite)), " close buffer write object");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABBCC1122334455XXX", "    check write after close");
+        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\n1122334455XXX", "    check write after close");
 
         TEST_RESULT_PTR(ioWriteFilterGroup(ioBufferWriteIo(bufferWrite)), filterGroup, "    check filter group");
         TEST_RESULT_UINT(
