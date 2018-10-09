@@ -6,6 +6,7 @@ IO Filter Group
 #include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/filter/buffer.h"
+#include "common/io/filter/filter.intern.h"
 #include "common/io/filter/group.h"
 #include "common/io/io.h"
 #include "common/log.h"

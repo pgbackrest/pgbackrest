@@ -154,6 +154,10 @@
                     <release-item>
                         <p>Simplify debug logging by allowing log functions to return <code>String</code> objects.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improve documentation in <code>filter.h</code> and <code>filter.internal.h</code>.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

@@ -1,19 +1,12 @@
 /***********************************************************************************************************************************
 IO Filter Interface
 
-Two types of filters are implemented using this interface:  In and InOut.
+Filters can modify an i/o stream (e.g. GzipCompress, GzipDecompress), generate a result (e.g. IoSize, CryptoHash), or even do both.
 
-In filters accept input and produce a result, but do not modify the input.  An example is the IoSize filter which counts all bytes
-that pass through it.
+A filter is created using a constructor implemented by each filter (e.g. ioBufferNew).  Filter processing is managed by
+IoFilterGroup so the only user facing functions are ioFilterResult() and ioFilterType().
 
-InOut filters accept input and produce output (and perhaps a result).  Because the input/output buffers may not be the same size the
-filter must be prepared to accept the same input again (by implementing IoFilterInputSame) if the output buffer is too small to
-accept all processed data.  If the filter holds state even when inputSame is false then it may also implement IoFilterDone to
-indicate that the filter should be flushed (by passing NULL inputs) after all input has been processed.  InOut filters should strive
-to fill the output buffer as much as possible, i.e., if the output buffer is not full after processing then inputSame should be
-false.  An example is the IoBuffer filter which buffers data between unequally sized input/output buffers.
-
-Each filter has a type that allows it to be identified in the filter list.
+Information on implementing a filter is in filter.internal.h.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_FILTER_FILTER_H
 #define COMMON_IO_FILTER_FILTER_H
@@ -27,18 +20,8 @@ typedef struct IoFilter IoFilter;
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-void ioFilterProcessIn(IoFilter *this, const Buffer *input);
-void ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output);
-IoFilter *ioFilterMove(IoFilter *this, MemContext *parentNew);
-
-/***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-bool ioFilterDone(const IoFilter *this);
-bool ioFilterInputSame(const IoFilter *this);
-bool ioFilterOutput(const IoFilter *this);
 const Variant *ioFilterResult(const IoFilter *this);
 const String *ioFilterType(const IoFilter *this);
 
