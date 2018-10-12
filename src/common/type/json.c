@@ -93,7 +93,27 @@ KeyValue *jsonToKv(const String *json)
                 value = varNewUInt64(cvtZToUInt64(strPtr(valueStr)));
             }
 
-            // Else not sure what it is.  Currently booleans and nulls will error.
+            // The value appears to be a boolean
+            else if (jsonC[jsonPos] == 't' || jsonC[jsonPos] == 'f')
+            {
+                valueBeginPos = jsonPos;
+
+                while (jsonC[jsonPos] != 'e' && jsonPos < strSize(json) - 1)
+                    jsonPos++;
+
+                if (jsonC[jsonPos] != 'e')
+                    THROW_FMT(JsonFormatError, "expected boolean but found '%c'", jsonC[jsonPos]);
+
+                jsonPos++;
+                String *valueStr = strNewN(jsonC + valueBeginPos, jsonPos - valueBeginPos);
+
+                if (strCmpZ(valueStr, "true") != 0 && strCmpZ(valueStr, "false") != 0)
+                    THROW_FMT(JsonFormatError, "expected 'true' or 'false' but found '%s'", strPtr(valueStr));
+
+                value = varNewBool(varBoolForce(varNewStr(valueStr)));
+            }
+
+            // Else not sure what it is.  Currently nulls will error.
             else
                 THROW(JsonFormatError, "unknown value type");
 
