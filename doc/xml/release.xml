@@ -46,7 +46,7 @@
                     </release-item>
 
                     <release-item>
-                        <p><postgres/> 11 Beta 4 support, including configurable WAL segment size.</p>
+                        <p><postgres/> 11 support, including configurable WAL segment size.</p>
                     </release-item>
                 </release-feature-list>
 
