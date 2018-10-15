@@ -298,12 +298,8 @@ sub s3ServerSetup
         $strScript .=
             "    wget -O /root/nodejs.sh https://deb.nodesource.com/setup_6.x && \\\n" .
             "    bash /root/nodejs.sh && \\\n" .
+            "    wget -qO- https://deb.nodesource.com/setup_8.x | bash - && \\\n" .
             "    apt-get install -y nodejs";
-
-        if ($strOS eq VM_U18)
-        {
-            $strScript .= ' npm';
-        }
     }
 
     # Install Scality S3

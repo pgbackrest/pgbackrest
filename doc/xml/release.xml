@@ -192,6 +192,10 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>Install <proper>nodejs</proper> from <id>deb.nodesource.com</id>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Disable flapping <id>archive/get</id> unit on CentOS 6.</p>
                     </release-item>
 
