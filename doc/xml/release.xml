@@ -12,6 +12,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.07dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2018-10-15" version="2.06" title="Checksum Delta Backup and PostgreSQL 11 Support">
             <release-core-list>
                 <release-bug-list>
