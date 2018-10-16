@@ -12,7 +12,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.06dev" title="UNDER DEVELOPMENT">
+        <release date="2018-10-15" version="2.06" title="Checksum Delta Backup and PostgreSQL 11 Support">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -116,7 +116,7 @@
                             <release-item-contributor id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Add <code>bufNewZ()</code> and <code>bufHex()</code>to <code>Buffer</code> object.</p>
+                        <p>Add <code>bufNewZ()</code> and <code>bufHex()</code> to <code>Buffer</code> object.</p>
                     </release-item>
 
                     <release-item>
@@ -140,7 +140,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Migrate control functions to detect stop files to C from Perl.</p>
+                        <p>Migrate control functions to detect stop files to C.</p>
                     </release-item>
 
                     <release-item>
@@ -241,7 +241,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="stephen.frost"/>
+                            <release-item-contributor id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Add <file>.gitignore</file> to C <path>src</path> directory.</p>
