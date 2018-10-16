@@ -105,6 +105,7 @@ KeyValue *jsonToKv(const String *json)
                     THROW_FMT(JsonFormatError, "expected boolean but found '%c'", jsonC[jsonPos]);
 
                 jsonPos++;
+
                 String *valueStr = strNewN(jsonC + valueBeginPos, jsonPos - valueBeginPos);
 
                 if (strCmpZ(valueStr, "true") != 0 && strCmpZ(valueStr, "false") != 0)
@@ -113,7 +114,80 @@ KeyValue *jsonToKv(const String *json)
                 value = varNewBool(varBoolForce(varNewStr(valueStr)));
             }
 
+            // The value appears to be an array.
+            else if (jsonC[jsonPos] == '[')
+            {
+                // Add a pointer to an empty variant list as the value for the key.
+                Variant *valueList = varNewVarLst(varLstNew());
+                kvAdd(result, varNewStr(key), valueList);
+
+                unsigned char arrayType = '\0';
+                // ??? Currently only working with same-type simple single-dimensional arrays
+                do
+                {
+                    jsonPos++;
+                    valueBeginPos = jsonPos;
+
+                    // CSHANG Duplicate (almost) code as above so make function or see if can use recursion
+                    // The value appears to be a string
+                    if (jsonC[jsonPos] == '"')
+                    {
+                        if (arrayType != '\0' && arrayType != 's')
+                            THROW_FMT(JsonFormatError, "string found in array of type '%c'", arrayType);
+
+                        arrayType = 's';
+
+                        valueBeginPos++;
+                        jsonPos++;
+
+                        while (jsonC[jsonPos] != '"' && jsonPos < strSize(json) - 1)
+                            jsonPos++;
+
+                        if (jsonC[jsonPos] != '"')
+                            THROW_FMT(JsonFormatError, "expected '\"' but found '%c'", jsonC[jsonPos]);
+
+                        value = varNewStr(strNewN(jsonC + valueBeginPos, jsonPos - valueBeginPos));
+
+                        jsonPos++;
+                    }
+
+                    // The value appears to be a number
+                    else if (isdigit(jsonC[jsonPos]))
+                    {
+                        if (arrayType != '\0' && arrayType != 'n')
+                            THROW_FMT(JsonFormatError, "number found in array of type '%c'", arrayType);
+
+                        arrayType = 'n';
+
+                        while (isdigit(jsonC[jsonPos]) && jsonPos < strSize(json) - 1)
+                            jsonPos++;
+
+                        String *valueStr = strNewN(jsonC + valueBeginPos, jsonPos - valueBeginPos);
+
+                        value = varNewUInt64(cvtZToUInt64(strPtr(valueStr)));
+                    }
+
+                    else
+                        THROW(JsonFormatError, "unknown array value type");
+
+                    kvAdd(result, varNewStr(key), value);
+                }
+                while (jsonC[jsonPos] == ',');
+
+                if (jsonC[jsonPos] != ']')
+                    THROW_FMT(JsonFormatError, "expected array delimeter ']' but found '%c'", jsonC[jsonPos]);
+
+                jsonPos++;
+
+                continue;
+            }
             // Else not sure what it is.  Currently nulls will error.
+// CSHANG: NULLS - NULLS and empty are different in JSON. If we got here, we could just check for jsonC[jsonPos] == 'n' and then make sure it
+// is null: String *valueStr = strNewN(jsonC[jsonPos], 5); if strCmpZ(valueStr, "null,") != 0 || strCmpZ(valueStr, "null}") != 0 then
+// error else advance the jsonPos to the , or } and set value = NULL;  DO WE HAVE ANY OF THESE IN OUR INFO/CONF/MAINFEST FILES? AS
+// far as I can see we do not.
+// CSHANG And how to we handle empty objects like pg_data={}?
+
             else
                 THROW(JsonFormatError, "unknown value type");
 
@@ -123,7 +197,7 @@ KeyValue *jsonToKv(const String *json)
 
         // Look for end delimiter
         if (jsonC[jsonPos] != '}')
-                THROW_FMT(JsonFormatError, "expected '}' but found '%c'", jsonC[jsonPos]);
+            THROW_FMT(JsonFormatError, "expected '}' but found '%c'", jsonC[jsonPos]);
     }
     MEM_CONTEXT_TEMP_END();
 
