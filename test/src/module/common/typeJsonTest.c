@@ -30,6 +30,7 @@ testRun(void)
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[\"\",]}")), JsonFormatError, "unknown array value type");
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[\"\",1]}")), JsonFormatError, "number found in array of type 's'");
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[1,\"\"]}")), JsonFormatError, "string found in array of type 'n'");
+        TEST_ERROR(jsonToKv(strNew("{\"key1\":[1}")), JsonFormatError, "expected array delimeter ']' but found '}'");
         // CSHANG Should we handle this as an empty array? Should we set it to NULL? Right now in the backup.info file, it appears
         // that only the backup-reference is an array - and if that is empty, something is REALLY wrong since it's only set on non-full
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[]}")), JsonFormatError, "unknown array value type");

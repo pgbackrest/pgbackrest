@@ -8,13 +8,61 @@ Convert JSON to/from KeyValue
 #include "common/type/json.h"
 
 /***********************************************************************************************************************************
+Internal helper functions
+***********************************************************************************************************************************/
+static Variant *
+jsonString(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned int *valueBeginPos)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(CHARPY, jsonC);
+        FUNCTION_DEBUG_PARAM(SIZE, strSize);
+        FUNCTION_DEBUG_PARAM(UINTP, jsonPos);
+        FUNCTION_DEBUG_PARAM(UINTP, valueBeginPos);
+    FUNCTION_DEBUG_END();
+
+    *valueBeginPos = *valueBeginPos + 1;
+    *jsonPos = *jsonPos + 1;
+
+    while (jsonC[*jsonPos] != '"' && *jsonPos < strSize - 1)
+        *jsonPos = *jsonPos + 1;
+
+    if (jsonC[*jsonPos] != '"')
+        THROW_FMT(JsonFormatError, "expected '\"' but found '%c'", jsonC[*jsonPos]);
+
+    Variant *result = varNewStr(strNewN(jsonC + *valueBeginPos, *jsonPos - *valueBeginPos));
+
+    *jsonPos = *jsonPos + 1;
+
+    FUNCTION_TEST_RESULT(VARIANT, result);
+}
+
+static Variant *
+jsonNumeric(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned int *valueBeginPos)
+{
+        FUNCTION_DEBUG_BEGIN(logLevelTrace);
+            FUNCTION_DEBUG_PARAM(CHARPY, jsonC);
+            FUNCTION_DEBUG_PARAM(SIZE, strSize);
+            FUNCTION_DEBUG_PARAM(UINTP, jsonPos);
+            FUNCTION_DEBUG_PARAM(UINTP, valueBeginPos);
+        FUNCTION_DEBUG_END();
+
+    while (isdigit(jsonC[*jsonPos]) && *jsonPos < strSize - 1)
+        *jsonPos = *jsonPos + 1;
+
+    Variant *result = varNewUInt64(cvtZToUInt64(strPtr(strNewN(jsonC + *valueBeginPos, *jsonPos - *valueBeginPos))));
+
+    FUNCTION_TEST_RESULT(VARIANT, result);
+}
+
+/***********************************************************************************************************************************
 Convert JSON to KeyValue object
 
 Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
 needed.  Since this function is only intended to read internally-generated JSON it is assumed to be well-formed with no extraneous
 whitespace.
 ***********************************************************************************************************************************/
-KeyValue *jsonToKv(const String *json)
+KeyValue *
+jsonToKv(const String *json)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(STRING, json);
@@ -68,29 +116,13 @@ KeyValue *jsonToKv(const String *json)
             // The value appears to be a string
             if (jsonC[jsonPos] == '"')
             {
-                valueBeginPos++;
-                jsonPos++;
-
-                while (jsonC[jsonPos] != '"' && jsonPos < strSize(json) - 1)
-                    jsonPos++;
-
-                if (jsonC[jsonPos] != '"')
-                    THROW_FMT(JsonFormatError, "expected '\"' but found '%c'", jsonC[jsonPos]);
-
-                value = varNewStr(strNewN(jsonC + valueBeginPos, jsonPos - valueBeginPos));
-
-                jsonPos++;
+                value = jsonString(jsonC, strSize(json), &jsonPos, &valueBeginPos);
             }
 
             // The value appears to be a number
             else if (isdigit(jsonC[jsonPos]))
             {
-                while (isdigit(jsonC[jsonPos]) && jsonPos < strSize(json) - 1)
-                    jsonPos++;
-
-                String *valueStr = strNewN(jsonC + valueBeginPos, jsonPos - valueBeginPos);
-
-                value = varNewUInt64(cvtZToUInt64(strPtr(valueStr)));
+                value = jsonNumeric(jsonC, strSize(json), &jsonPos, &valueBeginPos);
             }
 
             // The value appears to be a boolean
@@ -128,7 +160,6 @@ KeyValue *jsonToKv(const String *json)
                     jsonPos++;
                     valueBeginPos = jsonPos;
 
-                    // CSHANG Duplicate (almost) code as above so make function or see if can use recursion
                     // The value appears to be a string
                     if (jsonC[jsonPos] == '"')
                     {
@@ -137,18 +168,7 @@ KeyValue *jsonToKv(const String *json)
 
                         arrayType = 's';
 
-                        valueBeginPos++;
-                        jsonPos++;
-
-                        while (jsonC[jsonPos] != '"' && jsonPos < strSize(json) - 1)
-                            jsonPos++;
-
-                        if (jsonC[jsonPos] != '"')
-                            THROW_FMT(JsonFormatError, "expected '\"' but found '%c'", jsonC[jsonPos]);
-
-                        value = varNewStr(strNewN(jsonC + valueBeginPos, jsonPos - valueBeginPos));
-
-                        jsonPos++;
+                        value = jsonString(jsonC, strSize(json), &jsonPos, &valueBeginPos);
                     }
 
                     // The value appears to be a number
@@ -159,12 +179,7 @@ KeyValue *jsonToKv(const String *json)
 
                         arrayType = 'n';
 
-                        while (isdigit(jsonC[jsonPos]) && jsonPos < strSize(json) - 1)
-                            jsonPos++;
-
-                        String *valueStr = strNewN(jsonC + valueBeginPos, jsonPos - valueBeginPos);
-
-                        value = varNewUInt64(cvtZToUInt64(strPtr(valueStr)));
+                        value = jsonNumeric(jsonC, strSize(json), &jsonPos, &valueBeginPos);
                     }
 
                     else
