@@ -12,7 +12,10 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.06dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.07dev" title="UNDER DEVELOPMENT">
+        </release>
+
+        <release date="2018-10-15" version="2.06" title="Checksum Delta Backup and PostgreSQL 11 Support">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -46,7 +49,7 @@
                     </release-item>
 
                     <release-item>
-                        <p><postgres/> 11 Beta 4 support, including configurable WAL segment size.</p>
+                        <p><postgres/> 11 support, including configurable WAL segment size.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -116,7 +119,7 @@
                             <release-item-contributor id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Add <code>bufNewZ()</code> and <code>bufHex()</code>to <code>Buffer</code> object.</p>
+                        <p>Add <code>bufNewZ()</code> and <code>bufHex()</code> to <code>Buffer</code> object.</p>
                     </release-item>
 
                     <release-item>
@@ -140,7 +143,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Migrate control functions to detect stop files to C from Perl.</p>
+                        <p>Migrate control functions to detect stop files to C.</p>
                     </release-item>
 
                     <release-item>
@@ -192,6 +195,10 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>Install <proper>nodejs</proper> from <id>deb.nodesource.com</id>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Disable flapping <id>archive/get</id> unit on CentOS 6.</p>
                     </release-item>
 
@@ -237,7 +244,7 @@
 
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="stephen.frost"/>
+                            <release-item-contributor id="stephen.frost"/>
                         </release-item-contributor-list>
 
                         <p>Add <file>.gitignore</file> to C <path>src</path> directory.</p>

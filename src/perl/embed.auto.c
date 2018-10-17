@@ -21450,7 +21450,7 @@ static const EmbeddedModule embeddedModule[] =
             "\n"
             "push @EXPORT, qw(backrestBin backrestBinSet);\n"
             "\n\n\n\n\n\n"
-            "use constant BACKREST_VERSION => '2.06dev';\n"
+            "use constant BACKREST_VERSION => '2.07dev';\n"
             "push @EXPORT, qw(BACKREST_VERSION);\n"
             "\n\n\n\n\n\n"
             "use constant BACKREST_FORMAT => 5;\n"
