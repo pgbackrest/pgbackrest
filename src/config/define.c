@@ -188,7 +188,7 @@ cfgDefDataFind(
         FUNCTION_TEST_PARAM(BOOLP, dataDefFound);
         FUNCTION_TEST_PARAM(INTP, dataDef);
         FUNCTION_TEST_PARAM(VOIDPP, dataDefList);
-        FUNCTION_TEST_PARAM(VOIDPP, dataDefListSize);
+        FUNCTION_TEST_PARAM(UINTP, dataDefListSize);
 
         FUNCTION_TEST_ASSERT(dataDefFound != NULL);
         FUNCTION_TEST_ASSERT(dataDef != NULL);
