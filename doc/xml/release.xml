@@ -13,6 +13,17 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.07dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>FUNCTION_DEBUG_UINTP_TYPE</code> and correct <code>cfgDefDataFind()</code> to use <code>UINTP</code> instead of <code>VOIDPP</code>.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
         </release>
 
         <release date="2018-10-15" version="2.06" title="Checksum Delta Backup and PostgreSQL 11 Support">
