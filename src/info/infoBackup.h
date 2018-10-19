@@ -16,7 +16,7 @@ typedef struct InfoBackup InfoBackup;
 /***********************************************************************************************************************************
 Backup info filename
 ***********************************************************************************************************************************/
-#define INFO_BACKUP_FILE                                           "archive.info"
+#define INFO_BACKUP_FILE                                           "backup.info"
 
 /***********************************************************************************************************************************
 Constructor
@@ -27,7 +27,7 @@ InfoBackup *infoBackupNew(const Storage *storage, const String *fileName, bool i
 Functions
 ***********************************************************************************************************************************/
 unsigned int infoBackupCheckPg(
-    const InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t catalogVersion, uint32_t controlVersion);
+    const InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgCatalogVersion, uint32_t pgControlVersion);
 
 /***********************************************************************************************************************************
 Getters

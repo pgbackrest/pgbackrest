@@ -10,17 +10,26 @@ Backup Info Handler
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/ini.h"
+#include "info/info.h"
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
 #include "storage/helper.h"
+
+/***********************************************************************************************************************************
+Internal constants
+??? INFO_BACKUP_SECTION should be in a separate include since it will also be used when reading the manifest
+***********************************************************************************************************************************/
+#define INFO_BACKUP_SECTION                                         "backup"
+#define INFO_BACKUP_SECTION_BACKUP_CURRENT                          INFO_BACKUP_SECTION ":current"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct InfoBackup
 {
-    MemContext *memContext;                                         // Context that contains the InfoArchive
+    MemContext *memContext;                                         // Context that contains the InfoBackup
     InfoPg *infoPg;                                                 // Contents of the DB data
+    StringList *backupCurrentKey;                                   // List of backup labels in the backup:current section
 };
 
 /***********************************************************************************************************************************
@@ -38,7 +47,7 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
         FUNCTION_DEBUG_ASSERT(fileName != NULL);
     FUNCTION_DEBUG_END();
 
-    InfoArchive *this = NULL;
+    InfoBackup *this = NULL;
 
     MEM_CONTEXT_NEW_BEGIN("infoBackup")
     {
@@ -61,6 +70,10 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
                 errorMessage());
         }
         TRY_END();
+
+        Ini *infoIni = infoPgIni(this->infoPg);
+        if (strLstExists(iniSectionList(infoIni), strNew(INFO_BACKUP_SECTION_BACKUP_CURRENT)))
+            this->backupCurrentKey = iniSectionKeyList(infoIni, strNew(INFO_BACKUP_SECTION_BACKUP_CURRENT));
     }
     MEM_CONTEXT_NEW_END();
 
@@ -78,11 +91,11 @@ infoBackupCheckPg(
     const InfoBackup *this,
     unsigned int pgVersion,
     uint64_t pgSystemId,
-    uint32_t catalogVersion,
-    uint32_t controlVersion)
+    uint32_t pgCatalogVersion,
+    uint32_t pgControlVersion)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_DEBUG_PARAM(INFO_BACKUP, this);
         FUNCTION_DEBUG_PARAM(UINT, pgVersion);
         FUNCTION_DEBUG_PARAM(UINT64, pgSystemId);
         FUNCTION_DEBUG_PARAM(UINT32, pgCatalogVersion);
@@ -91,8 +104,6 @@ infoBackupCheckPg(
         FUNCTION_DEBUG_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();
 
-    String *errorMsg = NULL;
-
     InfoPgData backupPg = infoPgDataCurrent(this->infoPg);
 
     if (backupPg.version != pgVersion || backupPg.systemId != pgSystemId)
@@ -100,7 +111,7 @@ infoBackupCheckPg(
             "database version = %u, system-id %" PRIu64 " does not match backup version = %u, system-id = %" PRIu64 "\n"
             "HINT: is this the correct stanza?", pgVersion, pgSystemId, backupPg.version, backupPg.systemId)));
 
-    if (backupPg.catalogVersion != catalogVersion || backupPg.controlVersion != controlVersion)
+    if (backupPg.catalogVersion != pgCatalogVersion || backupPg.controlVersion != pgControlVersion)
     {
         THROW(BackupMismatchError, strPtr(strNewFmt(
             "database control-version = %" PRIu32 ", catalog-version %" PRIu32
