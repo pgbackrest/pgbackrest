@@ -26,12 +26,12 @@ InfoBackup *infoBackupNew(const Storage *storage, const String *fileName, bool i
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void infoBackupCheckPg(const InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId);
+unsigned int infoBackupCheckPg(
+    const InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t catalogVersion, uint32_t controlVersion);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-const String *infoBackupId(const InfoBackup *this);
 InfoPg *infoBackupPg(const InfoBackup *this);
 
 /***********************************************************************************************************************************

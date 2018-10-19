@@ -21,7 +21,6 @@ struct InfoBackup
 {
     MemContext *memContext;                                         // Context that contains the InfoArchive
     InfoPg *infoPg;                                                 // Contents of the DB data
-    unsigned int pgId;                                              // The history id associated with the current PG
 };
 
 /***********************************************************************************************************************************
@@ -70,7 +69,8 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
 }
 
 /***********************************************************************************************************************************
-Checks the backup info file's DB section against the PG version, system id, catolog and constrol version passed in
+Checks the backup info file's DB section against the PG version, system id, catolog and constrol version passed in and returns
+the history id of the current PG database.
 // ??? Should we still check that the file exists if it is required?
 ***********************************************************************************************************************************/
 unsigned int
@@ -108,35 +108,18 @@ infoBackupCheckPg(
             "HINT: this may be a symptom of database or repository corruption!",
             pgControlVersion, pgCatalogVersion, backupPg.controlVersion, backupPg.catalogVersion)));
     }
-// CSHANG Hmmm not sure I like this since it should be set in NEW but then we'd have to call check from NEW - OR we set it in NEW but then check it here if it is different?
-    this->pgId = backupPg.id;
 
-    FUNCTION_DEBUG_RESULT(UINT, this->pgId);
-}
-
-/***********************************************************************************************************************************
-Get the current pg id
-***********************************************************************************************************************************/
-const unsigned int
-infoArchiveId(const InfoBackup *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RESULT(UINT, this->pgId);
+    FUNCTION_DEBUG_RESULT(UINT, backupPg.id);
 }
 
 /***********************************************************************************************************************************
 Get PostgreSQL info
 ***********************************************************************************************************************************/
 InfoPg *
-infoArchivePg(const InfoArchive *this)
+infoBackupPg(const InfoBackup *this)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
 
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
@@ -148,10 +131,10 @@ infoArchivePg(const InfoArchive *this)
 Free the info
 ***********************************************************************************************************************************/
 void
-infoArchiveFree(InfoArchive *this)
+infoBackupFree(InfoBackup *this)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_DEBUG_PARAM(INFO_BACKUP, this);
     FUNCTION_DEBUG_END();
 
     if (this != NULL)
