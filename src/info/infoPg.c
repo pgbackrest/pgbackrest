@@ -40,7 +40,6 @@ struct InfoPg
 {
     MemContext *memContext;                                         // Context that contains the infoPg
     List *history;                                                  // A list of InfoPgData
-    unsigned int indexCurrent;                                      // Index to the history list for the db Section
     Info *info;                                                     // Info contents
 };
 
@@ -118,7 +117,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type)
                 else if (type != infoPgArchive)
                     THROW_FMT(AssertError, "invalid InfoPg type %u", type);
 
-                infoPgAdd(this, &infoPgData);
+                lstAdd(this->history, &infoPgData);
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -132,7 +131,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type)
 /***********************************************************************************************************************************
 Add Postgres data to the history list and return the new currentIndex
 ***********************************************************************************************************************************/
-unsigned int
+void
 infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
@@ -143,10 +142,9 @@ infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
         FUNCTION_DEBUG_ASSERT(infoPgData != NULL);
     FUNCTION_DEBUG_END();
 
-    lstAdd(this->history, infoPgData);
-    this->indexCurrent = lstSize(this->history) - 1;
+    lstInsert(this->history, 0, infoPgData);
 
-    FUNCTION_DEBUG_RESULT(UINT, this->indexCurrent);
+    FUNCTION_DEBUG_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -195,7 +193,7 @@ infoPgDataCurrent(const InfoPg *this)
         FUNCTION_DEBUG_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();
 
-    FUNCTION_DEBUG_RESULT(INFO_PG_DATA, infoPgData(this, this->indexCurrent));
+    FUNCTION_DEBUG_RESULT(INFO_PG_DATA, infoPgData(this, 0));
 }
 
 /***********************************************************************************************************************************

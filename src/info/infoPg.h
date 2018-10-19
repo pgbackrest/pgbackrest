@@ -43,7 +43,7 @@ InfoPg *infoPgNew(const Storage *storage, const String *fileName, InfoPgType typ
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-unsigned int infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
+void infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
 
 /***********************************************************************************************************************************
 Getters
