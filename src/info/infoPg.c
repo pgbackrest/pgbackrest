@@ -129,7 +129,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type)
 }
 
 /***********************************************************************************************************************************
-Add Postgres data to the history list and return the new currentIndex
+Add Postgres data to the history list at position 0 to ensure the latest history is always first in the list
 ***********************************************************************************************************************************/
 void
 infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
