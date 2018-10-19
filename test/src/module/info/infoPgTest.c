@@ -39,7 +39,6 @@ testRun(void)
         TEST_ASSIGN(infoPg, infoPgNew(storageLocal(), fileName, infoPgArchive), "new infoPg archive - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
-        TEST_RESULT_INT(infoPg->indexCurrent, 0, "    current index set");
 
         InfoPgData infoPgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(infoPgData.id, 1, "    id set");
@@ -76,7 +75,6 @@ testRun(void)
         TEST_ASSIGN(infoPg, infoPgNew(storageLocal(), fileName, infoPgBackup), "new infoPg backup - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
-        TEST_RESULT_INT(infoPg->indexCurrent, 0, "    current index set");
 
         infoPgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(infoPgData.id, 1, "    id set");
@@ -90,7 +88,6 @@ testRun(void)
         TEST_ASSIGN(infoPg, infoPgNew(storageLocal(), fileName, infoPgManifest), "new infoPg manifest - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "history record added");
-        TEST_RESULT_INT(infoPg->indexCurrent, 0, "current index set");
 
         infoPgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(infoPgData.id, 1, "    id set");
@@ -106,7 +103,7 @@ testRun(void)
         infoPgData.systemId = 6365925855999999999;
         infoPgData.catalogVersion = 201510051;
         infoPgData.controlVersion = 942;
-        TEST_RESULT_INT(infoPgAdd(infoPg, &infoPgData), 1, "infoPgAdd - currentIndex incremented");
+        TEST_RESULT_VOID(infoPgAdd(infoPg, &infoPgData), "infoPgAdd");
 
         InfoPgData infoPgDataTest = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(infoPgDataTest.id, 2, "    id set");

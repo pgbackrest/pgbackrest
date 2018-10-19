@@ -180,6 +180,11 @@ size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
 #define FUNCTION_DEBUG_UINT_FORMAT(value, buffer, bufferSize)                                                                      \
     cvtUIntToZ(value, buffer, bufferSize)
 
+#define FUNCTION_DEBUG_UINTP_TYPE                                                                                                  \
+    unsigned int *
+#define FUNCTION_DEBUG_UINTP_FORMAT(value, buffer, bufferSize)                                                                     \
+    ptrToLog(value, "unsigned int *", buffer, bufferSize)
+
 #define FUNCTION_DEBUG_UINT16_TYPE                                                                                                 \
     uint16_t
 #define FUNCTION_DEBUG_UINT16_FORMAT(value, buffer, bufferSize)                                                                    \
