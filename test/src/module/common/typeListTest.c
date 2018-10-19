@@ -47,7 +47,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("lstAdd(), lstMove(), and lstSize()"))
+    if (testBegin("lstAdd(), lstInsert(), lstMove(), and lstSize()"))
     {
         List *list = NULL;
 
@@ -56,13 +56,18 @@ testRun(void)
             list = lstNew(sizeof(int));
 
             // Add ints to the list
-            for (int listIdx = 0; listIdx <= LIST_INITIAL_SIZE; listIdx++)
+            for (int listIdx = 1; listIdx <= LIST_INITIAL_SIZE; listIdx++)
                 TEST_RESULT_PTR(lstAdd(list, &listIdx), list, "add item %d", listIdx);
 
             lstMove(list, MEM_CONTEXT_OLD());
         }
         MEM_CONTEXT_TEMP_END();
 
+        // Insert an int at the beginning
+        int insertIdx = 0;
+        TEST_RESULT_PTR(lstInsert(list, 0, &insertIdx), list, "insert item %d", insertIdx);
+
+        // Check the size
         TEST_RESULT_INT(lstSize(list), 9, "list size");
 
         // Read them back and check values

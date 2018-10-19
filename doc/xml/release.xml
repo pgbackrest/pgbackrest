@@ -16,6 +16,10 @@
             <release-core-list>
                 <release-development-list>
                     <release-item>
+                        <p>Add <code>lstInsert()</code> to <code>List</code> object.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
