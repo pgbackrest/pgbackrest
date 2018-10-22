@@ -10,6 +10,8 @@ Backup Info Handler
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/ini.h"
+#include "common/type/json.h"
+#include "common/type/list.h"
 #include "info/info.h"
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
@@ -29,8 +31,42 @@ struct InfoBackup
 {
     MemContext *memContext;                                         // Context that contains the InfoBackup
     InfoPg *infoPg;                                                 // Contents of the DB data
-    StringList *backupCurrentKey;                                   // List of backup labels in the backup:current section
+    KeyValue *backupCurrent;                                        // List of backup labels and their keyValues
 };
+
+/***********************************************************************************************************************************
+Set a key/value in the backup current list
+??? Internal until able to write via c then it will be added to .h file and can be moved below the constructor
+***********************************************************************************************************************************/
+void
+infoBackupCurrentSet(InfoBackup *this, const String *section, const String *key, const Variant *value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(VARIANT, value);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(section != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+        FUNCTION_TEST_ASSERT(value != NULL);
+    FUNCTION_TEST_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        Variant *sectionKey = varNewStr(section);
+        KeyValue *sectionKv = varKv(kvGet(this->backupCurrent, sectionKey));
+
+        if (sectionKv == NULL)
+            sectionKv = kvPutKv(this->backupCurrent, sectionKey);
+
+        kvAdd(sectionKv, varNewStr(key), value);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RESULT_VOID();
+}
 
 /***********************************************************************************************************************************
 Create a new InfoBackup object
@@ -71,14 +107,70 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
         }
         TRY_END();
 
-        Ini *infoIni = infoPgIni(this->infoPg);
-        if (strLstExists(iniSectionList(infoIni), strNew(INFO_BACKUP_SECTION_BACKUP_CURRENT)))
-            this->backupCurrentKey = iniSectionKeyList(infoIni, strNew(INFO_BACKUP_SECTION_BACKUP_CURRENT));
+        const Ini *infoIni = infoPgIni(this->infoPg);
+
+        // const Ini *infoPgIni = infoPgIni(this->infoPg);
+        const String *backupCurrentSection = strNew(INFO_BACKUP_SECTION_BACKUP_CURRENT);
+
+        // If there are current backups, then parse the json for each into a key/value object
+        if (strLstExists(iniSectionList(infoIni), backupCurrentSection))
+        {
+            // Initialize the store and get the list of backup labels
+            this->backupCurrent = kvNew();
+            const StringList *backupLabelList = iniSectionKeyList(infoIni, backupCurrentSection);
+
+            // For each backup label, store the information as key/value pairs
+            for (unsigned int backupLabelIdx = 0; backupLabelIdx < strLstSize(backupLabelList); backupLabelIdx++)
+            {
+                const String *backupLabelKey = strLstGet(backupLabelList, backupLabelIdx);
+                const KeyValue *backupKv = jsonToKv(
+                        varStr(iniGet(infoIni, backupCurrentSection, backupLabelKey)));
+                const VariantList *keyList = kvKeyList(backupKv);
+
+                for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+                {
+                    infoBackupCurrentSet(
+                        this, backupLabelKey, varStr(varLstGet(keyList, keyIdx)), kvGet(backupKv, varLstGet(keyList, keyIdx)));
+                }
+            }
+        }
     }
     MEM_CONTEXT_NEW_END();
 
     // Return buffer
     FUNCTION_DEBUG_RESULT(INFO_BACKUP, this);
+}
+
+/***********************************************************************************************************************************
+Get a value of a key from a specific backup in the backup current list
+***********************************************************************************************************************************/
+const Variant *
+infoBackupCurrentGet(const InfoBackup *this, const String *section, const String *key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(section != NULL);
+        FUNCTION_TEST_ASSERT(key != NULL);
+    FUNCTION_TEST_END();
+
+    const Variant *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Get the section
+        KeyValue *sectionKv = varKv(kvGet(this->backupCurrent, varNewStr(section)));
+
+        // Section must exist to get the value
+        if (sectionKv != NULL)
+            result = kvGet(sectionKv, varNewStr(key));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RESULT(CONST_VARIANT, result);
 }
 
 /***********************************************************************************************************************************

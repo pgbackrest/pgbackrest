@@ -33,6 +33,7 @@ unsigned int infoBackupCheckPg(
 Getters
 ***********************************************************************************************************************************/
 InfoPg *infoBackupPg(const InfoBackup *this);
+const Variant *infoBackupCurrentGet(const InfoBackup *this, const String *section, const String *key);
 
 /***********************************************************************************************************************************
 Destructor

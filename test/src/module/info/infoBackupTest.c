@@ -53,7 +53,7 @@ testRun(void)
 
         TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false), "    new backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
-        TEST_RESULT_PTR(infoBackup->backupCurrentKey, NULL, "    backupCurrentKey NULL");
+        TEST_RESULT_PTR(infoBackup->backupCurrent, NULL, "    backupCurrent NULL");
 
         // File exists, ignoreMissing=false, backup:current section exists
         //--------------------------------------------------------------------------------------------------------------------------
@@ -95,34 +95,19 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put backup info current to file");
 
-        infoBackup = NULL;
-
         TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false), "    new backup info");
-        TEST_RESULT_PTR_NE(infoBackup->backupCurrentKey, NULL, "    backupCurrentKey not NULL");
+        TEST_RESULT_PTR_NE(infoBackup->backupCurrent, NULL, "    backupCurrent not NULL");
 
-        // for (unsigned int keyIdx = 0;  keyIdx < strLstSize(infoBackup->backupCurrentKey); keyIdx++)
-        //
-        //
-        // TEST_RESULT_STR(strPtr(infoBackupId(info)), "9.4-1", "    archiveId set");
-        //
-        //
-        // // Check PG version
-        // //--------------------------------------------------------------------------------------------------------------------------
-        // TEST_RESULT_VOID(infoBackupCheckPg(info, 90400, 6569239123849665679), "check PG current");
-        // TEST_ERROR(infoBackupCheckPg(info, 1, 6569239123849665679), ArchiveMismatchError,
-        //     "WAL segment version 1 does not match archive version 90400"
-        //     "\nHINT: are you archiving to the correct stanza?");
-        // TEST_ERROR(infoBackupCheckPg(info, 90400, 1), ArchiveMismatchError,
-        //     "WAL segment system-id 1 does not match archive system-id 6569239123849665679"
-        //     "\nHINT: are you archiving to the correct stanza?");
-        // TEST_ERROR(infoBackupCheckPg(info, 1, 1), ArchiveMismatchError,
-        //     "WAL segment version 1 does not match archive version 90400"
-        //     "\nWAL segment system-id 1 does not match archive system-id 6569239123849665679"
-        //     "\nHINT: are you archiving to the correct stanza?");
-        //
-        // // Free
-        // //--------------------------------------------------------------------------------------------------------------------------
-        // TEST_RESULT_VOID(infoBackupFree(info), "infoBackupFree() - free archive info");
-        // TEST_RESULT_VOID(infoBackupFree(NULL), "    NULL ptr");
+        StringList *backupLabelList = strLstNewVarLst(kvKeyList(infoBackup->backupCurrent));
+        String *backupLabel = strLstGet(backupLabelList, 0);
+
+        TEST_RESULT_STR(strPtr(backupLabel), "20161219-212741F", "full backup label");
+        TEST_RESULT_INT(varIntForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("backrest-format"))), 5,
+            "    backrest-format");
+
+        // Free
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(infoBackupFree(infoBackup), "infoBackupFree() - free backup info");
+        TEST_RESULT_VOID(infoBackupFree(NULL), "    NULL ptr");
     }
 }
