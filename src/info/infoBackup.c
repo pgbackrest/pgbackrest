@@ -15,6 +15,7 @@ Backup Info Handler
 #include "info/info.h"
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
+#include "postgres/interface.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -200,8 +201,9 @@ infoBackupCheckPg(
 
     if (backupPg.version != pgVersion || backupPg.systemId != pgSystemId)
         THROW(BackupMismatchError, strPtr(strNewFmt(
-            "database version = %u, system-id %" PRIu64 " does not match backup version = %u, system-id = %" PRIu64 "\n"
-            "HINT: is this the correct stanza?", pgVersion, pgSystemId, backupPg.version, backupPg.systemId)));
+            "database version = %s, system-id %" PRIu64 " does not match backup version = %s, system-id = %" PRIu64 "\n"
+            "HINT: is this the correct stanza?",
+            strPtr(pgVersionToStr(pgVersion)), pgSystemId, strPtr(pgVersionToStr(backupPg.version)), backupPg.systemId)));
 
     if (backupPg.catalogVersion != pgCatalogVersion || backupPg.controlVersion != pgControlVersion)
     {

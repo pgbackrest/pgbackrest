@@ -8,14 +8,15 @@ Test Run
 void
 testRun(void)
 {
-    // *****************************************************************************************************************************
-    if (testBegin("infoBackupNew(), infoBackupCheckPg(), infoBackupFree()"))
-    {
-        // Initialize test variables
-        //--------------------------------------------------------------------------------------------------------------------------
-        String *content = NULL;
-        String *fileName = strNewFmt("%s/test.ini", testPath());
+    // Initialize test variables
+    //--------------------------------------------------------------------------------------------------------------------------
+    String *content = NULL;
+    String *fileName = strNewFmt("%s/test.ini", testPath());
+    InfoBackup *infoBackup = NULL;
 
+    // *****************************************************************************************************************************
+    if (testBegin("infoBackupNew(), infoBackupCurrentSet(), infoBackupCheckPg(), infoBackupFree()"))
+    {
         // File missing, ignoreMissing=false -- error
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
@@ -49,12 +50,46 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put backup info to file");
 
-        InfoBackup *infoBackup = NULL;
-
         TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false), "    new backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
         TEST_RESULT_PTR(infoBackup->backupCurrent, NULL, "    backupCurrent NULL");
 
+        // infoBackupCheckPg
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_INT(infoBackupCheckPg(infoBackup, 90400, 6569239123849665679, 201409291, 942), 1, "check PG data");
+
+        TEST_ERROR_FMT(
+            infoBackupCheckPg(infoBackup, 90500, 6569239123849665679, 201409291, 942), BackupMismatchError,
+            "database version = 9.5, system-id 6569239123849665679 does not match "
+            "backup version = 9.4, system-id = 6569239123849665679\n"
+            "HINT: is this the correct stanza?");
+
+        TEST_ERROR_FMT(
+            infoBackupCheckPg(infoBackup, 90400, 6569239123849665999, 201409291, 942), BackupMismatchError,
+            "database version = 9.4, system-id 6569239123849665999 does not match "
+            "backup version = 9.4, system-id = 6569239123849665679\n"
+            "HINT: is this the correct stanza?");
+
+        TEST_ERROR_FMT(
+            infoBackupCheckPg(infoBackup, 90400, 6569239123849665679, 201409291, 941), BackupMismatchError,
+            "database control-version = 941, catalog-version 201409291"
+            " does not match backup control-version = 942, catalog-version = 201409291\n"
+            "HINT: this may be a symptom of database or repository corruption!");
+
+        TEST_ERROR_FMT(
+            infoBackupCheckPg(infoBackup, 90400, 6569239123849665679, 201509291, 942), BackupMismatchError,
+            "database control-version = 942, catalog-version 201509291"
+            " does not match backup control-version = 942, catalog-version = 201409291\n"
+            "HINT: this may be a symptom of database or repository corruption!");
+
+        // Free
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(infoBackupFree(infoBackup), "infoBackupFree() - free backup info");
+        TEST_RESULT_VOID(infoBackupFree(NULL), "    NULL ptr");
+    }
+    // *****************************************************************************************************************************
+    if (testBegin("infoBackupCurrentGet()"))
+    {
         // File exists, ignoreMissing=false, backup:current section exists
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
@@ -105,6 +140,9 @@ testRun(void)
         TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false), "    new backup info");
         TEST_RESULT_PTR_NE(infoBackup->backupCurrent, NULL, "    backupCurrent not NULL");
 
+        TEST_RESULT_PTR(infoBackupCurrentGet(infoBackup, strNew("section-not-exist"), strNew("backup-timestamp-start")),
+            NULL, "empty section returns NULL");
+
         StringList *backupLabelList = strLstNewVarLst(kvKeyList(infoBackup->backupCurrent));
         String *backupLabel = strLstGet(backupLabelList, 0);
 
@@ -138,10 +176,5 @@ testRun(void)
             "        last array element");
         TEST_RESULT_STR(strPtr(varStrForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("backup-type")))), "incr",
             "    check string after array");
-
-        // Free
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(infoBackupFree(infoBackup), "infoBackupFree() - free backup info");
-        TEST_RESULT_VOID(infoBackupFree(NULL), "    NULL ptr");
     }
 }
