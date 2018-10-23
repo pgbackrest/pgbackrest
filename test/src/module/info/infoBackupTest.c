@@ -60,7 +60,7 @@ testRun(void)
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"e7d8fd004c1915dacedc07b28a0814d012de8dd1\"\n"
+            "backrest-checksum=\"1d29626cbe8f405074d325c586d70a2d87e16bad\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.04\"\n"
             "\n"
@@ -79,11 +79,18 @@ testRun(void)
             "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"
             "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,"
             "\"option-online\":true}\n"
-            "20161219-212741F_20161219-212803I={\"backrest-format\":5,\"backrest-version\":\"2.04\","
+            "20161219-212741F_20161219-212803D={\"backrest-format\":5,\"backrest-version\":\"2.04\","
             "\"backup-archive-start\":\"00000008000000000000001E\",\"backup-archive-stop\":\"00000008000000000000001E\","
             "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"
-            "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\"],"
-            "\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,\"backup-type\":\"incr\",\"db-id\":1,"
+            "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"test-reference\":[2,3,1],"
+            "\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,\"backup-type\":\"diff\",\"db-id\":1,"
+            "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","
+            "\"backup-archive-start\":\"00000008000000000000001E\",\"backup-archive-stop\":\"00000008000000000000001E\","
+            "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"
+            "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\","
+            "\"20161219-212741F_20161219-212803D\"],\"backup-type\":\"incr\",\"db-id\":1,"
             "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "\n"
@@ -103,7 +110,34 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(backupLabel), "20161219-212741F", "full backup label");
         TEST_RESULT_INT(varIntForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("backrest-format"))), 5,
-            "    backrest-format");
+            "    check first kv");
+        TEST_RESULT_STR(strPtr(varStrForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("backup-type")))), "full",
+            "    check string");
+        TEST_RESULT_INT(varIntForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("db-id"))), 1,
+            "    check int");
+        TEST_RESULT_BOOL(varBoolForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("option-archive-check"))), true,
+            "    check bool");
+
+        backupLabel = strLstGet(backupLabelList, 1);
+        VariantList *testArray = varVarLst(infoBackupCurrentGet(infoBackup, backupLabel, strNew("test-reference")));
+
+        TEST_RESULT_INT(varLstSize(testArray), 3, "    check int array size");
+        TEST_RESULT_INT(varIntForce(varLstGet(testArray, 0)), 2, "        first array element");
+        TEST_RESULT_INT(varIntForce(varLstGet(testArray, 1)), 3, "        middle array element");
+        TEST_RESULT_INT(varIntForce(varLstGet(testArray, 2)), 1, "        last array element");
+        TEST_RESULT_INT(varIntForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("backup-timestamp-start"))), 1482182877,
+            "    check int after array");
+
+        backupLabel = strLstGet(backupLabelList, 2);
+        backupLabelList = strLstNewVarLst(varVarLst(infoBackupCurrentGet(infoBackup, backupLabel, strNew("backup-reference"))));
+
+        TEST_RESULT_INT(strLstSize(backupLabelList), 2, "    check string array size");
+        TEST_RESULT_STR(strPtr(strLstGet(backupLabelList, 0)), "20161219-212741F",
+            "        first array element");
+        TEST_RESULT_STR(strPtr(strLstGet(backupLabelList, 1)), "20161219-212741F_20161219-212803D",
+            "        last array element");
+        TEST_RESULT_STR(strPtr(varStrForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("backup-type")))), "incr",
+            "    check string after array");
 
         // Free
         //--------------------------------------------------------------------------------------------------------------------------
