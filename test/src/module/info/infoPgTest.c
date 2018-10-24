@@ -9,7 +9,7 @@ void
 testRun(void)
 {
     // *****************************************************************************************************************************
-    if (testBegin("infoPgNew(), infoPgFree(), infoPgDataCurrent(), infoPgDataToLog(), infoPgAdd()"))
+    if (testBegin("infoPgNew(), infoPgFree(), infoPgDataCurrent(), infoPgDataToLog(), infoPgAdd(), infoPgIni()"))
     {
         String *content = NULL;
         String *fileName = strNewFmt("%s/test.ini", testPath());
@@ -111,6 +111,12 @@ testRun(void)
         TEST_RESULT_INT(infoPgDataTest.systemId, 6365925855999999999, "    system-id set");
         TEST_RESULT_INT(infoPgDataTest.catalogVersion, 201510051, "    catalog-version set");
         TEST_RESULT_INT(infoPgDataTest.controlVersion, 942, "    control-version set");
+
+        // infoPgIni
+        //--------------------------------------------------------------------------------------------------------------------------
+        Ini *infoIni = NULL;
+        TEST_ASSIGN(infoIni, infoPgIni(infoPg), "get ini from infoPg");
+        TEST_RESULT_BOOL(strLstExists(iniSectionList(infoIni), strNew("backrest")), true, "    section exists in ini");
 
         // Errors
         //--------------------------------------------------------------------------------------------------------------------------

@@ -109,8 +109,6 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
         TRY_END();
 
         const Ini *infoIni = infoPgIni(this->infoPg);
-
-        // const Ini *infoPgIni = infoPgIni(this->infoPg);
         const String *backupCurrentSection = strNew(INFO_BACKUP_SECTION_BACKUP_CURRENT);
 
         // If there are current backups, then parse the json for each into a key/value object
@@ -156,11 +154,11 @@ infoBackupCurrentKeyGet(const InfoBackup *this)
 
     StringList *result = NULL;
 
-// CSHANG I use temp memcontext, then in the tests, then strLstGet statement errors because it says it was freed but why then does
-// infoBackupCurrentGet function not error on temp memcontext?
-        // StringList *backupLabelList = infoBackupCurrentKeyGet(infoBackup);
-        // String *backupLabel = strLstGet(backupLabelList, 0);
-
+/* CSHANG I use temp memcontext, then in the tests, then strLstGet statement errors because it says it was freed but why then does
+ infoBackupCurrentGet function not error on temp memcontext?
+     StringList *backupLabelList = infoBackupCurrentKeyGet(infoBackup);
+     String *backupLabel = strLstGet(backupLabelList, 0);
+*/
     // MEM_CONTEXT_TEMP_BEGIN()
     // {
         if (this->backupCurrent != NULL)
