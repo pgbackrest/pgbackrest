@@ -28,6 +28,7 @@ Functions
 ***********************************************************************************************************************************/
 unsigned int infoBackupCheckPg(
     const InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgCatalogVersion, uint32_t pgControlVersion);
+StringList *infoBackupCurrentKeyGet(const InfoBackup *this);
 
 /***********************************************************************************************************************************
 Getters

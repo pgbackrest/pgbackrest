@@ -143,20 +143,49 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
 }
 
 /***********************************************************************************************************************************
+Get the list of keys (backup labels) from the backup current list
+***********************************************************************************************************************************/
+StringList *
+infoBackupCurrentKeyGet(const InfoBackup *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    StringList *result = NULL;
+
+// CSHANG I use temp memcontext, then in the tests, then strLstGet statement errors because it says it was freed but why then does
+// infoBackupCurrentGet function not error on temp memcontext?
+        // StringList *backupLabelList = infoBackupCurrentKeyGet(infoBackup);
+        // String *backupLabel = strLstGet(backupLabelList, 0);
+
+    // MEM_CONTEXT_TEMP_BEGIN()
+    // {
+        if (this->backupCurrent != NULL)
+            result = strLstNewVarLst(kvKeyList(this->backupCurrent));
+    // }
+    // MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RESULT(STRING_LIST, result);
+}
+
+/***********************************************************************************************************************************
 Get a value of a key from a specific backup in the backup current list
 ***********************************************************************************************************************************/
 const Variant *
 infoBackupCurrentGet(const InfoBackup *this, const String *section, const String *key)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
-        FUNCTION_TEST_PARAM(STRING, section);
-        FUNCTION_TEST_PARAM(STRING, key);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO_BACKUP, this);
+        FUNCTION_DEBUG_PARAM(STRING, section);
+        FUNCTION_DEBUG_PARAM(STRING, key);
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(section != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
-    FUNCTION_TEST_END();
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+        FUNCTION_DEBUG_ASSERT(section != NULL);
+        FUNCTION_DEBUG_ASSERT(key != NULL);
+    FUNCTION_DEBUG_END();
 
     const Variant *result = NULL;
 
@@ -171,7 +200,7 @@ infoBackupCurrentGet(const InfoBackup *this, const String *section, const String
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RESULT(CONST_VARIANT, result);
+    FUNCTION_DEBUG_RESULT(CONST_VARIANT, result);
 }
 
 /***********************************************************************************************************************************

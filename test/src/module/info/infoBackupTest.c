@@ -15,7 +15,7 @@ testRun(void)
     InfoBackup *infoBackup = NULL;
 
     // *****************************************************************************************************************************
-    if (testBegin("infoBackupNew(), infoBackupCurrentSet(), infoBackupCheckPg(), infoBackupFree()"))
+    if (testBegin("infoBackupNew(), infoBackupCurrentSet(), infoBackupCurrentKeyGet(), infoBackupCheckPg(), infoBackupFree()"))
     {
         // File missing, ignoreMissing=false -- error
         //--------------------------------------------------------------------------------------------------------------------------
@@ -53,6 +53,7 @@ testRun(void)
         TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false), "    new backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
         TEST_RESULT_PTR(infoBackup->backupCurrent, NULL, "    backupCurrent NULL");
+        TEST_RESULT_PTR(infoBackupCurrentKeyGet(infoBackup),  NULL, "    infoBackupCurrentKeyGet returns NULL");
 
         // infoBackupCheckPg
         //--------------------------------------------------------------------------------------------------------------------------
@@ -88,7 +89,7 @@ testRun(void)
         TEST_RESULT_VOID(infoBackupFree(NULL), "    NULL ptr");
     }
     // *****************************************************************************************************************************
-    if (testBegin("infoBackupCurrentGet()"))
+    if (testBegin("infoBackupCurrentGet(), infoBackupCurrentKeyGet()"))
     {
         // File exists, ignoreMissing=false, backup:current section exists
         //--------------------------------------------------------------------------------------------------------------------------
@@ -143,7 +144,7 @@ testRun(void)
         TEST_RESULT_PTR(infoBackupCurrentGet(infoBackup, strNew("section-not-exist"), strNew("backup-timestamp-start")),
             NULL, "empty section returns NULL");
 
-        StringList *backupLabelList = strLstNewVarLst(kvKeyList(infoBackup->backupCurrent));
+        StringList *backupLabelList = infoBackupCurrentKeyGet(infoBackup);
         String *backupLabel = strLstGet(backupLabelList, 0);
 
         TEST_RESULT_STR(strPtr(backupLabel), "20161219-212741F", "full backup label");
