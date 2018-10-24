@@ -54,14 +54,14 @@ testRun(void)
         // Check PG version
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(infoArchiveCheckPg(info, 90400, 6569239123849665679), "check PG current");
-        TEST_ERROR(infoArchiveCheckPg(info, 1, 6569239123849665679), ArchiveMismatchError,
-            "WAL segment version 1 does not match archive version 90400"
+        TEST_ERROR(infoArchiveCheckPg(info, 90500, 6569239123849665679), ArchiveMismatchError,
+            "WAL segment version 9.5 does not match archive version 9.4"
             "\nHINT: are you archiving to the correct stanza?");
         TEST_ERROR(infoArchiveCheckPg(info, 90400, 1), ArchiveMismatchError,
             "WAL segment system-id 1 does not match archive system-id 6569239123849665679"
             "\nHINT: are you archiving to the correct stanza?");
-        TEST_ERROR(infoArchiveCheckPg(info, 1, 1), ArchiveMismatchError,
-            "WAL segment version 1 does not match archive version 90400"
+        TEST_ERROR(infoArchiveCheckPg(info, 100000, 1), ArchiveMismatchError,
+            "WAL segment version 10 does not match archive version 9.4"
             "\nWAL segment system-id 1 does not match archive system-id 6569239123849665679"
             "\nHINT: are you archiving to the correct stanza?");
 
