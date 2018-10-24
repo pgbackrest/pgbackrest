@@ -154,17 +154,15 @@ infoBackupCurrentKeyGet(const InfoBackup *this)
 
     StringList *result = NULL;
 
-/* CSHANG I use temp memcontext, then in the tests, then strLstGet statement errors because it says it was freed but why then does
- infoBackupCurrentGet function not error on temp memcontext?
-     StringList *backupLabelList = infoBackupCurrentKeyGet(infoBackup);
-     String *backupLabel = strLstGet(backupLabelList, 0);
-*/
-    // MEM_CONTEXT_TEMP_BEGIN()
-    // {
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
         if (this->backupCurrent != NULL)
+        {
             result = strLstNewVarLst(kvKeyList(this->backupCurrent));
-    // }
-    // MEM_CONTEXT_TEMP_END();
+            strLstMove(result, MEM_CONTEXT_OLD());
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RESULT(STRING_LIST, result);
 }
