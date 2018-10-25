@@ -12,6 +12,7 @@ Archive Info Handler
 #include "common/ini.h"
 #include "info/infoArchive.h"
 #include "info/infoPg.h"
+#include "postgres/interface.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -93,7 +94,11 @@ infoArchiveCheckPg(const InfoArchive *this, unsigned int pgVersion, uint64_t pgS
     InfoPgData archivePg = infoPgDataCurrent(this->infoPg);
 
     if (archivePg.version != pgVersion)
-        errorMsg = strNewFmt("WAL segment version %u does not match archive version %u", pgVersion, archivePg.version);
+    {
+        errorMsg = strNewFmt(
+            "WAL segment version %s does not match archive version %s", strPtr(pgVersionToStr(pgVersion)),
+            strPtr(pgVersionToStr(archivePg.version)));
+    }
 
     if (archivePg.systemId != pgSystemId)
     {
