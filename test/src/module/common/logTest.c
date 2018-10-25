@@ -239,7 +239,7 @@ testRun(void)
         TEST_RESULT_STR(logBuffer, "P00  TRACE:         test::test_func: message\n", "    check log");
 
         // Reopen the log file
-        logFileSet(fileFile);
+        TEST_RESULT_BOOL(logFileSet(fileFile), true, "open valid file");
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
@@ -250,7 +250,7 @@ testRun(void)
         TEST_RESULT_STR(logBuffer, "P00   INFO: info message 2\n", "    check log");
 
         // Reopen invalid log file
-        logFileSet("/" BOGUS_STR);
+        TEST_RESULT_BOOL(logFileSet("/" BOGUS_STR), false, "attempt to open bogus file");
 
         // Check stdout
         testLogResult(

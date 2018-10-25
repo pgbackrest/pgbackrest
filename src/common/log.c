@@ -126,8 +126,10 @@ logInit(LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel log
 
 /***********************************************************************************************************************************
 Set the log file
+
+Returns true if file logging is off or the log file was successfully opened, false if the log file could not be opened.
 ***********************************************************************************************************************************/
-void
+bool
 logFileSet(const char *logFile)
 {
     FUNCTION_TEST_BEGIN();
@@ -144,6 +146,8 @@ logFileSet(const char *logFile)
     }
 
     // Only open the file if there is a chance to log something
+    bool result = true;
+
     if (logLevelFile != logLevelOff)
     {
         // Open the file and handle errors
@@ -153,13 +157,14 @@ logFileSet(const char *logFile)
         {
             int errNo = errno;
             LOG_WARN("unable to open log file '%s': %s\nNOTE: process will continue without log file.", logFile, strerror(errNo));
+            result = false;
         };
 
         // Output the banner on first log message
         logFileBanner = false;
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************

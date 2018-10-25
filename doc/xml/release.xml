@@ -14,6 +14,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.07dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vthriller"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix error after log file open failure when processing should continue.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -5725,6 +5735,11 @@
         <contributor id="vitaliy.kukharik">
             <contributor-name-display>Vitaliy Kukharik</contributor-name-display>
             <contributor-id type="github">vitabaks</contributor-id>
+        </contributor>
+
+        <contributor id="vthriller">
+            <contributor-name-display>vthriller</contributor-name-display>
+            <contributor-id type="github">vthriller</contributor-id>
         </contributor>
 
         <contributor id="william.cox">

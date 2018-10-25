@@ -68,9 +68,9 @@ cmdArchivePush(void)
                         cfgLoadLogSetting();
 
                         // Open the log file
-                        logFileSet(
-                            strPtr(strNewFmt("%s/%s-%s-async.log", strPtr(cfgOptionStr(cfgOptLogPath)),
-                            strPtr(cfgOptionStr(cfgOptStanza)), cfgCommandName(cfgCommand()))));
+                        cfgLoadLogFile(
+                            strNewFmt("%s/%s-%s-async.log", strPtr(cfgOptionStr(cfgOptLogPath)),
+                            strPtr(cfgOptionStr(cfgOptStanza)), cfgCommandName(cfgCommand())));
 
                         // Log command info since we are starting a new log
                         cmdBegin(true);
