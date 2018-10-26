@@ -114,9 +114,9 @@ testRun(void)
         TEST_ASSIGN(json, kvToJson(kv), "kvToJson");
         TEST_RESULT_STR(strPtr(json),
             "\"backup-info-size-delta\"=1982702,\"backup-prior\"=\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\"=[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],\"checksum-page-error\"=[1],"
-            "\"backup-timestamp-start\"=1482182951",
-            "    json string result");
+            "\"backup-reference\"=[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+            "\"backup-timestamp-start\"=1482182951,\"checksum-page-error\"=[1]",
+            "    sorted json string result");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

@@ -239,21 +239,22 @@ kvToJson(const KeyValue *kv)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const VariantList *keyList = kvKeyList(kv);
+        const StringList *keyList = strLstSort(strLstNewVarLst(kvKeyList(kv)), sortOrderAsc);
 
-        for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+        for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
         {
-            const Variant *value = kvGet(kv, varLstGet(keyList, keyIdx));
+            String *key = strLstGet(keyList, keyIdx);
+            const Variant *value = kvGet(kv, varNewStr(key));
 
             // If going to add another key, prepend a comma
             if (keyIdx > 0)
                 strCat(result, ",");
 
-            // Keys are always strings, so add starting quote
+            // Keys are always strings in the output, so add starting quote
             if (result == NULL)
-                result = strNewFmt("\"%s\"=", strPtr(varStr(varLstGet(keyList, keyIdx))));
+                result = strNewFmt("\"%s\"=", strPtr(key));
             else
-                strCatFmt(result, "\"%s\"=", strPtr(varStr(varLstGet(keyList, keyIdx))));
+                strCatFmt(result, "\"%s\"=", strPtr(key));
 
             if (varType(value) == varTypeKeyValue)
             {
