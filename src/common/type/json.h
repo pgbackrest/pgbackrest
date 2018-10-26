@@ -11,5 +11,6 @@ Functions
 ***********************************************************************************************************************************/
 KeyValue *jsonToKv(const String *json);
 String *kvToJson(const KeyValue *kv);
+String *jsonPretty(const String *json, unsigned int indent);
 
 #endif

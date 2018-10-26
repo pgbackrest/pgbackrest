@@ -235,7 +235,7 @@ kvToJson(const KeyValue *kv)
         FUNCTION_TEST_ASSERT(kv != NULL);
     FUNCTION_DEBUG_END();
 
-    String *result = strNew("");;
+    String *result = strNew("{");
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -288,6 +288,7 @@ kvToJson(const KeyValue *kv)
             else
                 strCat(result, strPtr(varStrForce(value)));
         }
+        strCat(result, "}");
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -297,26 +298,48 @@ kvToJson(const KeyValue *kv)
 /***********************************************************************************************************************************
 Pretty print a json string. Indent must be a value 0 - 8.
 ***********************************************************************************************************************************/
-// String *
-// jsonPretty(const String *json, unsigned int indent)
-// {
-//     FUNCTION_DEBUG_BEGIN(logLevelTrace);
-//         FUNCTION_DEBUG_PARAM(STRING, json);
-//         FUNCTION_DEBUG_PARAM(UINT, json);
-//
-//         FUNCTION_TEST_ASSERT(json != NULL);
-//         FUNCTION_TEST_ASSERT(indent != NULL);
-//     FUNCTION_DEBUG_END();
-//
-//     ASSERT(indent <= 8);
-//
-//     String *result = NULL;
-//
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//
-//     }
-//     MEM_CONTEXT_TEMP_END();
-//
-//     FUNCTION_DEBUG_RESULT(STRING, result);
-// }
+String *
+jsonPretty(const String *json, unsigned int indent)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, json);
+        FUNCTION_DEBUG_PARAM(UINT, indent);
+
+        FUNCTION_TEST_ASSERT(json != NULL);
+        FUNCTION_TEST_ASSERT(indent <= 8);
+    FUNCTION_DEBUG_END();
+
+    String *result = strNew("");
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // We'll examine the string byte by byte
+        const char *jsonC = strPtr(json);
+        unsigned int jsonPos = 0;
+
+        // Confirm the initial delimiter
+        if (jsonC[jsonPos] != '[' && jsonC[jsonPos] != '{')
+            THROW_FMT(JsonFormatError, "expected '{' but found '%c'", jsonC[jsonPos]);
+
+        String *indentSpace = strNew("");
+
+        for (unsigned int idx = 0; idx < indent; idx++)
+        {
+            strCat(indentSpace, " ");
+        }
+
+        if (jsonC[jsonPos] != '[')
+            strCatFmt(result, "[\n%s", strPtr(indentSpace));
+/* CSHANG rules:
+    1) space after quote after keyname
+    2) space after :
+    3) if char after : is a [ or { then put it there and then a carriage return and an indent (but have to keep track of depth
+    4) { and [ always have a carriage return after
+    5) closing } and ] are always on their own line
+    6)
+*/
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_DEBUG_RESULT(STRING, result);
+}

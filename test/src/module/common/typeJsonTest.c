@@ -97,10 +97,11 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("kvToJson()"))
+    if (testBegin("kvToJson(), jsonPretty()"))
     {
         KeyValue *kv = NULL;
         String *json = NULL;
+        String *jsonOut = NULL;
 
         TEST_ASSIGN(
             kv,
@@ -111,12 +112,25 @@ testRun(void)
                 "\"checksum-page-error\":[1],\"backup-timestamp-start\":1482182951}")),
             "multpile values with array");
 
+        // Embed a keyValue section to test recursion
+        Variant *sectionKey = varNewStr(strNew("section"));
+        KeyValue *sectionKv = kvPutKv(kv, sectionKey);
+        kvAdd(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
+        kvAdd(sectionKv, varNewStr(strNew("key2")), varNewStr(strNew("value2")));
+
+/* CSHANG Need to add a section (and probably code to json.c) that then is an array of keyValue such that the output would be
+"section2":[{"key11":1,"key12":"1a"},{"key21":2,"key12":"2a"}]
+*/
         TEST_ASSIGN(json, kvToJson(kv), "kvToJson");
         TEST_RESULT_STR(strPtr(json),
-            "\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
+            "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
-            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1]",
+            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
+            "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}",
             "    sorted json string result");
+
+        TEST_ASSIGN(jsonOut, jsonPretty(json, 0), "jsonPretty");
+        TEST_RESULT_STR(strPtr(jsonOut), "[\n", "test");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
