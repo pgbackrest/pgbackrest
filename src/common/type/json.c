@@ -235,7 +235,7 @@ kvToJson(const KeyValue *kv)
         FUNCTION_TEST_ASSERT(kv != NULL);
     FUNCTION_DEBUG_END();
 
-    String *result = NULL;
+    String *result = strNew("");;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -251,10 +251,7 @@ kvToJson(const KeyValue *kv)
                 strCat(result, ",");
 
             // Keys are always strings in the output, so add starting quote
-            if (result == NULL)
-                result = strNewFmt("\"%s\":", strPtr(key));
-            else
-                strCatFmt(result, "\"%s\":", strPtr(key));
+            strCatFmt(result, "\"%s\":", strPtr(key));
 
             if (varType(value) == varTypeKeyValue)
             {
@@ -291,11 +288,35 @@ kvToJson(const KeyValue *kv)
             else
                 strCat(result, strPtr(varStrForce(value)));
         }
-// CSHANG Still error with block being freed regardless of strMove or not
-        printf("RESULT: %s\n", strPtr(result)); fflush(stdout);
-        strMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_DEBUG_RESULT(STRING, result);
 }
+
+/***********************************************************************************************************************************
+Pretty print a json string. Indent must be a value 0 - 8.
+***********************************************************************************************************************************/
+// String *
+// jsonPretty(const String *json, unsigned int indent)
+// {
+//     FUNCTION_DEBUG_BEGIN(logLevelTrace);
+//         FUNCTION_DEBUG_PARAM(STRING, json);
+//         FUNCTION_DEBUG_PARAM(UINT, json);
+//
+//         FUNCTION_TEST_ASSERT(json != NULL);
+//         FUNCTION_TEST_ASSERT(indent != NULL);
+//     FUNCTION_DEBUG_END();
+//
+//     ASSERT(indent <= 8);
+//
+//     String *result = NULL;
+//
+//     MEM_CONTEXT_TEMP_BEGIN()
+//     {
+//
+//     }
+//     MEM_CONTEXT_TEMP_END();
+//
+//     FUNCTION_DEBUG_RESULT(STRING, result);
+// }
