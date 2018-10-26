@@ -21,7 +21,7 @@ jsonString(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned in
         FUNCTION_DEBUG_PARAM(UINTP, jsonPos);
         FUNCTION_DEBUG_PARAM(UINTP, valueBeginPos);
     FUNCTION_DEBUG_END();
-
+// CSHANG DO I need memcontext here?
     *valueBeginPos = *valueBeginPos + 1;
     *jsonPos = *jsonPos + 1;
 
@@ -47,13 +47,11 @@ jsonNumeric(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned i
             FUNCTION_DEBUG_PARAM(UINTP, jsonPos);
             FUNCTION_DEBUG_PARAM(UINTP, valueBeginPos);
         FUNCTION_DEBUG_END();
-
+// CSHANG DO I need memcontext here?
     while (isdigit(jsonC[*jsonPos]) && *jsonPos < strSize - 1)
         *jsonPos = *jsonPos + 1;
 
-    Variant *result = varNewUInt64(cvtZToUInt64(strPtr(strNewN(jsonC + *valueBeginPos, *jsonPos - *valueBeginPos))));
-
-    FUNCTION_TEST_RESULT(VARIANT, result);
+    FUNCTION_TEST_RESULT(VARIANT, varNewUInt64(cvtZToUInt64(strPtr(strNewN(jsonC + *valueBeginPos, *jsonPos - *valueBeginPos)))));
 }
 
 /***********************************************************************************************************************************
@@ -259,13 +257,11 @@ kvToJson(const KeyValue *kv)
 
             if (varType(value) == varTypeKeyValue)
             {
-                printf("KEY: %s, IDX: %u, VALUE IS KV\n", strPtr(varStr(varLstGet(keyList, keyIdx))), keyIdx); fflush(stdout);
                 KeyValue *data = kvDup(varKv(value));
                 strCat(result, strPtr(kvToJson(data)));
             }
             else if (varType(value) == varTypeVariantList)
             {
-                printf("KEY: %s, IDX: %u, VALUE IS VARLIST\n", strPtr(varStr(varLstGet(keyList, keyIdx))), keyIdx); fflush(stdout);
                 // Open the array
                 strCat(result, "[");
 
@@ -284,25 +280,19 @@ kvToJson(const KeyValue *kv)
                         strCatFmt(result, "\"%s\"", strPtr(arrayValue));
                     else
                         strCat(result, strPtr(arrayValue));
-
-                    printf("     TYPE: %u, IDX: %u, VALUE: %s\n", type, arrayIdx, strPtr(arrayValue)); fflush(stdout);
                 }
 
                 // Close the array
                 strCat(result, "]");
-                printf("RESULT: %s\n", strPtr(result)); fflush(stdout);
             }
             else if (varType(value) == varTypeString)
-            {
                 strCatFmt(result, "\"%s\"", strPtr(varStr(value)));
-                printf("KEY: %s, IDX: %u, VALUE IS STRING\n", strPtr(varStr(varLstGet(keyList, keyIdx))), keyIdx); fflush(stdout);
-            }
             else
                 strCat(result, strPtr(varStrForce(value)));
         }
-
-// CSHANG May have to move the memory context?
-
+// CSHANG Still error with block being freed regardless of strMove or not
+        printf("RESULT: %s\n", strPtr(result)); fflush(stdout);
+        strMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 

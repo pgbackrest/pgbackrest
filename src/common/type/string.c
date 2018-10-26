@@ -456,6 +456,26 @@ strLower(String *this)
     FUNCTION_TEST_RESULT(STRING, this);
 }
 
+
+/***********************************************************************************************************************************
+Move the string
+***********************************************************************************************************************************/
+String *
+strMove(String *this, MemContext *parentNew)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
+
+        FUNCTION_TEST_ASSERT(parentNew != NULL);
+    FUNCTION_TEST_END();
+
+    if (this != NULL)
+        memContextMove(this->memContext, parentNew);
+
+    FUNCTION_TEST_RESULT(STRING, this);
+}
+
 /***********************************************************************************************************************************
 Return the path part of a string (i.e. everything before the last / or "" if there is no /)
 ***********************************************************************************************************************************/

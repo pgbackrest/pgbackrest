@@ -35,6 +35,7 @@ String *strFirstUpper(String *this);
 String *strFirstLower(String *this);
 String *strUpper(String *this);
 String *strLower(String *this);
+String *strMove(String *this, MemContext *parentNew);
 String *strPath(const String *this);
 const char *strPtr(const String *this);
 String *strQuote(const String *this, const String *quote);
