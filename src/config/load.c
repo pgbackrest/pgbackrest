@@ -199,6 +199,17 @@ cfgLoadUpdateOption(void)
 }
 
 /***********************************************************************************************************************************
+Attempt to set the log file and turn file logging off if the file cannot be opened.  This is so the Perl code won't attempt to open
+the file again and error out.
+***********************************************************************************************************************************/
+void
+cfgLoadLogFile(const String *logFile)
+{
+    if (!logFileSet(strPtr(logFile)))
+        cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("off"));
+}
+
+/***********************************************************************************************************************************
 Load the configuration
 ***********************************************************************************************************************************/
 void
@@ -248,7 +259,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
                     strCatFmt(logFile, "%s.log", cfgCommandName(cfgCommand()));
 
                 // Set the log file name
-                logFileSet(strPtr(logFile));
+                cfgLoadLogFile(logFile);
             }
 
             // Begin the command

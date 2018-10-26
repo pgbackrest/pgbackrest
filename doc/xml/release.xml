@@ -14,6 +14,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.07dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vthriller"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix error after log file open failure when processing should continue.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -21,6 +31,35 @@
                         </release-item-contributor-list>
 
                         <p>Update internal json parser to parse booleans and numeric-only or string-only one-dimensional arrays.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Correct current history item in <code>InfoPg</code> to always be in position 0.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>lstInsert()</code> to <code>List</code> object.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Correct <code>cfgDefDataFind()</code> to use <code>UINTP</code> instead of <code>VOIDPP</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Change <code>infoArchiveCheckPg()</code> to display the <postgres/> version as a string (e.g. 9.4) instead of the integer representation (e.g. 90400) when throwing an error.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -5704,6 +5743,11 @@
         <contributor id="vitaliy.kukharik">
             <contributor-name-display>Vitaliy Kukharik</contributor-name-display>
             <contributor-id type="github">vitabaks</contributor-id>
+        </contributor>
+
+        <contributor id="vthriller">
+            <contributor-name-display>vthriller</contributor-name-display>
+            <contributor-id type="github">vthriller</contributor-id>
         </contributor>
 
         <contributor id="william.cox">

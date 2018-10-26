@@ -57,29 +57,7 @@ lstAdd(List *this, const void *item)
         FUNCTION_TEST_ASSERT(item != NULL);
     FUNCTION_TEST_END();
 
-    // If list size = max then allocate more space
-    if (this->listSize == this->listSizeMax)
-    {
-        MEM_CONTEXT_BEGIN(this->memContext)
-        {
-            // If nothing has been allocated yet
-            if (this->listSizeMax == 0)
-            {
-                this->listSizeMax = LIST_INITIAL_SIZE;
-                this->list = memNewRaw(this->listSizeMax * this->itemSize);
-            }
-            // Else the list needs to be extended
-            else
-            {
-                this->listSizeMax *= 2;
-                this->list = memGrowRaw(this->list, this->listSizeMax * this->itemSize);
-            }
-        }
-        MEM_CONTEXT_END();
-    }
-
-    memcpy(this->list + (this->listSize * this->itemSize), item, this->itemSize);
-    this->listSize++;
+    lstInsert(this, lstSize(this), item);
 
     FUNCTION_TEST_RESULT(LIST, this);
 }
@@ -103,6 +81,57 @@ lstGet(const List *this, unsigned int listIdx)
 
     // Return pointer to list item
     FUNCTION_TEST_RESULT(VOIDP, this->list + (listIdx * this->itemSize));
+}
+
+/***********************************************************************************************************************************
+Insert an item into the list
+***********************************************************************************************************************************/
+List *
+lstInsert(List *this, unsigned int listIdx, const void *item)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, this);
+        FUNCTION_TEST_PARAM(VOIDP, item);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(listIdx <= lstSize(this));
+        FUNCTION_TEST_ASSERT(item != NULL);
+    FUNCTION_TEST_END();
+
+    // If list size = max then allocate more space
+    if (this->listSize == this->listSizeMax)
+    {
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            // If nothing has been allocated yet
+            if (this->listSizeMax == 0)
+            {
+                this->listSizeMax = LIST_INITIAL_SIZE;
+                this->list = memNewRaw(this->listSizeMax * this->itemSize);
+            }
+            // Else the list needs to be extended
+            else
+            {
+                this->listSizeMax *= 2;
+                this->list = memGrowRaw(this->list, this->listSizeMax * this->itemSize);
+            }
+        }
+        MEM_CONTEXT_END();
+    }
+
+    // If not inserting at the end then move items down to make space
+    if (listIdx != lstSize(this))
+    {
+        memmove(
+            this->list + ((listIdx + 1) * this->itemSize), this->list + (listIdx * this->itemSize),
+            (lstSize(this) - listIdx) * this->itemSize);
+    }
+
+    // Copy item into the list
+    memcpy(this->list + (listIdx * this->itemSize), item, this->itemSize);
+    this->listSize++;
+
+    FUNCTION_TEST_RESULT(LIST, this);
 }
 
 /***********************************************************************************************************************************

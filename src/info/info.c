@@ -107,7 +107,7 @@ Internal function to check if the information is valid or not
 static bool
 infoValidInternal(
         const Info *this,                                           // Info object to validate
-        bool ignoreError)                                     // ignore errors found?
+        bool ignoreError)                                           // ignore errors found?
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO, this);

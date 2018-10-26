@@ -6,11 +6,14 @@ Configuration Load
 
 #include <sys/types.h>
 
+#include "common/type/string.h"
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 void cfgLoad(unsigned int argListSize, const char *argList[]);
 void cfgLoadLogSetting(void);
+void cfgLoadLogFile(const String *logFile);
 void cfgLoadUpdateOption(void);
 
 #endif

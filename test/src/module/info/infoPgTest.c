@@ -39,7 +39,6 @@ testRun(void)
         TEST_ASSIGN(infoPg, infoPgNew(storageLocal(), fileName, infoPgArchive), "new infoPg archive - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
-        TEST_RESULT_INT(infoPg->indexCurrent, 0, "    current index set");
 
         InfoPgData infoPgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(infoPgData.id, 1, "    id set");
@@ -76,7 +75,6 @@ testRun(void)
         TEST_ASSIGN(infoPg, infoPgNew(storageLocal(), fileName, infoPgBackup), "new infoPg backup - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
-        TEST_RESULT_INT(infoPg->indexCurrent, 0, "    current index set");
 
         infoPgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(infoPgData.id, 1, "    id set");
@@ -87,33 +85,55 @@ testRun(void)
 
         // Manifest info
         //--------------------------------------------------------------------------------------------------------------------------
+        content = strNew
+        (
+            "[backrest]\n"
+            "backrest-checksum=\"62e4d16add4b111bed37c9e9ab0b6f60897e27da\"\n"
+            "backrest-format=5\n"
+            "backrest-version=\"2.04\"\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201510051\n"
+            "db-control-version=942\n"
+            "db-id=2\n"
+            "db-system-id=6365925855999999999\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6365925855999999999,"
+                "\"db-version\":\"9.5\"}\n"
+        );
+
+        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put info to file");
+
         TEST_ASSIGN(infoPg, infoPgNew(storageLocal(), fileName, infoPgManifest), "new infoPg manifest - load file");
 
-        TEST_RESULT_INT(lstSize(infoPg->history), 1, "history record added");
-        TEST_RESULT_INT(infoPg->indexCurrent, 0, "current index set");
+        TEST_RESULT_INT(lstSize(infoPg->history), 2, "history record added");
 
         infoPgData = infoPgDataCurrent(infoPg);
-        TEST_RESULT_INT(infoPgData.id, 1, "    id set");
-        TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
-        TEST_RESULT_INT(infoPgData.systemId, 6569239123849665679, "    system-id set");
-        TEST_RESULT_INT(infoPgData.catalogVersion, 201409291, "    catalog-version set");
+        TEST_RESULT_INT(infoPgData.id, 2, "    id set");
+        TEST_RESULT_INT(infoPgData.version, PG_VERSION_95, "    version set");
+        TEST_RESULT_INT(infoPgData.systemId, 6365925855999999999, "    system-id set");
+        TEST_RESULT_INT(infoPgData.catalogVersion, 201510051, "    catalog-version set");
         TEST_RESULT_INT(infoPgData.controlVersion, 942, "    control-version set");
 
         // infoPgAdd
         //--------------------------------------------------------------------------------------------------------------------------
-        infoPgData.id = 2;
+        infoPgData.id = 3;
         infoPgData.version = PG_VERSION_96;
-        infoPgData.systemId = 6365925855999999999;
-        infoPgData.catalogVersion = 201510051;
-        infoPgData.controlVersion = 942;
-        TEST_RESULT_INT(infoPgAdd(infoPg, &infoPgData), 1, "infoPgAdd - currentIndex incremented");
+        infoPgData.systemId = 6399999999999999999;
+        infoPgData.catalogVersion = 201608131;
+        infoPgData.controlVersion = 960;
+        TEST_RESULT_VOID(infoPgAdd(infoPg, &infoPgData), "infoPgAdd");
 
         InfoPgData infoPgDataTest = infoPgDataCurrent(infoPg);
-        TEST_RESULT_INT(infoPgDataTest.id, 2, "    id set");
+        TEST_RESULT_INT(infoPgDataTest.id, 3, "    id set");
         TEST_RESULT_INT(infoPgDataTest.version, PG_VERSION_96, "    version set");
-        TEST_RESULT_INT(infoPgDataTest.systemId, 6365925855999999999, "    system-id set");
-        TEST_RESULT_INT(infoPgDataTest.catalogVersion, 201510051, "    catalog-version set");
-        TEST_RESULT_INT(infoPgDataTest.controlVersion, 942, "    control-version set");
+        TEST_RESULT_INT(infoPgDataTest.systemId, 6399999999999999999, "    system-id set");
+        TEST_RESULT_INT(infoPgDataTest.catalogVersion, 201608131, "    catalog-version set");
+        TEST_RESULT_INT(infoPgDataTest.controlVersion, 960, "    control-version set");
 
         // Errors
         //--------------------------------------------------------------------------------------------------------------------------

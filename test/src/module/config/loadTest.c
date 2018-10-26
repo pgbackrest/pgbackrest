@@ -230,6 +230,18 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("cfgLoadLogFile()"))
+    {
+        cfgInit();
+        cfgOptionValidSet(cfgOptLogLevelFile, true);
+        cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("detail"));
+
+        // On the error case is tested here, success is tested in cfgLoad()
+        TEST_RESULT_VOID(cfgLoadLogFile(strNew("/BOGUS")), "attempt to open bogus log file");
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptLogLevelFile)), "off", "log-level-file should now be off");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cfgLoad()"))
     {
         // Command does not have umask
