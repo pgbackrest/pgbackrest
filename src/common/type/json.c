@@ -252,9 +252,9 @@ kvToJson(const KeyValue *kv)
 
             // Keys are always strings in the output, so add starting quote
             if (result == NULL)
-                result = strNewFmt("\"%s\"=", strPtr(key));
+                result = strNewFmt("\"%s\":", strPtr(key));
             else
-                strCatFmt(result, "\"%s\"=", strPtr(key));
+                strCatFmt(result, "\"%s\":", strPtr(key));
 
             if (varType(value) == varTypeKeyValue)
             {
