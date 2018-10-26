@@ -10,5 +10,6 @@ Convert JSON to/from KeyValue
 Functions
 ***********************************************************************************************************************************/
 KeyValue *jsonToKv(const String *json);
+String *kvToJson(const KeyValue *kv);
 
 #endif

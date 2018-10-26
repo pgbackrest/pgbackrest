@@ -96,5 +96,22 @@ testRun(void)
         TEST_RESULT_UINT(varUInt64(kvGet(kv, varNewStr(strNew("backup-timestamp-start")))), 1482182951, "  check integer");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("kvToJson()"))
+    {
+        KeyValue *kv = NULL;
+
+        TEST_ASSIGN(
+            kv,
+            jsonToKv(
+                strNew(
+                "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
+                "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+                "\"checksum-page-error\":[1],\"backup-timestamp-start\":1482182951}")),
+            "multpile values with array");
+
+        kvToJson(kv);
+    }
+
     FUNCTION_HARNESS_RESULT_VOID();
 }

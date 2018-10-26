@@ -3,6 +3,8 @@ Convert JSON to/from KeyValue
 ***********************************************************************************************************************************/
 #include <ctype.h>
 
+#include <stdio.h> // cshang
+
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/type/json.h"
@@ -217,4 +219,92 @@ jsonToKv(const String *json)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_DEBUG_RESULT(KEY_VALUE, result);
+}
+
+/***********************************************************************************************************************************
+Convert KeyValue object to JSON string
+
+Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
+needed.  Since this function is only intended to read internally-generated JSON it is assumed to be well-formed with no extraneous
+whitespace.
+***********************************************************************************************************************************/
+String *
+kvToJson(const KeyValue *kv)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(KEY_VALUE, kv);
+
+        FUNCTION_TEST_ASSERT(kv != NULL);
+    FUNCTION_DEBUG_END();
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const VariantList *keyList = kvKeyList(kv);
+
+        for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+        {
+            const Variant *value = kvGet(kv, varLstGet(keyList, keyIdx));
+
+            // If going to add another key, prepend a comma
+            if (keyIdx > 0)
+                strCat(result, ",");
+
+            // Keys are always strings, so add starting quote
+            if (result == NULL)
+                result = strNewFmt("\"%s\"=", strPtr(varStr(varLstGet(keyList, keyIdx))));
+            else
+                strCatFmt(result, "\"%s\"=", strPtr(varStr(varLstGet(keyList, keyIdx))));
+
+            if (varType(value) == varTypeKeyValue)
+            {
+                printf("KEY: %s, IDX: %u, VALUE IS KV\n", strPtr(varStr(varLstGet(keyList, keyIdx))), keyIdx); fflush(stdout);
+                KeyValue *data = kvDup(varKv(value));
+                strCat(result, strPtr(kvToJson(data)));
+            }
+            else if (varType(value) == varTypeVariantList)
+            {
+                printf("KEY: %s, IDX: %u, VALUE IS VARLIST\n", strPtr(varStr(varLstGet(keyList, keyIdx))), keyIdx); fflush(stdout);
+                // Open the array
+                strCat(result, "[");
+
+                for (unsigned int arrayIdx = 0; arrayIdx < varLstSize(varVarLst(value)); arrayIdx++)
+                {
+                    // varStrForce will force a boolean to true or false which is consistent with json
+                    String *arrayValue = varStrForce(varLstGet(varVarLst(value), arrayIdx));
+                    unsigned int type = varType(varLstGet(varVarLst(value), arrayIdx));
+
+                    // If going to add another element, prepend a comma
+                    if (arrayIdx > 0)
+                        strCat(result, ",");
+
+                    // If the type is a string, add leading and trailing double quotes
+                    if (type == varTypeString)
+                        strCatFmt(result, "\"%s\"", strPtr(arrayValue));
+                    else
+                        strCat(result, strPtr(arrayValue));
+
+                    printf("     TYPE: %u, IDX: %u, VALUE: %s\n", type, arrayIdx, strPtr(arrayValue)); fflush(stdout);
+                }
+
+                // Close the array
+                strCat(result, "]");
+                printf("RESULT: %s\n", strPtr(result)); fflush(stdout);
+            }
+            else if (varType(value) == varTypeString)
+            {
+                strCatFmt(result, "\"%s\"", strPtr(varStr(value)));
+                printf("KEY: %s, IDX: %u, VALUE IS STRING\n", strPtr(varStr(varLstGet(keyList, keyIdx))), keyIdx); fflush(stdout);
+            }
+            else
+                strCat(result, strPtr(varStrForce(value)));
+        }
+
+// CSHANG May have to move the memory context?
+
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_DEBUG_RESULT(STRING, result);
 }
