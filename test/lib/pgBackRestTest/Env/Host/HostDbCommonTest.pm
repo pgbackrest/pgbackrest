@@ -35,6 +35,11 @@ use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
+# Test WAL size
+####################################################################################################################################
+use constant PG_WAL_SIZE_TEST                                       => 16777216;
+
+####################################################################################################################################
 # Host defaults
 ####################################################################################################################################
 use constant HOST_PATH_SPOOL                                        => 'spool';
@@ -145,7 +150,7 @@ sub archivePush
     $self->executeSimple(
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
-        ' --log-level-console=warn --archive-push-queue-max=' . int(2 * PG_WAL_SIZE) .
+        ' --log-level-console=warn --archive-push-queue-max=' . int(2 * PG_WAL_SIZE_TEST) .
         ' --stanza=' . $self->stanza() .
         (defined($iExpectedError) && $iExpectedError == ERROR_FILE_READ ? ' --repo1-host=bogus' : '') .
         ($bAsync ? '' : ' --no-archive-async') .

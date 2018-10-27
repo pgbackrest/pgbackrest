@@ -24,6 +24,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Fix static WAL segment size used to determine if <br-option>archive-push-queue-max</br-option> has been exceeded.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="vthriller"/>
                         </release-item-contributor-list>

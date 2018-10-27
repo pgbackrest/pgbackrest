@@ -26,6 +26,13 @@ use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
 
 ####################################################################################################################################
+# PostgreSQL 8.3 WAL size
+#
+# WAL segment size in 8.3 cannot be determined from pg_control, so use this constant instead.
+####################################################################################################################################
+use constant PG_WAL_SIZE_83                                         => 16777216;
+
+####################################################################################################################################
 # Backup advisory lock
 ####################################################################################################################################
 use constant DB_BACKUP_ADVISORY_LOCK                                => '12340078987004321';
@@ -682,7 +689,7 @@ sub backupStart
 
     my ($strTimestampDbStart, $strArchiveStart, $strLsnStart, $iWalSegmentSize) = $self->executeSqlRow(
         "select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_" . $self->walId() . "file_name(lsn), lsn::text," .
-            ($self->{strDbVersion} < PG_VERSION_84 ? PG_WAL_SIZE :
+            ($self->{strDbVersion} < PG_VERSION_84 ? PG_WAL_SIZE_83 :
                 " (select setting::int8 from pg_settings where name = 'wal_segment_size')" .
                 # In Pre-11 versions the wal_segment_sise was expressed in terms of blocks rather than total size
                 ($self->{strDbVersion} < PG_VERSION_11 ?

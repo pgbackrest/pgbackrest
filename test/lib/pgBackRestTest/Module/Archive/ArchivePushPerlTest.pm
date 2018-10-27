@@ -35,6 +35,11 @@ use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
+# Test WAL size
+####################################################################################################################################
+use constant PG_WAL_SIZE_TEST                                       => 16777216;
+
+####################################################################################################################################
 # initModule
 ####################################################################################################################################
 sub initModule
@@ -294,7 +299,7 @@ sub run
     if ($self->begin("ArchivePush->dropList()"))
     {
         my $oPushAsync = new pgBackRest::Archive::Push::Async($self->{strWalPath}, $self->{strSpoolPath});
-        $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, PG_WAL_SIZE * 4);
+        $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, PG_WAL_SIZE_TEST * 4);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         my $iWalTimeline = 1;
@@ -302,16 +307,24 @@ sub run
         my $iWalMinor = 1;
 
         #---------------------------------------------------------------------------------------------------------------------------
-        storageTest()->put("$self->{strWalStatusPath}/" . $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++) . '.ready');
-        storageTest()->put("$self->{strWalStatusPath}/" . $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++) . '.ready');
-        storageTest()->put("$self->{strWalStatusPath}/" . $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++) . '.ready');
+        my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
+        storageTest()->put("$self->{strWalStatusPath}/${strSegment}.ready");
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
+
+        $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
+        storageTest()->put("$self->{strWalStatusPath}/${strSegment}.ready");
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
+
+        $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
+        storageTest()->put("$self->{strWalStatusPath}/${strSegment}.ready");
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
         $self->testResult(
             sub {$oPushAsync->dropList($oPushAsync->readyList())}, '()',
             'WAL files not dropped');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, PG_WAL_SIZE * 2);
+        $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, PG_WAL_SIZE_TEST * 2);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $self->testResult(
@@ -472,7 +485,7 @@ sub run
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, PG_WAL_SIZE * 2);
+        $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, PG_WAL_SIZE_TEST * 2);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         # Generate WAL to test queue limits
@@ -570,7 +583,7 @@ sub run
             "${strSegment} WAL in archive");
 
         # Set more realistic queue max and allow segment to push
-        $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, PG_WAL_SIZE * 4);
+        $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, PG_WAL_SIZE_TEST * 4);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, undef, "${strSegment} WAL pushed");
