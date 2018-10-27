@@ -117,6 +117,7 @@ sub archivePush
         $iArchiveNo,
         $iExpectedError,
         $bAsync,
+        $strOptionalParam,
     ) =
         logDebugParam
         (
@@ -126,6 +127,7 @@ sub archivePush
             {name => 'iArchiveNo', required => false},
             {name => 'iExpectedError', required => false},
             {name => 'bAsync', default => true},
+            {name => 'strOptionalParam', required => false},
         );
 
     my $strSourceFile;
@@ -147,7 +149,8 @@ sub archivePush
         ' --stanza=' . $self->stanza() .
         (defined($iExpectedError) && $iExpectedError == ERROR_FILE_READ ? ' --repo1-host=bogus' : '') .
         ($bAsync ? '' : ' --no-archive-async') .
-        " archive-push" . (defined($strSourceFile) ? " ${strSourceFile}" : ''),
+        " archive-push" . (defined($strSourceFile) ? " ${strSourceFile}" : '') .
+        (defined($strOptionalParam) ? " ${strOptionalParam}" : ''),
         {iExpectedExitStatus => $iExpectedError, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any

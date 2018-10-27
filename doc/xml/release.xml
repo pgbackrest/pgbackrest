@@ -17,6 +17,14 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="sebastien.lardiere"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue with <br-option>archive-push-queue-max</br-option> not being honored on connection error.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="vthriller"/>
                         </release-item-contributor-list>
 

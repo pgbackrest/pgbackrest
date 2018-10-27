@@ -489,7 +489,7 @@ sub run
         }
 
         # Process and check results
-        $self->testResult(sub {$oPushAsync->processQueue()}, '(3, 3, 1, 0)', "process and drop files");
+        $self->testResult(sub {$oPushAsync->processQueue()}, '(0, 3, 0, 0)', "process and drop files");
 
         $self->testResult(
             sub {storageSpool()->list($self->{strSpoolPath})}, '(' . join('.ok, ', @strySegment) . '.ok)',
@@ -499,21 +499,20 @@ sub run
         {
             $self->testResult(
                 sub {${storageSpool()->get("$self->{strSpoolPath}/${strSegment}.ok")}},
-                $strSegment eq $strySegment[0] ? undef :
-                    "0\ndropped WAL file ${strSegment} because archive queue exceeded " . cfgOption(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX) .
-                        ' bytes',
+                "0\ndropped WAL file ${strSegment} because archive queue exceeded " . cfgOption(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX) .
+                    ' bytes',
                 "verify ${strSegment} status");
 
             $self->walRemove($self->{strWalPath}, $strSegment);
         }
 
-        $self->optionTestClear(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX);
-        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
-
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(sub {$oPushAsync->processQueue()}, '(0, 0, 0, 0)', "final process to remove ok files");
 
         $self->testResult(sub {storageSpool()->list($self->{strSpoolPath})}, "[undef]", "ok files removed");
+
+        $self->optionTestClear(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
     }
 
     ################################################################################################################################
