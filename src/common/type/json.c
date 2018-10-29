@@ -200,7 +200,7 @@ jsonToKv(const String *json)
 // CSHANG: NULLS - NULLS and empty are different in JSON. If we got here, we could just check for jsonC[jsonPos] == 'n' and then make sure it
 // is null: String *valueStr = strNewN(jsonC[jsonPos], 5); if strCmpZ(valueStr, "null,") != 0 || strCmpZ(valueStr, "null}") != 0 then
 // error else advance the jsonPos to the , or } and set value = NULL;  DO WE HAVE ANY OF THESE IN OUR INFO/CONF/MAINFEST FILES? AS
-// far as I can see we do not.
+// far as I can see we do not. BUT we do have them for the info command so that would need to be in kvToJson
 // CSHANG And how to we handle empty objects like pg_data={}?
 
             else
@@ -285,6 +285,7 @@ kvToJson(const KeyValue *kv)
             }
             else if (varType(value) == varTypeString)
                 strCatFmt(result, "\"%s\"", strPtr(varStr(value)));
+// CSHANG More is needed to process NULL
             else
                 strCat(result, strPtr(varStrForce(value)));
         }
@@ -327,17 +328,71 @@ jsonPretty(const String *json, unsigned int indent)
         {
             strCat(indentSpace, " ");
         }
+// CSHANG Need to figure out how to ensure the json string passed has the first position with outer bracket for array
+        // if (jsonC[jsonPos] != '[')
+        //     strCatFmt(result, "[\n%s", strPtr(indentSpace));
 
-        if (jsonC[jsonPos] != '[')
-            strCatFmt(result, "[\n%s", strPtr(indentSpace));
-/* CSHANG rules:
-    1) space after quote after keyname
-    2) space after :
-    3) if char after : is a [ or { then put it there and then a carriage return and an indent (but have to keep track of depth
-    4) { and [ always have a carriage return after
-    5) closing } and ] are always on their own line
-    6)
-*/
+// CSHANG Maybe all this would be better done with buffers?
+        unsigned int depth = 1;
+
+
+// CSHANG Below should be a recursive function into which depth, the json string, json position, indentSpace and indentDepth are passed
+// and return result? PROBLEM - Can have {} or [] or null so can't always say { and [ have a carriace return after
+        if (jsonC[jsonPos] == '{')
+        {
+            if (jsonC[jsonPos + 1] != '}')
+            {
+                strCat(indentDepth, strPtr(indentSpace));
+                strCatFmt(result, "%s\n%s", jsonC[jsonPos], strPtr(indentDepth));
+            }
+        }
+        else if (jsonC[jsonPos] == '[')
+        {
+            // If not an empty array, increase indentation and add a carriage return followed by the new indentation
+            if (jsonC[jsonPos + 1] != ']')
+            {
+                strCat(indentDepth, strPtr(indentSpace));
+                strCatFmt(result, "%s\n%s", jsonC[jsonPos], strPtr(indentDepth));
+            }
+            else
+            {
+                // If it is an empty array, a comma should follow unless it is the end of the string
+                if (jsonC[jsonPos + 2] != ',' && jsonPos + 1 < strSize(json) - 1)
+                    THROW_FMT(JsonFormatError, "expected ',' but found '%c'", jsonC[jsonPos +2]);
+
+                strCatFmt(result, "%s%s,", jsonC[jsonPos], jsonC[jsonPos+1]);
+                jsonPos = jsonPos + 2;
+            }
+        }
+        else if (jsonC[jsonPos] == ',')
+        {
+            strCatFmt(result, "%s\n%s", jsonC[jsonPos], strPtr(indentDepth));
+        }
+        else if (jsonC[jsonPos] == '}' || jsonC[jsonPos] == ']')
+        {
+            strTrunc(indentDepth, strSize(indentDepth) - strSize(indentSpace));
+            strCatFmt(result, "\n%s%s", strPtr(indentDepth), jsonC[jsonPos]);
+        }
+        else if (jsonC[jsonPos] == ':')
+        {
+            strCatFmt(result, " %s ", jsonC[jsonPos]);
+        }
+        else if (jsonC[jsonPos] == '"')
+        {
+            // Set valueBeginPos to jsonPos before incrementing jsonPos
+            unsigned int valueBeginPos = jsonPos++;
+
+            while (jsonC[jsonPos] != '"' && jsonPos < strSize(json) - 1)
+                jsonPos = jsonPos + 1;
+
+            if (jsonC[jsonPos] != '"')
+                THROW_FMT(JsonFormatError, "expected '\"' but found '%c'", jsonC[*jsonPos]);
+
+            // Copy the string, including beginning and ending quotes
+            jsonPos = jsonPos + 1;
+            strCat(result, strPtr(strNewN(jsonC + valueBeginPos, jsonPos - valueBeginPos)));
+        }
+
     }
     MEM_CONTEXT_TEMP_END();
 
