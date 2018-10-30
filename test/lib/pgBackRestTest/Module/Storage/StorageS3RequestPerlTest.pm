@@ -166,12 +166,18 @@ sub run
 
             $self->httpsServerAccept();
             $self->httpsServerResponse(500);
+
+            $self->httpsServerAccept();
+            $self->httpsServerResponse(500);
+
+            $self->httpsServerAccept();
+            $self->httpsServerResponse(500);
         });
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(sub {$oS3Request->request(HTTP_VERB_GET)}, undef, 'successful request after retries');
         $self->testException(
-            sub {$oS3Request->request(HTTP_VERB_GET)}, ERROR_PROTOCOL, 'S3 request error after retries \[500\] GenericMessage.*');
+            sub {$oS3Request->request(HTTP_VERB_GET)}, ERROR_PROTOCOL, 'S3 request error after 5 tries \[500\] GenericMessage.*');
     }
 }
 

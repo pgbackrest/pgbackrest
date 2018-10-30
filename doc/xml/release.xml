@@ -36,6 +36,16 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="craig.a.james"/>
+                        </release-item-contributor-list>
+
+                        <p>Retry all S3 <id>5xx</id> errors rather than just <id>500</id> internal errors.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
