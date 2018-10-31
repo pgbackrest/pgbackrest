@@ -102,44 +102,54 @@ testRun(void)
     {
         // KeyValue *kv = NULL;
         String *json = NULL;
-        // String *jsonOut = NULL;
         Variant *keyValue = NULL;
 
         TEST_ASSIGN(keyValue, varNewKv(), "new");
         kvPut(varKv(keyValue), varNewStrZ("backup-info-size-delta"), varNewInt(1982702));
         kvPut(varKv(keyValue), varNewStrZ("backup-prior"), varNewStrZ("20161219-212741F_20161219-212803I"));
 
-        // Variant *listVar = NULL;
-        // TEST_ASSIGN(listVar, varNewVarLst(varLstNew()), "new string array");
-        // varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F"));
-        // varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F_20161219-212803I"));
-        // kvPut(varKv(keyValue), varNewStrZ("backup-reference"), listVar);
-        //
-        // kvPut(varKv(keyValue), varNewStrZ("backup-timestamp-start"), varNewInt(1482182951));
-        //
-        // Variant *listVar2 = NULL;
-        // TEST_ASSIGN(listVar2, varNewVarLst(varLstNew()), "new int array");
-        // varLstAdd(varVarLst(listVar2), varNewInt(1));
-        // kvPut(varKv(keyValue), varNewStrZ("checksum-page-error"), listVar2);
-        //
-        // // Embed a keyValue section to test recursion
-        // Variant *sectionKey = varNewStr(strNew("section"));
-        // KeyValue *sectionKv = kvPutKv(varKv(keyValue), sectionKey);
-        // kvAdd(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
-        // kvAdd(sectionKv, varNewStr(strNew("key2")), varNewStr(strNew("value2")));
-        //
-        // TEST_ASSIGN(json, varToJson(keyValue, 0), "varToJson");
-        // TEST_RESULT_STR(strPtr(json),
-        //     "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-        //     "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
-        //     "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-        //     "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}",
-        //     "    sorted json string result");
+        Variant *listVar = NULL;
+        TEST_ASSIGN(listVar, varNewVarLst(varLstNew()), "new string array");
+        varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F"));
+        varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F_20161219-212803I"));
+        kvPut(varKv(keyValue), varNewStrZ("backup-reference"), listVar);
 
-        TEST_ASSIGN(json, varToJson(keyValue, 4), "varToJson");
+        kvPut(varKv(keyValue), varNewStrZ("backup-timestamp-start"), varNewInt(1482182951));
+
+        Variant *listVar2 = NULL;
+        TEST_ASSIGN(listVar2, varNewVarLst(varLstNew()), "new int array");
+        varLstAdd(varVarLst(listVar2), varNewInt(1));
+        kvPut(varKv(keyValue), varNewStrZ("checksum-page-error"), listVar2);
+
+        // Embed a keyValue section to test recursion
+        Variant *sectionKey = varNewStr(strNew("section"));
+        KeyValue *sectionKv = kvPutKv(varKv(keyValue), sectionKey);
+        kvAdd(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
+        kvAdd(sectionKv, varNewStr(strNew("key2")), varNewStr(strNew("value2")));
+
+        TEST_ASSIGN(json, varToJson(keyValue, 0), "varToJson");
         TEST_RESULT_STR(strPtr(json),
-            "{\n    \"backup-info-size-delta\" : 1982702,\n    \"backup-prior\" : \"20161219-212741F_20161219-212803I\"\n}\n",
+            "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
+            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
+            "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}\n",
             "    sorted json string result");
+
+        TEST_ASSIGN(json, varToJson(keyValue, 4), "varToJson - KeyValue");
+        TEST_RESULT_STR(strPtr(json),
+            "{\n    \"backup-info-size-delta\" : 1982702,\n    \"backup-prior\" : \"20161219-212741F_20161219-212803I\","
+            "\n    \"backup-reference\" : [\n        \"20161219-212741F\",\n        \"20161219-212741F_20161219-212803I\"\n    ],"
+            "\n    \"backup-timestamp-start\" : 1482182951,\n    \"checksum-page-error\" : [\n        1\n    ],"
+            "\n    \"section\" : {\n        \"key1\" : \"value1\",\n        \"key2\" : \"value2\"\n    }\n}\n",
+            "    sorted json string result");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+//         VariantList *varListOuter = NULL;
+//
+//         TEST_ASSIGN(varListOuter, varNewVarLst(varLstNew()), "new keyValue array");
+//         varLstAdd(varVarLst(varListOuter), keyValue);
+//         TEST_ASSIGN(json, varToJson(varListOuter, 0), "varToJson - VariantList");
+// printf("JSON:\n%s",strPtr(json)); fflush(stdout);
 // CSHANG Not sure how to pass the kv as a variant to the varToJson
         // TEST_ASSIGN(
         //     kv,

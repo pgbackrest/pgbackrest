@@ -117,13 +117,17 @@ kvToJson(const KeyValue *kv, String *indentSpace, String *indentDepth)
                 if (varType(value) == varTypeKeyValue)
                 {
                     KeyValue *data = kvDup(varKv(value));
+                    strCat(indentDepth, strPtr(indentSpace));
                     strCat(result, strPtr(kvToJson(data, indentSpace, indentDepth)));
                 }
                 else if (varType(value) == varTypeVariantList)
                 {
                     // Open the array. If the array is empty, then do not add the indent.
                     if (varLstSize(varVarLst(value)) != 0)
+                    {
+                        strCat(indentDepth, strPtr(indentSpace));
                         strCatFmt(result, "[%s", strPtr(indentDepth));
+                    }
                     else
                         strCat(result, "[");
 
@@ -143,9 +147,10 @@ kvToJson(const KeyValue *kv, String *indentSpace, String *indentDepth)
                         else
                             strCat(result, strPtr(arrayValue));
                     }
-                    strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
+                    if (strSize(indentDepth) > strSize(indentSpace))
+                        strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
                     // Close the array
-                    strCatFmt(result, "]%s", strPtr(indentDepth));
+                    strCatFmt(result, "%s]", strPtr(indentDepth));
                 }
                 else if (varType(value) == varTypeString)
                     strCatFmt(result, "\"%s\"", strPtr(varStr(value)));
@@ -153,8 +158,9 @@ kvToJson(const KeyValue *kv, String *indentSpace, String *indentDepth)
                 else
                     strCat(result, strPtr(varStrForce(value)));
             }
-            //
-            strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
+            if (strSize(indentDepth) > strSize(indentSpace))
+                strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
+
             strCatFmt(result, "%s}", strPtr(indentDepth));
         }
         // Empty object so close without formatting
