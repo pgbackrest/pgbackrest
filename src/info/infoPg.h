@@ -12,6 +12,7 @@ typedef struct InfoPg InfoPg;
 #include <stdint.h>
 
 #include "storage/storage.h"
+#include "common/ini.h"
 
 /***********************************************************************************************************************************
 Information about the PostgreSQL cluster
@@ -53,6 +54,7 @@ String *infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx);
 InfoPgData infoPgData(const InfoPg *this, unsigned int pgDataIdx);
 InfoPgData infoPgDataCurrent(const InfoPg *this);
 unsigned int infoPgDataTotal(const InfoPg *this);
+Ini *infoPgIni(const InfoPg *this);
 
 /***********************************************************************************************************************************
 Destructor

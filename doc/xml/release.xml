@@ -61,6 +61,13 @@
 
                         <p>Change <code>infoArchiveCheckPg()</code> to display the <postgres/> version as a string (e.g. 9.4) instead of the integer representation (e.g. 90400) when throwing an error.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+                        <p>Update internal json parser to parse booleans and numeric-only or string-only one-dimensional arrays.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>
