@@ -10,7 +10,7 @@ Convert JSON to/from KeyValue
 Functions
 ***********************************************************************************************************************************/
 KeyValue *jsonToKv(const String *json);
-String *kvToJson(const KeyValue *kv);
+String *varToJson(const Variant *var, unsigned int indent);
 String *jsonPretty(const String *json, unsigned int indent);
 
 #endif

@@ -34,6 +34,7 @@ testRun(void)
         // CSHANG Should we handle this as an empty array? Should we set it to NULL? Right now in the backup.info file, it appears
         // that only the backup-reference is an array - and if that is empty, something is REALLY wrong since it's only set on non-full
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[]}")), JsonFormatError, "unknown array value type");
+        TEST_ERROR(jsonToKv(strNew("{}")), JsonFormatError, "expected '\"' but found '}'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         KeyValue *kv = NULL;
@@ -47,7 +48,7 @@ testRun(void)
         TEST_ASSIGN(kv, jsonToKv(strNew("{\"key1\":true}")), "boolean true");
         TEST_RESULT_BOOL(varBool(kvGet(kv, varNewStr(strNew("key1")))), true, "  check boolean");
 
-        TEST_ASSIGN(kv, jsonToKv(strNew("{\"key1\":false}")), "boolean true");
+        TEST_ASSIGN(kv, jsonToKv(strNew("{\"key1\":false}")), "boolean false");
         TEST_RESULT_BOOL(varBool(kvGet(kv, varNewStr(strNew("key1")))), false, "  check boolean");
 
         TEST_ASSIGN(
@@ -97,40 +98,77 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("kvToJson(), jsonPretty()"))
+    if (testBegin("varToJson()"))
     {
-        KeyValue *kv = NULL;
+        // KeyValue *kv = NULL;
         String *json = NULL;
-        String *jsonOut = NULL;
+        // String *jsonOut = NULL;
+        Variant *keyValue = NULL;
 
-        TEST_ASSIGN(
-            kv,
-            jsonToKv(
-                strNew(
-                "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-                "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
-                "\"checksum-page-error\":[1],\"backup-timestamp-start\":1482182951}")),
-            "multpile values with array");
+        TEST_ASSIGN(keyValue, varNewKv(), "new");
+        kvPut(varKv(keyValue), varNewStrZ("backup-info-size-delta"), varNewInt(1982702));
+        kvPut(varKv(keyValue), varNewStrZ("backup-prior"), varNewStrZ("20161219-212741F_20161219-212803I"));
 
-        // Embed a keyValue section to test recursion
-        Variant *sectionKey = varNewStr(strNew("section"));
-        KeyValue *sectionKv = kvPutKv(kv, sectionKey);
-        kvAdd(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
-        kvAdd(sectionKv, varNewStr(strNew("key2")), varNewStr(strNew("value2")));
+        // Variant *listVar = NULL;
+        // TEST_ASSIGN(listVar, varNewVarLst(varLstNew()), "new string array");
+        // varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F"));
+        // varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F_20161219-212803I"));
+        // kvPut(varKv(keyValue), varNewStrZ("backup-reference"), listVar);
+        //
+        // kvPut(varKv(keyValue), varNewStrZ("backup-timestamp-start"), varNewInt(1482182951));
+        //
+        // Variant *listVar2 = NULL;
+        // TEST_ASSIGN(listVar2, varNewVarLst(varLstNew()), "new int array");
+        // varLstAdd(varVarLst(listVar2), varNewInt(1));
+        // kvPut(varKv(keyValue), varNewStrZ("checksum-page-error"), listVar2);
+        //
+        // // Embed a keyValue section to test recursion
+        // Variant *sectionKey = varNewStr(strNew("section"));
+        // KeyValue *sectionKv = kvPutKv(varKv(keyValue), sectionKey);
+        // kvAdd(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
+        // kvAdd(sectionKv, varNewStr(strNew("key2")), varNewStr(strNew("value2")));
+        //
+        // TEST_ASSIGN(json, varToJson(keyValue, 0), "varToJson");
+        // TEST_RESULT_STR(strPtr(json),
+        //     "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
+        //     "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+        //     "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
+        //     "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}",
+        //     "    sorted json string result");
+
+        TEST_ASSIGN(json, varToJson(keyValue, 4), "varToJson");
+        TEST_RESULT_STR(strPtr(json),
+            "{\n    \"backup-info-size-delta\" : 1982702,\n    \"backup-prior\" : \"20161219-212741F_20161219-212803I\"\n}\n",
+            "    sorted json string result");
+// CSHANG Not sure how to pass the kv as a variant to the varToJson
+        // TEST_ASSIGN(
+        //     kv,
+        //     jsonToKv(
+        //         strNew(
+        //         "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
+        //         "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+        //         "\"checksum-page-error\":[1],\"backup-timestamp-start\":1482182951}")),
+        //     "multpile values with array");
+        //
+        // // Embed a keyValue section to test recursion
+        // Variant *sectionKey = varNewStr(strNew("section"));
+        // KeyValue *sectionKv = kvPutKv(kv, sectionKey);
+        // kvAdd(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
+        // kvAdd(sectionKv, varNewStr(strNew("key2")), varNewStr(strNew("value2")));
 
 /* CSHANG Need to add a section (and probably code to json.c) that then is an array of keyValue such that the output would be
 "section2":[{"key11":1,"key12":"1a"},{"key21":2,"key12":"2a"}]
 */
-        TEST_ASSIGN(json, kvToJson(kv), "kvToJson");
-        TEST_RESULT_STR(strPtr(json),
-            "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
-            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}",
-            "    sorted json string result");
+        // TEST_ASSIGN(json, varToJson(kv, 0), "kvToJson");
+        // TEST_RESULT_STR(strPtr(json),
+        //     "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
+        //     "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+        //     "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
+        //     "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}",
+        //     "    sorted json string result");
 
-        TEST_ASSIGN(jsonOut, jsonPretty(json, 0), "jsonPretty");
-        TEST_RESULT_STR(strPtr(jsonOut), "[\n", "test");
+        // TEST_ASSIGN(jsonOut, jsonPretty(json, 0), "jsonPretty");
+        // TEST_RESULT_STR(strPtr(jsonOut), "[\n", "test");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
