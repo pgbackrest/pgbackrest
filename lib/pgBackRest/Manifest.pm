@@ -557,6 +557,127 @@ sub isTargetTablespace
 }
 
 ####################################################################################################################################
+# checkDelta
+#
+# Determine if the delta option should be enabled. Only called if delta has not yet been enabled.
+####################################################################################################################################
+sub checkDelta
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strLastBackupSource,
+        $bOnlineSame,
+        $strTimelineCurrent,
+        $strTimelineLast,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->checkDelta', \@_,
+            {name => 'strLastBackupSource'},
+            {name => 'bOnlineSame'},
+            {name => 'strTimelineCurrent', required => false},
+            {name => 'strTimelineLast', required => false},
+        );
+
+    my $bDelta = false;
+
+    # Determine if a timeline switch has occurred
+    if (defined($strTimelineLast) && defined($strTimelineCurrent))
+    {
+        # If there is a prior backup, check if a timeline switch has occurred since then
+        if ($strTimelineLast ne $strTimelineCurrent)
+        {
+            &log(WARN, "a timeline switch has occurred since the ${strLastBackupSource} backup, enabling delta checksum");
+            $bDelta = true;
+        }
+    }
+
+    # If delta was not set above and there is a change in the online option, then set delta option
+    if (!$bDelta && !$bOnlineSame)
+    {
+        &log(WARN, "the online option has changed since the ${strLastBackupSource} backup, enabling delta checksum");
+        $bDelta = true;
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bDelta', value => $bDelta, trace => true},
+    );
+}
+
+####################################################################################################################################
+# checkDeltaFile
+#
+# Determine if the delta option should be enabled. Only called if delta has not yet been enabled.
+####################################################################################################################################
+sub checkDeltaFile
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $stryFileList,
+        $oPriorManifest,
+        $lTimeBegin,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->checkDeltaFile', \@_,
+            {name => 'stryFileList'},
+            {name => 'oPriorManifest', required => false},
+            {name => 'lTimeBegin', required => false},
+        );
+
+    my $bDelta = false;
+
+    # Loop though all files
+    foreach my $strName (@{$stryFileList})
+    {
+        # If $lTimeBegin is defined, then this is not an aborted manifest so check if modification time is in the future (in this
+        # backup OR the last backup) then enable delta and exit
+        if (defined($lTimeBegin) &&
+            ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) > $lTimeBegin ||
+            (defined($oPriorManifest) &&
+             $oPriorManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_FUTURE, 'y'))))
+        {
+            &log(WARN, "file $strName has timestamp in the future, enabling delta checksum");
+            $bDelta = true;
+            last;
+        }
+
+        # If the time on the file is earlier than the last manifest time or the size is different but the timestamp is the
+        # same, then enable delta and exit
+        if (defined($oPriorManifest) && $oPriorManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName) &&
+            ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) <
+            $oPriorManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ||
+            ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) !=
+            $oPriorManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) &&
+            $self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
+            $oPriorManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP))))
+        {
+            &log(WARN, "file $strName timestamp in the past or size changed but timestamp did not, enabling delta checksum");
+            $bDelta = true;
+            last;
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bDelta', value => $bDelta, trace => true},
+    );
+}
+
+####################################################################################################################################
 # build
 #
 # Build the manifest object.
@@ -577,6 +698,8 @@ sub build
         $hTablespaceMap,
         $hDatabaseMap,
         $rhExclude,
+        $strTimelineCurrent,
+        $strTimelineLast,
         $strLevel,
         $bTablespace,
         $strParentPath,
@@ -594,6 +717,8 @@ sub build
             {name => 'hTablespaceMap', required => false},
             {name => 'hDatabaseMap', required => false},
             {name => 'rhExclude', required => false},
+            {name => 'strTimelineCurrent', required => false},
+            {name => 'strTimelineLast', required => false},
             {name => 'strLevel', required => false},
             {name => 'bTablespace', required => false},
             {name => 'strParentPath', required => false},
@@ -641,6 +766,14 @@ sub build
 
                 $hTablespaceMap->{$strOid} = "ts${strOid}";
             }
+        }
+
+        # If there is a last manifest, then check to see if delta checksum should be enabled
+        if (defined($oLastManifest) && !$bDelta)
+        {
+            $bDelta = $self->checkDelta(
+                'last', $oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, $bOnline),
+                $strTimelineCurrent, $strTimelineLast);
         }
     }
 
@@ -933,9 +1066,9 @@ sub build
                 $strFile = substr($strFile, length(MANIFEST_TARGET_PGDATA) + 1);
             }
 
-            $self->build(
-                $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $bDelta, $hTablespaceMap, $hDatabaseMap, $rhExclude, $strFile,
-                $bTablespace, dirname("${strPath}/${strName}"), $strFilter, $iLevel + 1);
+            $bDelta = $self->build(
+                $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $bDelta, $hTablespaceMap, $hDatabaseMap, $rhExclude, undef,
+                undef, $strFile, $bTablespace, dirname("${strPath}/${strName}"), $strFilter, $iLevel + 1);
         }
     }
 
@@ -971,6 +1104,17 @@ sub build
                               $hDatabaseMap->{$strDbName}{&MANIFEST_KEY_DB_LAST_SYSTEM_ID});
         }
 
+        # Determine if delta checksum should be enabled
+        if (!$bDelta)
+        {
+            my @stryFileList = $self->keys(MANIFEST_SECTION_TARGET_FILE);
+
+            if (@stryFileList)
+            {
+                $bDelta = $self->checkDeltaFile(\@stryFileList, $oLastManifest, $lTimeBegin);
+            }
+        }
+
         # Loop though all files
         foreach my $strName ($self->keys(MANIFEST_SECTION_TARGET_FILE))
         {
@@ -1004,13 +1148,13 @@ sub build
                 if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE))
                 {
                     $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
-                               $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE));
+                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE));
                 }
                 # Otherwise the reference is to the previous backup
                 else
                 {
                     $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE,
-                               $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
+                        $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
                 }
 
                 # Copy the checksum from previous manifest (if it exists - zero sized files don't have checksums)
@@ -1024,7 +1168,7 @@ sub build
                 if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE))
                 {
                     $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE,
-                               $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE));
+                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE));
                 }
 
                 # Copy master flag from the previous manifest (if it exists)
@@ -1068,7 +1212,11 @@ sub build
     }
 
     # Return from function and log return values if any
-    return logDebugReturn($strOperation);
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bDelta', value => $bDelta, trace => true},
+    );
 }
 
 ####################################################################################################################################

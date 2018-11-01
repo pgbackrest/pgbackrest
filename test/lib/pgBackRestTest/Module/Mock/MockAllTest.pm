@@ -968,32 +968,22 @@ sub run
         # Also create tablespace 11 to be sure it does not conflict with path of tablespace 1
         $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 11);
 
-        # Change only the time on a valid file and update the timestamp in the expected manifest
+        # Change only the time to be in the past on a valid file and update the timestamp in the expected manifest
         utime($lTime - 100, $lTime - 100, $oHostDbMaster->dbBasePath() . '/changetime.txt')
             or confess &log(ERROR, "unable to set time for file ".$oHostDbMaster->dbBasePath() . '/changetime.txt');
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changetime.txt'}{&MANIFEST_SUBKEY_TIMESTAMP} = $lTime - 100;
 
-        # Change the content of the changecontent file to be the same size but not the timestamp on the file
+        # Change the content of the changecontent file to be the same size but leave the timestamp the same on the file
         storageDb()->put($oHostDbMaster->dbBasePath() . '/changecontent.txt', 'CHGCONT');
         utime($lTime, $lTime, $oHostDbMaster->dbBasePath() . '/changecontent.txt')
             or confess &log(ERROR, "unable to set time for file ".$oHostDbMaster->dbBasePath() . '/changecontent.txt');
 
-        if ($bDeltaBackup)
-        {
-            # With --delta, the changetime file will not be recopied and the reference will remain to the last backup however,
-            # the changecontent file will be recopied since the checksum has changed so update the checksum and remove the reference
-            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changecontent.txt'}{&MANIFEST_SUBKEY_CHECKSUM} =
-                "a094d94583e209556d03c3c5da33131a065f1689";
-            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changecontent.txt'}{&MANIFEST_SUBKEY_REFERENCE});
-        }
-        else
-        {
-            # Without --delta, the changetime reference will be removed since the timestamp has changed but since the timestamp on
-            # the changecontent did not change even though the contents did, it will still reference the prior backup - this may be
-            # a rare occurrence and not good but it is one reason to use --delta
-            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changetime.txt'}{&MANIFEST_SUBKEY_REFERENCE});
-            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changetime.txt'}{&MANIFEST_SUBKEY_TIMESTAMP} = $lTime - 100;
-        }
+        # The changecontent & changetime files have conditions that will force the delta option to be turned on which should result
+        # in the reference of changecontent to be removed but the reference to changetime to stay since the checksum wouldn't change
+        $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changecontent.txt'}{&MANIFEST_SUBKEY_CHECKSUM} =
+            "a094d94583e209556d03c3c5da33131a065f1689";
+        delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changecontent.txt'}{&MANIFEST_SUBKEY_REFERENCE});
+        $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changetime.txt'}{&MANIFEST_SUBKEY_TIMESTAMP} = $lTime - 100;
 
         $strBackup = $oHostBackup->backup(
             $strType, 'resume and add tablespace 2',

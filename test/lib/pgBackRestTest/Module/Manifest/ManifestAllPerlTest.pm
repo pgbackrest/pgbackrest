@@ -229,16 +229,11 @@ sub run
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false, false)}, ERROR_FILE_MISSING,
             "unable to stat '" . $self->{strDbPath} . "/" . MANIFEST_TARGET_PGTBLSPC . "': No such file or directory");
 
-        # bOnline = true tests - Compare the base manifest
+        # bOnline = true tests
         #---------------------------------------------------------------------------------------------------------------------------
         $oManifest = new pgBackRest::Manifest(
             $strBackupManifestFile,
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
-        $self->testResult(sub {$self->manifestCompare($oManifestBase, $oManifest)}, "", 'base manifest');
-        $self->testException(
-            sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_ASSERT,
-            'manifest has already been built');
 
         # Create expected manifest from base
         my $oManifestExpected = dclone($oManifestBase);
@@ -276,6 +271,10 @@ sub run
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'paths/files and different modes');
+
+        $self->testException(
+            sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, ERROR_ASSERT,
+            'manifest has already been built');
 
         # Master = false (what can be copied from a standby vs the master)
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1248,10 +1247,11 @@ sub run
             $lTime + 20000);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_FUTURE, 'y');
 
-        $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, "[undef]",
-            'future timestamp warning', {strLogExpect =>
+        $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false)}, true,
+            'future timestamp warning, enable delta checksum', {strLogExpect =>
+            "WARN: file " . MANIFEST_TARGET_PGDATA . "/$strTest has timestamp in the future, enabling delta checksum\n" .
             "WARN: some files have timestamps in the future - they will be copied to prevent possible race conditions"});
-        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'manifest future subkey=y');
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", '    manifest future subkey=y');
 
         # Future timestamp in last manifest
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1272,23 +1272,29 @@ sub run
             $lTime);
 
         # Create a new manifest
-        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
-            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
-
         $oManifest = new pgBackRest::Manifest(
             $strBackupManifestFile,
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
-        $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false)}, "[undef]",
-            'last manifest future timestamp warning', {strLogExpect =>
+
+        # Last manifest is passed with online option=false, but passing true as current online status to invoke warning delta
+        # being enabled
+        $oLastManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, false);
+        $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false)}, true,
+            'last manifest future timestamp warning - delta enabled for online mismatch', {strLogExpect =>
+            "WARN: the online option has changed since the last backup, enabling delta checksum\n" .
             "WARN: some files have timestamps in the future - they will be copied to prevent possible race conditions"});
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
-            'last manifest future subkey=y, new manifest future subkey removed');
+            '    last manifest future subkey=y, new manifest future subkey removed');
+
+        # Set online in last manifest to avoid delta warning being displayed in the rest of the tests
+        $oLastManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, true);
 
         # File info in last manifest same as current
         #---------------------------------------------------------------------------------------------------------------------------
         $oLastManifest->remove(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_FUTURE);
         $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_TIMESTAMP,
             $lTime);
+        $oLastManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, true);
 
         # Update reference in expected manifest
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_REFERENCE,
@@ -1298,10 +1304,14 @@ sub run
         $oManifest = new pgBackRest::Manifest(
             $strBackupManifestFile,
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
-        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false);
-        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
-        'reference set to prior backup label');
 
+        $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false)}, false,
+            'delta is not enabled');
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+            '    reference set to prior backup label');
+
+        # Zero-sized file and size of file changed but timestamp did not
+        #---------------------------------------------------------------------------------------------------------------------------
         # Create a new file reference and a zero-sized file reference
         my $strTestNew = $strTest . 'new';
         my $strZeroFile = 'zero-file';
@@ -1376,8 +1386,32 @@ sub run
         $oManifest = new pgBackRest::Manifest(
             $strBackupManifestFile,
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
-        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false);
-        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'updates from last manifest');
+        $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false)}, true,
+            'timestamp same, contents different, delta is enabled', {strLogExpect =>
+            "WARN: file " . MANIFEST_TARGET_PGDATA .
+            "/$strTest timestamp in the past or size changed but timestamp did not, enabling delta checksum"});
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", '    updates from last manifest');
+
+        # new timestamp less than last manifest timestamp for referenced file
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime + 100);
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest,
+            MANIFEST_SUBKEY_REFERENCE);
+
+        $oManifest = new pgBackRest::Manifest(
+            $strBackupManifestFile,
+            {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
+        $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true, false)}, true,
+            'time in past, delta enabled', {strLogExpect =>
+            "WARN: file " . MANIFEST_TARGET_PGDATA .
+            "/$strTest timestamp in the past or size changed but timestamp did not, enabling delta checksum"});
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+            '    manifest compare');
+
+        # Reset the timestamp
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime + 0);
 
         # Timestamp in the lastManifest is different than built manifest (size and content the same)
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1395,7 +1429,7 @@ sub run
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest . '2',
             MANIFEST_SUBKEY_SIZE, length($strTest));
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest . '2',
-            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime + 0);
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTest . '2',
             MANIFEST_SUBKEY_MASTER, true);
 
@@ -1416,6 +1450,12 @@ sub run
             MANIFEST_SUBKEY_REPO_SIZE);
         $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
             MANIFEST_SUBKEY_CHECKSUM_PAGE);
+
+        # Update the size in the last manifest to match the current and add the reference to the expected manifest
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest,
+            MANIFEST_SUBKEY_SIZE, length($strTest . 'more'));
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest,
+            MANIFEST_SUBKEY_REFERENCE, BOGUS);
 
         # Default "master" is flipping because it's not something we read from disk
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MASTER, undef, true);
@@ -1469,7 +1509,29 @@ sub run
             iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
         my $oManifestExpected = dclone($oManifestBase);
 
+        # Add a bogus file - all traces to be removed after the manifest has been built to simulate an inital manifest and avoid
+        # missing files error
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . BOGUS,
+            {strMode => MODE_0750, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
+
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0750);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MASTER, undef, true);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . BOGUS,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . BOGUS,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true, false);
+
+        # Remove the initial file and reset the manifest portions relating to the file for the following tests
+        storageDb()->remove($self->{strDbPath} . '/' . BOGUS);
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE);
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE . ":default");
+        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE);
+        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE . ":default");
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'build initial manifest');
 
         # Add a file after building manifest
         my $lTimeTest = $lTime + 10;
@@ -1585,6 +1647,65 @@ sub run
         $strFile = MANIFEST_TARGET_PGDATA . '/' . DB_PATH_GLOBAL . '/' . BOGUS;
         $self->testResult(sub {isChecksumPage($strFile)}, true,
             "file '${strFile}' isChecksumPage=true");
+    }
+
+    ################################################################################################################################
+    if ($self->begin('checkDelta()'))
+    {
+        my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
+            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
+
+        $self->testResult(sub {$oManifest->checkDelta('test', false, "000000010000000000000000", "000000020000000000000000")}, true,
+            "timeline switch, delta enabled",
+            {strLogExpect => "WARN: a timeline switch has occurred since the test backup, enabling delta checksum"});
+
+        $self->testResult(sub {$oManifest->checkDelta('last', false, "000000010000000000000000", "000000010000000000000000")}, true,
+            "online option changed, delta enabled",
+            {strLogExpect => "WARN: the online option has changed since the last backup, enabling delta checksum"});
+
+        $self->testResult(sub {$oManifest->checkDelta('test', true, "000000010000000000000000", undef)}, false,
+            "no last timeline, online same, delta not enabled");
+
+        $self->testResult(sub {$oManifest->checkDelta('test', false, undef, "000000010000000000000000")}, true,
+            "no current timeline, online not same, delta enabled");
+
+        $self->testResult(sub {$oManifest->checkDelta('test', true, undef, undef)}, false,
+            "no timelines, online same, delta not enabled");
+    }
+
+    ################################################################################################################################
+    if ($self->begin('checkDeltaFile()'))
+    {
+        # Additional tests to cover checkDeltaFile not covered by build tests
+        my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
+            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
+        my $strFile = MANIFEST_TARGET_PGDATA . '/' . BOGUS;
+        my @stryFileList = ($strFile . '1');
+        push(@stryFileList, $strFile);
+
+        $self->testResult(sub {$oManifest->checkDeltaFile(\@stryFileList, undef, undef)}, false,
+            "no prior manifest, no time begin, delta not enabled");
+
+        my $oManifestPrior = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
+            iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)});
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile . '1', MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile . '1', MANIFEST_SUBKEY_SIZE, 0);
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestPrior->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile . '1', MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestPrior->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile . '1', MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestPrior->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestPrior->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestPrior->set(MANIFEST_SECTION_TARGET_FILE, $strFile,  MANIFEST_SUBKEY_FUTURE, 'y');
+
+        $self->testResult(sub {$oManifest->checkDeltaFile(\@stryFileList, $oManifestPrior, $lTime)}, true,
+            "prior manifest, time begin same, prior future is set, delta enabled", {strLogExpect =>
+            "WARN: file $strFile has timestamp in the future, enabling delta checksum"});
+
+        $oManifestPrior->remove(MANIFEST_SECTION_TARGET_FILE, $strFile,  MANIFEST_SUBKEY_FUTURE);
+
+        $self->testResult(sub {$oManifest->checkDeltaFile(\@stryFileList, $oManifestPrior)}, false,
+            "simulate aborted manifest, delta not enabled");
     }
 }
 
