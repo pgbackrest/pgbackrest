@@ -75,6 +75,7 @@ jsonNumeric(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned i
     FUNCTION_TEST_RESULT(VARIANT, result);
 }
 
+// CSHANG Need to create an externally avaiable kvToJson wrapper for this and rename this to kvToJsonInternal
 static String *
 kvToJson(const KeyValue *kv, String *indentSpace, String *indentDepth)
 {
@@ -168,40 +169,6 @@ kvToJson(const KeyValue *kv, String *indentSpace, String *indentDepth)
         {
             result = strCat(result, "}\n");
         }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RESULT(STRING, result);
-}
-
-static String *
-vlToJson(const VariantList *vl, String *indentSpace, String *indentDepth)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(KEY_VALUE, vl);
-        FUNCTION_TEST_PARAM(STRING, indentSpace);
-        FUNCTION_TEST_PARAM(STRING, indentDepth);
-
-        FUNCTION_TEST_ASSERT(vl != NULL);
-        FUNCTION_TEST_ASSERT(indentSpace != NULL);
-        FUNCTION_TEST_ASSERT(indentDepth != NULL);
-    FUNCTION_TEST_END();
-
-    String *result = strNew("");
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        if (varLstSize(vl) > 0)
-        {
-            for (unsigned int vlIdx = 0; vlIdx < varLstSize(vl); vlIdx++)
-            {
-                strCatFmt(result, "[%s", strPtr(indentDepth));
-                result = kvToJson(varKv(varLstGet(vl, vlIdx)), indentSpace, indentDepth);
-                strCatFmt(result, "%s]", strPtr(indentDepth));
-            }
-        }
-        else
-            strCat(result, "[]");
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -386,6 +353,7 @@ varToJson(const Variant *var, unsigned int indent)
 
     String *result = NULL;
 
+    // Currently the variant to parse must be either a VariantList or a KeyValue type.
     if (varType(var) != varTypeVariantList && varType(var) != varTypeKeyValue)
         THROW(JsonFormatError, "variant type is invalid");
 
@@ -405,10 +373,25 @@ varToJson(const Variant *var, unsigned int indent)
 
         strCat(indentDepth, strPtr(indentSpace));
 
+        // If VariantList then process each item in the array. Currently the list must be KeyValue types.
         if (varType(var) == varTypeVariantList)
         {
-            const VariantList *list = varVarLst(var);
-            String *jsonStr = vlToJson(list, indentSpace, indentDepth);
+            const VariantList *vl = varVarLst(var);
+            String *jsonStr = strNew("");
+
+            if (varLstSize(vl) > 0)
+            {
+                for (unsigned int vlIdx = 0; vlIdx < varLstSize(vl); vlIdx++)
+                {
+                    strCatFmt(jsonStr, "[%s", strPtr(indentDepth));
+                    strCat(jsonStr, strPtr(kvToJson(varKv(varLstGet(vl, vlIdx)), indentSpace, indentDepth)));
+                    strCatFmt(jsonStr, "%s]", strPtr(indentDepth));
+                }
+            }
+            // Empty array
+            else
+                strCat(jsonStr, "[]");
+
             memContextSwitch(MEM_CONTEXT_OLD());
             result = strDup(jsonStr);
             memContextSwitch(MEM_CONTEXT_TEMP());

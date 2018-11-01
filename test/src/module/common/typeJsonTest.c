@@ -127,7 +127,7 @@ testRun(void)
         kvAdd(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
         kvAdd(sectionKv, varNewStr(strNew("key2")), varNewStr(strNew("value2")));
 
-        TEST_ASSIGN(json, varToJson(keyValue, 0), "varToJson");
+        TEST_ASSIGN(json, varToJson(keyValue, 0), "varToJson - KeyValue no indent");
         TEST_RESULT_STR(strPtr(json),
             "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
@@ -135,7 +135,7 @@ testRun(void)
             "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}\n",
             "    sorted json string result");
 
-        TEST_ASSIGN(json, varToJson(keyValue, 4), "varToJson - KeyValue");
+        TEST_ASSIGN(json, varToJson(keyValue, 4), "varToJson - KeyValue - indent 4");
         TEST_RESULT_STR(strPtr(json),
             "{\n    \"backup-info-size-delta\" : 1982702,\n    \"backup-prior\" : \"20161219-212741F_20161219-212803I\","
             "\n    \"backup-reference\" : [\n        \"20161219-212741F\",\n        \"20161219-212741F_20161219-212803I\"\n    ],"
@@ -144,11 +144,18 @@ testRun(void)
             "    sorted json string result");
 
         //--------------------------------------------------------------------------------------------------------------------------
-//         VariantList *varListOuter = NULL;
-//
-//         TEST_ASSIGN(varListOuter, varNewVarLst(varLstNew()), "new keyValue array");
-//         varLstAdd(varVarLst(varListOuter), keyValue);
-//         TEST_ASSIGN(json, varToJson(varListOuter, 0), "varToJson - VariantList");
+        Variant *varListOuter = NULL;
+
+        TEST_ASSIGN(varListOuter, varNewVarLst(varLstNew()), "new keyValue array");
+        varLstAdd(varVarLst(varListOuter), keyValue);
+
+        TEST_ASSIGN(json, varToJson(varListOuter, 0), "varToJson - VariantList - no indent");
+        TEST_RESULT_STR(strPtr(json),
+            "[{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
+            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
+            "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}]\n",
+            "    sorted json string result");
 // printf("JSON:\n%s",strPtr(json)); fflush(stdout);
 // CSHANG Not sure how to pass the kv as a variant to the varToJson
         // TEST_ASSIGN(
