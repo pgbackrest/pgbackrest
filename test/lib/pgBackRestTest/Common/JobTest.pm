@@ -35,6 +35,7 @@ use pgBackRestTest::Common::VmTest;
 # Build flags from the last build.  When the build flags change test files must be rebuilt
 ####################################################################################################################################
 my $rhBuildFlags = undef;
+my $rhBuildInit = undef;
 
 ####################################################################################################################################
 # new
@@ -201,21 +202,44 @@ sub run
                 # If testing C code copy source files to the test directory
                 if ($self->{oTest}->{&TEST_C})
                 {
-                    # If any of the build flags have changed then we'll need to rebuild from scratch
-                    my $bFlagsChanged =
-                        defined($rhBuildFlags->{$self->{iVmIdx}}) != defined($self->{oTest}->{&TEST_CDEF}) ||
-                        defined($rhBuildFlags->{$self->{iVmIdx}}) &&
-                        $rhBuildFlags->{$self->{iVmIdx}} ne $self->{oTest}->{&TEST_CDEF};
-
-                    if (!$bGCovExists || $bFlagsChanged)
+                    # If no tests have been run on this VM init build flags
+                    if (!$rhBuildInit->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}})
                     {
-                        executeTest("rsync -rt --delete $self->{strBackRestBase}/src/ $self->{strGCovPath}");
-                        executeTest("rsync -t $self->{strBackRestBase}/libc/LibC.h $self->{strGCovPath}");
-                        executeTest("rsync -rt $self->{strBackRestBase}/libc/xs/ $self->{strGCovPath}/xs");
-                        executeTest("rsync -rt $self->{strBackRestBase}/test/src/ $self->{strGCovPath}");
+                        # Attempt to load build flags off from file
+                        my $oFile = $self->{oStorageTest}->openRead("$self->{strGCovPath}/buildflags", {bIgnoreMissing => true});
+
+                        # If the file was not found then we don't know what the flags were set to, so rebuild
+                        if (!defined($oFile))
+                        {
+                            $rhBuildFlags->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}} = 'REBUILD-REQUIRED';
+                        }
+                        # Else load the build flags
+                        else
+                        {
+                            $rhBuildFlags->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}} = ${$self->{oStorageTest}->get($oFile)};
+                        }
                     }
 
-                    $rhBuildFlags->{$self->{iVmIdx}} = $self->{oTest}->{&TEST_CDEF};
+                    # If any of the build flags have changed then we'll need to rebuild from scratch
+                    my $bFlagsChanged =
+                        $rhBuildFlags->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}} ne $self->{oTest}->{&TEST_CDEF};
+
+                    # If flags changed or this is the first build, then rsync files
+                    if ($bFlagsChanged || !$rhBuildInit->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}})
+                    {
+                        executeTest(
+                            'rsync -rt' . ($bFlagsChanged ? ' --delete' : '') .
+                                " --exclude=test.c $self->{strBackRestBase}/src/ $self->{strGCovPath} && " .
+                            "rsync -t $self->{strBackRestBase}/libc/LibC.h $self->{strGCovPath} && " .
+                            "rsync -rt $self->{strBackRestBase}/libc/xs/ $self->{strGCovPath}/xs && " .
+                            "rsync -rt --exclude=test.c $self->{strBackRestBase}/test/src/ $self->{strGCovPath}");
+                    }
+
+                    # Set build flags and save them to a file
+                    $rhBuildInit->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}} = true;
+                    $rhBuildFlags->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}} = $self->{oTest}->{&TEST_CDEF};
+                    $self->{oStorageTest}->put(
+                        "$self->{strGCovPath}/buildflags", $rhBuildFlags->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}});
                 }
 
                 # If testing Perl code (or C code that calls Perl code) install bin and Perl C Library
@@ -364,8 +388,20 @@ sub run
 
                 $strTestC =~ s/\{\[C\_TEST\_LIST\]\}/$strTestInit/g;
 
-                # Save C test file
-                $self->{oStorageTest}->put("$self->{strGCovPath}/test.c", $strTestC);
+                # Save C test file but don't overwrite the file if it exists and has the same content.  This prevents unneeded
+                # recompiles of the test code.
+                my $bSave = true;
+                my $oFile = $self->{oStorageTest}->openRead("$self->{strGCovPath}/test.c", {bIgnoreMissing => true});
+
+                if (defined($oFile) && ${$self->{oStorageTest}->get($oFile)} eq $strTestC)
+                {
+                    $bSave = false;
+                }
+
+                if ($bSave)
+                {
+                    $self->{oStorageTest}->put("$self->{strGCovPath}/test.c", $strTestC);
+                }
 
                 # Build the Makefile
                 my $strMakefile =

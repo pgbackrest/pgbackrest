@@ -576,20 +576,22 @@ eval
                 push(@{$oyProcess}, undef);
             }
 
-            executeTest("sudo rm -rf ${strTestPath}/*");
+            executeTest(
+                "sudo rm -rf ${strTestPath}/cover_db ${strTestPath}/test-* ${strTestPath}/expect-*" .
+                ($bDev ? '' : " ${strTestPath}/gcov-*"));
             $oStorageTest->pathCreate($strCoveragePath, {strMode => '0770', bIgnoreMissing => true, bCreateParent => true});
 
             # Remove old coverage dirs -- do it this way so the dirs stay open in finder/explorer, etc.
-            executeTest("rm -rf ${strBackRestBase}/test/coverage/c/*");
-            executeTest("rm -rf ${strBackRestBase}/test/coverage/perl/*");
+            executeTest("rm -rf ${strBackRestBase}/test/coverage/c/* ${strBackRestBase}/test/coverage/perl/*");
 
             # Copy C code for coverage tests
             if (vmCoverageC($strVm) && !$bDryRun)
             {
                 $oStorageTest->pathCreate("${strCodePath}/test", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
-                executeTest("rsync -rt --delete --exclude=test ${strBackRestBase}/src/ ${strCodePath}");
-                executeTest("rsync -rt --delete ${strBackRestBase}/test/src/module/ ${strCodePath}/test");
+                executeTest(
+                    "rsync -rt --delete --exclude=test ${strBackRestBase}/src/ ${strCodePath} && " .
+                    "rsync -rt --delete ${strBackRestBase}/test/src/module/ ${strCodePath}/test");
             }
         }
 
