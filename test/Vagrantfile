@@ -46,6 +46,13 @@ Vagrant.configure(2) do |config|
         sudo /etc/init.d/virtualbox-guest-utils stop
         sudo /usr/sbin/VBoxService --timesync-set-on-restore --timesync-interval 5000 --timesync-set-threshold 1
 
+        # Mount tmpfs at /home/vagrant/test for faster testing
+        #---------------------------------------------------------------------------------------------------------------------------
+        echo 'Mount tmpfs' && date
+        sudo -u vagrant mkdir -p -m 770 /home/vagrant/test
+        echo 'tmpfs /home/vagrant/test tmpfs size=2560M 0 1' >> /etc/fstab
+        mount -a
+
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Perl Modules' && date
         apt-get install -y libdbd-pg-perl libio-socket-ssl-perl libxml-libxml-perl libxml-checker-perl libperl-critic-perl \

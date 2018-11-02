@@ -87,6 +87,14 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Mount <id>tmpfs</id> in <file>Vagrantfile</file> instead <file>test.pl</file>.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2018-10-15" version="2.06" title="Checksum Delta Backup and PostgreSQL 11 Support">
