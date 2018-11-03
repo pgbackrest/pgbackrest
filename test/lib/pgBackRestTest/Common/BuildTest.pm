@@ -42,6 +42,9 @@ sub buildPutDiffers
     {
         $oStorage->put($strFile, $strContents);
     }
+
+    # Was the file saved?
+    return $bSave;
 }
 
 push @EXPORT, qw(buildPutDiffers);
