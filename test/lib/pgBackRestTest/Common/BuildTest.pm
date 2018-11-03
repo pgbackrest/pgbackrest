@@ -18,6 +18,35 @@ use Exporter qw(import);
 use pgBackRest::Common::Log;
 
 ####################################################################################################################################
+# Save contents to a file if the file is missing or the contents are different.  This saves write IO and prevents the timestamp from
+# changing.
+####################################################################################################################################
+sub buildPutDiffers
+{
+    my $oStorage = shift;
+    my $strFile = shift;
+    my $strContents = shift;
+
+    # Attempt to load the file
+    my $bSave = true;
+    my $oFile = $oStorage->openRead($strFile, {bIgnoreMissing => true});
+
+    # If file was found see if the content is the same
+    if (defined($oFile) && ${$oStorage->get($oFile)} eq $strContents)
+    {
+        $bSave = false;
+    }
+
+    # Save if the contents are different or missing
+    if ($bSave)
+    {
+        $oStorage->put($strFile, $strContents);
+    }
+}
+
+push @EXPORT, qw(buildPutDiffers);
+
+####################################################################################################################################
 # Find last modification time in a list of directories, with optional filters
 ####################################################################################################################################
 sub buildLastModTime
@@ -69,7 +98,7 @@ sub buildDependencyTree
         # Only process non-auto files
         if ($strFile =~ /^[A-Za-z0-9\/]+\.(c|h)$/)
         {
-            buildDependencyTreeSub($oStorage, $rhDependencyTree, $strFile);
+            buildDependencyTreeSub($oStorage, $rhDependencyTree, $strFile, undef, ['src', 'libc']);
         }
     }
 
@@ -83,17 +112,34 @@ sub buildDependencyTreeSub
     my $oStorage = shift;
     my $rhDependencyTree = shift;
     my $strFile = shift;
+    my $strBasePath = shift;
+    my $rstryPath = shift;
 
     if (!defined($rhDependencyTree->{$strFile}))
     {
         $rhDependencyTree->{$strFile} = {};
 
         # Load file contents
-        my $rstrContent = $oStorage->get($oStorage->openRead("src/${strFile}", {bIgnoreMissing => true}));
+        my $rstrContent;
+
+        foreach my $strPath (@{$rstryPath})
+        {
+            $rstrContent = $oStorage->get(
+                $oStorage->openRead(
+                    (defined($strBasePath) ? "${strBasePath}/" : '') . ($strPath ne '' ? "${strPath}/" : '') . "${strFile}",
+                    {bIgnoreMissing => true}));
+
+            if (defined($rstrContent))
+            {
+                $rhDependencyTree->{$strFile}{path} = $strPath;
+                last;
+            }
+        }
 
         if (!defined($rstrContent))
         {
-            $rstrContent = $oStorage->get("libc/${strFile}");
+            confess &log(ERROR,
+                "unable to find ${strFile} in " . $oStorage->pathGet($strBasePath) . " + [" . join(', ', @{$rstryPath}) . "]");
         }
 
         # Process includes
@@ -104,7 +150,7 @@ sub buildDependencyTreeSub
             $strInclude = (split('"', $strInclude))[1];
             $rhInclude->{$strInclude} = true;
 
-            buildDependencyTreeSub($oStorage, $rhDependencyTree, $strInclude);
+            buildDependencyTreeSub($oStorage, $rhDependencyTree, $strInclude, $strBasePath, $rstryPath);
 
             foreach my $strIncludeSub (@{$rhDependencyTree->{$strInclude}{include}})
             {
@@ -114,22 +160,10 @@ sub buildDependencyTreeSub
 
         my @stryInclude = sort(keys(%{$rhInclude}));
         $rhDependencyTree->{$strFile}{include} = \@stryInclude;
-
-        # Find header files that map to C files -- these are required to compile this file
-        foreach my $strInclude (@stryInclude)
-        {
-            if ($strInclude =~ /^[A-Za-z0-9\/]+\.h$/)
-            {
-                my $strObject = substr($strInclude, 0, length($strInclude) - 1) . 'c';
-
-                if ($oStorage->exists("src/${strObject}"))
-                {
-                    push(@{$rhDependencyTree->{$strFile}{object}}, $strObject);
-                }
-            }
-        }
     }
 }
+
+push @EXPORT, qw(buildDependencyTreeSub);
 
 ####################################################################################################################################
 # Build Makefile object compile rules
@@ -223,7 +257,7 @@ sub buildMakefile
 push @EXPORT, qw(buildMakefile);
 
 ####################################################################################################################################
-# Update a Makefile with object compile rules
+# Load the C library and check pointer size
 ####################################################################################################################################
 sub buildLoadLibC
 {

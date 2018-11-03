@@ -49,6 +49,8 @@ use constant TESTDEF_C                                              => 'c';
     push @EXPORT, qw(TESTDEF_C);
 use constant TESTDEF_DEFINE                                         => 'define';
     push @EXPORT, qw(TESTDEF_DEFINE);
+use constant TESTDEF_DEFINE_TEST                                    => 'define-test';
+    push @EXPORT, qw(TESTDEF_DEFINE_TEST);
 use constant TESTDEF_DEBUG_UNIT_SUPPRESS                            => 'debugUnitSuppress';
     push @EXPORT, qw(TESTDEF_DEBUG_UNIT_SUPPRESS);
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
@@ -119,7 +121,8 @@ sub testDefLoad
                 push(@stryModuleTest, $strTest);
 
                 # Resolve variables that can be set in the module or the test
-                foreach my $strVar (TESTDEF_DEFINE, TESTDEF_DEBUG_UNIT_SUPPRESS, TESTDEF_DB, TESTDEF_PERL_REQ, TESTDEF_VM)
+                foreach my $strVar (
+                    TESTDEF_DEFINE, TESTDEF_DEFINE_TEST, TESTDEF_DEBUG_UNIT_SUPPRESS, TESTDEF_DB, TESTDEF_PERL_REQ, TESTDEF_VM)
                 {
                     $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                         $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);
