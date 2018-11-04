@@ -388,8 +388,8 @@ eval
                 trim(
                     executeTest(
                         "git -C ${strBackRestBase} ls-files -c --others --exclude-standard |" .
-                            " rsync -rtW --out-format=\"\%n\" --delete --exclude=repo.manifest ${strBackRestBase}/" .
-                            " --files-from=- ${strRepoCachePath}"))));
+                            " rsync -rtW --out-format=\"\%n\" --delete --ignore-missing-args --exclude=repo.manifest" .
+                            " ${strBackRestBase}/ --files-from=- ${strRepoCachePath}"))));
 
         if (@stryModifiedList > 0)
         {
