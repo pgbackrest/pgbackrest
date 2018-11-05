@@ -178,7 +178,7 @@ sub dropList
     my
     (
         $strOperation,
-        $stryReadyFile,
+        $stryWalFile,
     ) =
         logDebugParam
         (
@@ -186,12 +186,20 @@ sub dropList
             {name => 'stryReadyList'},
         );
 
+    # Determine the total size of the WAL
+    my $iTotalSize = 0;
+
+    for my $strWalFile (@{$stryWalFile})
+    {
+        $iTotalSize += (storageDb()->info("$self->{strWalPath}/${strWalFile}"))->size();
+    }
+
+    # If total size exceeds queue max then drop all files
     my $stryDropFile = [];
 
-    # Determine if there are any to be dropped
-    if (@{$stryReadyFile} > int(cfgOption(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX) / PG_WAL_SIZE))
+    if ($iTotalSize > cfgOption(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX))
     {
-        $stryDropFile = $stryReadyFile;
+        $stryDropFile = $stryWalFile;
     }
 
     return logDebugReturn

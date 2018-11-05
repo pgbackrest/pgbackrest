@@ -10,6 +10,7 @@ use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT = qw();
+use File::Basename qw(basename);
 use Storable qw(dclone);
 
 use pgBackRest::Common::Log;
@@ -36,6 +37,9 @@ sub buildAll
     # Storage object
     my $oStorage = new pgBackRest::Storage::Local(
         $strBuildPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+
+    # List of files actually built
+    my @stryBuilt;
 
     # Build and output source code
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -162,14 +166,27 @@ sub buildAll
                     $strExt = $strFileType eq BLD_C ? $strFileExt : "${strFileExt}h";
                 }
 
-                # Save the file
-                $oStorage->put("${strPath}/${strFile}.auto.${strExt}", trim($rhSource->{$strFileType}) . "\n");
+                # Save the file if it has not changed
+                my $strBuilt = "${strPath}/${strFile}.auto.${strExt}";
+                my $bSave = true;
+                my $oFile = $oStorage->openRead($strBuilt, {bIgnoreMissing => true});
+
+                if (defined($oFile) && ${$oStorage->get($oFile)} eq (trim($rhSource->{$strFileType}) . "\n"))
+                {
+                    $bSave = false;
+                }
+
+                if ($bSave)
+                {
+                    $oStorage->put($strBuilt, trim($rhSource->{$strFileType}) . "\n");
+                    push(@stryBuilt, basename($strBuildPath) . "/${strBuilt}");
+                }
             }
         }
     }
 
-    # Return build hash to caller for further processing
-    return $rhBuild;
+    # Return list of files built
+    return @stryBuilt;
 }
 
 push @EXPORT, qw(buildAll);

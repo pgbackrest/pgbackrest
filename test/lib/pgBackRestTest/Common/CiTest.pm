@@ -24,6 +24,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Version;
 
+use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -129,7 +130,7 @@ sub process
         "script:\n" .
         "  - " . BACKREST_EXE . "/test/travis.pl \${PGB_CI?}\n";
 
-    $self->{oStorage}->put('.travis.yml', $strConfig);
+    buildPutDiffers($self->{oStorage}, '.travis.yml', $strConfig);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

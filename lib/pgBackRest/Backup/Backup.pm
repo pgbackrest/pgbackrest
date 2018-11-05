@@ -72,7 +72,11 @@ sub resumeClean
         $oStorageRepo,
         $strBackupLabel,
         $oManifest,
-        $oAbortedManifest
+        $oAbortedManifest,
+        $bOnline,
+        $bDelta,
+        $strTimelineCurrent,
+        $strTimelineLast,
     ) =
         logDebugParam
         (
@@ -80,7 +84,11 @@ sub resumeClean
             {name => 'oStorageRepo'},
             {name => 'strBackupLabel'},
             {name => 'oManifest'},
-            {name => 'oAbortedManifest'}
+            {name => 'oAbortedManifest'},
+            {name => 'bOnline'},
+            {name => 'bDelta'},
+            {name => 'strTimelineCurrent', required => false},
+            {name => 'strTimelineLast', required => false},
         );
 
     &log(DETAIL, 'clean resumed backup path: ' . $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}"));
@@ -90,6 +98,56 @@ sub resumeClean
 
     # Get compress flag
     my $bCompressed = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
+
+    if (!$bDelta)
+    {
+        # Check to see if delta checksum should be enabled
+        $bDelta = $oAbortedManifest->checkDelta(
+            'resumed', $oAbortedManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, $bOnline),
+            $strTimelineCurrent, $strTimelineLast);
+
+        # If delta is still false, check the files for anomalies
+        if (!$bDelta)
+        {
+            my @stryFileList = ();
+
+            foreach my $strName (sort(keys(%{$hFile})))
+            {
+                # Ignore files that will never be in the manifest but should be preserved
+                if ($strName eq FILE_MANIFEST_COPY ||
+                    $strName eq '.')
+                {
+                    next;
+                }
+
+                if ($hFile->{$strName}{type} eq 'f')
+                {
+                    # If the original backup was compressed then remove the extension before checking the manifest
+                    my $strFile = $strName;
+
+                    if ($bCompressed)
+                    {
+                        $strFile = substr($strFile, 0, length($strFile) - 3);
+                    }
+
+                    # To be preserved the file must exist in the new manifest and not be a reference to a previous backup and must
+                    # have a checksum
+                    if ($oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile) &&
+                        !$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE) &&
+                        $oAbortedManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM))
+                    {
+                        push(@stryFileList, $strFile);
+                    }
+                }
+            }
+
+            # If there are files in the list then check if delta should be enabled
+            if (@stryFileList)
+            {
+                $bDelta = $oManifest->checkDeltaFile(\@stryFileList, $oAbortedManifest, undef);
+            }
+        }
+    }
 
     # Find paths and files to delete
     my @stryFile;
@@ -139,7 +197,7 @@ sub resumeClean
                 if (defined($strChecksum) &&
                     $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) ==
                     $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE)  &&
-                    (cfgOption(CFGOPT_DELTA) ||
+                    ($bDelta ||
                     $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
                     $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP)))
                 {
@@ -189,7 +247,11 @@ sub resumeClean
     }
 
     # Return from function and log return values if any
-    return logDebugReturn($strOperation);
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bDelta', value => $bDelta, trace => true},
+    );
 }
 
 ####################################################################################################################################
@@ -504,6 +566,7 @@ sub process
     # Find the previous backup based on the type
     my $oLastManifest;
     my $strBackupLastPath;
+    my $strTimelineLast;
 
     if ($strType ne CFGOPTVAL_BACKUP_TYPE_FULL)
     {
@@ -519,6 +582,12 @@ sub process
 
             # If the repo is encrypted then use the passphrase in this manifest for the backup set
             $strCipherPassBackupSet = $oLastManifest->cipherPassSub();
+
+            # Get archive segment timeline for determining if a timeline switch has occurred. Only defined for prior online backup.
+            if ($oLastManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP))
+            {
+                $strTimelineLast = substr($oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP), 0, 8);
+            }
 
             &log(INFO, 'last backup label = ' . $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL) .
                        ', version = ' . $oLastManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION));
@@ -554,6 +623,7 @@ sub process
     my $strBackupLabel;
     my $oAbortedManifest;
     my $strBackupPath;
+    my $strTimelineAborted;
 
     foreach my $strAbortedBackup ($oStorageRepo->list(
         STORAGE_REPO_BACKUP, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))
@@ -659,6 +729,17 @@ sub process
                 {
                     $strCipherPassBackupSet = $oAbortedManifest->cipherPassSub();
                 }
+
+                # Get the archive segment timeline for determining if a timeline switch has occurred. Only defined for prior online
+                # backup.
+                if ($oAbortedManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP))
+                {
+                    $strTimelineAborted = substr($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP), 0, 8);
+                }
+                elsif ($oAbortedManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START))
+                {
+                    $strTimelineAborted = substr($oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START), 0, 8);
+                }
             }
             else
             {
@@ -725,7 +806,8 @@ sub process
     my $strLsnStart = undef;
     my $iWalSegmentSize = undef;
     my $hTablespaceMap = undef;
-	my $hDatabaseMap = undef;
+    my $hDatabaseMap = undef;
+    my $strTimelineCurrent = undef;
 
     # If this is an offline backup
     if (!cfgOption(CFGOPT_ONLINE))
@@ -766,6 +848,9 @@ sub process
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strLsnStart);
         &log(INFO, "backup start archive = ${strArchiveStart}, lsn = ${strLsnStart}");
+
+        # Get the timeline from the archive
+        $strTimelineCurrent = substr($strArchiveStart, 0, 8);
 
         # Get tablespace map
         $hTablespaceMap = $oDbMaster->tablespaceMapGet();
@@ -825,12 +910,10 @@ sub process
     # Record checksum-page option in the manifest
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE, undef, cfgOption(CFGOPT_CHECKSUM_PAGE));
 
-    # Build the manifest
-    $oBackupManifest->build($oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
-        cfgOption(CFGOPT_DELTA), $hTablespaceMap, $hDatabaseMap, cfgOption(CFGOPT_EXCLUDE, false));
-
-    # Set the delta option.
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef, cfgOption(CFGOPT_DELTA));
+    # Build the manifest. The delta option may have changed from false to true during the manifest build so set it to the result.
+    cfgOptionSet(CFGOPT_DELTA, $oBackupManifest->build(
+        $oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE), cfgOption(CFGOPT_DELTA), $hTablespaceMap,
+        $hDatabaseMap, cfgOption(CFGOPT_EXCLUDE, false), $strTimelineCurrent, $strTimelineLast));
 
     &log(TEST, TEST_MANIFEST_BUILD);
 
@@ -840,8 +923,10 @@ sub process
         &log(WARN, "aborted backup ${strBackupLabel} of same type exists, will be cleaned to remove invalid files and resumed");
         &log(TEST, TEST_BACKUP_RESUME);
 
-        # Clean the backup path before resuming
-        $self->resumeClean($oStorageRepo, $strBackupLabel, $oBackupManifest, $oAbortedManifest);
+        # Clean the backup path before resuming. The delta option may have changed from false to true during the reseume clean
+        # so set it to the result.
+        cfgOptionSet(CFGOPT_DELTA, $self->resumeClean($oStorageRepo, $strBackupLabel, $oBackupManifest, $oAbortedManifest,
+            cfgOption(CFGOPT_ONLINE), cfgOption(CFGOPT_DELTA), $strTimelineCurrent, $strTimelineAborted));
     }
     # Else create the backup path
     else
@@ -849,6 +934,9 @@ sub process
         logDebugMisc($strOperation, "create backup path ${strBackupPath}");
         $oStorageRepo->pathCreate(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
     }
+
+    # Set the delta option in the manifest
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_DELTA, undef, cfgOption(CFGOPT_DELTA));
 
     # Save the backup manifest
     $oBackupManifest->saveCopy();

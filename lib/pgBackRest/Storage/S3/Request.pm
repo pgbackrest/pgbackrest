@@ -49,9 +49,9 @@ use constant S3_RESPONSE_TYPE_XML                                   => 'xml';
 use constant S3_RESPONSE_CODE_SUCCESS                               => 200;
 use constant S3_RESPONSE_CODE_ERROR_AUTH                            => 403;
 use constant S3_RESPONSE_CODE_ERROR_NOT_FOUND                       => 404;
-use constant S3_RESPONSE_CODE_ERROR_INTERNAL                        => 500;
+use constant S3_RESPONSE_CODE_ERROR_RETRY_CLASS                     => 5;
 
-use constant S3_RETRY_MAX                                           => 2;
+use constant S3_RETRY_MAX                                           => 4;
 
 ####################################################################################################################################
 # new
@@ -213,8 +213,8 @@ sub request
             # Else a more serious error
             else
             {
-                # Retry for S3 internal errors
-                if ($iResponseCode == S3_RESPONSE_CODE_ERROR_INTERNAL)
+                # Retry for S3 internal or rate-limiting errors (any 5xx error should be retried)
+                if (int($iResponseCode / 100) == S3_RESPONSE_CODE_ERROR_RETRY_CLASS)
                 {
                     # Increment retry total and check if retry should be attempted
                     $iRetryTotal++;
@@ -233,7 +233,7 @@ sub request
                     my $rstrResponseBody = $oHttpClient->responseBody();
 
                     confess &log(ERROR,
-                        'S3 request error' . ($iRetryTotal > 0 ? " after retries" : '') .
+                        'S3 request error' . ($iRetryTotal > 0 ? " after " . (S3_RETRY_MAX + 1) . " tries" : '') .
                             " [$iResponseCode] " . $oHttpClient->responseMessage() .
                             "\n*** request header ***\n" . $oHttpClient->requestHeaderText() .
                             ($iResponseCode == S3_RESPONSE_CODE_ERROR_AUTH ?

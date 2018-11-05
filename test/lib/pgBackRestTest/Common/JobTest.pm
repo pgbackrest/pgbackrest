@@ -24,6 +24,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Version;
 
+use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -32,9 +33,9 @@ use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
-# Build flags from the last build.  When the build flags change test files must be rebuilt
+# Has the C build directory been initialized yet?
 ####################################################################################################################################
-my $rhBuildFlags = undef;
+my $rhBuildInit = undef;
 
 ####################################################################################################################################
 # new
@@ -201,21 +202,20 @@ sub run
                 # If testing C code copy source files to the test directory
                 if ($self->{oTest}->{&TEST_C})
                 {
-                    # If any of the build flags have changed then we'll need to rebuild from scratch
-                    my $bFlagsChanged =
-                        defined($rhBuildFlags->{$self->{iVmIdx}}) != defined($self->{oTest}->{&TEST_CDEF}) ||
-                        defined($rhBuildFlags->{$self->{iVmIdx}}) &&
-                        $rhBuildFlags->{$self->{iVmIdx}} ne $self->{oTest}->{&TEST_CDEF};
-
-                    if (!$bGCovExists || $bFlagsChanged)
+                    # If this is the first build, then rsync files
+                    if (!$rhBuildInit->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}})
                     {
-                        executeTest("rsync -rt --delete $self->{strBackRestBase}/src/ $self->{strGCovPath}");
-                        executeTest("rsync -t $self->{strBackRestBase}/libc/LibC.h $self->{strGCovPath}");
-                        executeTest("rsync -rt $self->{strBackRestBase}/libc/xs/ $self->{strGCovPath}/xs");
-                        executeTest("rsync -rt $self->{strBackRestBase}/test/src/ $self->{strGCovPath}");
+                        executeTest(
+                            'rsync -rt --delete --exclude=*.o --exclude=test.c --exclude=test.gcno --exclude=LibC.h --exclude=xs' .
+                                " --exclude=test --exclude=buildflags --exclude=testflags --exclude=harnessflags" .
+                                " $self->{strBackRestBase}/src/ $self->{strGCovPath} && " .
+                            "rsync -t $self->{strBackRestBase}/libc/LibC.h $self->{strGCovPath} && " .
+                            "rsync -rt --delete $self->{strBackRestBase}/libc/xs/ $self->{strGCovPath}/xs && " .
+                            "rsync -rt --delete --exclude=*.o $self->{strBackRestBase}/test/src/ $self->{strGCovPath}/test");
                     }
 
-                    $rhBuildFlags->{$self->{iVmIdx}} = $self->{oTest}->{&TEST_CDEF};
+                    # Build directory has been initialized
+                    $rhBuildInit->{$self->{oTest}->{&TEST_VM}}{$self->{iVmIdx}} = true;
                 }
 
                 # If testing Perl code (or C code that calls Perl code) install bin and Perl C Library
@@ -246,9 +246,9 @@ sub run
                 "cd $self->{strGCovPath} && " .
                 "make -s 2>&1 &&" .
                 ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{bValgrindUnit}?
-                    " valgrind -q --gen-suppressions=all --suppressions=$self->{strBackRestBase}/test/src/valgrind.suppress" .
+                    " valgrind -q --gen-suppressions=all --suppressions=$self->{strGCovPath}/test/valgrind.suppress" .
                     " --leak-check=full --leak-resolution=high --error-exitcode=25" : '') .
-                " ./test 2>&1'";
+                " ./test.bin 2>&1'";
         }
         else
         {
@@ -294,15 +294,16 @@ sub run
                     next if $strFile =~ /test\.c$/;
 
                     if (!defined($hTestCoverage->{substr($strFile, 0, length($strFile) - 2)}) &&
-                        $strFile !~ /^module\/[^\/]*\/.*Test\.c$/)
+                        $strFile !~ /^test\/module\/[^\/]*\/.*Test\.c$/)
                     {
                         push(@stryCFile, "${strFile}");
                     }
                 }
 
                 # Generate list of C files to include for testing
+                my $strTestDepend = '';
                 my $strTestFile =
-                    "module/$self->{oTest}->{&TEST_MODULE}/" . testRunName($self->{oTest}->{&TEST_NAME}, false) . 'Test.c';
+                    "test/module/$self->{oTest}->{&TEST_MODULE}/" . testRunName($self->{oTest}->{&TEST_NAME}, false) . 'Test.c';
                 my $strCInclude;
 
                 foreach my $strFile (sort(keys(%{$hTestCoverage})))
@@ -329,12 +330,26 @@ sub run
                     }
 
                     $strCInclude .= (defined($strCInclude) ? "\n" : '') . "#include \"${strCIncludeFile}\"";
+                    $strTestDepend .= " ${strCIncludeFile}";
                 }
 
                 # Update C test file with test module
-                my $strTestC = ${$self->{oStorageTest}->get("$self->{strBackRestBase}/test/src/test.c")};
+                my $strTestC = ${$self->{oStorageTest}->get("$self->{strGCovPath}/test/test.c")};
                 $strTestC =~ s/\{\[C\_INCLUDE\]\}/$strCInclude/g;
                 $strTestC =~ s/\{\[C\_TEST\_INCLUDE\]\}/\#include \"$strTestFile\"/g;
+                $strTestDepend .= " ${strTestFile}";
+
+                # Build dependencies for the test file
+                my $rhDependencyTree = {};
+                buildDependencyTreeSub(
+                    $self->{oStorageTest}, $rhDependencyTree, $strTestFile, $self->{strGCovPath}, ['', 'test']);
+
+                foreach my $strDepend (@{$rhDependencyTree->{$strTestFile}{include}})
+                {
+                    $strTestDepend .=
+                        ' ' . ($rhDependencyTree->{$strDepend}{path} ne '' ? $rhDependencyTree->{$strDepend}{path} . '/' : '') .
+                        $strDepend;
+                }
 
                 # Set globals
                 $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strVmTestPath/g;
@@ -363,50 +378,93 @@ sub run
                 }
 
                 $strTestC =~ s/\{\[C\_TEST\_LIST\]\}/$strTestInit/g;
+                buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/test.c", $strTestC);
 
-                # Save C test file
-                $self->{oStorageTest}->put("$self->{strGCovPath}/test.c", $strTestC);
+                # Flags that are common to all builds
+                my $strCommonFlags =
+                    '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered `perl -MExtUtils::Embed -e ccopts`'
+                    . ($self->{bProfile} ? " -pg" : '') .
+                    ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : " -DDEBUG_UNIT") .
+                    (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
+                    ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
+                    ($self->{bDebug} ? '' : " -DNDEBUG");
+
+                # Flags used to buid harness files
+                my $strHarnessFlags =
+                    '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
+                    ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
+
+                buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/harnessflags", "${strCommonFlags} ${strHarnessFlags}");
+
+                # Flags used to buid test.c
+                my $strTestFlags =
+                    '-Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2' .
+                    ' -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla' .
+                    ($self->{oTest}->{&TEST_VM} eq VM_U16 || $self->{oTest}->{&TEST_VM} eq VM_U18 ?
+                        ' -Wformat-signedness' : '') .
+                    ($self->{oTest}->{&TEST_VM} eq VM_U18 ?
+                        ' -Wduplicated-branches -Wduplicated-cond' : '') .
+                    # This warning appears to be broken on U12/CO6 even though the functionality is fine
+                    ($self->{oTest}->{&TEST_VM} eq VM_U12 || $self->{oTest}->{&TEST_VM} eq VM_CO6 ?
+                        ' -Wno-missing-field-initializers' : '') .
+                    ' -O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
+                    (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
+                        ' -fprofile-arcs -ftest-coverage' : '') .
+                    ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
+
+                buildPutDiffers(
+                    $self->{oStorageTest}, "$self->{strGCovPath}/testflags", "${strCommonFlags} ${strTestFlags}");
+
+                # Flags used to buid all other files
+                my $strBuildFlags =
+                    ($self->{bOptimize} ? '-O2' : '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : ''));
+
+                buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/buildflags", "${strCommonFlags} ${strBuildFlags}");
 
                 # Build the Makefile
                 my $strMakefile =
                     "CC=gcc\n" .
-                    "CFLAGS=-I. -std=c99 -fPIC -g" . ($self->{bProfile} ? " -pg" : '') . "\\\n" .
-                    "       -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wswitch-enum -Wconversion \\\n" .
-                    ($self->{oTest}->{&TEST_VM} eq VM_U16 || $self->{oTest}->{&TEST_VM} eq VM_U18 ?
-                        "       -Wformat-signedness \\\n" : '') .
-                    ($self->{oTest}->{&TEST_VM} eq VM_U18 ?
-                        "       -Wduplicated-branches -Wduplicated-cond \\\n" : '') .
-                    # This warning appears to be broken on U12 even though the functionality is fine
-                    ($self->{oTest}->{&TEST_VM} eq VM_U12 || $self->{oTest}->{&TEST_VM} eq VM_CO6 ?
-                        "       -Wno-missing-field-initializers \\\n" : '') .
-                    # ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 &&
-                    #     $self->{oTest}->{&TEST_MODULE} ne 'perl' && $self->{oTest}->{&TEST_NAME} ne 'exec' ?
-                    #         "       -Wpedantic \\\n" : '') .
-                    "       -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla \\\n" .
-                    "       `perl -MExtUtils::Embed -e ccopts`\n" .
-                    "LDFLAGS=-lcrypto -lz" . (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
+                    "COMMONFLAGS=${strCommonFlags}\n" .
+                    "BUILDFLAGS=${strBuildFlags}\n" .
+                    "HARNESSFLAGS=${strHarnessFlags}\n" .
+                    "TESTFLAGS=${strTestFlags}\n" .
+                    "LDFLAGS=-lcrypto -lssl -lz" .
+                        (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -lbacktrace' : '') .
                         " `perl -MExtUtils::Embed -e ldopts`\n" .
-                    'TESTFLAGS=' . ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : "-DDEBUG_UNIT") .
-                        (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
-                        ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
-                        ($self->{bDebug} ? '' : " -DNDEBUG") .
                     "\n" .
-                    "\nSRCS=" . join(' ', @stryCFile) . "\n" .
+                    "SRCS=" . join(' ', @stryCFile) . "\n" .
                     "OBJS=\$(SRCS:.c=.o)\n" .
                     "\n" .
                     "test: \$(OBJS) test.o\n" .
-                    "\t\$(CC) -o test \$(OBJS) test.o"  . ($self->{bProfile} ? " -pg" : '') . " \$(LDFLAGS)\n" .
+                    "\t\$(CC) -o test.bin \$(OBJS) test.o"  . ($self->{bProfile} ? " -pg" : '') . " \$(LDFLAGS)\n" .
                     "\n" .
-                    "test.o: test.c\n" .
-	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) -O0" .
-                        ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
-                        (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
-                            ' -fprofile-arcs -ftest-coverage' : '') .
-                        " -c test.c\n" .
-                    "\n" .
-                    ".c.o:\n" .
-	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) " . ($self->{bOptimize} ? '-O2' : '-O0') . " -c \$< -o \$@\n";
+                    "test.o: testflags test.c${strTestDepend}\n" .
+	                "\t\$(CC) \$(COMMONFLAGS) \$(TESTFLAGS) -c test.c\n";
+
+                # Build C file dependencies
+                foreach my $strCFile (@stryCFile)
+                {
+                    buildDependencyTreeSub(
+                        $self->{oStorageTest}, $rhDependencyTree, $strCFile, $self->{strGCovPath}, ['', 'test']);
+
+                    $strMakefile .=
+                        "\n" . substr($strCFile, 0, length($strCFile) - 2) . ".o:" .
+                        ($strCFile =~ /^test\// ? " harnessflags" : " buildflags") . " $strCFile";
+
+                    foreach my $strDepend (@{$rhDependencyTree->{$strCFile}{include}})
+                    {
+                        $strMakefile .=
+                            ' ' . ($rhDependencyTree->{$strDepend}{path} ne '' ? $rhDependencyTree->{$strDepend}{path} . '/' : '') .
+                            $strDepend;
+                    }
+
+                    $strMakefile .=
+                        "\n" .
+                        "\t\$(CC) \$(COMMONFLAGS)" .
+                            ($strCFile =~ /^test\// ? " \$(HARNESSFLAGS)" : " \$(BUILDFLAGS)") .
+                            " -c $strCFile -o " . substr($strCFile, 0, length($strCFile) - 2) . ".o\n";
+                }
 
                 $self->{oStorageTest}->put($self->{strGCovPath} . "/Makefile", $strMakefile);
             }
@@ -495,7 +553,7 @@ sub end
                 "module/$self->{oTest}->{&TEST_MODULE}/" . testRunName($self->{oTest}->{&TEST_NAME}, false) . 'Test');
 
             # Generate coverage reports for the modules
-            my $strLCovExe = "lcov --config-file=$self->{strBackRestBase}/test/src/lcov.conf";
+            my $strLCovExe = "lcov --config-file=$self->{strGCovPath}/test/lcov.conf";
             my $strLCovOut = $self->{strGCovPath} . '/test.lcov';
             my $strLCovOutTmp = $self->{strGCovPath} . '/test.tmp.lcov';
 

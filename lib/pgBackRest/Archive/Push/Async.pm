@@ -121,6 +121,27 @@ sub processQueue
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->processQueue');
 
+    # If queue max is exceeded then drop all WAL in the queue
+    my $iDropTotal = 0;
+
+    if (cfgOptionTest(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX))
+    {
+        my $stryDropList = $self->dropList($self->readyList());
+
+        if (@{$stryDropList} > 0)
+        {
+            foreach my $strDropFile (@{$stryDropList})
+            {
+                archiveAsyncStatusWrite(
+                    WAL_STATUS_OK, $self->{strSpoolPath}, $strDropFile, 0,
+                    "dropped WAL file ${strDropFile} because archive queue exceeded " .
+                        cfgOption(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX) . ' bytes');
+
+                $iDropTotal++;
+            }
+        }
+    }
+
     # Get jobs to process
     my $stryWalFile = $self->readyList();
 
@@ -135,7 +156,6 @@ sub processQueue
     # Process jobs if there are any
     my $iOkTotal = 0;
     my $iErrorTotal = 0;
-    my $iDropTotal = 0;
 
     if ($self->{oArchiveProcess}->jobTotal() > 0)
     {
@@ -184,27 +204,6 @@ sub processQueue
                         $iOkTotal++;
 
                         &log(DETAIL, "pushed WAL file ${strWalFile} to archive", undef, undef, undef, $hJob->{iProcessId});
-                    }
-                }
-
-                # Drop any jobs that exceed the queue max
-                if (cfgOptionTest(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX))
-                {
-                    my $stryDropList = $self->dropList($self->readyList());
-
-                    if (@{$stryDropList} > 0)
-                    {
-                        foreach my $strDropFile (@{$stryDropList})
-                        {
-                            archiveAsyncStatusWrite(
-                                WAL_STATUS_OK, $self->{strSpoolPath}, $strDropFile, 0,
-                                "dropped WAL file ${strDropFile} because archive queue exceeded " .
-                                    cfgOption(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX) . ' bytes');
-
-                            $iDropTotal++;
-                        }
-
-                        $self->{oArchiveProcess}->dequeueJobs(1, 'default');
                     }
                 }
             }

@@ -13,7 +13,8 @@
 #           full - the module/test provides full coverage for the code module
 #           partial - the module/test provides partial coverage for the code module
 #           noCode - the code module should not contain any coverable code.  If it does an error will be thrown.
-#     * define - defines for C testing
+#     * define - defines for C code (will also be applied to the test harness)
+#     * define-test - defines for the test harness
 #     * debugUnitSuppress - don't define DEBUG_UNIT for unit tests -- this is used to test unit test debugging macros
 #     * perlReq - is Perl required for this C test?
 #
@@ -36,7 +37,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: error
         total: 8
-        define: -DNO_ERROR -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
+        define-test: -DNO_ERROR -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
 
         coverage:
           common/error: full
@@ -45,7 +46,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-on
         total: 2
-        define: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
+        define-test: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
 
         coverage:
           common/assert: noCode
@@ -53,7 +54,8 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-off
         total: 2
-        define: -DNDEBUG -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
+        define: -DNDEBUG
+        define-test: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
         debugUnitSuppress: true
 
         coverage:
@@ -62,7 +64,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stack-trace
         total: 4
-        define: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
+        define-test: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
 
         coverage:
           common/stackTrace: full
@@ -70,7 +72,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: mem-context
         total: 7
-        define: -DNO_MEM_CONTEXT -DNO_LOG
+        define-test: -DNO_MEM_CONTEXT -DNO_LOG
 
         coverage:
           common/memContext: full
@@ -78,7 +80,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: time
         total: 2
-        define: -DNO_ERROR -DNO_LOG
+        define-test: -DNO_ERROR -DNO_LOG
 
         coverage:
           common/time: full
@@ -86,7 +88,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: fork
         total: 1
-        define: -DNO_LOG
+        define-test: -DNO_LOG
 
         coverage:
           common/fork: full
@@ -94,7 +96,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: log
         total: 5
-        define: -DNO_LOG
+        define-test: -DNO_LOG
 
         coverage:
           common/log: full
@@ -102,7 +104,8 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: debug-off
         total: 2
-        define: -DNDEBUG -DNO_LOG
+        define: -DNDEBUG
+        define-test: -DNO_LOG
         debugUnitSuppress: true
 
         coverage:
@@ -659,13 +662,14 @@ unit:
   # ********************************************************************************************************************************
   - name: backup
 
-    coverage:
-      Backup/Common: full
-
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: unit-perl
-        total: 3
+        total: 4
+
+        coverage:
+          Backup/Common: full
+          Backup/Backup: partial
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: info-unit-perl
@@ -687,7 +691,7 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: all-perl
-        total: 9
+        total: 11
 
         coverage:
           Manifest: partial

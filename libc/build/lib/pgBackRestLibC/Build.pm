@@ -19,13 +19,13 @@ use lib dirname($0) . '/../lib';
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRestBuild::Config::Data;
 use pgBackRest::Storage::Local;
 use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Version;
 
 use pgBackRestBuild::Build;
 use pgBackRestBuild::Build::Common;
+use pgBackRestBuild::Config::Data;
 use pgBackRestBuild::Error::Data;
 
 ####################################################################################################################################
@@ -35,6 +35,35 @@ use constant BLD_EXPORTTYPE_SUB                                     => 'sub';
 use constant BLD_EXPORTTYPE_CONSTANT                                => 'constant';
 
 use constant LIB_AUTO_NAME                                          => 'LibCAuto';
+
+####################################################################################################################################
+# Save contents to a file if the file is missing or the contents are different.  This saves write IO and prevents the timestamp from
+# changing.
+####################################################################################################################################
+sub buildPutDiffers
+{
+    my $oStorage = shift;
+    my $strFile = shift;
+    my $strContents = shift;
+
+    # Attempt to load the file
+    my $bSave = true;
+    my $oFile = $oStorage->openRead($strFile, {bIgnoreMissing => true});
+
+    # If file was found see if the content is the same
+    if (defined($oFile) && ${$oStorage->get($oFile)} eq $strContents)
+    {
+        $bSave = false;
+    }
+
+    # Save if the contents are different or missing
+    if ($bSave)
+    {
+        $oStorage->put($strFile, $strContents);
+    }
+
+    return $bSave;
+}
 
 ####################################################################################################################################
 # Static exports
@@ -138,6 +167,9 @@ my $rhExport =
 sub buildXsAll
 {
     my $strBuildPath = shift;
+
+    # List of files built
+    my @stryBuilt;
 
     # Storage
     my $oStorage = new pgBackRest::Storage::Local(
@@ -311,7 +343,12 @@ sub buildXsAll
         "1;\n";
 
     # Save the file
-    $oStorage->put('../lib/' . BACKREST_NAME . '/' . LIB_AUTO_NAME . '.pm', $strContent);
+    my $strFile = 'lib/' . BACKREST_NAME . '/' . LIB_AUTO_NAME . '.pm';
+
+    if (buildPutDiffers($oStorage, "../${strFile}", $strContent))
+    {
+        push(@stryBuilt, $strFile);
+    }
 
     # Build error file
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -364,7 +401,15 @@ sub buildXsAll
         "\n" .
         "1;\n";
 
-    $oStorage->put('../lib/' . BACKREST_NAME . '/Common/ExceptionAuto.pm', $strContent);
+    $strFile = 'lib/' . BACKREST_NAME . '/Common/ExceptionAuto.pm';
+
+    if (buildPutDiffers($oStorage, "../${strFile}", $strContent))
+    {
+        push(@stryBuilt, $strFile);
+    }
+
+    # Return list of files built
+    return @stryBuilt;
 }
 
 push @EXPORT, qw(buildXsAll);

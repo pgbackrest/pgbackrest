@@ -95,7 +95,7 @@ sub run
             $strWalPath, $strWalTestFile, 3, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
 
         # Now this segment will get dropped
-        $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 4);
+        $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 4, undef, undef, '--repo1-host=bogus');
 
         # Fix the database version
         if ($iError == 0)
@@ -106,18 +106,16 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(
             sub {$oStorage->list(
-                STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001',
-                {strExpression => '^(?!000000010000000100000002).+'})},
+                STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001')},
             "000000010000000100000001-${strWalHash}${strCompressExt}",
-            'segment 2-4 not pushed (2 is pushed sometimes when remote but ignore)', {iWaitSeconds => 5});
+            'segment 2-4 not pushed', {iWaitSeconds => 5});
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 5);
 
         $self->testResult(
             sub {$oStorage->list(
-                STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001',
-                {strExpression => '^(?!000000010000000100000002).+'})},
+                STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001')},
             "(000000010000000100000001-${strWalHash}${strCompressExt}, " .
                 "000000010000000100000005-${strWalHash}${strCompressExt})",
             'segment 5 is pushed', {iWaitSeconds => 5});

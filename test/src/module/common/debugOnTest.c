@@ -115,11 +115,11 @@ testRun(void)
         testFunction1(99, false, 1.17, 0755);
 
         harnessLogResult(
-            "P00  DEBUG:     module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false, paramDouble: 1.17"
+            "P00  DEBUG:     test/module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false, paramDouble: 1.17"
                 ", paramMode: 0755)\n"
-            "P00  TRACE:         module/common/debugOnTest::testFunction2: (void)\n"
-            "P00  TRACE:         module/common/debugOnTest::testFunction2: => void\n"
-            "P00  DEBUG:     module/common/debugOnTest::testFunction1: => 1");
+            "P00  TRACE:         test/module/common/debugOnTest::testFunction2: (void)\n"
+            "P00  TRACE:         test/module/common/debugOnTest::testFunction2: => void\n"
+            "P00  DEBUG:     test/module/common/debugOnTest::testFunction1: => 1");
         harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------

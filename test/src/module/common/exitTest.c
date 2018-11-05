@@ -85,7 +85,7 @@ testRun(void)
             harnessLogResultRegExp(
                 "P00  ERROR\\: \\[122\\]\\: test debug error message\n"
                 "            STACK TRACE\\:\n"
-                "            module\\/common\\/exitTest\\:testRun\\:.*\n"
+                "            test\\/module\\/common\\/exitTest\\:testRun\\:.*\n"
                 "            test\\:main\\:.*\n");
         }
         TRY_END();
@@ -103,7 +103,7 @@ testRun(void)
             harnessLogResultRegExp(
                 "P00 ASSERT\\: \\[025\\]\\: test assert message\n"
                 "            STACK TRACE\\:\n"
-                "            module/common/exitTest\\:testRun\\:.*\n"
+                "            test/module/common/exitTest\\:testRun\\:.*\n"
                 "            test\\:main\\:.*\n");
         }
         TRY_END();
