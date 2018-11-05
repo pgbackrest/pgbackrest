@@ -98,9 +98,67 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("kvToJson(), kvToJsonInternal()"))
+    {
+        KeyValue *keyValue = kvNew();
+        String *json = NULL;
+
+        TEST_ASSIGN(json, kvToJson(keyValue, 0), "kvToJson - empty, no indent");
+        TEST_RESULT_STR(strPtr(json), "{}\n", "  empty curly brackets");
+
+        TEST_ASSIGN(json, kvToJson(keyValue, 2), "kvToJson - empty, indent 2");
+        TEST_RESULT_STR(strPtr(json), "{}\n", "  empty curly brackets");
+
+        // Variant *varList = varNewVarLst(varLstNew());
+
+
+
+
+        // TEST_ASSIGN(keyValue, varNewKv(), "new");
+        kvPut(keyValue, varNewStrZ("backup"), varNewVarLst(varLstNew()));
+        TEST_ASSIGN(json, kvToJson(keyValue, 0), "kvToJson - kv with empty array, no indent");
+        TEST_RESULT_STR(strPtr(json), "{\"backup\":[]}\n", "  kv with empty array brackets");
+
+        // TEST_ASSIGN(keyValue, varNewKv(), "new");
+        kvPut(keyValue, varNewStrZ("backup"), varNewVarLst(varLstNew()));
+        TEST_ASSIGN(json, kvToJson(keyValue, 2), "kvToJson - kv with empty array, indent 2");
+        TEST_RESULT_STR(strPtr(json),
+            "{\n"
+            "  \"backup\" : []\n"
+            "}\n", "  formatted kv with empty array brackets");
+
+        Variant *sectionKey = varNewStr(strNew("archive"));
+        kvPutKv(keyValue, sectionKey);
+        // kvAdd(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
+        // kvAdd(sectionKv, varNewStr(strNew("key2")), varNewStr(strNew("value2")));
+        TEST_ASSIGN(json, kvToJson(keyValue, 2), "kvToJson - kv with empty array, indent 2");
+        TEST_RESULT_STR(strPtr(json),
+            "{\n"
+            "  \"backup\" : [],\n"
+            "  \"archive\" : {}\n"
+            "}\n", "  formatted kv with empty array and empty kv");
+
+
+        TEST_ASSIGN(
+            keyValue,
+            jsonToKv(
+                strNew(
+                "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
+                "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+                "\"checksum-page-error\":[1],\"backup-timestamp-start\":1482182951}")),
+            "multpile values with array");
+        TEST_ASSIGN(json, kvToJson(keyValue, 0), "  kvToJson - sorted, no indent");
+        TEST_RESULT_STR(strPtr(json),
+            "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
+            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1]}\n",
+            "  check string");
+
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("varToJson()"))
     {
-        // KeyValue *kv = NULL;
         String *json = NULL;
         Variant *keyValue = NULL;
 
@@ -133,15 +191,27 @@ testRun(void)
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
             "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}\n",
-            "    sorted json string result");
+            "  sorted json string result");
 
         TEST_ASSIGN(json, varToJson(keyValue, 4), "varToJson - KeyValue - indent 4");
         TEST_RESULT_STR(strPtr(json),
-            "{\n    \"backup-info-size-delta\" : 1982702,\n    \"backup-prior\" : \"20161219-212741F_20161219-212803I\","
-            "\n    \"backup-reference\" : [\n        \"20161219-212741F\",\n        \"20161219-212741F_20161219-212803I\"\n    ],"
-            "\n    \"backup-timestamp-start\" : 1482182951,\n    \"checksum-page-error\" : [\n        1\n    ],"
-            "\n    \"section\" : {\n        \"key1\" : \"value1\",\n        \"key2\" : \"value2\"\n    }\n}\n",
-            "    sorted json string result");
+            "{\n"
+            "    \"backup-info-size-delta\" : 1982702,\n"
+            "    \"backup-prior\" : \"20161219-212741F_20161219-212803I\",\n"
+            "    \"backup-reference\" : [\n"
+            "        \"20161219-212741F\",\n"
+            "        \"20161219-212741F_20161219-212803I\"\n"
+            "    ],\n"
+            "    \"backup-timestamp-start\" : 1482182951,\n"
+            "    \"checksum-page-error\" : [\n"
+            "        1\n"
+            "    ],\n"
+            "    \"section\" : {\n"
+            "        \"key1\" : \"value1\",\n"
+            "        \"key2\" : \"value2\"\n"
+            "    }\n"
+            "}\n",
+            "  sorted json string result");
 
         //--------------------------------------------------------------------------------------------------------------------------
         Variant *varListOuter = NULL;
@@ -155,7 +225,60 @@ testRun(void)
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
             "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}]\n",
-            "    sorted json string result");
+            "  sorted json string result");
+
+        Variant *keyValue2 = varDup(keyValue);
+        varLstAdd(varVarLst(varListOuter), keyValue2);
+
+        TEST_ASSIGN(json, varToJson(varListOuter, 0), "varToJson - VariantList - no indent - multiple elements");
+        TEST_RESULT_STR(strPtr(json),
+            "[{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
+            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
+            "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}},"
+            "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
+            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
+            "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}]\n",
+            "  sorted json string result");
+
+        TEST_ASSIGN(json, varToJson(varListOuter, 2), "varToJson - VariantList - indent 2 - multiple elements");
+        TEST_RESULT_STR(strPtr(json),
+            "[\n"
+            "  {\n"
+            "    \"backup-info-size-delta\" : 1982702,\n"
+            "    \"backup-prior\" : \"20161219-212741F_20161219-212803I\",\n"
+            "    \"backup-reference\" : [\n"
+            "      \"20161219-212741F\",\n"
+            "      \"20161219-212741F_20161219-212803I\"\n"
+            "    ],\n"
+            "    \"backup-timestamp-start\" : 1482182951,\n"
+            "    \"checksum-page-error\" : [\n"
+            "      1\n"
+            "    ],\n"
+            "    \"section\" : {\n"
+            "      \"key1\" : \"value1\",\n"
+            "      \"key2\" : \"value2\"\n"
+            "    }\n"
+            "  },\n"
+            "  {\n"
+            "    \"backup-info-size-delta\" : 1982702,\n"
+            "    \"backup-prior\" : \"20161219-212741F_20161219-212803I\",\n"
+            "    \"backup-reference\" : [\n"
+            "      \"20161219-212741F\",\n"
+            "      \"20161219-212741F_20161219-212803I\"\n"
+            "    ],\n"
+            "    \"backup-timestamp-start\" : 1482182951,\n"
+            "    \"checksum-page-error\" : [\n"
+            "      1\n"
+            "    ],\n"
+            "    \"section\" : {\n"
+            "      \"key1\" : \"value1\",\n"
+            "      \"key2\" : \"value2\"\n"
+            "    }\n"
+            "  }\n"
+            "]\n",
+            "  sorted json string result");
 // printf("JSON:\n%s",strPtr(json)); fflush(stdout);
 // CSHANG Not sure how to pass the kv as a variant to the varToJson
         // TEST_ASSIGN(

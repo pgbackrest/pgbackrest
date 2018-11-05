@@ -12,6 +12,9 @@ Convert JSON to/from KeyValue
 /***********************************************************************************************************************************
 Internal helper functions
 ***********************************************************************************************************************************/
+/***********************************************************************************************************************************
+jsonString - given a character array and its size, return a variant from the extracted string
+***********************************************************************************************************************************/
 static Variant *
 jsonString(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned int *valueBeginPos)
 {
@@ -29,17 +32,20 @@ jsonString(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned in
         *valueBeginPos = *valueBeginPos + 1;
         *jsonPos = *jsonPos + 1;
 
+        // Find the end of the string within the entire character array
         while (jsonC[*jsonPos] != '"' && *jsonPos < strSize - 1)
             *jsonPos = *jsonPos + 1;
 
         if (jsonC[*jsonPos] != '"')
             THROW_FMT(JsonFormatError, "expected '\"' but found '%c'", jsonC[*jsonPos]);
 
+        // Extract the string, including the enclosing quotes and return it as a variant
         String *resultStr = strNewN(jsonC + *valueBeginPos, *jsonPos - *valueBeginPos);
         memContextSwitch(MEM_CONTEXT_OLD());
         result = varNewStr(resultStr);
         memContextSwitch(MEM_CONTEXT_TEMP());
 
+        // Advance the character array pointer to the next element after the string
         *jsonPos = *jsonPos + 1;
     }
     MEM_CONTEXT_TEMP_END();
@@ -47,6 +53,9 @@ jsonString(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned in
     FUNCTION_TEST_RESULT(VARIANT, result);
 }
 
+/***********************************************************************************************************************************
+jsonNumeric - given a character array and its size, return a variant from the extracted numeric
+***********************************************************************************************************************************/
 static Variant *
 jsonNumeric(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned int *valueBeginPos)
 {
@@ -61,11 +70,14 @@ jsonNumeric(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned i
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Find the end of the numeric within the entire character array
         while (isdigit(jsonC[*jsonPos]) && *jsonPos < strSize - 1)
             *jsonPos = *jsonPos + 1;
 
+        // Extract the numeric as a string
         String *resultStr = strNewN(jsonC + *valueBeginPos, *jsonPos - *valueBeginPos);
 
+        // Convert the string to a uint64 variant
         memContextSwitch(MEM_CONTEXT_OLD());
         result = varNewUInt64(cvtZToUInt64(strPtr(resultStr)));
         memContextSwitch(MEM_CONTEXT_TEMP());
@@ -75,9 +87,11 @@ jsonNumeric(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned i
     FUNCTION_TEST_RESULT(VARIANT, result);
 }
 
-// CSHANG Need to create an externally avaiable kvToJson wrapper for this and rename this to kvToJsonInternal
+/***********************************************************************************************************************************
+kvToJsonInternal - Internal recursive function to walk a KeyValue and return a json string
+***********************************************************************************************************************************/
 static String *
-kvToJson(const KeyValue *kv, String *indentSpace, String *indentDepth)
+kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, kv);
@@ -119,39 +133,40 @@ kvToJson(const KeyValue *kv, String *indentSpace, String *indentDepth)
                 {
                     KeyValue *data = kvDup(varKv(value));
                     strCat(indentDepth, strPtr(indentSpace));
-                    strCat(result, strPtr(kvToJson(data, indentSpace, indentDepth)));
+                    strCat(result, strPtr(kvToJsonInternal(data, indentSpace, indentDepth)));
                 }
                 else if (varType(value) == varTypeVariantList)
                 {
-                    // Open the array. If the array is empty, then do not add the indent.
-                    if (varLstSize(varVarLst(value)) != 0)
+                    // If the array is empty, then do not add the indent.
+                    if (varLstSize(varVarLst(value)) == 0)
+                        strCat(result, "[]");
+                    // Else, process the array
+                    else
                     {
                         strCat(indentDepth, strPtr(indentSpace));
                         strCatFmt(result, "[%s", strPtr(indentDepth));
+
+                        for (unsigned int arrayIdx = 0; arrayIdx < varLstSize(varVarLst(value)); arrayIdx++)
+                        {
+                            // varStrForce will force a boolean to true or false which is consistent with json
+                            String *arrayValue = varStrForce(varLstGet(varVarLst(value), arrayIdx));
+                            unsigned int type = varType(varLstGet(varVarLst(value), arrayIdx));
+
+                            // If going to add another element, add a comma
+                            if (arrayIdx > 0)
+                                strCatFmt(result, ",%s", strPtr(indentDepth));
+
+                            // If the type is a string, add leading and trailing double quotes
+                            if (type == varTypeString)
+                                strCatFmt(result, "\"%s\"", strPtr(arrayValue));
+                            else
+                                strCat(result, strPtr(arrayValue));
+                        }
+                        if (strSize(indentDepth) > strSize(indentSpace))
+                            strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
+                        // Close the array
+                        strCatFmt(result, "%s]", strPtr(indentDepth));
                     }
-                    else
-                        strCat(result, "[");
-
-                    for (unsigned int arrayIdx = 0; arrayIdx < varLstSize(varVarLst(value)); arrayIdx++)
-                    {
-                        // varStrForce will force a boolean to true or false which is consistent with json
-                        String *arrayValue = varStrForce(varLstGet(varVarLst(value), arrayIdx));
-                        unsigned int type = varType(varLstGet(varVarLst(value), arrayIdx));
-
-                        // If going to add another element, prepend a comma
-                        if (arrayIdx > 0)
-                            strCatFmt(result, ",%s", strPtr(indentDepth));
-
-                        // If the type is a string, add leading and trailing double quotes
-                        if (type == varTypeString)
-                            strCatFmt(result, "\"%s\"", strPtr(arrayValue));
-                        else
-                            strCat(result, strPtr(arrayValue));
-                    }
-                    if (strSize(indentDepth) > strSize(indentSpace))
-                        strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
-                    // Close the array
-                    strCatFmt(result, "%s]", strPtr(indentDepth));
                 }
                 else if (varType(value) == varTypeString)
                     strCatFmt(result, "\"%s\"", strPtr(varStr(value)));
@@ -335,6 +350,59 @@ jsonToKv(const String *json)
 }
 
 /***********************************************************************************************************************************
+Convert KeyValue object to JSON string. If indent = 0 then no pretty format.
+
+Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
+needed.  Since this function is only intended to read internally-generated JSON it is assumed to be well-formed with no extraneous
+whitespace.
+***********************************************************************************************************************************/
+String *
+kvToJson(const KeyValue *kv, unsigned int indent)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(KEY_VALUE, kv);
+        FUNCTION_DEBUG_PARAM(UINT, indent);
+
+        FUNCTION_DEBUG_ASSERT(kv != NULL);
+    FUNCTION_DEBUG_END();
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *jsonStr = strNew("");
+        String *indentSpace = strNew("");
+        String *indentDepth = strNew("");
+
+        // Set up the indent spacing (indent 0 will result in an empty string)
+        for (unsigned int idx = 0; idx < indent; idx++)
+        {
+            strCat(indentSpace, " ");
+        }
+
+        // If indent > 0 (pretty printing) then add carriage return to the indent format
+        if (indent > 0)
+            strCat(indentDepth, "\n");
+
+        strCat(indentDepth, strPtr(indentSpace));
+
+        strCat(jsonStr, strPtr(kvToJsonInternal(kv, indentSpace, indentDepth)));
+
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = strDup(jsonStr);
+        memContextSwitch(MEM_CONTEXT_TEMP());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+// CSHANG We always need at least a terminating linefeed even when not pretty printing, right??
+    // Add terminating linefeed if it is not already added
+    if (!strEndsWithZ(result, "\n"))
+        strCat(result, "\n");
+
+    FUNCTION_DEBUG_RESULT(STRING, result);
+}
+
+/***********************************************************************************************************************************
 Convert Variant object to JSON string. If indent = 0 then no pretty format.
 
 Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
@@ -359,15 +427,17 @@ varToJson(const Variant *var, unsigned int indent)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        String *jsonStr = strNew("");
         String *indentSpace = strNew("");
         String *indentDepth = strNew("");
 
+        // Set up the indent spacing (indent 0 will result in an empty string)
         for (unsigned int idx = 0; idx < indent; idx++)
         {
             strCat(indentSpace, " ");
         }
 
-        // If indent > 0 then add carriage return for pretty printing
+        // If indent > 0 (pretty printing) then add carriage return to the indent format
         if (indent > 0)
             strCat(indentDepth, "\n");
 
@@ -377,18 +447,33 @@ varToJson(const Variant *var, unsigned int indent)
         if (varType(var) == varTypeVariantList)
         {
             const VariantList *vl = varVarLst(var);
-            String *jsonStr = strNew("");
 
+            // If not an empty array
             if (varLstSize(vl) > 0)
             {
+                // Add the indent formatting
+                strCatFmt(jsonStr, "[%s", strPtr(indentDepth));
+
+                // Currently only KeyValue list is supported
                 for (unsigned int vlIdx = 0; vlIdx < varLstSize(vl); vlIdx++)
                 {
-                    strCatFmt(jsonStr, "[%s", strPtr(indentDepth));
-                    strCat(jsonStr, strPtr(kvToJson(varKv(varLstGet(vl, vlIdx)), indentSpace, indentDepth)));
-                    strCatFmt(jsonStr, "%s]", strPtr(indentDepth));
+                    // If going to add another key, append a comma and format for the next line
+                    if (vlIdx > 0)
+                        strCatFmt(jsonStr, ",%s", strPtr(indentDepth));
+
+                    // Update the depth before processing the contents of the list element
+                    strCat(indentDepth, strPtr(indentSpace));
+                    strCat(jsonStr, strPtr(kvToJsonInternal(varKv(varLstGet(vl, vlIdx)), indentSpace, indentDepth)));
                 }
+
+                // Decrease the depth
+                if (strSize(indentDepth) > strSize(indentSpace))
+                    strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
+
+                // Close the array
+                strCatFmt(jsonStr, "%s]", strPtr(indentDepth));
             }
-            // Empty array
+            // Else empty array
             else
                 strCat(jsonStr, "[]");
 
@@ -398,8 +483,8 @@ varToJson(const Variant *var, unsigned int indent)
         }
         else
         {
-            const KeyValue *kv = varKv(var);
-            String *jsonStr = kvToJson(kv, indentSpace, indentDepth);
+            strCat(jsonStr, strPtr(kvToJsonInternal(varKv(var), indentSpace, indentDepth)));
+
             memContextSwitch(MEM_CONTEXT_OLD());
             result = strDup(jsonStr);
             memContextSwitch(MEM_CONTEXT_TEMP());
@@ -413,106 +498,3 @@ varToJson(const Variant *var, unsigned int indent)
 
     FUNCTION_DEBUG_RESULT(STRING, result);
 }
-
-/***********************************************************************************************************************************
-Pretty print a json string. Indent must be a value 0 - 8.
-***********************************************************************************************************************************/
-// String *
-// jsonPretty(const String *json, unsigned int indent)
-// {
-//     FUNCTION_DEBUG_BEGIN(logLevelTrace);
-//         FUNCTION_DEBUG_PARAM(STRING, json);
-//         FUNCTION_DEBUG_PARAM(UINT, indent);
-//
-//         FUNCTION_TEST_ASSERT(json != NULL);
-//         FUNCTION_TEST_ASSERT(indent <= 8);
-//     FUNCTION_DEBUG_END();
-//
-//     String *result = strNew("");
-//
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//         // We'll examine the string byte by byte
-//         const char *jsonC = strPtr(json);
-//         unsigned int jsonPos = 0;
-//
-//         // Confirm the initial delimiter
-//         if (jsonC[jsonPos] != '[' && jsonC[jsonPos] != '{')
-//             THROW_FMT(JsonFormatError, "expected '{' but found '%c'", jsonC[jsonPos]);
-//
-//         String *indentSpace = strNew("");
-//
-//         for (unsigned int idx = 0; idx < indent; idx++)
-//         {
-//             strCat(indentSpace, " ");
-//         }
-// // CSHANG Need to figure out how to ensure the json string passed has the first position with outer bracket for array
-//         // if (jsonC[jsonPos] != '[')
-//         //     strCatFmt(result, "[\n%s", strPtr(indentSpace));
-//
-// // CSHANG Maybe all this would be better done with buffers?
-//         unsigned int depth = 1;
-//
-//
-// // CSHANG Below should be a recursive function into which depth, the json string, json position, indentSpace and indentDepth are passed
-// // and return result? PROBLEM - Can have {} or [] or null so can't always say { and [ have a carriace return after
-//         if (jsonC[jsonPos] == '{')
-//         {
-//             if (jsonC[jsonPos + 1] != '}')
-//             {
-//                 strCat(indentDepth, strPtr(indentSpace));
-//                 strCatFmt(result, "%s\n%s", jsonC[jsonPos], strPtr(indentDepth));
-//             }
-//         }
-//         else if (jsonC[jsonPos] == '[')
-//         {
-//             // If not an empty array, increase indentation and add a carriage return followed by the new indentation
-//             if (jsonC[jsonPos + 1] != ']')
-//             {
-//                 strCat(indentDepth, strPtr(indentSpace));
-//                 strCatFmt(result, "%s\n%s", jsonC[jsonPos], strPtr(indentDepth));
-//             }
-//             else
-//             {
-//                 // If it is an empty array, a comma should follow unless it is the end of the string
-//                 if (jsonC[jsonPos + 2] != ',' && jsonPos + 1 < strSize(json) - 1)
-//                     THROW_FMT(JsonFormatError, "expected ',' but found '%c'", jsonC[jsonPos +2]);
-//
-//                 strCatFmt(result, "%s%s,", jsonC[jsonPos], jsonC[jsonPos+1]);
-//                 jsonPos = jsonPos + 2;
-//             }
-//         }
-//         else if (jsonC[jsonPos] == ',')
-//         {
-//             strCatFmt(result, "%s\n%s", jsonC[jsonPos], strPtr(indentDepth));
-//         }
-//         else if (jsonC[jsonPos] == '}' || jsonC[jsonPos] == ']')
-//         {
-//             strTrunc(indentDepth, strSize(indentDepth) - strSize(indentSpace));
-//             strCatFmt(result, "\n%s%s", strPtr(indentDepth), jsonC[jsonPos]);
-//         }
-//         else if (jsonC[jsonPos] == ':')
-//         {
-//             strCatFmt(result, " %s ", jsonC[jsonPos]);
-//         }
-//         else if (jsonC[jsonPos] == '"')
-//         {
-//             // Set valueBeginPos to jsonPos before incrementing jsonPos
-//             unsigned int valueBeginPos = jsonPos++;
-//
-//             while (jsonC[jsonPos] != '"' && jsonPos < strSize(json) - 1)
-//                 jsonPos = jsonPos + 1;
-//
-//             if (jsonC[jsonPos] != '"')
-//                 THROW_FMT(JsonFormatError, "expected '\"' but found '%c'", jsonC[*jsonPos]);
-//
-//             // Copy the string, including beginning and ending quotes
-//             jsonPos = jsonPos + 1;
-//             strCat(result, strPtr(strNewN(jsonC + valueBeginPos, jsonPos - valueBeginPos)));
-//         }
-//
-//     }
-//     MEM_CONTEXT_TEMP_END();
-//
-//     FUNCTION_DEBUG_RESULT(STRING, result);
-// }
