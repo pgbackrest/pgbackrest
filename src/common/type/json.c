@@ -3,8 +3,6 @@ Convert JSON to/from KeyValue
 ***********************************************************************************************************************************/
 #include <ctype.h>
 
-#include <stdio.h> // cshang
-
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/type/json.h"
@@ -109,81 +107,85 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
     {
         const StringList *keyList = strLstSort(strLstNewVarLst(kvKeyList(kv)), sortOrderAsc);
 
+        // If not an empty list, then add indent formatting
         if (strLstSize(keyList) > 0)
-        {
             strCatFmt(result, "%s", strPtr(indentDepth));
 
-            for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
-            {
-                String *key = strLstGet(keyList, keyIdx);
-                const Variant *value = kvGet(kv, varNewStr(key));
-
-                // If going to add another key, prepend a comma
-                if (keyIdx > 0)
-                    strCatFmt(result, ",%s", strPtr(indentDepth));
-
-                // Keys are always strings in the output, so add starting quote and colon.
-                // Note if indent is 0 then spaces do not surround the colon, else they do.
-                if (strSize(indentSpace) == 0)
-                    strCatFmt(result, "\"%s\":", strPtr(key));
-                else
-                    strCatFmt(result, "\"%s\" : ", strPtr(key));
-
-                if (varType(value) == varTypeKeyValue)
-                {
-                    KeyValue *data = kvDup(varKv(value));
-                    strCat(indentDepth, strPtr(indentSpace));
-                    strCat(result, strPtr(kvToJsonInternal(data, indentSpace, indentDepth)));
-                }
-                else if (varType(value) == varTypeVariantList)
-                {
-                    // If the array is empty, then do not add the indent.
-                    if (varLstSize(varVarLst(value)) == 0)
-                        strCat(result, "[]");
-                    // Else, process the array
-                    else
-                    {
-                        strCat(indentDepth, strPtr(indentSpace));
-                        strCatFmt(result, "[%s", strPtr(indentDepth));
-
-                        for (unsigned int arrayIdx = 0; arrayIdx < varLstSize(varVarLst(value)); arrayIdx++)
-                        {
-                            // varStrForce will force a boolean to true or false which is consistent with json
-                            String *arrayValue = varStrForce(varLstGet(varVarLst(value), arrayIdx));
-                            unsigned int type = varType(varLstGet(varVarLst(value), arrayIdx));
-
-                            // If going to add another element, add a comma
-                            if (arrayIdx > 0)
-                                strCatFmt(result, ",%s", strPtr(indentDepth));
-
-                            // If the type is a string, add leading and trailing double quotes
-                            if (type == varTypeString)
-                                strCatFmt(result, "\"%s\"", strPtr(arrayValue));
-                            else
-                                strCat(result, strPtr(arrayValue));
-                        }
-                        if (strSize(indentDepth) > strSize(indentSpace))
-                            strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
-                        // Close the array
-                        strCatFmt(result, "%s]", strPtr(indentDepth));
-                    }
-                }
-                else if (varType(value) == varTypeString)
-                    strCatFmt(result, "\"%s\"", strPtr(varStr(value)));
-    // CSHANG More is needed to process NULL
-                else
-                    strCat(result, strPtr(varStrForce(value)));
-            }
-            if (strSize(indentDepth) > strSize(indentSpace))
-                strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
-
-            strCatFmt(result, "%s}", strPtr(indentDepth));
-        }
-        // Empty object so close without formatting
-        else
+        for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
         {
-            result = strCat(result, "}\n");
+            String *key = strLstGet(keyList, keyIdx);
+            const Variant *value = kvGet(kv, varNewStr(key));
+
+            // If going to add another key, prepend a comma
+            if (keyIdx > 0)
+                strCatFmt(result, ",%s", strPtr(indentDepth));
+
+            // Keys are always strings in the output, so add starting quote and colon.
+            // Note if indent is 0 then spaces do not surround the colon, else they do.
+            if (strSize(indentSpace) == 0)
+                strCatFmt(result, "\"%s\":", strPtr(key));
+            else
+                strCatFmt(result, "\"%s\" : ", strPtr(key));
+
+            // NULL value
+            if (value == NULL)
+                strCat(result, "null");
+            // KeyValue
+            else if (varType(value) == varTypeKeyValue)
+            {
+                KeyValue *data = kvDup(varKv(value));
+                strCat(indentDepth, strPtr(indentSpace));
+                strCat(result, strPtr(kvToJsonInternal(data, indentSpace, indentDepth)));
+            }
+            // VariantList
+            else if (varType(value) == varTypeVariantList)
+            {
+                // If the array is empty, then do not add formatting, else process the array.
+                if (varLstSize(varVarLst(value)) == 0)
+                    strCat(result, "[]");
+                else
+                {
+                    strCat(indentDepth, strPtr(indentSpace));
+                    strCatFmt(result, "[%s", strPtr(indentDepth));
+
+                    for (unsigned int arrayIdx = 0; arrayIdx < varLstSize(varVarLst(value)); arrayIdx++)
+                    {
+                        // varStrForce will force a boolean to true or false which is consistent with json
+                        String *arrayValue = varStrForce(varLstGet(varVarLst(value), arrayIdx));
+                        unsigned int type = varType(varLstGet(varVarLst(value), arrayIdx));
+
+                        // If going to add another element, add a comma
+                        if (arrayIdx > 0)
+                            strCatFmt(result, ",%s", strPtr(indentDepth));
+
+                        // If the type is a string, add leading and trailing double quotes
+                        if (type == varTypeString)
+                            strCatFmt(result, "\"%s\"", strPtr(arrayValue));
+                        else
+                            strCat(result, strPtr(arrayValue));
+                    }
+
+                    if (strSize(indentDepth) > strSize(indentSpace))
+                        strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
+
+                    strCatFmt(result, "%s]", strPtr(indentDepth));
+                }
+            }
+            // String
+            else if (varType(value) == varTypeString)
+                strCatFmt(result, "\"%s\"", strPtr(varStr(value)));
+            // Numeric, Boolean or other type
+            else
+                strCat(result, strPtr(varStrForce(value)));
         }
+        if (strSize(indentDepth) > strSize(indentSpace))
+            strTrunc(indentDepth, (int)(strSize(indentDepth) - strSize(indentSpace)));
+
+        if (strLstSize(keyList) > 0)
+            strCatFmt(result, "%s}", strPtr(indentDepth));
+        else
+            result = strCat(result, "}");
+
     }
     MEM_CONTEXT_TEMP_END();
 

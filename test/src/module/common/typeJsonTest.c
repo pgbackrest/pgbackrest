@@ -31,8 +31,6 @@ testRun(void)
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[\"\",1]}")), JsonFormatError, "number found in array of type 's'");
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[1,\"\"]}")), JsonFormatError, "string found in array of type 'n'");
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[1}")), JsonFormatError, "expected array delimeter ']' but found '}'");
-        // CSHANG Should we handle this as an empty array? Should we set it to NULL? Right now in the backup.info file, it appears
-        // that only the backup-reference is an array - and if that is empty, something is REALLY wrong since it's only set on non-full
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[]}")), JsonFormatError, "unknown array value type");
         TEST_ERROR(jsonToKv(strNew("{}")), JsonFormatError, "expected '\"' but found '}'");
 
@@ -63,9 +61,6 @@ testRun(void)
         TEST_RESULT_UINT(varUInt64(kvGet(kv, varNewStr(strNew("db-system-id")))), 6116111691796124355, "  check integer");
         TEST_RESULT_STR(strPtr(varStr(kvGet(kv, varNewStr(strNew("db-version"))))), "9.4", "  check string");
 
-        // CSHANG If empty string, should it be converted to NULL as the output? Probably not - should only do that if null is an
-        // element of the array - do we even have that in the info or manifest files? I know we have {} so is that a NULL object or
-        // empty object?
         TEST_ASSIGN(kv, jsonToKv(strNew("{\"key1\":[\"\"]}")), "single-dimension empty string array");
         TEST_RESULT_STR(strPtr(varStr(varLstGet(varVarLst(kvGet(kv, varNewStr(strNew("key1")))), 0))), "", "  array[0]");
 
@@ -109,17 +104,10 @@ testRun(void)
         TEST_ASSIGN(json, kvToJson(keyValue, 2), "kvToJson - empty, indent 2");
         TEST_RESULT_STR(strPtr(json), "{}\n", "  empty curly brackets");
 
-        // Variant *varList = varNewVarLst(varLstNew());
-
-
-
-
-        // TEST_ASSIGN(keyValue, varNewKv(), "new");
         kvPut(keyValue, varNewStrZ("backup"), varNewVarLst(varLstNew()));
         TEST_ASSIGN(json, kvToJson(keyValue, 0), "kvToJson - kv with empty array, no indent");
         TEST_RESULT_STR(strPtr(json), "{\"backup\":[]}\n", "  kv with empty array brackets");
 
-        // TEST_ASSIGN(keyValue, varNewKv(), "new");
         kvPut(keyValue, varNewStrZ("backup"), varNewVarLst(varLstNew()));
         TEST_ASSIGN(json, kvToJson(keyValue, 2), "kvToJson - kv with empty array, indent 2");
         TEST_RESULT_STR(strPtr(json),
@@ -127,17 +115,21 @@ testRun(void)
             "  \"backup\" : []\n"
             "}\n", "  formatted kv with empty array brackets");
 
-        Variant *sectionKey = varNewStr(strNew("archive"));
-        kvPutKv(keyValue, sectionKey);
-        // kvAdd(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
-        // kvAdd(sectionKv, varNewStr(strNew("key2")), varNewStr(strNew("value2")));
+        kvPutKv(keyValue, varNewStr(strNew("archive")));
+        kvPutKv(keyValue, varNewStr(strNew("empty")));
+        kvPut(keyValue, varNewStrZ("bool1"), varNewBool(true));
+        kvPut(keyValue, varNewStrZ("bool2"), varNewBool(false));
+        kvPut(keyValue, varNewStrZ("checknull"), (Variant *)NULL);
         TEST_ASSIGN(json, kvToJson(keyValue, 2), "kvToJson - kv with empty array, indent 2");
         TEST_RESULT_STR(strPtr(json),
             "{\n"
+            "  \"archive\" : {},\n"
             "  \"backup\" : [],\n"
-            "  \"archive\" : {}\n"
+            "  \"bool1\" : true,\n"
+            "  \"bool2\" : false,\n"
+            "  \"checknull\" : null,\n"
+            "  \"empty\" : {}\n"
             "}\n", "  formatted kv with empty array and empty kv");
-
 
         TEST_ASSIGN(
             keyValue,
@@ -153,29 +145,29 @@ testRun(void)
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1]}\n",
             "  check string");
-
     }
 
     // *****************************************************************************************************************************
     if (testBegin("varToJson()"))
     {
+        TEST_ERROR(varToJson(varNewUInt64(100), 0), JsonFormatError, "variant type is invalid");
+
         String *json = NULL;
         Variant *keyValue = NULL;
 
-        TEST_ASSIGN(keyValue, varNewKv(), "new");
+        TEST_ASSIGN(keyValue, varNewKv(), "build new kv");
         kvPut(varKv(keyValue), varNewStrZ("backup-info-size-delta"), varNewInt(1982702));
         kvPut(varKv(keyValue), varNewStrZ("backup-prior"), varNewStrZ("20161219-212741F_20161219-212803I"));
 
         Variant *listVar = NULL;
-        TEST_ASSIGN(listVar, varNewVarLst(varLstNew()), "new string array");
+        TEST_ASSIGN(listVar, varNewVarLst(varLstNew()), "  new string array to kv");
         varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F"));
         varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F_20161219-212803I"));
         kvPut(varKv(keyValue), varNewStrZ("backup-reference"), listVar);
-
         kvPut(varKv(keyValue), varNewStrZ("backup-timestamp-start"), varNewInt(1482182951));
 
         Variant *listVar2 = NULL;
-        TEST_ASSIGN(listVar2, varNewVarLst(varLstNew()), "new int array");
+        TEST_ASSIGN(listVar2, varNewVarLst(varLstNew()), "  new int array to kv");
         varLstAdd(varVarLst(listVar2), varNewInt(1));
         kvPut(varKv(keyValue), varNewStrZ("checksum-page-error"), listVar2);
 
@@ -183,17 +175,18 @@ testRun(void)
         Variant *sectionKey = varNewStr(strNew("section"));
         KeyValue *sectionKv = kvPutKv(varKv(keyValue), sectionKey);
         kvAdd(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
-        kvAdd(sectionKv, varNewStr(strNew("key2")), varNewStr(strNew("value2")));
+        kvAdd(sectionKv, varNewStr(strNew("key2")), (Variant *)NULL);
+        kvAdd(sectionKv, varNewStr(strNew("key3")), varNewStr(strNew("value2")));
 
-        TEST_ASSIGN(json, varToJson(keyValue, 0), "varToJson - KeyValue no indent");
+        TEST_ASSIGN(json, varToJson(keyValue, 0), "KeyValue no indent");
         TEST_RESULT_STR(strPtr(json),
             "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}\n",
+            "\"section\":{\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}\n",
             "  sorted json string result");
 
-        TEST_ASSIGN(json, varToJson(keyValue, 4), "varToJson - KeyValue - indent 4");
+        TEST_ASSIGN(json, varToJson(keyValue, 4), "KeyValue - indent 4");
         TEST_RESULT_STR(strPtr(json),
             "{\n"
             "    \"backup-info-size-delta\" : 1982702,\n"
@@ -208,7 +201,8 @@ testRun(void)
             "    ],\n"
             "    \"section\" : {\n"
             "        \"key1\" : \"value1\",\n"
-            "        \"key2\" : \"value2\"\n"
+            "        \"key2\" : null,\n"
+            "        \"key3\" : \"value2\"\n"
             "    }\n"
             "}\n",
             "  sorted json string result");
@@ -216,33 +210,36 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         Variant *varListOuter = NULL;
 
-        TEST_ASSIGN(varListOuter, varNewVarLst(varLstNew()), "new keyValue array");
+        TEST_ASSIGN(json, varToJson(varNewVarLst(varLstNew()), 0), "VariantList");
+        TEST_RESULT_STR(strPtr(json), "[]\n", "  empty list");
+
+        TEST_ASSIGN(varListOuter, varNewVarLst(varLstNew()), "new variant list with keyValues");
         varLstAdd(varVarLst(varListOuter), keyValue);
 
-        TEST_ASSIGN(json, varToJson(varListOuter, 0), "varToJson - VariantList - no indent");
+        TEST_ASSIGN(json, varToJson(varListOuter, 0), "VariantList - no indent");
         TEST_RESULT_STR(strPtr(json),
             "[{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}]\n",
+            "\"section\":{\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]\n",
             "  sorted json string result");
 
         Variant *keyValue2 = varDup(keyValue);
         varLstAdd(varVarLst(varListOuter), keyValue2);
 
-        TEST_ASSIGN(json, varToJson(varListOuter, 0), "varToJson - VariantList - no indent - multiple elements");
+        TEST_ASSIGN(json, varToJson(varListOuter, 0), "VariantList - no indent - multiple elements");
         TEST_RESULT_STR(strPtr(json),
             "[{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}},"
+            "\"section\":{\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}},"
             "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}]\n",
+            "\"section\":{\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]\n",
             "  sorted json string result");
 
-        TEST_ASSIGN(json, varToJson(varListOuter, 2), "varToJson - VariantList - indent 2 - multiple elements");
+        TEST_ASSIGN(json, varToJson(varListOuter, 2), "VariantList - indent 2 - multiple elements");
         TEST_RESULT_STR(strPtr(json),
             "[\n"
             "  {\n"
@@ -258,7 +255,8 @@ testRun(void)
             "    ],\n"
             "    \"section\" : {\n"
             "      \"key1\" : \"value1\",\n"
-            "      \"key2\" : \"value2\"\n"
+            "      \"key2\" : null,\n"
+            "      \"key3\" : \"value2\"\n"
             "    }\n"
             "  },\n"
             "  {\n"
@@ -274,41 +272,12 @@ testRun(void)
             "    ],\n"
             "    \"section\" : {\n"
             "      \"key1\" : \"value1\",\n"
-            "      \"key2\" : \"value2\"\n"
+            "      \"key2\" : null,\n"
+            "      \"key3\" : \"value2\"\n"
             "    }\n"
             "  }\n"
             "]\n",
             "  sorted json string result");
-// printf("JSON:\n%s",strPtr(json)); fflush(stdout);
-// CSHANG Not sure how to pass the kv as a variant to the varToJson
-        // TEST_ASSIGN(
-        //     kv,
-        //     jsonToKv(
-        //         strNew(
-        //         "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-        //         "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
-        //         "\"checksum-page-error\":[1],\"backup-timestamp-start\":1482182951}")),
-        //     "multpile values with array");
-        //
-        // // Embed a keyValue section to test recursion
-        // Variant *sectionKey = varNewStr(strNew("section"));
-        // KeyValue *sectionKv = kvPutKv(kv, sectionKey);
-        // kvAdd(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
-        // kvAdd(sectionKv, varNewStr(strNew("key2")), varNewStr(strNew("value2")));
-
-/* CSHANG Need to add a section (and probably code to json.c) that then is an array of keyValue such that the output would be
-"section2":[{"key11":1,"key12":"1a"},{"key21":2,"key12":"2a"}]
-*/
-        // TEST_ASSIGN(json, varToJson(kv, 0), "kvToJson");
-        // TEST_RESULT_STR(strPtr(json),
-        //     "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-        //     "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
-        //     "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-        //     "\"section\":{\"key1\":\"value1\",\"key2\":\"value2\"}}",
-        //     "    sorted json string result");
-
-        // TEST_ASSIGN(jsonOut, jsonPretty(json, 0), "jsonPretty");
-        // TEST_RESULT_STR(strPtr(jsonOut), "[\n", "test");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
