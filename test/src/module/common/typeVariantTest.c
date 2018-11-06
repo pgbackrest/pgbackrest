@@ -126,7 +126,7 @@ testRun(void)
 
         TEST_ERROR(
             varInt64Force(varNewStrZ("9223372036854775808")), FormatError,
-            "unable to convert string '9223372036854775808' to int64");
+            "unable to convert base 10 string '9223372036854775808' to int64");
         TEST_ERROR(varInt64Force(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to int64");
         TEST_ERROR(varInt64Force(varNewUInt64(9223372036854775808U)), FormatError,
             "unable to convert uint64 9223372036854775808 to int64");
@@ -162,8 +162,8 @@ testRun(void)
 
         TEST_ERROR(
             varUInt64Force(varNewStrZ("18446744073709551616")), FormatError,
-            "unable to convert string '18446744073709551616' to uint64");   // string value is out of bounds for uint64
-        TEST_ERROR(varUInt64Force(varNewStrZ(" 16")), FormatError,"unable to convert string ' 16' to uint64");
+            "unable to convert base 10 string '18446744073709551616' to uint64");   // string value is out of bounds for uint64
+        TEST_ERROR(varUInt64Force(varNewStrZ(" 16")), FormatError,"unable to convert base 10 string ' 16' to uint64");
         TEST_ERROR(varUInt64Force(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to uint64");
         TEST_ERROR(varUInt64Force(varNewInt64(-1)), FormatError, "unable to convert int64 -1 to uint64");
         TEST_ERROR(varUInt64Force(varNewInt(-1)), FormatError, "unable to convert int -1 to uint64");
@@ -250,7 +250,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         string = varNewStr(strNew("not-an-int"));
-        TEST_ERROR(varIntForce(string), FormatError, "unable to convert string 'not-an-int' to int");
+        TEST_ERROR(varIntForce(string), FormatError, "unable to convert base 10 string 'not-an-int' to int");
         varFree(string);
 
         // -------------------------------------------------------------------------------------------------------------------------

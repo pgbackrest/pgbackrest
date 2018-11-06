@@ -67,6 +67,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <id>base</id> variants to all integer to string conversion functions.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>lstInsert()</code> to <code>List</code> object.</p>
                     </release-item>
 

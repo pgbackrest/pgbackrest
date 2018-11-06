@@ -62,7 +62,8 @@ testRun(void)
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))),
             bufNewZ(BOGUS_STR "\nmessage"));
-        TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, false), FormatError, "unable to convert string 'BOGUS' to int");
+        TEST_ERROR(
+            archiveAsyncStatus(archiveModePush, segment, false), FormatError, "unable to convert base 10 string 'BOGUS' to int");
 
         storagePutNP(storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))), NULL);
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "ok file");
