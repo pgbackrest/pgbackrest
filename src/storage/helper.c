@@ -25,6 +25,7 @@ static struct
 
     String *stanza;                                                 // Stanza for storage
     RegExp *walRegExp;                                              // Regular expression for identifying wal files
+    bool stanzaRequired;                                            // Is a stanza required?
 } storageHelper;
 
 /***********************************************************************************************************************************
@@ -62,6 +63,9 @@ storageHelperStanzaInit(void)
             storageHelper.stanza = strDup(cfgOptionStr(cfgOptStanza));
         }
         MEM_CONTEXT_END();
+
+        if (storageHelper.stanzaRequired && storageHelper.stanza == NULL)
+            THROW_FMT(AssertError, "stanza cannot be NULL for this storage object");
     }
     else if (!strEq(storageHelper.stanza, cfgOptionStr(cfgOptStanza)))
     {
@@ -133,6 +137,7 @@ storageRepoPathExpression(const String *expression, const String *path)
         FUNCTION_TEST_PARAM(STRING, path);
 
         FUNCTION_TEST_ASSERT(expression != NULL);
+        FUNCTION_TEST_ASSERT(storageHelper.stanza != NULL);
     FUNCTION_TEST_END();
 
     String *result = NULL;
@@ -224,6 +229,7 @@ storageSpoolPathExpression(const String *expression, const String *path)
         FUNCTION_TEST_PARAM(STRING, path);
 
         FUNCTION_TEST_ASSERT(expression != NULL);
+        FUNCTION_TEST_ASSERT(storageHelper.stanza != NULL);
     FUNCTION_TEST_END();
 
     String *result = NULL;
@@ -259,6 +265,7 @@ storageSpool(void)
     if (storageHelper.storageSpool == NULL)
     {
         storageHelperInit();
+        storageHelper.stanzaRequired = true;
         storageHelperStanzaInit();
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
@@ -285,6 +292,7 @@ storageSpoolWrite(void)
     if (storageHelper.storageSpoolWrite == NULL)
     {
         storageHelperInit();
+        storageHelper.stanzaRequired = true;
         storageHelperStanzaInit();
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
