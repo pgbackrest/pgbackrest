@@ -28,11 +28,11 @@ testRun(void)
 
         EVP_MD_CTX *context = EVP_MD_CTX_create();
         TEST_ERROR(
-            cryptoError(EVP_DigestInit_ex(context, NULL, NULL) != 1, "unable to initialize hash context"), CipherError,
+            cryptoError(EVP_DigestInit_ex(context, NULL, NULL) != 1, "unable to initialize hash context"), CryptoError,
             "unable to initialize hash context: no digest set");
         EVP_MD_CTX_destroy(context);
 
-        TEST_ERROR(cryptoError(true, "no error"), CipherError, "no error: no details available");
+        TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: no details available");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

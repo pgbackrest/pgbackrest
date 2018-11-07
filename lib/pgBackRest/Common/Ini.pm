@@ -107,7 +107,7 @@ sub new
 
     if (defined($self->{oStorage}->cipherPassUser()) && !defined($self->{strCipherPass}))
     {
-        confess &log(ERROR, 'passphrase is required when storage is encrypted', ERROR_CIPHER);
+        confess &log(ERROR, 'passphrase is required when storage is encrypted', ERROR_CRYPTO);
     }
 
     # Set changed to false
@@ -188,7 +188,7 @@ sub loadVersion
     else
     {
         confess &log(ERROR, "unable to parse '$self->{strFileName}" . ($bCopy ? INI_COPY_EXT : '') . "'" .
-            "\nHINT: Is or was the repo encrypted?", ERROR_CIPHER);
+            "\nHINT: Is or was the repo encrypted?", ERROR_CRYPTO);
     }
 
     return defined($self->{oContent});

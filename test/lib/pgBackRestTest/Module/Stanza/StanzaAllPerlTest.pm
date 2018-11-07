@@ -336,7 +336,7 @@ sub run
         # Try to create a manifest without a passphrase in an encrypted storage
         $self->testException(sub {new pgBackRest::Manifest($strBackupManifestFile,
             {bLoad => false, strDbVersion => PG_VERSION_94, iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94)})},
-            ERROR_CIPHER, 'passphrase is required when storage is encrypted');
+            ERROR_CRYPTO, 'passphrase is required when storage is encrypted');
 
         # Get the encryption passphrase and create the new manifest
         my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath});
@@ -525,7 +525,7 @@ sub run
         $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
         $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
 
-        $self->testException(sub {$oStanza->stanzaUpgrade()}, ERROR_CIPHER,
+        $self->testException(sub {$oStanza->stanzaUpgrade()}, ERROR_CRYPTO,
             "unable to parse '" . $self->{strArchivePath} . "/archive.info'" .
             "\nHINT: Is or was the repo encrypted?");
 
@@ -548,7 +548,7 @@ sub run
         $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'y');
         $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
 
-        $self->testException(sub {$oStanza->stanzaUpgrade()}, ERROR_CIPHER,
+        $self->testException(sub {$oStanza->stanzaUpgrade()}, ERROR_CRYPTO,
             "unable to parse '" . $self->{strArchivePath} . "/archive.info'" .
             "\nHINT: Is or was the repo encrypted?");
 

@@ -173,7 +173,7 @@ testRun(void)
 
         TEST_ERROR(
             cipherBlockProcess(
-                blockDecrypt, (unsigned char *)"1234567890123456", 16, decryptBuffer), CipherError, "cipher header invalid");
+                blockDecrypt, (unsigned char *)"1234567890123456", 16, decryptBuffer), CryptoError, "cipher header invalid");
 
         cipherBlockFree(blockDecrypt);
 
@@ -188,7 +188,7 @@ testRun(void)
             cipherBlockProcess(
                 blockDecrypt, (unsigned char *)"1234567890123456", 16, decryptBuffer), 0, "process 0 bytes");
 
-        TEST_ERROR(cipherBlockFlush(blockDecrypt, decryptBuffer), CipherError, "unable to flush");
+        TEST_ERROR(cipherBlockFlush(blockDecrypt, decryptBuffer), CryptoError, "unable to flush");
 
         cipherBlockFree(blockDecrypt);
 
@@ -197,7 +197,7 @@ testRun(void)
         blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
         TEST_RESULT_INT(cipherBlockProcess(blockDecrypt, encryptBuffer, 0, decryptBuffer), 0, "no header processed");
-        TEST_ERROR(cipherBlockFlush(blockDecrypt, decryptBuffer), CipherError, "cipher header missing");
+        TEST_ERROR(cipherBlockFlush(blockDecrypt, decryptBuffer), CryptoError, "cipher header missing");
 
         cipherBlockFree(blockDecrypt);
 
@@ -208,7 +208,7 @@ testRun(void)
         TEST_RESULT_INT(
             cipherBlockProcess(
                 blockDecrypt, (unsigned char *)(CIPHER_BLOCK_MAGIC "12345678"), 16, decryptBuffer), 0, "0 bytes processed");
-        TEST_ERROR(cipherBlockFlush(blockDecrypt, decryptBuffer), CipherError, "unable to flush");
+        TEST_ERROR(cipherBlockFlush(blockDecrypt, decryptBuffer), CryptoError, "unable to flush");
 
         cipherBlockFree(blockDecrypt);
     }

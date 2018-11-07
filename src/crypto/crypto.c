@@ -29,7 +29,7 @@ cryptoError(bool error, const char *description)
     if (error)
     {
         const char *errorMessage = ERR_reason_error_string(ERR_get_error());
-        THROW_FMT(CipherError, "%s: %s", description, errorMessage == NULL ? "no details available" : errorMessage);
+        THROW_FMT(CryptoError, "%s: %s", description, errorMessage == NULL ? "no details available" : errorMessage);
     }
 
     FUNCTION_TEST_RESULT_VOID();

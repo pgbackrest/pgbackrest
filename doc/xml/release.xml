@@ -93,6 +93,10 @@
                     <release-item>
                         <p>Add <code>cryptoError()</code> and update crypto code to use it.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Rename <code>CipherError</code> to <code>CryptoError</code>.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

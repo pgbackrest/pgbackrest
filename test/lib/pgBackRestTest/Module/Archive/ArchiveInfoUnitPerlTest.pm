@@ -108,7 +108,7 @@ sub run
         # Prepend encryption Magic signature to simulate encryption
         executeTest('echo "' . CIPHER_MAGIC . '$(cat ' . $strArchiveFile . ')" > ' . $strArchiveFile);
 
-        $self->testException(sub {$oArchiveInfo->reconstruct(PG_VERSION_94, $self->dbSysId(PG_VERSION_94))}, ERROR_CIPHER,
+        $self->testException(sub {$oArchiveInfo->reconstruct(PG_VERSION_94, $self->dbSysId(PG_VERSION_94))}, ERROR_CRYPTO,
             "encryption incompatible for '$strArchiveFile'" .
             "\nHINT: Is or was the repo encrypted?");
 
@@ -204,7 +204,7 @@ sub run
         # Prepend encryption Magic signature to simulate encryption
         executeTest('echo "' . CIPHER_MAGIC . '$(cat ' . $strFile . ')" > ' . $strFile);
 
-        $self->testException(sub {new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE))}, ERROR_CIPHER,
+        $self->testException(sub {new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE))}, ERROR_CRYPTO,
             "unable to parse '$strFile'" .
             "\nHINT: Is or was the repo encrypted?");
 

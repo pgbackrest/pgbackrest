@@ -458,7 +458,7 @@ sub run
         $self->configTestLoad(CFGCMD_INFO);
         my $oInfo = new pgBackRest::Info();
 
-        $self->testException(sub {$oInfo->stanzaList()}, ERROR_CIPHER,
+        $self->testException(sub {$oInfo->stanzaList()}, ERROR_CRYPTO,
             "unable to parse '" . $self->{strBackupPathEncrypt} . "/backup.info'" .
             "\nHINT: Is or was the repo encrypted?" .
             "\nHINT: use option --stanza if encryption settings are different for the stanza than the global settings");

@@ -78,7 +78,7 @@ ERROR_DECLARE(GroupMissingError);
 ERROR_DECLARE(PathExistsError);
 ERROR_DECLARE(FileExistsError);
 ERROR_DECLARE(MemoryError);
-ERROR_DECLARE(CipherError);
+ERROR_DECLARE(CryptoError);
 ERROR_DECLARE(ParamInvalidError);
 ERROR_DECLARE(PathCloseError);
 ERROR_DECLARE(FileInfoError);

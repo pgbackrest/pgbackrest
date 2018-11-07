@@ -187,7 +187,7 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t source
                 // The first bytes of the file to decrypt should be equal to the magic.  If not then this is not an
                 // encrypted file, or at least not in a format we recognize.
                 if (memcmp(this->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
-                    THROW(CipherError, "cipher header invalid");
+                    THROW(CryptoError, "cipher header invalid");
             }
             // Else copy what was provided into the header buffer and return 0
             else
@@ -265,11 +265,11 @@ cipherBlockFlush(CipherBlock *this, unsigned char *destination)
 
     // If no header was processed then error
     if (!this->saltDone)
-        THROW(CipherError, "cipher header missing");
+        THROW(CryptoError, "cipher header missing");
 
     // Only flush remaining data if some data was processed
     if (!EVP_CipherFinal(this->cipherContext, destination, (int *)&destinationSize))
-        THROW(CipherError, "unable to flush");
+        THROW(CryptoError, "unable to flush");
 
     // Return actual destination size
     FUNCTION_DEBUG_RESULT(SIZE, destinationSize);

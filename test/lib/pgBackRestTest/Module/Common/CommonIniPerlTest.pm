@@ -287,14 +287,14 @@ sub run
         # Prepend encryption Magic signature to copy (main invalid) to simulate encryption
         executeTest('echo "' . CIPHER_MAGIC . '$(cat ' . $strTestFileCopy . ')" > ' . $strTestFileCopy);
 
-        $self->testException(sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CIPHER,
+        $self->testException(sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CRYPTO,
             "unable to parse '$strTestFileCopy'" .
             "\nHINT: Is or was the repo encrypted?");
 
         # Prepend encryption Magic signature to main to simulate encryption
         executeTest('echo "' . CIPHER_MAGIC . '$(cat ' . $strTestFile . ')" > ' . $strTestFile);
 
-        $self->testException(sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CIPHER,
+        $self->testException(sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CRYPTO,
             "unable to parse '$strTestFile'" .
             "\nHINT: Is or was the repo encrypted?");
 
@@ -319,7 +319,7 @@ sub run
         my $oStorage = new pgBackRest::Storage::Local($self->testPath(), new pgBackRest::Storage::Posix::Driver(),
             {strCipherType => CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC, strCipherPassUser => $strCipherPass});
 
-        $self->testException(sub {new pgBackRest::Common::Ini($strTestFile, {oStorage => $oStorage})}, ERROR_CIPHER,
+        $self->testException(sub {new pgBackRest::Common::Ini($strTestFile, {oStorage => $oStorage})}, ERROR_CRYPTO,
             "passphrase is required when storage is encrypted");
 
         $self->testException(sub {new pgBackRest::Common::Ini($strTestFile, {bLoad => false, oStorage => $oStorage,
