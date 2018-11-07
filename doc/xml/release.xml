@@ -89,6 +89,10 @@
 
                         <p>Change <code>infoArchiveCheckPg()</code> to display the <postgres/> version as a string (e.g. 9.4) instead of the integer representation (e.g. 90400) when throwing an error.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <code>cryptoError()</code> and update crypto code to use it.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

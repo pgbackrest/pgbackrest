@@ -296,7 +296,7 @@ config/parse.o: config/parse.c common/assert.h common/debug.h common/error.auto.
 crypto/cipherBlock.o: crypto/cipherBlock.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/convert.h crypto/cipher.h crypto/cipherBlock.h crypto/crypto.h crypto/random.h
 	$(CC) $(CFLAGS) -c crypto/cipherBlock.c -o crypto/cipherBlock.o
 
-crypto/crypto.o: crypto/crypto.c common/debug.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h crypto/crypto.h
+crypto/crypto.o: crypto/crypto.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h crypto/crypto.h
 	$(CC) $(CFLAGS) -c crypto/crypto.c -o crypto/crypto.o
 
 crypto/hash.o: crypto/hash.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h crypto/crypto.h crypto/hash.h
