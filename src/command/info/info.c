@@ -5,41 +5,93 @@ Help Command
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "common/assert.h"
+#include <stdio.h>  // CSHANG only for debugging
+
 #include "common/debug.h"
 #include "common/io/handle.h"
+#include "common/log.h"
 #include "common/memContext.h"
+#include "common/type/json.h"
 #include "config/config.h"
-#include "config/define.h"
-#include "version.h"
+#include "info/infoArchive.h"
+#include "info/infoBackup.h"
+#include "info/infoPg.h"
+#include "storage/helper.h"
 
 /***********************************************************************************************************************************
+CSHANG Do I need this? I copied it from Help
 Define the console width - use a fixed with of 80 since this should be safe on virtually all consoles
 ***********************************************************************************************************************************/
 #define CONSOLE_WIDTH                                               80
 
+#define INFO_STANZA_NAME                                            "name"
+
+// static VariantList *
+// backupList(String *stanza)
+// {
+// '<REPO:BACKUP>/backup.info'
+//             // Attempt to load the backup info file
+//             InfoBackup *info = infoBackupNew(storageRepo(), strNew("backup/stanzaname/" INFO_BACKUP_FILE), false);
+//
+
 static VariantList *
-backupList(String *stanza)
+stanzaInfo(const String *stanza)
 {
-'<REPO:BACKUP>/backup.info'
-            // Attempt to load the backup info file
-            InfoBackup *info = infoBackupNew(storageRepo(), strNew("backup/stanzaname/" INFO_BACKUP_FILE), false);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, stanza);
+    FUNCTION_TEST_END();
 
-static StringList *
-stanzaList(String *stanza)
-{
+    VariantList *result = varLstNew();
+
     // Get a list of stanzas in the backup directory
-    StringList *stanzaName = storageRepo()->storageList(cfgCommandName(cfgCmdBackup)); // CSHANG NEED TO HAVE A CONSTANT and not tie this to the backup command
 
-    need to construct the path myself and dont use cfgcmdbackup
+    StringList *stanzaName = strLstSort(storageListNP(storageRepo(), strNew(STORAGE_PATH_BACKUP)), sortOrderAsc);
 
-    for (unsigned int idx = 0; idx <
+    for (unsigned int idx = 0; idx < strLstSize(stanzaName); idx++)
+    {
+        // If a specific stanza has been requested and this is not it, then continue to the next in the list
+        if (stanza != NULL && !strEq(stanza, strLstGet(stanzaName, idx)))
+            continue;
 
-                    if (defined($strStanza) && $strStanza ne $strStanzaFound)
-                    {
-                        next;
-                    }
+        Variant *stanzaInfo = varNewKv();
+        kvPut(varKv(stanzaInfo), varNewStr(strNew(INFO_STANZA_NAME)), varNewStr(strLstGet(stanzaName, idx)));
 
+        varLstAdd(result, stanzaInfo);
+    }
+
+    FUNCTION_TEST_RESULT(VARIANT_LIST, result);
+}
+
+static String *
+infoRender(void)
+{
+    FUNCTION_DEBUG_VOID(logLevelDebug);
+
+    String *result = NULL;
+
+    // Get stanza if specified
+    const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
+
+    VariantList *stanzaInfoList = stanzaInfo(stanza);
+
+    // CSHANG I couldn't find the constants for the values - are there IDs or another way to check if text vs json?
+    if (strEqZ(cfgOptionStr(cfgOptOutput), "text"))
+    {
+        // CSHANG call a formatText function and then if it returns NULL the following would be retunred?
+        result = strNewFmt("No stanzas exist in %s\n", strPtr(storagePathNP(storageRepo(), NULL)));
+    }
+    else if (strEqZ(cfgOptionStr(cfgOptOutput), "json"))
+    {
+        result = varToJson(varNewVarLst(stanzaInfoList), 4);
+    }
+    else
+    {
+// CSHANG This should never happen since it will be caught by the command parser so should we just remove? Or is there a way to have this entire ELSE only as test code
+        THROW_FMT(AssertError, "invalid info output option '%s'", cfgCommandName(cfgOptOutput));
+    }
+
+    FUNCTION_DEBUG_RESULT(STRING, result);
+}
 // /***********************************************************************************************************************************
 // Helper function for helpRender() to make output look good on a console
 // ***********************************************************************************************************************************/
@@ -402,16 +454,17 @@ stanzaList(String *stanza)
 // }
 
 /***********************************************************************************************************************************
-Render help and output to stdout
+Render info and output to stdout
 ***********************************************************************************************************************************/
 void
-cmdHelp(void)
+cmdInfo(void)
 {
+// CSHANG How foes this work - I assume I would use this?
     FUNCTION_DEBUG_VOID(logLevelDebug);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ioHandleWriteOneStr(STDOUT_FILENO, helpRender());
+        ioHandleWriteOneStr(STDOUT_FILENO, infoRender());
     }
     MEM_CONTEXT_TEMP_END();
 

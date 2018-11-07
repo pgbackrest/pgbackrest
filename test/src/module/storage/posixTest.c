@@ -935,7 +935,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         const Storage *storage = NULL;
-
+// CSHANG Need a test regarding OK to have a NULL stanza but first need to decide if can transition from NULL to an actual stanza (i.e. require an init flag)
         TEST_RESULT_PTR(storageHelper.storageRepo, NULL, "repo storage not cached");
         TEST_ASSIGN(storage, storageRepo(), "new storage");
         TEST_RESULT_PTR(storageHelper.storageRepo, storage, "repo storage cached");
@@ -981,6 +981,11 @@ testRun(void)
     if (testBegin("storageSpool() and storageSpoolWrite()"))
     {
         const Storage *storage = NULL;
+
+        TEST_RESULT_PTR(storageHelper.storageSpool, NULL, "storageSpool not cached");
+        TEST_ERROR(storageSpool(), AssertError, "stanza cannot be NULL for this storage object");
+        TEST_RESULT_PTR(storageHelper.storageSpoolWrite, NULL, "storageSpoolWrite not cached");
+        TEST_ERROR(storageSpoolWrite(), AssertError, "stanza cannot be NULL for this storage object");
 
         // Load configuration to set spool-path and stanza
         StringList *argList = strLstNew();

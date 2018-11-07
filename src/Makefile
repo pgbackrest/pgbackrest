@@ -173,6 +173,9 @@ command/control/control.o: command/control/control.c command/control/control.h c
 command/help/help.o: command/help/help.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/handle.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h version.h
 	$(CC) $(CFLAGS) -c command/help/help.c -o command/help/help.o
 
+command/info/info.o: command/info/info.c common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/handle.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h info/infoArchive.h info/infoBackup.h info/infoPg.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
+	$(CC) $(CFLAGS) -c command/info/info.c -o command/info/info.o
+
 common/debug.o: common/debug.c common/debug.h common/logLevel.h common/stackTrace.h common/type/convert.h
 	$(CC) $(CFLAGS) -c common/debug.c -o common/debug.o
 

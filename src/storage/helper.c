@@ -24,8 +24,8 @@ static struct
     Storage *storageSpoolWrite;                                     // Spool write storage
 
     String *stanza;                                                 // Stanza for storage
+    bool stanzaRequired;                                            // Is a stanza required for the storage being created?
     RegExp *walRegExp;                                              // Regular expression for identifying wal files
-    bool stanzaRequired;                                            // Is a stanza required?
 } storageHelper;
 
 /***********************************************************************************************************************************
@@ -55,7 +55,7 @@ static void
 storageHelperStanzaInit(void)
 {
     FUNCTION_TEST_VOID();
-
+// CSHANG It may be better to have an init flag unless it is OK to change from a NULL stanza to having a stanza?
     if (storageHelper.stanza == NULL)
     {
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
@@ -65,7 +65,7 @@ storageHelperStanzaInit(void)
         MEM_CONTEXT_END();
 
         if (storageHelper.stanzaRequired && storageHelper.stanza == NULL)
-            THROW_FMT(AssertError, "stanza cannot be NULL for this storage object");
+            THROW(AssertError, "stanza cannot be NULL for this storage object");
     }
     else if (!strEq(storageHelper.stanza, cfgOptionStr(cfgOptStanza)))
     {
@@ -144,7 +144,7 @@ storageRepoPathExpression(const String *expression, const String *path)
 
     if (strEqZ(expression, STORAGE_REPO_ARCHIVE))
     {
-        result = strNewFmt("archive/%s", strPtr(storageHelper.stanza));
+        result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strPtr(storageHelper.stanza));
 
         if (path != NULL)
         {
@@ -237,16 +237,16 @@ storageSpoolPathExpression(const String *expression, const String *path)
     if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_IN))
     {
         if (path == NULL)
-            result = strNewFmt("archive/%s/in", strPtr(storageHelper.stanza));
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/in", strPtr(storageHelper.stanza));
         else
-            result = strNewFmt("archive/%s/in/%s", strPtr(storageHelper.stanza), strPtr(path));
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/in/%s", strPtr(storageHelper.stanza), strPtr(path));
     }
     else if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_OUT))
     {
         if (path == NULL)
-            result = strNewFmt("archive/%s/out", strPtr(storageHelper.stanza));
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/out", strPtr(storageHelper.stanza));
         else
-            result = strNewFmt("archive/%s/out/%s", strPtr(storageHelper.stanza), strPtr(path));
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/out/%s", strPtr(storageHelper.stanza), strPtr(path));
     }
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));
