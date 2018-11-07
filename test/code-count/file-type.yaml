@@ -967,14 +967,6 @@ src/crypto/hash.h:
   class: core
   type: c/h
 
-src/crypto/random.c:
-  class: core
-  type: c
-
-src/crypto/random.h:
-  class: core
-  type: c/h
-
 src/info/info.c:
   class: core
   type: c

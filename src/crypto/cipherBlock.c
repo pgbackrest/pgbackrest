@@ -11,7 +11,6 @@ Block Cipher
 #include "common/memContext.h"
 #include "crypto/cipherBlock.h"
 #include "crypto/crypto.h"
-#include "crypto/random.h"
 
 /***********************************************************************************************************************************
 Header constants and sizes
@@ -165,7 +164,7 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t source
             destinationSize += CIPHER_BLOCK_MAGIC_SIZE;
 
             // Add salt to the destination buffer
-            randomBytes(destination, PKCS5_SALT_LEN);
+            cryptoRandomBytes(destination, PKCS5_SALT_LEN);
             salt = destination;
             destination += PKCS5_SALT_LEN;
             destinationSize += PKCS5_SALT_LEN;

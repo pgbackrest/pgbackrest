@@ -2,8 +2,9 @@
 Crypto Common
 ***********************************************************************************************************************************/
 #include <openssl/conf.h>
-#include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
 
 #include "common/debug.h"
 #include "common/error.h"
@@ -63,4 +64,23 @@ cryptoIsInit(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RESULT(BOOL, cryptoInitDone);
+}
+
+/***********************************************************************************************************************************
+Generate random bytes
+***********************************************************************************************************************************/
+void
+cryptoRandomBytes(unsigned char *buffer, size_t size)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(UCHARP, buffer);
+        FUNCTION_DEBUG_PARAM(SIZE, size);
+
+        FUNCTION_DEBUG_ASSERT(buffer != NULL);
+        FUNCTION_DEBUG_ASSERT(size > 0);
+    FUNCTION_DEBUG_END();
+
+    RAND_bytes(buffer, (int)size);
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

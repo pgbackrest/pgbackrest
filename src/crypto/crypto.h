@@ -12,5 +12,6 @@ Functions
 void cryptoError(bool error, const char *description);
 void cryptoInit(void);
 bool cryptoIsInit(void);
+void cryptoRandomBytes(unsigned char *buffer, size_t size);
 
 #endif

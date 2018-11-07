@@ -334,7 +334,7 @@ sub libcAutoExportTag
 
         random =>
         [
-            'randomBytes',
+            'cryptoRandomBytes',
         ],
 
         storage =>

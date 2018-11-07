@@ -60,7 +60,7 @@ These includes are from the src directory.  There is no Perl-specific code in th
 #include "config/define.h"
 #include "config/load.h"
 #include "config/parse.h"
-#include "crypto/random.h"
+#include "crypto/crypto.h"
 #include "perl/config.h"
 #include "postgres/pageChecksum.h"
 #include "storage/driver/posix/storage.h"
@@ -396,8 +396,8 @@ XS_EUPXS(XS_pgBackRest__LibC_pageChecksumBufferTest)
 /* INCLUDE: Returning to 'xs/crypto/random.xs' from 'xs/postgres/pageChecksum.xs' */
 
 
-XS_EUPXS(XS_pgBackRest__LibC_randomBytes); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC_randomBytes)
+XS_EUPXS(XS_pgBackRest__LibC_cryptoRandomBytes); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC_cryptoRandomBytes)
 {
     dVAR; dXSARGS;
     if (items != 1)
@@ -409,7 +409,7 @@ XS_EUPXS(XS_pgBackRest__LibC_randomBytes)
     RETVAL = newSV(size);
     SvPOK_only(RETVAL);
 
-    randomBytes((unsigned char *)SvPV_nolen(RETVAL), size);
+    cryptoRandomBytes((unsigned char *)SvPV_nolen(RETVAL), size);
 
     SvCUR_set(RETVAL, size);
 	RETVAL = sv_2mortal(RETVAL);
@@ -1217,7 +1217,7 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::pageChecksum", XS_pgBackRest__LibC_pageChecksum);
         newXS_deffile("pgBackRest::LibC::pageChecksumTest", XS_pgBackRest__LibC_pageChecksumTest);
         newXS_deffile("pgBackRest::LibC::pageChecksumBufferTest", XS_pgBackRest__LibC_pageChecksumBufferTest);
-        newXS_deffile("pgBackRest::LibC::randomBytes", XS_pgBackRest__LibC_randomBytes);
+        newXS_deffile("pgBackRest::LibC::cryptoRandomBytes", XS_pgBackRest__LibC_cryptoRandomBytes);
         newXS_deffile("pgBackRest::LibC::Crypto::Hash::new", XS_pgBackRest__LibC__Crypto__Hash_new);
         newXS_deffile("pgBackRest::LibC::Crypto::Hash::process", XS_pgBackRest__LibC__Crypto__Hash_process);
         newXS_deffile("pgBackRest::LibC::Crypto::Hash::result", XS_pgBackRest__LibC__Crypto__Hash_result);

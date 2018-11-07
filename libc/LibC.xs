@@ -52,7 +52,7 @@ These includes are from the src directory.  There is no Perl-specific code in th
 #include "config/define.h"
 #include "config/load.h"
 #include "config/parse.h"
-#include "crypto/random.h"
+#include "crypto/crypto.h"
 #include "perl/config.h"
 #include "postgres/pageChecksum.h"
 #include "storage/driver/posix/storage.h"

@@ -142,7 +142,7 @@ my $rhExport =
     'random' =>
     {
         &BLD_EXPORTTYPE_SUB => [qw(
-            randomBytes
+            cryptoRandomBytes
         )],
     },
 
