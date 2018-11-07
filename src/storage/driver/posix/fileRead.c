@@ -250,6 +250,8 @@ storageDriverPosixFileReadFree(StorageDriverPosixFileRead *this)
     if (this != NULL)
     {
         storageDriverPosixFileReadClose(this);
+
+        memContextCallbackClear(this->memContext);
         memContextFree(this->memContext);
     }
 

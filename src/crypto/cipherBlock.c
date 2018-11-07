@@ -291,6 +291,7 @@ cipherBlockFree(CipherBlock *this)
         EVP_CIPHER_CTX_cleanup(this->cipherContext);
 
     // Free mem context
+    memContextCallbackClear(this->memContext);
     memContextFree(this->memContext);
 
     FUNCTION_DEBUG_RESULT_VOID();

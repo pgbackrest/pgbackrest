@@ -184,7 +184,7 @@ gzipCompressToLog(const GzipCompress *this)
 {
     return strNewFmt(
         "{inputSame: %s, done: %s, flushing: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
-        cvtBoolToConstZ(this->done), this->stream != NULL ? this->stream->avail_in : 0);
+        cvtBoolToConstZ(this->done), this->stream->avail_in);
 }
 
 /***********************************************************************************************************************************
@@ -199,12 +199,10 @@ gzipCompressFree(GzipCompress *this)
 
     if (this != NULL)
     {
-        if (this->stream != NULL)
-        {
-            deflateEnd(this->stream);
-            this->stream = NULL;
-        }
+        deflateEnd(this->stream);
+        this->stream = NULL;
 
+        memContextCallbackClear(this->memContext);
         memContextFree(this->memContext);
     }
 

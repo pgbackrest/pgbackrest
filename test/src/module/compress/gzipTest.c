@@ -170,8 +170,6 @@ testRun(void)
 
         decompress->inputSame = true;
         decompress->done = true;
-        inflateEnd(decompress->stream);
-        decompress->stream = NULL;
         TEST_RESULT_STR(strPtr(gzipDecompressToLog(decompress)), "{inputSame: true, done: true, availIn: 0}", "format object");
     }
 

@@ -219,12 +219,9 @@ cryptoHashFree(CryptoHash *this)
 
     if (this != NULL)
     {
-        if (this->hashContext != NULL)
-        {
-            EVP_MD_CTX_destroy(this->hashContext);
-            this->hashContext = NULL;
-        }
+        EVP_MD_CTX_destroy(this->hashContext);
 
+        memContextCallbackClear(this->memContext);
         memContextFree(this->memContext);
     }
 
@@ -294,7 +291,6 @@ cryptoHashOneStr(const String *type, String *message)
 
     FUNCTION_TEST_RESULT(BUFFER, cryptoHashOneC(type, (const unsigned char *)strPtr(message), strSize(message)));
 }
-
 
 /***********************************************************************************************************************************
 Get hmac for one message/key

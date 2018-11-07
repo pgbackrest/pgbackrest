@@ -107,6 +107,8 @@ regExpFree(RegExp *this)
     if (this != NULL)
     {
         regfree(&this->regExp);
+
+        memContextCallbackClear(this->memContext);
         memContextFree(this->memContext);
     }
 

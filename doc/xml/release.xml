@@ -91,6 +91,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>memContextCallbackClear()</code> to prevent double <code>free()</code> calls.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Merge <file>crypto/random</file> module into <file>crypto/crypto</file>.</p>
                     </release-item>
 

@@ -354,6 +354,8 @@ storageDriverPosixFileWriteFree(StorageDriverPosixFileWrite *this)
     if (this != NULL)
     {
         storageDriverPosixFileWriteClose(this);
+
+        memContextCallbackClear(this->memContext);
         memContextFree(this->memContext);
     }
 
