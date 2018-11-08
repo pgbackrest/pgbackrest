@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-String Handler
+Buffer Handler
 ***********************************************************************************************************************************/
 #include <stdio.h>
 #include <string.h>
@@ -15,6 +15,8 @@ struct Buffer
 {
     MemContext *memContext;
     size_t size;                                                    // Actual size of buffer
+    bool limitSet;                                                  // Has a limit been set?
+    size_t limit;                                                   // Limited reported size of the buffer to make it appear smaller
     size_t used;                                                    // Amount of buffer used
     unsigned char *buffer;                                          // Buffer allocation
 };
@@ -83,8 +85,8 @@ bufNewStr(const String *string)
 
     // Create object and copy string
     Buffer *this = bufNew(strSize(string));
-    memcpy(this->buffer, strPtr(string), this->size);
-    this->used = this->size;
+    memcpy(this->buffer, strPtr(string), bufSize(this));
+    this->used = bufSize(this);
 
     FUNCTION_TEST_RESULT(BUFFER, this);
 }
@@ -103,8 +105,8 @@ bufNewZ(const char *string)
 
     // Create a new buffer and then copy the string into it.
     Buffer *this = bufNew(strlen(string));
-    memcpy(this->buffer, string, this->size);
-    this->used = this->size;
+    memcpy(this->buffer, string, bufSize(this));
+    this->used = bufSize(this);
 
     FUNCTION_TEST_RESULT(BUFFER, this);
 }
@@ -146,7 +148,7 @@ bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize
 
     if (catSize > 0)
     {
-        if (this->used + catSize > this->size)
+        if (this->used + catSize > bufSize(this))
             bufResize(this, this->used + catSize);
 
         // Just here to silence nonnull warnings from clang static analyzer
@@ -221,7 +223,7 @@ bufHex(const Buffer *this)
 
     String *result = strNew("");
 
-    for (unsigned int bufferIdx = 0; bufferIdx < this->size; bufferIdx++)
+    for (unsigned int bufferIdx = 0; bufferIdx < bufSize(this); bufferIdx++)
         strCatFmt(result, "%02x", this->buffer[bufferIdx]);
 
     FUNCTION_TEST_RESULT(STRING, result);
@@ -294,6 +296,9 @@ bufResize(Buffer *this, size_t size)
 
         if (this->used > this->size)
             this->used = this->size;
+
+        if (this->limitSet && this->limit > this->size)
+            this->limit = this->size;
     }
 
     FUNCTION_TEST_RESULT(BUFFER, this);
@@ -311,7 +316,41 @@ bufFull(const Buffer *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->used == this->size);
+    FUNCTION_TEST_RESULT(BOOL, this->used == bufSize(this));
+}
+
+/***********************************************************************************************************************************
+Set and clear buffer limits
+***********************************************************************************************************************************/
+void
+bufLimitClear(Buffer *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    this->limitSet = false;
+
+    FUNCTION_TEST_RESULT_VOID();
+}
+
+void
+bufLimitSet(Buffer *this, size_t limit)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+        FUNCTION_TEST_PARAM(SIZE, limit);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(limit <= this->size);
+    FUNCTION_TEST_END();
+
+    this->limit = limit;
+    this->limitSet = true;
+
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -341,7 +380,7 @@ bufRemains(const Buffer *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(SIZE, this->size - this->used);
+    FUNCTION_TEST_RESULT(SIZE, bufSize(this) - this->used);
 }
 
 /***********************************************************************************************************************************
@@ -371,7 +410,7 @@ bufSize(const Buffer *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(SIZE, this->size);
+    FUNCTION_TEST_RESULT(SIZE, this->limitSet ? this->limit : this->size);
 }
 
 /***********************************************************************************************************************************
@@ -400,7 +439,7 @@ bufUsedInc(Buffer *this, size_t inc)
         FUNCTION_TEST_PARAM(SIZE, inc);
 
         FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->used + inc <= this->size);
+        FUNCTION_TEST_ASSERT(this->used + inc <= bufSize(this));
     FUNCTION_TEST_END();
 
     this->used += inc;
@@ -416,7 +455,7 @@ bufUsedSet(Buffer *this, size_t used)
         FUNCTION_TEST_PARAM(SIZE, used);
 
         FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(used <= this->size);
+        FUNCTION_TEST_ASSERT(used <= bufSize(this));
     FUNCTION_TEST_END();
 
     this->used = used;
@@ -444,7 +483,14 @@ Render as string for logging
 String *
 bufToLog(const Buffer *this)
 {
-    return strNewFmt("{used: %zu, size: %zu}", this->used, this->size);
+    String *result = strNewFmt("{used: %zu, size: %zu, limit: ", this->used, this->size);
+
+    if (this->limitSet)
+        strCatFmt(result, "%zu}", this->limit);
+    else
+        strCat(result, "<off>}");
+
+    return result;
 }
 
 /***********************************************************************************************************************************

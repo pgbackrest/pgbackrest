@@ -29,6 +29,8 @@ Buffer *bufMove(Buffer *this, MemContext *parentNew);
 Buffer *bufResize(Buffer *this, size_t size);
 
 bool bufFull(const Buffer *this);
+void bufLimitClear(Buffer *this);
+void bufLimitSet(Buffer *this, size_t limit);
 unsigned char *bufPtr(const Buffer *this);
 size_t bufRemains(const Buffer *this);
 unsigned char *bufRemainsPtr(const Buffer *this);

@@ -45,7 +45,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("bufResize(), bufFull(), bufRemains*(), and bufUsed*()"))
+    if (testBegin("bufResize(), bufFull(), bufLimit*(), bufRemains*(), and bufUsed*()"))
     {
         Buffer *buffer = NULL;
         unsigned char *bufferPtr = NULL;
@@ -94,10 +94,20 @@ testRun(void)
 
         TEST_RESULT_INT(sameTotal, 128, "original bytes match");
 
+        // Use limits to change size reporting
+        TEST_RESULT_VOID(bufLimitSet(buffer, 64), "set limit");
+        TEST_RESULT_INT(bufSize(buffer), 64, "    check limited size");
+        TEST_RESULT_VOID(bufLimitClear(buffer), "    clear limit");
+        TEST_RESULT_INT(bufSize(buffer), 128, "    check unlimited size");
+
         // Resize to zero buffer
         TEST_RESULT_VOID(bufUsedZero(buffer), "set used to 0");
         TEST_RESULT_INT(bufUsed(buffer), 0, "check used is zero");
 
+        TEST_RESULT_VOID(bufLimitSet(buffer, 64), "set limit to make sure it gets reduced with the resize");
+        TEST_RESULT_VOID(bufResize(buffer, 32), "decrease size to 32");
+        TEST_RESULT_INT(bufSize(buffer), 32, "check size");
+        TEST_RESULT_VOID(bufLimitSet(buffer, 0), "set limit so that it won't need to be resized");
         TEST_RESULT_VOID(bufResize(buffer, 0), "decrease size to zero");
         TEST_RESULT_INT(bufSize(buffer), 0, "check size");
         TEST_RESULT_VOID(bufResize(buffer, 0), "decrease size to zero again");
@@ -138,7 +148,11 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("bufToLog()"))
     {
-        TEST_RESULT_STR(strPtr(bufToLog(bufNew(100))), "{used: 0, size: 100}", "buf to log");
+        Buffer *buffer = bufNew(100);
+        TEST_RESULT_STR(strPtr(bufToLog(buffer)), "{used: 0, size: 100, limit: <off>}", "buf to log");
+
+        bufLimitSet(buffer, 50);
+        TEST_RESULT_STR(strPtr(bufToLog(buffer)), "{used: 0, size: 100, limit: 50}", "buf to log");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

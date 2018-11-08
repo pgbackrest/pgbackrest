@@ -544,7 +544,7 @@ P00  DEBUG:     command/control/control::lockStopTest: => void
 P00  DEBUG:     command/archive/get/file::archiveGetCheck: (archiveFile: {"000000010000000100000002"})
 P00  DEBUG:     postgres/interface::pgControlFromFile: (pgPath: {"[TEST_PATH]/db-master/db/base"})
 P00  DEBUG:     storage/storage::storageGet: (file: {type: posix, name: {"[TEST_PATH]/db-master/db/base/global/pg_control"}, ignoreMissing: false}, param.exactSize: 512)
-P00  DEBUG:     storage/storage::storageGet: => {used: 512, size: 512}
+P00  DEBUG:     storage/storage::storageGet: => {used: 512, size: 512, limit: <off>}
 P00  DEBUG:     postgres/interface::pgControlFromFile: => {version: 90300, systemId: 1000000000000000093, walSegmentSize: 16777216, pageChecksum: true}
 P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: (path: {"[TEST_PATH]/db-master/repo"}, modeFile: 0640, modePath: 0750, write: false, pathExpressionFunction: (function *))
 P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: => {StorageDriverPosix}
