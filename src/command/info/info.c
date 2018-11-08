@@ -16,6 +16,7 @@ Help Command
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
+#include "postgres/interface.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -24,18 +25,131 @@ Define the console width - use a fixed with of 80 since this should be safe on v
 ***********************************************************************************************************************************/
 #define CONSOLE_WIDTH                                               80
 
-#define INFO_STANZA_NAME                                            "name"
+#define INFO_STANZA_NAME()                                                                                                         \
+    strNew("name")
+#define INFO_SECTION_DB()                                                                                                          \
+    strNew("db")
+#define INFO_SECTION_DB_ID()                                                                                                       \
+    strNew("id")
+#define INFO_SECTION_DB_SYSTEM_ID()                                                                                                \
+    strNew("system-id")
+#define INFO_SECTION_DB_VERSION()                                                                                                  \
+    strNew("version")
+#define INFO_SECTION_ARCHIVE()                                                                                                     \
+    strNew("archive")
+#define INFO_SECTION_BACKUP()                                                                                                      \
+    strNew("backup")
+#define INFO_SECTION_BACKUP_LABEL()                                                                                                \
+    strNew("label")
 
-// static VariantList *
-// backupList(String *stanza)
+// static void
+// buildKv(Variant *kv, const String *section, const String *key, const Variant *value)
 // {
-// '<REPO:BACKUP>/backup.info'
-//             // Attempt to load the backup info file
-//             InfoBackup *info = infoBackupNew(storageRepo(), strNew("backup/stanzaname/" INFO_BACKUP_FILE), false);
-//
+//     FUNCTION_TEST_BEGIN();
+//         FUNCTION_TEST_PARAM(VARIANT, kv);
+//         FUNCTION_TEST_PARAM(STRING, section);
+//         FUNCTION_TEST_PARAM(STRING, key);
+//         FUNCTION_TEST_PARAM(VARIANT, value);
+//         // Variant *sectionKey = varNewStr(section);
+//         // KeyValue *sectionKv = varKv(kvGet(this->backupCurrent, sectionKey));
+//         //
+//         // if (sectionKv == NULL)
+//         //     sectionKv = kvPutKv(this->backupCurrent, sectionKey);
+//         //
+//         // kvAdd(sectionKv, varNewStr(key), value);
+
+static Variant *
+backupList(String *stanza, Variant *stanzaInfo)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, stanza);
+
+        FUNCTION_TEST_ASSERT(stanza != NULL);
+    FUNCTION_TEST_END();
+
+    InfoBackup *info = NULL;
+
+    // Catch certain errors
+    TRY_BEGIN()
+    {
+        // Attempt to load the backup info file
+        info = infoBackupNew(storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_BACKUP, strPtr(stanza), INFO_BACKUP_FILE), false);
+    }
+    CATCH(FileMissingError)
+    {
+        // CSHANG Is this empty code block the best way to handle this?
+        // Do not error if the file is missing - the status message will indicate it in the resulting output
+    }
+    CATCH(CipherError)
+    {
+        THROW_FMT(
+            CipherError,
+            "%s\n"
+            "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
+            errorMessage());
+    }
+    CATCH_ANY()
+    {
+        RETHROW();
+    }
+    TRY_END();
+
+    VariantList *dbList = varLstNew();
+    // VariantList *backupList = varLstNew();
+
+    if (info != NULL)
+    {
+        for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoBackupPg(info)); pgIdx++)
+        {
+            InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);
+            Variant *pgInfo = varNewKv();
+            kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_ID()), varNewUInt64((uint64_t)pgData.id));
+            kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_SYSTEM_ID()), varNewUInt64(pgData.systemId));
+            kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_VERSION()), varNewStr(pgVersionToStr(pgData.version)));
+
+            varLstAdd(dbList, pgInfo);
+        }
+
+        // StringList *backupKey = infoBackupCurrentKeyGet(info);
+        // for (unsigned int keyIdx = 0; keyIdx < strLstSize(backupKey); keyIdx++)
+        // {
+        //     String *backupLabel = strLstGet(backupKey, keyIdx);
+        //     Variant *backupInfo = varNewKv();
+        //     kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_LABEL()), varNewStr(backupLabel));
+        //
+        //     Variant *archiveInfo = varNewKv();
+        //     kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_START()),
+        //         varNewStr(infoBackupCurrentGet(info, strLstGet(backupKey, keyIdx), INFO_MANIFEST_KEY_ARCHIVE_START())));
+        //     kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_STOP()),
+        //         varNewStr(infoBackupCurrentGet(info, strLstGet(backupKey, keyIdx), INFO_MANIFEST_KEY_ARCHIVE_STOP())));
+        //
+        //     kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_ARCHIVE()), varNewStr(backupLabel));
+        //     kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_ARCHIVE()),
+        //         );
+        //
+        //
+        // Variant *sectionKey = varNewStr(section);
+        // KeyValue *sectionKv = varKv(kvGet(this->backupCurrent, sectionKey));
+        //
+        // if (sectionKv == NULL)
+        //     sectionKv = kvPutKv(this->backupCurrent, sectionKey);
+        //
+        // kvAdd(sectionKv, varNewStr(key), value);
+        //
+        //
+        // varLstAdd(backupList, backupInfo);
+        // }
+
+    }
+
+    kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_DB()), varNewVarLst(dbList));
+    // kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_BACKUP()), varNewVarLst(backupList));
+
+    FUNCTION_TEST_RESULT(VARIANT, stanzaInfo);  // CSHANG Don't really need a return value - but is it good practice to have it?
+}
 
 static VariantList *
-stanzaInfo(const String *stanza)
+stanzaList(const String *stanza)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
@@ -44,23 +158,57 @@ stanzaInfo(const String *stanza)
     VariantList *result = varLstNew();
 
     // Get a list of stanzas in the backup directory
+    StringList *stanzaList = strLstSort(storageListNP(storageRepo(), strNew(STORAGE_PATH_BACKUP)), sortOrderAsc);
 
-    StringList *stanzaName = strLstSort(storageListNP(storageRepo(), strNew(STORAGE_PATH_BACKUP)), sortOrderAsc);
-
-    for (unsigned int idx = 0; idx < strLstSize(stanzaName); idx++)
+    for (unsigned int idx = 0; idx < strLstSize(stanzaList); idx++)
     {
+        String *stanzaListName = strLstGet(stanzaList, idx);
+
         // If a specific stanza has been requested and this is not it, then continue to the next in the list
-        if (stanza != NULL && !strEq(stanza, strLstGet(stanzaName, idx)))
+        if (stanza != NULL && !strEq(stanza, stanzaListName))
             continue;
 
         Variant *stanzaInfo = varNewKv();
-        kvPut(varKv(stanzaInfo), varNewStr(strNew(INFO_STANZA_NAME)), varNewStr(strLstGet(stanzaName, idx)));
-
+        kvPut(varKv(stanzaInfo), varNewStr(INFO_STANZA_NAME()), varNewStr(stanzaListName));
+/* CSHANG Maybe we should have a varLstAddKv. Problem is I need to be able to add a KeyValue not a Variant to a VariantList. The
+real problem is that I thought multiple stanzas would be an array but that is not true currently. The json output when there are
+multiple stanzas is:
+[
+    {
+        "archive" : [],
+        "backup" : [],
+        "cipher" : "none",
+        "db" : [],
+        "name" : "demo",
+        "status" : {
+            "code" : 3,
+            "message" : "missing stanza data"
+        }
+    },
+    {
+        "archive" : [],
+        "backup" : [],
+        "cipher" : "none",
+        "db" : [],
+        "name" : "test",
+        "status" : {
+            "code" : 3,
+            "message" : "missing stanza data"
+        }
+    }
+]
+So what I want to do is create a KeyValue for a stanza, then add that to the varLst.
+*/
         varLstAdd(result, stanzaInfo);
+        backupList(stanzaListName, stanzaInfo);
     }
 
     FUNCTION_TEST_RESULT(VARIANT_LIST, result);
 }
+/* CSHANG Why does helpRender need a memeory context but helpRenderText and helpRenderValue do not? Aren't all the variables created
+in the temp mem context of cmdHelp?  Since all these are static, I don't understand why a memory context is needed anywhere except
+the cmdXXX function...
+*/
 
 static String *
 infoRender(void)
@@ -72,9 +220,9 @@ infoRender(void)
     // Get stanza if specified
     const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
 
-    VariantList *stanzaInfoList = stanzaInfo(stanza);
+    VariantList *stanzaInfoList = stanzaList(stanza);
 
-    // CSHANG I couldn't find the constants for the values - are there IDs or another way to check if text vs json?
+    // CSHANG I couldn't find the constants for the values - are there IDs or another way to confirm the option value?
     if (strEqZ(cfgOptionStr(cfgOptOutput), "text"))
     {
         // CSHANG call a formatText function and then if it returns NULL the following would be retunred?
@@ -92,6 +240,7 @@ infoRender(void)
 
     FUNCTION_DEBUG_RESULT(STRING, result);
 }
+
 // /***********************************************************************************************************************************
 // Helper function for helpRender() to make output look good on a console
 // ***********************************************************************************************************************************/

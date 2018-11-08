@@ -106,6 +106,10 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
                 "HINT: has a stanza-create been performed?",
                 errorMessage());
         }
+        CATCH_ANY()
+        {
+            RETHROW();
+        }
         TRY_END();
 
         const Ini *infoIni = infoPgIni(this->infoPg);
@@ -122,8 +126,7 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
             for (unsigned int backupLabelIdx = 0; backupLabelIdx < strLstSize(backupLabelList); backupLabelIdx++)
             {
                 const String *backupLabelKey = strLstGet(backupLabelList, backupLabelIdx);
-                const KeyValue *backupKv = jsonToKv(
-                        varStr(iniGet(infoIni, backupCurrentSection, backupLabelKey)));
+                const KeyValue *backupKv = jsonToKv(varStr(iniGet(infoIni, backupCurrentSection, backupLabelKey)));
                 const VariantList *keyList = kvKeyList(backupKv);
 
                 for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
