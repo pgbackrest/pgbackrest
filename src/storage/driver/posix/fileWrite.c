@@ -20,7 +20,7 @@ Object type
 struct StorageDriverPosixFileWrite
 {
     MemContext *memContext;
-    const StorageDriverPosix *storage;
+    StorageDriverPosix *storage;
     StorageFileWrite *interface;
     IoWrite *io;
 
@@ -50,7 +50,7 @@ Create a new file
 ***********************************************************************************************************************************/
 StorageDriverPosixFileWrite *
 storageDriverPosixFileWriteNew(
-    const StorageDriverPosix *storage, const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile,
+    StorageDriverPosix *storage, const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile,
     bool syncPath, bool atomic)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);

@@ -19,7 +19,7 @@ typedef struct StorageDriverPosixFileWrite StorageDriverPosixFileWrite;
 Constructor
 ***********************************************************************************************************************************/
 StorageDriverPosixFileWrite *storageDriverPosixFileWriteNew(
-    const StorageDriverPosix *storage, const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile,
+    StorageDriverPosix *storage, const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile,
     bool syncPath, bool atomic);
 
 /***********************************************************************************************************************************

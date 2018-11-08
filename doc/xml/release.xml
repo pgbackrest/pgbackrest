@@ -99,6 +99,10 @@
                     </release-item>
 
                     <release-item>
+                        <p><code>Storage</code> interface methods no longer declare the driver as const.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>memContextCallbackClear()</code> to prevent double <code>free()</code> calls.</p>
                     </release-item>
 

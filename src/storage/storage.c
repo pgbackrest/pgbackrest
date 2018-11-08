@@ -18,7 +18,7 @@ Object type
 struct Storage
 {
     MemContext *memContext;
-    const void *driver;
+    void *driver;
     StorageInterface interface;
     const String *type;
 
@@ -35,7 +35,7 @@ New storage object
 Storage *
 storageNew(
     const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
-    StoragePathExpressionCallback pathExpressionFunction, const void *driver, StorageInterface interface)
+    StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(STRING, type);
