@@ -51,7 +51,7 @@ testRun(void)
             "unable to push WAL segment '000000010000000100000001' asynchronously after 1 second(s)");
 
         // Wait for the lock to release
-        lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30, true);
+        lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30000, true);
         lockRelease(true);
 
         // Write out a bogus .error file to make sure it is ignored on the first loop
@@ -81,7 +81,7 @@ testRun(void)
         // the lock is lost and cannot be closed by the main process.
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30, true), "acquire lock");
+            lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30000, true), "acquire lock");
         TEST_RESULT_VOID(lockClear(true), "clear lock");
 
         TEST_ERROR(

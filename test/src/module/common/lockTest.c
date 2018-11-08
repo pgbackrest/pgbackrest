@@ -70,7 +70,7 @@ testRun(void)
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo mkdir -p 700 %s", strPtr(strPath(noPermLock))))), 0, "create noperm dir");
 
         TEST_ERROR(
-            lockAcquireFile(noPermLock, .1, true), LockAcquireError,
+            lockAcquireFile(noPermLock, 100, true), LockAcquireError,
             strPtr(
                 strNewFmt(
                     "unable to acquire lock on file '%s': Permission denied\n"

@@ -42,7 +42,7 @@ cmdArchivePush(void)
             bool server = false;                                        // Is this the async server process?
 
             // Loop and wait for the WAL segment to be pushed
-            Wait *wait = waitNew(cfgOptionDbl(cfgOptArchiveTimeout));
+            Wait *wait = waitNew((TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
 
             do
             {

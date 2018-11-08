@@ -16,11 +16,12 @@ typedef enum
 } LockType;
 
 #include "common/type/string.h"
+#include "common/time.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-bool lockAcquire(const String *lockPath, const String *stanza, LockType lockType, double lockTimeout, bool failOnNoLock);
+bool lockAcquire(const String *lockPath, const String *stanza, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock);
 bool lockClear(bool failOnNoLock);
 bool lockRelease(bool failOnNoLock);
 

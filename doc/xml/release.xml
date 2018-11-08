@@ -91,6 +91,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Construct <code>Wait</code> object in milliseconds instead of fractional seconds.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>memContextCallbackClear()</code> to prevent double <code>free()</code> calls.</p>
                     </release-item>
 

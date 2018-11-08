@@ -136,7 +136,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(storageExistsNP(storageTest, strNew("missing")), false, "file does not exist");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, strNew("missing"), .timeout = .1), false, "file does not exist");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, strNew("missing"), .timeout = 100), false, "file does not exist");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
@@ -161,7 +161,7 @@ testRun(void)
 
             HARNESS_FORK_PARENT()
             {
-                TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 1), true, "file exists after wait");
+                TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 1000), true, "file exists after wait");
             }
         }
         HARNESS_FORK_END();

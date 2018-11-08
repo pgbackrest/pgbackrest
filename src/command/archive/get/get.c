@@ -141,7 +141,7 @@ cmdArchiveGet(void)
             bool confessOnError = false;                                // Should we confess errors?
 
             // Loop and wait for the WAL segment to be pushed
-            Wait *wait = waitNew(cfgOptionDbl(cfgOptArchiveTimeout));
+            Wait *wait = waitNew((TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
 
             do
             {

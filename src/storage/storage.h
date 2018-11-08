@@ -14,6 +14,7 @@ typedef struct Storage Storage;
 #include "common/type/buffer.h"
 #include "common/type/stringList.h"
 #include "common/io/filter/group.h"
+#include "common/time.h"
 #include "storage/fileRead.h"
 #include "storage/fileWrite.h"
 #include "storage/info.h"
@@ -31,7 +32,7 @@ storageExists
 ***********************************************************************************************************************************/
 typedef struct StorageExistsParam
 {
-    double timeout;
+    TimeMSec timeout;
 } StorageExistsParam;
 
 #define storageExistsP(this, pathExp, ...)                                                                                         \

@@ -4,7 +4,6 @@ Wait Handler
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/time.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
@@ -23,12 +22,12 @@ struct Wait
 New wait handler
 ***********************************************************************************************************************************/
 Wait *
-waitNew(double waitTime)
+waitNew(TimeMSec waitTime)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(DOUBLE, waitTime);
+        FUNCTION_DEBUG_PARAM(TIMEMSEC, waitTime);
 
-        FUNCTION_DEBUG_ASSERT(waitTime >= 0.1 && waitTime <= 999999.0);
+        FUNCTION_DEBUG_ASSERT(waitTime >= 100 && waitTime <= 999999000);
     FUNCTION_DEBUG_END();
 
     // Allocate wait object
@@ -41,7 +40,7 @@ waitNew(double waitTime)
         this->memContext = MEM_CONTEXT_NEW();
 
         // Store time
-        this->waitTime = (TimeMSec)(waitTime * MSEC_PER_SEC);
+        this->waitTime = waitTime;
 
         // Calculate first sleep time -- start with 1/10th of a second for anything >= 1 second
         if (this->waitTime >= MSEC_PER_SEC)

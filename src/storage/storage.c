@@ -135,10 +135,9 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STORAGE, this);
         FUNCTION_DEBUG_PARAM(STRING, pathExp);
-        FUNCTION_DEBUG_PARAM(DOUBLE, param.timeout);
+        FUNCTION_DEBUG_PARAM(TIMEMSEC, param.timeout);
 
         FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(param.timeout >= 0);
     FUNCTION_DEBUG_END();
 
     bool result = false;

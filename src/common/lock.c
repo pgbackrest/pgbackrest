@@ -39,18 +39,15 @@ static LockType lockTypeHeld = lockTypeNone;
 Acquire a lock using a file on the local filesystem
 ***********************************************************************************************************************************/
 static int
-lockAcquireFile(const String *lockFile, double lockTimeout, bool failOnNoLock)
+lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(STRING, lockFile);
-        FUNCTION_DEBUG_PARAM(DOUBLE, lockTimeout);
+        FUNCTION_DEBUG_PARAM(TIMEMSEC, lockTimeout);
         FUNCTION_DEBUG_PARAM(BOOL, failOnNoLock);
     FUNCTION_DEBUG_END();
 
     int result = -1;
-
-    // Timeout can't be negative
-    ASSERT_DEBUG(lockTimeout >= 0);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -153,13 +150,13 @@ This will involve locking one or more files on disk depending on the lock type. 
 backup), but the stanza commands all need to lock both.
 ***********************************************************************************************************************************/
 bool
-lockAcquire(const String *lockPath, const String *stanza, LockType lockType, double lockTimeout, bool failOnNoLock)
+lockAcquire(const String *lockPath, const String *stanza, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, lockPath);
         FUNCTION_DEBUG_PARAM(STRING, stanza);
         FUNCTION_DEBUG_PARAM(ENUM, lockType);
-        FUNCTION_DEBUG_PARAM(DOUBLE, lockTimeout);
+        FUNCTION_DEBUG_PARAM(TIMEMSEC, lockTimeout);
         FUNCTION_DEBUG_PARAM(BOOL, failOnNoLock);
     FUNCTION_DEBUG_END();
 

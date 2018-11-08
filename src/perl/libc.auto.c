@@ -1084,7 +1084,7 @@ XS_EUPXS(XS_pgBackRest__LibC_lockAcquire)
 
         // Attempt to acquire the lock
         if (cfgLockRequired())
-            RETVAL = lockAcquire(strNew(lockPath), strNew(stanza), cfgLockType(), lockTimeout, failOnNoLock);
+            RETVAL = lockAcquire(strNew(lockPath), strNew(stanza), cfgLockType(), (TimeMSec)(lockTimeout * 1000), failOnNoLock);
     }
     MEM_CONTEXT_XS_TEMP_END();
 	ST(0) = boolSV(RETVAL);

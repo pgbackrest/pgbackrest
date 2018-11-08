@@ -165,6 +165,11 @@ size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
 #define FUNCTION_DEBUG_MODE_FORMAT(value, buffer, bufferSize)                                                                      \
     cvtModeToZ(value, buffer, bufferSize)
 
+#define FUNCTION_DEBUG_TIMEMSEC_TYPE                                                                                               \
+    TimeMSec
+#define FUNCTION_DEBUG_TIMEMSEC_FORMAT(value, buffer, bufferSize)                                                                  \
+    cvtUInt64ToZ(value, buffer, bufferSize)
+
 #define FUNCTION_DEBUG_UCHARP_TYPE                                                                                                 \
     unsigned char *
 #define FUNCTION_DEBUG_UCHARP_FORMAT(value, buffer, bufferSize)                                                                    \
