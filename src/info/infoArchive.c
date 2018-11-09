@@ -62,7 +62,7 @@ infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissin
                 "HINT: has a stanza-create been performed?\n"
                 "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
                 errorMessage());
-        } // CSHANG Shouldn't there be a CATCH_ANY() { RETHROW(); }  here? And what about the FINALLY?
+        }
         TRY_END();
 
         // Store the archiveId for the current PG db-version db-id

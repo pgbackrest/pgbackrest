@@ -35,6 +35,9 @@ example as the config option name changed to repo-hardlink
 // CSHANG Replaces MANIFEST_KEY_ONLINE and INFO_BACKUP_KEY_ONLINE
 #define INFO_MANIFEST_KEY_ONLINE()                                                                                                 \
     strNew("option-online")
+// CSHANG Replaces MANIFEST_KEY_PRIOR and INFO_BACKUP_KEY_PRIOR
+#define INFO_MANIFEST_KEY_BACKUP_PRIOR()                                                                                           \
+    strNew("backup-prior")
 // CSHANG Replaces MANIFEST_KEY_TIMESTAMP_START and INFO_BACKUP_KEY_TIMESTAMP_START
 #define INFO_MANIFEST_KEY_TIMESTAMP_START()                                                                                        \
     strNew("backup-timestamp-start")

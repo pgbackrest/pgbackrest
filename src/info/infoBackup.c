@@ -106,10 +106,6 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
                 "HINT: has a stanza-create been performed?",
                 errorMessage());
         }
-        CATCH_ANY()
-        {
-            RETHROW();
-        }
         TRY_END();
 
         const Ini *infoIni = infoPgIni(this->infoPg);

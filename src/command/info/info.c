@@ -23,9 +23,9 @@ Help Command
 CSHANG Do I need this? I copied it from Help
 Define the console width - use a fixed with of 80 since this should be safe on virtually all consoles
 ***********************************************************************************************************************************/
-#define CONSOLE_WIDTH                                               80
+#define CONSOLE_WIDTH                                               80  // MAYBE test ASSERT TO MAKE SURE DON't go over 80 chars? But wait if json string is not pretty print then can absolutely go over 80 characters
 
-#define INFO_STANZA_NAME()                                                                                                         \
+#define INFO_SECTION_STANZA_NAME()                                                                                                 \
     strNew("name")
 #define INFO_SECTION_DB()                                                                                                          \
     strNew("db")
@@ -39,8 +39,24 @@ Define the console width - use a fixed with of 80 since this should be safe on v
     strNew("archive")
 #define INFO_SECTION_BACKUP()                                                                                                      \
     strNew("backup")
+#define INFO_SECTION_BACKUP_ARCHIVE()                                                                                              \
+    strNew("archive")
+#define INFO_SECTION_BACKUP_BACKREST()                                                                                             \
+    strNew("backrest")
+#define INFO_SECTION_BACKUP_DATABASE()                                                                                             \
+    strNew("database")
+#define INFO_SECTION_BACKUP_info()                                                                                                 \
+    strNew("info")
 #define INFO_SECTION_BACKUP_LABEL()                                                                                                \
     strNew("label")
+#define INFO_SECTION_BACKUP_PRIOR()                                                                                                \
+    strNew("prior")
+#define INFO_SECTION_BACKUP_REFERENCE()                                                                                            \
+    strNew("reference")
+#define INFO_SECTION_BACKUP_TIMESTAMP()                                                                                            \
+    strNew("timestamp")
+#define INFO_SECTION_BACKUP_TYPE()                                                                                                 \
+    strNew("type")
 
 // static void
 // buildKv(Variant *kv, const String *section, const String *key, const Variant *value)
@@ -59,7 +75,7 @@ Define the console width - use a fixed with of 80 since this should be safe on v
 //         // kvAdd(sectionKv, varNewStr(key), value);
 
 static Variant *
-backupList(String *stanza, Variant *stanzaInfo)
+backupList(const String *stanza, Variant *stanzaInfo)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
@@ -77,7 +93,6 @@ backupList(String *stanza, Variant *stanzaInfo)
     }
     CATCH(FileMissingError)
     {
-        // CSHANG Is this empty code block the best way to handle this?
         // Do not error if the file is missing - the status message will indicate it in the resulting output
     }
     CATCH(CipherError)
@@ -88,14 +103,11 @@ backupList(String *stanza, Variant *stanzaInfo)
             "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
             errorMessage());
     }
-    CATCH_ANY()
-    {
-        RETHROW();
-    }
     TRY_END();
 
-    VariantList *dbList = varLstNew();
-    // VariantList *backupList = varLstNew();
+    // Create the section variables for the stanzaInfo
+    VariantList *dbSection = varLstNew();
+    VariantList *backupSection = varLstNew();
 
     if (info != NULL)
     {
@@ -107,45 +119,43 @@ backupList(String *stanza, Variant *stanzaInfo)
             kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_SYSTEM_ID()), varNewUInt64(pgData.systemId));
             kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_VERSION()), varNewStr(pgVersionToStr(pgData.version)));
 
-            varLstAdd(dbList, pgInfo);
+            varLstAdd(dbSection, pgInfo);
         }
 
-        // StringList *backupKey = infoBackupCurrentKeyGet(info);
-        // for (unsigned int keyIdx = 0; keyIdx < strLstSize(backupKey); keyIdx++)
-        // {
-        //     String *backupLabel = strLstGet(backupKey, keyIdx);
-        //     Variant *backupInfo = varNewKv();
-        //     kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_LABEL()), varNewStr(backupLabel));
-        //
-        //     Variant *archiveInfo = varNewKv();
-        //     kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_START()),
-        //         varNewStr(infoBackupCurrentGet(info, strLstGet(backupKey, keyIdx), INFO_MANIFEST_KEY_ARCHIVE_START())));
-        //     kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_STOP()),
-        //         varNewStr(infoBackupCurrentGet(info, strLstGet(backupKey, keyIdx), INFO_MANIFEST_KEY_ARCHIVE_STOP())));
-        //
-        //     kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_ARCHIVE()), varNewStr(backupLabel));
-        //     kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_ARCHIVE()),
-        //         );
-        //
-        //
-        // Variant *sectionKey = varNewStr(section);
-        // KeyValue *sectionKv = varKv(kvGet(this->backupCurrent, sectionKey));
-        //
-        // if (sectionKv == NULL)
-        //     sectionKv = kvPutKv(this->backupCurrent, sectionKey);
-        //
-        // kvAdd(sectionKv, varNewStr(key), value);
-        //
-        //
-        // varLstAdd(backupList, backupInfo);
-        // }
+        // For each current backup, get the label and correstponding data
+        StringList *backupKey = infoBackupCurrentKeyGet(info);
+        for (unsigned int keyIdx = 0; keyIdx < strLstSize(backupKey); keyIdx++)
+        {
+            String *backupLabel = strLstGet(backupKey, keyIdx);
+            Variant *backupInfo = varNewKv();
+
+            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_LABEL()), varNewStr(backupLabel));
+            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_TYPE()),
+                varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_TYPE())));
+            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_PRIOR()),
+                varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_PRIOR())));
+
+
+            // Variant *archiveInfo = varNewKv();
+            // kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_START()),
+            //     varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_ARCHIVE_START())));
+            // kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_STOP()),
+            //     varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_ARCHIVE_STOP())));
+
+            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_ARCHIVE()), varNewStr(backupLabel));
+            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_ARCHIVE()),
+                );
+
+
+            varLstAdd(backupList, backupInfo);
+        }
 
     }
 
-    kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_DB()), varNewVarLst(dbList));
-    // kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_BACKUP()), varNewVarLst(backupList));
+    kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_DB()), varNewVarLst(dbSection));
+    kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_BACKUP()), varNewVarLst(backupSection));
 
-    FUNCTION_TEST_RESULT(VARIANT, stanzaInfo);  // CSHANG Don't really need a return value - but is it good practice to have it?
+    FUNCTION_TEST_RESULT(VARIANT, stanzaInfo);  // A.CSHANG Don't really need a return value - but is it good practice to have it? CHANGE TO VOID
 }
 
 static VariantList *
@@ -169,8 +179,9 @@ stanzaList(const String *stanza)
             continue;
 
         Variant *stanzaInfo = varNewKv();
-        kvPut(varKv(stanzaInfo), varNewStr(INFO_STANZA_NAME()), varNewStr(stanzaListName));
-/* CSHANG Maybe we should have a varLstAddKv. Problem is I need to be able to add a KeyValue not a Variant to a VariantList. The
+        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_NAME()), varNewStr(stanzaListName));
+        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_CIPHER()), //WHERE ARE WE STORING THE CIPHER TYPE FOR THE REPO???);
+/* A.CSHANG Maybe we should have a varLstAddKv. Problem is I need to be able to add a KeyValue not a Variant to a VariantList. The
 real problem is that I thought multiple stanzas would be an array but that is not true currently. The json output when there are
 multiple stanzas is:
 [
@@ -197,7 +208,7 @@ multiple stanzas is:
         }
     }
 ]
-So what I want to do is create a KeyValue for a stanza, then add that to the varLst.
+So what I want to do is create a KeyValue for a stanza, then add that to the varLst. NO _ use varKv to get the KV from the var if need to us kvPut
 */
         varLstAdd(result, stanzaInfo);
         backupList(stanzaListName, stanzaInfo);
@@ -205,9 +216,9 @@ So what I want to do is create a KeyValue for a stanza, then add that to the var
 
     FUNCTION_TEST_RESULT(VARIANT_LIST, result);
 }
-/* CSHANG Why does helpRender need a memeory context but helpRenderText and helpRenderValue do not? Aren't all the variables created
+/* A.CSHANG Why does helpRender need a memeory context but helpRenderText and helpRenderValue do not? Aren't all the variables created
 in the temp mem context of cmdHelp?  Since all these are static, I don't understand why a memory context is needed anywhere except
-the cmdXXX function...
+the cmdXXX function...   render is the MAIN function so best practive to have mem context.
 */
 
 static String *
@@ -222,7 +233,7 @@ infoRender(void)
 
     VariantList *stanzaInfoList = stanzaList(stanza);
 
-    // CSHANG I couldn't find the constants for the values - are there IDs or another way to confirm the option value?
+    // CSHANG I couldn't find the constants for the values - are there IDs or another way to confirm the option value? CREATE #DEFINES
     if (strEqZ(cfgOptionStr(cfgOptOutput), "text"))
     {
         // CSHANG call a formatText function and then if it returns NULL the following would be retunred?
@@ -234,7 +245,7 @@ infoRender(void)
     }
     else
     {
-// CSHANG This should never happen since it will be caught by the command parser so should we just remove? Or is there a way to have this entire ELSE only as test code
+// CSHANG This should never happen since it will be caught by the command parser so should we just remove? Or is there a way to have this entire ELSE only as test code -- REMOVE
         THROW_FMT(AssertError, "invalid info output option '%s'", cfgCommandName(cfgOptOutput));
     }
 
@@ -608,7 +619,7 @@ Render info and output to stdout
 void
 cmdInfo(void)
 {
-// CSHANG How foes this work - I assume I would use this?
+// CSHANG How does this work - I assume I would use this?
     FUNCTION_DEBUG_VOID(logLevelDebug);
 
     MEM_CONTEXT_TEMP_BEGIN()
