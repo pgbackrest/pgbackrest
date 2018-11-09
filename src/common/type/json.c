@@ -396,9 +396,8 @@ kvToJson(const KeyValue *kv, unsigned int indent)
     }
     MEM_CONTEXT_TEMP_END();
 
-// CSHANG We always need at least a terminating linefeed even when not pretty printing, right??
-    // Add terminating linefeed if it is not already added
-    if (!strEndsWithZ(result, "\n"))
+    // Add terminating linefeed for pretty print if it is not already added
+    if (indent > 0 && !strEndsWithZ(result, "\n"))
         strCat(result, "\n");
 
     FUNCTION_DEBUG_RESULT(STRING, result);
@@ -492,8 +491,8 @@ varToJson(const Variant *var, unsigned int indent)
             memContextSwitch(MEM_CONTEXT_TEMP());
         }
 
-        // Add terminating linefeed if it is not already added
-        if (!strEndsWithZ(result, "\n"))
+        // Add terminating linefeed for pretty print if it is not already added
+        if (indent > 0 && !strEndsWithZ(result, "\n"))
             strCat(result, "\n");
     }
     MEM_CONTEXT_TEMP_END();
