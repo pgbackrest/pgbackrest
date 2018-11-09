@@ -144,3 +144,44 @@ regExpMatchOne(const String *expression, const String *string)
 
     FUNCTION_TEST_RESULT(BOOL, result);
 }
+
+/***********************************************************************************************************************************
+Return the constant first part of the regular expression if it has a beginning anchor
+
+This works by scanning the string until the first special regex character is found so escaped characters will not be included.
+***********************************************************************************************************************************/
+String *
+regExpPrefix(const String *expression)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, expression);
+    FUNCTION_TEST_END();
+
+    String *result = NULL;
+
+    // Only generate prefix if expression is defined and has a beginning anchor
+    if (expression != NULL && strPtr(expression)[0] == '^')
+    {
+        unsigned int expressionIdx = 1;
+
+        for (; expressionIdx < strSize(expression); expressionIdx++)
+        {
+            char expressionChr = strPtr(expression)[expressionIdx];
+
+            // Search for characters that will end the prefix
+            if (expressionChr == '.' || expressionChr == '^' || expressionChr == '$' || expressionChr == '*' ||
+                expressionChr == '+' || expressionChr == '-' || expressionChr == '?' || expressionChr == '(' ||
+                expressionChr == '[' || expressionChr == '{' || expressionChr == ' ' || expressionChr == '|' ||
+                expressionChr == '\\')
+            {
+                break;
+            }
+        }
+
+        // Will there be any characters in the prefix?
+        if (expressionIdx > 1)
+            result = strSubN(expression, 1, expressionIdx - 1);
+    }
+
+    FUNCTION_TEST_RESULT(STRING, result);
+}

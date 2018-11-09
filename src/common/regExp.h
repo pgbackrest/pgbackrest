@@ -19,6 +19,7 @@ bool regExpMatch(RegExp *this, const String *string);
 void regExpFree(RegExp *this);
 
 bool regExpMatchOne(const String *expression, const String *string);
+String *regExpPrefix(const String *expression);
 
 /***********************************************************************************************************************************
 Macros for function logging

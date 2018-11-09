@@ -79,6 +79,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>regExpPrefix()</code> to aid in static prefix searches.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
