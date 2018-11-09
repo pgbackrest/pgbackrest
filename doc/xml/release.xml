@@ -75,6 +75,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>strCatChr()</code> to <code>String</code> object.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>

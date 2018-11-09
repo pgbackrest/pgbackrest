@@ -222,6 +222,33 @@ strCat(String *this, const char *cat)
 }
 
 /***********************************************************************************************************************************
+Append a character
+***********************************************************************************************************************************/
+String *
+strCatChr(String *this, char cat)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(CHAR, cat);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(cat != 0);
+    FUNCTION_TEST_END();
+
+    // Allocate and append character
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->buffer = memGrowRaw(this->buffer, this->size + 2);
+    }
+    MEM_CONTEXT_END();
+
+    this->buffer[this->size++] = cat;
+    this->buffer[this->size] = 0;
+
+    FUNCTION_TEST_RESULT(STRING, this);
+}
+
+/***********************************************************************************************************************************
 Append a formatted string
 ***********************************************************************************************************************************/
 String *

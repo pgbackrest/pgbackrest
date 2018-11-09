@@ -56,21 +56,16 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strCat() and strCatFmt()"))
+    if (testBegin("strCat(), strCatChr(), and strCatFmt()"))
     {
         String *string = strNew("XXXX");
         String *string2 = strNew("ZZZZ");
 
-        strCat(string, "YYYY");
-        TEST_RESULT_STR(strPtr(string), "XXXXYYYY", "cat string");
-
-        strCatFmt(string, "%05d", 777);
-        TEST_RESULT_STR(strPtr(string), "XXXXYYYY00777", "cat formatted string");
+        TEST_RESULT_STR(strPtr(strCat(string, "YYYY")), "XXXXYYYY", "cat string");
+        TEST_RESULT_STR(strPtr(strCatFmt(string, "%05d", 777)), "XXXXYYYY00777", "cat formatted string");
+        TEST_RESULT_STR(strPtr(strCatChr(string, '!')), "XXXXYYYY00777!", "cat chr");
 
         TEST_RESULT_STR(strPtr(string2), "ZZZZ", "check unaltered string");
-
-        strFree(string);
-        strFree(string2);
     }
 
     // *****************************************************************************************************************************

@@ -23,6 +23,7 @@ String *strBase(const String *this);
 bool strBeginsWith(const String *this, const String *beginsWith);
 bool strBeginsWithZ(const String *this, const char *beginsWith);
 String *strCat(String *this, const char *cat);
+String *strCatChr(String *this, char cat);
 String *strCatFmt(String *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
 int strCmp(const String *this, const String *compare);
 int strCmpZ(const String *this, const char *compare);
