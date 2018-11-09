@@ -24,7 +24,7 @@ static struct
     Storage *storageSpoolWrite;                                     // Spool write storage
 
     String *stanza;                                                 // Stanza for storage
-    bool stanzaRequired;                                            // Is a stanza required for the storage being created?
+    bool stanzaInit;                                                // Has the stanza been initialized?
     RegExp *walRegExp;                                              // Regular expression for identifying wal files
 } storageHelper;
 
@@ -52,22 +52,25 @@ storageHelperInit(void)
 Initialize the stanza and error if it changes
 ***********************************************************************************************************************************/
 static void
-storageHelperStanzaInit(void)
+storageHelperStanzaInit(const bool stanzaRequired)
 {
     FUNCTION_TEST_VOID();
-// CSHANG It may be better to have an init flag unless it is OK to change from a NULL stanza to having a stanza?
-    if (storageHelper.stanza == NULL)
+
+    // If the stanza is NULL and the storage has not already been initialized then initialize the stanza
+    if (storageHelper.stanza == NULL && !storageHelper.stanzaInit)
     {
+        if (stanzaRequired && cfgOptionStr(cfgOptStanza) == NULL)
+            THROW(AssertError, "stanza cannot be NULL for this storage object");
+
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
             storageHelper.stanza = strDup(cfgOptionStr(cfgOptStanza));
+            storageHelper.stanzaInit = true;
         }
         MEM_CONTEXT_END();
-
-        if (storageHelper.stanzaRequired && storageHelper.stanza == NULL)
-            THROW(AssertError, "stanza cannot be NULL for this storage object");
     }
-    else if (!strEq(storageHelper.stanza, cfgOptionStr(cfgOptStanza)))
+    else if ((storageHelper.stanza == NULL && cfgOptionStr(cfgOptStanza) != NULL) ||
+        (cfgOptionStr(cfgOptStanza) != NULL && !strEq(storageHelper.stanza, cfgOptionStr(cfgOptStanza))))
     {
         THROW_FMT(
             AssertError, "stanza has changed from '%s' to '%s'", strPtr(storageHelper.stanza), strPtr(cfgOptionStr(cfgOptStanza)));
@@ -205,7 +208,7 @@ storageRepo(void)
     if (storageHelper.storageRepo == NULL)
     {
         storageHelperInit();
-        storageHelperStanzaInit();
+        storageHelperStanzaInit(false);
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
@@ -265,8 +268,7 @@ storageSpool(void)
     if (storageHelper.storageSpool == NULL)
     {
         storageHelperInit();
-        storageHelper.stanzaRequired = true;
-        storageHelperStanzaInit();
+        storageHelperStanzaInit(true);
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
@@ -292,8 +294,7 @@ storageSpoolWrite(void)
     if (storageHelper.storageSpoolWrite == NULL)
     {
         storageHelperInit();
-        storageHelper.stanzaRequired = true;
-        storageHelperStanzaInit();
+        storageHelperStanzaInit(true);
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
