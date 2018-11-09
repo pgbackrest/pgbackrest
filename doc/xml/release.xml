@@ -125,6 +125,10 @@
                     <release-item>
                         <p>Test speed improvements.  Mount <id>tmpfs</id> in <file>Vagrantfile</file> instead <file>test.pl</file>.  Preserve contents of C unit test build directory between <file>test.pl</file> executions.  Improve efficiency of code generation.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add time since the beginning of the run to each test statement.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
