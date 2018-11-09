@@ -120,6 +120,14 @@ testRun(void)
         kvPut(keyValue, varNewStrZ("bool1"), varNewBool(true));
         kvPut(keyValue, varNewStrZ("bool2"), varNewBool(false));
         kvPut(keyValue, varNewStrZ("checknull"), (Variant *)NULL);
+
+        VariantList *dbList = varLstNew();
+        Variant *dbInfo = varNewKv();
+        kvPut(varKv(dbInfo), varNewStr(strNew("id")), varNewInt(1));
+        kvPut(varKv(dbInfo), varNewStr(strNew("version")),  varNewStr(strNew("9.4")));
+        varLstAdd(dbList, dbInfo);
+        kvPut(keyValue, varNewStrZ("db"), varNewVarLst(dbList));
+
         TEST_ASSIGN(json, kvToJson(keyValue, 2), "kvToJson - kv with empty array, indent 2");
         TEST_RESULT_STR(strPtr(json),
             "{\n"
@@ -128,8 +136,14 @@ testRun(void)
             "  \"bool1\" : true,\n"
             "  \"bool2\" : false,\n"
             "  \"checknull\" : null,\n"
+            "  \"db\" : [\n"
+            "    {\n"
+            "      \"id\" : 1,\n"
+            "      \"version\" : \"9.4\"\n"
+            "    }\n"
+            "  ],\n"
             "  \"empty\" : {}\n"
-            "}\n", "  formatted kv with empty array and empty kv");
+            "}\n", "  formatted kv with empty array, kv, varList with values");
 
         TEST_ASSIGN(
             keyValue,

@@ -133,9 +133,8 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
             // KeyValue
             else if (varType(value) == varTypeKeyValue)
             {
-                KeyValue *data = kvDup(varKv(value));
                 strCat(indentDepth, strPtr(indentSpace));
-                strCat(result, strPtr(kvToJsonInternal(data, indentSpace, indentDepth)));
+                strCat(result, strPtr(kvToJsonInternal(kvDup(varKv(value)), indentSpace, indentDepth)));
             }
             // VariantList
             else if (varType(value) == varTypeVariantList)
@@ -150,8 +149,7 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
 
                     for (unsigned int arrayIdx = 0; arrayIdx < varLstSize(varVarLst(value)); arrayIdx++)
                     {
-                        // varStrForce will force a boolean to true or false which is consistent with json
-                        String *arrayValue = varStrForce(varLstGet(varVarLst(value), arrayIdx));
+                        Variant *arrayValue = varLstGet(varVarLst(value), arrayIdx);
                         unsigned int type = varType(varLstGet(varVarLst(value), arrayIdx));
 
                         // If going to add another element, add a comma
@@ -160,9 +158,15 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
 
                         // If the type is a string, add leading and trailing double quotes
                         if (type == varTypeString)
-                            strCatFmt(result, "\"%s\"", strPtr(arrayValue));
+                            strCatFmt(result, "\"%s\"", strPtr(varStr(arrayValue)));
+                        else if (type == varTypeKeyValue)
+                        {
+                            strCat(indentDepth, strPtr(indentSpace));
+                            strCat(result, strPtr(kvToJsonInternal(kvDup(varKv(arrayValue)), indentSpace, indentDepth)));
+                        }
+                        // Numeric, Boolean or other type
                         else
-                            strCat(result, strPtr(arrayValue));
+                            strCat(result, strPtr(varStrForce(arrayValue)));
                     }
 
                     if (strSize(indentDepth) > strSize(indentSpace))

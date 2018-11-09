@@ -15,6 +15,7 @@ Help Command
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
+#include "info/infoManifest.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
@@ -27,6 +28,8 @@ Define the console width - use a fixed with of 80 since this should be safe on v
 
 #define INFO_SECTION_STANZA_NAME()                                                                                                 \
     strNew("name")
+#define INFO_SECTION_STANZA_CIPHER()                                                                                               \
+    strNew("cipher")
 #define INFO_SECTION_DB()                                                                                                          \
     strNew("db")
 #define INFO_SECTION_DB_ID()                                                                                                       \
@@ -79,8 +82,10 @@ backupList(const String *stanza, Variant *stanzaInfo)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
+        FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
 
         FUNCTION_TEST_ASSERT(stanza != NULL);
+        FUNCTION_TEST_ASSERT(stanzaInfo != NULL);
     FUNCTION_TEST_END();
 
     InfoBackup *info = NULL;
@@ -124,32 +129,30 @@ backupList(const String *stanza, Variant *stanzaInfo)
 
         // For each current backup, get the label and correstponding data
         StringList *backupKey = infoBackupCurrentKeyGet(info);
-        for (unsigned int keyIdx = 0; keyIdx < strLstSize(backupKey); keyIdx++)
+
+        if (backupKey != NULL)
         {
-            String *backupLabel = strLstGet(backupKey, keyIdx);
-            Variant *backupInfo = varNewKv();
+            for (unsigned int keyIdx = 0; keyIdx < strLstSize(backupKey); keyIdx++)
+            {
+                String *backupLabel = strLstGet(backupKey, keyIdx);
+                Variant *backupInfo = varNewKv();
 
-            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_LABEL()), varNewStr(backupLabel));
-            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_TYPE()),
-                varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_TYPE())));
-            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_PRIOR()),
-                varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_PRIOR())));
-
-
-            // Variant *archiveInfo = varNewKv();
-            // kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_START()),
-            //     varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_ARCHIVE_START())));
-            // kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_STOP()),
-            //     varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_ARCHIVE_STOP())));
-
-            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_ARCHIVE()), varNewStr(backupLabel));
-            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_ARCHIVE()),
-                );
+                kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_LABEL()), varNewStr(backupLabel));
+                kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_TYPE()),
+                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_TYPE()));
+                kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_PRIOR()),
+                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_PRIOR()));
 
 
-            varLstAdd(backupList, backupInfo);
+                // Variant *archiveInfo = varNewKv();
+                // kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_START()),
+                //     varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_ARCHIVE_START())));
+                // kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_STOP()),
+                //     varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_ARCHIVE_STOP())));
+
+                varLstAdd(backupSection, backupInfo);
+            }
         }
-
     }
 
     kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_DB()), varNewVarLst(dbSection));
@@ -180,38 +183,9 @@ stanzaList(const String *stanza)
 
         Variant *stanzaInfo = varNewKv();
         kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_NAME()), varNewStr(stanzaListName));
-        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_CIPHER()), //WHERE ARE WE STORING THE CIPHER TYPE FOR THE REPO???);
-/* A.CSHANG Maybe we should have a varLstAddKv. Problem is I need to be able to add a KeyValue not a Variant to a VariantList. The
-real problem is that I thought multiple stanzas would be an array but that is not true currently. The json output when there are
-multiple stanzas is:
-[
-    {
-        "archive" : [],
-        "backup" : [],
-        "cipher" : "none",
-        "db" : [],
-        "name" : "demo",
-        "status" : {
-            "code" : 3,
-            "message" : "missing stanza data"
-        }
-    },
-    {
-        "archive" : [],
-        "backup" : [],
-        "cipher" : "none",
-        "db" : [],
-        "name" : "test",
-        "status" : {
-            "code" : 3,
-            "message" : "missing stanza data"
-        }
-    }
-]
-So what I want to do is create a KeyValue for a stanza, then add that to the varLst. NO _ use varKv to get the KV from the var if need to us kvPut
-*/
-        varLstAdd(result, stanzaInfo);
-        backupList(stanzaListName, stanzaInfo);
+        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_CIPHER()), varNewStr(cfgOptionStr(cfgOptRepoCipherType)));
+
+        varLstAdd(result, backupList(stanzaListName, stanzaInfo));
     }
 
     FUNCTION_TEST_RESULT(VARIANT_LIST, result);

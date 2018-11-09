@@ -34,12 +34,15 @@ testRun(void)
         TEST_RESULT_STR(strPtr(infoRender()), "[]\n", "empty json");
 
         TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), strCat(backupPath, "/stanza1")), "create stanza1 directory");
-        // TEST_RESULT_STR(strPtr(infoRender()),
-        //     "[\n"
-        //     "    {\n"
-        //     "        \"name\" : \"stanza1\"\n"
-        //     "    }\n"
-        //     "]\n", "single stanza");  // CSHANG Flesh this test out for stanza without backup or archive info
+        TEST_RESULT_STR(strPtr(infoRender()),
+            "[\n"
+            "    {\n"
+            "        \"backup\" : [],\n"
+            "        \"cipher\" : \"none\",\n"
+            "        \"db\" : [],\n"
+            "        \"name\" : \"stanza1\"\n"
+            "    }\n"
+            "]\n", "single empty stanza");  // CSHANG Flesh this test out for stanza without backup or archive info
 
         // File exists, ignoreMissing=false, no backup:current section
         //--------------------------------------------------------------------------------------------------------------------------
@@ -71,9 +74,23 @@ testRun(void)
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
             "    {\n"
+            "        \"backup\" : [],\n"
+            "        \"cipher\" : \"none\",\n"
+            "        \"db\" : [\n"
+            "            {\n"
+            "                \"id\" : 2,\n"
+            "                \"system-id\" : 6569239123849665679,\n"
+            "                \"version\" : \"9.4\"\n"
+            "            },\n"
+            "            {\n"
+            "                \"id\" : 1,\n"
+            "                \"system-id\" : 6569239123849665666,\n"
+            "                \"version\" : \"9.3\"\n"
+            "            }\n"
+            "        ],\n"
             "        \"name\" : \"stanza1\"\n"
             "    }\n"
-            "]\n", "single stanza");  // CSHANG Flesh this test out for stanza without backup or archive info
+            "]\n", "single stanza");  // CSHANG Flesh this test out for stanza for backup, archive info, etc
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

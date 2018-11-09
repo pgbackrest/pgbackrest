@@ -47,3 +47,5 @@ example as the config option name changed to repo-hardlink
 // CSHANG Replaces MANIFEST_KEY_TYPE and INFO_BACKUP_KEY_TYPE
 #define INFO_MANIFEST_KEY_TYPE()                                                                                                   \
     strNew("backup-type")
+
+#endif
