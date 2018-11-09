@@ -123,6 +123,10 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>New test containers.  Add libxml2 library needed for S3 development.  Include new minor version upgrades for <postgres/>.  Remove <postgres/> 11 beta/rc repository.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Test speed improvements.  Mount <id>tmpfs</id> in <file>Vagrantfile</file> instead <file>test.pl</file>.  Preserve contents of C unit test build directory between <file>test.pl</file> executions.  Improve efficiency of code generation.</p>
                     </release-item>
 

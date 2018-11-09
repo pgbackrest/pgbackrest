@@ -407,7 +407,8 @@ sub containerBuild
                 "    yum -y update && \\\n" .
                 "    yum -y install openssh-server openssh-clients wget sudo python-pip build-essential valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL perl-YAML-LibYAML \\\n" .
-                "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build zlib-devel";
+                "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
+                "        zlib-devel libxml2-devel";
 
             if ($strOS eq VM_CO6)
             {
@@ -434,7 +435,7 @@ sub containerBuild
                 "    apt-get -y install openssh-server wget sudo python-pip build-essential valgrind git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libio-socket-ssl-perl libxml-libxml-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
-                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev";
+                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev";
 
             if ($strOS eq VM_U12)
             {
@@ -521,7 +522,7 @@ sub containerBuild
             {
                 $strScript .=
                     "    echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
-                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' . ($strOS ne VM_U12 ? ' 11' : '') .
+                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' .
                         "' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                     "    apt-get update && \\\n" .
