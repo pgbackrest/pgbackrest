@@ -75,7 +75,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <code>strCatChr()</code> to <code>String</code> object.</p>
+                        <p>Add <code>strCatChr()</code>and constant macros to <code>String</code> object.</p>
                     </release-item>
 
                     <release-item>

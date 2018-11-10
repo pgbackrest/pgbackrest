@@ -3,6 +3,9 @@ Test Strings
 ***********************************************************************************************************************************/
 #include "common/type/buffer.h"
 
+// Declare a static const string for testing
+STRING_STATIC(TEST_STRING, "a very interesting string!");
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -39,6 +42,13 @@ testRun(void)
 
         TEST_RESULT_VOID(strFree(string), "free string");
         TEST_RESULT_VOID(strFree(NULL), "free null string");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("STRING_STATIC()"))
+    {
+        TEST_RESULT_STR(strPtr(TEST_STRING), "a very interesting string!", "check static string");
+        TEST_RESULT_STR(strPtr(strSubN(TEST_STRING, 0, 6)), "a very", "read-only strSub() works");
     }
 
     // *****************************************************************************************************************************
@@ -181,8 +191,8 @@ testRun(void)
         String *val = strNew("abcdef");
         TEST_ERROR(
             strTrunc(val, (int)(strSize(val) + 1)), AssertError,
-            "function test assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
-        TEST_ERROR(strTrunc(val, -1), AssertError, "function test assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
+            "function test assertion 'idx >= 0 && (size_t)idx <= this->common.size' failed");
+        TEST_ERROR(strTrunc(val, -1), AssertError, "function test assertion 'idx >= 0 && (size_t)idx <= this->common.size' failed");
 
         TEST_RESULT_STR(strPtr(strTrunc(val, strChr(val, 'd'))), "abc", "simple string truncated");
         strCat(val, "\r\n to end");

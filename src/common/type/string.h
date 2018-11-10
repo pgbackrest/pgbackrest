@@ -51,13 +51,59 @@ String *strTrunc(String *this, int idx);
 void strFree(String *this);
 
 /***********************************************************************************************************************************
+Fields that are common between dynamically allocated and constant strings
+
+There is nothing user-accessible here but this construct allows constant strings to be created and then handled by the same
+functions that process dynamically allocated strings.
+***********************************************************************************************************************************/
+struct StringCommon
+{
+    size_t size;
+    char *buffer;
+};
+
+/***********************************************************************************************************************************
+Macros for constant strings
+
+Frequently used constant strings can be declared with these macros at compile time rather than dynamically at run time.
+
+Note that strings created in this way are declared as const so can't be modified or freed by the str*() methods.  Casting to
+String * will result in a segfault due to modifying read-only memory.
+
+By convention all string constant identifiers are appended with _STR.
+***********************************************************************************************************************************/
+// Create a string constant inline.  Useful when the constant will only be use once.
+#define STRING_CONST(value)                                                                                                        \
+    ((const String *)&(const struct StringCommon){.size = sizeof(value) - 1, .buffer = (char *)value})
+
+// Used to declare string constants that will be externed using STRING_DECLARE().  Must be used in a .c file.
+#define STRING_EXTERN(name, value)                                                                                                 \
+    const String *name = STRING_CONST(value);
+
+// Used to declare string constants that will be local to the .c file.  Must be used in a .c file.
+#define STRING_STATIC(name, value)                                                                                                 \
+    static const String *name = STRING_CONST(value);
+
+// Used to extern string constants declared with STRING_EXTERN(.  Must be used in a .h file.
+#define STRING_DECLARE(name)                                                                                                       \
+    extern const String *name;
+
+/***********************************************************************************************************************************
+Constant strings that are generally useful
+***********************************************************************************************************************************/
+STRING_DECLARE(FSLASH_STR);
+STRING_DECLARE(N_STR);
+STRING_DECLARE(NULL_STR);
+STRING_DECLARE(Y_STR);
+
+/***********************************************************************************************************************************
 Helper function/macro for object logging
 ***********************************************************************************************************************************/
 typedef String *(*StrObjToLogFormat)(const void *object);
 
 size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffer, size_t bufferSize);
 
-#define FUNCTION_DEBUG_STRING_OBJECT_FORMAT(object, formatFunc, buffer, bufferSize)                                                                    \
+#define FUNCTION_DEBUG_STRING_OBJECT_FORMAT(object, formatFunc, buffer, bufferSize)                                                \
     strObjToLog(object, (StrObjToLogFormat)formatFunc, buffer, bufferSize)
 
 /***********************************************************************************************************************************
