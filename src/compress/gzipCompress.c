@@ -16,6 +16,7 @@ Gzip Compress
 Filter type constant
 ***********************************************************************************************************************************/
 #define GZIP_COMPRESS_FILTER_TYPE                                   "gzipCompress"
+    STRING_STATIC(GZIP_COMPRESS_FILTER_TYPE_STR,                    GZIP_COMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
@@ -66,7 +67,7 @@ gzipCompressNew(int level, bool raw)
 
         // Create filter interface
         this->filter = ioFilterNewP(
-            strNew(GZIP_COMPRESS_FILTER_TYPE), this, .done = (IoFilterInterfaceDone)gzipCompressDone,
+            GZIP_COMPRESS_FILTER_TYPE_STR, this, .done = (IoFilterInterfaceDone)gzipCompressDone,
             .inOut = (IoFilterInterfaceProcessInOut)gzipCompressProcess,
             .inputSame = (IoFilterInterfaceInputSame)gzipCompressInputSame);
     }

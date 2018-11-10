@@ -15,6 +15,7 @@ Gzip Decompress
 Filter type constant
 ***********************************************************************************************************************************/
 #define GZIP_DECOMPRESS_FILTER_TYPE                                 "gzipDecompress"
+    STRING_STATIC(GZIP_DECOMPRESS_FILTER_TYPE_STR,                  GZIP_DECOMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
@@ -57,7 +58,7 @@ gzipDecompressNew(bool raw)
 
         // Create filter interface
         this->filter = ioFilterNewP(
-            strNew(GZIP_DECOMPRESS_FILTER_TYPE), this, .done = (IoFilterInterfaceDone)gzipDecompressDone,
+            GZIP_DECOMPRESS_FILTER_TYPE_STR, this, .done = (IoFilterInterfaceDone)gzipDecompressDone,
             .inOut = (IoFilterInterfaceProcessInOut)gzipDecompressProcess,
             .inputSame = (IoFilterInterfaceInputSame)gzipDecompressInputSame);
     }

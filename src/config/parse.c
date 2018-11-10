@@ -22,6 +22,7 @@ Standard config file name and old default path and name
 ***********************************************************************************************************************************/
 #define PGBACKREST_CONFIG_FILE                                      PGBACKREST_BIN ".conf"
 #define PGBACKREST_CONFIG_ORIG_PATH_FILE                            "/etc/" PGBACKREST_CONFIG_FILE
+    STRING_STATIC(PGBACKREST_CONFIG_ORIG_PATH_FILE_STR,             PGBACKREST_CONFIG_FILE)
 
 /***********************************************************************************************************************************
 Prefix for environment variables
@@ -108,7 +109,7 @@ convertToByte(String **value, double *valueDbl)
     String *result = strLower(strDup(*value));
 
     // Match the value against possible values
-    if (regExpMatchOne(strNew("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p|b)*$"), result))
+    if (regExpMatchOne(STRING_CONST("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p|b)*$"), result))
     {
         // Get the character array and size
         const char *strArray = strPtr(result);
@@ -315,7 +316,7 @@ cfgFileLoad(                                                        // NOTE: Pas
 
         // Get a list of conf files from the specified path -error on missing directory if the option was passed on the command line
         StringList *list = storageListP(
-            storageLocal(), configIncludePath, .expression = strNew(".+\\.conf$"), .errorOnMissing = configIncludeRequired);
+            storageLocal(), configIncludePath, .expression = STRING_CONST(".+\\.conf$"), .errorOnMissing = configIncludeRequired);
 
         // If conf files are found, then add them to the config string
         if (list != NULL && strLstSize(list) > 0)
@@ -641,7 +642,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             String *configString = cfgFileLoad(parseOptionList,
                 strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfig))),
                 strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfigIncludePath))),
-                strNew(PGBACKREST_CONFIG_ORIG_PATH_FILE));
+                PGBACKREST_CONFIG_ORIG_PATH_FILE_STR);
 
             if (configString != NULL)
             {
@@ -663,7 +664,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 }
 
                 strLstAdd(sectionList, strNewFmt(CFGDEF_SECTION_GLOBAL ":%s", cfgCommandName(cfgCommand())));
-                strLstAdd(sectionList, strNew(CFGDEF_SECTION_GLOBAL));
+                strLstAdd(sectionList, CFGDEF_SECTION_GLOBAL_STR);
 
                 // Loop through sections to search for options
                 for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
@@ -980,7 +981,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             String *value = strLstGet(parseOption->valueList, 0);
 
                             // If a numeric type check that the value is valid
-                            if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeFloat || optionDefType == cfgDefOptTypeSize)
+                            if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeFloat ||
+                                optionDefType == cfgDefOptTypeSize)
                             {
                                 double valueDbl = 0;
 

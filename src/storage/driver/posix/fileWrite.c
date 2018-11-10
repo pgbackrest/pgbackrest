@@ -77,7 +77,7 @@ storageDriverPosixFileWriteNew(
         this->storage = storage;
 
         this->interface = storageFileWriteNewP(
-            strNew(STORAGE_DRIVER_POSIX_TYPE), this, .atomic = (StorageFileWriteInterfaceAtomic)storageDriverPosixFileWriteAtomic,
+            STORAGE_DRIVER_POSIX_TYPE_STR, this, .atomic = (StorageFileWriteInterfaceAtomic)storageDriverPosixFileWriteAtomic,
             .createPath = (StorageFileWriteInterfaceCreatePath)storageDriverPosixFileWriteCreatePath,
             .io = (StorageFileWriteInterfaceIo)storageDriverPosixFileWriteIo,
             .modeFile = (StorageFileWriteInterfaceModeFile)storageDriverPosixFileWriteModeFile,

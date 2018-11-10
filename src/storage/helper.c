@@ -11,6 +11,12 @@ Storage Helper
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
+Storage path constants
+***********************************************************************************************************************************/
+STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_IN_STR,                         STORAGE_SPOOL_ARCHIVE_IN);
+STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_OUT_STR,                        STORAGE_SPOOL_ARCHIVE_OUT);
+
+/***********************************************************************************************************************************
 Local variables
 ***********************************************************************************************************************************/
 static struct
@@ -88,7 +94,7 @@ storageLocal(void)
         {
             storageHelper.storageLocal = storageDriverPosixInterface(
                 storageDriverPosixNew(
-                    strNew("/"), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL));
+                    FSLASH_STR, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL));
         }
         MEM_CONTEXT_END();
     }
@@ -114,7 +120,7 @@ storageLocalWrite(void)
         {
             storageHelper.storageLocalWrite = storageDriverPosixInterface(
                 storageDriverPosixNew(
-                    strNew("/"), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+                    FSLASH_STR, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
         }
         MEM_CONTEXT_END();
     }
@@ -204,7 +210,7 @@ storageRepo(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.walRegExp = regExpNew(strNew("^[0-F]{24}"));
+            storageHelper.walRegExp = regExpNew(STRING_CONST("^[0-F]{24}"));
             storageHelper.storageRepo = storageRepoGet(cfgOptionStr(cfgOptRepoType), false);
         }
         MEM_CONTEXT_END();

@@ -19,9 +19,11 @@ Internal constants
 ***********************************************************************************************************************************/
 #define INI_COPY_EXT                                                ".copy"
 #define INI_SECTION_BACKREST                                        "backrest"
+    STRING_STATIC(INI_SECTION_BACKREST_STR,                         INI_SECTION_BACKREST)
 #define INI_KEY_FORMAT                                              "backrest-format"
-#define INI_KEY_VERSION                                             "backrest-version"
+    STRING_STATIC(INI_KEY_FORMAT_STR,                               INI_KEY_FORMAT)
 #define INI_KEY_CHECKSUM                                            "backrest-checksum"
+    STRING_STATIC(INI_KEY_CHECKSUM_STR,                             INI_KEY_CHECKSUM)
 
 /***********************************************************************************************************************************
 Object type
@@ -45,7 +47,7 @@ infoHash(const Ini *ini)
         FUNCTION_TEST_ASSERT(ini != NULL);
     FUNCTION_TEST_END();
 
-    CryptoHash *result = cryptoHashNew(strNew(HASH_TYPE_SHA1));
+    CryptoHash *result = cryptoHashNew(HASH_TYPE_SHA1_STR);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -77,8 +79,8 @@ infoHash(const Ini *ini)
                 String *key = strLstGet(keyList, keyIdx);
 
                 // Skip the backrest checksum in the file
-                if ((strEq(section, strNew(INI_SECTION_BACKREST)) && !strEq(key, strNew(INI_KEY_CHECKSUM))) ||
-                    !strEq(section, strNew(INI_SECTION_BACKREST)))
+                if ((strEq(section, INI_SECTION_BACKREST_STR) && !strEq(key, INI_KEY_CHECKSUM_STR)) ||
+                    !strEq(section, INI_SECTION_BACKREST_STR))
                 {
                     cryptoHashProcessC(result, (const unsigned char *)"\"", 1);
                     cryptoHashProcessStr(result, key);
@@ -121,7 +123,7 @@ infoValidInternal(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Make sure the ini is valid by testing the checksum
-        String *infoChecksum = varStr(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_CHECKSUM)));
+        String *infoChecksum = varStr(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_CHECKSUM_STR));
 
         CryptoHash *hash = infoHash(this->ini);
 
@@ -145,11 +147,12 @@ infoValidInternal(
         }
 
         // Make sure that the format is current, otherwise error
-        if (varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST), strNew(INI_KEY_FORMAT))) != PGBACKREST_FORMAT)
+        if (varIntForce(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_FORMAT_STR)) != PGBACKREST_FORMAT)
         {
-            String *fmtMsg = strNewFmt("invalid format in '%s', expected %d but found %d",
-                strPtr(this->fileName), PGBACKREST_FORMAT, varIntForce(iniGet(this->ini, strNew(INI_SECTION_BACKREST),
-                strNew(INI_KEY_FORMAT))));
+            String *fmtMsg = strNewFmt(
+                "invalid format in '%s', expected %d but found %d",
+                strPtr(this->fileName), PGBACKREST_FORMAT,
+                varIntForce(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_FORMAT_STR)));
 
             if (!ignoreError)
             {

@@ -59,7 +59,7 @@ queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegm
 
         // Get the list of files actually in the queue
         StringList *actualQueue = strLstSort(
-            storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN), .errorOnMissing = true), sortOrderAsc);
+            storageListP(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN_STR, .errorOnMissing = true), sortOrderAsc);
 
         // Only preserve files that match the ideal queue. '.error'/'.ok' files are deleted so the async process can try again.
         RegExp *regExpPreserve = regExpNew(strNewFmt("^(%s)$", strPtr(strLstJoin(idealQueue, "|"))));
@@ -184,7 +184,7 @@ cmdArchiveGet(void)
 
                     // Get a list of WAL segments left in the queue
                     StringList *queue = storageListP(
-                        storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN), .expression = strNew(WAL_SEGMENT_REGEXP));
+                        storageSpool(), STORAGE_SPOOL_ARCHIVE_IN_STR, .expression = WAL_SEGMENT_REGEXP_STR);
 
                     if (strLstSize(queue) > 0)
                     {
@@ -224,7 +224,7 @@ cmdArchiveGet(void)
                             PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
 
                             // Create the queue
-                            storagePathCreateNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
+                            storagePathCreateNP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN_STR);
 
                             // Clean the current queue using the list of WAL that we ideally want in the queue.  queueNeed()
                             // will return the list of WAL needed to fill the queue and this will be passed to the async process.

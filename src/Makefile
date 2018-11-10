@@ -283,7 +283,7 @@ compress/gzipDecompress.o: compress/gzipDecompress.c common/debug.h common/error
 config/config.o: config/config.c common/assert.h common/debug.h common/error.auto.h common/error.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.c config/config.auto.h config/config.h config/define.auto.h config/define.h
 	$(CC) $(CFLAGS) -c config/config.c -o config/config.o
 
-config/define.o: config/define.c common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/stackTrace.h common/type/convert.h config/define.auto.c config/define.auto.h config/define.h
+config/define.o: config/define.c common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h config/define.auto.c config/define.auto.h config/define.h
 	$(CC) $(CFLAGS) -c config/define.c -o config/define.o
 
 config/load.o: config/load.c command/command.h common/debug.h common/error.auto.h common/error.h common/io/io.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h config/parse.h

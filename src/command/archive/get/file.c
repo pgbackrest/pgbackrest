@@ -35,7 +35,7 @@ archiveGetCheck(const String *archiveFile)
         PgControl controlInfo = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
 
         // Attempt to load the archive info file
-        InfoArchive *info = infoArchiveNew(storageRepo(), strNew(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false);
+        InfoArchive *info = infoArchiveNew(storageRepo(), STRING_CONST(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false);
 
         // Loop through the pg history in case the WAL we need is not in the most recent archive id
         String *archiveId = NULL;

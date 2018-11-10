@@ -17,6 +17,12 @@ Archive Push Command
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
+WAL segment constants
+***********************************************************************************************************************************/
+STRING_EXTERN(WAL_SEGMENT_REGEXP_STR,                               WAL_SEGMENT_REGEXP);
+STRING_EXTERN(WAL_SEGMENT_PARTIAL_REGEXP_STR,                       WAL_SEGMENT_PARTIAL_REGEXP);
+
+/***********************************************************************************************************************************
 Check for ok/error status files in the spool in/out directory
 ***********************************************************************************************************************************/
 bool
@@ -32,7 +38,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *spoolQueue = strNew(archiveMode == archiveModeGet ? STORAGE_SPOOL_ARCHIVE_IN : STORAGE_SPOOL_ARCHIVE_OUT);
+        const String *spoolQueue = (archiveMode == archiveModeGet ? STORAGE_SPOOL_ARCHIVE_IN_STR : STORAGE_SPOOL_ARCHIVE_OUT_STR);
         String *okFile = strNewFmt("%s.ok", strPtr(walSegment));
         String *errorFile = strNewFmt("%s.error", strPtr(walSegment));
 
@@ -148,7 +154,7 @@ walIsSegment(const String *walSegment)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            regExpSegment = regExpNew(strNew(WAL_SEGMENT_PARTIAL_REGEXP));
+            regExpSegment = regExpNew(WAL_SEGMENT_PARTIAL_REGEXP_STR);
         }
         MEM_CONTEXT_END();
     }

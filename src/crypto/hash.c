@@ -19,6 +19,14 @@ Cryptographic Hash
 Filter type constant
 ***********************************************************************************************************************************/
 #define CRYPTO_HASH_FILTER_TYPE                                     "hash"
+    STRING_STATIC(CRYPTO_HASH_FILTER_TYPE_STR,                      CRYPTO_HASH_FILTER_TYPE);
+
+/***********************************************************************************************************************************
+Hash types
+***********************************************************************************************************************************/
+STRING_EXTERN(HASH_TYPE_MD5_STR,                                    HASH_TYPE_MD5)
+STRING_EXTERN(HASH_TYPE_SHA1_STR,                                   HASH_TYPE_SHA1)
+STRING_EXTERN(HASH_TYPE_SHA256_STR,                                 HASH_TYPE_SHA256)
 
 /***********************************************************************************************************************************
 Object type
@@ -72,7 +80,7 @@ cryptoHashNew(const String *type)
 
         // Create filter interface
         this->filter = ioFilterNewP(
-            strNew(CRYPTO_HASH_FILTER_TYPE), this, .in = (IoFilterInterfaceProcessIn)cryptoHashProcess,
+            CRYPTO_HASH_FILTER_TYPE_STR, this, .in = (IoFilterInterfaceProcessIn)cryptoHashProcess,
             .result = (IoFilterInterfaceResult)cryptoHashResult);
     }
     MEM_CONTEXT_NEW_END();

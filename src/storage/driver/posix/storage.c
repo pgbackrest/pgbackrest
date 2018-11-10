@@ -21,6 +21,11 @@ Posix Storage Driver
 #include "storage/driver/posix/common.h"
 
 /***********************************************************************************************************************************
+Driver type constant string
+***********************************************************************************************************************************/
+STRING_EXTERN(STORAGE_DRIVER_POSIX_TYPE_STR,                        STORAGE_DRIVER_POSIX_TYPE)
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct StorageDriverPosix
@@ -55,7 +60,7 @@ storageDriverPosixNew(
         this->memContext = MEM_CONTEXT_NEW();
 
         this->interface = storageNewP(
-            strNew(STORAGE_DRIVER_POSIX_TYPE), path, modeFile, modePath, write, pathExpressionFunction, this,
+            STORAGE_DRIVER_POSIX_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, this,
             .exists = (StorageInterfaceExists)storageDriverPosixExists, .info = (StorageInterfaceInfo)storageDriverPosixInfo,
             .list = (StorageInterfaceList)storageDriverPosixList, .move = (StorageInterfaceMove)storageDriverPosixMove,
             .newRead = (StorageInterfaceNewRead)storageDriverPosixNewRead,

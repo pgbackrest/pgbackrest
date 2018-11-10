@@ -94,10 +94,10 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
             // Error when requested
             if (failOnNoLock)
             {
-                String *errorHint = NULL;
+                const String *errorHint = NULL;
 
                 if (errNo == EWOULDBLOCK)
-                    errorHint = strNew("\nHINT: is another " PGBACKREST_NAME " process running?");
+                    errorHint = STRING_CONST("\nHINT: is another " PGBACKREST_NAME " process running?");
                 else if (errNo == EACCES)
                 {
                     errorHint = strNewFmt(

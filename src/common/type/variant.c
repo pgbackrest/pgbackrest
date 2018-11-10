@@ -929,7 +929,7 @@ Convert variant to a zero-terminated string for logging
 String *
 varToLog(const Variant *this)
 {
-    String *string = NULL;
+    const String *string = NULL;
 
     switch (varType(this))
     {
@@ -941,13 +941,13 @@ varToLog(const Variant *this)
 
         case varTypeKeyValue:
         {
-            string = strNew("KeyValue");
+            string = STRING_CONST("KeyValue");
             break;
         }
 
         case varTypeVariantList:
         {
-            string = strNew("VariantList");
+            string = STRING_CONST("VariantList");
             break;
         }
 

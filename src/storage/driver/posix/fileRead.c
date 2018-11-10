@@ -56,7 +56,7 @@ storageDriverPosixFileReadNew(StorageDriverPosix *storage, const String *name, b
         this->handle = -1;
 
         this->interface = storageFileReadNewP(
-            strNew(STORAGE_DRIVER_POSIX_TYPE), this,
+            STORAGE_DRIVER_POSIX_TYPE_STR, this,
             .ignoreMissing = (StorageFileReadInterfaceIgnoreMissing)storageDriverPosixFileReadIgnoreMissing,
             .io = (StorageFileReadInterfaceIo)storageDriverPosixFileReadIo,
             .name = (StorageFileReadInterfaceName)storageDriverPosixFileReadName);
