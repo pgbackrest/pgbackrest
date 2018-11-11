@@ -111,6 +111,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>KernelError</code> to report miscellaneous kernel errors.</p>
+                    </release-item>
+
+                    <release-item>
                         <p><code>Storage</code> interface methods no longer declare the driver as const.</p>
                     </release-item>
 
