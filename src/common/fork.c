@@ -16,20 +16,16 @@ forkDetach(void)
 {
     FUNCTION_DEBUG_VOID(logLevelTrace);
 
-    if (chdir("/") == -1)                                                                       // {uncoverable - should never fail}
-        THROW_SYS_ERROR(PathMissingError, "unable to change directory to '/'");                 // {uncoverable+}
+    // Change the working directory to / so we won't error if the old working directory goes away
+    THROW_ON_SYS_ERROR(chdir("/") == -1, PathMissingError, "unable to change directory to '/'");
 
-    if (setsid() == -1)                                                                         // {uncoverable - should never fail}
-        THROW_SYS_ERROR(AssertError, "unable to create new session group");                     // {uncoverable+}
+    // Make this process a group leader so the parent process won't block waiting for it to finish
+    THROW_ON_SYS_ERROR(setsid() == -1, KernelError, "unable to create new session group");
 
-    if (close(STDIN_FILENO) == -1)                                                              // {uncoverable - should never fail}
-        THROW_SYS_ERROR(FileCloseError, "unable to close stdin");                               // {uncoverable+}
-
-    if (close(STDOUT_FILENO) == -1)                                                             // {uncoverable - should never fail}
-        THROW_SYS_ERROR(FileCloseError, "unable to close stdout");                              // {uncoverable+}
-
-    if (close(STDERR_FILENO) == -1)                                                             // {uncoverable - should never fail}
-        THROW_SYS_ERROR(FileCloseError, "unable to close stderr");                              // {uncoverable+}
+    // Close standard file handles
+    THROW_ON_SYS_ERROR(close(STDIN_FILENO) == -1, FileCloseError, "unable to close stdin");
+    THROW_ON_SYS_ERROR(close(STDOUT_FILENO) == -1, FileCloseError, "unable to close stdout");
+    THROW_ON_SYS_ERROR(close(STDERR_FILENO) == -1, FileCloseError, "unable to close stderr");
 
     FUNCTION_DEBUG_RESULT_VOID();
 }
