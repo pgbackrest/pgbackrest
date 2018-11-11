@@ -147,6 +147,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>New, concise coverage report for C.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improve alignment of expected vs. actual error test results.</p>
                     </release-item>
 
