@@ -128,6 +128,14 @@
                 </release-development-list>
             </release-core-list>
 
+            <release-doc-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Add new HTML tags and <code>strExtra</code> to <code>DocHtmlElement</code>.</p>
+                    </release-item>
+                </release-development-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-development-list>
                     <release-item>

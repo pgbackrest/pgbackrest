@@ -127,7 +127,8 @@ sub htmlRender
         $self->indent($iDepth) . "<$oElement->{strType}" .
             (defined($oElement->{strClass}) ? " class=\"$oElement->{strClass}\"": '') .
             (defined($oElement->{strRef}) ? " href=\"$oElement->{strRef}\"": '') .
-            (defined($oElement->{strId}) ? " id=\"$oElement->{strId}\"": '') . '>';
+            (defined($oElement->{strId}) ? " id=\"$oElement->{strId}\"": '') .
+            (defined($oElement->{strExtra}) ? " $oElement->{strExtra}": '') . '>';
 
     if (defined($oElement->{strContent}))
     {

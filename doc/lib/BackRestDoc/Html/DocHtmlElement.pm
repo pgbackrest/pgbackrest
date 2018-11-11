@@ -26,6 +26,14 @@ use constant HTML_DIV                                               => 'div';
     push @EXPORT, qw(HTML_DIV);
 use constant HTML_SPAN                                              => 'span';
     push @EXPORT, qw(HTML_SPAN);
+use constant HTML_TABLE                                             => 'table';
+    push @EXPORT, qw(HTML_TABLE);
+use constant HTML_TD                                                => 'td';
+    push @EXPORT, qw(HTML_TD);
+use constant HTML_TH                                                => 'th';
+    push @EXPORT, qw(HTML_TH);
+use constant HTML_TR                                                => 'tr';
+    push @EXPORT, qw(HTML_TR);
 use constant HTML_UL                                                => 'ul';
     push @EXPORT, qw(HTML_UL);
 use constant HTML_LI                                                => 'li';
@@ -63,6 +71,7 @@ sub new
     $self->{strContent} = $$oParam{strContent};
     $self->{strId} = $$oParam{strId};
     $self->{strRef} = $$oParam{strRef};
+    $self->{strExtra} = $$oParam{strExtra};
     $self->{bPre} = $$oParam{bPre};
 
     # Return from function and log return values if any
