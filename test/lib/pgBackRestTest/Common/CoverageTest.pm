@@ -167,7 +167,7 @@ sub coverageGenerate
         }
     }
 
-    # Determine all lines to report for coverage.  We'll just go backward and forward to the next blank line.
+    # Report on the entire function if any lines in the function are uncovered
     foreach my $strFile (sort(keys(%{$rhCoverage})))
     {
         if (defined($rhCoverage->{$strFile}{line}))
@@ -177,36 +177,26 @@ sub coverageGenerate
 
             foreach my $iLine (sort(keys(%{$rhCoverage->{$strFile}{line}})))
             {
-                # Run back to the last blank or brace-only line
-                for (my $iLineIdx = $iLine; $iLineIdx >= 0; $iLineIdx--)
+                # Run back to the beginning of the function comment
+                for (my $iLineIdx = $iLine - 1; $iLineIdx >= 0; $iLineIdx--)
                 {
-                    if (trim($stryC[$iLineIdx - 1]) eq '' || trim($stryC[$iLineIdx - 1]) eq '{')
+                    if (!defined($rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)}))
                     {
-                        last;
+                        $rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)} = undef;
                     }
-                    else
-                    {
-                        if (!defined($rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)}))
-                        {
-                            $rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)} = undef;
-                        }
-                    }
+
+                    last if ($stryC[$iLineIdx - 1] =~ '^\/\*');
                 }
 
-                # Run forward to the last blank or brace-only line
-                for (my $iLineIdx = $iLine; $iLineIdx <= @stryC; $iLineIdx++)
+                # Run forward to the end of the function
+                for (my $iLineIdx = $iLine + 1; $iLineIdx < @stryC; $iLineIdx++)
                 {
-                    if (trim($stryC[$iLineIdx - 1]) eq '' || trim($stryC[$iLineIdx - 1]) eq '}')
+                    if (!defined($rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)}))
                     {
-                        last;
+                        $rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)} = undef;
                     }
-                    else
-                    {
-                        if (!defined($rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)}))
-                        {
-                            $rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)} = undef;
-                        }
-                    }
+
+                    last if ($stryC[$iLineIdx - 1] eq '}');
                 }
             }
         }
@@ -215,6 +205,8 @@ sub coverageGenerate
     # Build html
     my $strTitle = BACKREST_NAME . ' Coverage Report';
     my $strDarkRed = '#580000';
+    my $strGray = '#555555';
+    my $strDarkGray = '#333333';
 
     my $oHtml = new BackRestDoc::Html::DocHtmlBuilder(
         BACKREST_NAME, $strTitle,
@@ -223,8 +215,9 @@ sub coverageGenerate
 
         "html\n" .
         "{\n" .
-        "    background-color: #f8f8f8;\n" .
+        "    background-color: ${strGray};\n" .
         "    font-family: Avenir, Corbel, sans-serif;\n" .
+        "    color: white;\n" .
         "    font-size: 12pt;\n" .
         "    margin-top: 8px;\n" .
         "    margin-left: 1\%;\n" .
@@ -272,7 +265,7 @@ sub coverageGenerate
         "{\n" .
         "    padding-left: .5em;\n" .
         "    padding-right: .5em;\n" .
-        "    background-color: gray;\n" .
+        "    background-color: ${strDarkGray};\n" .
         "    width: 100\%;\n" .
         "}\n" .
 
@@ -287,6 +280,8 @@ sub coverageGenerate
         "\n" .
         ".list-table-row-file\n" .
         "{\n" .
+        "    padding-left: .5em;\n" .
+        "    padding-right: .5em;\n" .
         "}\n" .
 
         "\n" .
@@ -319,7 +314,7 @@ sub coverageGenerate
         "{\n" .
         "    padding-left: .5em;\n" .
         "    padding-right: .5em;\n" .
-        "    background-color: gray;\n" .
+        "    background-color: ${strDarkGray};\n" .
         "}\n" .
 
         "\n" .
@@ -337,15 +332,10 @@ sub coverageGenerate
         "\n" .
         ".report-table-row-dot-skip\n" .
         "{\n" .
+        "    height: 1em;\n" .
         "    padding-top: .25em;\n" .
         "    padding-bottom: .25em;\n" .
         "    text-align: center;\n" .
-        "}\n" .
-
-        "\n" .
-        ".report-table-row-dot-skip::after\n" .
-        "{\n" .
-        "    content: \"...\";\n" .
         "}\n" .
 
         "\n" .
