@@ -15,11 +15,12 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("strNew(), strNewBuf(), strNewN(), strPtr(), and strFree()"))
+    if (testBegin("strNew(), strNewBuf(), strNewN(), strEmpty(), strPtr(), strSize(), and strFree()"))
     {
         String *string = strNew("static string");
         TEST_RESULT_STR(strPtr(string), "static string", "new with static string");
         TEST_RESULT_INT(strSize(string), 13, "check size");
+        TEST_RESULT_BOOL(strEmpty(string), false, "is not empty");
         TEST_RESULT_INT(strlen(strPtr(string)), 13, "check size with strlen()");
         TEST_RESULT_CHAR(strPtr(string)[2], 'a', "check character");
 

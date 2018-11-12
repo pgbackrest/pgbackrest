@@ -28,6 +28,7 @@ String *strCatFmt(String *this, const char *format, ...) __attribute__((format(p
 int strCmp(const String *this, const String *compare);
 int strCmpZ(const String *this, const char *compare);
 String *strDup(const String *this);
+bool strEmpty(const String *this);
 bool strEndsWith(const String *this, const String *endsWith);
 bool strEndsWithZ(const String *this, const char *endsWith);
 bool strEq(const String *this, const String *compare);
