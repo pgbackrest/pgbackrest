@@ -92,6 +92,7 @@ By convention all string constant identifiers are appended with _STR.
 /***********************************************************************************************************************************
 Constant strings that are generally useful
 ***********************************************************************************************************************************/
+STRING_DECLARE(EMPTY_STR);
 STRING_DECLARE(FSLASH_STR);
 STRING_DECLARE(N_STR);
 STRING_DECLARE(NULL_STR);
