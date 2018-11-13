@@ -272,7 +272,7 @@ sub run
                     {strMode => STORAGE_DECRYPT})},
                 '[object]', 'new read empty attempt decrypt');
 
-        $self->testException(sub {$oEncryptFileIo->read(\$tBuffer, 16)}, ERROR_CIPHER, 'cipher header missing');
+        $self->testException(sub {$oEncryptFileIo->read(\$tBuffer, 16)}, ERROR_CRYPTO, 'cipher header missing');
         $self->testResult(sub {$oEncryptFileIo->close()}, true, 'close');
 
         # OpenSSL should error on the empty file

@@ -13,6 +13,7 @@ IO Buffer Filter
 Filter type constant
 ***********************************************************************************************************************************/
 #define BUFFER_FILTER_TYPE                                          "buffer"
+    STRING_STATIC(BUFFER_FILTER_TYPE_STR,                           BUFFER_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
@@ -43,7 +44,7 @@ ioBufferNew(void)
 
         // Create filter interface
         this->filter = ioFilterNewP(
-            strNew(BUFFER_FILTER_TYPE), this, .inOut = (IoFilterInterfaceProcessInOut)ioBufferProcess,
+            BUFFER_FILTER_TYPE_STR, this, .inOut = (IoFilterInterfaceProcessInOut)ioBufferProcess,
             .inputSame = (IoFilterInterfaceInputSame)ioBufferInputSame);
     }
     MEM_CONTEXT_NEW_END();

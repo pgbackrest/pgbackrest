@@ -20,7 +20,7 @@ Check results of strto*() function for:
     * error in errno
 ***********************************************************************************************************************************/
 static void
-cvtZToIntValid(int errNo, const char *value, const char *endPtr, const char *type)
+cvtZToIntValid(int errNo, int base, const char *value, const char *endPtr, const char *type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, errNo);
@@ -33,7 +33,7 @@ cvtZToIntValid(int errNo, const char *value, const char *endPtr, const char *typ
     FUNCTION_TEST_END();
 
     if (errNo != 0 || *value == '\0' || isspace(*value) || *endPtr != '\0')
-        THROW_FMT(FormatError, "unable to convert string '%s' to %s", value, type);
+        THROW_FMT(FormatError, "unable to convert base %d string '%s' to %s", base, value, type);
 
     FUNCTION_TEST_RESULT_VOID();
 }
@@ -42,7 +42,7 @@ cvtZToIntValid(int errNo, const char *value, const char *endPtr, const char *typ
 Convert zero-terminated string to int64 and validate result
 ***********************************************************************************************************************************/
 static int64_t
-cvtZToInt64Internal(const char *value, const char *type)
+cvtZToInt64Internal(const char *value, const char *type, int base)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, value);
@@ -55,10 +55,10 @@ cvtZToInt64Internal(const char *value, const char *type)
     // Convert from string
     errno = 0;
     char *endPtr = NULL;
-    int64_t result = strtoll(value, &endPtr, 10);
+    int64_t result = strtoll(value, &endPtr, base);
 
     // Validate the result
-    cvtZToIntValid(errno, value, endPtr, type);
+    cvtZToIntValid(errno, base, value, endPtr, type);
 
     FUNCTION_TEST_RESULT(INT64, result);
 }
@@ -67,7 +67,7 @@ cvtZToInt64Internal(const char *value, const char *type)
 Convert zero-terminated string to uint64 and validate result
 ***********************************************************************************************************************************/
 static uint64_t
-cvtZToUInt64Internal(const char *value, const char *type)
+cvtZToUInt64Internal(const char *value, const char *type, int base)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, value);
@@ -80,10 +80,10 @@ cvtZToUInt64Internal(const char *value, const char *type)
     // Convert from string
     errno = 0;
     char *endPtr = NULL;
-    uint64_t result = strtoull(value, &endPtr, 10);
+    uint64_t result = strtoull(value, &endPtr, base);
 
     // Validate the result
-    cvtZToIntValid(errno, value, endPtr, type);
+    cvtZToIntValid(errno, base, value, endPtr, type);
 
     FUNCTION_TEST_RESULT(UINT64, result);
 }
@@ -227,6 +227,23 @@ cvtIntToZ(int value, char *buffer, size_t bufferSize)
 }
 
 int
+cvtZToIntBase(const char *value, int base)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, value);
+
+        FUNCTION_TEST_ASSERT(value != NULL);
+    FUNCTION_TEST_END();
+
+    int64_t result = cvtZToInt64Internal(value, "int", base);
+
+    if (result > INT_MAX || result < INT_MIN)
+        THROW_FMT(FormatError, "unable to convert base %d string '%s' to int", base, value);
+
+    FUNCTION_TEST_RESULT(INT, (int)result);
+}
+
+int
 cvtZToInt(const char *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -235,12 +252,7 @@ cvtZToInt(const char *value)
         FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
 
-    int64_t result = cvtZToInt64Internal(value, "int");
-
-    if (result > INT_MAX || result < INT_MIN)
-        THROW_FMT(FormatError, "unable to convert string '%s' to int", value);
-
-    FUNCTION_TEST_RESULT(INT, (int)result);
+    FUNCTION_TEST_RESULT(INT, cvtZToIntBase(value, 10));
 }
 
 /***********************************************************************************************************************************
@@ -266,6 +278,18 @@ cvtInt64ToZ(int64_t value, char *buffer, size_t bufferSize)
 }
 
 int64_t
+cvtZToInt64Base(const char *value, int base)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, value);
+
+        FUNCTION_TEST_ASSERT(value != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(INT64, cvtZToInt64Internal(value, "int64", base));
+}
+
+int64_t
 cvtZToInt64(const char *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -274,7 +298,7 @@ cvtZToInt64(const char *value)
         FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(INT64, cvtZToInt64Internal(value, "int64"));
+    FUNCTION_TEST_RESULT(INT64, cvtZToInt64Base(value, 10));
 }
 
 /***********************************************************************************************************************************
@@ -344,6 +368,24 @@ cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize)
 }
 
 unsigned int
+cvtZToUIntBase(const char *value, int base)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, value);
+
+        FUNCTION_TEST_ASSERT(value != NULL);
+    FUNCTION_TEST_END();
+
+    uint64_t result = cvtZToUInt64Internal(value, "unsigned int", base);
+
+    // Don't allow negative numbers even though strtoull() does and check max value
+    if (*value == '-' || result > UINT_MAX)
+        THROW_FMT(FormatError, "unable to convert base %d string '%s' to unsigned int", base, value);
+
+    FUNCTION_TEST_RESULT(UINT, (unsigned int)result);
+}
+
+unsigned int
 cvtZToUInt(const char *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -352,13 +394,7 @@ cvtZToUInt(const char *value)
         FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
 
-    uint64_t result = cvtZToUInt64Internal(value, "unsigned int");
-
-    // Don't allow negative numbers even though strtoull() does and check max value
-    if (*value == '-' || result > UINT_MAX)
-        THROW_FMT(FormatError, "unable to convert string '%s' to unsigned int", value);
-
-    FUNCTION_TEST_RESULT(UINT, (unsigned int)result);
+    FUNCTION_TEST_RESULT(UINT, cvtZToUIntBase(value, 10));
 }
 
 /***********************************************************************************************************************************
@@ -384,6 +420,24 @@ cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize)
 }
 
 uint64_t
+cvtZToUInt64Base(const char *value, int base)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHARP, value);
+
+        FUNCTION_TEST_ASSERT(value != NULL);
+    FUNCTION_TEST_END();
+
+    uint64_t result = cvtZToUInt64Internal(value, "uint64", base);
+
+    // Don't allow negative numbers even though strtoull() does
+    if (*value == '-')
+        THROW_FMT(FormatError, "unable to convert base %d string '%s' to uint64", base, value);
+
+    FUNCTION_TEST_RESULT(UINT64, result);
+}
+
+uint64_t
 cvtZToUInt64(const char *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -392,11 +446,5 @@ cvtZToUInt64(const char *value)
         FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
 
-    uint64_t result = cvtZToUInt64Internal(value, "uint64");
-
-    // Don't allow negative numbers even though strtoull() does
-    if (*value == '-')
-        THROW_FMT(FormatError, "unable to convert string '%s' to uint64", value);
-
-    FUNCTION_TEST_RESULT(UINT64, result);
+    FUNCTION_TEST_RESULT(UINT64, cvtZToUInt64Base(value, 10));
 }

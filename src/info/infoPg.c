@@ -25,13 +25,19 @@ Internal constants
 ***********************************************************************************************************************************/
 #define INFO_SECTION_DB                                             "db"
 #define INFO_SECTION_DB_HISTORY                                     INFO_SECTION_DB ":history"
+    STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                      INFO_SECTION_DB_HISTORY)
 #define INFO_SECTION_DB_MANIFEST                                    "backup:" INFO_SECTION_DB
 
 #define INFO_KEY_DB_ID                                              "db-id"
+    STRING_STATIC(INFO_KEY_DB_ID_STR,                               INFO_KEY_DB_ID)
 #define INFO_KEY_DB_CATALOG_VERSION                                 "db-catalog-version"
+    STRING_STATIC(INFO_KEY_DB_CATALOG_VERSION_STR,                  INFO_KEY_DB_CATALOG_VERSION)
 #define INFO_KEY_DB_CONTROL_VERSION                                 "db-control-version"
+    STRING_STATIC(INFO_KEY_DB_CONTROL_VERSION_STR,                  INFO_KEY_DB_CONTROL_VERSION)
 #define INFO_KEY_DB_SYSTEM_ID                                       "db-system-id"
+    STRING_STATIC(INFO_KEY_DB_SYSTEM_ID_STR,                        INFO_KEY_DB_SYSTEM_ID)
 #define INFO_KEY_DB_VERSION                                         "db-version"
+    STRING_STATIC(INFO_KEY_DB_VERSION_STR,                          INFO_KEY_DB_VERSION)
 
 /***********************************************************************************************************************************
 Object type
@@ -75,11 +81,11 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             const Ini *infoPgIni = infoIni(this->info);
-            const String *pgHistorySection = strNew(INFO_SECTION_DB_HISTORY);
+            const String *pgHistorySection = INFO_SECTION_DB_HISTORY_STR;
             const StringList *pgHistoryKey = iniSectionKeyList(infoPgIni, pgHistorySection);
-            const Variant *idKey = varNewStr(strNew(INFO_KEY_DB_ID));
-            const Variant *systemIdKey = varNewStr(strNew(INFO_KEY_DB_SYSTEM_ID));
-            const Variant *versionKey = varNewStr(strNew(INFO_KEY_DB_VERSION));
+            const Variant *idKey = varNewStr(INFO_KEY_DB_ID_STR);
+            const Variant *systemIdKey = varNewStr(INFO_KEY_DB_SYSTEM_ID_STR);
+            const Variant *versionKey = varNewStr(INFO_KEY_DB_VERSION_STR);
 
             // History must include at least one item or the file is corrupt
             ASSERT(strLstSize(pgHistoryKey) > 0);
@@ -108,8 +114,8 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type)
                 // we must write them at least, even if we give up reading them.
                 if (type == infoPgBackup || type == infoPgManifest)
                 {
-                    const Variant *catalogVersionKey = varNewStr(strNew(INFO_KEY_DB_CATALOG_VERSION));
-                    const Variant *controlVersionKey = varNewStr(strNew(INFO_KEY_DB_CONTROL_VERSION));
+                    const Variant *catalogVersionKey = varNewStr(INFO_KEY_DB_CATALOG_VERSION_STR);
+                    const Variant *controlVersionKey = varNewStr(INFO_KEY_DB_CONTROL_VERSION_STR);
 
                     infoPgData.catalogVersion = (unsigned int)varUInt64Force(kvGet(pgDataKv, catalogVersionKey));
                     infoPgData.controlVersion = (unsigned int)varUInt64Force(kvGet(pgDataKv, controlVersionKey));

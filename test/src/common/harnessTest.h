@@ -8,13 +8,20 @@ C Test Harness
 
 #include "common/error.h"
 
-// Bogus values
+/***********************************************************************************************************************************
+Constants
+***********************************************************************************************************************************/
 #define BOGUS_STR                                                   "BOGUS"
 
-// Functions
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
 void testAdd(int run, bool selected);
 bool testBegin(const char *name);
 void testComplete(void);
+
+uint64_t testTimeMSec(void);
+uint64_t testTimeMSecBegin(void);
 
 const char *testExe(void);
 void testExeSet(const char *testExe);
@@ -45,7 +52,10 @@ Test that an expected error is actually thrown and error when it isn't
 {                                                                                                                                  \
     bool TEST_ERROR_catch = false;                                                                                                 \
                                                                                                                                    \
-    printf("    l%04d - expect %s: %s\n", __LINE__, errorTypeName(&errorTypeExpected), errorMessageExpected);                      \
+    printf(                                                                                                                        \
+        "    %03u.%03us l%04d - expect %s: %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                   \
+        (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__, errorTypeName(&errorTypeExpected),                \
+        errorMessageExpected);                                                                                                     \
     fflush(stdout);                                                                                                                \
                                                                                                                                    \
     TRY_BEGIN()                                                                                                                    \
@@ -58,7 +68,7 @@ Test that an expected error is actually thrown and error when it isn't
                                                                                                                                    \
         if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                                \
             THROW_FMT(                                                                                                             \
-                AssertError, "EXPECTED %s: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),             \
+                AssertError, "EXPECTED %s: %s\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),            \
                 errorMessageExpected, errorName(), errorMessage(), errorStackTrace());                                             \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
@@ -126,7 +136,9 @@ Compare types
 Output information about the test
 ***********************************************************************************************************************************/
 #define TEST_RESULT_INFO(...)                                                                                                      \
-    printf("    l%04d - ", __LINE__);                                                                                              \
+    printf(                                                                                                                        \
+        "    %03u.%03us l%04d - ", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                                  \
+        (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __LINE__);                                                  \
     printf(__VA_ARGS__);                                                                                                           \
     printf("\n");                                                                                                                  \
     fflush(stdout);

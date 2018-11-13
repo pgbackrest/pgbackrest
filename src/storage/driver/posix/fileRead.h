@@ -17,7 +17,7 @@ typedef struct StorageDriverPosixFileRead StorageDriverPosixFileRead;
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-StorageDriverPosixFileRead *storageDriverPosixFileReadNew(const StorageDriverPosix *storage, const String *name, bool ignoreMissing);
+StorageDriverPosixFileRead *storageDriverPosixFileReadNew(StorageDriverPosix *storage, const String *name, bool ignoreMissing);
 
 /***********************************************************************************************************************************
 Functions

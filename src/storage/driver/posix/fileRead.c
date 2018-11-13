@@ -19,7 +19,7 @@ Object type
 struct StorageDriverPosixFileRead
 {
     MemContext *memContext;
-    const StorageDriverPosix *storage;
+    StorageDriverPosix *storage;
     StorageFileRead *interface;
     IoRead *io;
     String *name;
@@ -33,7 +33,7 @@ struct StorageDriverPosixFileRead
 Create a new file
 ***********************************************************************************************************************************/
 StorageDriverPosixFileRead *
-storageDriverPosixFileReadNew(const StorageDriverPosix *storage, const String *name, bool ignoreMissing)
+storageDriverPosixFileReadNew(StorageDriverPosix *storage, const String *name, bool ignoreMissing)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(STRING, name);
@@ -56,7 +56,7 @@ storageDriverPosixFileReadNew(const StorageDriverPosix *storage, const String *n
         this->handle = -1;
 
         this->interface = storageFileReadNewP(
-            strNew(STORAGE_DRIVER_POSIX_TYPE), this,
+            STORAGE_DRIVER_POSIX_TYPE_STR, this,
             .ignoreMissing = (StorageFileReadInterfaceIgnoreMissing)storageDriverPosixFileReadIgnoreMissing,
             .io = (StorageFileReadInterfaceIo)storageDriverPosixFileReadIo,
             .name = (StorageFileReadInterfaceName)storageDriverPosixFileReadName);
@@ -250,6 +250,8 @@ storageDriverPosixFileReadFree(StorageDriverPosixFileRead *this)
     if (this != NULL)
     {
         storageDriverPosixFileReadClose(this);
+
+        memContextCallbackClear(this->memContext);
         memContextFree(this->memContext);
     }
 

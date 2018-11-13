@@ -20,7 +20,7 @@ Object type
 struct StorageDriverPosixFileWrite
 {
     MemContext *memContext;
-    const StorageDriverPosix *storage;
+    StorageDriverPosix *storage;
     StorageFileWrite *interface;
     IoWrite *io;
 
@@ -50,7 +50,7 @@ Create a new file
 ***********************************************************************************************************************************/
 StorageDriverPosixFileWrite *
 storageDriverPosixFileWriteNew(
-    const StorageDriverPosix *storage, const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile,
+    StorageDriverPosix *storage, const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile,
     bool syncPath, bool atomic)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
@@ -77,7 +77,7 @@ storageDriverPosixFileWriteNew(
         this->storage = storage;
 
         this->interface = storageFileWriteNewP(
-            strNew(STORAGE_DRIVER_POSIX_TYPE), this, .atomic = (StorageFileWriteInterfaceAtomic)storageDriverPosixFileWriteAtomic,
+            STORAGE_DRIVER_POSIX_TYPE_STR, this, .atomic = (StorageFileWriteInterfaceAtomic)storageDriverPosixFileWriteAtomic,
             .createPath = (StorageFileWriteInterfaceCreatePath)storageDriverPosixFileWriteCreatePath,
             .io = (StorageFileWriteInterfaceIo)storageDriverPosixFileWriteIo,
             .modeFile = (StorageFileWriteInterfaceModeFile)storageDriverPosixFileWriteModeFile,
@@ -354,6 +354,8 @@ storageDriverPosixFileWriteFree(StorageDriverPosixFileWrite *this)
     if (this != NULL)
     {
         storageDriverPosixFileWriteClose(this);
+
+        memContextCallbackClear(this->memContext);
         memContextFree(this->memContext);
     }
 

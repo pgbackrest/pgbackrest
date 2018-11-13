@@ -77,7 +77,7 @@ file-exists: 93
 # Memory allocation failed
 memory: 94
 
-cipher: 95
+crypto: 95
 param-invalid: 96
 
 # Unable to close a path
@@ -88,6 +88,9 @@ file-info: 98
 
 # Invalid JSON format.  Eventually this should be a child of format error and share the same code
 json-format: 99
+
+# An error from the kernel that there's nothing we can do about.  It should always be fatal.
+kernel: 100
 
 # This error should not be thrown directly -- it serves as a parent for the C errors
 runtime: 122

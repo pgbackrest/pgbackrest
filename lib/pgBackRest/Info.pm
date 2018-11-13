@@ -555,12 +555,12 @@ sub backupList
         {
             return;
         }
-        elsif (exceptionCode($EVAL_ERROR) == ERROR_CIPHER)
+        elsif (exceptionCode($EVAL_ERROR) == ERROR_CRYPTO)
         {
             # Confess the encryption error with additional hint
             confess &log(ERROR, exceptionMessage($EVAL_ERROR) .
                 "\nHINT: use option --stanza if encryption settings are different for the stanza than the global settings",
-                ERROR_CIPHER);
+                ERROR_CRYPTO);
         }
         else
         {

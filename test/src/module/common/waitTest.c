@@ -15,13 +15,13 @@ testRun(void)
     {
         Wait *wait = NULL;
 
-        TEST_ERROR(waitNew(0.01), AssertError, "function debug assertion 'waitTime >= 0.1 && waitTime <= 999999.0' failed");
-        TEST_ERROR(waitNew(9999999), AssertError, "function debug assertion 'waitTime >= 0.1 && waitTime <= 999999.0' failed");
+        TEST_ERROR(waitNew(10), AssertError, "function debug assertion 'waitTime >= 100 && waitTime <= 999999000' failed");
+        TEST_ERROR(waitNew(9999999000), AssertError, "function debug assertion 'waitTime >= 100 && waitTime <= 999999000' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TimeMSec begin = timeMSec();
 
-        TEST_ASSIGN(wait, waitNew(0.2), "new wait = 0.2 sec");
+        TEST_ASSIGN(wait, waitNew(200), "new wait = 0.2 sec");
         TEST_RESULT_DOUBLE(wait->waitTime, 200, "    check wait time");
         TEST_RESULT_DOUBLE(wait->sleepTime, 20, "    check sleep time");
         TEST_RESULT_DOUBLE(wait->sleepPrevTime, 0, "    check sleep prev time");
@@ -39,7 +39,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         begin = timeMSec();
 
-        TEST_ASSIGN(wait, waitNew(1.1), "new wait = 1.1 sec");
+        TEST_ASSIGN(wait, waitNew(1100), "new wait = 1.1 sec");
         TEST_RESULT_DOUBLE(wait->waitTime, 1100, "    check wait time");
         TEST_RESULT_DOUBLE(wait->sleepTime, 100, "    check sleep time");
         TEST_RESULT_DOUBLE(wait->sleepPrevTime, 0, "    check sleep prev time");

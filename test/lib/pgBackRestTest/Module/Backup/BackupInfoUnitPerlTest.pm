@@ -213,7 +213,7 @@ sub run
         # Prepend encryption Magic signature to simulate encryption
         executeTest('echo "' . CIPHER_MAGIC . '$(cat ' . $strFile . ')" > ' . $strFile);
 
-        $self->testException(sub {new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP))}, ERROR_CIPHER,
+        $self->testException(sub {new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP))}, ERROR_CRYPTO,
             "unable to parse '$strFile'" .
             "\nHINT: Is or was the repo encrypted?");
 
@@ -253,7 +253,7 @@ sub run
         $self->optionTestSet(CFGOPT_REPO_PATH, $self->testPath() . '/repo');
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        $self->testException(sub {new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP))}, ERROR_CIPHER,
+        $self->testException(sub {new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP))}, ERROR_CRYPTO,
             "unable to parse '" . $oBackupInfo->{strFileName} . "'" .
             "\nHINT: Is or was the repo encrypted?");
     }

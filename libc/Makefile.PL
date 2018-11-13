@@ -83,7 +83,6 @@ my @stryCFile =
     'crypto/cipherBlock.c',
     'crypto/crypto.c',
     'crypto/hash.c',
-    'crypto/random.c',
     'perl/config.c',
     'postgres/pageChecksum.c',
     'storage/driver/posix/storage.c',

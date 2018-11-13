@@ -3,6 +3,9 @@ Test Strings
 ***********************************************************************************************************************************/
 #include "common/type/buffer.h"
 
+// Declare a static const string for testing
+STRING_STATIC(TEST_STRING, "a very interesting string!");
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -12,11 +15,12 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("strNew(), strNewBuf(), strNewN(), strPtr(), and strFree()"))
+    if (testBegin("strNew(), strNewBuf(), strNewN(), strEmpty(), strPtr(), strSize(), and strFree()"))
     {
         String *string = strNew("static string");
         TEST_RESULT_STR(strPtr(string), "static string", "new with static string");
         TEST_RESULT_INT(strSize(string), 13, "check size");
+        TEST_RESULT_BOOL(strEmpty(string), false, "is not empty");
         TEST_RESULT_INT(strlen(strPtr(string)), 13, "check size with strlen()");
         TEST_RESULT_CHAR(strPtr(string)[2], 'a', "check character");
 
@@ -42,6 +46,13 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("STRING_STATIC()"))
+    {
+        TEST_RESULT_STR(strPtr(TEST_STRING), "a very interesting string!", "check static string");
+        TEST_RESULT_STR(strPtr(strSubN(TEST_STRING, 0, 6)), "a very", "read-only strSub() works");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("strBase() and strPath()"))
     {
         TEST_RESULT_STR(strPtr(strBase(strNew(""))), "", "empty string");
@@ -56,21 +67,16 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strCat() and strCatFmt()"))
+    if (testBegin("strCat(), strCatChr(), and strCatFmt()"))
     {
         String *string = strNew("XXXX");
         String *string2 = strNew("ZZZZ");
 
-        strCat(string, "YYYY");
-        TEST_RESULT_STR(strPtr(string), "XXXXYYYY", "cat string");
-
-        strCatFmt(string, "%05d", 777);
-        TEST_RESULT_STR(strPtr(string), "XXXXYYYY00777", "cat formatted string");
+        TEST_RESULT_STR(strPtr(strCat(string, "YYYY")), "XXXXYYYY", "cat string");
+        TEST_RESULT_STR(strPtr(strCatFmt(string, "%05d", 777)), "XXXXYYYY00777", "cat formatted string");
+        TEST_RESULT_STR(strPtr(strCatChr(string, '!')), "XXXXYYYY00777!", "cat chr");
 
         TEST_RESULT_STR(strPtr(string2), "ZZZZ", "check unaltered string");
-
-        strFree(string);
-        strFree(string2);
     }
 
     // *****************************************************************************************************************************
@@ -186,8 +192,8 @@ testRun(void)
         String *val = strNew("abcdef");
         TEST_ERROR(
             strTrunc(val, (int)(strSize(val) + 1)), AssertError,
-            "function test assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
-        TEST_ERROR(strTrunc(val, -1), AssertError, "function test assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
+            "function test assertion 'idx >= 0 && (size_t)idx <= this->common.size' failed");
+        TEST_ERROR(strTrunc(val, -1), AssertError, "function test assertion 'idx >= 0 && (size_t)idx <= this->common.size' failed");
 
         TEST_RESULT_STR(strPtr(strTrunc(val, strChr(val, 'd'))), "abc", "simple string truncated");
         strCat(val, "\r\n to end");

@@ -600,7 +600,7 @@ sub infoObject
         else
         {
             # Confess unhandled exception
-            if (($iResult != ERROR_FILE_MISSING) && ($iResult != ERROR_CIPHER))
+            if (($iResult != ERROR_FILE_MISSING) && ($iResult != ERROR_CRYPTO))
             {
                 confess &log(ERROR, $strResultMessage, $iResult);
             }

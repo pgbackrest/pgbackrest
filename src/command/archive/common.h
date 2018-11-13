@@ -31,9 +31,11 @@ WAL segment constants
 
 // Match on a WAL segment without checksum appended
 #define WAL_SEGMENT_REGEXP                                          WAL_SEGMENT_PREFIX_REGEXP "$"
+    STRING_DECLARE(WAL_SEGMENT_REGEXP_STR);
 
 // Match on a WAL segment with partial allowed
 #define WAL_SEGMENT_PARTIAL_REGEXP                                  WAL_SEGMENT_PREFIX_REGEXP "(\\.partial){0,1}$"
+    STRING_DECLARE(WAL_SEGMENT_PARTIAL_REGEXP_STR);
 
 // Defines the size of standard WAL segment name -- hopefully this won't change
 #define WAL_SEGMENT_NAME_SIZE                                       ((unsigned int)24)

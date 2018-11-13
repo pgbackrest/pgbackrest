@@ -11,7 +11,6 @@ Block Cipher
 #include "common/memContext.h"
 #include "crypto/cipherBlock.h"
 #include "crypto/crypto.h"
-#include "crypto/random.h"
 
 /***********************************************************************************************************************************
 Header constants and sizes
@@ -165,7 +164,7 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t source
             destinationSize += CIPHER_BLOCK_MAGIC_SIZE;
 
             // Add salt to the destination buffer
-            randomBytes(destination, PKCS5_SALT_LEN);
+            cryptoRandomBytes(destination, PKCS5_SALT_LEN);
             salt = destination;
             destination += PKCS5_SALT_LEN;
             destinationSize += PKCS5_SALT_LEN;
@@ -187,7 +186,7 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t source
                 // The first bytes of the file to decrypt should be equal to the magic.  If not then this is not an
                 // encrypted file, or at least not in a format we recognize.
                 if (memcmp(this->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
-                    THROW(CipherError, "cipher header invalid");
+                    THROW(CryptoError, "cipher header invalid");
             }
             // Else copy what was provided into the header buffer and return 0
             else
@@ -211,18 +210,16 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t source
                 this->cipher, this->digest, salt, (unsigned char *)this->pass, (int)this->passSize, 1, key, initVector);
 
             // Create context to track cipher
-            if (!(this->cipherContext = EVP_CIPHER_CTX_new()))                  // {uncoverable - no failure condition known}
-                THROW(MemoryError, "unable to create context");                 // {+uncoverable}
+            cryptoError(!(this->cipherContext = EVP_CIPHER_CTX_new()), "unable to create context");
 
             // Set free callback to ensure cipher context is freed
             memContextCallback(this->memContext, (MemContextCallback)cipherBlockFree, this);
 
             // Initialize cipher
-            if (EVP_CipherInit_ex(                                              // {uncoverable - no failure condition known}
-                    this->cipherContext, this->cipher, NULL, key, initVector, this->mode == cipherModeEncrypt) != 1)
-            {
-                THROW(MemoryError, "unable to initialize cipher");              // {+uncoverable}
-            }
+            cryptoError(
+                !EVP_CipherInit_ex(
+                    this->cipherContext, this->cipher, NULL, key, initVector, this->mode == cipherModeEncrypt),
+                    "unable to initialize cipher");
 
             this->saltDone = true;
         }
@@ -234,9 +231,9 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t source
         // Process the data
         size_t destinationUpdateSize = 0;
 
-        if (!EVP_CipherUpdate(                                                  // {uncoverable - no failure condition known}
-                this->cipherContext, destination, (int *)&destinationUpdateSize, source, (int)sourceSize))
-            THROW(CipherError, "unable to process");                            // {+uncoverable}
+        cryptoError(
+            !EVP_CipherUpdate(this->cipherContext, destination, (int *)&destinationUpdateSize, source, (int)sourceSize),
+            "unable to process cipher");
 
         destinationSize += destinationUpdateSize;
 
@@ -267,11 +264,11 @@ cipherBlockFlush(CipherBlock *this, unsigned char *destination)
 
     // If no header was processed then error
     if (!this->saltDone)
-        THROW(CipherError, "cipher header missing");
+        THROW(CryptoError, "cipher header missing");
 
     // Only flush remaining data if some data was processed
     if (!EVP_CipherFinal(this->cipherContext, destination, (int *)&destinationSize))
-        THROW(CipherError, "unable to flush");
+        THROW(CryptoError, "unable to flush");
 
     // Return actual destination size
     FUNCTION_DEBUG_RESULT(SIZE, destinationSize);
@@ -294,6 +291,7 @@ cipherBlockFree(CipherBlock *this)
         EVP_CIPHER_CTX_cleanup(this->cipherContext);
 
     // Free mem context
+    memContextCallbackClear(this->memContext);
     memContextFree(this->memContext);
 
     FUNCTION_DEBUG_RESULT_VOID();

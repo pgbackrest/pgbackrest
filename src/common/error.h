@@ -150,6 +150,34 @@ Throw an error when a system call fails
 #define THROWP_SYS_ERROR_FMT(errorType, ...)                                                                                       \
     errorInternalThrowSysFmt(errno, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
+#define THROW_ON_SYS_ERROR(error, errorType, message)                                                                              \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        if (error)                                                                                                                 \
+            errorInternalThrowSys(errno, &errorType, __FILE__, __func__, __LINE__, message);                                       \
+    } while(0)
+
+#define THROW_ON_SYS_ERROR_FMT(error, errorType, ...)                                                                              \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        if (error)                                                                                                                 \
+            errorInternalThrowSysFmt(errno, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__);                                \
+    } while(0)
+
+#define THROWP_ON_SYS_ERROR(error, errorType, message)                                                                             \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        if (error)                                                                                                                 \
+            errorInternalThrowSys(errno, errorType, __FILE__, __func__, __LINE__, message);                                        \
+    } while(0)
+
+#define THROWP_ON_SYS_ERROR_FMT(error, errorType, ...)                                                                             \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        if (error)                                                                                                                 \
+            errorInternalThrowSysFmt(errno, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__);                                 \
+    } while(0)
+
 #define THROW_SYS_ERROR_CODE(errNo, errorType, message)                                                                            \
     errorInternalThrowSys(errNo, &errorType, __FILE__, __func__, __LINE__, message)
 #define THROW_SYS_ERROR_CODE_FMT(errNo, errorType, ...)                                                                            \

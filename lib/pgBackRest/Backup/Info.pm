@@ -163,7 +163,7 @@ sub new
                 confess &log(ERROR, "${strBackupClusterPath}/$strBackupInfoMissingMsg", ERROR_FILE_MISSING);
             }
         }
-        elsif ($iResult == ERROR_CIPHER && $strResultMessage =~ "^unable to flush")
+        elsif ($iResult == ERROR_CRYPTO && $strResultMessage =~ "^unable to flush")
         {
             confess &log(ERROR, "unable to parse '$strBackupInfoFile'\nHINT: Is or was the repo encrypted?", $iResult);
         }

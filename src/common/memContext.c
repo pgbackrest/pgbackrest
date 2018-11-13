@@ -266,6 +266,32 @@ memContextCallback(MemContext *this, void (*callbackFunction)(void *), void *cal
 }
 
 /***********************************************************************************************************************************
+Clear the mem context callback.  This is usually done in the object free method after resources have been freed but before
+memContextFree() is called.  The goal is to prevent the object free method from being called more than once.
+***********************************************************************************************************************************/
+void
+memContextCallbackClear(MemContext *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    // Error if context is not active or freeing
+    ASSERT(this->state == memContextStateActive || this->state == memContextStateFreeing);
+
+    // Top context cannot have a callback
+    ASSERT(this != memContextTop());
+
+    // Clear callback function and argument
+    this->callbackFunction = NULL;
+    this->callbackArgument = NULL;
+
+    FUNCTION_TEST_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
 Allocate memory in the memory context and optionally zero it.
 ***********************************************************************************************************************************/
 static void *

@@ -47,7 +47,7 @@ testRun(void)
     Storage *storageTest = storageDriverPosixInterface(
         storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
     Storage *storageTmp = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew("/tmp"), 0, 0, true, NULL));
+        storageDriverPosixNew(strNew("/tmp"), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
     ioBufferSizeSet(2);
 
     // Directory and file that cannot be accessed to test permissions errors
@@ -136,7 +136,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(storageExistsNP(storageTest, strNew("missing")), false, "file does not exist");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, strNew("missing"), .timeout = .1), false, "file does not exist");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, strNew("missing"), .timeout = 100), false, "file does not exist");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
@@ -161,7 +161,7 @@ testRun(void)
 
             HARNESS_FORK_PARENT()
             {
-                TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 1), true, "file exists after wait");
+                TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 1000), true, "file exists after wait");
             }
         }
         HARNESS_FORK_END();

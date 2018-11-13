@@ -72,27 +72,27 @@ helpRenderText(const String *text, size_t indent, bool indentFirst, size_t lengt
 /***********************************************************************************************************************************
 Helper function for helpRender() to output values as strings
 ***********************************************************************************************************************************/
-static String *
+static const String *
 helpRenderValue(const Variant *value)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(VARIANT, value);
     FUNCTION_DEBUG_END();
 
-    String *result = NULL;
+    const String *result = NULL;
 
     if (value != NULL)
     {
         if (varType(value) == varTypeBool)
         {
             if (varBool(value))
-                result = strNew("y");
+                result = Y_STR;
             else
-                result = strNew("n");
+                result = N_STR;
         }
         else if (varType(value) == varTypeKeyValue)
         {
-            result = strNew("");
+            String *resultTemp = strNew("");
 
             const KeyValue *optionKv = varKv(value);
             const VariantList *keyList = kvKeyList(optionKv);
@@ -100,32 +100,36 @@ helpRenderValue(const Variant *value)
             for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
             {
                 if (keyIdx != 0)
-                    strCat(result, ", ");
+                    strCat(resultTemp, ", ");
 
                 strCatFmt(
-                    result, "%s=%s", strPtr(varStr(varLstGet(keyList, keyIdx))),
+                    resultTemp, "%s=%s", strPtr(varStr(varLstGet(keyList, keyIdx))),
                     strPtr(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
             }
+
+            result = resultTemp;
         }
         else if (varType(value) == varTypeVariantList)
         {
-            result = strNew("");
+            String *resultTemp = strNew("");
 
             const VariantList *list = varVarLst(value);
 
             for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
             {
                 if (listIdx != 0)
-                    strCat(result, ", ");
+                    strCat(resultTemp, ", ");
 
-                strCatFmt(result, "%s", strPtr(varStr(varLstGet(list, listIdx))));
+                strCatFmt(resultTemp, "%s", strPtr(varStr(varLstGet(list, listIdx))));
             }
+
+            result = resultTemp;
         }
         else
             result = varStrForce(value);
     }
 
-    FUNCTION_DEBUG_RESULT(STRING, result);
+    FUNCTION_DEBUG_RESULT(CONST_STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -260,8 +264,8 @@ helpRender(void)
                             strlen(cfgDefOptionHelpSummary(commandDefId, optionDefId)) - 1));
 
                         // Ouput current and default values if they exist
-                        String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
-                        String *value = NULL;
+                        const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
+                        const String *value = NULL;
 
                         if (cfgOptionSource(optionId) != cfgSourceDefault)
                             value = helpRenderValue(cfgOption(optionId));
@@ -330,8 +334,8 @@ helpRender(void)
                     strPtr(helpRenderText(strNew(cfgDefOptionHelpDescription(commandDefId, optionDefId)), 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
-                String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
-                String *value = NULL;
+                const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
+                const String *value = NULL;
 
                 if (cfgOptionSource(optionId) != cfgSourceDefault)
                     value = helpRenderValue(cfgOption(optionId));

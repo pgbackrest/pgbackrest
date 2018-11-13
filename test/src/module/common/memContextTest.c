@@ -232,6 +232,10 @@ testRun(void)
             memContextCallback(memContext, (MemContextCallback)testFree, memContext),
             AssertError, "callback is already set for context 'test-callback'");
 
+        // Clear and reset it
+        memContextCallbackClear(memContext);
+        memContextCallback(memContext, (MemContextCallback)testFree, memContext);
+
         memContextFree(memContext);
         TEST_RESULT_PTR(memContextCallbackArgument, memContext, "callback argument is context");
     }

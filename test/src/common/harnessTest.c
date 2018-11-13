@@ -4,6 +4,7 @@ C Test Harness
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "common/harnessDebug.h"
 #include "common/harnessTest.h"
@@ -21,6 +22,8 @@ static TestData testList[TEST_LIST_SIZE];
 static int testRun = 0;
 static int testTotal = 0;
 static bool testFirst = true;
+
+static uint64_t timeMSecBegin;
 
 static const char *testExeData = NULL;
 static const char *testPathData = NULL;
@@ -107,6 +110,31 @@ testExpectPathSet(const char *testExpectPath)
 }
 
 /***********************************************************************************************************************************
+Get the time in milliseconds
+***********************************************************************************************************************************/
+uint64_t
+testTimeMSec(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    struct timeval currentTime;
+    gettimeofday(&currentTime, NULL);
+
+    FUNCTION_HARNESS_RESULT(UINT64, ((uint64_t)currentTime.tv_sec * 1000) + (uint64_t)currentTime.tv_usec / 1000);
+}
+
+/***********************************************************************************************************************************
+Get time at beginning of current run
+***********************************************************************************************************************************/
+uint64_t
+testTimeMSecBegin(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    FUNCTION_HARNESS_RESULT(UINT64, timeMSecBegin);
+}
+
+/***********************************************************************************************************************************
 testAdd - add a new test
 ***********************************************************************************************************************************/
 void
@@ -173,6 +201,8 @@ testBegin(const char *name)
 
         printf("run %03d - %s\n", testRun, name);
         fflush(stdout);
+
+        timeMSecBegin = testTimeMSec();
 
 #ifndef NO_LOG
         // Initialize logging

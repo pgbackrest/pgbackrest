@@ -25,6 +25,30 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("regExpPrefix()"))
+    {
+        TEST_RESULT_PTR(regExpPrefix(NULL), NULL, "null expression has no prefix");
+        TEST_RESULT_PTR(regExpPrefix(strNew("")), NULL, "empty expression has no prefix");
+        TEST_RESULT_PTR(regExpPrefix(strNew("ABC")), NULL, "expression without begin anchor has no prefix");
+        TEST_RESULT_PTR(regExpPrefix(strNew("^.")), NULL, "expression with no regular character has no prefix");
+
+        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC^"))), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC$"))), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC*"))), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC+"))), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC-"))), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC?"))), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC("))), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC["))), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC{"))), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC "))), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC|"))), "ABC", "prefix stops at special character");
+        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABC\\"))), "ABC", "prefix stops at special character");
+
+        TEST_RESULT_STR(strPtr(regExpPrefix(strNew("^ABCDEF"))), "ABCDEF", "prefix is entire expression");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("regExpMatchOne()"))
     {
         TEST_ERROR(regExpMatchOne(strNew("[[["), strNew("")), FormatError, "Unmatched [ or [^");

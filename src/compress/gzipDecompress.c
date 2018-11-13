@@ -15,6 +15,7 @@ Gzip Decompress
 Filter type constant
 ***********************************************************************************************************************************/
 #define GZIP_DECOMPRESS_FILTER_TYPE                                 "gzipDecompress"
+    STRING_STATIC(GZIP_DECOMPRESS_FILTER_TYPE_STR,                  GZIP_DECOMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
@@ -57,7 +58,7 @@ gzipDecompressNew(bool raw)
 
         // Create filter interface
         this->filter = ioFilterNewP(
-            strNew(GZIP_DECOMPRESS_FILTER_TYPE), this, .done = (IoFilterInterfaceDone)gzipDecompressDone,
+            GZIP_DECOMPRESS_FILTER_TYPE_STR, this, .done = (IoFilterInterfaceDone)gzipDecompressDone,
             .inOut = (IoFilterInterfaceProcessInOut)gzipDecompressProcess,
             .inputSame = (IoFilterInterfaceInputSame)gzipDecompressInputSame);
     }
@@ -159,7 +160,7 @@ gzipDecompressToLog(const GzipDecompress *this)
 {
     return strNewFmt(
         "{inputSame: %s, done: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
-        this->stream != NULL ? this->stream->avail_in : 0);
+        this->stream->avail_in);
 }
 
 /***********************************************************************************************************************************
@@ -174,12 +175,9 @@ gzipDecompressFree(GzipDecompress *this)
 
     if (this != NULL)
     {
-        if (this->stream != NULL)
-        {
-            inflateEnd(this->stream);
-            this->stream = NULL;
-        }
+        inflateEnd(this->stream);
 
+        memContextCallbackClear(this->memContext);
         memContextFree(this->memContext);
     }
 

@@ -33,7 +33,7 @@ sub cipherPassGen
         );
 
     # Create and base64 encode the key
-    my $strCipherPass = encodeToStr(ENCODE_TYPE_BASE64, randomBytes($iKeySizeInBytes));
+    my $strCipherPass = encodeToStr(ENCODE_TYPE_BASE64, cryptoRandomBytes($iKeySizeInBytes));
 
     # Return from function and log return values if any
     return logDebugReturn

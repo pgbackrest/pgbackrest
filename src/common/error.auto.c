@@ -76,11 +76,12 @@ ERROR_DEFINE( 91, GroupMissingError, RuntimeError);
 ERROR_DEFINE( 92, PathExistsError, RuntimeError);
 ERROR_DEFINE( 93, FileExistsError, RuntimeError);
 ERROR_DEFINE( 94, MemoryError, RuntimeError);
-ERROR_DEFINE( 95, CipherError, RuntimeError);
+ERROR_DEFINE( 95, CryptoError, RuntimeError);
 ERROR_DEFINE( 96, ParamInvalidError, RuntimeError);
 ERROR_DEFINE( 97, PathCloseError, RuntimeError);
 ERROR_DEFINE( 98, FileInfoError, RuntimeError);
 ERROR_DEFINE( 99, JsonFormatError, RuntimeError);
+ERROR_DEFINE(100, KernelError, RuntimeError);
 ERROR_DEFINE(122, RuntimeError, RuntimeError);
 ERROR_DEFINE(123, InvalidError, RuntimeError);
 ERROR_DEFINE(124, UnhandledError, RuntimeError);
@@ -160,11 +161,12 @@ static const ErrorType *errorTypeList[] =
     &PathExistsError,
     &FileExistsError,
     &MemoryError,
-    &CipherError,
+    &CryptoError,
     &ParamInvalidError,
     &PathCloseError,
     &FileInfoError,
     &JsonFormatError,
+    &KernelError,
     &RuntimeError,
     &InvalidError,
     &UnhandledError,

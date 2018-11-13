@@ -49,6 +49,7 @@ use pgBackRestBuild::Error::Data;
 use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::CodeCountTest;
 use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::CoverageTest;
 use pgBackRestTest::Common::CiTest;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -662,6 +663,11 @@ eval
 
             # Remove old coverage dirs -- do it this way so the dirs stay open in finder/explorer, etc.
             executeTest("rm -rf ${strBackRestBase}/test/coverage/c/* ${strBackRestBase}/test/coverage/perl/*");
+
+            # Overwrite the C coverage report so it will load but not show old coverage
+            $oStorageTest->pathCreate("${strBackRestBase}/test/coverage", {strMode => '0770', bIgnoreExists => true});
+            $oStorageBackRest->put(
+                "${strBackRestBase}/test/coverage/c-coverage.html", "<center>[ Generating New Report ]</center>");
 
             # Copy C code for coverage tests
             if (vmCoverageC($strVm) && !$bDryRun)
@@ -1462,6 +1468,10 @@ eval
                             }
                         }
                     }
+
+                $oStorageBackRest->remove("${strBackRestBase}/test/.vagrant/code/all.lcov", {bIgnoreMissing => true});
+                coverageGenerate(
+                    $oStorageBackRest, "${strBackRestBase}/test/.vagrant/code", "${strBackRestBase}/test/coverage/c-coverage.html");
                 }
                 else
                 {

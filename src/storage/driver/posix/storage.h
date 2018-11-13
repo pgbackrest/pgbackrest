@@ -22,6 +22,7 @@ typedef struct StorageDriverPosix StorageDriverPosix;
 Driver type constant
 ***********************************************************************************************************************************/
 #define STORAGE_DRIVER_POSIX_TYPE                                   "posix"
+    STRING_DECLARE(STORAGE_DRIVER_POSIX_TYPE_STR)
 
 /***********************************************************************************************************************************
 Constructor
@@ -32,21 +33,19 @@ StorageDriverPosix *storageDriverPosixNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-bool storageDriverPosixExists(const StorageDriverPosix *this, const String *path);
-StorageInfo storageDriverPosixInfo(const StorageDriverPosix *this, const String *file, bool ignoreMissing);
-StringList *storageDriverPosixList(
-    const StorageDriverPosix *this, const String *path, bool errorOnMissing, const String *expression);
-bool storageDriverPosixMove(
-    const StorageDriverPosix *this, StorageDriverPosixFileRead *source, StorageDriverPosixFileWrite *destination);
-StorageFileRead *storageDriverPosixNewRead(const StorageDriverPosix *this, const String *file, bool ignoreMissing);
+bool storageDriverPosixExists(StorageDriverPosix *this, const String *path);
+StorageInfo storageDriverPosixInfo(StorageDriverPosix *this, const String *file, bool ignoreMissing);
+StringList *storageDriverPosixList(StorageDriverPosix *this, const String *path, bool errorOnMissing, const String *expression);
+bool storageDriverPosixMove(StorageDriverPosix *this, StorageDriverPosixFileRead *source, StorageDriverPosixFileWrite *destination);
+StorageFileRead *storageDriverPosixNewRead(StorageDriverPosix *this, const String *file, bool ignoreMissing);
 StorageFileWrite *storageDriverPosixNewWrite(
-    const StorageDriverPosix *this, const String *file, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile,
-    bool syncPath, bool atomic);
+    StorageDriverPosix *this, const String *file, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool syncPath,
+    bool atomic);
 void storageDriverPosixPathCreate(
-    const StorageDriverPosix *this, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
-void storageDriverPosixPathRemove(const StorageDriverPosix *this, const String *path, bool errorOnMissing, bool recurse);
-void storageDriverPosixPathSync(const StorageDriverPosix *this, const String *path, bool ignoreMissing);
-void storageDriverPosixRemove(const StorageDriverPosix *this, const String *file, bool errorOnMissing);
+    StorageDriverPosix *this, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
+void storageDriverPosixPathRemove(StorageDriverPosix *this, const String *path, bool errorOnMissing, bool recurse);
+void storageDriverPosixPathSync(StorageDriverPosix *this, const String *path, bool ignoreMissing);
+void storageDriverPosixRemove(StorageDriverPosix *this, const String *file, bool errorOnMissing);
 
 /***********************************************************************************************************************************
 Getters

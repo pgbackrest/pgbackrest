@@ -20,19 +20,18 @@ typedef String *(*StoragePathExpressionCallback)(const String *expression, const
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-typedef bool (*StorageInterfaceExists)(const void *driver, const String *path);
-typedef StorageInfo (*StorageInterfaceInfo)(const void *driver, const String *file, bool ignoreMissing);
-typedef StringList *(*StorageInterfaceList)(const void *driver, const String *path, bool errorOnMissing, const String *expression);
-typedef bool (*StorageInterfaceMove)(const void *driver, void *source, void *destination);
-typedef StorageFileRead *(*StorageInterfaceNewRead)(const void *driver, const String *file, bool ignoreMissing);
+typedef bool (*StorageInterfaceExists)(void *driver, const String *path);
+typedef StorageInfo (*StorageInterfaceInfo)(void *driver, const String *file, bool ignoreMissing);
+typedef StringList *(*StorageInterfaceList)(void *driver, const String *path, bool errorOnMissing, const String *expression);
+typedef bool (*StorageInterfaceMove)(void *driver, void *source, void *destination);
+typedef StorageFileRead *(*StorageInterfaceNewRead)(void *driver, const String *file, bool ignoreMissing);
 typedef StorageFileWrite *(*StorageInterfaceNewWrite)(
-    const void *driver, const String *file, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool syncPath,
-    bool atomic);
+    void *driver, const String *file, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool syncPath, bool atomic);
 typedef void (*StorageInterfacePathCreate)(
-    const void *driver, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
-typedef void (*StorageInterfacePathRemove)(const void *driver, const String *path, bool errorOnMissing, bool recurse);
-typedef void (*StorageInterfacePathSync)(const void *driver, const String *path, bool ignoreMissing);
-typedef void (*StorageInterfaceRemove)(const void *driver, const String *file, bool errorOnMissing);
+    void *driver, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
+typedef void (*StorageInterfacePathRemove)(void *driver, const String *path, bool errorOnMissing, bool recurse);
+typedef void (*StorageInterfacePathSync)(void *driver, const String *path, bool ignoreMissing);
+typedef void (*StorageInterfaceRemove)(void *driver, const String *file, bool errorOnMissing);
 
 typedef struct StorageInterface
 {
@@ -48,12 +47,12 @@ typedef struct StorageInterface
     StorageInterfaceRemove remove;
 } StorageInterface;
 
-#define storageNewP(type, path, modeFile, modePath, write, pathExpressionFunction, driver, ...)                                                                                                   \
+#define storageNewP(type, path, modeFile, modePath, write, pathExpressionFunction, driver, ...)                                    \
     storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
 
 Storage *storageNew(
     const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
-    StoragePathExpressionCallback pathExpressionFunction, const void *driver, StorageInterface interface);
+    StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface);
 
 /***********************************************************************************************************************************
 Macros for function logging

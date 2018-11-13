@@ -19,6 +19,14 @@ Cryptographic Hash
 Filter type constant
 ***********************************************************************************************************************************/
 #define CRYPTO_HASH_FILTER_TYPE                                     "hash"
+    STRING_STATIC(CRYPTO_HASH_FILTER_TYPE_STR,                      CRYPTO_HASH_FILTER_TYPE);
+
+/***********************************************************************************************************************************
+Hash types
+***********************************************************************************************************************************/
+STRING_EXTERN(HASH_TYPE_MD5_STR,                                    HASH_TYPE_MD5)
+STRING_EXTERN(HASH_TYPE_SHA1_STR,                                   HASH_TYPE_SHA1)
+STRING_EXTERN(HASH_TYPE_SHA256_STR,                                 HASH_TYPE_SHA256)
 
 /***********************************************************************************************************************************
 Object type
@@ -61,19 +69,18 @@ cryptoHashNew(const String *type)
         if ((this->hashType = EVP_get_digestbyname(strPtr(type))) == NULL)
             THROW_FMT(AssertError, "unable to load hash '%s'", strPtr(type));
 
-        // Create and initialize the context
-        if ((this->hashContext = EVP_MD_CTX_create()) == NULL)                      // {uncoverable - no failure condition known}
-            THROW(MemoryError, "unable to create hash context");                    // {+uncoverable}
-
-        if (EVP_DigestInit_ex(this->hashContext, this->hashType, NULL) != 1)        // {uncoverable - no failure condition known}
-            THROW(MemoryError, "unable to initialize hash context");                // {+uncoverable}
+        // Create context
+        cryptoError((this->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
 
         // Set free callback to ensure hash context is freed
         memContextCallback(this->memContext, (MemContextCallback)cryptoHashFree, this);
 
+        // Initialize context
+        cryptoError(!EVP_DigestInit_ex(this->hashContext, this->hashType, NULL), "unable to initialize hash context");
+
         // Create filter interface
         this->filter = ioFilterNewP(
-            strNew(CRYPTO_HASH_FILTER_TYPE), this, .in = (IoFilterInterfaceProcessIn)cryptoHashProcess,
+            CRYPTO_HASH_FILTER_TYPE_STR, this, .in = (IoFilterInterfaceProcessIn)cryptoHashProcess,
             .result = (IoFilterInterfaceResult)cryptoHashResult);
     }
     MEM_CONTEXT_NEW_END();
@@ -97,11 +104,7 @@ cryptoHashProcessC(CryptoHash *this, const unsigned char *message, size_t messag
         FUNCTION_DEBUG_ASSERT(message != NULL);
     FUNCTION_DEBUG_END();
 
-    if (EVP_DigestUpdate(                                                           // {uncoverable - no failure condition known}
-            this->hashContext, message, messageSize) != 1)
-    {
-        THROW(MemoryError, "unable to process message hash");                       // {+uncoverable}
-    }
+    cryptoError(!EVP_DigestUpdate(this->hashContext, message, messageSize), "unable to process message hash");
 
     FUNCTION_DEBUG_RESULT_VOID();
 }
@@ -161,13 +164,8 @@ cryptoHash(CryptoHash *this)
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             this->hash = bufNew((size_t)EVP_MD_size(this->hashType));
-            unsigned int hashSize;
 
-            if (EVP_DigestFinal_ex(                                                 // {uncoverable - no failure condition known}
-                this->hashContext, bufPtr(this->hash), &hashSize) != 1)
-            {
-                THROW(MemoryError, "unable to finalize message hash");              // {+uncoverable}
-            }
+            cryptoError(!EVP_DigestFinal_ex(this->hashContext, bufPtr(this->hash), NULL), "unable to finalize message hash");
 
             // Free the context
             EVP_MD_CTX_destroy(this->hashContext);
@@ -229,12 +227,9 @@ cryptoHashFree(CryptoHash *this)
 
     if (this != NULL)
     {
-        if (this->hashContext != NULL)
-        {
-            EVP_MD_CTX_destroy(this->hashContext);
-            this->hashContext = NULL;
-        }
+        EVP_MD_CTX_destroy(this->hashContext);
 
+        memContextCallbackClear(this->memContext);
         memContextFree(this->memContext);
     }
 
@@ -304,7 +299,6 @@ cryptoHashOneStr(const String *type, String *message)
 
     FUNCTION_TEST_RESULT(BUFFER, cryptoHashOneC(type, (const unsigned char *)strPtr(message), strSize(message)));
 }
-
 
 /***********************************************************************************************************************************
 Get hmac for one message/key

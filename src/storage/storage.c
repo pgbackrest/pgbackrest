@@ -18,7 +18,7 @@ Object type
 struct Storage
 {
     MemContext *memContext;
-    const void *driver;
+    void *driver;
     StorageInterface interface;
     const String *type;
 
@@ -35,7 +35,7 @@ New storage object
 Storage *
 storageNew(
     const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
-    StoragePathExpressionCallback pathExpressionFunction, const void *driver, StorageInterface interface)
+    StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(STRING, type);
@@ -70,8 +70,8 @@ storageNew(
     this->type = type;
 
     this->path = strDup(path);
-    this->modeFile = modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : modeFile;
-    this->modePath = modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : modePath;
+    this->modeFile = modeFile;
+    this->modePath = modePath;
     this->write = write;
     this->pathExpressionFunction = pathExpressionFunction;
 
@@ -135,10 +135,9 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STORAGE, this);
         FUNCTION_DEBUG_PARAM(STRING, pathExp);
-        FUNCTION_DEBUG_PARAM(DOUBLE, param.timeout);
+        FUNCTION_DEBUG_PARAM(TIMEMSEC, param.timeout);
 
         FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(param.timeout >= 0);
     FUNCTION_DEBUG_END();
 
     bool result = false;
