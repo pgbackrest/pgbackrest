@@ -70,8 +70,8 @@ storageNew(
     this->type = type;
 
     this->path = strDup(path);
-    this->modeFile = modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : modeFile;
-    this->modePath = modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : modePath;
+    this->modeFile = modeFile;
+    this->modePath = modePath;
     this->write = write;
     this->pathExpressionFunction = pathExpressionFunction;
 

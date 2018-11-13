@@ -99,6 +99,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow storage path and file mode to be 0.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Limit usable <code>Buffer</code> size without changing allocated size.</p>
                     </release-item>
 

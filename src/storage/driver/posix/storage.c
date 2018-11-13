@@ -49,6 +49,8 @@ storageDriverPosixNew(
         FUNCTION_DEBUG_PARAM(FUNCTIONP, pathExpressionFunction);
 
         FUNCTION_TEST_ASSERT(path != NULL);
+        FUNCTION_TEST_ASSERT(modeFile != 0);
+        FUNCTION_TEST_ASSERT(modePath != 0);
     FUNCTION_DEBUG_END();
 
     // Create the object

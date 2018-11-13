@@ -47,7 +47,7 @@ testRun(void)
     Storage *storageTest = storageDriverPosixInterface(
         storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
     Storage *storageTmp = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew("/tmp"), 0, 0, true, NULL));
+        storageDriverPosixNew(strNew("/tmp"), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
     ioBufferSizeSet(2);
 
     // Directory and file that cannot be accessed to test permissions errors
