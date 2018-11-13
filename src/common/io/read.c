@@ -109,11 +109,12 @@ ioReadEofDriver(const IoRead *this)
 Read data from IO and process filters
 ***********************************************************************************************************************************/
 static void
-ioReadInternal(IoRead *this, Buffer *buffer)
+ioReadInternal(IoRead *this, Buffer *buffer, bool relaxed)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(IO_READ, this);
         FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+        FUNCTION_DEBUG_PARAM(BOOL, relaxed);
 
         FUNCTION_TEST_ASSERT(this != NULL);
         FUNCTION_TEST_ASSERT(buffer != NULL);
@@ -121,6 +122,8 @@ ioReadInternal(IoRead *this, Buffer *buffer)
     FUNCTION_DEBUG_END();
 
     // Loop until EOF or the output buffer is full
+    size_t bufferUsedBegin = bufUsed(buffer);
+
     while (!this->eofAll && bufRemains(buffer) > 0)
     {
         // Process input buffer again to get more output
@@ -143,6 +146,10 @@ ioReadInternal(IoRead *this, Buffer *buffer)
 
             // Process the input buffer (or flush if NULL)
             ioFilterGroupProcess(this->filterGroup, this->input, buffer);
+
+            // Stop if relaxed read -- we don't need to fill the buffer as long as we got some data
+            if (relaxed && bufUsed(buffer) > bufferUsedBegin)
+                break;
         }
 
         // Eof when no more input and the filter group is done
@@ -186,13 +193,15 @@ ioRead(IoRead *this, Buffer *buffer)
     }
 
     // Read data
-    ioReadInternal(this, buffer);
+    ioReadInternal(this, buffer, false);
 
     FUNCTION_DEBUG_RESULT(SIZE, outputRemains - bufRemains(buffer));
 }
 
 /***********************************************************************************************************************************
 Read linefeed-terminated string
+
+The entire string to search for must fit within a single buffer.
 ***********************************************************************************************************************************/
 String *
 ioReadLine(IoRead *this)
@@ -216,32 +225,44 @@ ioReadLine(IoRead *this)
         MEM_CONTEXT_END();
     }
 
-    // Read more data if there is any.  The entire string we are searching for must fit within the buffer so we'll make sure that
-    // the buffer is full
-    ioReadInternal(this, this->output);
-
-    // If some data was read search for a linefeed
+    // Search for a linefeed
     String *result = NULL;
 
-    if (bufUsed(this->output) > 0)
+    do
     {
-        // Search for a linefeed in the buffer
-        char *linefeed = memchr(bufPtr(this->output), '\n', bufUsed(this->output));
-
-        // A linefeed was found so get the string
-        if (linefeed != NULL)
+        if (bufUsed(this->output) > 0)
         {
-            // Get the string size
-            size_t size = (size_t)(linefeed - (char *)bufPtr(this->output) + 1);
+            // Search for a linefeed in the buffer
+            char *linefeed = memchr(bufPtr(this->output), '\n', bufUsed(this->output));
 
-            // Create the string
-            result = strNewN((char *)bufPtr(this->output), size - 1);
+            // A linefeed was found so get the string
+            if (linefeed != NULL)
+            {
+                // Get the string size
+                size_t size = (size_t)(linefeed - (char *)bufPtr(this->output) + 1);
 
-            // Remove string from the output buffer
-            memmove(bufPtr(this->output), bufPtr(this->output) + size, bufUsed(this->output) - size);
-            bufUsedSet(this->output, bufUsed(this->output) - size);
+                // Create the string
+                result = strNewN((char *)bufPtr(this->output), size - 1);
+
+                // Remove string from the output buffer
+                memmove(bufPtr(this->output), bufPtr(this->output) + size, bufUsed(this->output) - size);
+                bufUsedSet(this->output, bufUsed(this->output) - size);
+            }
+        }
+
+        // Read data if no linefeed was found in the existing buffer
+        if (result == NULL)
+        {
+            if (bufFull(this->output))
+                THROW_FMT(FileReadError, "unable to find line in %zu byte buffer", bufSize(this->output));
+
+            if (ioReadEof(this))
+                THROW(FileReadError, "unexpected eof while reading line");
+
+            ioReadInternal(this, this->output, 1);
         }
     }
+    while (result == NULL);
 
     FUNCTION_DEBUG_RESULT(STRING, result);
 }

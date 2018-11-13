@@ -345,16 +345,26 @@ testRun(void)
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "DDD", "    check buffer");
 
         // Read line doesn't work without a linefeed
-        TEST_RESULT_STR(strPtr(ioReadLine(read)), NULL, "read line");
+        TEST_ERROR(ioReadLine(read), FileReadError, "unexpected eof while reading line");
 
         // But those bytes can be picked up by a buffer read
-        bufUsedSet(buffer, 0);
-        TEST_RESULT_INT(ioRead(read, buffer), 3, "read buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "EFF", "    check buffer");
+        buffer = bufNew(2);
+        TEST_RESULT_INT(ioRead(read, buffer), 2, "read buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "EF", "    check buffer");
+
+        buffer = bufNew(1);
+        TEST_RESULT_INT(ioRead(read, buffer), 1, "read buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "F", "    check buffer");
 
         // Nothing left to read
-        TEST_RESULT_STR(strPtr(ioReadLine(read)), NULL, "read line");
+        TEST_ERROR(ioReadLine(read), FileReadError, "unexpected eof while reading line");
         TEST_RESULT_INT(ioRead(read, buffer), 0, "read buffer");
+
+        // Error if buffer is full and there is no linefeed
+        ioBufferSizeSet(10);
+        read = ioBufferReadIo(ioBufferReadNew(bufNewZ("0123456789")));
+        ioReadOpen(read);
+        TEST_ERROR(ioReadLine(read), FileReadError, "unable to find line in 10 byte buffer");
     }
 
     // *****************************************************************************************************************************
