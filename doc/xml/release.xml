@@ -149,6 +149,10 @@
                     <release-item>
                         <p>Add new HTML tags and <code>strExtra</code> to <code>DocHtmlElement</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Remove error suppression for <backrest/> <file>make</file>.</p>
+                    </release-item>
                 </release-development-list>
             </release-doc-list>
 

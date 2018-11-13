@@ -549,8 +549,8 @@
         <execute-list host="{[host-build]}">
             <title>Build <backrest/> executable</title>
 
-            <execute user="root" err-suppress="y">
-                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/src</exe-cmd>
+            <execute user="root">
+                <exe-cmd>make -s -C /root/pgbackrest-release-{[version]}/src</exe-cmd>
             </execute>
         </execute-list>
     </section>
