@@ -23,6 +23,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("infoRender()"))
     {
+        // json output
+        //--------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s", strPtr(repoPath)));
@@ -31,20 +33,25 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // No stanzas have been created
-        TEST_RESULT_STR(strPtr(infoRender()), "[]\n", "empty json");
+        TEST_RESULT_STR(strPtr(infoRender()), "[]\n", "json - no stanzas");
 
         TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), strCat(backupPath, "/stanza1")), "create stanza1 directory");
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
             "    {\n"
+            "        \"archive\" : [],\n"
             "        \"backup\" : [],\n"
             "        \"cipher\" : \"none\",\n"
             "        \"db\" : [],\n"
-            "        \"name\" : \"stanza1\"\n"
+            "        \"name\" : \"stanza1\",\n"
+            "        \"status\" : {\n"
+            "            \"code\" : 3,\n"
+            "            \"message\" : \"missing stanza data\"\n"
+            "        }\n"
             "    }\n"
             "]\n", "single empty stanza");  // CSHANG Flesh this test out for stanza without backup or archive info
 
-        // File exists, ignoreMissing=false, no backup:current section
+        // backup.info file exists, ignoreMissing=false, no backup:current section so no valid backups
         //--------------------------------------------------------------------------------------------------------------------------
         String *content = strNew
         (
@@ -74,6 +81,7 @@ testRun(void)
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
             "    {\n"
+            "        \"archive\" : [],\n"
             "        \"backup\" : [],\n"
             "        \"cipher\" : \"none\",\n"
             "        \"db\" : [\n"
@@ -88,9 +96,13 @@ testRun(void)
             "                \"version\" : \"9.3\"\n"
             "            }\n"
             "        ],\n"
-            "        \"name\" : \"stanza1\"\n"
+            "        \"name\" : \"stanza1\",\n"
+            "        \"status\" : {\n"
+            "            \"code\" : 2,\n"
+            "            \"message\" : \"no valid backups\"\n"
+            "        }\n"
             "    }\n"
-            "]\n", "single stanza");  // CSHANG Flesh this test out for stanza for backup, archive info, etc
+            "]\n", "single stanza, no valid backups");  // CSHANG Flesh this test out for stanza for backup, archive info, etc
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

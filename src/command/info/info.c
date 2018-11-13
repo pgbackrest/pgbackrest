@@ -26,40 +26,33 @@ Define the console width - use a fixed with of 80 since this should be safe on v
 ***********************************************************************************************************************************/
 #define CONSOLE_WIDTH                                               80  // MAYBE test ASSERT TO MAKE SURE DON't go over 80 chars? But wait if json string is not pretty print then can absolutely go over 80 characters
 
-#define INFO_SECTION_STANZA_NAME()                                                                                                 \
-    strNew("name")
-#define INFO_SECTION_STANZA_CIPHER()                                                                                               \
-    strNew("cipher")
-#define INFO_SECTION_DB()                                                                                                          \
-    strNew("db")
-#define INFO_SECTION_DB_ID()                                                                                                       \
-    strNew("id")
-#define INFO_SECTION_DB_SYSTEM_ID()                                                                                                \
-    strNew("system-id")
-#define INFO_SECTION_DB_VERSION()                                                                                                  \
-    strNew("version")
-#define INFO_SECTION_ARCHIVE()                                                                                                     \
-    strNew("archive")
-#define INFO_SECTION_BACKUP()                                                                                                      \
-    strNew("backup")
-#define INFO_SECTION_BACKUP_ARCHIVE()                                                                                              \
-    strNew("archive")
-#define INFO_SECTION_BACKUP_BACKREST()                                                                                             \
-    strNew("backrest")
-#define INFO_SECTION_BACKUP_DATABASE()                                                                                             \
-    strNew("database")
-#define INFO_SECTION_BACKUP_info()                                                                                                 \
-    strNew("info")
-#define INFO_SECTION_BACKUP_LABEL()                                                                                                \
-    strNew("label")
-#define INFO_SECTION_BACKUP_PRIOR()                                                                                                \
-    strNew("prior")
-#define INFO_SECTION_BACKUP_REFERENCE()                                                                                            \
-    strNew("reference")
-#define INFO_SECTION_BACKUP_TIMESTAMP()                                                                                            \
-    strNew("timestamp")
-#define INFO_SECTION_BACKUP_TYPE()                                                                                                 \
-    strNew("type")
+STRING_STATIC(INFO_SECTION_STANZA_NAME_STR,                         "name")
+STRING_STATIC(INFO_SECTION_STANZA_CIPHER_STR,                       "cipher")
+STRING_STATIC(INFO_SECTION_STANZA_STATUS_STR,                       "status")
+STRING_STATIC(INFO_SECTION_STANZA_STATUS_CODE_STR,                  "code")
+STRING_STATIC(INFO_SECTION_STANZA_STATUS_MESSAGE_STR,               "message")
+STRING_STATIC(INFO_SECTION_STANZA_DB_STR,                           "db")
+STRING_STATIC(INFO_SECTION_DB_ID_STR,                               "id")
+STRING_STATIC(INFO_SECTION_DB_SYSTEM_ID_STR,                        "system-id")
+STRING_STATIC(INFO_SECTION_DB_VERSION_STR,                          "version")
+STRING_STATIC(INFO_SECTION_ARCHIVE_STR,                             "archive")
+STRING_STATIC(INFO_SECTION_BACKUP_STR,                              "backup")
+// STRING_STATIC(INFO_SECTION_BACKUP_ARCHIVE_STR,                   "archive")
+// STRING_STATIC(INFO_SECTION_BACKUP_BACKREST_STR,                  "backrest")
+// STRING_STATIC(INFO_SECTION_BACKUP_DATABASE_STR,                  "database")
+// STRING_STATIC(INFO_SECTION_BACKUP_INFO_STR,                      "info")
+STRING_STATIC(INFO_SECTION_BACKUP_LABEL_STR,                        "label")
+STRING_STATIC(INFO_SECTION_BACKUP_PRIOR_STR,                        "prior")
+// STRING_STATIC(INFO_SECTION_BACKUP_REFERENCE_STR,                 "reference")
+// STRING_STATIC(INFO_SECTION_BACKUP_TIMESTAMP_STR,                 "timestamp")
+STRING_STATIC(INFO_SECTION_BACKUP_TYPE_STR,                         "type")
+
+#define INFO_STANZA_STATUS_CODE_OK                                  0
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_OK_STR,                    "ok")
+#define INFO_STANZA_STATUS_CODE_NO_BACKUP                           2
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR,             "no valid backups")
+#define INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA                 3
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing stanza data")
 
 // static void
 // buildKv(Variant *kv, const String *section, const String *key, const Variant *value)
@@ -76,6 +69,27 @@ Define the console width - use a fixed with of 80 since this should be safe on v
 //         //     sectionKv = kvPutKv(this->backupCurrent, sectionKey);
 //         //
 //         // kvAdd(sectionKv, varNewStr(key), value);
+static void
+stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, code);
+        FUNCTION_TEST_PARAM(STRING, message);
+        FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
+
+        FUNCTION_TEST_ASSERT(code >= 0 && code <= 3);
+        FUNCTION_TEST_ASSERT(message != NULL);
+        FUNCTION_TEST_ASSERT(stanzaInfo != NULL);
+    FUNCTION_TEST_END();
+
+    Variant *stanzaStatus = varNewStr(INFO_SECTION_STANZA_STATUS_STR);
+    KeyValue *statusKv = kvPutKv(varKv(stanzaInfo), stanzaStatus);
+
+    kvAdd(statusKv, varNewStr(INFO_SECTION_STANZA_STATUS_CODE_STR), varNewInt(code));
+    kvAdd(statusKv, varNewStr(INFO_SECTION_STANZA_STATUS_MESSAGE_STR), varNewStr(message));
+
+    FUNCTION_TEST_RESULT_VOID();
+}
 
 static Variant *
 backupList(const String *stanza, Variant *stanzaInfo)
@@ -98,12 +112,13 @@ backupList(const String *stanza, Variant *stanzaInfo)
     }
     CATCH(FileMissingError)
     {
-        // Do not error if the file is missing - the status message will indicate it in the resulting output
+        // If there is no backup.info then set the status
+        stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR, stanzaInfo);
     }
-    CATCH(CipherError)
+    CATCH(CryptoError)
     {
         THROW_FMT(
-            CipherError,
+            CryptoError,
             "%s\n"
             "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
             errorMessage());
@@ -120,9 +135,9 @@ backupList(const String *stanza, Variant *stanzaInfo)
         {
             InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);
             Variant *pgInfo = varNewKv();
-            kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_ID()), varNewUInt64((uint64_t)pgData.id));
-            kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_SYSTEM_ID()), varNewUInt64(pgData.systemId));
-            kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_VERSION()), varNewStr(pgVersionToStr(pgData.version)));
+            kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_ID_STR), varNewUInt64((uint64_t)pgData.id));
+            kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_SYSTEM_ID_STR), varNewUInt64(pgData.systemId));
+            kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_VERSION_STR), varNewStr(pgVersionToStr(pgData.version)));
 
             varLstAdd(dbSection, pgInfo);
         }
@@ -137,11 +152,11 @@ backupList(const String *stanza, Variant *stanzaInfo)
                 String *backupLabel = strLstGet(backupKey, keyIdx);
                 Variant *backupInfo = varNewKv();
 
-                kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_LABEL()), varNewStr(backupLabel));
-                kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_TYPE()),
-                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_TYPE()));
-                kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_PRIOR()),
-                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_PRIOR()));
+                kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_LABEL_STR), varNewStr(backupLabel));
+                kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_TYPE_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_TYPE_STR));
+                kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_PRIOR_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_PRIOR_STR));
 
 
                 // Variant *archiveInfo = varNewKv();
@@ -155,10 +170,10 @@ backupList(const String *stanza, Variant *stanzaInfo)
         }
     }
 
-    kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_DB()), varNewVarLst(dbSection));
-    kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_BACKUP()), varNewVarLst(backupSection));
+    kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_DB_STR), varNewVarLst(dbSection));
+    kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_BACKUP_STR), varNewVarLst(backupSection));
 
-    FUNCTION_TEST_RESULT(VARIANT, stanzaInfo);  // A.CSHANG Don't really need a return value - but is it good practice to have it? CHANGE TO VOID
+    FUNCTION_TEST_RESULT(VARIANT, stanzaInfo);
 }
 
 static VariantList *
@@ -182,10 +197,30 @@ stanzaList(const String *stanza)
             continue;
 
         Variant *stanzaInfo = varNewKv();
-        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_NAME()), varNewStr(stanzaListName));
-        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_CIPHER()), varNewStr(cfgOptionStr(cfgOptRepoCipherType)));
+        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_NAME_STR), varNewStr(stanzaListName));
+        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_CIPHER_STR), varNewStr(cfgOptionStr(cfgOptRepoCipherType)));
 
         varLstAdd(result, backupList(stanzaListName, stanzaInfo));
+
+        // If a status has not already been set and there are no backups then set status to no backup
+        if (kvGet(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_STATUS_STR)) == NULL &&
+            varLstSize(kvGetList(varKv(stanzaInfo), varNewStr(INFO_SECTION_BACKUP_STR))) == 0)
+        {
+            stanzaStatus(INFO_STANZA_STATUS_CODE_NO_BACKUP, INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR, stanzaInfo);
+        }
+
+        // If a status has still not been set then set it to OK
+        if (kvGet(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_STATUS_STR)) == NULL)
+            stanzaStatus(INFO_STANZA_STATUS_CODE_OK, INFO_STANZA_STATUS_MESSAGE_OK_STR, stanzaInfo);
+
+        VariantList *archiveSection = varLstNew();
+        // if varLstSize(kvGetList(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_DB_STR))) > 0)
+        // {
+        //     /* CSHANG need code for archives OR do this in the backupList?
+        //     */
+        // }
+
+        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_ARCHIVE_STR), varNewVarLst(archiveSection));
     }
 
     FUNCTION_TEST_RESULT(VARIANT_LIST, result);
@@ -207,7 +242,7 @@ infoRender(void)
 
     VariantList *stanzaInfoList = stanzaList(stanza);
 
-    // CSHANG I couldn't find the constants for the values - are there IDs or another way to confirm the option value? CREATE #DEFINES
+    // CSHANG Dave says to CREATE #DEFINES for the options, but where? Shouldn't this be in the config system?
     if (strEqZ(cfgOptionStr(cfgOptOutput), "text"))
     {
         // CSHANG call a formatText function and then if it returns NULL the following would be retunred?
@@ -216,11 +251,6 @@ infoRender(void)
     else if (strEqZ(cfgOptionStr(cfgOptOutput), "json"))
     {
         result = varToJson(varNewVarLst(stanzaInfoList), 4);
-    }
-    else
-    {
-// CSHANG This should never happen since it will be caught by the command parser so should we just remove? Or is there a way to have this entire ELSE only as test code -- REMOVE
-        THROW_FMT(AssertError, "invalid info output option '%s'", cfgCommandName(cfgOptOutput));
     }
 
     FUNCTION_DEBUG_RESULT(STRING, result);
@@ -593,7 +623,6 @@ Render info and output to stdout
 void
 cmdInfo(void)
 {
-// CSHANG How does this work - I assume I would use this?
     FUNCTION_DEBUG_VOID(logLevelDebug);
 
     MEM_CONTEXT_TEMP_BEGIN()
