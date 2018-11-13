@@ -178,7 +178,7 @@ sub coverageGenerate
             foreach my $iLine (sort(keys(%{$rhCoverage->{$strFile}{line}})))
             {
                 # Run back to the beginning of the function comment
-                for (my $iLineIdx = $iLine - 1; $iLineIdx >= 0; $iLineIdx--)
+                for (my $iLineIdx = $iLine; $iLineIdx >= 0; $iLineIdx--)
                 {
                     if (!defined($rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)}))
                     {
@@ -189,7 +189,7 @@ sub coverageGenerate
                 }
 
                 # Run forward to the end of the function
-                for (my $iLineIdx = $iLine + 1; $iLineIdx < @stryC; $iLineIdx++)
+                for (my $iLineIdx = $iLine; $iLineIdx < @stryC; $iLineIdx++)
                 {
                     if (!defined($rhCoverage->{$strFile}{line}{sprintf("%09d", $iLineIdx)}))
                     {
