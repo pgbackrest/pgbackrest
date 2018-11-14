@@ -145,6 +145,10 @@
                     <release-item>
                         <p>Rename <code>CipherError</code> to <code>CryptoError</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add logging macros for <code>TimeMSec</code> type.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
