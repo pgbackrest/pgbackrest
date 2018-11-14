@@ -71,6 +71,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>ioWriteFlush()</code> to flush pending output.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <id>base</id> variants to all integer to string conversion functions.</p>
                     </release-item>
 

@@ -146,6 +146,30 @@ ioWriteLine(IoWrite *this, const String *string)
 }
 
 /***********************************************************************************************************************************
+Flush any data in the output buffer
+
+This does not end writing and if there are filters that are not done it might not have the intended effect.
+***********************************************************************************************************************************/
+void
+ioWriteFlush(IoWrite *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(IO_WRITE, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
+    FUNCTION_DEBUG_END();
+
+    if (bufUsed(this->output) > 0)
+    {
+        this->interface.write(this->driver, this->output);
+        bufUsedZero(this->output);
+    }
+
+    FUNCTION_DEBUG_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
 Close the IO and write any additional data that has not been written yet
 ***********************************************************************************************************************************/
 void
