@@ -76,7 +76,7 @@ testRun(void)
         cfgOptionSet(cfgOptDbInclude, cfgSourceParam, varNewVarLst(varLstNewStrLst(includeList)));
 
         cfgOptionValidSet(cfgOptRecoveryOption, true);
-        // !!! WHY DO WE STILL NEED TO CREATE THE VAR KV EMPTY?
+
         Variant *recoveryVar = varNewKv();
         KeyValue *recoveryKv = varKv(recoveryVar);
         kvPut(recoveryKv, varNewStr(strNew("standby_mode")), varNewStr(strNew("on")));

@@ -69,7 +69,6 @@ testRun(void)
         strLstAddZ(list, "db2");
         cfgOptionSet(cfgOptDbInclude, cfgSourceParam, varNewVarLst(varLstNewStrLst(list)));
 
-        // !!! WHY DO WE STILL NEED TO CREATE THE VAR KV EMPTY?
         cfgOptionValidSet(cfgOptRecoveryOption, true);
         Variant *recoveryVar = varNewKv();
         KeyValue *recoveryKv = varKv(recoveryVar);
