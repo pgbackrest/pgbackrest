@@ -287,7 +287,7 @@ sub run
                     # Skip all files except .c files (including .auto.c)
                     next if $strFile !~ /(?<!\.auto)\.c$/;
 
-                    # !!! Skip main for now until it can be rewritten
+                    # ??? Skip main for now until the function can be renamed to allow unit testing
                     next if $strFile =~ /main\.c$/;
 
                     # Skip test.c -- it will be added manually at the end
