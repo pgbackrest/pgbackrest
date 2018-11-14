@@ -21,10 +21,8 @@ testRun(void)
     storagePathCreateNP(storageLocalWrite(), backupPath);
 
     // *****************************************************************************************************************************
-    if (testBegin("infoRender()"))
+    if (testBegin("infoRender() - json"))
     {
-        // json output
-        //--------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s", strPtr(repoPath)));
@@ -33,8 +31,11 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // No stanzas have been created
+        //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(strPtr(infoRender()), "[]\n", "json - no stanzas");
 
+        // Empty stanza
+        //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), strCat(backupPath, "/stanza1")), "create stanza1 directory");
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
@@ -103,6 +104,22 @@ testRun(void)
             "        }\n"
             "    }\n"
             "]\n", "single stanza, no valid backups");  // CSHANG Flesh this test out for stanza for backup, archive info, etc
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("infoRender() - text"))
+    {
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAdd(argList, strNewFmt("--repo-path=%s", strPtr(repoPath)));
+        strLstAddZ(argList, "--output=text");
+        strLstAddZ(argList, "info");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // No stanzas have been created
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_STR(strPtr(infoRender()),
+            strPtr(strNewFmt("No stanzas exist in %s\n", strPtr(storagePathNP(storageRepo(), NULL)))), "text - no stanzas");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

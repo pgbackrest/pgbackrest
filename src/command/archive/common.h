@@ -40,6 +40,10 @@ WAL segment constants
 // Defines the size of standard WAL segment name -- hopefully this won't change
 #define WAL_SEGMENT_NAME_SIZE                                       ((unsigned int)24)
 
+// WAL segment directory/file
+STRING_DECLARE(WAL_SEGMENT_DIR_REGEXP_STR);
+STRING_DECLARE(WAL_SEGMENT_FILE_REGEXP_STR);
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/

@@ -21,6 +21,8 @@ WAL segment constants
 ***********************************************************************************************************************************/
 STRING_EXTERN(WAL_SEGMENT_REGEXP_STR,                               WAL_SEGMENT_REGEXP);
 STRING_EXTERN(WAL_SEGMENT_PARTIAL_REGEXP_STR,                       WAL_SEGMENT_PARTIAL_REGEXP);
+STRING_EXTERN(WAL_SEGMENT_DIR_REGEXP_STR,                           "^[0-F]{16}$");  // CSHANG Ok here and is this right naming convention?
+STRING_EXTERN(WAL_SEGMENT_FILE_REGEXP_STR,                          "^[0-F]{24}-[0-f]{40}(\\.gz){0,1}$"); // CSHANG Ok here and is this right naming convention?
 
 /***********************************************************************************************************************************
 Check for ok/error status files in the spool in/out directory

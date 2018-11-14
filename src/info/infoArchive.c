@@ -133,6 +133,45 @@ infoArchiveId(const InfoArchive *this)
 }
 
 /***********************************************************************************************************************************
+Given a PG systemIf and version, return the archiveId of the newest PG history that matches.
+***********************************************************************************************************************************/
+const String *
+infoArchiveIdMatch(const InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_DEBUG_PARAM(UINT, pgVersion);
+        FUNCTION_DEBUG_PARAM(UINT64, pgSystemId);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
+    String *archiveId = NULL;
+    InfoPg *infoPg = infoArchivePg(this);
+
+    for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoPg); pgIdx++)
+    {
+        InfoPgData pgDataArchive = infoPgData(infoPg, pgIdx);
+        if (pgSystemId = pgDataArchive.systemId && pgVersion = pgDataArchive.version)
+        {
+            archiveId = infoPgArchiveId(infoPg, pgIdx);
+            break;
+        }
+    }
+
+    // If the archive id has not been found, then error
+    if (archiveId == NULL)
+    {
+        THROW_FMT(
+            ArchiveMismatchError,
+            "unable to retrieve the archive id for database version '%s' and system-id '%" PRIu64 "'",
+            strPtr(pgVersionToStr(pgVersion)), pgSystemId);
+    }
+
+    FUNCTION_TEST_RESULT(STRING, archiveId);
+}
+
+/***********************************************************************************************************************************
 Get PostgreSQL info
 ***********************************************************************************************************************************/
 InfoPg *

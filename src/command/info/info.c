@@ -7,6 +7,7 @@ Help Command
 
 #include <stdio.h>  // CSHANG only for debugging
 
+#include "command/archive/common.h"
 #include "common/debug.h"
 #include "common/io/handle.h"
 #include "common/log.h"
@@ -49,6 +50,8 @@ STRING_STATIC(INFO_SECTION_BACKUP_TYPE_STR,                         "type")
 
 #define INFO_STANZA_STATUS_CODE_OK                                  0
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_OK_STR,                    "ok")
+#define INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH                 1
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR,   "missing stanza path")
 #define INFO_STANZA_STATUS_CODE_NO_BACKUP                           2
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR,             "no valid backups")
 #define INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA                 3
@@ -91,89 +94,98 @@ stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
     FUNCTION_TEST_RESULT_VOID();
 }
 
-static Variant *
-backupList(const String *stanza, Variant *stanzaInfo)
+static VariantList *
+archiveDbList(const String *stanza, const InfoPgData *pgDataBackup, VariantList *archiveSection)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, stanza);
+        FUNCTION_TEST_PARAM(INFO_PG_DATA, pgData);
+        FUNCTION_TEST_PARAM(VARIANT, archiveSection);
+
+        FUNCTION_TEST_ASSERT(stanza != NULL);
+        FUNCTION_TEST_ASSERT(pgData != NULL);
+        FUNCTION_TEST_ASSERT(archiveSection != NULL);
+    FUNCTION_TEST_END();
+
+    InfoArchive *info = infoArchiveNew(
+        storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanza), INFO_ARCHIVE_FILE), false);
+
+    // With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the
+    // archive path must be built by retrieving the archive id given the db version and system id of the backup.info file.
+    // If it does not exist, an error will be thrown.
+    String *archiveId = infoArchiveIdMatch(info, pgData.version, pgData.systemId);
+
+    String *archivePath = strCatFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanza), strPtr(archiveId);
+    String *archiveStart = NULL;
+    String *archiveStop = NULL;
+    Variant *archiveInfo = varNewKv();
+
+    if (storageExistsNP(storageRepo(), archivePath))
+    {
+        // Get a list of WAL directories in the archive repo from oldest to newest
+        StringList *walDir = strLstSort(
+            storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR), sortOrderAsc);
+
+        for (unsigned int idx = 0; idx < strLstSize(walDir); idx++)
+        {
+            // Get a list of all WAL from oldest to newest to get the oldest starting WAL archived for this DB
+            StringList *list = strLstSort(storageListP(
+                storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
+                .expression = WAL_SEGMENT_FILE_REGEXP_STR), sortOrderAsc);
+
+            // CSHANG more to do....
+        }
+
+    }
+
+    varLstAdd(archiveSection, archiveInfo);
+
+    FUNCTION_TEST_RESULT(VARIANT_LIST, archiveSection);
+}
+
+static VariantList *
+backupList(const String *stanza, Variant *stanzaInfo, VariantList *backupSection, InfoBackup *info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
         FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
+        FUNCTION_TEST_PARAM(VARIANT, backupSection);
+        FUNCTION_TEST_PARAM(INFO_BACKUP, info);
 
         FUNCTION_TEST_ASSERT(stanza != NULL);
         FUNCTION_TEST_ASSERT(stanzaInfo != NULL);
+        FUNCTION_TEST_ASSERT(backupSection != NULL);
+        FUNCTION_TEST_ASSERT(info != NULL);
     FUNCTION_TEST_END();
 
-    InfoBackup *info = NULL;
+    // For each current backup, get the label and correstponding data
+    StringList *backupKey = infoBackupCurrentKeyGet(info);
 
-    // Catch certain errors
-    TRY_BEGIN()
+    if (backupKey != NULL)
     {
-        // Attempt to load the backup info file
-        info = infoBackupNew(storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_BACKUP, strPtr(stanza), INFO_BACKUP_FILE), false);
-    }
-    CATCH(FileMissingError)
-    {
-        // If there is no backup.info then set the status
-        stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR, stanzaInfo);
-    }
-    CATCH(CryptoError)
-    {
-        THROW_FMT(
-            CryptoError,
-            "%s\n"
-            "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
-            errorMessage());
-    }
-    TRY_END();
-
-    // Create the section variables for the stanzaInfo
-    VariantList *dbSection = varLstNew();
-    VariantList *backupSection = varLstNew();
-
-    if (info != NULL)
-    {
-        for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoBackupPg(info)); pgIdx++)
+        for (unsigned int keyIdx = 0; keyIdx < strLstSize(backupKey); keyIdx++)
         {
-            InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);
-            Variant *pgInfo = varNewKv();
-            kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_ID_STR), varNewUInt64((uint64_t)pgData.id));
-            kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_SYSTEM_ID_STR), varNewUInt64(pgData.systemId));
-            kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_VERSION_STR), varNewStr(pgVersionToStr(pgData.version)));
+            String *backupLabel = strLstGet(backupKey, keyIdx);
+            Variant *backupInfo = varNewKv();
 
-            varLstAdd(dbSection, pgInfo);
-        }
-
-        // For each current backup, get the label and correstponding data
-        StringList *backupKey = infoBackupCurrentKeyGet(info);
-
-        if (backupKey != NULL)
-        {
-            for (unsigned int keyIdx = 0; keyIdx < strLstSize(backupKey); keyIdx++)
-            {
-                String *backupLabel = strLstGet(backupKey, keyIdx);
-                Variant *backupInfo = varNewKv();
-
-                kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_LABEL_STR), varNewStr(backupLabel));
-                kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_TYPE_STR),
-                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_TYPE_STR));
-                kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_PRIOR_STR),
-                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_PRIOR_STR));
+            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_LABEL_STR), varNewStr(backupLabel));
+            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_TYPE_STR),
+                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_TYPE_STR));
+            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_PRIOR_STR),
+                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_PRIOR_STR));
 
 
-                // Variant *archiveInfo = varNewKv();
-                // kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_START()),
-                //     varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_ARCHIVE_START())));
-                // kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_STOP()),
-                //     varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_ARCHIVE_STOP())));
+            // Variant *archiveInfo = varNewKv();
+            // kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_START()),
+            //     varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_ARCHIVE_START())));
+            // kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_STOP()),
+            //     varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_ARCHIVE_STOP())));
 
-                varLstAdd(backupSection, backupInfo);
-            }
+            varLstAdd(backupSection, backupInfo);
         }
     }
 
-    kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_DB_STR), varNewVarLst(dbSection));
-    kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_BACKUP_STR), varNewVarLst(backupSection));
-
-    FUNCTION_TEST_RESULT(VARIANT, stanzaInfo);
+    FUNCTION_TEST_RESULT(VARIANT_LIST, backupSection);
 }
 
 static VariantList *
@@ -184,23 +196,82 @@ stanzaList(const String *stanza)
     FUNCTION_TEST_END();
 
     VariantList *result = varLstNew();
+    bool stanzaFound = false;
 
     // Get a list of stanzas in the backup directory
     StringList *stanzaList = strLstSort(storageListNP(storageRepo(), strNew(STORAGE_PATH_BACKUP)), sortOrderAsc);
+
+    // Create the section variables for the stanzaInfo
+    VariantList *dbSection = varLstNew();
+    VariantList *backupSection = varLstNew();
+    VariantList *archiveSection = varLstNew();
 
     for (unsigned int idx = 0; idx < strLstSize(stanzaList); idx++)
     {
         String *stanzaListName = strLstGet(stanzaList, idx);
 
-        // If a specific stanza has been requested and this is not it, then continue to the next in the list
-        if (stanza != NULL && !strEq(stanza, stanzaListName))
-            continue;
+        // If a specific stanza has been requested and this is not it, then continue to the next in the list else indicate found
+        if (stanza != NULL)
+        {
+            if (!strEq(stanza, stanzaListName))
+                continue;
+            else
+                stanzaFound = true;
+        }
 
         Variant *stanzaInfo = varNewKv();
+        InfoBackup *info = NULL;
+
+        // Catch certain errors
+        TRY_BEGIN()
+        {
+            // Attempt to load the backup info file
+            info = infoBackupNew(
+                storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_BACKUP, strPtr(stanzaListName), INFO_BACKUP_FILE), false);
+        }
+        CATCH(FileMissingError)
+        {
+            // If there is no backup.info then set the status to indicate missing
+            stanzaStatus(
+                INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR, stanzaInfo);
+        }
+        CATCH(CryptoError)
+        {
+            THROW_FMT(
+                CryptoError,
+                "%s\n"
+                "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
+                errorMessage());
+        }
+        TRY_END();
+
+        // Set the stanza name and cipher
         kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_NAME_STR), varNewStr(stanzaListName));
         kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_CIPHER_STR), varNewStr(cfgOptionStr(cfgOptRepoCipherType)));
 
-        varLstAdd(result, backupList(stanzaListName, stanzaInfo));
+        // If the backup.info file exists, get the database history information and corresponding archive
+        if (info != NULL)
+        {
+            for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoBackupPg(info)); pgIdx++)
+            {
+                InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);
+                Variant *pgInfo = varNewKv();
+                kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_ID_STR), varNewUInt64((uint64_t)pgData.id));
+                kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_SYSTEM_ID_STR), varNewUInt64(pgData.systemId));
+                kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_VERSION_STR), varNewStr(pgVersionToStr(pgData.version)));
+
+                varLstAdd(dbSection, pgInfo);
+
+                // Get the archive info for the DB
+                archiveSection = archiveDbList(stanzaListName, pgData, archiveSection);
+            }
+            // Get data for all existing backups for this stanza
+            backupSection = backupList(stanzaListName, stanzaInfo, backupSection, info);
+        }
+
+        // Add the database history section and backup section to the stanza info
+        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_DB_STR), varNewVarLst(dbSection));
+        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_BACKUP_STR), varNewVarLst(backupSection));
 
         // If a status has not already been set and there are no backups then set status to no backup
         if (kvGet(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_STATUS_STR)) == NULL &&
@@ -213,7 +284,7 @@ stanzaList(const String *stanza)
         if (kvGet(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_STATUS_STR)) == NULL)
             stanzaStatus(INFO_STANZA_STATUS_CODE_OK, INFO_STANZA_STATUS_MESSAGE_OK_STR, stanzaInfo);
 
-        VariantList *archiveSection = varLstNew();
+
         // if varLstSize(kvGetList(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_DB_STR))) > 0)
         // {
         //     /* CSHANG need code for archives OR do this in the backupList?
@@ -221,6 +292,16 @@ stanzaList(const String *stanza)
         // }
 
         kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_ARCHIVE_STR), varNewVarLst(archiveSection));
+
+        varLstAdd(result, stanzaInfo);
+    }
+
+    // If looking for a specific stanza and it was not found, set the status
+    if (stanza != NULL && !stanzaFound)
+    {
+        Variant *stanzaInfo = varNewKv();
+        stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR, stanzaInfo);
+        varLstAdd(result, stanzaInfo);
     }
 
     FUNCTION_TEST_RESULT(VARIANT_LIST, result);
