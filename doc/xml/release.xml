@@ -147,6 +147,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Reword misleading message in stack trace when parameter buffer is full.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add logging macros for <code>TimeMSec</code> type.</p>
                     </release-item>
                 </release-development-list>
