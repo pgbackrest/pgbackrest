@@ -179,6 +179,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>TEST_LOG()</code> and <code>TEST_LOG_FMT()</code> macros.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improve alignment of expected vs. actual error test results.</p>
                     </release-item>
 

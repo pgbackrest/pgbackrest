@@ -297,4 +297,25 @@ Macros to ease the use of common data types
 #define TEST_RESULT_UINT_NE(statement, resultExpected, ...)                                                                        \
     TEST_RESULT_UINT_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
+/***********************************************************************************************************************************
+Logging macros
+***********************************************************************************************************************************/
+#define TEST_LOG(message)                                                                                                          \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        printf(                                                                                                                    \
+            "    %03u.%03us       %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                            \
+            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), message);                                               \
+        fflush(stdout);                                                                                                            \
+    } while(0)
+
+#define TEST_LOG_FMT(format, ...)                                                                                                  \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        printf(                                                                                                                    \
+            "    %03u.%03us       " format "\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                    \
+            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __VA_ARGS__);                                           \
+        fflush(stdout);                                                                                                            \
+    } while(0)
+
 #endif
