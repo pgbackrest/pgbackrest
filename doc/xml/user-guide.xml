@@ -1999,7 +1999,8 @@
             <title>Setup Passwordless SSH</title>
 
             <block id="setup-ssh-intro">
-                <block-variable-replace key="bogus">bogus !!!</block-variable-replace>
+                <!-- ??? Bogus variable is set because the syntax currently requires at least one -->
+                <block-variable-replace key="bogus"></block-variable-replace>
             </block>
 
             <execute-list host="{[host-repo1]}">
@@ -2330,7 +2331,8 @@
             <title>Setup Passwordless SSH</title>
 
             <block id="setup-ssh-intro">
-                <block-variable-replace key="bogus">bogus !!!</block-variable-replace>
+                <!-- ??? Bogus variable is set because the syntax currently requires at least one -->
+                <block-variable-replace key="bogus"></block-variable-replace>
             </block>
 
             <block id="setup-ssh">
