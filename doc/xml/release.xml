@@ -153,6 +153,10 @@
                     <release-item>
                         <p>Add logging macros for <code>TimeMSec</code> type.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Modify value of <code>PERL_EMBED_ERROR</code> macro.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
