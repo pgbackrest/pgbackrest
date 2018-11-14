@@ -133,10 +133,36 @@ archiveDbList(const String *stanza, const InfoPgData *pgDataBackup, VariantList 
                 storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR), sortOrderAsc);
 
-            // CSHANG more to do....
+            // If wal segments are found, take the first (oldest) one as the archive start
+            if (strLstSize(list) > 0)
+            {
+                archiveStart = strSubN(strLstGet(list, 0), 0, 24));
+                break;
+            }
         }
 
+        // Iterate through the directory list in the reverse so processing newest first
+        for (unsigned int idx = strLstSize(walDir) - 1; idx >= 0; idx--)
+        {
+            // Get a list of all WAL from newest to oldest to get the newest ending WAL archived for this DB
+            StringList *list = strLstSort(storageListP(
+                storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
+                .expression = WAL_SEGMENT_FILE_REGEXP_STR), sortOrderDesc);
+
+            // If wal segments are found, take the first (newest) one as the archive stop
+            if (strLstSize(list) > 0)
+            {
+                archiveStart = strSubN(strLstGet(list, 0), 0, 24));
+                break;
+            }
+        }
     }
+
+/* CSHANG TODO:
+    # If there is an archive or the database is the current database then store it
+
+    Also need to look into the fact that the missing stanza omits archive[] and cipher.
+*/
 
     varLstAdd(archiveSection, archiveInfo);
 
