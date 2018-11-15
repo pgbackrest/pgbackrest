@@ -92,11 +92,14 @@ By convention all string constant identifiers are appended with _STR.
 /***********************************************************************************************************************************
 Constant strings that are generally useful
 ***********************************************************************************************************************************/
+STRING_DECLARE(CR_STR);
 STRING_DECLARE(EMPTY_STR);
 STRING_DECLARE(FSLASH_STR);
+STRING_DECLARE(LF_STR);
 STRING_DECLARE(N_STR);
 STRING_DECLARE(NULL_STR);
 STRING_DECLARE(Y_STR);
+STRING_DECLARE(ZERO_STR);
 
 /***********************************************************************************************************************************
 Helper function/macro for object logging
