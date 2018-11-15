@@ -92,8 +92,8 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type)
 
             // Iterate in reverse because we would like the most recent pg history to be in position 0.  If we need to look at the
             // history list at all we'll be iterating from newest to oldest and putting newest in position 0 makes for more natural
-            // looping.
-            for (unsigned int pgHistoryIdx = strLstSize(pgHistoryKey) - 1; pgHistoryIdx < strLstSize(pgHistoryKey); pgHistoryIdx--)
+            // looping. Cast the index check to an integer to test for > 0 (for readability).
+            for (unsigned int pgHistoryIdx = strLstSize(pgHistoryKey) - 1; (int)pgHistoryIdx > 0; pgHistoryIdx--)
             {
                 // Load JSON data into a KeyValue
                 const KeyValue *pgDataKv = jsonToKv(
@@ -123,6 +123,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type)
                 else if (type != infoPgArchive)
                     THROW_FMT(AssertError, "invalid InfoPg type %u", type);
 
+                // Using lstAdd because more efficient than lstInsert and loading this file is in some critical code paths
                 lstAdd(this->history, &infoPgData);
             }
         }

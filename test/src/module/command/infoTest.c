@@ -89,30 +89,31 @@ testRun(void)
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
             strPtr(archivePath), strPtr(archivePath));
 
-        // backup.info/archive.info files exist, ignoreMissing=false, no backup:current section so no valid backups
+        // backup.info/archive.info files exist, mismatched db ids, no backup:current section so no valid backups
         //--------------------------------------------------------------------------------------------------------------------------
-// CSHANG something is wrong - when I remove the checksum line and sha1sum it I get b1ded37a3496b1ea37b14f36a997fdb320498209 but the infoHash is looking for 02142fe712035d2ea89e6d3c604a011316931ed9. Is this because the infoHash is recreating the entire file as a json and we're not exactly doing that here? If so, is that correct?
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"02142fe712035d2ea89e6d3c604a011316931ed9\"\n"
+            "backrest-checksum=\"0da11608456bae64c42cc1dc8df4ae79b953d597\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.04\"\n"
             "\n"
             "[db]\n"
-            "db-id=2\n"
+            "db-id=1\n"
             "db-system-id=6569239123849665679\n"
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665666,\"db-version\":\"9.3\"}\n"
-            "2={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
+            "2={\"db-id\":6569239123849665666,\"db-version\":\"9.3\"}\n"
+            "3={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
         );
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strCat(archivePath, "/archive.info")), bufNewStr(content)),
             "put archive info to file");
 
+        // archive section will reference backup db-id 2 but archive db-id 3
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
             "    {\n"
@@ -121,7 +122,7 @@ testRun(void)
             "                \"database\" : {\n"
             "                    \"id\" : 2\n"
             "                },\n"
-            "                \"id\" : \"9.4-2\",\n"
+            "                \"id\" : \"9.4-3\",\n"
             "                \"max\" : null,\n"
             "                \"min\" : null\n"
             "            }\n"
@@ -147,6 +148,60 @@ testRun(void)
             "        }\n"
             "    }\n"
             "]\n", "single stanza, no valid backups");
+
+// CSHANG something is wrong - when I remove the checksum line and sha1sum it I get b1ded37a3496b1ea37b14f36a997fdb320498209 but the infoHash is looking for 02142fe712035d2ea89e6d3c604a011316931ed9. Is this because the infoHash is recreating the entire file as a json and we're not exactly doing that here? If so, is that correct?
+// CSHANG TODO: Uncomment this and store it as the archive info and add archive directories and backup:current section
+        // content = strNew
+        // (
+        //     "[backrest]\n"
+        //     "backrest-checksum=\"02142fe712035d2ea89e6d3c604a011316931ed9\"\n"
+        //     "backrest-format=5\n"
+        //     "backrest-version=\"2.04\"\n"
+        //     "\n"
+        //     "[db]\n"
+        //     "db-id=2\n"
+        //     "db-system-id=6569239123849665679\n"
+        //     "db-version=\"9.4\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-id\":6569239123849665666,\"db-version\":\"9.3\"}\n"
+        //     "2={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
+        // );
+        //
+        // TEST_RESULT_STR(strPtr(infoRender()),
+        //     "[\n"
+        //     "    {\n"
+        //     "        \"archive\" : [\n"
+        //     "            {\n"
+        //     "                \"database\" : {\n"
+        //     "                    \"id\" : 2\n"
+        //     "                },\n"
+        //     "                \"id\" : \"9.4-2\",\n"
+        //     "                \"max\" : null,\n"
+        //     "                \"min\" : null\n"
+        //     "            }\n"
+        //     "        ],\n"
+        //     "        \"backup\" : [],\n"
+        //     "        \"cipher\" : \"none\",\n"
+        //     "        \"db\" : [\n"
+        //     "            {\n"
+        //     "                \"id\" : 2,\n"
+        //     "                \"system-id\" : 6569239123849665679,\n"
+        //     "                \"version\" : \"9.4\"\n"
+        //     "            },\n"
+        //     "            {\n"
+        //     "                \"id\" : 1,\n"
+        //     "                \"system-id\" : 6569239123849665666,\n"
+        //     "                \"version\" : \"9.3\"\n"
+        //     "            }\n"
+        //     "        ],\n"
+        //     "        \"name\" : \"stanza1\",\n"
+        //     "        \"status\" : {\n"
+        //     "            \"code\" : 2,\n"
+        //     "            \"message\" : \"no valid backups\"\n"
+        //     "        }\n"
+        //     "    }\n"
+        //     "]\n", "single stanza, no valid backups");
 // CSHANG Maybe add another history here and then have backups and archives
         // // backup.info/archive.info files exist, but db history mismatch
         // //--------------------------------------------------------------------------------------------------------------------------

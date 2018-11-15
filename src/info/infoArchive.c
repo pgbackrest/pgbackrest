@@ -149,6 +149,7 @@ infoArchiveIdMatch(const InfoArchive *this, unsigned int pgVersion, uint64_t pgS
     String *archiveId = NULL;
     InfoPg *infoPg = infoArchivePg(this);
 
+    // Search the history list, from newest to oldest and stop when found a matching database system-id and version
     for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoPg); pgIdx++)
     {
         InfoPgData pgDataArchive = infoPgData(infoPg, pgIdx);
