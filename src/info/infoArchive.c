@@ -152,7 +152,7 @@ infoArchiveIdMatch(const InfoArchive *this, unsigned int pgVersion, uint64_t pgS
     for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoPg); pgIdx++)
     {
         InfoPgData pgDataArchive = infoPgData(infoPg, pgIdx);
-        if (pgSystemId = pgDataArchive.systemId && pgVersion = pgDataArchive.version)
+        if (pgSystemId == pgDataArchive.systemId && pgVersion == pgDataArchive.version)
         {
             archiveId = infoPgArchiveId(infoPg, pgIdx);
             break;

@@ -22,10 +22,9 @@ Help Command
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
-CSHANG Do I need this? I copied it from Help
 Define the console width - use a fixed with of 80 since this should be safe on virtually all consoles
 ***********************************************************************************************************************************/
-#define CONSOLE_WIDTH                                               80  // MAYBE test ASSERT TO MAKE SURE DON't go over 80 chars? But wait if json string is not pretty print then can absolutely go over 80 characters
+#define CONSOLE_WIDTH                                               80  // CSHANG Only for TEXT format width - this out put should be restricted - whether do it through an assertion or put in a unit test.
 
 STRING_STATIC(INFO_SECTION_STANZA_NAME_STR,                         "name")
 STRING_STATIC(INFO_SECTION_STANZA_CIPHER_STR,                       "cipher")
@@ -37,10 +36,12 @@ STRING_STATIC(INFO_SECTION_DB_ID_STR,                               "id")
 STRING_STATIC(INFO_SECTION_DB_SYSTEM_ID_STR,                        "system-id")
 STRING_STATIC(INFO_SECTION_DB_VERSION_STR,                          "version")
 STRING_STATIC(INFO_SECTION_ARCHIVE_STR,                             "archive")
+STRING_STATIC(INFO_SECTION_ARCHIVE_MIN_STR,                         "min")
+STRING_STATIC(INFO_SECTION_ARCHIVE_MAX_STR,                         "max")
 STRING_STATIC(INFO_SECTION_BACKUP_STR,                              "backup")
 // STRING_STATIC(INFO_SECTION_BACKUP_ARCHIVE_STR,                   "archive")
 // STRING_STATIC(INFO_SECTION_BACKUP_BACKREST_STR,                  "backrest")
-// STRING_STATIC(INFO_SECTION_BACKUP_DATABASE_STR,                  "database")
+STRING_STATIC(INFO_SECTION_BACKUP_DATABASE_STR,                     "database")
 // STRING_STATIC(INFO_SECTION_BACKUP_INFO_STR,                      "info")
 STRING_STATIC(INFO_SECTION_BACKUP_LABEL_STR,                        "label")
 STRING_STATIC(INFO_SECTION_BACKUP_PRIOR_STR,                        "prior")
@@ -95,12 +96,13 @@ stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
 }
 
 static VariantList *
-archiveDbList(const String *stanza, const InfoPgData *pgDataBackup, VariantList *archiveSection)
+archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archiveSection, bool currentDb)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
-        FUNCTION_TEST_PARAM(INFO_PG_DATA, pgData);
+        FUNCTION_TEST_PARAM(INFO_PG_DATAP, pgData);
         FUNCTION_TEST_PARAM(VARIANT, archiveSection);
+        FUNCTION_TEST_PARAM(BOOL, currentDb);
 
         FUNCTION_TEST_ASSERT(stanza != NULL);
         FUNCTION_TEST_ASSERT(pgData != NULL);
@@ -113,9 +115,9 @@ archiveDbList(const String *stanza, const InfoPgData *pgDataBackup, VariantList 
     // With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the
     // archive path must be built by retrieving the archive id given the db version and system id of the backup.info file.
     // If it does not exist, an error will be thrown.
-    String *archiveId = infoArchiveIdMatch(info, pgData.version, pgData.systemId);
+    const String *archiveId = infoArchiveIdMatch(info, pgData->version, pgData->systemId);
 
-    String *archivePath = strCatFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanza), strPtr(archiveId);
+    String *archivePath = strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanza), strPtr(archiveId));
     String *archiveStart = NULL;
     String *archiveStop = NULL;
     Variant *archiveInfo = varNewKv();
@@ -130,41 +132,49 @@ archiveDbList(const String *stanza, const InfoPgData *pgDataBackup, VariantList 
         {
             // Get a list of all WAL from oldest to newest to get the oldest starting WAL archived for this DB
             StringList *list = strLstSort(storageListP(
-                storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
+                storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR), sortOrderAsc);
 
             // If wal segments are found, take the first (oldest) one as the archive start
             if (strLstSize(list) > 0)
             {
-                archiveStart = strSubN(strLstGet(list, 0), 0, 24));
+                archiveStart = strSubN(strLstGet(list, 0), 0, 24);
                 break;
             }
         }
 
-        // Iterate through the directory list in the reverse so processing newest first
-        for (unsigned int idx = strLstSize(walDir) - 1; idx >= 0; idx--)
+        // Iterate through the directory list in the reverse so processing newest first. Cast comparison to an int for readability.
+        for (unsigned int idx = strLstSize(walDir) - 1; (int)idx > 0; idx--)
         {
             // Get a list of all WAL from newest to oldest to get the newest ending WAL archived for this DB
             StringList *list = strLstSort(storageListP(
-                storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
+                storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR), sortOrderDesc);
 
             // If wal segments are found, take the first (newest) one as the archive stop
             if (strLstSize(list) > 0)
             {
-                archiveStart = strSubN(strLstGet(list, 0), 0, 24));
+                archiveStop = strSubN(strLstGet(list, 0), 0, 24);
                 break;
             }
         }
     }
 
-/* CSHANG TODO:
-    # If there is an archive or the database is the current database then store it
+    // If there is an archive or the database is the current database then store it
+    if (currentDb || archiveStart != NULL)
+    {
+        KeyValue *databaseInfo = kvPutKv(varKv(archiveInfo), varNewStr(INFO_SECTION_BACKUP_DATABASE_STR));
+// CSHANG I would like to have a varUintType so I could just do varNewUint(pgData.id)
+        kvAdd(databaseInfo, varNewStr(INFO_SECTION_DB_ID_STR), varNewUInt64((uint64_t)pgData->id));
 
-    Also need to look into the fact that the missing stanza omits archive[] and cipher.
-*/
+        kvPut(varKv(archiveInfo), varNewStr(INFO_SECTION_DB_ID_STR), varNewStr(archiveId));
+        kvPut(varKv(archiveInfo), varNewStr(INFO_SECTION_ARCHIVE_MIN_STR),
+            (archiveStart != NULL ? varNewStr(archiveStart) : (Variant *)NULL));
+        kvPut(varKv(archiveInfo), varNewStr(INFO_SECTION_ARCHIVE_MAX_STR),
+            (archiveStop != NULL ? varNewStr(archiveStop) : (Variant *)NULL));
 
-    varLstAdd(archiveSection, archiveInfo);
+        varLstAdd(archiveSection, archiveInfo);
+    }
 
     FUNCTION_TEST_RESULT(VARIANT_LIST, archiveSection);
 }
@@ -275,29 +285,31 @@ stanzaList(const String *stanza)
         kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_NAME_STR), varNewStr(stanzaListName));
         kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_CIPHER_STR), varNewStr(cfgOptionStr(cfgOptRepoCipherType)));
 
-        // If the backup.info file exists, get the database history information and corresponding archive
+        // If the backup.info file exists, get the database history information (newest to oldest) and corresponding archive
         if (info != NULL)
         {
             for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoBackupPg(info)); pgIdx++)
             {
                 InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);
                 Variant *pgInfo = varNewKv();
+// CSHANG I would like to have a varUintType so I could just do varNewUint(pgData.id)
                 kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_ID_STR), varNewUInt64((uint64_t)pgData.id));
                 kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_SYSTEM_ID_STR), varNewUInt64(pgData.systemId));
                 kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_VERSION_STR), varNewStr(pgVersionToStr(pgData.version)));
 
                 varLstAdd(dbSection, pgInfo);
-
+// CSHANG Probably just VOID the return for archiveDbList and backupList
                 // Get the archive info for the DB
-                archiveSection = archiveDbList(stanzaListName, pgData, archiveSection);
+                archiveSection = archiveDbList(stanzaListName, &pgData, archiveSection, (pgIdx == 0 ? true : false));
             }
             // Get data for all existing backups for this stanza
             backupSection = backupList(stanzaListName, stanzaInfo, backupSection, info);
         }
 
-        // Add the database history section and backup section to the stanza info
+        // Add the database history, backup and archive sections to the stanza info
         kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_DB_STR), varNewVarLst(dbSection));
         kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_BACKUP_STR), varNewVarLst(backupSection));
+        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_ARCHIVE_STR), varNewVarLst(archiveSection));
 
         // If a status has not already been set and there are no backups then set status to no backup
         if (kvGet(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_STATUS_STR)) == NULL &&
@@ -310,22 +322,18 @@ stanzaList(const String *stanza)
         if (kvGet(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_STATUS_STR)) == NULL)
             stanzaStatus(INFO_STANZA_STATUS_CODE_OK, INFO_STANZA_STATUS_MESSAGE_OK_STR, stanzaInfo);
 
-
-        // if varLstSize(kvGetList(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_DB_STR))) > 0)
-        // {
-        //     /* CSHANG need code for archives OR do this in the backupList?
-        //     */
-        // }
-
-        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_ARCHIVE_STR), varNewVarLst(archiveSection));
-
         varLstAdd(result, stanzaInfo);
     }
 
-    // If looking for a specific stanza and it was not found, set the status
+    // If looking for a specific stanza and it was not found, set minimum info and the status
     if (stanza != NULL && !stanzaFound)
     {
         Variant *stanzaInfo = varNewKv();
+        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_NAME_STR), varNewStr(stanza));
+
+        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_DB_STR), varNewVarLst(dbSection));
+        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_BACKUP_STR), varNewVarLst(backupSection));
+
         stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR, stanzaInfo);
         varLstAdd(result, stanzaInfo);
     }
@@ -344,21 +352,31 @@ infoRender(void)
 
     String *result = NULL;
 
-    // Get stanza if specified
-    const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
-
-    VariantList *stanzaInfoList = stanzaList(stanza);
-
-    // CSHANG Dave says to CREATE #DEFINES for the options, but where? Shouldn't this be in the config system?
-    if (strEqZ(cfgOptionStr(cfgOptOutput), "text"))
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        // CSHANG call a formatText function and then if it returns NULL the following would be retunred?
-        result = strNewFmt("No stanzas exist in %s\n", strPtr(storagePathNP(storageRepo(), NULL)));
+        // Get stanza if specified
+        const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
+
+        VariantList *stanzaInfoList = stanzaList(stanza);
+        String *resultStr = strNew("");
+
+        // CSHANG Dave says to CREATE #DEFINES for the options, but where? Shouldn't this be in the config system?
+        // Dave - for now just create #defines in the info.h which also needs the cmdInfo to be defined in there
+        if (strEqZ(cfgOptionStr(cfgOptOutput), "text"))
+        {
+            // CSHANG call a formatText function and then if it returns NULL the following would be returned?
+            resultStr = strNewFmt("No stanzas exist in %s\n", strPtr(storagePathNP(storageRepo(), NULL)));
+        }
+        else if (strEqZ(cfgOptionStr(cfgOptOutput), "json"))
+        {
+            resultStr = varToJson(varNewVarLst(stanzaInfoList), 4);
+        }
+
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = strDup(resultStr);
+        memContextSwitch(MEM_CONTEXT_TEMP());
     }
-    else if (strEqZ(cfgOptionStr(cfgOptOutput), "json"))
-    {
-        result = varToJson(varNewVarLst(stanzaInfoList), 4);
-    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_DEBUG_RESULT(STRING, result);
 }
