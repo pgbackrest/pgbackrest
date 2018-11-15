@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Buffer IO Read
 
-Read from a Buffer object using the IoWrite interface.
+Read from a Buffer object using the IoRead interface.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_BUFFERREAD_H
 #define COMMON_IO_BUFFERREAD_H

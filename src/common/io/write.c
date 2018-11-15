@@ -28,8 +28,6 @@ struct IoWrite
 
 /***********************************************************************************************************************************
 New object
-
-Allocations will be in the memory context of the caller.
 ***********************************************************************************************************************************/
 IoWrite *
 ioWriteNew(void *driver, IoWriteInterface interface)
@@ -42,11 +40,17 @@ ioWriteNew(void *driver, IoWriteInterface interface)
         FUNCTION_TEST_ASSERT(interface.write != NULL);
     FUNCTION_DEBUG_END();
 
-    IoWrite *this = memNew(sizeof(IoWrite));
-    this->memContext = memContextCurrent();
-    this->driver = driver;
-    this->interface = interface;
-    this->output = bufNew(ioBufferSize());
+    IoWrite *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("IoWrite")
+    {
+        this = memNew(sizeof(IoWrite));
+        this->memContext = memContextCurrent();
+        this->driver = driver;
+        this->interface = interface;
+        this->output = bufNew(ioBufferSize());
+    }
+    MEM_CONTEXT_NEW_END();
 
     FUNCTION_DEBUG_RESULT(IO_WRITE, this);
 }
@@ -242,6 +246,22 @@ ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup)
     FUNCTION_DEBUG_END();
 
     this->filterGroup = filterGroup;
+
+    FUNCTION_DEBUG_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Free the object
+***********************************************************************************************************************************/
+void
+ioWriteFree(IoWrite *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(IO_WRITE, this);
+    FUNCTION_DEBUG_END();
+
+    if (this != NULL)
+        memContextFree(this->memContext);
 
     FUNCTION_DEBUG_RESULT_VOID();
 }

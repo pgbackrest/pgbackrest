@@ -75,6 +75,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add destructors to <code>IoRead</code> and <code>IoWrite</code> objects.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <id>base</id> variants to all integer to string conversion functions.</p>
                     </release-item>
 

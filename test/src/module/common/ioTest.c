@@ -247,6 +247,9 @@ testRun(void)
         TEST_RESULT_VOID(ioReadClose(read), "    close io object");
         TEST_RESULT_BOOL(testIoReadCloseCalled, true, "    check io object closed");
 
+        TEST_RESULT_VOID(ioReadFree(read), "    free read object");
+        TEST_RESULT_VOID(ioReadFree(NULL), "    free null read object");
+
         // -------------------------------------------------------------------------------------------------------------------------
         IoBufferRead *bufferRead = NULL;
         ioBufferSizeSet(2);
@@ -385,6 +388,9 @@ testRun(void)
         TEST_RESULT_VOID(ioWrite(write, bufNewZ("ABC")), "    write 3 bytes");
         TEST_RESULT_VOID(ioWriteClose(write), "    close io object");
         TEST_RESULT_BOOL(testIoWriteCloseCalled, true, "    check io object closed");
+
+        TEST_RESULT_VOID(ioWriteFree(write), "    free write object");
+        TEST_RESULT_VOID(ioWriteFree(NULL), "    free null write object");
 
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(3);

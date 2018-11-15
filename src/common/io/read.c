@@ -31,8 +31,6 @@ struct IoRead
 
 /***********************************************************************************************************************************
 New object
-
-Allocations will be in the memory context of the caller.
 ***********************************************************************************************************************************/
 IoRead *
 ioReadNew(void *driver, IoReadInterface interface)
@@ -45,11 +43,17 @@ ioReadNew(void *driver, IoReadInterface interface)
         FUNCTION_TEST_ASSERT(interface.read != NULL);
     FUNCTION_DEBUG_END();
 
-    IoRead *this = memNew(sizeof(IoRead));
-    this->memContext = memContextCurrent();
-    this->driver = driver;
-    this->interface = interface;
-    this->input = bufNew(ioBufferSize());
+    IoRead *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("IoRead")
+    {
+        this = memNew(sizeof(IoRead));
+        this->memContext = memContextCurrent();
+        this->driver = driver;
+        this->interface = interface;
+        this->input = bufNew(ioBufferSize());
+    }
+    MEM_CONTEXT_NEW_END();
 
     FUNCTION_DEBUG_RESULT(IO_READ, this);
 }
@@ -343,6 +347,22 @@ ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup)
     FUNCTION_DEBUG_END();
 
     this->filterGroup = filterGroup;
+
+    FUNCTION_DEBUG_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Free the object
+***********************************************************************************************************************************/
+void
+ioReadFree(IoRead *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(IO_READ, this);
+    FUNCTION_DEBUG_END();
+
+    if (this != NULL)
+        memContextFree(this->memContext);
 
     FUNCTION_DEBUG_RESULT_VOID();
 }
