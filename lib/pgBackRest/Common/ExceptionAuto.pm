@@ -169,6 +169,8 @@ use constant ERROR_JSON_FORMAT                                      => 99;
 push @EXPORT, qw(ERROR_JSON_FORMAT);
 use constant ERROR_KERNEL                                           => 100;
 push @EXPORT, qw(ERROR_KERNEL);
+use constant ERROR_SERVICE                                          => 101;
+push @EXPORT, qw(ERROR_SERVICE);
 use constant ERROR_RUNTIME                                          => 122;
 push @EXPORT, qw(ERROR_RUNTIME);
 use constant ERROR_INVALID                                          => 123;

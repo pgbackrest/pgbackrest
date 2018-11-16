@@ -16,6 +16,10 @@
             <release-core-list>
                 <release-development-list>
                     <release-item>
+                        <p>Add <code>ServiceError</code> for errors from a service that can be retried.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Reduce debug level for <code>infoIni()</code> to test.</p>
                     </release-item>
 

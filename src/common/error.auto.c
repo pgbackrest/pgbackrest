@@ -82,6 +82,7 @@ ERROR_DEFINE( 97, PathCloseError, RuntimeError);
 ERROR_DEFINE( 98, FileInfoError, RuntimeError);
 ERROR_DEFINE( 99, JsonFormatError, RuntimeError);
 ERROR_DEFINE(100, KernelError, RuntimeError);
+ERROR_DEFINE(101, ServiceError, RuntimeError);
 ERROR_DEFINE(122, RuntimeError, RuntimeError);
 ERROR_DEFINE(123, InvalidError, RuntimeError);
 ERROR_DEFINE(124, UnhandledError, RuntimeError);
@@ -167,6 +168,7 @@ static const ErrorType *errorTypeList[] =
     &FileInfoError,
     &JsonFormatError,
     &KernelError,
+    &ServiceError,
     &RuntimeError,
     &InvalidError,
     &UnhandledError,
