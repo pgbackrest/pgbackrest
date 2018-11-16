@@ -54,6 +54,8 @@ do                                                                              
     LOG_WILL(logLevelInfo, 0, __VA_ARGS__)
 #define LOG_DETAIL(...)                                                                                                            \
     LOG_WILL(logLevelDetail, 0, __VA_ARGS__)
+#define LOG_DEBUG(...)                                                                                                             \
+    LOG_WILL(logLevelDebug, 0, __VA_ARGS__)
 #define LOG_TRACE(...)                                                                                                             \
     LOG_WILL(logLevelTrace, 0, __VA_ARGS__)
 
