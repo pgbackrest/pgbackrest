@@ -12,6 +12,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.08dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2018-11-16" version="2.07" title="Automatic Backup Checksum Delta">
             <release-core-list>
                 <release-bug-list>
