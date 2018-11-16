@@ -257,34 +257,18 @@ infoNew(
 }
 
 /***********************************************************************************************************************************
-Free the info
-***********************************************************************************************************************************/
-void
-infoFree(Info *this)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO, this);
-    FUNCTION_DEBUG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_DEBUG_RESULT_VOID();
-}
-
-/***********************************************************************************************************************************
 Accessor functions
 ***********************************************************************************************************************************/
 Ini *
 infoIni(const Info *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(INFO, this);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
 
-    FUNCTION_DEBUG_RESULT(INI, this->ini);
+    FUNCTION_TEST_RESULT(INI, this->ini);
 }
 
 String *
@@ -297,4 +281,20 @@ infoFileName(const Info *this)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(STRING, this->fileName);
+}
+
+/***********************************************************************************************************************************
+Free the object
+***********************************************************************************************************************************/
+void
+infoFree(Info *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO, this);
+    FUNCTION_DEBUG_END();
+
+    if (this != NULL)
+        memContextFree(this->memContext);
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }

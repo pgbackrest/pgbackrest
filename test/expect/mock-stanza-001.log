@@ -552,8 +552,6 @@ P00  DEBUG:     info/infoArchive::infoArchiveNew: (fileName: {"<REPO:ARCHIVE>/ar
 P00  DEBUG:     info/infoPg::infoPgNew: (fileName: {"<REPO:ARCHIVE>/archive.info"})
 P00  DEBUG:     info/info::infoNew: (fileName: {"<REPO:ARCHIVE>/archive.info"})
 P00  DEBUG:     info/info::infoNew: => {Info}
-P00  DEBUG:     info/info::infoIni: (this: {Info})
-P00  DEBUG:     info/info::infoIni: => {Ini}
 P00  DEBUG:     info/infoPg::infoPgNew: => {InfoPg}
 P00  DEBUG:     info/infoArchive::infoArchiveNew: => {InfoArchive}
 P00  DEBUG:     command/archive/common::walSegmentFind: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, archiveId: {"9.3-1"}, walSegment: {"000000010000000100000002"})

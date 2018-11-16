@@ -13,6 +13,13 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.08dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Reduce debug level for <code>infoIni()</code> to test.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
         </release>
 
         <release date="2018-11-16" version="2.07" title="Automatic Backup Checksum Delta">
