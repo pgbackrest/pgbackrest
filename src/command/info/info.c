@@ -14,6 +14,7 @@ Help Command
 #include "common/memContext.h"
 #include "common/type/json.h"
 #include "config/config.h"
+#include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/infoManifest.h"
@@ -26,28 +27,35 @@ Define the console width - use a fixed with of 80 since this should be safe on v
 ***********************************************************************************************************************************/
 #define CONSOLE_WIDTH                                               80  // CSHANG Only for TEXT format width - this out put should be restricted - whether do it through an assertion or put in a unit test.
 
-STRING_STATIC(INFO_SECTION_STANZA_NAME_STR,                         "name")
-STRING_STATIC(INFO_SECTION_STANZA_CIPHER_STR,                       "cipher")
-STRING_STATIC(INFO_SECTION_STANZA_STATUS_STR,                       "status")
-STRING_STATIC(INFO_SECTION_STANZA_STATUS_CODE_STR,                  "code")
-STRING_STATIC(INFO_SECTION_STANZA_STATUS_MESSAGE_STR,               "message")
-STRING_STATIC(INFO_SECTION_STANZA_DB_STR,                           "db")
-STRING_STATIC(INFO_SECTION_DB_ID_STR,                               "id")
-STRING_STATIC(INFO_SECTION_DB_SYSTEM_ID_STR,                        "system-id")
-STRING_STATIC(INFO_SECTION_DB_VERSION_STR,                          "version")
-STRING_STATIC(INFO_SECTION_ARCHIVE_STR,                             "archive")
-STRING_STATIC(INFO_SECTION_ARCHIVE_MIN_STR,                         "min")
-STRING_STATIC(INFO_SECTION_ARCHIVE_MAX_STR,                         "max")
-STRING_STATIC(INFO_SECTION_BACKUP_STR,                              "backup")
-// STRING_STATIC(INFO_SECTION_BACKUP_ARCHIVE_STR,                   "archive")
-// STRING_STATIC(INFO_SECTION_BACKUP_BACKREST_STR,                  "backrest")
-STRING_STATIC(INFO_SECTION_BACKUP_DATABASE_STR,                     "database")
-// STRING_STATIC(INFO_SECTION_BACKUP_INFO_STR,                      "info")
-STRING_STATIC(INFO_SECTION_BACKUP_LABEL_STR,                        "label")
-STRING_STATIC(INFO_SECTION_BACKUP_PRIOR_STR,                        "prior")
-// STRING_STATIC(INFO_SECTION_BACKUP_REFERENCE_STR,                 "reference")
-// STRING_STATIC(INFO_SECTION_BACKUP_TIMESTAMP_STR,                 "timestamp")
-STRING_STATIC(INFO_SECTION_BACKUP_TYPE_STR,                         "type")
+// Naming convention: <sectionname>_KEY_<keyname>_STR. If the key exists in multiple sections, then <sectionname>_ is omitted.
+STRING_STATIC(ARCHIVE_KEY_MIN_STR,                                  "min")
+STRING_STATIC(ARCHIVE_KEY_MAX_STR,                                  "max")
+STRING_STATIC(BACKREST_KEY_FORMAT_STR,                              "format")
+STRING_STATIC(BACKREST_KEY_VERSION_STR,                             "version")
+STRING_STATIC(BACKUP_KEY_BACKREST_STR,                              "backrest")
+STRING_STATIC(BACKUP_KEY_INFO_STR,                                  "info")
+STRING_STATIC(BACKUP_KEY_LABEL_STR,                                 "label")
+STRING_STATIC(BACKUP_KEY_PRIOR_STR,                                 "prior")
+STRING_STATIC(BACKUP_KEY_REFERENCE_STR,                             "reference")
+STRING_STATIC(BACKUP_KEY_TIMESTAMP_STR,                             "timestamp")
+STRING_STATIC(BACKUP_KEY_TYPE_STR,                                  "type")
+STRING_STATIC(DB_KEY_ID_STR,                                        "id")
+STRING_STATIC(DB_KEY_SYSTEM_ID_STR,                                 "system-id")
+STRING_STATIC(DB_KEY_VERSION_STR,                                   "version")
+STRING_STATIC(INFO_KEY_REPOSITORY_STR,                              "repository")
+STRING_STATIC(KEY_ARCHIVE_STR,                                      "archive")
+STRING_STATIC(KEY_DATABASE_STR,                                     "database")
+STRING_STATIC(KEY_DELTA_STR,                                        "delta")
+STRING_STATIC(KEY_SIZE_STR,                                         "size")
+STRING_STATIC(KEY_START_STR,                                        "start")
+STRING_STATIC(KEY_STOP_STR,                                         "stop")
+STRING_STATIC(STANZA_KEY_BACKUP_STR,                                "backup")
+STRING_STATIC(STANZA_KEY_CIPHER_STR,                                "cipher")
+STRING_STATIC(STANZA_KEY_NAME_STR,                                  "name")
+STRING_STATIC(STANZA_KEY_STATUS_STR,                                "status")
+STRING_STATIC(STANZA_KEY_DB_STR,                                    "db")
+STRING_STATIC(STATUS_KEY_CODE_STR,                                  "code")
+STRING_STATIC(STATUS_KEY_MESSAGE_STR,                               "message")
 
 #define INFO_STANZA_STATUS_CODE_OK                                  0
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_OK_STR,                    "ok")
@@ -86,11 +94,11 @@ stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
         FUNCTION_TEST_ASSERT(stanzaInfo != NULL);
     FUNCTION_TEST_END();
 
-    Variant *stanzaStatus = varNewStr(INFO_SECTION_STANZA_STATUS_STR);
+    Variant *stanzaStatus = varNewStr(STANZA_KEY_STATUS_STR);
     KeyValue *statusKv = kvPutKv(varKv(stanzaInfo), stanzaStatus);
 
-    kvAdd(statusKv, varNewStr(INFO_SECTION_STANZA_STATUS_CODE_STR), varNewInt(code));
-    kvAdd(statusKv, varNewStr(INFO_SECTION_STANZA_STATUS_MESSAGE_STR), varNewStr(message));
+    kvAdd(statusKv, varNewStr(STATUS_KEY_CODE_STR), varNewInt(code));
+    kvAdd(statusKv, varNewStr(STATUS_KEY_MESSAGE_STR), varNewStr(message));
 
     FUNCTION_TEST_RESULT_VOID();
 }
@@ -163,14 +171,14 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     // If there is an archive or the database is the current database then store it
     if (currentDb || archiveStart != NULL)
     {
-        KeyValue *databaseInfo = kvPutKv(varKv(archiveInfo), varNewStr(INFO_SECTION_BACKUP_DATABASE_STR));
-// CSHANG I would like to have a varUintType so I could just do varNewUint(pgData.id)
-        kvAdd(databaseInfo, varNewStr(INFO_SECTION_DB_ID_STR), varNewUInt64((uint64_t)pgData->id));
+        // Add empty database section to archiveInfo and then fill in database id from the backup.info
+        KeyValue *databaseInfo = kvPutKv(varKv(archiveInfo), varNewStr(KEY_DATABASE_STR));
+        kvAdd(databaseInfo, varNewStr(DB_KEY_ID_STR), varNewUInt64((uint64_t)pgData->id));
 
-        kvPut(varKv(archiveInfo), varNewStr(INFO_SECTION_DB_ID_STR), varNewStr(archiveId));
-        kvPut(varKv(archiveInfo), varNewStr(INFO_SECTION_ARCHIVE_MIN_STR),
+        kvPut(varKv(archiveInfo), varNewStr(DB_KEY_ID_STR), varNewStr(archiveId));
+        kvPut(varKv(archiveInfo), varNewStr(ARCHIVE_KEY_MIN_STR),
             (archiveStart != NULL ? varNewStr(archiveStart) : (Variant *)NULL));
-        kvPut(varKv(archiveInfo), varNewStr(INFO_SECTION_ARCHIVE_MAX_STR),
+        kvPut(varKv(archiveInfo), varNewStr(ARCHIVE_KEY_MAX_STR),
             (archiveStop != NULL ? varNewStr(archiveStop) : (Variant *)NULL));
 
         varLstAdd(archiveSection, archiveInfo);
@@ -194,28 +202,65 @@ backupList(const String *stanza, Variant *stanzaInfo, VariantList *backupSection
         FUNCTION_TEST_ASSERT(info != NULL);
     FUNCTION_TEST_END();
 
-    // For each current backup, get the label and correstponding data
+    // For each current backup, get the label and corresponding data
     StringList *backupKey = infoBackupCurrentKeyGet(info);
 
     if (backupKey != NULL)
     {
+        // Build the backup section
         for (unsigned int keyIdx = 0; keyIdx < strLstSize(backupKey); keyIdx++)
         {
             String *backupLabel = strLstGet(backupKey, keyIdx);
             Variant *backupInfo = varNewKv();
 
-            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_LABEL_STR), varNewStr(backupLabel));
-            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_TYPE_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_TYPE_STR));
-            kvPut(varKv(backupInfo), varNewStr(INFO_SECTION_BACKUP_PRIOR_STR),
+            // main keys
+            kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_LABEL_STR), varNewStr(backupLabel));
+            kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_TYPE_STR),
+                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_TYPE_STR));
+            kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_PRIOR_STR),
                 infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_PRIOR_STR));
+            kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_REFERENCE_STR),
+                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_REFERENCE_STR));
 
+            // archive section
+            KeyValue *archiveInfo = kvPutKv(varKv(backupInfo), varNewStr(KEY_ARCHIVE_STR));
+            kvAdd(archiveInfo, varNewStr(KEY_START_STR),
+                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_STR));
+            kvAdd(archiveInfo, varNewStr(KEY_STOP_STR),
+                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR));
 
-            // Variant *archiveInfo = varNewKv();
-            // kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_START()),
-            //     varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_ARCHIVE_START())));
-            // kvPut(varKv(archiveInfo), varNewStr(INFO_MANIFEST_KEY_ARCHIVE_STOP()),
-            //     varNewStr(infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_ARCHIVE_STOP())));
+            // backrest section
+            KeyValue *backrestInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_BACKREST_STR));
+            kvAdd(backrestInfo, varNewStr(BACKREST_KEY_FORMAT_STR),
+                infoBackupCurrentGet(info, backupLabel, INI_KEY_FORMAT_STR));
+            kvAdd(backrestInfo, varNewStr(BACKREST_KEY_VERSION_STR),
+                infoBackupCurrentGet(info, backupLabel, INI_KEY_VERSION_STR));
+
+            // database section
+            KeyValue *dbInfo = kvPutKv(varKv(backupInfo), varNewStr(KEY_DATABASE_STR));
+            kvAdd(dbInfo, varNewStr(DB_KEY_ID_STR),
+                infoBackupCurrentGet(info, backupLabel, INFO_KEY_DB_ID_STR));
+
+            // info section
+            KeyValue *infoInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_INFO_STR));
+            kvAdd(infoInfo, varNewStr(KEY_SIZE_STR),
+                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR));
+            kvAdd(infoInfo, varNewStr(KEY_DELTA_STR),
+                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR));
+
+            // info:repository section
+            KeyValue *repoInfo = kvPutKv(infoInfo, varNewStr(INFO_KEY_REPOSITORY_STR));
+            kvAdd(repoInfo, varNewStr(KEY_SIZE_STR),
+                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR));
+            kvAdd(repoInfo, varNewStr(KEY_DELTA_STR),
+                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR));
+
+            // timestamp section
+            KeyValue *timeInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_TIMESTAMP_STR));
+            kvAdd(timeInfo, varNewStr(KEY_START_STR),
+                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR));
+            kvAdd(timeInfo, varNewStr(KEY_STOP_STR),
+                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR));
 
             varLstAdd(backupSection, backupInfo);
         }
@@ -282,8 +327,8 @@ stanzaList(const String *stanza)
         TRY_END();
 
         // Set the stanza name and cipher
-        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_NAME_STR), varNewStr(stanzaListName));
-        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_CIPHER_STR), varNewStr(cfgOptionStr(cfgOptRepoCipherType)));
+        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_NAME_STR), varNewStr(stanzaListName));
+        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_CIPHER_STR), varNewStr(cfgOptionStr(cfgOptRepoCipherType)));
 
         // If the backup.info file exists, get the database history information (newest to oldest) and corresponding archive
         if (info != NULL)
@@ -292,10 +337,9 @@ stanzaList(const String *stanza)
             {
                 InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);
                 Variant *pgInfo = varNewKv();
-// CSHANG I would like to have a varUintType so I could just do varNewUint(pgData.id)
-                kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_ID_STR), varNewUInt64((uint64_t)pgData.id));
-                kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_SYSTEM_ID_STR), varNewUInt64(pgData.systemId));
-                kvPut(varKv(pgInfo), varNewStr(INFO_SECTION_DB_VERSION_STR), varNewStr(pgVersionToStr(pgData.version)));
+                kvPut(varKv(pgInfo), varNewStr(DB_KEY_ID_STR), varNewUInt64((uint64_t)pgData.id));
+                kvPut(varKv(pgInfo), varNewStr(DB_KEY_SYSTEM_ID_STR), varNewUInt64(pgData.systemId));
+                kvPut(varKv(pgInfo), varNewStr(DB_KEY_VERSION_STR), varNewStr(pgVersionToStr(pgData.version)));
 
                 varLstAdd(dbSection, pgInfo);
 // CSHANG Probably just VOID the return for archiveDbList and backupList
@@ -307,19 +351,19 @@ stanzaList(const String *stanza)
         }
 
         // Add the database history, backup and archive sections to the stanza info
-        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_DB_STR), varNewVarLst(dbSection));
-        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_BACKUP_STR), varNewVarLst(backupSection));
-        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_ARCHIVE_STR), varNewVarLst(archiveSection));
+        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_DB_STR), varNewVarLst(dbSection));
+        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_BACKUP_STR), varNewVarLst(backupSection));
+        kvPut(varKv(stanzaInfo), varNewStr(KEY_ARCHIVE_STR), varNewVarLst(archiveSection));
 
         // If a status has not already been set and there are no backups then set status to no backup
-        if (kvGet(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_STATUS_STR)) == NULL &&
-            varLstSize(kvGetList(varKv(stanzaInfo), varNewStr(INFO_SECTION_BACKUP_STR))) == 0)
+        if (kvGet(varKv(stanzaInfo), varNewStr(STANZA_KEY_STATUS_STR)) == NULL &&
+            varLstSize(kvGetList(varKv(stanzaInfo), varNewStr(STANZA_KEY_BACKUP_STR))) == 0)
         {
             stanzaStatus(INFO_STANZA_STATUS_CODE_NO_BACKUP, INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR, stanzaInfo);
         }
 
         // If a status has still not been set then set it to OK
-        if (kvGet(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_STATUS_STR)) == NULL)
+        if (kvGet(varKv(stanzaInfo), varNewStr(STANZA_KEY_STATUS_STR)) == NULL)
             stanzaStatus(INFO_STANZA_STATUS_CODE_OK, INFO_STANZA_STATUS_MESSAGE_OK_STR, stanzaInfo);
 
         varLstAdd(result, stanzaInfo);
@@ -329,10 +373,10 @@ stanzaList(const String *stanza)
     if (stanza != NULL && !stanzaFound)
     {
         Variant *stanzaInfo = varNewKv();
-        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_NAME_STR), varNewStr(stanza));
+        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_NAME_STR), varNewStr(stanza));
 
-        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_STANZA_DB_STR), varNewVarLst(dbSection));
-        kvPut(varKv(stanzaInfo), varNewStr(INFO_SECTION_BACKUP_STR), varNewVarLst(backupSection));
+        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_DB_STR), varNewVarLst(dbSection));
+        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_BACKUP_STR), varNewVarLst(backupSection));
 
         stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR, stanzaInfo);
         varLstAdd(result, stanzaInfo);

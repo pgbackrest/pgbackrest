@@ -14,9 +14,15 @@ typedef struct InfoBackup InfoBackup;
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
-Backup info filename
+Constants
 ***********************************************************************************************************************************/
 #define INFO_BACKUP_FILE                                           "backup.info"
+
+STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR)
+STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR)
+STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR)
+STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR)
+STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR)
 
 /***********************************************************************************************************************************
 Constructor

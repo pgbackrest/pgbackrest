@@ -26,10 +26,9 @@ Internal constants
 #define INFO_SECTION_DB                                             "db"
 #define INFO_SECTION_DB_HISTORY                                     INFO_SECTION_DB ":history"
     STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                      INFO_SECTION_DB_HISTORY)
-#define INFO_SECTION_DB_MANIFEST                                    "backup:" INFO_SECTION_DB
 
 #define INFO_KEY_DB_ID                                              "db-id"
-    STRING_STATIC(INFO_KEY_DB_ID_STR,                               INFO_KEY_DB_ID)
+    STRING_EXTERN(INFO_KEY_DB_ID_STR,                               INFO_KEY_DB_ID)
 #define INFO_KEY_DB_CATALOG_VERSION                                 "db-catalog-version"
     STRING_STATIC(INFO_KEY_DB_CATALOG_VERSION_STR,                  INFO_KEY_DB_CATALOG_VERSION)
 #define INFO_KEY_DB_CONTROL_VERSION                                 "db-control-version"
@@ -92,8 +91,8 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type)
 
             // Iterate in reverse because we would like the most recent pg history to be in position 0.  If we need to look at the
             // history list at all we'll be iterating from newest to oldest and putting newest in position 0 makes for more natural
-            // looping. Cast the index check to an integer to test for > 0 (for readability).
-            for (unsigned int pgHistoryIdx = strLstSize(pgHistoryKey) - 1; (int)pgHistoryIdx > 0; pgHistoryIdx--)
+            // looping. Cast the index check to an integer to test for >= 0 (for readability).
+            for (unsigned int pgHistoryIdx = strLstSize(pgHistoryKey) - 1; (int)pgHistoryIdx >= 0; pgHistoryIdx--)
             {
                 // Load JSON data into a KeyValue
                 const KeyValue *pgDataKv = jsonToKv(
