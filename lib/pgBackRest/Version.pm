@@ -39,7 +39,7 @@ push @EXPORT, qw(backrestBin backrestBinSet);
 # Defines the current version of the BackRest executable.  The version number is used to track features but does not affect what
 # repositories or manifests can be read - that's the job of the format number.
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant BACKREST_VERSION                                       => '2.07dev';
+use constant BACKREST_VERSION                                       => '2.07';
     push @EXPORT, qw(BACKREST_VERSION);
 
 # Format Format Number
