@@ -129,20 +129,21 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     String *archiveStart = NULL;
     String *archiveStop = NULL;
     Variant *archiveInfo = varNewKv();
-
+printf("CHECK PATH: %s\n", strPtr(archivePath)); fflush(stdout);
     if (storageExistsNP(storageRepo(), archivePath))
     {
+printf("PATH: %s, EXISTS \n", strPtr(archivePath)); fflush(stdout);
         // Get a list of WAL directories in the archive repo from oldest to newest
         StringList *walDir = strLstSort(
             storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR), sortOrderAsc);
-
+printf("PATH: %s, DIRS: %u\n", strPtr(archivePath), strLstSize(walDir)); fflush(stdout);
         for (unsigned int idx = 0; idx < strLstSize(walDir); idx++)
         {
             // Get a list of all WAL from oldest to newest to get the oldest starting WAL archived for this DB
             StringList *list = strLstSort(storageListP(
                 storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR), sortOrderAsc);
-
+printf("WALLISTSIZE:  %u\n", strLstSize(list)); fflush(stdout);
             // If wal segments are found, take the first (oldest) one as the archive start
             if (strLstSize(list) > 0)
             {
@@ -173,7 +174,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     {
         // Add empty database section to archiveInfo and then fill in database id from the backup.info
         KeyValue *databaseInfo = kvPutKv(varKv(archiveInfo), varNewStr(KEY_DATABASE_STR));
-        kvAdd(databaseInfo, varNewStr(DB_KEY_ID_STR), varNewUInt64((uint64_t)pgData->id));
+        kvAdd(databaseInfo, varNewStr(DB_KEY_ID_STR), varNewUInt64(pgData->id));
 
         kvPut(varKv(archiveInfo), varNewStr(DB_KEY_ID_STR), varNewStr(archiveId));
         kvPut(varKv(archiveInfo), varNewStr(ARCHIVE_KEY_MIN_STR),
@@ -270,22 +271,20 @@ backupList(const String *stanza, Variant *stanzaInfo, VariantList *backupSection
 }
 
 static VariantList *
-stanzaList(const String *stanza)
+stanzaInfoList(const String *stanza, StringList *stanzaList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
+        FUNCTION_TEST_PARAM(STRING_LIST, stanzaList);
+
+        FUNCTION_TEST_ASSERT(stanzaList != NULL);
     FUNCTION_TEST_END();
 
     VariantList *result = varLstNew();
     bool stanzaFound = false;
 
-    // Get a list of stanzas in the backup directory
-    StringList *stanzaList = strLstSort(storageListNP(storageRepo(), strNew(STORAGE_PATH_BACKUP)), sortOrderAsc);
-
-    // Create the section variables for the stanzaInfo
-    VariantList *dbSection = varLstNew();
-    VariantList *backupSection = varLstNew();
-    VariantList *archiveSection = varLstNew();
+    // Sort the list
+    stanzaList = strLstSort(stanzaList, sortOrderAsc);
 
     for (unsigned int idx = 0; idx < strLstSize(stanzaList); idx++)
     {
@@ -300,7 +299,11 @@ stanzaList(const String *stanza)
                 stanzaFound = true;
         }
 
+        // Create the stanzaInfo and section variables
         Variant *stanzaInfo = varNewKv();
+        VariantList *dbSection = varLstNew();
+        VariantList *backupSection = varLstNew();
+        VariantList *archiveSection = varLstNew()
         InfoBackup *info = NULL;
 
         // Catch certain errors
@@ -337,7 +340,7 @@ stanzaList(const String *stanza)
             {
                 InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);
                 Variant *pgInfo = varNewKv();
-                kvPut(varKv(pgInfo), varNewStr(DB_KEY_ID_STR), varNewUInt64((uint64_t)pgData.id));
+                kvPut(varKv(pgInfo), varNewStr(DB_KEY_ID_STR), varNewUInt64(pgData.id));
                 kvPut(varKv(pgInfo), varNewStr(DB_KEY_SYSTEM_ID_STR), varNewUInt64(pgData.systemId));
                 kvPut(varKv(pgInfo), varNewStr(DB_KEY_VERSION_STR), varNewStr(pgVersionToStr(pgData.version)));
 
@@ -375,8 +378,8 @@ stanzaList(const String *stanza)
         Variant *stanzaInfo = varNewKv();
         kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_NAME_STR), varNewStr(stanza));
 
-        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_DB_STR), varNewVarLst(dbSection));
-        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_BACKUP_STR), varNewVarLst(backupSection));
+        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_DB_STR), varNewVarLst(varLstNew()));
+        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_BACKUP_STR), varNewVarLst(varLstNew()));
 
         stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR, stanzaInfo);
         varLstAdd(result, stanzaInfo);
@@ -401,8 +404,15 @@ infoRender(void)
         // Get stanza if specified
         const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
 
-        VariantList *stanzaInfoList = stanzaList(stanza);
+        // Get a list of stanzas in the backup directory
+        StringList *stanzaList = storageListNP(storageRepo(), strNew(STORAGE_PATH_BACKUP));
+
+        VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
+
+        // If there are any stanzas to process then process them
+        if (stanzaList != NULL)
+            infoList = stanzaInfoList(stanza, stanzaList);
 
         // CSHANG Dave says to CREATE #DEFINES for the options, but where? Shouldn't this be in the config system?
         // Dave - for now just create #defines in the info.h which also needs the cmdInfo to be defined in there
@@ -413,7 +423,7 @@ infoRender(void)
         }
         else if (strEqZ(cfgOptionStr(cfgOptOutput), "json"))
         {
-            resultStr = varToJson(varNewVarLst(stanzaInfoList), 4);
+            resultStr = varToJson(varNewVarLst(infoList), 4);
         }
 
         memContextSwitch(MEM_CONTEXT_OLD());

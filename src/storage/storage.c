@@ -489,7 +489,7 @@ storagePath(const Storage *this, const String *pathExp)
                 result = strNewFmt("/%s", strPtr(pathExp));
             else
                 result = strNewFmt("%s/%s", strPtr(this->path), strPtr(pathExp));
-
+printf("RESULT: %s, THIS_PATH: %s, PATHEXP: %s\n", strPtr(result), strPtr(this->path), strPtr(pathExp)); fflush(stdout); // CSHANG
             strFree(pathEvaluated);
         }
     }
