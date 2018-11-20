@@ -28,6 +28,14 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Add <code>testRepoPath()</code> to let C unit tests know where the code repository is located.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2018-11-16" version="2.07" title="Automatic Backup Checksum Delta">
