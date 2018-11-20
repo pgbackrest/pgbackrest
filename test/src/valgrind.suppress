@@ -4,6 +4,15 @@
     ...
     obj:*/libcrypto.so*
 }
+
+# This only seems to be an issue on Ubuntu 12.04 -- probably due to the old version of Valgrind
+{
+    ignore_libcrypto_uninit_cond_jump
+    Memcheck:Cond
+    ...
+    obj:*/libcrypto.so*
+}
+
 {
     ignore_libperl_leaks
     Memcheck:Leak

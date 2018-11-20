@@ -42,7 +42,7 @@ LDPERL = `perl -MExtUtils::Embed -e ldopts`
 LDEXTRA =
 
 # Concatenate options for easy usage
-LDFLAGS = -lcrypto -lz $(LDPERL) $(LDEXTRA)
+LDFLAGS = -lcrypto -lssl -lz $(LDPERL) $(LDEXTRA)
 
 ####################################################################################################################################
 # Install options
@@ -76,6 +76,7 @@ SRCS = \
 	common/io/handle.c \
 	common/io/io.c \
 	common/io/read.c \
+	common/io/tls/client.c \
 	common/io/write.c \
 	common/ini.c \
 	common/lock.c \
@@ -219,6 +220,9 @@ common/io/io.o: common/io/io.c common/assert.h common/debug.h common/error.auto.
 
 common/io/read.o: common/io/read.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/io.h common/io/read.h common/io/read.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CFLAGS) -c common/io/read.c -o common/io/read.o
+
+common/io/tls/client.o: common/io/tls/client.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/io.h common/io/read.h common/io/read.intern.h common/io/tls/client.h common/io/write.h common/io/write.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h common/wait.h crypto/crypto.h
+	$(CC) $(CFLAGS) -c common/io/tls/client.c -o common/io/tls/client.o
 
 common/io/write.o: common/io/write.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/io.h common/io/write.h common/io/write.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CFLAGS) -c common/io/write.c -o common/io/write.o

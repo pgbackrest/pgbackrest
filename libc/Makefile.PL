@@ -122,7 +122,7 @@ WriteMakefile
 
     C => \@stryCFile,
 
-    LIBS => [-lcrypto],
+    LIBS => '-lcrypto -lssl',
 
     OBJECT => '$(O_FILES)',
 );
