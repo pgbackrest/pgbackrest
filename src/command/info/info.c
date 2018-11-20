@@ -122,47 +122,54 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
 
     // With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the
     // archive path must be built by retrieving the archive id given the db version and system id of the backup.info file.
-    // If it does not exist, an error will be thrown.
+    // If there is no match, an error will be thrown.
     const String *archiveId = infoArchiveIdMatch(info, pgData->version, pgData->systemId);
 
     String *archivePath = strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanza), strPtr(archiveId));
     String *archiveStart = NULL;
     String *archiveStop = NULL;
     Variant *archiveInfo = varNewKv();
-printf("CHECK PATH: %s\n", strPtr(archivePath)); fflush(stdout);
-    if (storageExistsNP(storageRepo(), archivePath))
+printf("PATH: %s\n", strPtr(archivePath)); fflush(stdout);
+    // Get a list of WAL directories in the archive repo from oldest to newest, if any exist
+    StringList *walDir = storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR);
+printf("PATH: %s, waldir %u\n", strPtr(archivePath), (walDir != NULL ? strLstSize(walDir) : 0)); fflush(stdout);
+    if (walDir != NULL)
     {
-printf("PATH: %s, EXISTS \n", strPtr(archivePath)); fflush(stdout);
-        // Get a list of WAL directories in the archive repo from oldest to newest
-        StringList *walDir = strLstSort(
-            storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR), sortOrderAsc);
-printf("PATH: %s, DIRS: %u\n", strPtr(archivePath), strLstSize(walDir)); fflush(stdout);
-        for (unsigned int idx = 0; idx < strLstSize(walDir); idx++)
+        unsigned int sizeWalDir = strLstSize(walDir);
+
+        if (sizeWalDir > 1)
+            walDir = strLstSort(walDir, sortOrderAsc);
+
+        for (unsigned int idx = 0; idx < sizeWalDir; idx++)
         {
-            // Get a list of all WAL from oldest to newest to get the oldest starting WAL archived for this DB
-            StringList *list = strLstSort(storageListP(
+            // Get a list of all WAL
+            StringList *list = storageListP(
                 storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
-                .expression = WAL_SEGMENT_FILE_REGEXP_STR), sortOrderAsc);
-printf("WALLISTSIZE:  %u\n", strLstSize(list)); fflush(stdout);
-            // If wal segments are found, take the first (oldest) one as the archive start
-            if (strLstSize(list) > 0)
+                .expression = WAL_SEGMENT_FILE_REGEXP_STR);
+
+            // If wal segments are found, get the oldest one as the archive start
+            if (list != NULL && strLstSize(list) > 0)
             {
+                // Sort the list from oldest to newest to get the oldest starting WAL archived for this DB
+                list = strLstSort(list, sortOrderAsc);
                 archiveStart = strSubN(strLstGet(list, 0), 0, 24);
                 break;
             }
         }
 
         // Iterate through the directory list in the reverse so processing newest first. Cast comparison to an int for readability.
-        for (unsigned int idx = strLstSize(walDir) - 1; (int)idx > 0; idx--)
+        for (unsigned int idx = sizeWalDir - 1; (int)idx > 0; idx--)
         {
-            // Get a list of all WAL from newest to oldest to get the newest ending WAL archived for this DB
-            StringList *list = strLstSort(storageListP(
+            // Get a list of all WAL
+            StringList *list = storageListP(
                 storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
-                .expression = WAL_SEGMENT_FILE_REGEXP_STR), sortOrderDesc);
+                .expression = WAL_SEGMENT_FILE_REGEXP_STR);
 
-            // If wal segments are found, take the first (newest) one as the archive stop
-            if (strLstSize(list) > 0)
+            // If wal segments are found, get the newest one as the archive stop
+            if (list != NULL && strLstSize(list) > 0)
             {
+                // Sort the list from newest to oldest to get the newest ending WAL archived for this DB
+                list = strLstSort(list, sortOrderDesc);
                 archiveStop = strSubN(strLstGet(list, 0), 0, 24);
                 break;
             }
@@ -303,7 +310,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
         Variant *stanzaInfo = varNewKv();
         VariantList *dbSection = varLstNew();
         VariantList *backupSection = varLstNew();
-        VariantList *archiveSection = varLstNew()
+        VariantList *archiveSection = varLstNew();
         InfoBackup *info = NULL;
 
         // Catch certain errors

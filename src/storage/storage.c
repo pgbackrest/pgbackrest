@@ -127,7 +127,7 @@ storageCopy(StorageFileRead *source, StorageFileWrite *destination)
 }
 
 /***********************************************************************************************************************************
-Does a file/path exist?
+Does a file exist? This function is only for files, not directories.
 ***********************************************************************************************************************************/
 bool
 storageExists(const Storage *this, const String *pathExp, StorageExistsParam param)
@@ -144,8 +144,8 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Build the path
-        String *path = storagePathNP(this, pathExp);
+        // Build the path to the file
+        String *filepath = storagePathNP(this, pathExp);
 
         // Create Wait object of timeout > 0
         Wait *wait = param.timeout != 0 ? waitNew(param.timeout) : NULL;
@@ -154,7 +154,7 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
         do
         {
             // Call driver function
-            result = this->interface.exists(this->driver, path);
+            result = this->interface.exists(this->driver, filepath);
         }
         while (!result && wait != NULL && waitMore(wait));
     }
@@ -489,7 +489,7 @@ storagePath(const Storage *this, const String *pathExp)
                 result = strNewFmt("/%s", strPtr(pathExp));
             else
                 result = strNewFmt("%s/%s", strPtr(this->path), strPtr(pathExp));
-printf("RESULT: %s, THIS_PATH: %s, PATHEXP: %s\n", strPtr(result), strPtr(this->path), strPtr(pathExp)); fflush(stdout); // CSHANG
+
             strFree(pathEvaluated);
         }
     }
