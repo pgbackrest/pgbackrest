@@ -44,6 +44,10 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>New test containers with static test certificates.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>testRepoPath()</code> to let C unit tests know where the code repository is located.</p>
                     </release-item>
                 </release-development-list>

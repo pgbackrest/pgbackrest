@@ -130,7 +130,7 @@ sub containerWrite
     $strScript =
         "# ${strTitle} Container\n" .
         "FROM ${strImageParent}" .
-        (defined($strCopy) ? "\n\n${strCopy}\n\n" : '') .
+        (defined($strCopy) ? "\n\n${strCopy}" : '') .
         (defined($strScript) && $strScript ne ''?
             "\n\nRUN echo '" . (CONTAINER_DEBUG ? 'DEBUG' : 'OPTIMIZED') . " BUILD'" . $strScript : '');
 
@@ -259,7 +259,9 @@ sub sshSetup
 ####################################################################################################################################
 sub certSetup
 {
-    return
+    my $strOS = shift;
+
+    my $strScript =
         sectionHeader() .
         "# Generate fake certs\n" .
         "    mkdir -p -m 755 /etc/fake-cert && \\\n" .
@@ -272,7 +274,34 @@ sub certSetup
         "        -subj \"/C=US/ST=Country/L=City/O=Organization/CN=*.pgbackrest.org\" && \\\n" .
         "    openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 99999 \\\n" .
         "        -sha256 && \\\n" .
-        "    chmod 644 /etc/fake-cert/*";
+        "    chmod 644 /etc/fake-cert/* && \\\n";
+
+    my $rhVm = vmGet();
+
+    if ($rhVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+    {
+        if ($strOS eq VM_CO6)
+        {
+            $strScript .=
+                "    update-ca-trust enable && \\\n";
+        }
+
+        $strScript .=
+            "    cp /etc/fake-cert/pgbackrest-test-ca.crt /etc/pki/ca-trust/source/anchors && \\\n" .
+            "    update-ca-trust extract";
+    }
+    elsif ($rhVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+    {
+        $strScript .=
+            "    cp /etc/fake-cert/pgbackrest-test-ca.crt /usr/local/share/ca-certificates && \\\n" .
+            "    update-ca-certificates";
+    }
+    else
+    {
+        confess &log(ERROR, "unable to install certificate for $rhVm->{$strOS}{&VM_OS_BASE}");
+    }
+
+    return $strScript;
 }
 
 ####################################################################################################################################
@@ -478,7 +507,18 @@ sub containerBuild
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $strScript .= certSetup();
+        my $strCertPath = 'test/certificate';
+        my $strCertName = 'pgbackrest-test';
+
+        $strCopy = '# Copy Test Certificates';
+
+        foreach my $strFile ('-ca.crt', '.crt', '.key')
+        {
+            $oStorageDocker->copy("${strCertPath}/${strCertName}${strFile}", "${strTempPath}/${strCertName}${strFile}");
+            $strCopy .= "\nCOPY ${strCertName}${strFile} " . CERT_FAKE_PATH . "/${strCertName}${strFile}";
+        }
+
+        $strScript .= certSetup($strOS);
 
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDeprecated)
@@ -629,7 +669,7 @@ sub containerBuild
 
         $strScript .= entryPointSetup($strOS);
 
-        containerWrite($oStorageDocker, $strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strCopy,$strScript, $bVmForce);
+        containerWrite($oStorageDocker, $strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
 
         # Copy Devel::Cover to host so it can be installed in other containers (if it doesn't already exist)
         if ($bPkgDevelCoverBuild)
