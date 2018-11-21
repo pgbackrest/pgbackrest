@@ -92,13 +92,15 @@ testRun(void)
 
     // Additional coverage not provided by testing with actual certificates
     // *****************************************************************************************************************************
-    if (testBegin("asn1ToStr() and tlsClientHostVerifyName()"))
+    if (testBegin("asn1ToStr(), tlsClientHostVerify(), and tlsClientHostVerifyName()"))
     {
         TEST_ERROR(asn1ToStr(NULL), CryptoError, "TLS certificate name entry is missing");
 
         TEST_ERROR(
             tlsClientHostVerifyName(
                 strNew("host"), strNewN("ab\0cd", 5)), CryptoError, "TLS certificate name contains embedded null");
+
+        TEST_ERROR(tlsClientHostVerify(strNew("host"), NULL), CryptoError, "No certificate presented by the TLS server");
 
         TEST_RESULT_BOOL(tlsClientHostVerifyName(strNew("host"), strNew("**")), false, "invalid pattern");
         TEST_RESULT_BOOL(tlsClientHostVerifyName(strNew("host"), strNew("*.")), false, "invalid pattern");

@@ -146,6 +146,14 @@ Matching is always case-insensitive since DNS is case insensitive.
 static bool
 tlsClientHostVerifyName(const String *host, const String *name)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, host);
+        FUNCTION_DEBUG_PARAM(STRING, name);
+
+        FUNCTION_DEBUG_ASSERT(host != NULL);
+        FUNCTION_DEBUG_ASSERT(name != NULL);
+    FUNCTION_DEBUG_END();
+
     // Reject embedded nulls in certificate common or alternative name to prevent attacks like CVE-2009-4034
     if (strlen(strPtr(name)) != strSize(name))
         THROW(CryptoError, "TLS certificate name contains embedded null");
@@ -174,7 +182,7 @@ tlsClientHostVerifyName(const String *host, const String *name)
         result = true;
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -185,7 +193,18 @@ The certificate's Common Name and Subject Alternative Names are considered.
 static bool
 tlsClientHostVerify(const String *host, X509 *certificate)
 {
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, host);
+        FUNCTION_DEBUG_PARAM(VOIDP, certificate);
+
+        FUNCTION_DEBUG_ASSERT(host != NULL);
+    FUNCTION_DEBUG_END();
+
     bool result = false;
+
+    // Error if the certificate is NULL
+    if (certificate == NULL)
+        THROW(CryptoError, "No certificate presented by the TLS server");
 
     // First get the subject alternative names from the certificate and compare them against the hostname
     STACK_OF(GENERAL_NAME) *altNameStack = (STACK_OF(GENERAL_NAME) *)X509_get_ext_d2i(
@@ -194,11 +213,9 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 
     if (altNameStack)
     {
-        int san_len = sk_GENERAL_NAME_num(altNameStack);
-
-        for (int i = 0; i < san_len; i++)
+        for (int altNameIdx = 0; altNameIdx < sk_GENERAL_NAME_num(altNameStack); altNameIdx++)
         {
-            const GENERAL_NAME *name = sk_GENERAL_NAME_value(altNameStack, i);
+            const GENERAL_NAME *name = sk_GENERAL_NAME_value(altNameStack, altNameIdx);
             altNameFound = true;
 
             if (name->type == GEN_DNS)
@@ -207,6 +224,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
             if (result != false)
                 break;
         }
+
         sk_GENERAL_NAME_free(altNameStack);
     }
 
@@ -228,7 +246,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
         }
     }
 
-    return result;
+    FUNCTION_DEBUG_RESULT(BOOL, result);
 }
 
 /***********************************************************************************************************************************
