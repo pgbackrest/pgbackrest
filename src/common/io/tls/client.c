@@ -397,10 +397,11 @@ tlsClientRead(TlsClient *this, Buffer *buffer)
         // Initialize the file descriptor set used for select
         fd_set selectSet;
         FD_ZERO(&selectSet);
-        // We know socket is not negative because it passed error handling, so it is safe to cast to unsigned
+
+        // We know the socket is not negative because it passed error handling, so it is safe to cast to unsigned
         FD_SET((unsigned int)this->socket, &selectSet);
 
-        // Initialize timeout struct used for select.  Recreate this structure each time since Linux at least will modify it.
+        // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
         struct timeval timeoutSelect;
         timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
         timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
