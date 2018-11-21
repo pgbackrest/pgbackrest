@@ -13,7 +13,7 @@ Command and Option Configuration Definition
 /***********************************************************************************************************************************
 Define global section name
 ***********************************************************************************************************************************/
-STRING_EXTERN(CFGDEF_SECTION_GLOBAL_STR,                            CFGDEF_SECTION_GLOBAL)
+STRING_EXTERN(CFGDEF_SECTION_GLOBAL_STR,                            CFGDEF_SECTION_GLOBAL);
 
 /***********************************************************************************************************************************
 Map command names to ids and vice versa.

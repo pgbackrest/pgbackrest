@@ -28,6 +28,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Remove embedded semicolon from <code>String</code> constant macros.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Reduce debug level for <code>infoIni()</code> to test.</p>
                     </release-item>
 

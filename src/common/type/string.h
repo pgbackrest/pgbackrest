@@ -79,15 +79,15 @@ By convention all string constant identifiers are appended with _STR.
 
 // Used to declare string constants that will be externed using STRING_DECLARE().  Must be used in a .c file.
 #define STRING_EXTERN(name, value)                                                                                                 \
-    const String *name = STRING_CONST(value);
+    const String *name = STRING_CONST(value)
 
 // Used to declare string constants that will be local to the .c file.  Must be used in a .c file.
 #define STRING_STATIC(name, value)                                                                                                 \
-    static const String *name = STRING_CONST(value);
+    static const String *name = STRING_CONST(value)
 
 // Used to extern string constants declared with STRING_EXTERN(.  Must be used in a .h file.
 #define STRING_DECLARE(name)                                                                                                       \
-    extern const String *name;
+    extern const String *name
 
 /***********************************************************************************************************************************
 Constant strings that are generally useful

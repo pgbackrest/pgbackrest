@@ -18,11 +18,11 @@ typedef struct CryptoHash CryptoHash;
 Hash types
 ***********************************************************************************************************************************/
 #define HASH_TYPE_MD5                                               "md5"
-    STRING_DECLARE(HASH_TYPE_MD5_STR)
+    STRING_DECLARE(HASH_TYPE_MD5_STR);
 #define HASH_TYPE_SHA1                                              "sha1"
-    STRING_DECLARE(HASH_TYPE_SHA1_STR)
+    STRING_DECLARE(HASH_TYPE_SHA1_STR);
 #define HASH_TYPE_SHA256                                            "sha256"
-    STRING_DECLARE(HASH_TYPE_SHA256_STR)
+    STRING_DECLARE(HASH_TYPE_SHA256_STR);
 
 /***********************************************************************************************************************************
 Constructor

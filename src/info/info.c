@@ -19,11 +19,11 @@ Internal constants
 ***********************************************************************************************************************************/
 #define INI_COPY_EXT                                                ".copy"
 #define INI_SECTION_BACKREST                                        "backrest"
-    STRING_STATIC(INI_SECTION_BACKREST_STR,                         INI_SECTION_BACKREST)
+    STRING_STATIC(INI_SECTION_BACKREST_STR,                         INI_SECTION_BACKREST);
 #define INI_KEY_FORMAT                                              "backrest-format"
-    STRING_STATIC(INI_KEY_FORMAT_STR,                               INI_KEY_FORMAT)
+    STRING_STATIC(INI_KEY_FORMAT_STR,                               INI_KEY_FORMAT);
 #define INI_KEY_CHECKSUM                                            "backrest-checksum"
-    STRING_STATIC(INI_KEY_CHECKSUM_STR,                             INI_KEY_CHECKSUM)
+    STRING_STATIC(INI_KEY_CHECKSUM_STR,                             INI_KEY_CHECKSUM);
 
 /***********************************************************************************************************************************
 Object type

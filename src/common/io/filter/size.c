@@ -13,7 +13,7 @@ IO Size Filter
 Filter type constant
 ***********************************************************************************************************************************/
 #define SIZE_FILTER_TYPE                                            "size"
-    STRING_STATIC(SIZE_FILTER_TYPE_STR,                             SIZE_FILTER_TYPE)
+    STRING_STATIC(SIZE_FILTER_TYPE_STR,                             SIZE_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
