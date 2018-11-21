@@ -16,6 +16,10 @@
             <release-core-list>
                 <release-development-list>
                     <release-item>
+                        <p>Require <proper>S3</proper> key options except for <cmd>local</cmd>/<cmd>remote</cmd> commands.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>ServiceError</code> for errors from a service that can be retried.</p>
                     </release-item>
 

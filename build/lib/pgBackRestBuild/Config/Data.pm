@@ -392,9 +392,9 @@ use constant CFGOPTVAL_REPO_TYPE_S3                                 => 's3';
 
 # Repo encryption type
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPTVAL_REPO_CIPHER_TYPE_NONE                    => 'none';
+use constant CFGOPTVAL_REPO_CIPHER_TYPE_NONE                        => 'none';
     push @EXPORT, qw(CFGOPTVAL_REPO_CIPHER_TYPE_NONE);
-use constant CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC             => 'aes-256-cbc';
+use constant CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                 => 'aes-256-cbc';
     push @EXPORT, qw(CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
 
 # Info output
@@ -1322,10 +1322,10 @@ my %hConfigDefine =
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECURE => true,
-        &CFGDEF_REQUIRED  => false,
+        &CFGDEF_REQUIRED => false,
         &CFGDEF_DEPEND =>
         {
-            &CFGDEF_DEPEND_OPTION  => CFGOPT_REPO_CIPHER_TYPE,
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_CIPHER_TYPE,
             &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC],
         },
         &CFGDEF_NAME_ALT =>
@@ -1649,7 +1649,7 @@ my %hConfigDefine =
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECURE => true,
-        &CFGDEF_REQUIRED => false,
+        &CFGDEF_REQUIRED => true,
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
@@ -1659,7 +1659,29 @@ my %hConfigDefine =
         {
             'repo-s3-key' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
-        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_EXPIRE => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_LOCAL =>
+            {
+                &CFGDEF_REQUIRED => false,
+            },
+            &CFGCMD_REMOTE =>
+            {
+                &CFGDEF_REQUIRED => false,
+            },
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_START => {},
+            &CFGCMD_STOP => {},
+        },
     },
 
     &CFGOPT_REPO_S3_KEY_SECRET =>
@@ -1686,7 +1708,7 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
-        &CFGDEF_REQUIRED  => false,
+        &CFGDEF_REQUIRED => false,
         &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
         &CFGDEF_NAME_ALT =>
         {
@@ -1707,6 +1729,8 @@ my %hConfigDefine =
     &CFGOPT_REPO_S3_TOKEN =>
     {
         &CFGDEF_INHERIT => CFGOPT_REPO_S3_KEY,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
     &CFGOPT_REPO_S3_VERIFY_SSL =>
