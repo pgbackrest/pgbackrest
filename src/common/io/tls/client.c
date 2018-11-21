@@ -58,6 +58,8 @@ tlsClientNew(
         FUNCTION_DEBUG_PARAM(BOOL, verifySsl);
         FUNCTION_DEBUG_PARAM(STRING, caFile);
         FUNCTION_DEBUG_PARAM(STRING, caPath);
+
+        FUNCTION_TEST_ASSERT(host != NULL);
     FUNCTION_DEBUG_END();
 
     TlsClient *this = NULL;
@@ -150,8 +152,8 @@ tlsClientHostVerifyName(const String *host, const String *name)
         FUNCTION_DEBUG_PARAM(STRING, host);
         FUNCTION_DEBUG_PARAM(STRING, name);
 
-        FUNCTION_DEBUG_ASSERT(host != NULL);
-        FUNCTION_DEBUG_ASSERT(name != NULL);
+        FUNCTION_TEST_ASSERT(host != NULL);
+        FUNCTION_TEST_ASSERT(name != NULL);
     FUNCTION_DEBUG_END();
 
     // Reject embedded nulls in certificate common or alternative name to prevent attacks like CVE-2009-4034
@@ -197,7 +199,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
         FUNCTION_DEBUG_PARAM(STRING, host);
         FUNCTION_DEBUG_PARAM(VOIDP, certificate);
 
-        FUNCTION_DEBUG_ASSERT(host != NULL);
+        FUNCTION_TEST_ASSERT(host != NULL);
     FUNCTION_DEBUG_END();
 
     bool result = false;
