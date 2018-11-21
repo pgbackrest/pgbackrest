@@ -1,6 +1,6 @@
 # pgBackRest Test Certificates
 
-The certificates in this directory are used for testing purposes only and are not used for actual services.  They are used only by the unit an integration tests and there should be no reason to modify them unless new tests are required.
+The certificates in this directory are used for testing purposes only and are not used for actual services.  They are used only by the unit and integration tests and there should be no reason to modify them unless new tests are required.
 
 ## Generating the Test CA (pgbackrest-test-ca.crt/key)
 

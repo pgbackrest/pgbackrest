@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 TLS Client
 
-This is a simple, secure TLS client intended to allow access to services that are exposed via HTTPS.  We call is TLS instead of SSL
+This is a simple, secure TLS client intended to allow access to services that are exposed via HTTPS.  We call it TLS instead of SSL
 because SSL methods are disabled so only TLS connections are allowed.
 
 This object is intended to be used for multiple TLS connections against a service so tlsClientOpen() can be called each time a new
@@ -30,7 +30,7 @@ typedef struct TlsClient TlsClient;
 Constructor
 ***********************************************************************************************************************************/
 TlsClient *tlsClientNew(
-    const String *host, unsigned int port, TimeMSec timeout, bool verifySsl, const String *caFile, const String *caPath);
+    const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 
 /***********************************************************************************************************************************
 Functions

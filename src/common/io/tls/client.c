@@ -34,11 +34,11 @@ struct TlsClient
     String *host;                                                   // Hostname or IP address
     unsigned int port;                                              // Port to connect to host on
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
-    bool verifySsl;                                                 // Should SSL cert be verified?
+    bool verifyPeer;                                                // Should the peer (server) certificate be verified?
 
-    SSL_CTX *context;                                               // TLS/SSL context
+    SSL_CTX *context;                                               // TLS context
     int socket;                                                     // Client socket
-    SSL *session;                                                   // TLS/SSL session on the socket
+    SSL *session;                                                   // TLS session on the socket
 
     IoRead *read;                                                   // Read interface
     IoWrite *write;                                                 // Write interface
@@ -49,13 +49,13 @@ New object
 ***********************************************************************************************************************************/
 TlsClient *
 tlsClientNew(
-    const String *host, unsigned int port, TimeMSec timeout, bool verifySsl, const String *caFile, const String *caPath)
+    const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug)
         FUNCTION_DEBUG_PARAM(STRING, host);
         FUNCTION_DEBUG_PARAM(UINT, port);
         FUNCTION_DEBUG_PARAM(TIME_MSEC, timeout);
-        FUNCTION_DEBUG_PARAM(BOOL, verifySsl);
+        FUNCTION_DEBUG_PARAM(BOOL, verifyPeer);
         FUNCTION_DEBUG_PARAM(STRING, caFile);
         FUNCTION_DEBUG_PARAM(STRING, caPath);
 
@@ -72,12 +72,12 @@ tlsClientNew(
         this->host = strDup(host);
         this->port = port;
         this->timeout = timeout;
-        this->verifySsl = verifySsl;
+        this->verifyPeer = verifyPeer;
 
         // Initialize socket to -1 so we know when it is disconnected
         this->socket = -1;
 
-        // Setup SSL context
+        // Setup TLS context
         // -------------------------------------------------------------------------------------------------------------------------
         cryptoInit();
 
@@ -86,7 +86,7 @@ tlsClientNew(
         const SSL_METHOD *method = SSLv23_method();
         cryptoError(method == NULL, "unable to load TLS method");
 
-        // Create the SSL context
+        // Create the TLS context
         this->context = SSL_CTX_new(method);
         cryptoError(this->context == NULL, "unable to create TLS context");
 
@@ -97,7 +97,7 @@ tlsClientNew(
 
         // Set location of CA certificates if the server certificate will be verified
         // -------------------------------------------------------------------------------------------------------------------------
-        if (this->verifySsl)
+        if (this->verifyPeer)
         {
             // If the user specified a location
             if (caFile != NULL || caPath != NULL)
@@ -307,7 +307,7 @@ tlsClientOpen(TlsClient *this)
                     if (connect(this->socket, (struct sockaddr *)&socketAddr, sizeof(socketAddr)) == -1)
                         THROW_SYS_ERROR_FMT(FileOpenError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
 
-                    // Negotiate SSL
+                    // Negotiate TLS
                     cryptoError((this->session = SSL_new(this->context)) == NULL, "unable to create TLS context");
 
                     cryptoError(SSL_set_tlsext_host_name(this->session, strPtr(this->host)) != 1, "unable to set TLS host name");
@@ -338,7 +338,7 @@ tlsClientOpen(TlsClient *this)
         MEM_CONTEXT_TEMP_END();
 
         // Verify that the certificate presented by the server is valid
-        if (this->verifySsl)
+        if (this->verifyPeer)
         {
             // Verify that the chain of trust leads to a valid CA
             long int verifyResult = SSL_get_verify_result(this->session);
