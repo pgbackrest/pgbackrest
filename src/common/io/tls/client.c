@@ -446,6 +446,7 @@ tlsClientWrite(TlsClient *this, const Buffer *buffer)
 
         FUNCTION_TEST_ASSERT(this != NULL);
         FUNCTION_TEST_ASSERT(this->session != NULL);
+        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_DEBUG_END();
 
     cryptoError(SSL_write(this->session, bufPtr(buffer), (int)bufUsed(buffer)) != (int)bufUsed(buffer), "unable to write");
