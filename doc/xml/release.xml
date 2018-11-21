@@ -16,6 +16,10 @@
             <release-core-list>
                 <release-development-list>
                     <release-item>
+                        <p>Add <code>TlsClient</code> object.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add interface objects for <proper>libxml2</proper>.</p>
                     </release-item>
 
