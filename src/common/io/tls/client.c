@@ -206,45 +206,49 @@ tlsClientHostVerify(const String *host, X509 *certificate)
     if (certificate == NULL)
         THROW(CryptoError, "No certificate presented by the TLS server");
 
-    // First get the subject alternative names from the certificate and compare them against the hostname
-    STACK_OF(GENERAL_NAME) *altNameStack = (STACK_OF(GENERAL_NAME) *)X509_get_ext_d2i(
-        certificate, NID_subject_alt_name, NULL, NULL);
-    bool altNameFound = false;
-
-    if (altNameStack)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        for (int altNameIdx = 0; altNameIdx < sk_GENERAL_NAME_num(altNameStack); altNameIdx++)
+        // First get the subject alternative names from the certificate and compare them against the hostname
+        STACK_OF(GENERAL_NAME) *altNameStack = (STACK_OF(GENERAL_NAME) *)X509_get_ext_d2i(
+            certificate, NID_subject_alt_name, NULL, NULL);
+        bool altNameFound = false;
+
+        if (altNameStack)
         {
-            const GENERAL_NAME *name = sk_GENERAL_NAME_value(altNameStack, altNameIdx);
-            altNameFound = true;
+            for (int altNameIdx = 0; altNameIdx < sk_GENERAL_NAME_num(altNameStack); altNameIdx++)
+            {
+                const GENERAL_NAME *name = sk_GENERAL_NAME_value(altNameStack, altNameIdx);
+                altNameFound = true;
 
-            if (name->type == GEN_DNS)
-                result = tlsClientHostVerifyName(host, asn1ToStr(name->d.dNSName));
+                if (name->type == GEN_DNS)
+                    result = tlsClientHostVerifyName(host, asn1ToStr(name->d.dNSName));
 
-            if (result != false)
-                break;
+                if (result != false)
+                    break;
+            }
+
+            sk_GENERAL_NAME_free(altNameStack);
         }
 
-        sk_GENERAL_NAME_free(altNameStack);
-    }
-
-    // If no subject alternative name was found then check the common name. Per RFC 2818 and RFC 6125, if the subjectAltName
-    // extension of type dNSName is present the CN must be ignored.
-    if (!altNameFound)
-    {
-        X509_NAME *subjectName = X509_get_subject_name(certificate);
-
-        if (subjectName != NULL)                                // {uncovered - not sure how to create cert with null common name}
+        // If no subject alternative name was found then check the common name. Per RFC 2818 and RFC 6125, if the subjectAltName
+        // extension of type dNSName is present the CN must be ignored.
+        if (!altNameFound)
         {
-            int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);
+            X509_NAME *subjectName = X509_get_subject_name(certificate);
 
-            if (commonNameIndex >= 0)                           // {uncovered - it seems this must be >= 0 if CN is not null}
+            if (subjectName != NULL)                            // {uncovered - not sure how to create cert with null common name}
             {
-                result = tlsClientHostVerifyName(
-                    host, asn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex))));
+                int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);
+
+                if (commonNameIndex >= 0)                       // {uncovered - it seems this must be >= 0 if CN is not null}
+                {
+                    result = tlsClientHostVerifyName(
+                        host, asn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex))));
+                }
             }
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_DEBUG_RESULT(BOOL, result);
 }
