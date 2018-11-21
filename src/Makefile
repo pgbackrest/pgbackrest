@@ -23,6 +23,9 @@ CWARN = -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion 
 # Automatically generate Perl compile options for the local system
 CPERL = `perl -MExtUtils::Embed -e ccopts`
 
+# Automatically generate xml compile options for the local system
+CXML = `xml2-config --cflags`
+
 # Debug options
 CDEBUG = -DNDEBUG
 
@@ -30,7 +33,7 @@ CDEBUG = -DNDEBUG
 CEXTRA =
 
 # Concatenate options for easy usage
-CFLAGS = $(CINCLUDE) $(CSTD) $(COPT) $(CWARN) $(CPERL) $(CDEBUG) $(CEXTRA)
+CFLAGS = $(CINCLUDE) $(CSTD) $(COPT) $(CWARN) $(CXML) $(CPERL) $(CDEBUG) $(CEXTRA)
 
 ####################################################################################################################################
 # Link options
@@ -42,7 +45,7 @@ LDPERL = `perl -MExtUtils::Embed -e ldopts`
 LDEXTRA =
 
 # Concatenate options for easy usage
-LDFLAGS = -lcrypto -lssl -lz $(LDPERL) $(LDEXTRA)
+LDFLAGS = -lcrypto -lssl -lxml2 -lz $(LDPERL) $(LDEXTRA)
 
 ####################################################################################################################################
 # Install options
@@ -94,6 +97,7 @@ SRCS = \
 	common/type/stringList.c \
 	common/type/variant.c \
 	common/type/variantList.c \
+	common/type/xml.c \
 	common/wait.c \
 	compress/gzip.c \
 	compress/gzipCompress.c \
@@ -271,6 +275,9 @@ common/type/variant.o: common/type/variant.c common/assert.h common/debug.h comm
 
 common/type/variantList.o: common/type/variantList.c common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CFLAGS) -c common/type/variantList.c -o common/type/variantList.o
+
+common/type/xml.o: common/type/xml.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/list.h common/type/string.h common/type/xml.h
+	$(CC) $(CFLAGS) -c common/type/xml.c -o common/type/xml.o
 
 common/wait.o: common/wait.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/convert.h common/wait.h
 	$(CC) $(CFLAGS) -c common/wait.c -o common/wait.o

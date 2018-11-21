@@ -3381,7 +3381,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     CFGDEFDATA_OPTION
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-key")
-        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
@@ -3423,6 +3423,20 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLocal)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRemote)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+            )
         )
     )
 
@@ -3430,7 +3444,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     CFGDEFDATA_OPTION
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-key-secret")
-        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
@@ -3472,6 +3486,20 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLocal)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRemote)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+            )
         )
     )
 

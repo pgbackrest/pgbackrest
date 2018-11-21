@@ -72,6 +72,7 @@ my @stryCFile =
     'common/type/stringList.c',
     'common/type/variant.c',
     'common/type/variantList.c',
+    'common/type/xml.c',
     'common/wait.c',
     'compress/gzip.c',
     'compress/gzipCompress.c',
@@ -113,6 +114,7 @@ WriteMakefile
         -o $@
         -std=c99
         -D_FILE_OFFSET_BITS=64
+        `xml2-config --cflags`
     )),
 
     INC => join(' ', qw(
@@ -122,7 +124,7 @@ WriteMakefile
 
     C => \@stryCFile,
 
-    LIBS => '-lcrypto -lssl',
+    LIBS => '-lcrypto -lssl -lxml2',
 
     OBJECT => '$(O_FILES)',
 );
