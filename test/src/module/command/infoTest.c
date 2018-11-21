@@ -157,6 +157,12 @@ testRun(void)
         String *archiveDb1_1 = strNewFmt("%s/9.4-1/0000000100000000", strPtr(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_1), "create db1 archive WAL1 directory");
 
+        String *archiveDb1_2 = strNewFmt("%s/9.4-1/0000000200000000", strPtr(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
+
+        String *archiveDb1_3 = strNewFmt("%s/9.4-1/0000000300000000", strPtr(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_3), "create db1 archive WAL3 directory");
+
         String *archiveDb3 = strNewFmt("%s/9.4-3/0000000100000000", strPtr(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb3), "create db3 archive WAL1 directory");
 
@@ -379,8 +385,8 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza2Path))),
                 bufNewStr(content)), "put backup info to file - stanza2");
 
-        String *archiveDb1_2 = strNewFmt("%s/9.4-1/0000000200000000", strPtr(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
+        // String *archiveDb1_2 = strNewFmt("%s/9.4-1/0000000200000000", strPtr(archiveStanza1Path));
+        // TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
         TEST_RESULT_INT(system(
             strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
             strPtr(archiveDb1_1)))))), 0, "touch WAL1 file");
@@ -474,7 +480,7 @@ testRun(void)
             "                \"version\" : \"9.4\"\n"
             "            }\n"
             "        ],\n"
-            "        \"name\" : \"demo\",\n"
+            "        \"name\" : \"stanza1\",\n"
             "        \"status\" : {\n"
             "            \"code\" : 0,\n"
             "            \"message\" : \"ok\"\n"
@@ -500,7 +506,7 @@ testRun(void)
             "                \"version\" : \"9.4\"\n"
             "            }\n"
             "        ],\n"
-            "        \"name\" : \"test\",\n"
+            "        \"name\" : \"stanza2\",\n"
             "        \"status\" : {\n"
             "            \"code\" : 2,\n"
             "            \"message\" : \"no valid backups\"\n"

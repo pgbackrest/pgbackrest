@@ -129,26 +129,29 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     String *archiveStart = NULL;
     String *archiveStop = NULL;
     Variant *archiveInfo = varNewKv();
-printf("PATH: %s\n", strPtr(archivePath)); fflush(stdout);
+
     // Get a list of WAL directories in the archive repo from oldest to newest, if any exist
     StringList *walDir = storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR);
-printf("PATH: %s, waldir %u\n", strPtr(archivePath), (walDir != NULL ? strLstSize(walDir) : 0)); fflush(stdout);
+
     if (walDir != NULL)
     {
         unsigned int sizeWalDir = strLstSize(walDir);
-
+printf("AP: %s, WALCNT: %u\n", strPtr(archivePath), sizeWalDir); fflush(stdout);
         if (sizeWalDir > 1)
+{
             walDir = strLstSort(walDir, sortOrderAsc);
-
+printf("DIR: %s, WALCNT: %u\n", strPtr(strNewFmt("%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, 0)))), sizeWalDir); fflush(stdout);
+}
+        // Not every WAL dir has WAL files so check each
         for (unsigned int idx = 0; idx < sizeWalDir; idx++)
         {
-            // Get a list of all WAL
+            // Get a list of all WAL in this WAL dir
             StringList *list = storageListP(
-                storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
+                storageRepo(), strNewFmt("%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR);
 
             // If wal segments are found, get the oldest one as the archive start
-            if (list != NULL && strLstSize(list) > 0)
+            if (strLstSize(list) > 0)
             {
                 // Sort the list from oldest to newest to get the oldest starting WAL archived for this DB
                 list = strLstSort(list, sortOrderAsc);
@@ -160,13 +163,13 @@ printf("PATH: %s, waldir %u\n", strPtr(archivePath), (walDir != NULL ? strLstSiz
         // Iterate through the directory list in the reverse so processing newest first. Cast comparison to an int for readability.
         for (unsigned int idx = sizeWalDir - 1; (int)idx > 0; idx--)
         {
-            // Get a list of all WAL
+            // Get a list of all WAL in this WAL dir
             StringList *list = storageListP(
-                storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
+                storageRepo(), strNewFmt("%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR);
-
+printf("WALDIR: %s, LSTCNT: %u\n", strPtr(strNewFmt("%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx)))), strLstSize(list)); fflush(stdout);
             // If wal segments are found, get the newest one as the archive stop
-            if (list != NULL && strLstSize(list) > 0)
+            if (strLstSize(list) > 0)
             {
                 // Sort the list from newest to oldest to get the newest ending WAL archived for this DB
                 list = strLstSort(list, sortOrderDesc);
