@@ -77,6 +77,10 @@ SRCS = \
 	common/io/filter/group.c \
 	common/io/filter/size.c \
 	common/io/handle.c \
+	common/io/http/client.c \
+	common/io/http/common.c \
+	common/io/http/header.c \
+	common/io/http/query.c \
 	common/io/io.c \
 	common/io/read.c \
 	common/io/tls/client.c \
@@ -218,6 +222,18 @@ common/io/filter/size.o: common/io/filter/size.c common/debug.h common/error.aut
 
 common/io/handle.o: common/io/handle.c common/debug.h common/error.auto.h common/error.h common/io/handle.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h
 	$(CC) $(CFLAGS) -c common/io/handle.c -o common/io/handle.o
+
+common/io/http/client.o: common/io/http/client.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/http/client.h common/io/http/common.h common/io/http/header.h common/io/http/query.h common/io/io.h common/io/read.h common/io/read.intern.h common/io/tls/client.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/wait.h
+	$(CC) $(CFLAGS) -c common/io/http/client.c -o common/io/http/client.o
+
+common/io/http/common.o: common/io/http/common.c common/debug.h common/error.auto.h common/error.h common/io/http/common.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h
+	$(CC) $(CFLAGS) -c common/io/http/common.c -o common/io/http/common.o
+
+common/io/http/header.o: common/io/http/header.c common/debug.h common/error.auto.h common/error.h common/io/http/header.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h
+	$(CC) $(CFLAGS) -c common/io/http/header.c -o common/io/http/header.o
+
+common/io/http/query.o: common/io/http/query.c common/debug.h common/error.auto.h common/error.h common/io/http/common.h common/io/http/query.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h
+	$(CC) $(CFLAGS) -c common/io/http/query.c -o common/io/http/query.o
 
 common/io/io.o: common/io/io.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/io.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h
 	$(CC) $(CFLAGS) -c common/io/io.c -o common/io/io.o

@@ -233,6 +233,16 @@ unit:
           common/io/tls/client: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: io-http
+        total: 4
+
+        coverage:
+          common/io/http/client: full
+          common/io/http/common: full
+          common/io/http/header: full
+          common/io/http/query: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: encode
         total: 1
 
