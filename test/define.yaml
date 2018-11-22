@@ -527,6 +527,16 @@ unit:
           storage/helper: full
           storage/storage: full
 
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: s3
+        total: 3
+
+        coverage:
+          storage/driver/s3/fileRead: full
+          storage/driver/s3/storage: full
+          storage/helper: full
+          storage/storage: full
+
   # ********************************************************************************************************************************
   - name: protocol
 

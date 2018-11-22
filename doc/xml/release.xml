@@ -16,6 +16,10 @@
             <release-core-list>
                 <release-development-list>
                     <release-item>
+                        <p>Add <proper>S3</proper> storage driver.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>HttpClient</code> object.</p>
                     </release-item>
 

@@ -48,12 +48,11 @@ storageNew(
         FUNCTION_DEBUG_PARAM(STORAGE_INTERFACE, interface);
 
         FUNCTION_TEST_ASSERT(type != NULL);
-        FUNCTION_TEST_ASSERT(path != NULL);
+        FUNCTION_TEST_ASSERT(path != NULL && strSize(path) >= 1 && strPtr(path)[0] == '/');
         FUNCTION_TEST_ASSERT(driver != NULL);
         FUNCTION_TEST_ASSERT(interface.exists != NULL);
         FUNCTION_TEST_ASSERT(interface.info != NULL);
         FUNCTION_TEST_ASSERT(interface.list != NULL);
-        FUNCTION_TEST_ASSERT(interface.move != NULL);
         FUNCTION_TEST_ASSERT(interface.newRead != NULL);
         FUNCTION_TEST_ASSERT(interface.newWrite != NULL);
         FUNCTION_TEST_ASSERT(interface.pathCreate != NULL);
@@ -294,6 +293,7 @@ storageMove(const Storage *this, StorageFileRead *source, StorageFileWrite *dest
         FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ, source);
         FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE, destination);
 
+        FUNCTION_TEST_ASSERT(this->interface.move != NULL);
         FUNCTION_TEST_ASSERT(source != NULL);
         FUNCTION_TEST_ASSERT(destination != NULL);
         FUNCTION_DEBUG_ASSERT(!storageFileReadIgnoreMissing(source));

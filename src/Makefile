@@ -135,6 +135,8 @@ SRCS = \
 	storage/driver/posix/common.c \
 	storage/driver/posix/fileRead.c \
 	storage/driver/posix/fileWrite.c \
+	storage/driver/s3/fileRead.c \
+	storage/driver/s3/storage.c \
 	storage/fileRead.c \
 	storage/fileWrite.c \
 	storage/helper.c \
@@ -397,13 +399,19 @@ storage/driver/posix/fileWrite.o: storage/driver/posix/fileWrite.c common/assert
 storage/driver/posix/storage.o: storage/driver/posix/storage.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h storage/driver/posix/common.h storage/driver/posix/fileRead.h storage/driver/posix/fileWrite.h storage/driver/posix/storage.h storage/fileRead.h storage/fileWrite.h storage/info.h storage/storage.h storage/storage.intern.h
 	$(CC) $(CFLAGS) -c storage/driver/posix/storage.c -o storage/driver/posix/storage.o
 
+storage/driver/s3/fileRead.o: storage/driver/s3/fileRead.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/http/client.h common/io/http/header.h common/io/http/query.h common/io/read.h common/io/read.intern.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h storage/driver/s3/fileRead.h storage/driver/s3/storage.h storage/fileRead.h storage/fileRead.intern.h storage/fileWrite.h storage/info.h storage/storage.h storage/storage.intern.h
+	$(CC) $(CFLAGS) -c storage/driver/s3/fileRead.c -o storage/driver/s3/fileRead.o
+
+storage/driver/s3/storage.o: storage/driver/s3/storage.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/http/client.h common/io/http/common.h common/io/http/header.h common/io/http/query.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/type/xml.h crypto/hash.h storage/driver/s3/fileRead.h storage/driver/s3/storage.h storage/fileRead.h storage/fileWrite.h storage/info.h storage/storage.h storage/storage.intern.h
+	$(CC) $(CFLAGS) -c storage/driver/s3/storage.c -o storage/driver/s3/storage.o
+
 storage/fileRead.o: storage/fileRead.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h storage/fileRead.h storage/fileRead.intern.h
 	$(CC) $(CFLAGS) -c storage/fileRead.c -o storage/fileRead.o
 
 storage/fileWrite.o: storage/fileWrite.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h storage/fileWrite.h storage/fileWrite.intern.h version.h
 	$(CC) $(CFLAGS) -c storage/fileWrite.c -o storage/fileWrite.o
 
-storage/helper.o: storage/helper.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h storage/driver/posix/fileRead.h storage/driver/posix/fileWrite.h storage/driver/posix/storage.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h storage/storage.intern.h
+storage/helper.o: storage/helper.c common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/http/client.h common/io/http/header.h common/io/http/query.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h storage/driver/posix/fileRead.h storage/driver/posix/fileWrite.h storage/driver/posix/storage.h storage/driver/s3/storage.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h storage/storage.intern.h
 	$(CC) $(CFLAGS) -c storage/helper.c -o storage/helper.o
 
 storage/storage.o: storage/storage.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/io.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/wait.h storage/fileRead.h storage/fileWrite.h storage/info.h storage/storage.h storage/storage.intern.h
