@@ -59,11 +59,12 @@ struct HttpClient
 Read content
 ***********************************************************************************************************************************/
 static size_t
-httpClientRead(HttpClient *this, Buffer *buffer)
+httpClientRead(HttpClient *this, Buffer *buffer, bool block)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(HTTP_CLIENT, this);
         FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+        FUNCTION_DEBUG_PARAM(BOOL, block);
 
         FUNCTION_TEST_ASSERT(this != NULL);
         FUNCTION_TEST_ASSERT(buffer != NULL);
@@ -361,7 +362,7 @@ httpClientRequest(
                         do
                         {
                             bufResize(result, bufSize(result) + ioBufferSize());
-                            httpClientRead(this, result);
+                            httpClientRead(this, result, true);
                         }
                         while (!httpClientEof(this));
                     }

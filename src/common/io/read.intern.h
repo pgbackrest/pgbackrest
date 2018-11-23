@@ -12,7 +12,7 @@ Constructor
 typedef bool (*IoReadInterfaceEof)(void *driver);
 typedef void (*IoReadInterfaceClose)(void *driver);
 typedef bool (*IoReadInterfaceOpen)(void *driver);
-typedef size_t (*IoReadInterfaceRead)(void *driver, Buffer *buffer);
+typedef size_t (*IoReadInterfaceRead)(void *driver, Buffer *buffer, bool block);
 
 typedef struct IoReadInterface
 {

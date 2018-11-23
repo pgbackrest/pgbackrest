@@ -103,11 +103,12 @@ storageDriverPosixFileReadOpen(StorageDriverPosixFileRead *this)
 Read from a file
 ***********************************************************************************************************************************/
 size_t
-storageDriverPosixFileRead(StorageDriverPosixFileRead *this, Buffer *buffer)
+storageDriverPosixFileRead(StorageDriverPosixFileRead *this, Buffer *buffer, bool block)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
         FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+        FUNCTION_DEBUG_PARAM(BOOL, block);
 
         FUNCTION_DEBUG_ASSERT(this != NULL && this->handle != -1);
         FUNCTION_DEBUG_ASSERT(buffer != NULL && !bufFull(buffer));

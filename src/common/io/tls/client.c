@@ -377,11 +377,12 @@ tlsClientOpen(TlsClient *this)
 Read from the TLS session
 ***********************************************************************************************************************************/
 size_t
-tlsClientRead(TlsClient *this, Buffer *buffer)
+tlsClientRead(TlsClient *this, Buffer *buffer, bool block)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(TLS_CLIENT, this);
         FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+        FUNCTION_DEBUG_PARAM(BOOL, block);
 
         FUNCTION_TEST_ASSERT(this != NULL);
         FUNCTION_TEST_ASSERT(this->session != NULL);
@@ -391,46 +392,54 @@ tlsClientRead(TlsClient *this, Buffer *buffer)
 
     ssize_t actualBytes = 0;
 
-    // If no tls data pending then check the socket
-    if (!SSL_pending(this->session))
+    // If blocking read keep reading until buffer is full
+    do
     {
-        // Initialize the file descriptor set used for select
-        fd_set selectSet;
-        FD_ZERO(&selectSet);
-
-        // We know the socket is not negative because it passed error handling, so it is safe to cast to unsigned
-        FD_SET((unsigned int)this->socket, &selectSet);
-
-        // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
-        struct timeval timeoutSelect;
-        timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
-        timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
-
-        // Determine if there is data to be read
-        int result = select(this->socket + 1, &selectSet, NULL, NULL, &timeoutSelect);
-        THROW_ON_SYS_ERROR_FMT(result == -1, AssertError, "unable to select from '%s:%u'", strPtr(this->host), this->port);
-
-        // If no data read after time allotted then error
-        if (!result)
+        // If no tls data pending then check the socket
+        if (!SSL_pending(this->session))
         {
-            THROW_FMT(
-                FileReadError, "unable to read data from '%s:%u' after %" PRIu64 "ms",
-                strPtr(this->host), this->port, this->timeout);
+            // Initialize the file descriptor set used for select
+            fd_set selectSet;
+            FD_ZERO(&selectSet);
+
+            // We know the socket is not negative because it passed error handling, so it is safe to cast to unsigned
+            FD_SET((unsigned int)this->socket, &selectSet);
+
+            // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
+            struct timeval timeoutSelect;
+            timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
+            timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
+
+            // Determine if there is data to be read
+            int result = select(this->socket + 1, &selectSet, NULL, NULL, &timeoutSelect);
+            THROW_ON_SYS_ERROR_FMT(result == -1, AssertError, "unable to select from '%s:%u'", strPtr(this->host), this->port);
+
+            // If no data read after time allotted then error
+            if (!result)
+            {
+                THROW_FMT(
+                    FileReadError, "unable to read data from '%s:%u' after %" PRIu64 "ms",
+                    strPtr(this->host), this->port, this->timeout);
+            }
+        }
+
+        // Read and handle errors
+        size_t expectedBytes = bufRemains(buffer);
+        actualBytes = SSL_read(this->session, bufRemainsPtr(buffer), (int)expectedBytes);
+
+        cryptoError(actualBytes < 0, "unable to read from TLS");
+
+        // Update amount of buffer used
+        bufUsedInc(buffer, (size_t)actualBytes);
+
+        // If zero bytes were returned then the connection was closed
+        if (actualBytes == 0)
+        {
+            tlsClientClose(this);
+            break;
         }
     }
-
-    // Read and handle errors
-    size_t expectedBytes = bufRemains(buffer);
-    actualBytes = SSL_read(this->session, bufRemainsPtr(buffer), (int)expectedBytes);
-
-    cryptoError(actualBytes < 0, "unable to read from TLS");
-
-    // Update amount of buffer used
-    bufUsedInc(buffer, (size_t)actualBytes);
-
-    // If zero bytes were returned then the connection was closed
-    if (actualBytes == 0)
-        tlsClientClose(this);
+    while (block && bufRemains(buffer) > 0);
 
     FUNCTION_DEBUG_RESULT(SIZE, (size_t)actualBytes);
 }

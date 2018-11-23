@@ -23,7 +23,7 @@ StorageDriverS3FileRead *storageDriverS3FileReadNew(StorageDriverS3 *storage, co
 Functions
 ***********************************************************************************************************************************/
 bool storageDriverS3FileReadOpen(StorageDriverS3FileRead *this);
-size_t storageDriverS3FileRead(StorageDriverS3FileRead *this, Buffer *buffer);
+size_t storageDriverS3FileRead(StorageDriverS3FileRead *this, Buffer *buffer, bool block);
 
 /***********************************************************************************************************************************
 Getters

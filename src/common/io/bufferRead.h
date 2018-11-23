@@ -21,7 +21,7 @@ IoBufferRead *ioBufferReadNew(const Buffer *buffer);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-size_t ioBufferRead(IoBufferRead *this, Buffer *buffer);
+size_t ioBufferRead(IoBufferRead *this, Buffer *buffer, bool block);
 IoBufferRead *ioBufferReadMove(IoBufferRead *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************

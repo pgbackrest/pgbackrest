@@ -113,12 +113,12 @@ ioReadEofDriver(const IoRead *this)
 Read data from IO and process filters
 ***********************************************************************************************************************************/
 static void
-ioReadInternal(IoRead *this, Buffer *buffer, bool relaxed)
+ioReadInternal(IoRead *this, Buffer *buffer, bool block)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(IO_READ, this);
         FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-        FUNCTION_DEBUG_PARAM(BOOL, relaxed);
+        FUNCTION_DEBUG_PARAM(BOOL, block);
 
         FUNCTION_TEST_ASSERT(this != NULL);
         FUNCTION_TEST_ASSERT(buffer != NULL);
@@ -142,7 +142,13 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool relaxed)
             if (!ioReadEofDriver(this))
             {
                 bufUsedZero(this->input);
-                this->interface.read(this->driver, this->input);
+
+                // If blocking then limit the amount of data requested
+                if (block && bufRemains(this->input) > bufRemains(buffer))
+                    bufLimitSet(this->input, bufRemains(buffer));
+
+                this->interface.read(this->driver, this->input, block);
+                bufLimitClear(this->input);
             }
             // Set input to NULL and flush (no need to actually free the buffer here as it will be freed with the mem context)
             else
@@ -151,8 +157,8 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool relaxed)
             // Process the input buffer (or flush if NULL)
             ioFilterGroupProcess(this->filterGroup, this->input, buffer);
 
-            // Stop if relaxed read -- we don't need to fill the buffer as long as we got some data
-            if (relaxed && bufUsed(buffer) > bufferUsedBegin)
+            // Stop if not blocking -- we don't need to fill the buffer as long as we got some data
+            if (!block && bufUsed(buffer) > bufferUsedBegin)
                 break;
         }
 
@@ -197,7 +203,7 @@ ioRead(IoRead *this, Buffer *buffer)
     }
 
     // Read data
-    ioReadInternal(this, buffer, false);
+    ioReadInternal(this, buffer, true);
 
     FUNCTION_DEBUG_RESULT(SIZE, outputRemains - bufRemains(buffer));
 }
@@ -263,7 +269,7 @@ ioReadLine(IoRead *this)
             if (ioReadEof(this))
                 THROW(FileReadError, "unexpected eof while reading line");
 
-            ioReadInternal(this, this->output, 1);
+            ioReadInternal(this, this->output, false);
         }
     }
     while (result == NULL);

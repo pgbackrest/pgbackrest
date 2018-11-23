@@ -23,7 +23,7 @@ StorageDriverPosixFileRead *storageDriverPosixFileReadNew(StorageDriverPosix *st
 Functions
 ***********************************************************************************************************************************/
 bool storageDriverPosixFileReadOpen(StorageDriverPosixFileRead *this);
-size_t storageDriverPosixFileRead(StorageDriverPosixFileRead *this, Buffer *buffer);
+size_t storageDriverPosixFileRead(StorageDriverPosixFileRead *this, Buffer *buffer, bool block);
 void storageDriverPosixFileReadClose(StorageDriverPosixFileRead *this);
 
 /***********************************************************************************************************************************

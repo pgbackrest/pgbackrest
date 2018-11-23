@@ -36,7 +36,7 @@ TlsClient *tlsClientNew(
 Functions
 ***********************************************************************************************************************************/
 void tlsClientOpen(TlsClient *this);
-size_t tlsClientRead(TlsClient *this, Buffer *buffer);
+size_t tlsClientRead(TlsClient *this, Buffer *buffer, bool block);
 void tlsClientWrite(TlsClient *this, const Buffer *buffer);
 void tlsClientClose(TlsClient *this);
 

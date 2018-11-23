@@ -126,6 +126,8 @@ P00  DEBUG:     storage/storage::storageExists: => false
 P00  DEBUG:     command/control/control::lockStopTest: => void
 P00  DEBUG:     command/archive/get/file::archiveGetCheck: (archiveFile: {"700000007000000070000000"})
 P00  DEBUG:     postgres/interface::pgControlFromFile: (pgPath: {"[TEST_PATH]/db-master/db/base"})
+P00  DEBUG:     storage/storage::storageNewRead: (this: {type: posix, path: {"/"}, write: false}, fileExp: {"[TEST_PATH]/db-master/db/base/global/pg_control"}, param.ignoreMissing: false, param.filterGroup: null)
+P00  DEBUG:     storage/storage::storageNewRead: => {type: posix, name: {"[TEST_PATH]/db-master/db/base/global/pg_control"}, ignoreMissing: false}
 P00  DEBUG:     storage/storage::storageGet: (file: {type: posix, name: {"[TEST_PATH]/db-master/db/base/global/pg_control"}, ignoreMissing: false}, param.exactSize: 512)
 P00  DEBUG:     storage/storage::storageGet: => {used: 512, size: 512, limit: <off>}
 P00  DEBUG:     postgres/interface::pgControlFromFile: => {version: 90400, systemId: 1000000000000000094, walSegmentSize: 16777216, pageChecksum: true}
@@ -166,6 +168,8 @@ P00  DEBUG:     storage/storage::storageExists: => false
 P00  DEBUG:     command/control/control::lockStopTest: => void
 P00  DEBUG:     command/archive/get/file::archiveGetCheck: (archiveFile: {"000000010000000100000001"})
 P00  DEBUG:     postgres/interface::pgControlFromFile: (pgPath: {"[TEST_PATH]/db-master/db/base"})
+P00  DEBUG:     storage/storage::storageNewRead: (this: {type: posix, path: {"/"}, write: false}, fileExp: {"[TEST_PATH]/db-master/db/base/global/pg_control"}, param.ignoreMissing: false, param.filterGroup: null)
+P00  DEBUG:     storage/storage::storageNewRead: => {type: posix, name: {"[TEST_PATH]/db-master/db/base/global/pg_control"}, ignoreMissing: false}
 P00  DEBUG:     storage/storage::storageGet: (file: {type: posix, name: {"[TEST_PATH]/db-master/db/base/global/pg_control"}, ignoreMissing: false}, param.exactSize: 512)
 P00  DEBUG:     storage/storage::storageGet: => {used: 512, size: 512, limit: <off>}
 P00  DEBUG:     postgres/interface::pgControlFromFile: => {version: 90400, systemId: 1000000000000000094, walSegmentSize: 16777216, pageChecksum: true}
@@ -184,8 +188,12 @@ P00  DEBUG:     command/archive/common::walSegmentFind: => {"0000000100000001000
 P00  DEBUG:     command/archive/get/file::archiveGetCheck: => {"9.4-1/0000000100000001/000000010000000100000001-ceb021d9bb41f220511e413b095d2b0d89fec113.gz"}
 P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: (path: {"/"}, modeFile: 0640, modePath: 0750, write: true, pathExpressionFunction: null)
 P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: => {StorageDriverPosix}
+P00  DEBUG:     storage/storage::storageNewWrite: (this: {type: posix, path: {"/"}, write: true}, fileExp: {"[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG"}, param.modeFile: 0000, param.modePath: 0000, param.noCreatePath: true, param.noSyncFile: true, param.noSyncPath: true, param.noAtomic: true, param.filterGroup: null)
+P00  DEBUG:     storage/storage::storageNewWrite: => {type: posix, name: {"[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG"}, modeFile: 0640, modePath: 0750, createPath: false, syncFile: false, syncPath: false, atomic: false}
 P00  DEBUG:     common/io/filter/group::ioFilterGroupAdd: (this: {inputSame: false, done: true}, filter: {IoFilter})
 P00  DEBUG:     common/io/filter/group::ioFilterGroupAdd: => void
+P00  DEBUG:     storage/storage::storageNewRead: (this: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileExp: {"<REPO:ARCHIVE>/9.4-1/0000000100000001/000000010000000100000001-ceb021d9bb41f220511e413b095d2b0d89fec113.gz"}, param.ignoreMissing: false, param.filterGroup: null)
+P00  DEBUG:     storage/storage::storageNewRead: => {type: posix, name: {"[TEST_PATH]/db-master/repo/archive/db/9.4-1/0000000100000001/000000010000000100000001-ceb021d9bb41f220511e413b095d2b0d89fec113.gz"}, ignoreMissing: false}
 P00  DEBUG:     storage/storage::storageCopy: (source: {type: posix, name: {"[TEST_PATH]/db-master/repo/archive/db/9.4-1/0000000100000001/000000010000000100000001-ceb021d9bb41f220511e413b095d2b0d89fec113.gz"}, ignoreMissing: false}, destination: {type: posix, name: {"[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG"}, modeFile: 0640, modePath: 0750, createPath: false, syncFile: false, syncPath: false, atomic: false})
 P00  DEBUG:     storage/storage::storageCopy: => true
 P00  DEBUG:     command/archive/get/file::archiveGetFile: => 0

@@ -423,7 +423,7 @@ testRun(void)
             strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{connection: 'close', content-length: '32'}",
             "    check response headers");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)),  "01234567890123456789012345678901", "    check response");
-        TEST_RESULT_UINT(httpClientRead(client, bufNew(1)), 0, "    call internal read to check eof");
+        TEST_RESULT_UINT(httpClientRead(client, bufNew(1), true), 0, "    call internal read to check eof");
 
         // Request with content using chunked encoding
         TEST_RESULT_VOID(httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), "request with chunked encoding");

@@ -330,7 +330,7 @@ Open a file for reading
 StorageFileRead *
 storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STORAGE, this);
         FUNCTION_DEBUG_PARAM(STRING, fileExp);
         FUNCTION_DEBUG_PARAM(BOOL, param.ignoreMissing);
@@ -361,7 +361,7 @@ Open a file for writing
 StorageFileWrite *
 storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+    FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STORAGE, this);
         FUNCTION_DEBUG_PARAM(STRING, fileExp);
         FUNCTION_DEBUG_PARAM(MODE, param.modeFile);

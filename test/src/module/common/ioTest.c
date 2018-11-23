@@ -294,7 +294,7 @@ testRun(void)
 
         TEST_RESULT_VOID(bufUsedZero(buffer), "    zero buffer");
         TEST_RESULT_BOOL(ioReadEof(ioBufferReadIo(bufferRead)), true, "    eof");
-        TEST_RESULT_BOOL(ioBufferRead(bufferRead, buffer), 0, "    eof from driver");
+        TEST_RESULT_BOOL(ioBufferRead(bufferRead, buffer, true), 0, "    eof from driver");
         TEST_RESULT_SIZE(ioRead(ioBufferReadIo(bufferRead), buffer), 0, "    read 0 bytes");
         TEST_RESULT_VOID(ioReadClose(ioBufferReadIo(bufferRead)), " close buffer read object");
 

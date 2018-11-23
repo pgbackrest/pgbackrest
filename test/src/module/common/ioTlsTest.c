@@ -67,7 +67,13 @@ testTlsServer(void)
         harnessTlsServerAccept();
 
         harnessTlsServerExpect("some protocol info");
-        harnessTlsServerReply("something:0\nsome content");
+        harnessTlsServerReply("something:0\n");
+
+        sleepMSec(100);
+        harnessTlsServerReply("some ");
+
+        sleepMSec(100);
+        harnessTlsServerReply("contentAND MORE");
 
         // This will cause the client to disconnect
         sleepMSec(500);
@@ -180,14 +186,17 @@ testRun(void)
         TEST_RESULT_VOID(ioWrite(tlsClientIoWrite(client), input), "write input");
         ioWriteFlush(tlsClientIoWrite(client));
 
-        Buffer *output = bufNew(12);
-        TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 12, "read output");
-        TEST_RESULT_STR(strPtr(strNewBuf(output)), "something:0\n", "    check output");
+        TEST_RESULT_STR(strPtr(ioReadLine(tlsClientIoRead(client))), "something:0", "read line");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
-        output = bufNew(12);
+        Buffer *output = bufNew(12);
         TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 12, "read output");
         TEST_RESULT_STR(strPtr(strNewBuf(output)), "some content", "    check output");
+        TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
+
+        output = bufNew(8);
+        TEST_RESULT_INT(ioRead(tlsClientIoRead(client), output), 8, "read output");
+        TEST_RESULT_STR(strPtr(strNewBuf(output)), "AND MORE", "    check output");
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), false, "    check eof = false");
 
         output = bufNew(12);
