@@ -81,7 +81,7 @@ sub run
 
     foreach my $bS3 (false, true)
     {
-    foreach my $bRemote ($bS3 ? (true) : (false, true))
+    foreach my $bRemote ($bS3 ? (false) : (false, true))
     {
         my $bRepoEncrypt = $bRemote && !$bS3 ? true : false;
 

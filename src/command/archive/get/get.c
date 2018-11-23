@@ -271,9 +271,8 @@ cmdArchiveGet(void)
             // Disable async if it was enabled
             cfgOptionSet(cfgOptArchiveAsync, cfgOptionSource(cfgOptArchiveAsync), varNewBool(false));
 
-            // If repo type is not s3 and repo server is not remote and not encrypted then this can be done entirely in C
-            if (!strEqZ(cfgOptionStr(cfgOptRepoType), STORAGE_TYPE_S3) && !cfgOptionTest(cfgOptRepoHost) &&
-                strEqZ(cfgOptionStr(cfgOptRepoCipherType), "none"))
+            // If repo server is not remote and not encrypted then this can be done entirely in C
+            if (!cfgOptionTest(cfgOptRepoHost) && strEqZ(cfgOptionStr(cfgOptRepoCipherType), "none"))
             {
                 result = archiveGetFile(walSegment, walDestination);
             }
