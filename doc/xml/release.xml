@@ -279,7 +279,7 @@
                             <release-item-ideator id="dan.farrell"/>
                         </release-item-contributor-list>
 
-                        <p>Fix missing missing URI encoding in S3 driver.</p>
+                        <p>Fix missing URI encoding in S3 driver.</p>
                     </release-item>
 
                     <release-item>
