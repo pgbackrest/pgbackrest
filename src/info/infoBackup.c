@@ -112,6 +112,7 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
                 "HINT: has a stanza-create been performed?",
                 errorMessage());
         }
+        // ??? Add encryption error
         TRY_END();
 
         const Ini *infoIni = infoPgIni(this->infoPg);

@@ -279,17 +279,18 @@ testRun(void)
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"7d4b23d578d765d27f95f0ca6e851ce14ab5e1ac\"\n"
+            "backrest-checksum=\"075a202d42c3b6a0257da5f73a68fa77b342f777\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.08dev\"\n"
             "\n"
             "[db]\n"
-            "db-id=1\n"
-            "db-system-id=6625592122879095702\n"
-            "db-version=\"9.4\"\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
             "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
+            "2={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n"
         );
 
         TEST_RESULT_VOID(
@@ -299,7 +300,7 @@ testRun(void)
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"901d9a199608901d81816c19f76b77548f448e17\"\n"
+            "backrest-checksum=\"15bc3f8186a8d52a9d5549ace7bb69779bb39a5f\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.08dev\"\n"
             "\n"
@@ -322,15 +323,17 @@ testRun(void)
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "\n"
             "[db]\n"
-            "db-catalog-version=201409291\n"
+            "db-catalog-version=201510051\n"
             "db-control-version=942\n"
-            "db-id=1\n"
-            "db-system-id=6625592122879095702\n"
-            "db-version=\"9.4\"\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
                 "\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"9.5\"}\n"
         );
 
         TEST_RESULT_VOID(
@@ -396,11 +399,19 @@ testRun(void)
         TEST_RESULT_INT(system(
             strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
             strPtr(archiveDb1_2)))))), 0, "touch WAL2 file");
-// CSHANG PROBLEM the min/max for stanza1 is still NULL
+
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
             "    {\n"
             "        \"archive\" : [\n"
+            "            {\n"
+            "                \"database\" : {\n"
+            "                    \"id\" : 2\n"
+            "                },\n"
+            "                \"id\" : \"9.5-2\",\n"
+            "                \"max\" : null,\n"
+            "                \"min\" : null\n"
+            "            },\n"
             "            {\n"
             "                \"database\" : {\n"
             "                    \"id\" : 1\n"
@@ -475,6 +486,11 @@ testRun(void)
             "        \"cipher\" : \"none\",\n"
             "        \"db\" : [\n"
             "            {\n"
+            "                \"id\" : 2,\n"
+            "                \"system-id\" : 6626363367545678089,\n"
+            "                \"version\" : \"9.5\"\n"
+            "            },\n"
+            "            {\n"
             "                \"id\" : 1,\n"
             "                \"system-id\" : 6625592122879095702,\n"
             "                \"version\" : \"9.4\"\n"
@@ -516,8 +532,9 @@ testRun(void)
 
         // Stanza not found
         //--------------------------------------------------------------------------------------------------------------------------
-        strLstAddZ(argList, "--stanza=silly");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        StringList *argList2 = strLstDup(argList);
+        strLstAddZ(argList2, "--stanza=silly");
+        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
             "    {\n"
@@ -530,6 +547,40 @@ testRun(void)
             "        }\n"
             "    }\n"
             "]\n", "missing stanza path");
+
+        // Stanza found
+        //--------------------------------------------------------------------------------------------------------------------------
+        strLstAddZ(argList, "--stanza=stanza2");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        TEST_RESULT_STR(strPtr(infoRender()),
+            "[\n"
+            "    {\n"
+            "        \"archive\" : [\n"
+            "            {\n"
+            "                \"database\" : {\n"
+            "                    \"id\" : 1\n"
+            "                },\n"
+            "                \"id\" : \"9.4-1\",\n"
+            "                \"max\" : null,\n"
+            "                \"min\" : null\n"
+            "            }\n"
+            "        ],\n"
+            "        \"backup\" : [],\n"
+            "        \"cipher\" : \"none\",\n"
+            "        \"db\" : [\n"
+            "            {\n"
+            "                \"id\" : 1,\n"
+            "                \"system-id\" : 6625633699176220261,\n"
+            "                \"version\" : \"9.4\"\n"
+            "            }\n"
+            "        ],\n"
+            "        \"name\" : \"stanza2\",\n"
+            "        \"status\" : {\n"
+            "            \"code\" : 2,\n"
+            "            \"message\" : \"no valid backups\"\n"
+            "        }\n"
+            "    }\n"
+            "]\n", "multiple stanzas - one selected");
     }
 
     // *****************************************************************************************************************************
@@ -546,7 +597,40 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(strPtr(infoRender()),
             strPtr(strNewFmt("No stanzas exist in %s\n", strPtr(storagePathNP(storageRepo(), NULL)))), "text - no stanzas");
+
+        // Empty stanza
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), backupStanza1Path), "backup stanza1 directory");
+        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveStanza1Path), "archive stanza1 directory");
+        TEST_RESULT_STR(strPtr(infoRender()), "stanza: stanza1\n    status: error\n", "empty stanza");
+
     }
+
+    // *****************************************************************************************************************************
+    // CSHANG Not sure how this works
+    // if (testBegin("cmdInfo()"))
+    // {
+    //     StringList *argList = strLstNew();
+    //     strLstAddZ(argList, "/path/to/pgbackrest");
+    //     TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "parse help from empty command line");
+    //
+    //     // Redirect stdout to a file
+    //     int stdoutSave = dup(STDOUT_FILENO);
+    //     String *stdoutFile = strNewFmt("%s/stdout.info", testPath());
+    //
+    //     if (freopen(strPtr(stdoutFile), "w", stdout) == NULL)                                       // {uncoverable - does not fail}
+    //         THROW_SYS_ERROR(FileWriteError, "unable to reopen stdout");                             // {uncoverable+}
+    //
+    //     // Not in a test wrapper to avoid writing to stdout
+    //     cmdInfo();
+    //
+    //     // Restore normal stdout
+    //     dup2(stdoutSave, STDOUT_FILENO);
+    //
+    //     Storage *storage = storageDriverPosixInterface(
+    //         storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL));
+    //     TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))), generalHelp, "    check text");
+    // }
 
     FUNCTION_HARNESS_RESULT_VOID();
 }

@@ -57,6 +57,9 @@ STRING_STATIC(STANZA_KEY_DB_STR,                                    "db")
 STRING_STATIC(STATUS_KEY_CODE_STR,                                  "code")
 STRING_STATIC(STATUS_KEY_MESSAGE_STR,                               "message")
 
+
+STRING_STATIC(INFO_STANZA_STATUS_OK,                                "ok")
+STRING_STATIC(INFO_STANZA_STATUS_ERROR,                             "error")
 #define INFO_STANZA_STATUS_CODE_OK                                  0
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_OK_STR,                    "ok")
 #define INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH                 1
@@ -136,12 +139,10 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     if (walDir != NULL)
     {
         unsigned int sizeWalDir = strLstSize(walDir);
-printf("AP: %s, WALCNT: %u\n", strPtr(archivePath), sizeWalDir); fflush(stdout);
+
         if (sizeWalDir > 1)
-{
             walDir = strLstSort(walDir, sortOrderAsc);
-printf("DIR: %s, WALCNT: %u\n", strPtr(strNewFmt("%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, 0)))), sizeWalDir); fflush(stdout);
-}
+
         // Not every WAL dir has WAL files so check each
         for (unsigned int idx = 0; idx < sizeWalDir; idx++)
         {
@@ -167,7 +168,7 @@ printf("DIR: %s, WALCNT: %u\n", strPtr(strNewFmt("%s/%s", strPtr(archivePath), s
             StringList *list = storageListP(
                 storageRepo(), strNewFmt("%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR);
-printf("WALDIR: %s, LSTCNT: %u\n", strPtr(strNewFmt("%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx)))), strLstSize(list)); fflush(stdout);
+
             // If wal segments are found, get the newest one as the archive stop
             if (strLstSize(list) > 0)
             {
@@ -329,14 +330,15 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
             stanzaStatus(
                 INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR, stanzaInfo);
         }
-        CATCH(CryptoError)
-        {
-            THROW_FMT(
-                CryptoError,
-                "%s\n"
-                "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
-                errorMessage());
-        }
+        // ??? Uncomment when encryption supported
+        // CATCH(CryptoError)
+        // {
+        //     THROW_FMT(
+        //         CryptoError,
+        //         "%s\n"
+        //         "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
+        //         errorMessage());
+        // }
         TRY_END();
 
         // Set the stanza name and cipher
@@ -402,6 +404,7 @@ in the temp mem context of cmdHelp?  Since all these are static, I don't underst
 the cmdXXX function...   render is the MAIN function so best practive to have mem context.
 */
 
+
 static String *
 infoRender(void)
 {
@@ -419,17 +422,49 @@ infoRender(void)
 
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
-
+printf("STL BEFORE: %s\n", (stanzaList == NULL ? "NULL" : "NOT NULL")); fflush(stdout);
         // If there are any stanzas to process then process them
         if (stanzaList != NULL)
             infoList = stanzaInfoList(stanza, stanzaList);
+printf("STL AFTER: %s\n", (stanzaList == NULL ? "NULL" : "NOT NULL")); fflush(stdout);
+// printf("SL: %s, CNT: %u, LST0: %s\n", (stanzaList == NULL ? "NULL" : "SOME"), (stanzaList == NULL ? 0 : strLstSize(stanzaList)), strPtr(strLstGet(stanzaList, 0))); fflush(stdout);
 
         // CSHANG Dave says to CREATE #DEFINES for the options, but where? Shouldn't this be in the config system?
         // Dave - for now just create #defines in the info.h which also needs the cmdInfo to be defined in there
         if (strEqZ(cfgOptionStr(cfgOptOutput), "text"))
         {
-            // CSHANG call a formatText function and then if it returns NULL the following would be returned?
-            resultStr = strNewFmt("No stanzas exist in %s\n", strPtr(storagePathNP(storageRepo(), NULL)));
+printf("STL INSIDE: %s\n", (stanzaList == NULL ? "NULL" : "NOT NULL")); fflush(stdout);
+            if  (stanzaList != NULL)
+            {
+                for (unsigned int idx = 0; idx < varLstSize(infoList); idx++)
+                {
+                    KeyValue *stanzaInfo = varKv(varLstGet(infoList, idx));
+
+                    // Output stanza name, status and cipher type
+                    strCatFmt(resultStr, "stanza: %s\n", strPtr(varStr(kvGet(stanzaInfo, varNewStr(STANZA_KEY_NAME_STR)))));
+
+                    KeyValue *stanzaStatus = varKv(kvGet(stanzaInfo, varNewStr(STANZA_KEY_STATUS_STR)));
+
+                    if (kvGet(stanzaStatus, varNewStr(STANZA_KEY_STATUS_STR)) != varNewStr(INFO_STANZA_STATUS_CODE_OK))
+                    {
+                        strCatFmt(resultStr, "    status: %s\n", strPtr(INFO_STANZA_STATUS_ERROR));
+                    }
+                    else
+                        strCatFmt(resultStr, "    status: %s\n", strPtr(INFO_STANZA_STATUS_OK));
+                }
+            }
+            else
+                resultStr = strNewFmt("No stanzas exist in %s\n", strPtr(storagePathNP(storageRepo(), NULL)));
+
+                            //
+                            // stanzaStatus(INFO_STANZA_STATUS_CODE_OK, INFO_STANZA_STATUS_MESSAGE_OK_STR, stanzaInfo);
+                            //
+                            //     Variant *stanzaStatus = varNewStr(STANZA_KEY_STATUS_STR);
+                            //     KeyValue *statusKv = kvPutKv(varKv(stanzaInfo), stanzaStatus);
+// 'stanza: ' . $oStanzaInfo->{&INFO_STANZA_NAME} . "\n" .
+// "    status: " . ($oStanzaInfo->{&INFO_SECTION_STATUS}{&INFO_KEY_CODE} == 0 ? INFO_STANZA_STATUS_OK :
+// INFO_STANZA_STATUS_ERROR . ' (' . $oStanzaInfo->{&INFO_SECTION_STATUS}{&INFO_KEY_MESSAGE} . ')') .
+// (defined($oStanzaInfo->{&INFO_SECTION_CIPHER}) ? "\n    cipher: " . $oStanzaInfo->{&INFO_SECTION_CIPHER} : '');
         }
         else if (strEqZ(cfgOptionStr(cfgOptOutput), "json"))
         {
@@ -444,367 +479,6 @@ infoRender(void)
 
     FUNCTION_DEBUG_RESULT(STRING, result);
 }
-
-// /***********************************************************************************************************************************
-// Helper function for helpRender() to make output look good on a console
-// ***********************************************************************************************************************************/
-// static String *
-// helpRenderText(const String *text, size_t indent, bool indentFirst, size_t length)
-// {
-//     FUNCTION_DEBUG_BEGIN(logLevelTrace);
-//         FUNCTION_DEBUG_PARAM(STRING, text);
-//         FUNCTION_DEBUG_PARAM(SIZE, indent);
-//         FUNCTION_DEBUG_PARAM(BOOL, indentFirst);
-//         FUNCTION_DEBUG_PARAM(SIZE, length);
-//
-//         FUNCTION_DEBUG_ASSERT(text != NULL);
-//         FUNCTION_DEBUG_ASSERT(length > 0);
-//     FUNCTION_DEBUG_END();
-//
-//     String *result = strNew("");
-//
-//     // Split the text into paragraphs
-//     StringList *lineList = strLstNewSplitZ(text, "\n");
-//
-//     // Iterate through each paragraph and split the lines according to the line length
-//     for (unsigned int lineIdx = 0; lineIdx < strLstSize(lineList); lineIdx++)
-//     {
-//         // Add LF if there is already content
-//         if (strSize(result) != 0)
-//             strCat(result, "\n");
-//
-//         // Split the paragraph into lines that don't exceed the line length
-//         StringList *partList = strLstNewSplitSizeZ(strLstGet(lineList, lineIdx), " ", length - indent);
-//
-//         for (unsigned int partIdx = 0; partIdx < strLstSize(partList); partIdx++)
-//         {
-//             // Indent when required
-//             if (partIdx != 0 || indentFirst)
-//             {
-//                 if (partIdx != 0)
-//                     strCat(result, "\n");
-//
-//                 if (strSize(strLstGet(partList, partIdx)))
-//                     strCatFmt(result, "%*s", (int)indent, "");
-//             }
-//
-//             // Add the line
-//             strCat(result, strPtr(strLstGet(partList, partIdx)));
-//         }
-//     }
-//
-//     FUNCTION_DEBUG_RESULT(STRING, result);
-// }
-//
-// /***********************************************************************************************************************************
-// Helper function for helpRender() to output values as strings
-// ***********************************************************************************************************************************/
-// static String *
-// helpRenderValue(const Variant *value)
-// {
-//     FUNCTION_DEBUG_BEGIN(logLevelTrace);
-//         FUNCTION_DEBUG_PARAM(VARIANT, value);
-//     FUNCTION_DEBUG_END();
-//
-//     String *result = NULL;
-//
-//     if (value != NULL)
-//     {
-//         if (varType(value) == varTypeBool)
-//         {
-//             if (varBool(value))
-//                 result = strNew("y");
-//             else
-//                 result = strNew("n");
-//         }
-//         else if (varType(value) == varTypeKeyValue)
-//         {
-//             result = strNew("");
-//
-//             const KeyValue *optionKv = varKv(value);
-//             const VariantList *keyList = kvKeyList(optionKv);
-//
-//             for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
-//             {
-//                 if (keyIdx != 0)
-//                     strCat(result, ", ");
-//
-//                 strCatFmt(
-//                     result, "%s=%s", strPtr(varStr(varLstGet(keyList, keyIdx))),
-//                     strPtr(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
-//             }
-//         }
-//         else if (varType(value) == varTypeVariantList)
-//         {
-//             result = strNew("");
-//
-//             const VariantList *list = varVarLst(value);
-//
-//             for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
-//             {
-//                 if (listIdx != 0)
-//                     strCat(result, ", ");
-//
-//                 strCatFmt(result, "%s", strPtr(varStr(varLstGet(list, listIdx))));
-//             }
-//         }
-//         else
-//             result = varStrForce(value);
-//     }
-//
-//     FUNCTION_DEBUG_RESULT(STRING, result);
-// }
-//
-// /***********************************************************************************************************************************
-// Render help to a string
-// ***********************************************************************************************************************************/
-// static String *
-// helpRender(void)
-// {
-//     FUNCTION_DEBUG_VOID(logLevelDebug);
-//
-//     String *result = strNew(PGBACKREST_NAME " " PGBACKREST_VERSION);
-//
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//         // Message for more help when it is available
-//         String *more = NULL;
-//
-//         // Display general help
-//         if (cfgCommand() == cfgCmdHelp || cfgCommand() == cfgCmdNone)
-//         {
-//             strCat(
-//                 result,
-//                 " - General help\n"
-//                 "\n"
-//                 "Usage:\n"
-//                 "    " PGBACKREST_BIN " [options] [command]\n"
-//                 "\n"
-//                 "Commands:\n");
-//
-//             // Find size of longest command name
-//             size_t commandSizeMax = 0;
-//
-//             for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
-//             {
-//                 if (commandId == cfgCmdNone)
-//                     continue;
-//
-//                 if (strlen(cfgCommandName(commandId)) > commandSizeMax)
-//                     commandSizeMax = strlen(cfgCommandName(commandId));
-//             }
-//
-//             // Output help for each command
-//             for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
-//             {
-//                 if (commandId == cfgCmdNone)
-//                     continue;
-//
-//                 const char *helpSummary = cfgDefCommandHelpSummary(cfgCommandDefIdFromId(commandId));
-//
-//                 if (helpSummary != NULL)
-//                 {
-//                     strCatFmt(
-//                         result, "    %s%*s%s\n", cfgCommandName(commandId),
-//                         (int)(commandSizeMax - strlen(cfgCommandName(commandId)) + 2), "",
-//                         strPtr(helpRenderText(strNew(helpSummary), commandSizeMax + 6, false, CONSOLE_WIDTH)));
-//                 }
-//             }
-//
-//             // Construct message for more help
-//             more = strNew("[command]");
-//         }
-//         else
-//         {
-//             ConfigCommand commandId = cfgCommand();
-//             ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(commandId);
-//             const char *commandName = cfgCommandName(commandId);
-//
-//             // Output command part of title
-//             strCatFmt(result, " - '%s' command", commandName);
-//
-//             // If no additional params then this is command help
-//             if (strLstSize(cfgCommandParam()) == 0)
-//             {
-//                 // Output command summary and description
-//                 strCatFmt(
-//                     result,
-//                     " help\n"
-//                     "\n"
-//                     "%s\n"
-//                     "\n"
-//                     "%s\n",
-//                     strPtr(helpRenderText(strNew(cfgDefCommandHelpSummary(commandDefId)), 0, true, CONSOLE_WIDTH)),
-//                     strPtr(helpRenderText(strNew(cfgDefCommandHelpDescription(commandDefId)), 0, true, CONSOLE_WIDTH)));
-//
-//                 // Construct key/value of sections and options
-//                 KeyValue *optionKv = kvNew();
-//                 size_t optionSizeMax = 0;
-//
-//                 for (unsigned int optionDefId = 0; optionDefId < cfgDefOptionTotal(); optionDefId++)
-//                 {
-//                     if (cfgDefOptionValid(commandDefId, optionDefId) && !cfgDefOptionInternal(commandDefId, optionDefId))
-//                     {
-//                         String *section = NULL;
-//
-//                         if (cfgDefOptionHelpSection(optionDefId) != NULL)
-//                             section = strNew(cfgDefOptionHelpSection(optionDefId));
-//
-//                         if (section == NULL ||
-//                             (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "repository") &&
-//                              !strEqZ(section, "stanza")))
-//                         {
-//                             section = strNew("command");
-//                         }
-//
-//                         kvAdd(optionKv, varNewStr(section), varNewInt((int)optionDefId));
-//
-//                         if (strlen(cfgDefOptionName(optionDefId)) > optionSizeMax)
-//                             optionSizeMax = strlen(cfgDefOptionName(optionDefId));
-//                     }
-//                 }
-//
-//                 // Output sections
-//                 StringList *sectionList = strLstSort(strLstNewVarLst(kvKeyList(optionKv)), sortOrderAsc);
-//
-//                 for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
-//                 {
-//                     const String *section = strLstGet(sectionList, sectionIdx);
-//
-//                     strCatFmt(result, "\n%s Options:\n\n", strPtr(strFirstUpper(strDup(section))));
-//
-//                     // Output options
-//                     VariantList *optionList = kvGetList(optionKv, varNewStr(section));
-//
-//                     for (unsigned int optionIdx = 0; optionIdx < varLstSize(optionList); optionIdx++)
-//                     {
-//                         ConfigDefineOption optionDefId = varInt(varLstGet(optionList, optionIdx));
-//                         ConfigOption optionId = cfgOptionIdFromDefId(optionDefId, 0);
-//
-//                         // Get option summary
-//                         String *summary = strFirstLower(strNewN(
-//                             cfgDefOptionHelpSummary(commandDefId, optionDefId),
-//                             strlen(cfgDefOptionHelpSummary(commandDefId, optionDefId)) - 1));
-//
-//                         // Ouput current and default values if they exist
-//                         String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
-//                         String *value = NULL;
-//
-//                         if (cfgOptionSource(optionId) != cfgSourceDefault)
-//                             value = helpRenderValue(cfgOption(optionId));
-//
-//                         if (value != NULL || defaultValue != NULL)
-//                         {
-//                             strCat(summary, " [");
-//
-//                             if (value != NULL)
-//                                 strCatFmt(summary, "current=%s", strPtr(value));
-//
-//                             if (defaultValue != NULL)
-//                             {
-//                                 if (value != NULL)
-//                                     strCat(summary, ", ");
-//
-//                                 strCatFmt(summary, "default=%s", strPtr(defaultValue));
-//                             }
-//
-//                             strCat(summary, "]");
-//                         }
-//
-//                         // Output option help
-//                         strCatFmt(
-//                             result, "  --%s%*s%s\n",
-//                             cfgDefOptionName(optionDefId), (int)(optionSizeMax - strlen(cfgDefOptionName(optionDefId)) + 2), "",
-//                             strPtr(helpRenderText(summary, optionSizeMax + 6, false, CONSOLE_WIDTH)));
-//                     }
-//                 }
-//
-//                 // Construct message for more help if there are options
-//                 if (optionSizeMax > 0)
-//                     more = strNewFmt("%s [option]", commandName);
-//             }
-//             // Else option help for the specified command
-//             else
-//             {
-//                 // Make sure only one option was specified
-//                 if (strLstSize(cfgCommandParam()) > 1)
-//                     THROW(ParamInvalidError, "only one option allowed for option help");
-//
-//                 // Ensure the option is valid
-//                 const char *optionName = strPtr(strLstGet(cfgCommandParam(), 0));
-//                 ConfigOption optionId = cfgOptionId(optionName);
-//
-//                 if (cfgOptionId(optionName) == -1)
-//                 {
-//                     if (cfgDefOptionId(optionName) != -1)
-//                         optionId = cfgOptionIdFromDefId(cfgDefOptionId(optionName), 0);
-//                     else
-//                         THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", optionName, commandName);
-//                 }
-//
-//                 // Output option summary and description
-//                 ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
-//
-//                 strCatFmt(
-//                     result,
-//                     " - '%s' option help\n"
-//                     "\n"
-//                     "%s\n"
-//                     "\n"
-//                     "%s\n",
-//                     optionName,
-//                     strPtr(helpRenderText(strNew(cfgDefOptionHelpSummary(commandDefId, optionDefId)), 0, true, CONSOLE_WIDTH)),
-//                     strPtr(helpRenderText(strNew(cfgDefOptionHelpDescription(commandDefId, optionDefId)), 0, true, CONSOLE_WIDTH)));
-//
-//                 // Ouput current and default values if they exist
-//                 String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
-//                 String *value = NULL;
-//
-//                 if (cfgOptionSource(optionId) != cfgSourceDefault)
-//                     value = helpRenderValue(cfgOption(optionId));
-//
-//                 if (value != NULL || defaultValue != NULL)
-//                 {
-//                     strCat(result, "\n");
-//
-//                     if (value != NULL)
-//                         strCatFmt(result, "current: %s\n", strPtr(value));
-//
-//                     if (defaultValue != NULL)
-//                         strCatFmt(result, "default: %s\n", strPtr(defaultValue));
-//                 }
-//
-//                 // Output alternate names (call them deprecated so the user will know not to use them)
-//                 if (cfgDefOptionHelpNameAlt(optionDefId))
-//                 {
-//                     strCat(result, "\ndeprecated name");
-//
-//                     if (cfgDefOptionHelpNameAltValueTotal(optionDefId) > 1) // {uncovered - no option has more than one alt name}
-//                         strCat(result, "s");                                // {+uncovered}
-//
-//                     strCat(result, ": ");
-//
-//                     for (unsigned int nameAltIdx = 0; nameAltIdx < cfgDefOptionHelpNameAltValueTotal(optionDefId); nameAltIdx++)
-//                     {
-//                         if (nameAltIdx != 0)                                // {uncovered - no option has more than one alt name}
-//                             strCat(result, ", ");                           // {+uncovered}
-//
-//                         strCat(result, cfgDefOptionHelpNameAltValue(optionDefId, nameAltIdx));
-//                     }
-//
-//                     strCat(result, "\n");
-//                 }
-//             }
-//         }
-//
-//         // If there is more help available output a message to let the user know
-//         if (more != NULL)
-//             strCatFmt(result, "\nUse '" PGBACKREST_BIN " help %s' for more information.\n", strPtr(more));
-//     }
-//     MEM_CONTEXT_TEMP_END();
-//
-//     FUNCTION_DEBUG_RESULT(STRING, result);
-// }
 
 /***********************************************************************************************************************************
 Render info and output to stdout
