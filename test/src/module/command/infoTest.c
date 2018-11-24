@@ -581,6 +581,9 @@ testRun(void)
             "        }\n"
             "    }\n"
             "]\n", "multiple stanzas - one selected");
+
+        // TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/stanza*", strPtr(backupPath)))), 0, "remove backup stanza paths");
+        // TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/stanza*", strPtr(archivePath)))), 0, "remove archive stanza paths");
     }
 
     // *****************************************************************************************************************************
@@ -602,7 +605,8 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), backupStanza1Path), "backup stanza1 directory");
         TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveStanza1Path), "archive stanza1 directory");
-        TEST_RESULT_STR(strPtr(infoRender()), "stanza: stanza1\n    status: error\n", "empty stanza");
+        TEST_RESULT_STR(strPtr(infoRender()),
+            "stanza: stanza1\n    status: error (missing stanza data)\n    cipher: none\n", "empty stanza");
 
     }
 

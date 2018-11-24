@@ -275,7 +275,7 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
     {
         // Build the path
         String *path = storagePathNP(this, pathExp);
-
+printf("PATH: %s\n", strPtr(path)); // cshang
         // Move list up to the old context
         result = strLstMove(this->interface.list(this->driver, path, param.errorOnMissing, param.expression), MEM_CONTEXT_OLD());
     }

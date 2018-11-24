@@ -23,9 +23,11 @@ Help Command
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
-Define the console width - use a fixed with of 80 since this should be safe on virtually all consoles
+Constants
 ***********************************************************************************************************************************/
 #define CONSOLE_WIDTH                                               80  // CSHANG Only for TEXT format width - this out put should be restricted - whether do it through an assertion or put in a unit test.
+STRING_EXTERN(CFGOPTVAL_INFO_OUTPUT_TEXT,                           "text")
+STRING_EXTERN(CFGOPTVAL_INFO_OUTPUT_JSON,                           "json")
 
 // Naming convention: <sectionname>_KEY_<keyname>_STR. If the key exists in multiple sections, then <sectionname>_ is omitted.
 STRING_STATIC(ARCHIVE_KEY_MIN_STR,                                  "min")
@@ -57,7 +59,6 @@ STRING_STATIC(STANZA_KEY_DB_STR,                                    "db")
 STRING_STATIC(STATUS_KEY_CODE_STR,                                  "code")
 STRING_STATIC(STATUS_KEY_MESSAGE_STR,                               "message")
 
-
 STRING_STATIC(INFO_STANZA_STATUS_OK,                                "ok")
 STRING_STATIC(INFO_STANZA_STATUS_ERROR,                             "error")
 #define INFO_STANZA_STATUS_CODE_OK                                  0
@@ -69,21 +70,6 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR,             "no valid ba
 #define INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA                 3
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing stanza data")
 
-// static void
-// buildKv(Variant *kv, const String *section, const String *key, const Variant *value)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(VARIANT, kv);
-//         FUNCTION_TEST_PARAM(STRING, section);
-//         FUNCTION_TEST_PARAM(STRING, key);
-//         FUNCTION_TEST_PARAM(VARIANT, value);
-//         // Variant *sectionKey = varNewStr(section);
-//         // KeyValue *sectionKv = varKv(kvGet(this->backupCurrent, sectionKey));
-//         //
-//         // if (sectionKv == NULL)
-//         //     sectionKv = kvPutKv(this->backupCurrent, sectionKey);
-//         //
-//         // kvAdd(sectionKv, varNewStr(key), value);
 static void
 stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
 {
@@ -300,7 +286,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
     for (unsigned int idx = 0; idx < strLstSize(stanzaList); idx++)
     {
         String *stanzaListName = strLstGet(stanzaList, idx);
-
+printf("STANZA LIST: %u\n", idx); fflush(stdout);
         // If a specific stanza has been requested and this is not it, then continue to the next in the list else indicate found
         if (stanza != NULL)
         {
@@ -399,11 +385,6 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
 
     FUNCTION_TEST_RESULT(VARIANT_LIST, result);
 }
-/* A.CSHANG Why does helpRender need a memeory context but helpRenderText and helpRenderValue do not? Aren't all the variables created
-in the temp mem context of cmdHelp?  Since all these are static, I don't understand why a memory context is needed anywhere except
-the cmdXXX function...   render is the MAIN function so best practive to have mem context.
-*/
-
 
 static String *
 infoRender(void)
@@ -416,57 +397,55 @@ infoRender(void)
     {
         // Get stanza if specified
         const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
-
+printf("STANZA: %s\n", (stanza == NULL ? "NULL" : strPtr(stanza))); fflush(stdout);
         // Get a list of stanzas in the backup directory
         StringList *stanzaList = storageListNP(storageRepo(), strNew(STORAGE_PATH_BACKUP));
-
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
-printf("STL BEFORE: %s\n", (stanzaList == NULL ? "NULL" : "NOT NULL")); fflush(stdout);
-        // If there are any stanzas to process then process them
+/* CSHANG At this point, even though /home/vagrant/test/test-0/repo/backup contains nothing,
+stanzaList can sometimes be NULL and other times NOT NULL with size = 0. For example:
+/backrest/test/test.pl --vm-out --dev --coverage --module=command --test=info
+this will correctly return stanzaList NULL size -1 for the first test of run=2 but if run:
+/backrest/test/test.pl --vm-out --dev --coverage --module=command --test=info --run=2 --no-cleanup
+this will incorrectly return stanzaList NOT NULL size 0
+*/
+printf("STL BEFORE: %s, %d\n", (stanzaList == NULL ? "NULL" : "NOT NULL"), (stanzaList == NULL ? -1 : (int) strLstSize(stanzaList))); fflush(stdout);
+        // If the backup storage exists, then search for and process any stanzas
         if (stanzaList != NULL)
             infoList = stanzaInfoList(stanza, stanzaList);
 printf("STL AFTER: %s\n", (stanzaList == NULL ? "NULL" : "NOT NULL")); fflush(stdout);
-// printf("SL: %s, CNT: %u, LST0: %s\n", (stanzaList == NULL ? "NULL" : "SOME"), (stanzaList == NULL ? 0 : strLstSize(stanzaList)), strPtr(strLstGet(stanzaList, 0))); fflush(stdout);
 
-        // CSHANG Dave says to CREATE #DEFINES for the options, but where? Shouldn't this be in the config system?
-        // Dave - for now just create #defines in the info.h which also needs the cmdInfo to be defined in there
-        if (strEqZ(cfgOptionStr(cfgOptOutput), "text"))
+        if (strEqZ(cfgOptionStr(cfgOptOutput), strPtr(CFGOPTVAL_INFO_OUTPUT_TEXT)))
         {
-printf("STL INSIDE: %s\n", (stanzaList == NULL ? "NULL" : "NOT NULL")); fflush(stdout);
-            if  (stanzaList != NULL)
+printf("INFOLIST: %s, SIZE: %d\n", (infoList == NULL ? "NULL" : "NOT NULL"), (infoList == NULL ? -1 : (int) varLstSize(infoList))); fflush(stdout);
+// CSHANG Had to put && varLstSize(infoList) > 0 because test is flapping
+            if  (stanzaList != NULL && varLstSize(infoList) > 0)
             {
                 for (unsigned int idx = 0; idx < varLstSize(infoList); idx++)
                 {
                     KeyValue *stanzaInfo = varKv(varLstGet(infoList, idx));
 
-                    // Output stanza name, status and cipher type
-                    strCatFmt(resultStr, "stanza: %s\n", strPtr(varStr(kvGet(stanzaInfo, varNewStr(STANZA_KEY_NAME_STR)))));
-
+                    // stanza name and status
+                    strCatFmt(resultStr, "stanza: %s\n    status: ",
+                        strPtr(varStr(kvGet(stanzaInfo, varNewStr(STANZA_KEY_NAME_STR)))));
                     KeyValue *stanzaStatus = varKv(kvGet(stanzaInfo, varNewStr(STANZA_KEY_STATUS_STR)));
-
-                    if (kvGet(stanzaStatus, varNewStr(STANZA_KEY_STATUS_STR)) != varNewStr(INFO_STANZA_STATUS_CODE_OK))
+                    if (varInt(kvGet(stanzaStatus, varNewStr(STATUS_KEY_CODE_STR))) != INFO_STANZA_STATUS_CODE_OK)
                     {
-                        strCatFmt(resultStr, "    status: %s\n", strPtr(INFO_STANZA_STATUS_ERROR));
+                        strCatFmt(resultStr, "%s (%s)\n", strPtr(INFO_STANZA_STATUS_ERROR),
+                            strPtr(varStr(kvGet(stanzaStatus, varNewStr(STATUS_KEY_MESSAGE_STR)))));
                     }
                     else
-                        strCatFmt(resultStr, "    status: %s\n", strPtr(INFO_STANZA_STATUS_OK));
+                        strCatFmt(resultStr, "%s\n", strPtr(INFO_STANZA_STATUS_OK));
+
+                    // cipher
+                    strCatFmt(resultStr, "    cipher: %s\n",
+                        strPtr(varStr(kvGet(stanzaInfo, varNewStr(STANZA_KEY_CIPHER_STR)))));
                 }
             }
             else
                 resultStr = strNewFmt("No stanzas exist in %s\n", strPtr(storagePathNP(storageRepo(), NULL)));
-
-                            //
-                            // stanzaStatus(INFO_STANZA_STATUS_CODE_OK, INFO_STANZA_STATUS_MESSAGE_OK_STR, stanzaInfo);
-                            //
-                            //     Variant *stanzaStatus = varNewStr(STANZA_KEY_STATUS_STR);
-                            //     KeyValue *statusKv = kvPutKv(varKv(stanzaInfo), stanzaStatus);
-// 'stanza: ' . $oStanzaInfo->{&INFO_STANZA_NAME} . "\n" .
-// "    status: " . ($oStanzaInfo->{&INFO_SECTION_STATUS}{&INFO_KEY_CODE} == 0 ? INFO_STANZA_STATUS_OK :
-// INFO_STANZA_STATUS_ERROR . ' (' . $oStanzaInfo->{&INFO_SECTION_STATUS}{&INFO_KEY_MESSAGE} . ')') .
-// (defined($oStanzaInfo->{&INFO_SECTION_CIPHER}) ? "\n    cipher: " . $oStanzaInfo->{&INFO_SECTION_CIPHER} : '');
         }
-        else if (strEqZ(cfgOptionStr(cfgOptOutput), "json"))
+        else if (strEqZ(cfgOptionStr(cfgOptOutput), strPtr(CFGOPTVAL_INFO_OUTPUT_JSON)))
         {
             resultStr = varToJson(varNewVarLst(infoList), 4);
         }
