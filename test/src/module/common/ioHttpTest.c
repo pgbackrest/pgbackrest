@@ -207,6 +207,48 @@ testHttpServer(void)
 
         harnessTlsServerClose();
 
+        // Request with eof before content complete with retry
+        harnessTlsServerAccept();
+
+        harnessTlsServerExpect(
+            "GET /path/file%201.txt HTTP/1.1\r\n"
+            "\r\n");
+
+        harnessTlsServerReply(
+            "HTTP/1.1 200 OK\r\n"
+            "content-length:32\r\n"
+            "\r\n"
+            "0123456789012345678901234567890");
+
+        harnessTlsServerClose();
+
+        harnessTlsServerAccept();
+
+        harnessTlsServerExpect(
+            "GET /path/file%201.txt HTTP/1.1\r\n"
+            "\r\n");
+
+        harnessTlsServerReply(
+            "HTTP/1.1 200 OK\r\n"
+            "content-length:32\r\n"
+            "\r\n"
+            "01234567890123456789012345678901");
+
+        // Request with eof before content complete
+        harnessTlsServerAccept();
+
+        harnessTlsServerExpect(
+            "GET /path/file%201.txt HTTP/1.1\r\n"
+            "\r\n");
+
+        harnessTlsServerReply(
+            "HTTP/1.1 200 OK\r\n"
+            "content-length:32\r\n"
+            "\r\n"
+            "0123456789012345678901234567890");
+
+        harnessTlsServerClose();
+
         // Request with chunked content
         harnessTlsServerAccept();
 
@@ -424,6 +466,21 @@ testRun(void)
             "    check response headers");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)),  "01234567890123456789012345678901", "    check response");
         TEST_RESULT_UINT(httpClientRead(client, bufNew(1), true), 0, "    call internal read to check eof");
+
+        // Request with eof before content complete with retry
+        TEST_ASSIGN(
+            buffer, httpClientRequest(client, strNew("GET"), strNew("/path/file 1.txt"), NULL, NULL, true),
+            "request with content length retry");
+        TEST_RESULT_STR(strPtr(strNewBuf(buffer)),  "01234567890123456789012345678901", "    check response");
+        TEST_RESULT_UINT(httpClientRead(client, bufNew(1), true), 0, "    call internal read to check eof");
+
+        // Request with eof before content and error
+        buffer = bufNew(32);
+        TEST_RESULT_VOID(
+            httpClientRequest(client, strNew("GET"), strNew("/path/file 1.txt"), NULL, NULL, false),
+            "request with content length error");
+        TEST_ERROR(
+            ioRead(httpClientIoRead(client), buffer), FileReadError, "unexpected EOF reading HTTP content");
 
         // Request with content using chunked encoding
         TEST_RESULT_VOID(httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), "request with chunked encoding");

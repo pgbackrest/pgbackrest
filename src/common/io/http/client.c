@@ -96,13 +96,17 @@ httpClientRead(HttpClient *this, Buffer *buffer, bool block)
             // Read if there is content remaining
             if (this->contentRemaining > 0)
             {
-                // If the buffer is larger than the content that needs to read then limit the buffer size so the read won't block
+                // If the buffer is larger than the content that needs to be read then limit the buffer size so the read won't block
                 // or read too far.  Casting to size_t is safe on 32-bit because we know the max buffer size is defined as less than
                 // 2^32 so content remaining can't be more than that.
                 if (bufRemains(buffer) > this->contentRemaining)
                     bufLimitSet(buffer, bufSize(buffer) - (bufRemains(buffer) - (size_t)this->contentRemaining));
 
                 this->contentRemaining -= ioRead(tlsClientIoRead(this->tls), buffer);
+
+                // Error if EOF but content read is not complete
+                if (ioReadEof(tlsClientIoRead(this->tls)))
+                    THROW(FileReadError, "unexpected EOF reading HTTP content");
 
                 // Clear limit (this works even if the limit was not set and it is easier than checking)
                 bufLimitClear(buffer);
