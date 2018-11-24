@@ -582,8 +582,9 @@ testRun(void)
             "    }\n"
             "]\n", "multiple stanzas - one selected");
 
-        // TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/stanza*", strPtr(backupPath)))), 0, "remove backup stanza paths");
-        // TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/stanza*", strPtr(archivePath)))), 0, "remove archive stanza paths");
+        // Reset the repo directories
+        TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/stanza*", strPtr(backupPath)))), 0, "remove backup stanza paths");
+        TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/stanza*", strPtr(archivePath)))), 0, "remove archive stanza paths");
     }
 
     // *****************************************************************************************************************************

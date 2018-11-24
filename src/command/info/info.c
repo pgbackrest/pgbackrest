@@ -407,7 +407,7 @@ stanzaList can sometimes be NULL and other times NOT NULL with size = 0. For exa
 /backrest/test/test.pl --vm-out --dev --coverage --module=command --test=info
 this will correctly return stanzaList NULL size -1 for the first test of run=2 but if run:
 /backrest/test/test.pl --vm-out --dev --coverage --module=command --test=info --run=2 --no-cleanup
-this will incorrectly return stanzaList NOT NULL size 0
+this will incorrectly return stanzaList NOT NULL size 0. Had to add conditinoal code later to get around this.
 */
 printf("STL BEFORE: %s, %d\n", (stanzaList == NULL ? "NULL" : "NOT NULL"), (stanzaList == NULL ? -1 : (int) strLstSize(stanzaList))); fflush(stdout);
         // If the backup storage exists, then search for and process any stanzas
