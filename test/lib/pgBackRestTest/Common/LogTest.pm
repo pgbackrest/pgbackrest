@@ -15,7 +15,6 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Version;
 

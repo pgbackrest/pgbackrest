@@ -14,7 +14,6 @@ use Exporter qw(import);
 use Storable qw(dclone);
 
 use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Version;
@@ -525,6 +524,10 @@ sub backrestConfig
 
     if ($self->{bExe} && $self->isRequired($oSection))
     {
+        # Load module dynamically
+        require pgBackRest::Common::Ini;
+        pgBackRest::Common::Ini->import();
+
         my ($bCacheHit, $strCacheType, $hCacheKey, $hCacheValue) = $self->cachePop('cfg-' . PROJECT_EXE, $hCacheKey);
 
         if ($bCacheHit)

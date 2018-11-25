@@ -18,7 +18,6 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Getopt::Long qw(GetOptions);
 
-use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Version;

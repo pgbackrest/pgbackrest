@@ -66,7 +66,6 @@ use Getopt::Long qw(GetOptions);
 use Storable qw(dclone);
 
 use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
 use pgBackRest::Common::Io::Base;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;

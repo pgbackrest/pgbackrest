@@ -28,11 +28,9 @@ use lib dirname(dirname($0)) . '/build/lib';
 use lib dirname(dirname($0)) . '/doc/lib';
 
 use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::DbVersion;
 use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Storage::Local;
 use pgBackRest::Version;

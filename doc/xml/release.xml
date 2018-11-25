@@ -60,6 +60,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Remove extraneous <code>use</code>/<code>include</code> statements.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove embedded semicolon from <code>String</code> constant macros.</p>
                     </release-item>
 
