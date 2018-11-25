@@ -11,7 +11,10 @@ Exit Routines
 #include "common/lock.h"
 #include "common/log.h"
 #include "config/config.h"
-#include "perl/exec.h"
+
+#ifdef WITH_PERL
+    #include "perl/exec.h"
+#endif
 
 /***********************************************************************************************************************************
 Return signal names
@@ -98,8 +101,10 @@ exitSafe(int result, bool error, SignalType signalType)
     if (error)
     {
         // Don't log the error if it has already been logged by Perl
+#ifdef WITH_PERL
         if (strcmp(errorMessage(), PERL_EMBED_ERROR) != 0)
         {
+#endif
             LogLevel logLevel = errorCode() == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError;
 
             // Assert errors always output a stack trace
@@ -118,7 +123,9 @@ exitSafe(int result, bool error, SignalType signalType)
                         errorStackTrace());
                 }
             }
+#ifdef WITH_PERL
         }
+#endif
 
         result = errorCode();
     }
@@ -131,11 +138,13 @@ exitSafe(int result, bool error, SignalType signalType)
     TRY_END();
 
     // Free Perl but ignore errors
+#ifdef WITH_PERL
     TRY_BEGIN()
     {
         perlFree(result);
     }
     TRY_END();
+#endif
 
     // Log command end if a command is set
     if (cfgCommand() != cfgCmdNone)

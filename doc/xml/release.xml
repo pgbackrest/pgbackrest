@@ -60,6 +60,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Conditional compilation of Perl logic in <file>exit.c</file>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove extraneous <code>use</code>/<code>include</code> statements.</p>
                     </release-item>
 

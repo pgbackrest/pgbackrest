@@ -21,7 +21,7 @@ CWARN = -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion 
 		-Wno-clobbered -Wno-missing-field-initializers -Wstrict-prototypes -Wpointer-arith -Wvla
 
 # Automatically generate Perl compile options for the local system
-CPERL = `perl -MExtUtils::Embed -e ccopts`
+CPERL = `perl -MExtUtils::Embed -e ccopts` -DWITH_PERL
 
 # Automatically generate xml compile options for the local system
 CXML = `xml2-config --cflags`
@@ -201,7 +201,7 @@ common/exit.o: common/exit.c command/command.h common/debug.h common/error.auto.
 common/fork.o: common/fork.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h
 	$(CC) $(CFLAGS) -c common/fork.c -o common/fork.o
 
-common/ini.o: common/ini.c common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
+common/ini.o: common/ini.c common/debug.h common/error.auto.h common/error.h common/ini.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CFLAGS) -c common/ini.c -o common/ini.o
 
 common/io/bufferRead.o: common/io/bufferRead.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/bufferRead.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/read.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
