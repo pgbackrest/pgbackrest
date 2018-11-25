@@ -113,6 +113,7 @@ WriteMakefile
         -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wno-missing-field-initializers
         -o $@
         -std=c99
+        -D_POSIX_C_SOURCE=200112L
         -D_FILE_OFFSET_BITS=64
         `xml2-config --cflags`
     )),

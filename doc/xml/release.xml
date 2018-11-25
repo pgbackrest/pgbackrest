@@ -56,6 +56,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Explicitly compile with Posix 2001 standard.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>ServiceError</code> for errors from a service that can be retried.</p>
                     </release-item>
 

@@ -7,8 +7,8 @@
 ####################################################################################################################################
 CC=gcc
 
-# Compile using C99 standard
-CSTD = -std=c99
+# Compile using C99 and Posix 2001 standards
+CSTD = -std=c99 -D_POSIX_C_SOURCE=200112L
 
 # Compile optimizations
 COPT = -O2
