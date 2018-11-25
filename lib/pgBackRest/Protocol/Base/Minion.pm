@@ -80,7 +80,7 @@ sub greetingWrite
 
     # Write the greeting
     $self->io()->writeLine((JSON::PP->new()->canonical()->allow_nonref())->encode(
-        {name => BACKREST_NAME, service => $self->{strName}, version => BACKREST_VERSION}));
+        {name => PROJECT_NAME, service => $self->{strName}, version => PROJECT_VERSION}));
 }
 
 ####################################################################################################################################

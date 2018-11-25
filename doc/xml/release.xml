@@ -48,6 +48,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Rename <code>PGBACKREST</code>/<code>BACKREST</code> constants to <code>PROJECT</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Require <proper>S3</proper> key options except for <cmd>local</cmd>/<cmd>remote</cmd> commands.</p>
                     </release-item>
 

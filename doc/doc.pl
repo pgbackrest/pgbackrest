@@ -129,7 +129,7 @@ eval
     # Display version and exit if requested
     if ($bHelp || $bVersion)
     {
-        print BACKREST_NAME . ' ' . BACKREST_VERSION . " Documentation Builder\n";
+        print PROJECT_NAME . ' ' . PROJECT_VERSION . " Documentation Builder\n";
 
         if ($bHelp)
         {
@@ -308,7 +308,7 @@ eval
 
             $oStorageDoc->pathCreate(
                 "${strBasePath}/output/man", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
-            $oStorageDoc->put("${strBasePath}/output/man/" . lc(BACKREST_NAME) . '.1.txt', $oDocConfig->manGet($oManifest));
+            $oStorageDoc->put("${strBasePath}/output/man/" . lc(PROJECT_NAME) . '.1.txt', $oDocConfig->manGet($oManifest));
         }
         elsif ($strOutput eq 'html')
         {

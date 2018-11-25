@@ -217,7 +217,7 @@ eval
     # Display version and exit if requested
     if ($bVersion || $bHelp)
     {
-        syswrite(*STDOUT, BACKREST_NAME . ' ' . BACKREST_VERSION . " Test Engine\n");
+        syswrite(*STDOUT, PROJECT_NAME . ' ' . PROJECT_VERSION . " Test Engine\n");
 
         if ($bHelp)
         {
@@ -606,14 +606,14 @@ eval
                 $bVersionDev = true;
                 $strVersionBase = substr($strVersion, 0, length($strVersion) - 3);
 
-                if (BACKREST_VERSION !~ /dev$/ && $oRelease->nodeTest('release-core-list'))
+                if (PROJECT_VERSION !~ /dev$/ && $oRelease->nodeTest('release-core-list'))
                 {
                     confess "dev release ${strVersion} must match the program version when core changes have been made";
                 }
             }
-            elsif ($strVersion ne BACKREST_VERSION)
+            elsif ($strVersion ne PROJECT_VERSION)
             {
-                confess 'unable to find version ' . BACKREST_VERSION . " as the most recent release in ${strReleaseFile}";
+                confess 'unable to find version ' . PROJECT_VERSION . " as the most recent release in ${strReleaseFile}";
             }
 
             # Update version for the C code based on the current Perl version
@@ -624,9 +624,9 @@ eval
 
             foreach my $strLine (split("\n", $strCVersionOld))
             {
-                if ($strLine =~ /^#define PGBACKREST_VERSION/)
+                if ($strLine =~ /^#define PROJECT_VERSION/)
                 {
-                    $strLine = '#define PGBACKREST_VERSION' . (' ' x 42) . '"' . BACKREST_VERSION . '"';
+                    $strLine = '#define PROJECT_VERSION' . (' ' x 45) . '"' . PROJECT_VERSION . '"';
                 }
 
                 $strCVersionNew .= "${strLine}\n";
@@ -1335,7 +1335,7 @@ eval
                     }
 
                     # Create code module path -- where the file is located on disk
-                    my $strCodeModulePath = "${strBackRestBase}/lib/" . BACKREST_NAME . "/${strCodeModule}.pm";
+                    my $strCodeModulePath = "${strBackRestBase}/lib/" . PROJECT_NAME . "/${strCodeModule}.pm";
 
                     # Get summary results
                     my $hCoverageResultAll = $hCoverageResult->{'summary'}{$strCodeModulePath}{total};
@@ -1382,7 +1382,7 @@ eval
                             &log(ERROR, ('-' x 80));
                             executeTest(
                                 "/usr/bin/cover -report text ${strCoveragePath} --select ${strBackRestBase}/lib/" .
-                                BACKREST_NAME . "/${strCodeModule}.pm",
+                                PROJECT_NAME . "/${strCodeModule}.pm",
                                 {bShowOutputAsync => true});
                             &log(ERROR, ('-' x 80));
                         }
@@ -1508,8 +1508,8 @@ eval
         $strVm, $iVmId,                                             # Vm info
         $strBackRestBase,                                           # Base backrest directory
         $strTestPath,                                               # Path where the tests will run
-        '/usr/bin/' . BACKREST_EXE,                                 # Path to the backrest executable
-        "${strBackRestBase}/bin/" . BACKREST_EXE,                   # Path to the backrest Perl helper
+        '/usr/bin/' . PROJECT_EXE,                                  # Path to the backrest executable
+        "${strBackRestBase}/bin/" . PROJECT_EXE,                    # Path to the backrest Perl helper
         $strPgVersion ne 'minimal' ? $strPgSqlBin: undef,           # Pg bin path
         $strPgVersion ne 'minimal' ? $strPgVersion: undef,          # Pg version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info

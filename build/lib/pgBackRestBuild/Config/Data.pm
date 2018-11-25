@@ -73,7 +73,7 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Version;
 
 ####################################################################################################################################
-# Command constants - commands that are allowed in pgBackRest
+# Command constants - commands that are allowed in the exe
 ####################################################################################################################################
 use constant CFGCMD_ARCHIVE_GET                                     => 'archive-get';
     push @EXPORT, qw(CFGCMD_ARCHIVE_GET);
@@ -438,8 +438,8 @@ use constant CFGDEF_DEFAULT_BUFFER_SIZE_MIN                         => 16384;
 use constant CFGDEF_DEFAULT_COMPRESS_LEVEL_MIN                      => 0;
 use constant CFGDEF_DEFAULT_COMPRESS_LEVEL_MAX                      => 9;
 
-use constant CFGDEF_DEFAULT_CONFIG_PATH                             => '/etc/pgbackrest';
-use constant CFGDEF_DEFAULT_CONFIG                                  => CFGDEF_DEFAULT_CONFIG_PATH . '/' . BACKREST_CONF;
+use constant CFGDEF_DEFAULT_CONFIG_PATH                             => '/etc/' . PROJECT_EXE;
+use constant CFGDEF_DEFAULT_CONFIG                                  => CFGDEF_DEFAULT_CONFIG_PATH . '/' . PROJECT_CONF;
 use constant CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH                     => CFGDEF_DEFAULT_CONFIG_PATH . '/conf.d';
 
 use constant CFGDEF_DEFAULT_DB_TIMEOUT                              => 1800;
@@ -1224,7 +1224,7 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_DEFAULT => '/tmp/' . BACKREST_EXE,
+        &CFGDEF_DEFAULT => '/tmp/' . PROJECT_EXE,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
@@ -1247,7 +1247,7 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_DEFAULT => '/var/log/' . BACKREST_EXE,
+        &CFGDEF_DEFAULT => '/var/log/' . PROJECT_EXE,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
@@ -1498,7 +1498,7 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
-        &CFGDEF_DEFAULT => 'pgbackrest',
+        &CFGDEF_DEFAULT => PROJECT_EXE,
         &CFGDEF_NAME_ALT =>
         {
             'backup-user' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
@@ -1517,7 +1517,7 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
-        &CFGDEF_DEFAULT => '/var/lib/' . BACKREST_EXE,
+        &CFGDEF_DEFAULT => '/var/lib/' . PROJECT_EXE,
         &CFGDEF_NAME_ALT =>
         {
             'repo-path' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
@@ -1788,7 +1788,7 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_DEFAULT => '/var/spool/' . BACKREST_EXE,
+        &CFGDEF_DEFAULT => '/var/spool/' . PROJECT_EXE,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},

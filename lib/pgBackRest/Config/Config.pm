@@ -86,7 +86,7 @@ sub configLoad
     my $rstrConfigJson = shift;
 
     # Set backrest bin
-    backrestBinSet($strBackRestBin);
+    projectBinSet($strBackRestBin);
 
     # Set command
     $strCommand = $strCommandName;
@@ -347,7 +347,7 @@ sub cfgCommandWrite
     my $bDisplayOnly = shift;
 
     # Set defaults
-    $strExeString = defined($strExeString) ? $strExeString : backrestBin();
+    $strExeString = defined($strExeString) ? $strExeString : projectBin();
     $bIncludeConfig = defined($bIncludeConfig) ? $bIncludeConfig : false;
     $bIncludeCommand = defined($bIncludeCommand) ? $bIncludeCommand : true;
 

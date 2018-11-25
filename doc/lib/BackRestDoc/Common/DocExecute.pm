@@ -525,7 +525,7 @@ sub backrestConfig
 
     if ($self->{bExe} && $self->isRequired($oSection))
     {
-        my ($bCacheHit, $strCacheType, $hCacheKey, $hCacheValue) = $self->cachePop('cfg-' . BACKREST_EXE, $hCacheKey);
+        my ($bCacheHit, $strCacheType, $hCacheKey, $hCacheValue) = $self->cachePop('cfg-' . PROJECT_EXE, $hCacheKey);
 
         if ($bCacheHit)
         {

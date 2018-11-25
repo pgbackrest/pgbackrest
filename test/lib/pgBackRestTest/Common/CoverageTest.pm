@@ -203,13 +203,13 @@ sub coverageGenerate
     }
 
     # Build html
-    my $strTitle = BACKREST_NAME . ' Coverage Report';
+    my $strTitle = PROJECT_NAME . ' Coverage Report';
     my $strDarkRed = '#580000';
     my $strGray = '#555555';
     my $strDarkGray = '#333333';
 
     my $oHtml = new BackRestDoc::Html::DocHtmlBuilder(
-        BACKREST_NAME, $strTitle,
+        PROJECT_NAME, $strTitle,
         undef, undef, undef,
         true, true,
 

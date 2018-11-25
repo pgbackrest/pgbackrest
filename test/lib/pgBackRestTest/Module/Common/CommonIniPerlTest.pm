@@ -126,7 +126,7 @@ sub run
 
         $self->testResult(
             sub {${storageTest()->get($strTestFile . INI_COPY_EXT)}},
-            $self->iniHeader(undef, BACKREST_FORMAT, BACKREST_VERSION, $oIni->hash()),
+            $self->iniHeader(undef, REPOSITORY_FORMAT, PROJECT_VERSION, $oIni->hash()),
             'empty with default format and version');
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -165,15 +165,15 @@ sub run
         storageTest()->put($strTestFile, iniRender($hIni));
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $oIni->numericSet(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, BACKREST_FORMAT - 1);
+        $oIni->numericSet(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, REPOSITORY_FORMAT - 1);
         $oIni->save();
 
         $self->testException(
             sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_FILE_MISSING,
             "unable to open ${strTestFile} or ${strTestFile}" . INI_COPY_EXT);
-            # "invalid format in '${strTestFile}', expected " . BACKREST_FORMAT . ' but found ' . (BACKREST_FORMAT - 1));
+            # "invalid format in '${strTestFile}', expected " . REPOSITORY_FORMAT . ' but found ' . (REPOSITORY_FORMAT - 1));
 
-        $oIni->numericSet(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, BACKREST_FORMAT);
+        $oIni->numericSet(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, REPOSITORY_FORMAT);
         $oIni->save();
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -187,12 +187,12 @@ sub run
 
         $oIni = new pgBackRest::Common::Ini($strTestFile);
 
-        $self->testResult(sub {$oIni->get(INI_SECTION_BACKREST, INI_KEY_VERSION)}, BACKREST_VERSION, 'version is updated on load');
+        $self->testResult(sub {$oIni->get(INI_SECTION_BACKREST, INI_KEY_VERSION)}, PROJECT_VERSION, 'version is updated on load');
         $oIni->save();
 
         $self->testResult(
             sub {${storageTest()->get($strTestFile . INI_COPY_EXT)}},
-            $self->iniHeader($oIni, undef, BACKREST_VERSION),
+            $self->iniHeader($oIni, undef, PROJECT_VERSION),
             'verify version is updated on load');
 
         $self->testResult(sub {$oIni->save()}, false, 'save again with no changes');

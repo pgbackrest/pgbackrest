@@ -20,7 +20,7 @@ use File::Basename qw(dirname);
 ####################################################################################################################################
 # Storage object to use for all file operations
 ####################################################################################################################################
-use constant BACKREST_NAME                                          => 'pgBackRest';
+use constant PROJECT_NAME                                           => 'pgBackRest';
 
 ####################################################################################################################################
 # Make sure the makefile is being created in an expected test directory.  This should prevent users from building it in production.
@@ -105,7 +105,7 @@ for (my $iFileIdx = 1; $iFileIdx < @stryCFile; $iFileIdx++)
 # Write the makefile
 WriteMakefile
 (
-    NAME => BACKREST_NAME . '::LibC',
+    NAME => PROJECT_NAME . '::LibC',
     VERSION => '999',
     AUTHOR => 'David Steele <david@pgbackrest.org>',
 

@@ -55,7 +55,7 @@ main(int argListSize, const char *argList[])
         // -------------------------------------------------------------------------------------------------------------------------
         else if (cfgCommand() == cfgCmdVersion)
         {
-            printf(PGBACKREST_NAME " " PGBACKREST_VERSION "\n");
+            printf(PROJECT_NAME " " PROJECT_VERSION "\n");
             fflush(stdout);
         }
 

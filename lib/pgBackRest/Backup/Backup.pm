@@ -654,17 +654,17 @@ sub process
                     my $strValueAborted;
 
                     # Check version
-                    if ($oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION) ne BACKREST_VERSION)
+                    if ($oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION) ne PROJECT_VERSION)
                     {
                         $strKey =  INI_KEY_VERSION;
-                        $strValueNew = BACKREST_VERSION;
+                        $strValueNew = PROJECT_VERSION;
                         $strValueAborted = $oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION);
                     }
                     # Check format
-                    elsif ($oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_FORMAT) ne BACKREST_FORMAT)
+                    elsif ($oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_FORMAT) ne REPOSITORY_FORMAT)
                     {
                         $strKey =  INI_KEY_FORMAT;
-                        $strValueNew = BACKREST_FORMAT;
+                        $strValueNew = REPOSITORY_FORMAT;
                         $strValueAborted = $oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_FORMAT);
                     }
                     # Check backup type
@@ -842,7 +842,7 @@ sub process
         # Start the backup
         ($strArchiveStart, $strLsnStart, $iWalSegmentSize) =
             $oDbMaster->backupStart(
-                BACKREST_NAME . ' backup started at ' . timestampFormat(undef, $lTimestampStart), cfgOption(CFGOPT_START_FAST));
+                PROJECT_NAME . ' backup started at ' . timestampFormat(undef, $lTimestampStart), cfgOption(CFGOPT_START_FAST));
 
         # Record the archive start location
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);

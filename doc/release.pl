@@ -90,7 +90,7 @@ eval
     # Display version and exit if requested
     if ($bHelp || $bVersion)
     {
-        print BACKREST_NAME . ' ' . BACKREST_VERSION . " Release Manager\n";
+        print PROJECT_NAME . ' ' . PROJECT_VERSION . " Release Manager\n";
 
         if ($bHelp)
         {
@@ -124,8 +124,8 @@ eval
         $strDocPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
 
     # Determine if this is a dev release
-    my $bDev = BACKREST_VERSION =~ /dev$/;
-    my $strVersion = $bDev ? 'dev' : BACKREST_VERSION;
+    my $bDev = PROJECT_VERSION =~ /dev$/;
+    my $strVersion = $bDev ? 'dev' : PROJECT_VERSION;
 
     if ($bBuild)
     {

@@ -43,7 +43,7 @@ sub new
         logDebugParam
     (
         __PACKAGE__ . '->new', \@_,
-        {name => 'strBackRestBin', default => backrestBin(), trace => true},
+        {name => 'strBackRestBin', default => projectBin(), trace => true},
     );
 
     # Return from function and log return values if any

@@ -162,7 +162,7 @@ sub process
         $self->coverage(), $self->{strBackRestExeC}, $self->{strBackRestExeHelper}, dirname($self->testPath()), $self->basePath(),
         $self->module(), $self->moduleTest(), true);
 
-    backrestBinSet($self->{strBackRestExe});
+    projectBinSet($self->{strBackRestExe});
 
     # Init, run, and end the test(s)
     $self->initModule();

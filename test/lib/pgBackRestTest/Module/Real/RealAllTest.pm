@@ -634,9 +634,9 @@ sub run
         # Check that application name is set
         if ($oHostDbMaster->pgVersion() >= PG_VERSION_APPLICATION_NAME)
         {
-            my $strApplicationNameExpected = BACKREST_NAME . ' [' . cfgCommandName(CFGCMD_BACKUP) . ']';
+            my $strApplicationNameExpected = PROJECT_NAME . ' [' . cfgCommandName(CFGCMD_BACKUP) . ']';
             my $strApplicationName = $oHostDbMaster->sqlSelectOne(
-                "select application_name from pg_stat_activity where application_name like '" . BACKREST_NAME . "%'");
+                "select application_name from pg_stat_activity where application_name like '" . PROJECT_NAME . "%'");
 
             if (!defined($strApplicationName) || $strApplicationName ne $strApplicationNameExpected)
             {

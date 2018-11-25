@@ -147,11 +147,11 @@ infoValidInternal(
         }
 
         // Make sure that the format is current, otherwise error
-        if (varIntForce(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_FORMAT_STR)) != PGBACKREST_FORMAT)
+        if (varIntForce(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_FORMAT_STR)) != REPOSITORY_FORMAT)
         {
             String *fmtMsg = strNewFmt(
                 "invalid format in '%s', expected %d but found %d",
-                strPtr(this->fileName), PGBACKREST_FORMAT,
+                strPtr(this->fileName), REPOSITORY_FORMAT,
                 varIntForce(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_FORMAT_STR)));
 
             if (!ignoreError)

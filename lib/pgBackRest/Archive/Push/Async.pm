@@ -49,7 +49,7 @@ sub new
             __PACKAGE__ . '->new', \@_,
             {name => 'strWalPath'},
             {name => 'strSpoolPath'},
-            {name => 'strBackRestBin', default => backrestBin()},
+            {name => 'strBackRestBin', default => projectBin()},
         );
 
     # Return from function and log return values if any

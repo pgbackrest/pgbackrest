@@ -714,8 +714,8 @@ sub jobInstallC
         (defined($bCopyLibC) && $bCopyLibC ?
             "mkdir -p -m 755 ${strPerlAutoPath} && " .
             "cp ${strBuildLibCPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " : '') .
-        "cp ${strBuildBinPath}/" . BACKREST_EXE . ' /usr/bin/' . BACKREST_EXE . ' && ' .
-        'chmod 755 /usr/bin/' . BACKREST_EXE . "'");
+        "cp ${strBuildBinPath}/" . PROJECT_EXE . ' /usr/bin/' . PROJECT_EXE . ' && ' .
+        'chmod 755 /usr/bin/' . PROJECT_EXE . "'");
 }
 
 push(@EXPORT, qw(jobInstallC));

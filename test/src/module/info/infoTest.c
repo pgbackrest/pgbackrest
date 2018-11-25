@@ -90,16 +90,16 @@ testRun(void)
         TEST_ERROR(infoNew(storageLocal(), fileName), FileMissingError, strPtr(missingInfoError));
         harnessLogResult(
             strPtr(
-                strNewFmt("P00   WARN: invalid format in '%s', expected %d but found %d", strPtr(fileName), PGBACKREST_FORMAT, 4)));
+                strNewFmt("P00   WARN: invalid format in '%s', expected %d but found %d", strPtr(fileName), REPOSITORY_FORMAT, 4)));
 
         storageCopyNP(storageNewReadNP(storageLocal(), fileName), storageNewWriteNP(storageLocalWrite(), fileNameCopy));
 
         TEST_ERROR(
             infoNew(storageLocal(), fileName), FormatError,
-            strPtr(strNewFmt("invalid format in '%s', expected %d but found %d", strPtr(fileName), PGBACKREST_FORMAT, 4)));
+            strPtr(strNewFmt("invalid format in '%s', expected %d but found %d", strPtr(fileName), REPOSITORY_FORMAT, 4)));
         harnessLogResult(
             strPtr(
-                strNewFmt("P00   WARN: invalid format in '%s', expected %d but found %d", strPtr(fileName), PGBACKREST_FORMAT, 4)));
+                strNewFmt("P00   WARN: invalid format in '%s', expected %d but found %d", strPtr(fileName), REPOSITORY_FORMAT, 4)));
 
         // Invalid checksum
         //--------------------------------------------------------------------------------------------------------------------------

@@ -97,7 +97,7 @@ push @EXPORT, qw(packageDevelCover);
 ####################################################################################################################################
 sub containerRepo
 {
-    return BACKREST_EXE . qw(/) . 'test';
+    return PROJECT_EXE . qw(/) . 'test';
 }
 
 push @EXPORT, qw(containerRepo);

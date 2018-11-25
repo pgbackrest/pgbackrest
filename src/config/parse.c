@@ -20,7 +20,7 @@ Command and Option Parse
 /***********************************************************************************************************************************
 Standard config file name and old default path and name
 ***********************************************************************************************************************************/
-#define PGBACKREST_CONFIG_FILE                                      PGBACKREST_BIN ".conf"
+#define PGBACKREST_CONFIG_FILE                                      PROJECT_BIN ".conf"
 #define PGBACKREST_CONFIG_ORIG_PATH_FILE                            "/etc/" PGBACKREST_CONFIG_FILE
     STRING_STATIC(PGBACKREST_CONFIG_ORIG_PATH_FILE_STR,             PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
