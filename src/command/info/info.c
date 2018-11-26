@@ -397,29 +397,20 @@ infoRender(void)
     {
         // Get stanza if specified
         const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
-printf("STANZA: %s\n", (stanza == NULL ? "NULL" : strPtr(stanza))); fflush(stdout);
-        // Get a list of stanzas in the backup directory
-        StringList *stanzaList = storageListNP(storageRepo(), strNew(STORAGE_PATH_BACKUP));
+
+        // Get a list of stanzas in the backup directory.
+        StringList *stanzaList = storageListP(storageRepo(), strNew(STORAGE_PATH_BACKUP), .errorOnMissing = true);
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
-/* CSHANG At this point, even though /home/vagrant/test/test-0/repo/backup contains nothing,
-stanzaList can sometimes be NULL and other times NOT NULL with size = 0. For example:
-/backrest/test/test.pl --vm-out --dev --coverage --module=command --test=info
-this will correctly return stanzaList NULL size -1 for the first test of run=2 but if run:
-/backrest/test/test.pl --vm-out --dev --coverage --module=command --test=info --run=2 --no-cleanup
-this will incorrectly return stanzaList NOT NULL size 0. Had to add conditinoal code later to get around this.
-*/
-printf("STL BEFORE: %s, %d\n", (stanzaList == NULL ? "NULL" : "NOT NULL"), (stanzaList == NULL ? -1 : (int) strLstSize(stanzaList))); fflush(stdout);
+
         // If the backup storage exists, then search for and process any stanzas
-        if (stanzaList != NULL)
+        if (strLstSize(stanzaList) > 0)
             infoList = stanzaInfoList(stanza, stanzaList);
-printf("STL AFTER: %s\n", (stanzaList == NULL ? "NULL" : "NOT NULL")); fflush(stdout);
 
         if (strEqZ(cfgOptionStr(cfgOptOutput), strPtr(CFGOPTVAL_INFO_OUTPUT_TEXT)))
         {
-printf("INFOLIST: %s, SIZE: %d\n", (infoList == NULL ? "NULL" : "NOT NULL"), (infoList == NULL ? -1 : (int) varLstSize(infoList))); fflush(stdout);
-// CSHANG Had to put && varLstSize(infoList) > 0 because test is flapping
-            if  (stanzaList != NULL && varLstSize(infoList) > 0)
+            // Process any stanza directories
+            if  (varLstSize(infoList) > 0)
             {
                 for (unsigned int idx = 0; idx < varLstSize(infoList); idx++)
                 {
@@ -429,10 +420,33 @@ printf("INFOLIST: %s, SIZE: %d\n", (infoList == NULL ? "NULL" : "NOT NULL"), (in
                     strCatFmt(resultStr, "stanza: %s\n    status: ",
                         strPtr(varStr(kvGet(stanzaInfo, varNewStr(STANZA_KEY_NAME_STR)))));
                     KeyValue *stanzaStatus = varKv(kvGet(stanzaInfo, varNewStr(STANZA_KEY_STATUS_STR)));
-                    if (varInt(kvGet(stanzaStatus, varNewStr(STATUS_KEY_CODE_STR))) != INFO_STANZA_STATUS_CODE_OK)
+                    int statusCode = varInt(kvGet(stanzaStatus, varNewStr(STATUS_KEY_CODE_STR)));
+
+                    // If an error has occurred, provide the information that is available and move onto next stanza
+                    if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
                         strCatFmt(resultStr, "%s (%s)\n", strPtr(INFO_STANZA_STATUS_ERROR),
                             strPtr(varStr(kvGet(stanzaStatus, varNewStr(STATUS_KEY_MESSAGE_STR)))));
+
+                        if (statusCode == INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA ||
+                            statusCode ==INFO_STANZA_STATUS_CODE_NO_BACKUP)
+                        {
+                            strCatFmt(resultStr, "    cipher: %s\n",
+                                strPtr(varStr(kvGet(stanzaInfo, varNewStr(STANZA_KEY_CIPHER_STR)))));
+
+                            // If there is a backup.info fie but no backups, then process the archive info
+                            if (statusCode ==INFO_STANZA_STATUS_CODE_NO_BACKUP)
+                            /* CSHANG TODO: This should call a function to loop through the arhiveInfo section -
+                            this must march the (current) and (prior)
+                                db (current)
+                                    wal archive min/max (9.5-2): none present
+
+                                db (prior)
+                                    wal archive min/max (9.4-1): 000000010000000000000001 / 000000010000000000000002
+                            */
+                        }
+
+                        continue;
                     }
                     else
                         strCatFmt(resultStr, "%s\n", strPtr(INFO_STANZA_STATUS_OK));

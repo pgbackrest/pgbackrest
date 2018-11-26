@@ -19,8 +19,6 @@ testRun(void)
     String *backupPath = strNewFmt("%s/%s", strPtr(repoPath), STORAGE_PATH_BACKUP);
     String *archiveStanza1Path = strNewFmt("%s/stanza1", strPtr(archivePath));
     String *backupStanza1Path = strNewFmt("%s/stanza1", strPtr(backupPath));
-    storagePathCreateNP(storageLocalWrite(), archivePath);
-    storagePathCreateNP(storageLocalWrite(), backupPath);
 
     // *****************************************************************************************************************************
     if (testBegin("infoRender() - json"))
@@ -32,9 +30,18 @@ testRun(void)
         strLstAddZ(argList, "info");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
+        // No repo path
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_ERROR_FMT(
+            infoRender(), PathOpenError,
+            "unable to open path '%s' for read: [2] No such file or directory", strPtr(backupPath));
+
+        storagePathCreateNP(storageLocalWrite(), archivePath);
+        storagePathCreateNP(storageLocalWrite(), backupPath);
+
         // No stanzas have been created
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(strPtr(infoRender()), "[]\n", "json - no stanzas");
+        TEST_RESULT_STR(strPtr(infoRender()), "[]\n", "json - repo but no stanzas");
 
         // Empty stanza
         //--------------------------------------------------------------------------------------------------------------------------
@@ -581,10 +588,6 @@ testRun(void)
             "        }\n"
             "    }\n"
             "]\n", "multiple stanzas - one selected");
-
-        // Reset the repo directories
-        TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/stanza*", strPtr(backupPath)))), 0, "remove backup stanza paths");
-        TEST_RESULT_INT(system(strPtr(strNewFmt("rm -rf %s/stanza*", strPtr(archivePath)))), 0, "remove archive stanza paths");
     }
 
     // *****************************************************************************************************************************
@@ -596,6 +599,15 @@ testRun(void)
         strLstAddZ(argList, "--output=text");
         strLstAddZ(argList, "info");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // No repo path
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_ERROR_FMT(
+            infoRender(), PathOpenError,
+            "unable to open path '%s' for read: [2] No such file or directory", strPtr(backupPath));
+
+        storagePathCreateNP(storageLocalWrite(), archivePath);
+        storagePathCreateNP(storageLocalWrite(), backupPath);
 
         // No stanzas have been created
         //--------------------------------------------------------------------------------------------------------------------------
