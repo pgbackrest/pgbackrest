@@ -92,7 +92,7 @@ stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
     FUNCTION_TEST_RESULT_VOID();
 }
 
-static VariantList *
+void
 archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archiveSection, bool currentDb)
 {
     FUNCTION_TEST_BEGIN();
@@ -182,10 +182,10 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
         varLstAdd(archiveSection, archiveInfo);
     }
 
-    FUNCTION_TEST_RESULT(VARIANT_LIST, archiveSection);
+    FUNCTION_TEST_RESULT_VOID();
 }
 
-static VariantList *
+void
 backupList(const String *stanza, Variant *stanzaInfo, VariantList *backupSection, InfoBackup *info)
 {
     FUNCTION_TEST_BEGIN();
@@ -264,7 +264,7 @@ backupList(const String *stanza, Variant *stanzaInfo, VariantList *backupSection
         }
     }
 
-    FUNCTION_TEST_RESULT(VARIANT_LIST, backupSection);
+    FUNCTION_TEST_RESULT_VOID();
 }
 
 static VariantList *
@@ -343,12 +343,12 @@ printf("STANZA LIST: %u\n", idx); fflush(stdout);
                 kvPut(varKv(pgInfo), varNewStr(DB_KEY_VERSION_STR), varNewStr(pgVersionToStr(pgData.version)));
 
                 varLstAdd(dbSection, pgInfo);
-// CSHANG Probably just VOID the return for archiveDbList and backupList
+
                 // Get the archive info for the DB
-                archiveSection = archiveDbList(stanzaListName, &pgData, archiveSection, (pgIdx == 0 ? true : false));
+                archiveDbList(stanzaListName, &pgData, archiveSection, (pgIdx == 0 ? true : false));
             }
             // Get data for all existing backups for this stanza
-            backupSection = backupList(stanzaListName, stanzaInfo, backupSection, info);
+            backupList(stanzaListName, stanzaInfo, backupSection, info);
         }
 
         // Add the database history, backup and archive sections to the stanza info
@@ -386,6 +386,135 @@ printf("STANZA LIST: %u\n", idx); fflush(stdout);
     FUNCTION_TEST_RESULT(VARIANT_LIST, result);
 }
 
+void
+formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, stanzaInfo);
+        FUNCTION_TEST_PARAM(STRING, resultStr);
+
+        FUNCTION_TEST_ASSERT(stanzaInfo != NULL);
+    FUNCTION_TEST_END();
+
+    VariantList *dbSection = kvGetList(stanzaInfo, varNewStr(STANZA_KEY_DB_STR));
+    VariantList *archiveSection = kvGetList(stanzaInfo, varNewStr(KEY_ARCHIVE_STR));
+    VariantList *backupSection = kvGetList(stanzaInfo, varNewStr(STANZA_KEY_BACKUP_STR));
+
+    // For each database find the corresponding archive and backup info
+    for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
+    {
+        KeyValue *pgInfo = varKv(varLstGet(dbSection, dbIdx));
+        uint64_t dbId = varUInt64(kvGet(pgInfo, varNewStr(DB_KEY_ID_STR)));
+
+        // List is ordered so 0 is always the current DB index
+        if (dbIdx == 0)
+            strCat(resultStr, "\n    db (current)");
+
+        String *archiveResult = strNew("");
+        for (unsigned int archiveIdx = 0; archiveIdx < varLstSize(archiveSection); archiveIdx++)
+        {
+            KeyValue *archiveInfo = varKv(varLstGet(archiveSection, archiveIdx));
+            KeyValue *archiveDbInfo = varKv(kvGet(archiveInfo, varNewStr(KEY_DATABASE_STR)));
+            uint64_t archiveDbId = varUInt64(kvGet(archiveDbInfo, varNewStr(DB_KEY_ID_STR)));
+printf("ARCHIVEID: %u, DBID %u\n", (unsigned int) archiveDbId, (unsigned int) dbId); fflush(stdout);
+            if (archiveDbId == dbId)
+            {
+                strCatFmt(archiveResult, "\n        wal archive min/max (%s): ",
+                    strPtr(varStr(kvGet(archiveInfo, varNewStr(DB_KEY_ID_STR)))));
+
+                // Get the archive min/max if there are any archives for the database
+                if (kvGet(archiveInfo, varNewStr(ARCHIVE_KEY_MIN_STR)) != NULL)
+                {
+                    strCatFmt(archiveResult, "%s/%s\n",
+                        strPtr(varStr(kvGet(archiveInfo, varNewStr(ARCHIVE_KEY_MIN_STR)))),
+                        strPtr(varStr(kvGet(archiveInfo, varNewStr(ARCHIVE_KEY_MAX_STR)))));
+                }
+                else
+                    strCat(archiveResult, "none present\n");
+            }
+        }
+
+        String *backupResult = strNew("");
+        for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
+        {
+            KeyValue *backupInfo = varKv(varLstGet(backupSection, backupIdx));
+            KeyValue *backupDbInfo = varKv(kvGet(backupInfo, varNewStr(KEY_DATABASE_STR)));
+            uint64_t backupDbId = varUInt64(kvGet(backupDbInfo, varNewStr(DB_KEY_ID_STR)));
+
+            if (backupDbId == dbId)
+            {
+                strCatFmt(backupResult, "\n        %s backup: %s\n",
+                    strPtr(varStr(kvGet(backupInfo, varNewStr(BACKUP_KEY_TYPE_STR)))),
+                    strPtr(varStr(kvGet(backupInfo, varNewStr(BACKUP_KEY_LABEL_STR)))));
+
+                KeyValue *timestampInfo = varKv(kvGet(backupInfo, varNewStr(BACKUP_KEY_TIMESTAMP_STR)));
+// CSHANG This needs to be converted to a readable date/time like 2018-10-31 19:14:07 by using something like         bufferPos += strftime(logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "%Y-%m-%d %H:%M:%S", localtime(&logTimeSec));
+                strCatFmt(backupResult, "            timestamp start/stop: %s / %s\n",
+                    strPtr(varStrForce(kvGet(timestampInfo, varNewStr(KEY_START_STR)))),
+                    strPtr(varStrForce(kvGet(timestampInfo, varNewStr(KEY_STOP_STR)))));
+
+                strCat(backupResult, "            wal start/stop: ");
+
+                KeyValue *archiveDBackupInfo = varKv(kvGet(backupInfo, varNewStr(KEY_ARCHIVE_STR)));
+
+                if (kvGet(archiveDBackupInfo, varNewStr(KEY_START_STR)) != NULL &&
+                    kvGet(archiveDBackupInfo, varNewStr(KEY_STOP_STR)) != NULL)
+                {
+                    strCatFmt(backupResult, "%s / %s\n", strPtr(varStr(kvGet(archiveDBackupInfo, varNewStr(KEY_START_STR)))),
+                        strPtr(varStr(kvGet(archiveDBackupInfo, varNewStr(KEY_STOP_STR)))));
+                }
+                else
+                    strCat(backupResult, "n/a\n");
+
+                KeyValue *info = varKv(kvGet(backupInfo, varNewStr(BACKUP_KEY_INFO_STR)));
+                strCat(backupResult, "            database size: ");
+
+                if (kvGet(info, varNewStr(KEY_SIZE_STR)) != NULL)
+                    strCatFmt(backupResult, "%s", strPtr(varStrForce(kvGet(info, varNewStr(KEY_SIZE_STR)))));
+
+                strCat(backupResult, ", backup size: ");
+
+                if (kvGet(info, varNewStr(KEY_DELTA_STR)) != NULL)
+                    strCatFmt(backupResult, "%s", strPtr(varStrForce(kvGet(info, varNewStr(KEY_DELTA_STR)))));
+
+                strCat(backupResult, "\n");
+
+                KeyValue *repoInfo = varKv(kvGet(info, varNewStr(INFO_KEY_REPOSITORY_STR)));
+                strCat(backupResult, "            repository size: ");
+
+                if (kvGet(repoInfo, varNewStr(KEY_SIZE_STR)) != NULL)
+                    strCatFmt(backupResult, "%s", strPtr(varStrForce(kvGet(repoInfo, varNewStr(KEY_SIZE_STR)))));
+
+                strCat(backupResult, ", repository backup size: ");
+
+                if (kvGet(repoInfo, varNewStr(KEY_DELTA_STR)) != NULL)
+                    strCatFmt(backupResult, "%s", strPtr(varStrForce(kvGet(repoInfo, varNewStr(KEY_DELTA_STR)))));
+
+                strCat(backupResult, "\n");
+
+                if (kvGet(backupInfo, varNewStr(BACKUP_KEY_REFERENCE_STR)) != NULL)
+                {
+                    StringList *referenceList = strLstNewVarLst(varVarLst(kvGet(backupInfo, varNewStr(BACKUP_KEY_REFERENCE_STR))));
+                    strCatFmt(backupResult, "            backup reference list: %s\n", strPtr(strLstJoin(referenceList, ", ")));
+                }
+            }
+        }
+
+        if (strSize(archiveResult) > 0 || strSize(backupResult) > 0)
+        {
+            if (dbIdx != 0)
+                strCat(resultStr, "\n    db (prior)");
+
+            if (strSize(archiveResult) > 0)
+                strCat(resultStr, strPtr(archiveResult));
+
+            if (strSize(backupResult) > 0)
+                strCat(resultStr, strPtr(backupResult));
+        }
+    }
+    FUNCTION_TEST_RESULT_VOID();
+}
+
 static String *
 infoRender(void)
 {
@@ -412,16 +541,20 @@ infoRender(void)
             // Process any stanza directories
             if  (varLstSize(infoList) > 0)
             {
-                for (unsigned int idx = 0; idx < varLstSize(infoList); idx++)
+                for (unsigned int stanzaIdx = 0; stanzaIdx < varLstSize(infoList); stanzaIdx++)
                 {
-                    KeyValue *stanzaInfo = varKv(varLstGet(infoList, idx));
+                    KeyValue *stanzaInfo = varKv(varLstGet(infoList, stanzaIdx));
+
+                    // Add a carriage return between stanzas
+                    if (stanzaIdx > 0)
+                        strCatFmt(resultStr, "\n");
 
                     // stanza name and status
                     strCatFmt(resultStr, "stanza: %s\n    status: ",
                         strPtr(varStr(kvGet(stanzaInfo, varNewStr(STANZA_KEY_NAME_STR)))));
                     KeyValue *stanzaStatus = varKv(kvGet(stanzaInfo, varNewStr(STANZA_KEY_STATUS_STR)));
                     int statusCode = varInt(kvGet(stanzaStatus, varNewStr(STATUS_KEY_CODE_STR)));
-
+printf("STATUSCODE: %d\n", statusCode); fflush(stdout);
                     // If an error has occurred, provide the information that is available and move onto next stanza
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
@@ -429,21 +562,16 @@ infoRender(void)
                             strPtr(varStr(kvGet(stanzaStatus, varNewStr(STATUS_KEY_MESSAGE_STR)))));
 
                         if (statusCode == INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA ||
-                            statusCode ==INFO_STANZA_STATUS_CODE_NO_BACKUP)
+                            statusCode == INFO_STANZA_STATUS_CODE_NO_BACKUP)
                         {
                             strCatFmt(resultStr, "    cipher: %s\n",
                                 strPtr(varStr(kvGet(stanzaInfo, varNewStr(STANZA_KEY_CIPHER_STR)))));
 
-                            // If there is a backup.info fie but no backups, then process the archive info
-                            if (statusCode ==INFO_STANZA_STATUS_CODE_NO_BACKUP)
-                            /* CSHANG TODO: This should call a function to loop through the arhiveInfo section -
-                            this must march the (current) and (prior)
-                                db (current)
-                                    wal archive min/max (9.5-2): none present
-
-                                db (prior)
-                                    wal archive min/max (9.4-1): 000000010000000000000001 / 000000010000000000000002
-                            */
+                            // If there is a backup.info file but no backups, then process the archive info
+                            if (statusCode == INFO_STANZA_STATUS_CODE_NO_BACKUP)
+                            {
+                                formatTextDb(stanzaInfo, resultStr);
+                            }
                         }
 
                         continue;
@@ -454,6 +582,10 @@ infoRender(void)
                     // cipher
                     strCatFmt(resultStr, "    cipher: %s\n",
                         strPtr(varStr(kvGet(stanzaInfo, varNewStr(STANZA_KEY_CIPHER_STR)))));
+
+                    formatTextDb(stanzaInfo, resultStr);
+
+
                 }
             }
             else
