@@ -10,6 +10,7 @@ Archive Get File
 #include "compress/gzip.h"
 #include "compress/gzipDecompress.h"
 #include "config/config.h"
+#include "crypto/crypto.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
@@ -35,7 +36,8 @@ archiveGetCheck(const String *archiveFile)
         PgControl controlInfo = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
 
         // Attempt to load the archive info file
-        InfoArchive *info = infoArchiveNew(storageRepo(), STRING_CONST(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false);
+        InfoArchive *info = infoArchiveNew(
+            storageRepo(), STRING_CONST(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false, cipherTypeNone, NULL);
 
         // Loop through the pg history in case the WAL we need is not in the most recent archive id
         String *archiveId = NULL;

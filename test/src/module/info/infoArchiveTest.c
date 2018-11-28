@@ -17,7 +17,7 @@ testRun(void)
         String *fileName = strNewFmt("%s/test.ini", testPath());
 
         TEST_ERROR_FMT(
-            infoArchiveNew(storageLocal(), fileName, true), FileMissingError,
+            infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), FileMissingError,
             "unable to open %s/test.ini or %s/test.ini.copy\n"
             "HINT: archive.info does not exist but is required to push/get WAL segments.\n"
             "HINT: is archive_command configured in postgresql.conf?\n"
@@ -47,9 +47,10 @@ testRun(void)
 
         InfoArchive *info = NULL;
 
-        TEST_ASSIGN(info, infoArchiveNew(storageLocal(), fileName, true), "    new archive info");
+        TEST_ASSIGN(info, infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), "    new archive info");
         TEST_RESULT_STR(strPtr(infoArchiveId(info)), "9.4-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
+        TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "    no cipher passphrase");
 
         // Check PG version
         //--------------------------------------------------------------------------------------------------------------------------

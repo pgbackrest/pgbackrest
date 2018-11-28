@@ -58,10 +58,14 @@ Load an InfoPg object
 ??? Currently this assumes the file exists and loads data from it
 ***********************************************************************************************************************************/
 InfoPg *
-infoPgNew(const Storage *storage, const String *fileName, InfoPgType type)
+infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(STORAGE, storage);
         FUNCTION_DEBUG_PARAM(STRING, fileName);
+        FUNCTION_DEBUG_PARAM(ENUM, type);
+        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+        // cipherPass omitted for security
 
         FUNCTION_DEBUG_ASSERT(fileName != NULL);
     FUNCTION_DEBUG_END();
@@ -73,7 +77,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type)
         // Create object
         this = memNew(sizeof(InfoPg));
         this->memContext = MEM_CONTEXT_NEW();
-        this->info = infoNew(storage, fileName);
+        this->info = infoNew(storage, fileName, cipherType, cipherPass);
 
         // Get the pg history list
         this->history = lstNew(sizeof(InfoPgData));
@@ -169,6 +173,21 @@ infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx)
     InfoPgData pgData = infoPgData(this, pgDataIdx);
 
     FUNCTION_DEBUG_RESULT(STRING, strNewFmt("%s-%u", strPtr(pgVersionToStr(pgData.version)), pgData.id));
+}
+
+/***********************************************************************************************************************************
+Return the cipher passphrase
+***********************************************************************************************************************************/
+const String *
+infoPgCipherPass(const InfoPg *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_PG, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(CONST_STRING, infoCipherPass(this->info));
 }
 
 /***********************************************************************************************************************************

@@ -10,6 +10,7 @@ Object type
 typedef struct InfoArchive InfoArchive;
 
 #include "common/type/string.h"
+#include "crypto/crypto.h"
 #include "info/infoPg.h"
 #include "storage/storage.h"
 
@@ -21,7 +22,8 @@ Archive info filename
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-InfoArchive *infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissing);
+InfoArchive *infoArchiveNew(
+    const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Functions
@@ -32,6 +34,7 @@ void infoArchiveCheckPg(const InfoArchive *this, unsigned int pgVersion, uint64_
 Getters
 ***********************************************************************************************************************************/
 const String *infoArchiveId(const InfoArchive *this);
+const String *infoArchiveCipherPass(const InfoArchive *this);
 InfoPg *infoArchivePg(const InfoArchive *this);
 
 /***********************************************************************************************************************************

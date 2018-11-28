@@ -133,9 +133,9 @@ P00  DEBUG:     storage/storage::storageGet: => {used: 512, size: 512, limit: <o
 P00  DEBUG:     postgres/interface::pgControlFromFile: => {version: 90400, systemId: 1000000000000000094, walSegmentSize: 16777216, pageChecksum: true}
 P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: (path: {"[TEST_PATH]/db-master/repo"}, modeFile: 0640, modePath: 0750, write: false, pathExpressionFunction: (function *))
 P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: => {StorageDriverPosix}
-P00  DEBUG:     info/infoArchive::infoArchiveNew: (fileName: {"<REPO:ARCHIVE>/archive.info"}, ignoreMissing: false)
-P00  DEBUG:     info/infoPg::infoPgNew: (fileName: {"<REPO:ARCHIVE>/archive.info"})
-P00  DEBUG:     info/info::infoNew: (fileName: {"<REPO:ARCHIVE>/archive.info"})
+P00  DEBUG:     info/infoArchive::infoArchiveNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, ignoreMissing: false, cipherType: 0)
+P00  DEBUG:     info/infoPg::infoPgNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, type: 0, cipherType: 0)
+P00  DEBUG:     info/info::infoNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, cipherType: 0)
 P00  DEBUG:     info/info::infoNew: => {Info}
 P00  DEBUG:     info/infoPg::infoPgNew: => {InfoPg}
 P00  DEBUG:     info/infoArchive::infoArchiveNew: => {InfoArchive}
@@ -175,9 +175,9 @@ P00  DEBUG:     storage/storage::storageGet: => {used: 512, size: 512, limit: <o
 P00  DEBUG:     postgres/interface::pgControlFromFile: => {version: 90400, systemId: 1000000000000000094, walSegmentSize: 16777216, pageChecksum: true}
 P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: (path: {"[TEST_PATH]/db-master/repo"}, modeFile: 0640, modePath: 0750, write: false, pathExpressionFunction: (function *))
 P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: => {StorageDriverPosix}
-P00  DEBUG:     info/infoArchive::infoArchiveNew: (fileName: {"<REPO:ARCHIVE>/archive.info"}, ignoreMissing: false)
-P00  DEBUG:     info/infoPg::infoPgNew: (fileName: {"<REPO:ARCHIVE>/archive.info"})
-P00  DEBUG:     info/info::infoNew: (fileName: {"<REPO:ARCHIVE>/archive.info"})
+P00  DEBUG:     info/infoArchive::infoArchiveNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, ignoreMissing: false, cipherType: 0)
+P00  DEBUG:     info/infoPg::infoPgNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, type: 0, cipherType: 0)
+P00  DEBUG:     info/info::infoNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, cipherType: 0)
 P00  DEBUG:     info/info::infoNew: => {Info}
 P00  DEBUG:     info/infoPg::infoPgNew: => {InfoPg}
 P00  DEBUG:     info/infoArchive::infoArchiveNew: => {InfoArchive}

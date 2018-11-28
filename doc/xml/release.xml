@@ -36,6 +36,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add encryption capability to <code>Info*</code> objects.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>IoFilter</code> interface to <code>CipherBlock</code> object.</p>
                     </release-item>
 

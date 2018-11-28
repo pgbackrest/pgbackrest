@@ -38,27 +38,55 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         String *missingInfoError = strNewFmt("unable to open %s or %s", strPtr(fileName), strPtr(fileNameCopy));
 
-        TEST_ERROR(infoNew(storageLocal(), fileName), FileMissingError, strPtr(missingInfoError));
+        TEST_ERROR(infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileMissingError, strPtr(missingInfoError));
 
         // Only copy exists and one is required
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), bufNewStr(content)), "put info.copy to file");
 
-        TEST_ASSIGN(info, infoNew(storageLocal(), fileName), "infoNew() - load copy file");
+        TEST_ASSIGN(info, infoNew(storageLocal(), fileName, cipherTypeNone, NULL), "infoNew() - load copy file");
         TEST_RESULT_STR(strPtr(infoFileName(info)), strPtr(fileName), "    infoFileName() is set");
 
         TEST_RESULT_PTR(infoIni(info), info->ini, "    infoIni() returns pointer to info->ini");
+        TEST_RESULT_PTR(infoCipherPass(info), NULL, "    cipherPass is not set");
 
-        // Remove the copy and store only the main info file. One is required.
+        // Remove the copy and store only the main info file and encrypt it. One is required.
         //--------------------------------------------------------------------------------------------------------------------------
-        storageMoveNP(
-            storageLocal(), storageNewReadNP(storageLocal(), fileNameCopy), storageNewWriteNP(storageLocalWrite(), fileName));
+        StorageFileWrite *infoWrite = storageNewWriteNP(storageLocalWrite(), fileName);
+
+        ioWriteFilterGroupSet(
+            storageFileWriteIo(infoWrite),
+            ioFilterGroupAdd(
+                ioFilterGroupNew(),
+                cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, bufNewStr(strNew("12345678")), NULL))));
+
+        storageRemoveNP(storageLocalWrite(), fileNameCopy);
+        storagePutNP(
+            infoWrite,
+            bufNewStr(
+                strNew(
+                    "[backrest]\n"
+                    "backrest-checksum=\"9d2f6dce339751e1a056187fad67d2834b3d4ab3\"\n"
+                    "backrest-format=5\n"
+                    "backrest-version=\"2.04\"\n"
+                    "\n"
+                    "[cipher]\n"
+                    "cipher-pass=\"ABCDEFGH\"\n"
+                    "\n"
+                    "[db]\n"
+                    "db-id=1\n"
+                    "db-system-id=6569239123849665679\n"
+                    "db-version=\"9.4\"\n"
+                    "\n"
+                    "[db:history]\n"
+                    "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n")));
 
         // Only main info exists and is required
-        TEST_ASSIGN(info, infoNew(storageLocal(), fileName), "infoNew() - load file");
+        TEST_ASSIGN(info, infoNew(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678")), "infoNew() - load file");
 
         TEST_RESULT_STR(strPtr(infoFileName(info)), strPtr(fileName), "    infoFileName() is set");
+        TEST_RESULT_STR(strPtr(infoCipherPass(info)), "ABCDEFGH", "    cipherPass is set");
 
         // Invalid format
         //--------------------------------------------------------------------------------------------------------------------------
@@ -87,7 +115,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put invalid br format to file");
 
-        TEST_ERROR(infoNew(storageLocal(), fileName), FileMissingError, strPtr(missingInfoError));
+        TEST_ERROR(infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileMissingError, strPtr(missingInfoError));
         harnessLogResult(
             strPtr(
                 strNewFmt("P00   WARN: invalid format in '%s', expected %d but found %d", strPtr(fileName), REPOSITORY_FORMAT, 4)));
@@ -95,7 +123,7 @@ testRun(void)
         storageCopyNP(storageNewReadNP(storageLocal(), fileName), storageNewWriteNP(storageLocalWrite(), fileNameCopy));
 
         TEST_ERROR(
-            infoNew(storageLocal(), fileName), FormatError,
+            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FormatError,
             strPtr(strNewFmt("invalid format in '%s', expected %d but found %d", strPtr(fileName), REPOSITORY_FORMAT, 4)));
         harnessLogResult(
             strPtr(
@@ -150,7 +178,7 @@ testRun(void)
 
         // Copy file error
         TEST_ERROR(
-            infoNew(storageLocal(), fileName), ChecksumError,
+            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), ChecksumError,
             strPtr(strNewFmt("invalid checksum in '%s', expected '%s' but found '%s'", strPtr(fileName),
             "4306ec205f71417c301e403c4714090e61c8a736", "4306ec205f71417c301e403c4714090e61c8a999")));
 

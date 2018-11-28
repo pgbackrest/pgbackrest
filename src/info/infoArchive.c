@@ -30,11 +30,14 @@ Create a new InfoArchive object
 // ??? Need loadFile parameter
 ***********************************************************************************************************************************/
 InfoArchive *
-infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissing)
+infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(STORAGE, storage);
         FUNCTION_DEBUG_PARAM(STRING, fileName);
         FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+        // cipherPass omitted for security
 
         FUNCTION_DEBUG_ASSERT(fileName != NULL);
     FUNCTION_DEBUG_END();
@@ -50,7 +53,7 @@ infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissin
         // Catch file missing error and add archive-specific hints before rethrowing
         TRY_BEGIN()
         {
-            this->infoPg = infoPgNew(storage, fileName, infoPgArchive);
+            this->infoPg = infoPgNew(storage, fileName, infoPgArchive, cipherType, cipherPass);
         }
         CATCH(FileMissingError)
         {
@@ -130,6 +133,21 @@ infoArchiveId(const InfoArchive *this)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(STRING, this->archiveId);
+}
+
+/***********************************************************************************************************************************
+Return the cipher passphrase
+***********************************************************************************************************************************/
+const String *
+infoArchiveCipherPass(const InfoArchive *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(CONST_STRING, infoPgCipherPass(this->infoPg));
 }
 
 /***********************************************************************************************************************************

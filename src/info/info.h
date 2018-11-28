@@ -10,17 +10,19 @@ Object type
 typedef struct Info Info;
 
 #include "common/ini.h"
+#include "crypto/crypto.h"
 #include "crypto/hash.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-Info *infoNew(const Storage *storage, const String *fileName);
+Info *infoNew(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
+const String *infoCipherPass(const Info *this);
 String *infoFileName(const Info *this);
 Ini *infoIni(const Info *this);
 

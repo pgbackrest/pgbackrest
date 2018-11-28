@@ -9,6 +9,7 @@ Info Handler
 #include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "crypto/cipherBlock.h"
 #include "crypto/hash.h"
 #include "info/info.h"
 #include "storage/helper.h"
@@ -18,8 +19,14 @@ Info Handler
 Internal constants
 ***********************************************************************************************************************************/
 #define INI_COPY_EXT                                                ".copy"
+
 #define INI_SECTION_BACKREST                                        "backrest"
     STRING_STATIC(INI_SECTION_BACKREST_STR,                         INI_SECTION_BACKREST);
+#define INI_SECTION_CIPHER                                          "cipher"
+    STRING_STATIC(INI_SECTION_CIPHER_STR,                           INI_SECTION_CIPHER);
+
+#define INI_KEY_CIPHER_PASS                                         "cipher-pass"
+    STRING_STATIC(INI_KEY_CIPHER_PASS_STR,                          INI_KEY_CIPHER_PASS);
 #define INI_KEY_FORMAT                                              "backrest-format"
     STRING_STATIC(INI_KEY_FORMAT_STR,                               INI_KEY_FORMAT);
 #define INI_KEY_CHECKSUM                                            "backrest-checksum"
@@ -33,6 +40,7 @@ struct Info
     MemContext *memContext;                                         // Context that contains the info
     String *fileName;                                               // Full path name of the file
     Ini *ini;                                                       // Parsed file contents
+    const String *cipherPass;                                       // Cipher passphrase if set
 };
 
 /***********************************************************************************************************************************
@@ -174,14 +182,14 @@ infoValidInternal(
 Internal function to load the copy and check validity
 ***********************************************************************************************************************************/
 static bool
-loadInternal(
-    Info *this,                                                     // Info object to load parsed buffer into
-    const Storage *storage,
-    bool copyFile)                                                  // Is this the copy file?
+loadInternal(Info *this, const Storage *storage, bool copyFile, CipherType cipherType, const String *cipherPass)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO, this);
-        FUNCTION_DEBUG_PARAM(BOOL, copyFile);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace)
+        FUNCTION_DEBUG_PARAM(INFO, this);                           // Info object to load parsed buffer into
+        FUNCTION_DEBUG_PARAM(STORAGE, storage);
+        FUNCTION_DEBUG_PARAM(BOOL, copyFile);                       // Is this the copy file?
+        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+        // cipherPass omitted for security
 
         FUNCTION_DEBUG_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();
@@ -193,7 +201,18 @@ loadInternal(
         String *fileName = copyFile ? strCat(strDup(this->fileName), INI_COPY_EXT) : this->fileName;
 
         // Attempt to load the file
-        Buffer *buffer = storageGetNP(storageNewReadP(storage, fileName, .ignoreMissing = true));
+        StorageFileRead *infoRead = storageNewReadP(storage, fileName, .ignoreMissing = true);
+
+        if (cipherType != cipherTypeNone)
+        {
+            ioReadFilterGroupSet(
+                storageFileReadIo(infoRead),
+                ioFilterGroupAdd(
+                    ioFilterGroupNew(), cipherBlockFilter(cipherBlockNew(cipherModeDecrypt, cipherType, bufNewStr(cipherPass),
+                    NULL))));
+        }
+
+        Buffer *buffer = storageGetNP(infoRead);
 
         // If the file exists, parse and validate it
         if (buffer != NULL)
@@ -217,12 +236,13 @@ Load an Info object
 // ??? The file MUST exist currently, so this is not actually creating the object - rather it is loading it
 ***********************************************************************************************************************************/
 Info *
-infoNew(
-    const Storage *storage,
-    const String *fileName)                                         // Full path/filename to load
+infoNew(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STRING, fileName);
+        FUNCTION_DEBUG_PARAM(STORAGE, storage);
+        FUNCTION_DEBUG_PARAM(STRING, fileName);                     // Full path/filename to load
+        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+        // cipherPass omitted for security
 
         FUNCTION_DEBUG_ASSERT(fileName != NULL);
     FUNCTION_DEBUG_END();
@@ -239,15 +259,24 @@ infoNew(
         this->fileName = strDup(fileName);
 
         // Attempt to load the main file. If it does not exist or is invalid, try to load the copy.
-        if (!loadInternal(this, storage, false))
+        if (!loadInternal(this, storage, false, cipherType, cipherPass))
         {
-            if (!loadInternal(this, storage, true))
+            if (!loadInternal(this, storage, true, cipherType, cipherPass))
             {
                 THROW_FMT(
                     FileMissingError, "unable to open %s or %s",
                     strPtr(storagePathNP(storage, this->fileName)),
                     strPtr(strCat(storagePathNP(storage, this->fileName), INI_COPY_EXT)));
             }
+        }
+
+        // Load the cipher passphrase if it exists
+        String *cipherPass = varStr(iniGetDefault(this->ini, INI_SECTION_CIPHER_STR, INI_KEY_CIPHER_PASS_STR, NULL));
+
+        if (cipherPass != NULL)
+        {
+            this->cipherPass = strSubN(cipherPass, 1, strSize(cipherPass) - 2);
+            strFree(cipherPass);
         }
     }
     MEM_CONTEXT_NEW_END();
@@ -259,6 +288,18 @@ infoNew(
 /***********************************************************************************************************************************
 Accessor functions
 ***********************************************************************************************************************************/
+const String *
+infoCipherPass(const Info *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(CONST_STRING, this->cipherPass);
+}
+
 Ini *
 infoIni(const Info *this)
 {

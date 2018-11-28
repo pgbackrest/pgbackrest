@@ -11,6 +11,7 @@ typedef struct InfoPg InfoPg;
 
 #include <stdint.h>
 
+#include "crypto/crypto.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -38,7 +39,7 @@ typedef enum
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-InfoPg *infoPgNew(const Storage *storage, const String *fileName, InfoPgType type);
+InfoPg *infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Functions
@@ -49,7 +50,7 @@ void infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
 Getters
 ***********************************************************************************************************************************/
 String *infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx);
-
+const String *infoPgCipherPass(const InfoPg *this);
 InfoPgData infoPgData(const InfoPg *this, unsigned int pgDataIdx);
 InfoPgData infoPgDataCurrent(const InfoPg *this);
 unsigned int infoPgDataTotal(const InfoPg *this);
