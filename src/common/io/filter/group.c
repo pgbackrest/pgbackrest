@@ -254,6 +254,20 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
                 // Keep processing while the filter is not done or there is input
                 if (!ioFilterDone(filterData->filter) || filterData->input != NULL)
                 {
+                    // If we are flushing and the prior filter is done and is not producing any more output then this filter should
+                    // be flushing as well.  Set filterData->input = NULL so it knows there is no more input coming.
+                    //
+                    // If the filter is already done then there is no need to set input to NULL because it has already flushed and
+                    // the filter shouldn't need to hand NULL input if it doesn't need it to know when to flush.
+                    //
+                    // Checking filterIdx - 1 is safe because the first filter's filterData->input is always set to NULL when input
+                    // is NULL.
+                    if (input == NULL && filterData->input != NULL && !ioFilterDone(filterData->filter) &&
+                        ioFilterDone(ioFilterGroupGet(this, filterIdx - 1)->filter) && bufUsed(filterData->input) == 0)
+                    {
+                        filterData->input = NULL;
+                    }
+
                     ioFilterProcessInOut(filterData->filter, filterData->input, filterData->output);
 
                     // If inputSame is set then the output buffer for this filter is full and it will need to be pre-processed with
@@ -262,7 +276,7 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
                         this->inputSame = true;
 
                     // Else clear the buffer if it was locally allocated.  If this is an input buffer that was passed in then the
-                    // caller is reponsible for clearing it.
+                    // caller is responsible for clearing it.
                     else if (filterData->inputLocal != NULL)
                         bufUsedZero(filterData->inputLocal);
                 }
