@@ -27,7 +27,7 @@ InfoArchive *infoArchiveNew(const Storage *storage, const String *fileName, bool
 Functions
 ***********************************************************************************************************************************/
 void infoArchiveCheckPg(const InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
-const String *infoArchiveIdMatch(const InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
+const String *infoArchiveIdHistoryMatch(const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);
 
 /***********************************************************************************************************************************
 Getters

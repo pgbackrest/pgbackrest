@@ -108,17 +108,17 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
 
     InfoArchive *info = infoArchiveNew(
         storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanza), INFO_ARCHIVE_FILE), false);
-
+printf("BACKUPDBID: %u\n", pgData->id); fflush(stdout);
     // With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the
     // archive path must be built by retrieving the archive id given the db version and system id of the backup.info file.
     // If there is no match, an error will be thrown.
-    const String *archiveId = infoArchiveIdMatch(info, pgData->version, pgData->systemId);
+    const String *archiveId = infoArchiveIdHistoryMatch(info, pgData->id, pgData->version, pgData->systemId);
 
     String *archivePath = strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanza), strPtr(archiveId));
     String *archiveStart = NULL;
     String *archiveStop = NULL;
     Variant *archiveInfo = varNewKv();
-
+printf("ARCHIVEPATH: %s\n", strPtr(archivePath)); fflush(stdout);
     // Get a list of WAL directories in the archive repo from oldest to newest, if any exist
     StringList *walDir = storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR);
 
@@ -136,7 +136,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
             StringList *list = storageListP(
                 storageRepo(), strNewFmt("%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR);
-
+printf("STARTWAL: %s/%s\n", strPtr(archivePath), strPtr(strLstGet(walDir, idx))); fflush(stdout);
             // If wal segments are found, get the oldest one as the archive start
             if (strLstSize(list) > 0)
             {
@@ -154,7 +154,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
             StringList *list = storageListP(
                 storageRepo(), strNewFmt("%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR);
-
+printf("STOPWAL: %s/%s\n", strPtr(archivePath), strPtr(strLstGet(walDir, idx))); fflush(stdout);
             // If wal segments are found, get the newest one as the archive stop
             if (strLstSize(list) > 0)
             {
@@ -416,7 +416,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
             KeyValue *archiveInfo = varKv(varLstGet(archiveSection, archiveIdx));
             KeyValue *archiveDbInfo = varKv(kvGet(archiveInfo, varNewStr(KEY_DATABASE_STR)));
             uint64_t archiveDbId = varUInt64(kvGet(archiveDbInfo, varNewStr(DB_KEY_ID_STR)));
-printf("ARCHIVEID: %u, DBID %u\n", (unsigned int) archiveDbId, (unsigned int) dbId); fflush(stdout);
+printf("ARCHIVEID: %u, DBID %u, ARCHIVESECTION: %u\n", (unsigned int) archiveDbId, (unsigned int) dbId, varLstSize(archiveSection)); fflush(stdout);
             if (archiveDbId == dbId)
             {
                 strCatFmt(archiveResult, "\n        wal archive min/max (%s): ",

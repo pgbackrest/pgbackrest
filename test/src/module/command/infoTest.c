@@ -394,8 +394,6 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza2Path))),
                 bufNewStr(content)), "put backup info to file - stanza2");
 
-        // String *archiveDb1_2 = strNewFmt("%s/9.4-1/0000000200000000", strPtr(archiveStanza1Path));
-        // TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
         TEST_RESULT_INT(system(
             strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
             strPtr(archiveDb1_1)))))), 0, "touch WAL1 file");
@@ -693,23 +691,15 @@ testRun(void)
             "        wal archive min/max (9.4-3): none present\n",
             "no backups");
 
+        // Coverage test certain branches for formatTextDb
         //--------------------------------------------------------------------------------------------------------------------------
         String *archiveDb1_1 = strNewFmt("%s/9.4-1/0000000100000000", strPtr(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_1), "create db1 archive WAL1 directory");
 
-        String *archiveDb1_2 = strNewFmt("%s/9.4-1/0000000200000000", strPtr(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
-
-        String *archiveDb1_3 = strNewFmt("%s/9.4-1/0000000300000000", strPtr(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_3), "create db1 archive WAL3 directory");
-
-        String *archiveDb3 = strNewFmt("%s/9.4-3/0000000100000000", strPtr(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb3), "create db3 archive WAL1 directory");
-
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"439b20775a642eb01c592b7d571d4013b362fcf2\"\n"
+            "backrest-checksum=\"73282374597bb031d4a436824df1290f667741b1\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.04\"\n"
             "\n"
@@ -723,19 +713,21 @@ testRun(void)
             "[backup:current]\n"
             "20181116-154756F={"
             "\"backrest-format\":5,\"backrest-version\":\"2.04\","
-            "\"backup-archive-start\":\"000000010000000000000001\",\"backup-archive-stop\":\"000000010000000000000002\","
-            "\"backup-info-repo-size\":2369190,\"backup-info-repo-size-delta\":2369190,"
+            "\"backup-archive-stop\":\"000000010000000000000002\","
             "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542383276,\"backup-timestamp-stop\":1542383289,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181116-154799F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.04\","
+            "\"backup-archive-start\":\"000000010000000000000001\","
+            "\"backup-info-repo-size\":2369190,\"backup-info-repo-size-delta\":2369190,"
             "\"backup-timestamp-start\":1542383276,\"backup-timestamp-stop\":1542383289,\"backup-type\":\"full\","
             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666,"
-                "\"db-version\":\"9.3\"}\n"
-            "3={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.4\"}\n"
         );
 
@@ -749,16 +741,20 @@ testRun(void)
             "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4-3): none present\n"
-            "\n"
-            "    db (prior)\n"
+            "        wal archive min/max (9.4-1): none present\n"
             "\n"
             "        full backup: 20181116-154756F\n"
             "            timestamp start/stop: 1542383276 / 1542383289\n"
-            "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
+            "            wal start/stop: n/a\n"
             "            database size: 20162900, backup size: 20162900\n"
-            "            repository size: 2369190, repository backup size: 2369190\n",
-            "single stanza, valid backup, no priors, no archives in latest DB");
+            "            repository size: , repository backup size: \n"
+            "\n"
+            "        full backup: 20181116-154799F\n"
+            "            timestamp start/stop: 1542383276 / 1542383289\n"
+            "            wal start/stop: n/a\n"
+            "            database size: , backup size: \n"
+            "            repository size: 2369190, repository backup size: 2369190\n"
+            ,"single stanza, valid backup, no priors, no archives in latest DB");
 
         // backup.info/archive.info files exist, backups exist, archives exist
         //--------------------------------------------------------------------------------------------------------------------------
@@ -883,14 +879,15 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza2Path))),
                 bufNewStr(content)), "put backup info to file - stanza2");
 
-        // String *archiveDb1_2 = strNewFmt("%s/9.4-1/0000000200000000", strPtr(archiveStanza1Path));
-        // TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
+        // Create WAL files
         TEST_RESULT_INT(system(
             strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
             strPtr(archiveDb1_1)))))), 0, "touch WAL1 file");
         TEST_RESULT_INT(system(
             strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
             strPtr(archiveDb1_1)))))), 0, "touch WAL1 file");
+        String *archiveDb1_2 = strNewFmt("%s/9.4-1/0000000200000000", strPtr(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
         TEST_RESULT_INT(system(
             strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
             strPtr(archiveDb1_2)))))), 0, "touch WAL2 file");
@@ -901,7 +898,10 @@ testRun(void)
             "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4-3): none present\n"
+            "        wal archive min/max (9.5-2): none present\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        full backup: 20181119-152138F\n"
             "            timestamp start/stop: 1542640898 / 1542640911\n"
@@ -932,7 +932,29 @@ testRun(void)
             , "multiple stanzas, one with valid backups, archives in latest DB");
     }
 
-    // *****************************************************************************************************************************
+    /*****************************************************************************************************************************/
+    if (testBegin("formatTextDb()"))
+    {
+        // These tests cover branches not covered in other tests
+        KeyValue *stanzaInfo = kvNew();
+        VariantList *dbSection = varLstNew();
+        Variant *pgInfo = varNewKv();
+        kvPut(varKv(pgInfo), varNewStr(DB_KEY_ID_STR), varNewUInt64(1));
+        kvPut(varKv(pgInfo), varNewStr(DB_KEY_SYSTEM_ID_STR), varNewUInt64(6625633699176220261));
+        kvPut(varKv(pgInfo), varNewStr(DB_KEY_VERSION_STR), varNewStr(pgVersionToStr(90500)));
+
+        varLstAdd(dbSection, pgInfo);
+
+        // Add the database history, backup and archive sections to the stanza info
+        kvPut(stanzaInfo, varNewStr(STANZA_KEY_DB_STR), varNewVarLst(dbSection));
+        kvPut(stanzaInfo, varNewStr(STANZA_KEY_BACKUP_STR), varNewVarLst(varLstNew()));
+        kvPut(stanzaInfo, varNewStr(KEY_ARCHIVE_STR), varNewVarLst(varLstNew()));
+
+        String *result = strNew("");
+        formatTextDb(stanzaInfo, result);
+
+        TEST_RESULT_STR(strPtr(result), "\n    db (current)", "formatTextDb");
+    }
     // CSHANG Not sure how this works
     // if (testBegin("cmdInfo()"))
     // {
