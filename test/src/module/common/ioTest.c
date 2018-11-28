@@ -267,7 +267,7 @@ testRun(void)
         IoFilterGroup *filterGroup = NULL;
         TEST_ASSIGN(filterGroup, ioFilterGroupNew(), "    create new filter group");
         IoSize *sizeFilter = ioSizeNew();
-        TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, ioSizeFilter(sizeFilter)), "    add filter to filter group");
+        TEST_RESULT_PTR(ioFilterGroupAdd(filterGroup, ioSizeFilter(sizeFilter)), filterGroup, "    add filter to filter group");
         TEST_RESULT_VOID(
             ioFilterGroupAdd(filterGroup, ioTestFilterDoubleNew("double", 1)->filter), "    add filter to filter group");
         TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, ioSizeFilter(ioSizeNew())), "    add filter to filter group");

@@ -76,7 +76,7 @@ ioFilterGroupNew(void)
 /***********************************************************************************************************************************
 Add a filter
 ***********************************************************************************************************************************/
-void
+IoFilterGroup *
 ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
@@ -95,7 +95,7 @@ ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter)
     IoFilterData filterData = {.filter = filter};
     lstAdd(this->filterList, &filterData);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_DEBUG_RESULT(IO_FILTER_GROUP, this);
 }
 
 /***********************************************************************************************************************************

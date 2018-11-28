@@ -80,6 +80,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Return <code>IoFilterGroup *</code> from <code>ioFilterGroupAdd()</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add missing <code>LOG_DEBUG()</code> macro.</p>
                     </release-item>
                 </release-development-list>

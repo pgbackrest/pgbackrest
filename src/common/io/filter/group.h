@@ -26,7 +26,7 @@ IoFilterGroup *ioFilterGroupNew(void);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter);
+IoFilterGroup *ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter);
 void ioFilterGroupOpen(IoFilterGroup *this);
 void ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output);
 void ioFilterGroupClose(IoFilterGroup *this);
