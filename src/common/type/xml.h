@@ -38,6 +38,7 @@ void xmlDocumentFree(XmlDocument *this);
 /***********************************************************************************************************************************
 Node Getters
 ***********************************************************************************************************************************/
+String *xmlNodeAttribute(XmlNode *this, const String *name);
 XmlNode *xmlNodeChild(XmlNode *this, const String *name, bool errorOnMissing);
 XmlNodeList *xmlNodeChildList(XmlNode *this, const String *name);
 XmlNode *xmlNodeChildN(XmlNode *this, const String *name, unsigned int index, bool errorOnMissing);

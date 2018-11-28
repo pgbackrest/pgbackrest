@@ -21,7 +21,7 @@ testRun(void)
             xmlDocumentNewZ(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">\n"
-                "    <Name>bucket</Name>\n"
+                "    <Name id=\"test\">bucket</Name>\n"
                 "    <Prefix/>\n"
                 "    <KeyCount>2</KeyCount>\n"
                 "    <MaxKeys>1000</MaxKeys>\n"
@@ -78,6 +78,10 @@ testRun(void)
             xmlNodeChildN(rootNode, strNew("Contents"), 2, true), FormatError,
             "unable to find child 'Contents':2 in node 'ListBucketResult'");
         TEST_RESULT_PTR(xmlNodeChildN(rootNode, strNew("Contents"), 2, false), NULL, "get missing child without error");
+
+        TEST_RESULT_PTR(xmlNodeAttribute(rootNode, strNew(BOGUS_STR)), NULL, "attempt to get missing attribute");
+        TEST_RESULT_STR(
+            strPtr(xmlNodeAttribute(xmlNodeChild(rootNode, strNew("Name"), true), strNew("id"))), "test", "get attribute");
 
         TEST_RESULT_VOID(xmlDocumentFree(xmlDocument), "free xmldoc");
         TEST_RESULT_VOID(xmlDocumentFree(NULL), "free null xmldoc");
