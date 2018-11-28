@@ -116,19 +116,21 @@ ioTestFilterSizeNew(const char *type)
 }
 
 /***********************************************************************************************************************************
-Test filter to double input to the output.  It can also flush out a variable number of bytes at the end.
+Test filter to multiply input to the output.  It can also flush out a variable number of bytes at the end.
 ***********************************************************************************************************************************/
-typedef struct IoTestFilterDouble
+typedef struct IoTestFilterMultiply
 {
     MemContext *memContext;
     unsigned int flushTotal;
-    Buffer *doubleBuffer;
+    char flushChar;
+    Buffer *multiplyBuffer;
+    unsigned int multiplier;
     IoFilter *bufferFilter;
     IoFilter *filter;
-} IoTestFilterDouble;
+} IoTestFilterMultiply;
 
 static void
-ioTestFilterDoubleProcess(IoTestFilterDouble *this, const Buffer *input, Buffer *output)
+ioTestFilterMultiplyProcess(IoTestFilterMultiply *this, const Buffer *input, Buffer *output)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(VOIDP, this);
@@ -141,63 +143,66 @@ ioTestFilterDoubleProcess(IoTestFilterDouble *this, const Buffer *input, Buffer 
 
     if (input == NULL)
     {
-        bufCat(output, bufNewC(1, "X"));
+        char flushZ[] = {this->flushChar, 0};
+        bufCat(output, bufNewC(1, flushZ));
         this->flushTotal--;
     }
     else
     {
-        if (this->doubleBuffer == NULL)
+        if (this->multiplyBuffer == NULL)
         {
-            this->doubleBuffer = bufNew(bufUsed(input) * 2);
+            this->multiplyBuffer = bufNew(bufUsed(input) * this->multiplier);
             unsigned char *inputPtr = bufPtr(input);
-            unsigned char *bufferPtr = bufPtr(this->doubleBuffer);
+            unsigned char *bufferPtr = bufPtr(this->multiplyBuffer);
 
             for (unsigned int charIdx = 0; charIdx < bufUsed(input); charIdx++)
             {
-                bufferPtr[charIdx * 2] = inputPtr[charIdx];
-                bufferPtr[charIdx * 2 + 1] = inputPtr[charIdx];
+                for (unsigned int multiplierIdx = 0; multiplierIdx < this->multiplier; multiplierIdx++)
+                    bufferPtr[charIdx * this->multiplier + multiplierIdx] = inputPtr[charIdx];
             }
 
-            bufUsedSet(this->doubleBuffer, bufSize(this->doubleBuffer));
+            bufUsedSet(this->multiplyBuffer, bufSize(this->multiplyBuffer));
         }
 
-        ioFilterProcessInOut(this->bufferFilter, this->doubleBuffer, output);
+        ioFilterProcessInOut(this->bufferFilter, this->multiplyBuffer, output);
 
         if (!ioFilterInputSame(this->bufferFilter))
-            this->doubleBuffer = NULL;
+            this->multiplyBuffer = NULL;
     }
 
     FUNCTION_DEBUG_RESULT_VOID();
 }
 
 static bool
-ioTestFilterDoubleDone(IoTestFilterDouble *this)
+ioTestFilterMultiplyDone(IoTestFilterMultiply *this)
 {
     return this->flushTotal == 0;
 }
 
 static bool
-ioTestFilterDoubleInputSame(IoTestFilterDouble *this)
+ioTestFilterMultiplyInputSame(IoTestFilterMultiply *this)
 {
     return ioFilterInputSame(this->bufferFilter);
 }
 
-static IoTestFilterDouble *
-ioTestFilterDoubleNew(const char *type, unsigned int flushTotal)
+static IoTestFilterMultiply *
+ioTestFilterMultiplyNew(const char *type, unsigned int multiplier, unsigned int flushTotal, char flushChar)
 {
-    IoTestFilterDouble *this = NULL;
+    IoTestFilterMultiply *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoTestFilterDouble")
+    MEM_CONTEXT_NEW_BEGIN("IoTestFilterMultiply")
     {
-        this = memNew(sizeof(IoTestFilterDouble));
+        this = memNew(sizeof(IoTestFilterMultiply));
         this->memContext = MEM_CONTEXT_NEW();
         this->bufferFilter = ioBufferFilter(ioBufferNew());
+        this->multiplier = multiplier;
         this->flushTotal = flushTotal;
+        this->flushChar = flushChar;
 
         this->filter = ioFilterNewP(
-            strNew(type), this, .done = (IoFilterInterfaceDone)ioTestFilterDoubleDone,
-            .inOut = (IoFilterInterfaceProcessInOut)ioTestFilterDoubleProcess,
-            .inputSame = (IoFilterInterfaceInputSame)ioTestFilterDoubleInputSame);
+            strNew(type), this, .done = (IoFilterInterfaceDone)ioTestFilterMultiplyDone,
+            .inOut = (IoFilterInterfaceProcessInOut)ioTestFilterMultiplyProcess,
+            .inputSame = (IoFilterInterfaceInputSame)ioTestFilterMultiplyInputSame);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -269,7 +274,7 @@ testRun(void)
         IoSize *sizeFilter = ioSizeNew();
         TEST_RESULT_PTR(ioFilterGroupAdd(filterGroup, ioSizeFilter(sizeFilter)), filterGroup, "    add filter to filter group");
         TEST_RESULT_VOID(
-            ioFilterGroupAdd(filterGroup, ioTestFilterDoubleNew("double", 1)->filter), "    add filter to filter group");
+            ioFilterGroupAdd(filterGroup, ioTestFilterMultiplyNew("double", 2, 1, 'X')->filter), "    add filter to filter group");
         TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, ioSizeFilter(ioSizeNew())), "    add filter to filter group");
         IoBuffer *bufferFilter = ioBufferNew();
         TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, ioBufferFilter(bufferFilter)), "    add filter to filter group");
@@ -410,7 +415,7 @@ testRun(void)
         IoSize *sizeFilter = ioSizeNew();
         TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, ioSizeFilter(sizeFilter)), "    add filter to filter group");
         TEST_RESULT_VOID(
-            ioFilterGroupAdd(filterGroup, ioTestFilterDoubleNew("double", 3)->filter), "    add filter to filter group");
+            ioFilterGroupAdd(filterGroup, ioTestFilterMultiplyNew("double", 2, 3, 'X')->filter), "    add filter to filter group");
         TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, ioTestFilterSizeNew("size2")->filter), "    add filter to filter group");
         TEST_RESULT_VOID(ioWriteFilterGroupSet(ioBufferWriteIo(bufferWrite), filterGroup), "    add filter group to write io");
 
@@ -427,7 +432,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteFlush(ioBufferWriteIo(bufferWrite)), "    flush again (nothing to flush)");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\nZZ", "    check output is unchanged");
 
-        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNewZ("12345")), "    write 4 bytes");
+        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNewZ("12345")), "    write bytes");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\nZZ112233445", "    check write");
 
         TEST_RESULT_VOID(ioWriteClose(ioBufferWriteIo(bufferWrite)), " close buffer write object");

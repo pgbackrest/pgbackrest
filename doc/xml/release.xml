@@ -104,6 +104,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow arbitrary multiplier and flush character in <code>IoTestFilterMultiply</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>testRepoPath()</code> to let C unit tests know where the code repository is located.</p>
                     </release-item>
                 </release-development-list>
