@@ -68,6 +68,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Merge <code>cipher.h</code> into <code>crypto.h</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove extraneous <code>use</code>/<code>include</code> statements.</p>
                     </release-item>
 

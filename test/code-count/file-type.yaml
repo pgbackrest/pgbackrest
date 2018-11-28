@@ -939,10 +939,6 @@ src/config/parse.h:
   class: core
   type: c/h
 
-src/crypto/cipher.h:
-  class: core
-  type: c/h
-
 src/crypto/cipherBlock.c:
   class: core
   type: c
