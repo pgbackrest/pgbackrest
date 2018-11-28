@@ -271,14 +271,15 @@ cmdArchiveGet(void)
             // Disable async if it was enabled
             cfgOptionSet(cfgOptArchiveAsync, cfgOptionSource(cfgOptArchiveAsync), varNewBool(false));
 
-            // If repo server is not remote and not encrypted then this can be done entirely in C
-            if (!cfgOptionTest(cfgOptRepoHost) && strEqZ(cfgOptionStr(cfgOptRepoCipherType), "none"))
+            // If repo server is not remote then this can be done entirely in C
+            if (!cfgOptionTest(cfgOptRepoHost))                                 // {uncovered - Perl code is covered in unit tests}
             {
-                result = archiveGetFile(walSegment, walDestination);
+                result = archiveGetFile(
+                    walSegment, walDestination, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
             }
             // Else do it in Perl
             else
-                result = perlExec();                                            // {uncovered - Perl code is covered in unit tests}
+                result = perlExec();                                            // {+uncovered}
         }
 
         // Log whether or not the file was found

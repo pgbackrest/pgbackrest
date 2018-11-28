@@ -83,7 +83,7 @@ sub run
     {
     foreach my $bRemote ($bS3 ? (false) : (false, true))
     {
-        my $bRepoEncrypt = $bRemote && !$bS3 ? true : false;
+        my $bRepoEncrypt = !$bRemote && !$bS3 ? true : false;
 
         # Increment the run, log, and decide whether this unit test should be run
         if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bRepoEncrypt}")) {next}

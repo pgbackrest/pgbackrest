@@ -5,10 +5,11 @@ Archive Get File
 #define COMMAND_ARCHIVE_GET_FILE_H
 
 #include "common/type/string.h"
+#include "crypto/crypto.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-int archiveGetFile(const String *archiveFile, const String *walDestination);
+int archiveGetFile(const String *archiveFile, const String *walDestination, CipherType cipherType, const String *cipherPass);
 
 #endif

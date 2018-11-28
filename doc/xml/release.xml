@@ -16,7 +16,7 @@
             <release-core-list>
                 <release-development-list>
                     <release-item>
-                        <p>Enable S3 storage for <cmd>archive-get</cmd> command in C.</p>
+                        <p>Enable S3 storage and encryption for <cmd>archive-get</cmd> command in C.</p>
                     </release-item>
 
                     <release-item>

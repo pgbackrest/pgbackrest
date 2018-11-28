@@ -10,7 +10,7 @@ Archive Get File
 #include "compress/gzip.h"
 #include "compress/gzipDecompress.h"
 #include "config/config.h"
-#include "crypto/crypto.h"
+#include "crypto/cipherBlock.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
@@ -19,16 +19,29 @@ Archive Get File
 /***********************************************************************************************************************************
 Check if a WAL file exists in the repository
 ***********************************************************************************************************************************/
-static String *
-archiveGetCheck(const String *archiveFile)
+#define FUNCTION_DEBUG_ARCHIVE_GET_CHECK_RESULT_TYPE                                                                               \
+    ArchiveGetCheckResult
+#define FUNCTION_DEBUG_ARCHIVE_GET_CHECK_RESULT_FORMAT(value, buffer, bufferSize)                                                  \
+    objToLog(&value, "ArchiveGetCheckResult", buffer, bufferSize)
+
+typedef struct ArchiveGetCheckResult
+{
+    String *archiveFileActual;
+    String *cipherPass;
+} ArchiveGetCheckResult;
+
+ArchiveGetCheckResult
+archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, archiveFile);
+        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+        // cipherPass omitted for security
 
         FUNCTION_TEST_ASSERT(archiveFile != NULL);
     FUNCTION_DEBUG_END();
 
-    String *result = NULL;
+    ArchiveGetCheckResult result = {0};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -37,7 +50,7 @@ archiveGetCheck(const String *archiveFile)
 
         // Attempt to load the archive info file
         InfoArchive *info = infoArchiveNew(
-            storageRepo(), STRING_CONST(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false, cipherTypeNone, NULL);
+            storageRepo(), STRING_CONST(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false, cipherType, cipherPass);
 
         // Loop through the pg history in case the WAL we need is not in the most recent archive id
         String *archiveId = NULL;
@@ -85,23 +98,27 @@ archiveGetCheck(const String *archiveFile)
         if (archiveFileActual != NULL)
         {
             memContextSwitch(MEM_CONTEXT_OLD());
-            result = strNewFmt("%s/%s", strPtr(archiveId), strPtr(archiveFileActual));
+            result.archiveFileActual = strNewFmt("%s/%s", strPtr(archiveId), strPtr(archiveFileActual));
+            result.cipherPass = strDup(infoArchiveCipherPass(info));
+            memContextSwitch(MEM_CONTEXT_TEMP());
         }
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING, result);
+    FUNCTION_DEBUG_RESULT(ARCHIVE_GET_CHECK_RESULT, result);
 }
 
 /***********************************************************************************************************************************
 Copy a file from the archive to the specified destination
 ***********************************************************************************************************************************/
 int
-archiveGetFile(const String *archiveFile, const String *walDestination)
+archiveGetFile(const String *archiveFile, const String *walDestination, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, archiveFile);
         FUNCTION_DEBUG_PARAM(STRING, walDestination);
+        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+        // cipherPass omitted for security
 
         FUNCTION_TEST_ASSERT(archiveFile != NULL);
         FUNCTION_TEST_ASSERT(walDestination != NULL);
@@ -116,25 +133,39 @@ archiveGetFile(const String *archiveFile, const String *walDestination)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Make sure the file exists and other checks pass
-        String *archiveFileActual = archiveGetCheck(archiveFile);
+        ArchiveGetCheckResult archiveGetCheckResult = archiveGetCheck(archiveFile, cipherType, cipherPass);
 
-        if (archiveFileActual != NULL)
+        if (archiveGetCheckResult.archiveFileActual != NULL)
         {
             StorageFileWrite *destination = storageNewWriteP(
                 storageLocalWrite(), walDestination, .noCreatePath = true,  .noSyncFile = true, .noSyncPath = true,
                 .noAtomic = true);
 
-            // If file is gzipped then add the decompression filter
-            if (strEndsWithZ(archiveFileActual, "." GZIP_EXT))
+            // Add filters
+            IoFilterGroup *filterGroup = ioFilterGroupNew();
+
+            // If there is a cipher then add the decrypt filter
+            if (cipherType != cipherTypeNone)
             {
-                IoFilterGroup *filterGroup = ioFilterGroupNew();
-                ioFilterGroupAdd(filterGroup, gzipDecompressFilter(gzipDecompressNew(false)));
-                ioWriteFilterGroupSet(storageFileWriteIo(destination), filterGroup);
+                ioFilterGroupAdd(
+                    filterGroup,
+                    cipherBlockFilter(
+                        cipherBlockNew(cipherModeDecrypt, cipherType, bufNewStr(archiveGetCheckResult.cipherPass), NULL)));
             }
+
+            // If file is gzipped then add the decompression filter
+            if (strEndsWithZ(archiveGetCheckResult.archiveFileActual, "." GZIP_EXT))
+            {
+                ioFilterGroupAdd(filterGroup, gzipDecompressFilter(gzipDecompressNew(false)));
+            }
+
+            ioWriteFilterGroupSet(storageFileWriteIo(destination), filterGroup);
 
             // Copy the file
             storageCopyNP(
-                storageNewReadNP(storageRepo(), strNewFmt("%s/%s", STORAGE_REPO_ARCHIVE, strPtr(archiveFileActual))), destination);
+                storageNewReadNP(
+                    storageRepo(), strNewFmt("%s/%s", STORAGE_REPO_ARCHIVE, strPtr(archiveGetCheckResult.archiveFileActual))),
+                    destination);
 
             // The WAL file was found
             result = 0;
