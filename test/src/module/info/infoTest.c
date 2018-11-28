@@ -36,9 +36,14 @@ testRun(void)
 
         // Info files missing and at least one is required
         //--------------------------------------------------------------------------------------------------------------------------
-        String *missingInfoError = strNewFmt("unable to open %s or %s", strPtr(fileName), strPtr(fileNameCopy));
-
-        TEST_ERROR(infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileMissingError, strPtr(missingInfoError));
+        TEST_ERROR(
+            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileOpenError,
+            strPtr(
+                strNewFmt(
+                    "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
+                    "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
+                    "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory",
+                testPath(), testPath(), testPath(), testPath())));
 
         // Only copy exists and one is required
         //--------------------------------------------------------------------------------------------------------------------------
@@ -115,19 +120,25 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put invalid br format to file");
 
-        TEST_ERROR(infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileMissingError, strPtr(missingInfoError));
-        harnessLogResult(
+        TEST_ERROR(
+            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileOpenError,
             strPtr(
-                strNewFmt("P00   WARN: invalid format in '%s', expected %d but found %d", strPtr(fileName), REPOSITORY_FORMAT, 4)));
+                strNewFmt(
+                    "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
+                    "FormatError: invalid format in '%s/test.ini', expected 5 but found 4\n"
+                    "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory",
+                testPath(), testPath(), testPath(), testPath())));
 
         storageCopyNP(storageNewReadNP(storageLocal(), fileName), storageNewWriteNP(storageLocalWrite(), fileNameCopy));
 
         TEST_ERROR(
-            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FormatError,
-            strPtr(strNewFmt("invalid format in '%s', expected %d but found %d", strPtr(fileName), REPOSITORY_FORMAT, 4)));
-        harnessLogResult(
+            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileOpenError,
             strPtr(
-                strNewFmt("P00   WARN: invalid format in '%s', expected %d but found %d", strPtr(fileName), REPOSITORY_FORMAT, 4)));
+                strNewFmt(
+                    "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
+                    "FormatError: invalid format in '%s/test.ini', expected 5 but found 4\n"
+                    "FormatError: invalid format in '%s/test.ini.copy', expected 5 but found 4",
+                testPath(), testPath(), testPath(), testPath())));
 
         // Invalid checksum
         //--------------------------------------------------------------------------------------------------------------------------
@@ -178,13 +189,15 @@ testRun(void)
 
         // Copy file error
         TEST_ERROR(
-            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), ChecksumError,
-            strPtr(strNewFmt("invalid checksum in '%s', expected '%s' but found '%s'", strPtr(fileName),
-            "4306ec205f71417c301e403c4714090e61c8a736", "4306ec205f71417c301e403c4714090e61c8a999")));
-
-        // Main file warning
-        harnessLogResult(strPtr(strNewFmt("P00   WARN: invalid checksum in '%s', expected '%s' but found '%s'", strPtr(fileName),
-            "4306ec205f71417c301e403c4714090e61c8a736", "[undef]")));
+            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileOpenError,
+            strPtr(
+                strNewFmt(
+                    "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
+                    "ChecksumError: invalid checksum in '%s/test.ini', expected '4306ec205f71417c301e403c4714090e61c8a736' but"
+                        " no checksum found\n"
+                    "ChecksumError: invalid checksum in '%s/test.ini.copy', expected '4306ec205f71417c301e403c4714090e61c8a736'"
+                        " but found '4306ec205f71417c301e403c4714090e61c8a999'",
+                testPath(), testPath(), testPath(), testPath())));
 
         storageRemoveNP(storageLocalWrite(), fileName);
         storageRemoveNP(storageLocalWrite(), fileNameCopy);

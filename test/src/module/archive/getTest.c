@@ -345,13 +345,17 @@ testRun(void)
             HARNESS_FORK_CHILD()
             {
                 TEST_ERROR_FMT(
-                    cmdArchiveGet(), FileMissingError,
-                    "unable to open %s/archive/test1/archive.info or %s/archive/test1/archive.info.copy\n"
-                    "HINT: archive.info does not exist but is required to push/get WAL segments.\n"
-                    "HINT: is archive_command configured in postgresql.conf?\n"
+                    cmdArchiveGet(), FileOpenError,
+                    "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
+                    "FileMissingError: unable to open '%s/archive/test1/archive.info' for read: [2] No such file or directory\n"
+                    "FileMissingError: unable to open '%s/archive/test1/archive.info.copy' for read: [2] No such file or"
+                        " directory\n"
+                    "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+                    "HINT: is archive_command configured correctly in postgresql.conf?\n"
                     "HINT: has a stanza-create been performed?\n"
                     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
                         " scheme.",
+                    strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)),
                     strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)));
             }
         }
@@ -371,13 +375,17 @@ testRun(void)
             HARNESS_FORK_CHILD()
             {
                 TEST_ERROR_FMT(
-                    cmdArchiveGet(), FileMissingError,
-                    "unable to open %s/archive/test1/archive.info or %s/archive/test1/archive.info.copy\n"
-                    "HINT: archive.info does not exist but is required to push/get WAL segments.\n"
-                    "HINT: is archive_command configured in postgresql.conf?\n"
+                    cmdArchiveGet(), FileOpenError,
+                    "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
+                    "FileMissingError: unable to open '%s/archive/test1/archive.info' for read: [2] No such file or directory\n"
+                    "FileMissingError: unable to open '%s/archive/test1/archive.info.copy' for read: [2] No such file or"
+                        " directory\n"
+                    "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+                    "HINT: is archive_command configured correctly in postgresql.conf?\n"
                     "HINT: has a stanza-create been performed?\n"
                     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
                         " scheme.",
+                    strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)),
                     strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)));
             }
         }

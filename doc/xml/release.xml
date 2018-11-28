@@ -60,6 +60,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve error message when info files are missing/corrupt.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Rename <code>PGBACKREST</code>/<code>BACKREST</code> constants to <code>PROJECT</code>.</p>
                     </release-item>
 

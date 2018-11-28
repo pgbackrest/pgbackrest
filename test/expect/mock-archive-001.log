@@ -14,12 +14,14 @@ P00   INFO: archive-push command end: aborted with exception [055]
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000001, [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [055]: unable to open [TEST_PATH]/db-master/repo/archive/db/archive.info or [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
-            HINT: archive.info does not exist but is required to push/get WAL segments.
-            HINT: is archive_command configured in postgresql.conf?
+P00  ERROR: [041]: unable to load info file '[TEST_PATH]/db-master/repo/archive/db/archive.info' or '[TEST_PATH]/db-master/repo/archive/db/archive.info.copy':
+            FileMissingError: unable to open '[TEST_PATH]/db-master/repo/archive/db/archive.info' for read: [2] No such file or directory
+            FileMissingError: unable to open '[TEST_PATH]/db-master/repo/archive/db/archive.info.copy' for read: [2] No such file or directory
+            HINT: archive.info cannot be opened but is required to push/get WAL segments.
+            HINT: is archive_command configured correctly in postgresql.conf?
             HINT: has a stanza-create been performed?
             HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
-P00   INFO: archive-get command end: aborted with exception [055]
+P00   INFO: archive-get command end: aborted with exception [041]
 
 stanza-create db - stanza create (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create

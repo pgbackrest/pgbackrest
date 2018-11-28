@@ -135,9 +135,12 @@ sub run
             $strCommandPush . " ${strWalPath}/${strSourceFile1}",
             {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $self->expect()});
 
+        # ??? C and Perl currently return different errors for info open failures -- this can be removed when Perl is gone
+        my $iExpectedError = !$bRemote ? ERROR_FILE_OPEN : ERROR_FILE_MISSING;
+
         $oHostDbMaster->executeSimple(
             $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $self->expect()});
+            {iExpectedExitStatus => $iExpectedError, oLogTest => $self->expect()});
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate(
