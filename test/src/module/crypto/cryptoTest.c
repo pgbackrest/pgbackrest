@@ -36,6 +36,18 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("cipherType() and cipherTypeName()"))
+    {
+        TEST_ERROR(cipherType(strNew(BOGUS_STR)), AssertError, "invalid cipher name 'BOGUS'");
+        TEST_RESULT_UINT(cipherType(strNew("none")), cipherTypeNone, "none type");
+        TEST_RESULT_UINT(cipherType(strNew("aes-256-cbc")), cipherTypeAes256Cbc, "aes-256-cbc type");
+
+        TEST_ERROR(cipherTypeName((CipherType)2), AssertError, "invalid cipher type 2");
+        TEST_RESULT_STR(strPtr(cipherTypeName(cipherTypeNone)), "none", "none name");
+        TEST_RESULT_STR(strPtr(cipherTypeName(cipherTypeAes256Cbc)), "aes-256-cbc", "aes-256-cbc name");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cryptoRandomBytes()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------

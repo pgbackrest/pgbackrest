@@ -321,7 +321,7 @@ config/load.o: config/load.c command/command.h common/debug.h common/error.auto.
 config/parse.o: config/parse.c common/assert.h common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/parse.auto.c config/parse.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h version.h
 	$(CC) $(CFLAGS) -c config/parse.c -o config/parse.o
 
-crypto/cipherBlock.o: crypto/cipherBlock.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/convert.h crypto/cipherBlock.h crypto/crypto.h
+crypto/cipherBlock.o: crypto/cipherBlock.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h crypto/cipherBlock.h crypto/crypto.h
 	$(CC) $(CFLAGS) -c crypto/cipherBlock.c -o crypto/cipherBlock.o
 
 crypto/crypto.o: crypto/crypto.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h crypto/crypto.h
