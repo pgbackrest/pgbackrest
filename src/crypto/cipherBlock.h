@@ -12,13 +12,21 @@ typedef struct CipherBlock CipherBlock;
 #include "crypto/cipher.h"
 
 /***********************************************************************************************************************************
+Constructor
+***********************************************************************************************************************************/
+CipherBlock *cipherBlockNewC(
+    CipherMode mode, const char *cipherName, const unsigned char *pass, size_t passSize, const char *digestName);
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-CipherBlock *cipherBlockNew(
-    CipherMode mode, const char *cipherName, const unsigned char *pass, size_t passSize, const char *digestName);
-size_t cipherBlockProcessSize(CipherBlock *this, size_t sourceSize);
-size_t cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t sourceSize, unsigned char *destination);
-size_t cipherBlockFlush(CipherBlock *this, unsigned char *destination);
+size_t cipherBlockProcessSizeC(CipherBlock *this, size_t sourceSize);
+size_t cipherBlockProcessC(CipherBlock *this, const unsigned char *source, size_t sourceSize, unsigned char *destination);
+size_t cipherBlockFlushC(CipherBlock *this, unsigned char *destination);
+
+/***********************************************************************************************************************************
+Destructor
+***********************************************************************************************************************************/
 void cipherBlockFree(CipherBlock *this);
 
 /***********************************************************************************************************************************
