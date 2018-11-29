@@ -1014,7 +1014,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        const char *generalHelp = strPtr(strNew("No stanzas exist in /home/vagrant/test/test-0/repo\n"));
+        const char *generalHelp = strPtr(strNewFmt("No stanzas exist in %s\n", testPath()));
 
         Storage *storage = storageDriverPosixInterface(
             storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL));
