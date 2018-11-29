@@ -693,9 +693,6 @@ testRun(void)
 
         // Coverage test certain branches for formatTextDb
         //--------------------------------------------------------------------------------------------------------------------------
-        String *archiveDb1_1 = strNewFmt("%s/9.4-1/0000000100000000", strPtr(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_1), "create db1 archive WAL1 directory");
-
         content = strNew
         (
             "[backrest]\n"
@@ -744,13 +741,13 @@ testRun(void)
             "        wal archive min/max (9.4-1): none present\n"
             "\n"
             "        full backup: 20181116-154756F\n"
-            "            timestamp start/stop: 1542383276 / 1542383289\n"
+            "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
             "            wal start/stop: n/a\n"
             "            database size: 20162900, backup size: 20162900\n"
             "            repository size: , repository backup size: \n"
             "\n"
             "        full backup: 20181116-154799F\n"
-            "            timestamp start/stop: 1542383276 / 1542383289\n"
+            "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
             "            wal start/stop: n/a\n"
             "            database size: , backup size: \n"
             "            repository size: 2369190, repository backup size: 2369190\n"
@@ -880,6 +877,8 @@ testRun(void)
                 bufNewStr(content)), "put backup info to file - stanza2");
 
         // Create WAL files
+        String *archiveDb1_1 = strNewFmt("%s/9.4-1/0000000100000000", strPtr(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_1), "create db1 archive WAL1 directory");
         TEST_RESULT_INT(system(
             strPtr(strNewFmt("touch %s", strPtr(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
             strPtr(archiveDb1_1)))))), 0, "touch WAL1 file");
@@ -904,20 +903,20 @@ testRun(void)
             "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        full backup: 20181119-152138F\n"
-            "            timestamp start/stop: 1542640898 / 1542640911\n"
+            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:51\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
             "            database size: 20162900, backup size: 20162900\n"
             "            repository size: 2369186, repository backup size: 2369186\n"
             "\n"
             "        diff backup: 20181119-152138F_20181119-152152D\n"
-            "            timestamp start/stop: 1542640912 / 1542640915\n"
+            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
             "            wal start/stop: 000000010000000000000003 / 000000010000000000000003\n"
             "            database size: 20162900, backup size: 8428\n"
             "            repository size: 2369186, repository backup size: 346\n"
             "            backup reference list: 20181119-152138F\n"
             "\n"
             "        incr backup: 20181119-152138F_20181119-152152I\n"
-            "            timestamp start/stop: 1542640912 / 1542640915\n"
+            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
             "            wal start/stop: 000000010000000000000003 / 000000010000000000000003\n"
             "            database size: 20162900, backup size: 8428\n"
             "            repository size: 2369186, repository backup size: 346\n"
@@ -947,13 +946,39 @@ testRun(void)
 
         // Add the database history, backup and archive sections to the stanza info
         kvPut(stanzaInfo, varNewStr(STANZA_KEY_DB_STR), varNewVarLst(dbSection));
-        kvPut(stanzaInfo, varNewStr(STANZA_KEY_BACKUP_STR), varNewVarLst(varLstNew()));
+
+        VariantList *backupSection = varLstNew();
+        Variant *backupInfo = varNewKv();
+
+        kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_LABEL_STR), varNewStr(strNew("20181119-152138F")));
+        kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_TYPE_STR), varNewStr(strNew("full")));
+        kvPutKv(varKv(backupInfo), varNewStr(KEY_ARCHIVE_STR));
+        KeyValue *infoInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_INFO_STR));
+        kvPutKv(infoInfo, varNewStr(INFO_KEY_REPOSITORY_STR));
+        KeyValue *databaseInfo = kvPutKv(varKv(backupInfo), varNewStr(KEY_DATABASE_STR));
+        kvAdd(databaseInfo, varNewStr(DB_KEY_ID_STR), varNewUInt64(1));
+        KeyValue *timeInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_TIMESTAMP_STR));
+        kvAdd(timeInfo, varNewStr(KEY_START_STR), varNewUInt64(1542383276));
+        kvAdd(timeInfo, varNewStr(KEY_STOP_STR), varNewUInt64(1542383289));
+
+        varLstAdd(backupSection, backupInfo);
+
+        kvPut(stanzaInfo, varNewStr(STANZA_KEY_BACKUP_STR), varNewVarLst(backupSection));
         kvPut(stanzaInfo, varNewStr(KEY_ARCHIVE_STR), varNewVarLst(varLstNew()));
 
         String *result = strNew("");
         formatTextDb(stanzaInfo, result);
 
-        TEST_RESULT_STR(strPtr(result), "\n    db (current)", "formatTextDb");
+        TEST_RESULT_STR(strPtr(result),
+            "\n"
+            "    db (current)\n"
+            "        full backup: 20181119-152138F\n"
+            "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
+            "            wal start/stop: n/a\n"
+            "            database size: , backup size: \n"
+            "            repository size: , repository backup size: \n"
+            ,"formatTextDb only backup section (code cverage only)");
+
     }
     // CSHANG Not sure how this works
     // if (testBegin("cmdInfo()"))

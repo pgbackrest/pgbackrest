@@ -3,6 +3,7 @@ Help Command
 ***********************************************************************************************************************************/
 #include <string.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <stdio.h>  // CSHANG only for debugging
@@ -108,7 +109,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
 
     InfoArchive *info = infoArchiveNew(
         storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanza), INFO_ARCHIVE_FILE), false);
-printf("BACKUPDBID: %u\n", pgData->id); fflush(stdout);
+
     // With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the
     // archive path must be built by retrieving the archive id given the db version and system id of the backup.info file.
     // If there is no match, an error will be thrown.
@@ -118,7 +119,7 @@ printf("BACKUPDBID: %u\n", pgData->id); fflush(stdout);
     String *archiveStart = NULL;
     String *archiveStop = NULL;
     Variant *archiveInfo = varNewKv();
-printf("ARCHIVEPATH: %s\n", strPtr(archivePath)); fflush(stdout);
+
     // Get a list of WAL directories in the archive repo from oldest to newest, if any exist
     StringList *walDir = storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR);
 
@@ -136,7 +137,7 @@ printf("ARCHIVEPATH: %s\n", strPtr(archivePath)); fflush(stdout);
             StringList *list = storageListP(
                 storageRepo(), strNewFmt("%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR);
-printf("STARTWAL: %s/%s\n", strPtr(archivePath), strPtr(strLstGet(walDir, idx))); fflush(stdout);
+
             // If wal segments are found, get the oldest one as the archive start
             if (strLstSize(list) > 0)
             {
@@ -154,7 +155,7 @@ printf("STARTWAL: %s/%s\n", strPtr(archivePath), strPtr(strLstGet(walDir, idx)))
             StringList *list = storageListP(
                 storageRepo(), strNewFmt("%s/%s", strPtr(archivePath), strPtr(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR);
-printf("STOPWAL: %s/%s\n", strPtr(archivePath), strPtr(strLstGet(walDir, idx))); fflush(stdout);
+
             // If wal segments are found, get the newest one as the archive stop
             if (strLstSize(list) > 0)
             {
@@ -286,7 +287,6 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
     for (unsigned int idx = 0; idx < strLstSize(stanzaList); idx++)
     {
         String *stanzaListName = strLstGet(stanzaList, idx);
-printf("STANZA LIST: %u\n", idx); fflush(stdout);
         // If a specific stanza has been requested and this is not it, then continue to the next in the list else indicate found
         if (stanza != NULL)
         {
@@ -416,7 +416,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
             KeyValue *archiveInfo = varKv(varLstGet(archiveSection, archiveIdx));
             KeyValue *archiveDbInfo = varKv(kvGet(archiveInfo, varNewStr(KEY_DATABASE_STR)));
             uint64_t archiveDbId = varUInt64(kvGet(archiveDbInfo, varNewStr(DB_KEY_ID_STR)));
-printf("ARCHIVEID: %u, DBID %u, ARCHIVESECTION: %u\n", (unsigned int) archiveDbId, (unsigned int) dbId, varLstSize(archiveSection)); fflush(stdout);
+
             if (archiveDbId == dbId)
             {
                 strCatFmt(archiveResult, "\n        wal archive min/max (%s): ",
@@ -448,13 +448,19 @@ printf("ARCHIVEID: %u, DBID %u, ARCHIVESECTION: %u\n", (unsigned int) archiveDbI
                     strPtr(varStr(kvGet(backupInfo, varNewStr(BACKUP_KEY_LABEL_STR)))));
 
                 KeyValue *timestampInfo = varKv(kvGet(backupInfo, varNewStr(BACKUP_KEY_TIMESTAMP_STR)));
-// CSHANG This needs to be converted to a readable date/time like 2018-10-31 19:14:07 by using something like         bufferPos += strftime(logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "%Y-%m-%d %H:%M:%S", localtime(&logTimeSec));
+
+                // Get and format the backup start/stop time
+                static char timeBufferStart[20];
+                static char timeBufferStop[20];
+                time_t timeStart = (time_t) varUInt64Force(kvGet(timestampInfo, varNewStr(KEY_START_STR)));
+                time_t timeStop = (time_t) varUInt64Force(kvGet(timestampInfo, varNewStr(KEY_STOP_STR)));
+                strftime(timeBufferStart, 20, "%Y-%m-%d %H:%M:%S", localtime(&timeStart));
+                strftime(timeBufferStop, 20, "%Y-%m-%d %H:%M:%S", localtime(&timeStop));
+
                 strCatFmt(backupResult, "            timestamp start/stop: %s / %s\n",
-                    strPtr(varStrForce(kvGet(timestampInfo, varNewStr(KEY_START_STR)))),
-                    strPtr(varStrForce(kvGet(timestampInfo, varNewStr(KEY_STOP_STR)))));
+                    timeBufferStart, timeBufferStop);
 
                 strCat(backupResult, "            wal start/stop: ");
-
                 KeyValue *archiveDBackupInfo = varKv(kvGet(backupInfo, varNewStr(KEY_ARCHIVE_STR)));
 
                 if (kvGet(archiveDBackupInfo, varNewStr(KEY_START_STR)) != NULL &&
@@ -554,7 +560,7 @@ infoRender(void)
                         strPtr(varStr(kvGet(stanzaInfo, varNewStr(STANZA_KEY_NAME_STR)))));
                     KeyValue *stanzaStatus = varKv(kvGet(stanzaInfo, varNewStr(STANZA_KEY_STATUS_STR)));
                     int statusCode = varInt(kvGet(stanzaStatus, varNewStr(STATUS_KEY_CODE_STR)));
-printf("STATUSCODE: %d\n", statusCode); fflush(stdout);
+
                     // If an error has occurred, provide the information that is available and move onto next stanza
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
