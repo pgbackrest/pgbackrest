@@ -6,8 +6,6 @@ Help Command
 #include <time.h>
 #include <unistd.h>
 
-#include <stdio.h>  // CSHANG only for debugging
-
 #include "command/archive/common.h"
 #include "common/debug.h"
 #include "common/io/handle.h"
@@ -26,7 +24,6 @@ Help Command
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define CONSOLE_WIDTH                                               80  // CSHANG Only for TEXT format width - this out put should be restricted - whether do it through an assertion or put in a unit test.
 STRING_EXTERN(CFGOPTVAL_INFO_OUTPUT_TEXT,                           "text")
 STRING_EXTERN(CFGOPTVAL_INFO_OUTPUT_JSON,                           "json")
 
@@ -71,6 +68,9 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR,             "no valid ba
 #define INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA                 3
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing stanza data")
 
+/***********************************************************************************************************************************
+Set error status code and message for the stanza to the code and message passed.
+***********************************************************************************************************************************/
 static void
 stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
 {
@@ -93,6 +93,9 @@ stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
     FUNCTION_TEST_RESULT_VOID();
 }
 
+/***********************************************************************************************************************************
+Set the data for the archive section of the stanza for the database info from the backup.info file.
+***********************************************************************************************************************************/
 void
 archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archiveSection, bool currentDb)
 {
@@ -186,6 +189,9 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     FUNCTION_TEST_RESULT_VOID();
 }
 
+/***********************************************************************************************************************************
+For each current backup in the backup.info file of the stanza, set the data for the backup section.
+***********************************************************************************************************************************/
 void
 backupList(const String *stanza, Variant *stanzaInfo, VariantList *backupSection, InfoBackup *info)
 {
@@ -268,6 +274,10 @@ backupList(const String *stanza, Variant *stanzaInfo, VariantList *backupSection
     FUNCTION_TEST_RESULT_VOID();
 }
 
+
+/***********************************************************************************************************************************
+Set the stanza data for each stanza found in the repo.
+***********************************************************************************************************************************/
 static VariantList *
 stanzaInfoList(const String *stanza, StringList *stanzaList)
 {
@@ -386,6 +396,9 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
     FUNCTION_TEST_RESULT(VARIANT_LIST, result);
 }
 
+/***********************************************************************************************************************************
+Format the text output for each database of the stanza.
+***********************************************************************************************************************************/
 void
 formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
 {
@@ -410,6 +423,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
         if (dbIdx == 0)
             strCat(resultStr, "\n    db (current)");
 
+        // Get the min/max archive information for the database
         String *archiveResult = strNew("");
         for (unsigned int archiveIdx = 0; archiveIdx < varLstSize(archiveSection); archiveIdx++)
         {
@@ -434,6 +448,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
             }
         }
 
+        // Get the information for each current backup.
         String *backupResult = strNew("");
         for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
         {
@@ -506,6 +521,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
             }
         }
 
+        // If there is data to display, then display it.
         if (strSize(archiveResult) > 0 || strSize(backupResult) > 0)
         {
             if (dbIdx != 0)
@@ -521,6 +537,9 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
     FUNCTION_TEST_RESULT_VOID();
 }
 
+/***********************************************************************************************************************************
+Render the information for the stanza based on the command parameters.
+***********************************************************************************************************************************/
 static String *
 infoRender(void)
 {
@@ -555,7 +574,7 @@ infoRender(void)
                     if (stanzaIdx > 0)
                         strCatFmt(resultStr, "\n");
 
-                    // stanza name and status
+                    // Stanza name and status
                     strCatFmt(resultStr, "stanza: %s\n    status: ",
                         strPtr(varStr(kvGet(stanzaInfo, varNewStr(STANZA_KEY_NAME_STR)))));
                     KeyValue *stanzaStatus = varKv(kvGet(stanzaInfo, varNewStr(STANZA_KEY_STATUS_STR)));
@@ -585,7 +604,7 @@ infoRender(void)
                     else
                         strCatFmt(resultStr, "%s\n", strPtr(INFO_STANZA_STATUS_OK));
 
-                    // cipher
+                    // Cipher
                     strCatFmt(resultStr, "    cipher: %s\n",
                         strPtr(varStr(kvGet(stanzaInfo, varNewStr(STANZA_KEY_CIPHER_STR)))));
 

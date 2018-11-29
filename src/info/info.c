@@ -5,8 +5,6 @@ Info Handler
 #include <stdlib.h>
 #include <string.h>
 
-#include <stdio.h> // CSHANG debugging
-
 #include "common/debug.h"
 #include "common/ini.h"
 #include "common/log.h"
@@ -20,10 +18,9 @@ Info Handler
 Internal constants
 ***********************************************************************************************************************************/
 #define INI_COPY_EXT                                                ".copy"
-// CSHANG I would like to rename these below to INFO_ -- these are defined here, not in ini.c. Also the #defines are confusing and not needed
+
 #define INI_SECTION_BACKREST                                        "backrest"
     STRING_STATIC(INI_SECTION_BACKREST_STR,                         INI_SECTION_BACKREST)
-// CSHANG I would like to rename these to INFO_KEY_BACKREST_
 #define INI_KEY_FORMAT                                              "backrest-format"
     STRING_EXTERN(INI_KEY_FORMAT_STR,                               INI_KEY_FORMAT)
 STRING_EXTERN(INI_KEY_VERSION_STR,                                  "backrest-version")
@@ -139,7 +136,7 @@ infoValidInternal(
             String *chksumMsg = strNewFmt("invalid checksum in '%s', expected '%s' but found '%s'",
             strPtr(this->fileName), strPtr(bufHex(cryptoHash(hash))), (strSize(infoChecksum) < 3) ?
                 "[undef]" : strPtr(strSubN(infoChecksum, 1, strSize(infoChecksum) - 2)));
-printf("CHKSUM: %s\n", strPtr(chksumMsg)); fflush(stdout);  // CSHANG
+
             if (!ignoreError)
             {
                 THROW(ChecksumError, strPtr(chksumMsg));

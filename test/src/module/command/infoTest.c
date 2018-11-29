@@ -988,30 +988,38 @@ testRun(void)
             "            repository size: , repository backup size: \n"
             ,"formatTextDb only backup section (code cverage only)");
     }
-    // CSHANG Not sure how this works
-    // if (testBegin("cmdInfo()"))
-    // {
-    //     StringList *argList = strLstNew();
-    //     strLstAddZ(argList, "/path/to/pgbackrest");
-    //     TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "parse help from empty command line");
-    //
-    //     // Redirect stdout to a file
-    //     int stdoutSave = dup(STDOUT_FILENO);
-    //     String *stdoutFile = strNewFmt("%s/stdout.info", testPath());
-    //
-    //     if (freopen(strPtr(stdoutFile), "w", stdout) == NULL)                                       // {uncoverable - does not fail}
-    //         THROW_SYS_ERROR(FileWriteError, "unable to reopen stdout");                             // {uncoverable+}
-    //
-    //     // Not in a test wrapper to avoid writing to stdout
-    //     cmdInfo();
-    //
-    //     // Restore normal stdout
-    //     dup2(stdoutSave, STDOUT_FILENO);
-    //
-    //     Storage *storage = storageDriverPosixInterface(
-    //         storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL));
-    //     TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))), generalHelp, "    check text");
-    // }
+
+    /*****************************************************************************************************************************/
+    if (testBegin("cmdInfo()"))
+    {
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAdd(argList, strNewFmt("--repo-path=%s", strPtr(repoPath)));
+        strLstAddZ(argList, "info");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        storagePathCreateNP(storageLocalWrite(), archivePath);
+        storagePathCreateNP(storageLocalWrite(), backupPath);
+
+        // Redirect stdout to a file
+        int stdoutSave = dup(STDOUT_FILENO);
+        String *stdoutFile = strNewFmt("%s/stdout.info", testPath());
+
+        if (freopen(strPtr(stdoutFile), "w", stdout) == NULL)                                       // {uncoverable - does not fail}
+            THROW_SYS_ERROR(FileWriteError, "unable to reopen stdout");                             // {uncoverable+}
+
+        // Not in a test wrapper to avoid writing to stdout
+        cmdInfo();
+
+        // Restore normal stdout
+        dup2(stdoutSave, STDOUT_FILENO);
+
+        const char *generalHelp = strPtr(strNew("No stanzas exist in /home/vagrant/test/test-0/repo\n"));
+
+        Storage *storage = storageDriverPosixInterface(
+            storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL));
+        TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))), generalHelp, "    check text");
+    }
 
     FUNCTION_HARNESS_RESULT_VOID();
 }

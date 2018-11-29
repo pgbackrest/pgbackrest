@@ -3,9 +3,7 @@ Manifest Info Handler
 ***********************************************************************************************************************************/
 #include "common/type/string.h"
 
-/* CSHANG It is not good to have a dependency on a config name so they've been removed. We have renamed config options before and
-it's OK to affect the config file but changes to the info files would require a format version bump. option-hardlink is a prime
-example as the config option name changed to repo-hardlink
+/* CSHANG
 These keys will replace the following perl keys:
 MANIFEST_KEY_ARCHIVE_START and INFO_BACKUP_KEY_ARCHIVE_START
 MANIFEST_KEY_ARCHIVE_STOP and INFO_BACKUP_KEY_ARCHIVE_STOP

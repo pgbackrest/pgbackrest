@@ -132,25 +132,6 @@ infoArchiveId(const InfoArchive *this)
     FUNCTION_TEST_RESULT(STRING, this->archiveId);
 }
 
-/* CSHANG What we need here is an archiveId list - for the info command, if we stop at the newest then we aren't getting a complete picture. So if the archive.info and backup.info have:
-archive.info
-[db:history]
-1={"db-id":6569239123849665679,"db-version":"9.4"}
-2={"db-id":6569239123849665666,"db-version":"9.3"}
-3={"db-id":6569239123849665679,"db-version":"9.4"}
-
-backup.info
-[backup:current]
-20181116-154756F={"backrest-format":5,"backrest-version":"2.04","backup-archive-start":"000000010000000000000001","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":2369190,"backup-info-repo-size-delta":2369190,"backup-info-size":20162900,"backup-info-size-delta":20162900,"backup-timestamp-start":1542383276,"backup-timestamp-stop":1542383289,"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-backup-standby":false,"option-checksum-page":true,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-[db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6569239123849665679,"db-version":"9.4"}
-2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6569239123849665666,"db-version":"9.3"}
-3={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6569239123849665679,"db-version":"9.4"}
-----
-Then we will never get the info for db-id=1 and since there is backup data there, then we'll lose that info.
-So maybe given the systemId and version, we also pass the history id. Or maybe pass an array of the history, system and version and if they do not match then go find the newest match? If then do match, then return the version-historyId (so if pass HID=1, SYS=XXXX, VER=9.4 from backup and that matches archive's HIS, SYS and VER then use it. If it doesn't then get the newest in the list.
-*/
 /***********************************************************************************************************************************
 Given a backrest history id and PG systemId and version, return the archiveId of the best PG match.
 ***********************************************************************************************************************************/
