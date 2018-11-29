@@ -109,6 +109,14 @@
                 </release-development-list>
             </release-core-list>
 
+            <release-doc-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Pre-build containers for any <id>execute</id> elements marked <id>pre</id>.</p>
+                    </release-item>
+                </release-development-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-development-list>
                     <release-item>

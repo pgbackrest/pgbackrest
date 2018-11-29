@@ -64,6 +64,7 @@ sub new
         $self->{strDocPath},
         $self->{bDeploy},
         $self->{bCacheOnly},
+        $self->{bPre},
     ) =
         logDebugParam
         (
@@ -77,6 +78,7 @@ sub new
             {name => 'strDocPath', required => false},
             {name => 'bDeploy', required => false},
             {name => 'bCacheOnly', required => false},
+            {name => 'bPre', required => false, default => false},
         );
 
     # Set the bin path

@@ -307,6 +307,22 @@ sub variableGet
 }
 
 ####################################################################################################################################
+# Get pre-execute list for a host
+####################################################################################################################################
+sub preExecute
+{
+    my $self = shift;
+    my $strHost = shift;
+
+    if (defined($self->{preExecute}{$strHost}))
+    {
+        return @{$self->{preExecute}{$strHost}};
+    }
+
+    return;
+}
+
+####################################################################################################################################
 # build
 #
 # Build the section map and perform keyword matching.
@@ -337,6 +353,7 @@ sub build
             &log(DEBUG, "            filtered ${strName}" . (defined($strDescription) ? ": ${strDescription}" : ''));
 
             $oParent->nodeRemove($oNode);
+            return;
         }
     }
     else
@@ -527,6 +544,16 @@ sub build
             $iChildIdx++;
         }
     }
+    # Check for pre-execute statements
+    elsif ($strName eq 'execute')
+    {
+        if ($self->{oManifest}->{bPre} && $oNode->paramGet('pre', false, 'n') eq 'y')
+        {
+            # Add to pre-execute list
+            my $strHost = $self->variableReplace($oParent->paramGet('host'));
+            push(@{$self->{preExecute}{$strHost}}, $oNode);
+        }
+    }
 
     # Iterate all text nodes
     if (defined($oNode->textGet(false)))
@@ -548,7 +575,7 @@ sub build
             $self->build($oChild, $oNode, $strPath, $strPathPrefix);
 
             # If the child should be logged then log the parent as well so the hierarchy is complete
-            if ($oChild->nameGet() eq 'section' && $oChild->paramGet('log'))
+            if ($oChild->nameGet() eq 'section' && $oChild->paramGet('log', false, false))
             {
                 $oNode->paramSet('log', true);
             }

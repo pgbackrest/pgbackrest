@@ -91,7 +91,7 @@
         <variable key="host-os" keyword="default">u16</variable>
         <variable key="host-os" keyword="co6">co6</variable>
 
-        <variable key="host-image">pgbackrest/doc:{[host-os]}-base</variable>
+        <variable key="host-image">pgbackrest/doc:{[host-os]}</variable>
 
         <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
         <variable key="host-mount">{[pgbackrest-base-dir]}:/backrest</variable>
@@ -329,12 +329,12 @@
         <execute-list host="{[br-install-host]}">
             <title>Install required Perl packages</title>
 
-            <execute keyword="default" user="root">
+            <execute keyword="default" user="root" pre="y">
                 <exe-cmd>apt-get install libdbd-pg-perl libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute keyword="co6" user="root">
+            <execute keyword="co6" user="root" pre="y">
                 <exe-cmd>yum install perl perl-Time-HiRes perl-parent perl-JSON
                     perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
@@ -519,16 +519,16 @@
         <execute-list host="{[host-build]}">
             <title>Install build dependencies</title>
 
-            <execute keyword="default" user="root" show="n">
+            <execute keyword="default" user="root" show="n" pre="y">
                 <exe-cmd>apt-get update</exe-cmd>
             </execute>
 
-            <execute keyword="default" user="root">
+            <execute keyword="default" user="root" pre="y">
                 <exe-cmd>apt-get install build-essential libssl-dev libxml2-dev libperl-dev</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute keyword="co6" user="root">
+            <execute keyword="co6" user="root" pre="y">
                 <exe-cmd>
                     yum install build-essential gcc openssl-devel libxml2-devel
                         perl-ExtUtils-Embed
@@ -1190,7 +1190,7 @@
             <execute-list host="{[host-pg1]}">
                 <title>Install <proper>jq</proper> utility</title>
 
-                <execute user="root">
+                <execute user="root" pre="y">
                     <exe-cmd>apt-get install jq</exe-cmd>
                     <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
                 </execute>

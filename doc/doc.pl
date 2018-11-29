@@ -62,6 +62,7 @@ doc.pl [options]
    --no-exe         Should commands be executed when building help? (for testing only)
    --no-cache       Don't use execution cache
    --cache-only     Only use the execution cache - don't attempt to generate it
+   --pre            Pre-build containers for execute elements marked pre
    --var            Override variables defined in the XML
    --doc-path       Document path to render (manifest.xml should be located here)
    --out            Output types (html, pdf, markdown)
@@ -69,12 +70,11 @@ doc.pl [options]
    --include        Include source in generation (links will reference website)
    --exclude        Exclude source from generation (links will reference website)
 
-Keyword Options:
+ Keyword Options:
    --keyword        Keyword used to filter output
    --keyword-add    Add keyword without overriding 'default' keyword
    --dev            Add 'dev' keyword
    --debug          Add 'debug' keyword
-   --pre            Add 'pre' keyword
 =cut
 
 ####################################################################################################################################
@@ -191,12 +191,6 @@ eval
         push(@stryKeyword, 'debug');
     }
 
-    # If --pre passed then add the pre keyword
-    if ($bPre)
-    {
-        push(@stryKeyword, 'pre');
-    }
-
     # Doesn't make sense to pass include and exclude
     if (@stryInclude > 0 && @stryExclude > 0)
     {
@@ -228,7 +222,7 @@ eval
     # Load the manifest
     my $oManifest = new BackRestDoc::Common::DocManifest(
         $oStorageDoc, \@stryKeyword, \@stryRequire, \@stryInclude, \@stryExclude, $oVariableOverride, $strDocPath, $bDeploy,
-        $bCacheOnly);
+        $bCacheOnly, $bPre);
 
     if (!$bNoCache)
     {
