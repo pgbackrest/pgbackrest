@@ -929,6 +929,15 @@ testRun(void)
             "    db (current)\n"
             "        wal archive min/max (9.4-1): none present\n"
             , "multiple stanzas, one with valid backups, archives in latest DB");
+
+        // Stanza not found
+        //--------------------------------------------------------------------------------------------------------------------------
+        strLstAddZ(argList, "--stanza=silly");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        TEST_RESULT_STR(strPtr(infoRender()),
+        "stanza: silly\n"
+        "    status: error (missing stanza path)\n"
+        , "missing stanza path");
     }
 
     /*****************************************************************************************************************************/
@@ -978,7 +987,6 @@ testRun(void)
             "            database size: , backup size: \n"
             "            repository size: , repository backup size: \n"
             ,"formatTextDb only backup section (code cverage only)");
-
     }
     // CSHANG Not sure how this works
     // if (testBegin("cmdInfo()"))
