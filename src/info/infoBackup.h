@@ -27,7 +27,8 @@ STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR);
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-InfoBackup *infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing);
+InfoBackup *infoBackupNew(
+    const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Functions

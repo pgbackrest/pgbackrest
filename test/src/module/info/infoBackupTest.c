@@ -20,7 +20,7 @@ testRun(void)
         // File missing, ignoreMissing=false -- error
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            infoBackupNew(storageLocal(), fileName, false), FileMissingError,
+            infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), FileMissingError,
             "unable to open %s/test.ini or %s/test.ini.copy\n"
             "HINT: backup.info does not exist and is required to perform a backup.\n"
             "HINT: has a stanza-create been performed?",
@@ -50,7 +50,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put backup info to file");
 
-        TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false), "    new backup info");
+        TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), "    new backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
         TEST_RESULT_PTR(infoBackup->backupCurrent, NULL, "    backupCurrent NULL");
         TEST_RESULT_PTR(infoBackupCurrentKeyGet(infoBackup),  NULL, "    infoBackupCurrentKeyGet returns NULL");
@@ -138,7 +138,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put backup info current to file");
 
-        TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false), "    new backup info");
+        TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), "    new backup info");
         TEST_RESULT_PTR_NE(infoBackup->backupCurrent, NULL, "    backupCurrent not NULL");
 
         TEST_RESULT_PTR(infoBackupCurrentGet(infoBackup, strNew("section-not-exist"), strNew("backup-timestamp-start")),

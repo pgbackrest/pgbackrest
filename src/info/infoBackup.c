@@ -81,11 +81,13 @@ Create a new InfoBackup object
 // ??? Need to handle ignoreMissing = true
 ***********************************************************************************************************************************/
 InfoBackup *
-infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing)
+infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
         FUNCTION_DEBUG_PARAM(STRING, fileName);
         FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+        // cipherPass omitted for security
 
         FUNCTION_DEBUG_ASSERT(fileName != NULL);
     FUNCTION_DEBUG_END();
@@ -101,7 +103,7 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
         // Catch file missing error and add backup-specific hints before rethrowing
         TRY_BEGIN()
         {
-            this->infoPg = infoPgNew(storage, fileName, infoPgBackup);
+            this->infoPg = infoPgNew(storage, fileName, infoPgBackup, cipherType, cipherPass);
         }
         CATCH(FileMissingError)
         {
