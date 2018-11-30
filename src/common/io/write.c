@@ -28,8 +28,6 @@ struct IoWrite
 
 /***********************************************************************************************************************************
 New object
-
-Allocations will be in the memory context of the caller.
 ***********************************************************************************************************************************/
 IoWrite *
 ioWriteNew(void *driver, IoWriteInterface interface)
@@ -42,11 +40,17 @@ ioWriteNew(void *driver, IoWriteInterface interface)
         FUNCTION_TEST_ASSERT(interface.write != NULL);
     FUNCTION_DEBUG_END();
 
-    IoWrite *this = memNew(sizeof(IoWrite));
-    this->memContext = memContextCurrent();
-    this->driver = driver;
-    this->interface = interface;
-    this->output = bufNew(ioBufferSize());
+    IoWrite *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("IoWrite")
+    {
+        this = memNew(sizeof(IoWrite));
+        this->memContext = memContextCurrent();
+        this->driver = driver;
+        this->interface = interface;
+        this->output = bufNew(ioBufferSize());
+    }
+    MEM_CONTEXT_NEW_END();
 
     FUNCTION_DEBUG_RESULT(IO_WRITE, this);
 }
@@ -146,6 +150,30 @@ ioWriteLine(IoWrite *this, const String *string)
 }
 
 /***********************************************************************************************************************************
+Flush any data in the output buffer
+
+This does not end writing and if there are filters that are not done it might not have the intended effect.
+***********************************************************************************************************************************/
+void
+ioWriteFlush(IoWrite *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(IO_WRITE, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
+    FUNCTION_DEBUG_END();
+
+    if (bufUsed(this->output) > 0)
+    {
+        this->interface.write(this->driver, this->output);
+        bufUsedZero(this->output);
+    }
+
+    FUNCTION_DEBUG_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
 Close the IO and write any additional data that has not been written yet
 ***********************************************************************************************************************************/
 void
@@ -218,6 +246,22 @@ ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup)
     FUNCTION_DEBUG_END();
 
     this->filterGroup = filterGroup;
+
+    FUNCTION_DEBUG_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Free the object
+***********************************************************************************************************************************/
+void
+ioWriteFree(IoWrite *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(IO_WRITE, this);
+    FUNCTION_DEBUG_END();
+
+    if (this != NULL)
+        memContextFree(this->memContext);
 
     FUNCTION_DEBUG_RESULT_VOID();
 }

@@ -124,11 +124,11 @@ sub process
         "    sudo adduser --ingroup=\${USER?} --uid=5001 --disabled-password --gecos \"\" " . BACKREST_USER . "\n" .
         "    umask 0022\n" .
         "    cd ~ && pwd && whoami && umask && groups\n" .
-        "    mv \${TRAVIS_BUILD_DIR?} " . BACKREST_EXE . "\n" .
+        "    mv \${TRAVIS_BUILD_DIR?} " . PROJECT_EXE . "\n" .
         "    rm -rf \${TRAVIS_BUILD_DIR?}\n" .
         "\n" .
         "script:\n" .
-        "  - " . BACKREST_EXE . "/test/travis.pl \${PGB_CI?}\n";
+        "  - " . PROJECT_EXE . "/test/travis.pl \${PGB_CI?}\n";
 
     buildPutDiffers($self->{oStorage}, '.travis.yml', $strConfig);
 

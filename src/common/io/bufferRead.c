@@ -51,11 +51,12 @@ ioBufferReadNew(const Buffer *buffer)
 Read data from the buffer
 ***********************************************************************************************************************************/
 size_t
-ioBufferRead(IoBufferRead *this, Buffer *buffer)
+ioBufferRead(IoBufferRead *this, Buffer *buffer, bool block)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(IO_BUFFER_READ, this);
         FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+        FUNCTION_DEBUG_PARAM(BOOL, block);
 
         FUNCTION_DEBUG_ASSERT(this != NULL);
         FUNCTION_DEBUG_ASSERT(buffer != NULL);

@@ -140,7 +140,7 @@ helpRender(void)
 {
     FUNCTION_DEBUG_VOID(logLevelDebug);
 
-    String *result = strNew(PGBACKREST_NAME " " PGBACKREST_VERSION);
+    String *result = strNew(PROJECT_NAME " " PROJECT_VERSION);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -155,7 +155,7 @@ helpRender(void)
                 " - General help\n"
                 "\n"
                 "Usage:\n"
-                "    " PGBACKREST_BIN " [options] [command]\n"
+                "    " PROJECT_BIN " [options] [command]\n"
                 "\n"
                 "Commands:\n");
 
@@ -376,7 +376,7 @@ helpRender(void)
 
         // If there is more help available output a message to let the user know
         if (more != NULL)
-            strCatFmt(result, "\nUse '" PGBACKREST_BIN " help %s' for more information.\n", strPtr(more));
+            strCatFmt(result, "\nUse '" PROJECT_BIN " help %s' for more information.\n", strPtr(more));
     }
     MEM_CONTEXT_TEMP_END();
 

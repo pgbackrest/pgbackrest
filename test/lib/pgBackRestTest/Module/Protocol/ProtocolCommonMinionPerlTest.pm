@@ -116,7 +116,7 @@ sub run
 
         $self->testResult(
             sub {$oIoBuffered->readLine()},
-            '{"name":"' . BACKREST_NAME . '","service":"test","version":"' . BACKREST_VERSION . '"}', 'read greeting');
+            '{"name":"' . PROJECT_NAME . '","service":"test","version":"' . PROJECT_VERSION . '"}', 'read greeting');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(

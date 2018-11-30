@@ -22,7 +22,7 @@ typedef struct StorageDriverPosix StorageDriverPosix;
 Driver type constant
 ***********************************************************************************************************************************/
 #define STORAGE_DRIVER_POSIX_TYPE                                   "posix"
-    STRING_DECLARE(STORAGE_DRIVER_POSIX_TYPE_STR)
+    STRING_DECLARE(STORAGE_DRIVER_POSIX_TYPE_STR);
 
 /***********************************************************************************************************************************
 Constructor

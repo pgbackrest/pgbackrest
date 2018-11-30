@@ -24,9 +24,9 @@ Filter type constant
 /***********************************************************************************************************************************
 Hash types
 ***********************************************************************************************************************************/
-STRING_EXTERN(HASH_TYPE_MD5_STR,                                    HASH_TYPE_MD5)
-STRING_EXTERN(HASH_TYPE_SHA1_STR,                                   HASH_TYPE_SHA1)
-STRING_EXTERN(HASH_TYPE_SHA256_STR,                                 HASH_TYPE_SHA256)
+STRING_EXTERN(HASH_TYPE_MD5_STR,                                    HASH_TYPE_MD5);
+STRING_EXTERN(HASH_TYPE_SHA1_STR,                                   HASH_TYPE_SHA1);
+STRING_EXTERN(HASH_TYPE_SHA256_STR,                                 HASH_TYPE_SHA256);
 
 /***********************************************************************************************************************************
 Object type

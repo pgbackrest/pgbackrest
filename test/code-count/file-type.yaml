@@ -939,10 +939,6 @@ src/config/parse.h:
   class: core
   type: c/h
 
-src/crypto/cipher.h:
-  class: core
-  type: c/h
-
 src/crypto/cipherBlock.c:
   class: core
   type: c
@@ -1276,6 +1272,10 @@ test/lib/pgBackRestTest/Common/CodeCountTest.pm:
   type: perl
 
 test/lib/pgBackRestTest/Common/ContainerTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Common/CoverageTest.pm:
   class: test/harness
   type: perl
 
@@ -1696,10 +1696,6 @@ test/src/module/crypto/cryptoTest.c:
   type: c
 
 test/src/module/crypto/hashTest.c:
-  class: test/module
-  type: c
-
-test/src/module/crypto/randomTest.c:
   class: test/module
   type: c
 

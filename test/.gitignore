@@ -1,6 +1,6 @@
 .vagrant
 nytprof*
-scratch.txt
+scratch*
 coverage*
 ubuntu-bionic-18.04-cloudimg-console.log
 profile

@@ -66,14 +66,13 @@ use Getopt::Long qw(GetOptions);
 use Storable qw(dclone);
 
 use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
 use pgBackRest::Common::Io::Base;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Version;
 
 ####################################################################################################################################
-# Command constants - commands that are allowed in pgBackRest
+# Command constants - commands that are allowed in the exe
 ####################################################################################################################################
 use constant CFGCMD_ARCHIVE_GET                                     => 'archive-get';
     push @EXPORT, qw(CFGCMD_ARCHIVE_GET);
@@ -392,9 +391,9 @@ use constant CFGOPTVAL_REPO_TYPE_S3                                 => 's3';
 
 # Repo encryption type
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPTVAL_REPO_CIPHER_TYPE_NONE                    => 'none';
+use constant CFGOPTVAL_REPO_CIPHER_TYPE_NONE                        => 'none';
     push @EXPORT, qw(CFGOPTVAL_REPO_CIPHER_TYPE_NONE);
-use constant CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC             => 'aes-256-cbc';
+use constant CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                 => 'aes-256-cbc';
     push @EXPORT, qw(CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
 
 # Info output
@@ -438,8 +437,8 @@ use constant CFGDEF_DEFAULT_BUFFER_SIZE_MIN                         => 16384;
 use constant CFGDEF_DEFAULT_COMPRESS_LEVEL_MIN                      => 0;
 use constant CFGDEF_DEFAULT_COMPRESS_LEVEL_MAX                      => 9;
 
-use constant CFGDEF_DEFAULT_CONFIG_PATH                             => '/etc/pgbackrest';
-use constant CFGDEF_DEFAULT_CONFIG                                  => CFGDEF_DEFAULT_CONFIG_PATH . '/' . BACKREST_CONF;
+use constant CFGDEF_DEFAULT_CONFIG_PATH                             => '/etc/' . PROJECT_EXE;
+use constant CFGDEF_DEFAULT_CONFIG                                  => CFGDEF_DEFAULT_CONFIG_PATH . '/' . PROJECT_CONF;
 use constant CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH                     => CFGDEF_DEFAULT_CONFIG_PATH . '/conf.d';
 
 use constant CFGDEF_DEFAULT_DB_TIMEOUT                              => 1800;
@@ -1224,7 +1223,7 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_DEFAULT => '/tmp/' . BACKREST_EXE,
+        &CFGDEF_DEFAULT => '/tmp/' . PROJECT_EXE,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
@@ -1247,7 +1246,7 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_DEFAULT => '/var/log/' . BACKREST_EXE,
+        &CFGDEF_DEFAULT => '/var/log/' . PROJECT_EXE,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
@@ -1322,10 +1321,10 @@ my %hConfigDefine =
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECURE => true,
-        &CFGDEF_REQUIRED  => false,
+        &CFGDEF_REQUIRED => false,
         &CFGDEF_DEPEND =>
         {
-            &CFGDEF_DEPEND_OPTION  => CFGOPT_REPO_CIPHER_TYPE,
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_CIPHER_TYPE,
             &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC],
         },
         &CFGDEF_NAME_ALT =>
@@ -1498,7 +1497,7 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
-        &CFGDEF_DEFAULT => 'pgbackrest',
+        &CFGDEF_DEFAULT => PROJECT_EXE,
         &CFGDEF_NAME_ALT =>
         {
             'backup-user' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
@@ -1517,7 +1516,7 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
-        &CFGDEF_DEFAULT => '/var/lib/' . BACKREST_EXE,
+        &CFGDEF_DEFAULT => '/var/lib/' . PROJECT_EXE,
         &CFGDEF_NAME_ALT =>
         {
             'repo-path' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
@@ -1649,7 +1648,7 @@ my %hConfigDefine =
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECURE => true,
-        &CFGDEF_REQUIRED => false,
+        &CFGDEF_REQUIRED => true,
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
@@ -1659,7 +1658,29 @@ my %hConfigDefine =
         {
             'repo-s3-key' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
-        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_EXPIRE => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_LOCAL =>
+            {
+                &CFGDEF_REQUIRED => false,
+            },
+            &CFGCMD_REMOTE =>
+            {
+                &CFGDEF_REQUIRED => false,
+            },
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_START => {},
+            &CFGCMD_STOP => {},
+        },
     },
 
     &CFGOPT_REPO_S3_KEY_SECRET =>
@@ -1686,7 +1707,7 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
-        &CFGDEF_REQUIRED  => false,
+        &CFGDEF_REQUIRED => false,
         &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
         &CFGDEF_NAME_ALT =>
         {
@@ -1707,6 +1728,8 @@ my %hConfigDefine =
     &CFGOPT_REPO_S3_TOKEN =>
     {
         &CFGDEF_INHERIT => CFGOPT_REPO_S3_KEY,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
     &CFGOPT_REPO_S3_VERIFY_SSL =>
@@ -1764,7 +1787,7 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_DEFAULT => '/var/spool/' . BACKREST_EXE,
+        &CFGDEF_DEFAULT => '/var/spool/' . PROJECT_EXE,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},

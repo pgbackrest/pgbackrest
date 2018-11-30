@@ -8,6 +8,7 @@ Storage Helper
 #include "common/regExp.h"
 #include "config/config.h"
 #include "storage/driver/posix/storage.h"
+#include "storage/driver/s3/storage.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -196,6 +197,18 @@ storageRepoGet(const String *type, bool write)
             storageDriverPosixNew(
                 cfgOptionStr(cfgOptRepoPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write,
                 storageRepoPathExpression));
+    }
+    else if (strEqZ(type, STORAGE_TYPE_S3))
+    {
+        result = storageDriverS3Interface(
+            storageDriverS3New(
+                cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket),
+                cfgOptionStr(cfgOptRepoS3Endpoint), cfgOptionStr(cfgOptRepoS3Region), cfgOptionStr(cfgOptRepoS3Key),
+                cfgOptionStr(cfgOptRepoS3KeySecret), cfgOptionTest(cfgOptRepoS3Token) ? cfgOptionStr(cfgOptRepoS3Token) : NULL,
+                cfgOptionTest(cfgOptRepoS3Host) ? cfgOptionStr(cfgOptRepoS3Host) : NULL,
+                STORAGE_DRIVER_S3_PORT_DEFAULT, STORAGE_DRIVER_S3_TIMEOUT_DEFAULT, cfgOptionBool(cfgOptRepoS3VerifySsl),
+                cfgOptionTest(cfgOptRepoS3CaFile) ? cfgOptionStr(cfgOptRepoS3CaFile) : NULL,
+                cfgOptionTest(cfgOptRepoS3CaPath) ? cfgOptionStr(cfgOptRepoS3CaPath) : NULL));
     }
     else
         THROW_FMT(AssertError, "invalid storage type '%s'", strPtr(type));

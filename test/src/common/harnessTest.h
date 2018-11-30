@@ -30,6 +30,8 @@ const char *testPath(void);
 void testPathSet(const char *testPath);
 const char *testExpectPath(void);
 void testExpectPathSet(const char *testExpectPath);
+const char *testRepoPath(void);
+void testRepoPathSet(const char *testRepoPath);
 
 /***********************************************************************************************************************************
 Convert a macro to a string -- handy for testing debug macros
@@ -211,7 +213,6 @@ Test that a void statement returns and does not throw an error
         THROW_FMT(                                                                                                                 \
             AssertError, "EXPECTED VOID RESULT FROM STATEMENT: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s", #statement, errorName(),   \
             errorMessage(), errorStackTrace());                                                                                    \
-                                                                                                                                   \
     }                                                                                                                              \
     TRY_END();                                                                                                                     \
 }
@@ -296,5 +297,26 @@ Macros to ease the use of common data types
     TEST_RESULT_UINT_PARAM(statement, resultExpected, ==, __VA_ARGS__);
 #define TEST_RESULT_UINT_NE(statement, resultExpected, ...)                                                                        \
     TEST_RESULT_UINT_PARAM(statement, resultExpected, !=, __VA_ARGS__);
+
+/***********************************************************************************************************************************
+Logging macros
+***********************************************************************************************************************************/
+#define TEST_LOG(message)                                                                                                          \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        printf(                                                                                                                    \
+            "    %03u.%03us       %s\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                            \
+            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), message);                                               \
+        fflush(stdout);                                                                                                            \
+    } while(0)
+
+#define TEST_LOG_FMT(format, ...)                                                                                                  \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        printf(                                                                                                                    \
+            "    %03u.%03us       " format "\n", (unsigned int)((testTimeMSec() - testTimeMSecBegin()) / 1000),                    \
+            (unsigned int)((testTimeMSec() - testTimeMSecBegin()) % 1000), __VA_ARGS__);                                           \
+        fflush(stdout);                                                                                                            \
+    } while(0)
 
 #endif

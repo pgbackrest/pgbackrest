@@ -343,7 +343,7 @@ sub buildXsAll
         "1;\n";
 
     # Save the file
-    my $strFile = 'lib/' . BACKREST_NAME . '/' . LIB_AUTO_NAME . '.pm';
+    my $strFile = 'lib/' . PROJECT_NAME . '/' . LIB_AUTO_NAME . '.pm';
 
     if (buildPutDiffers($oStorage, "../${strFile}", $strContent))
     {
@@ -401,7 +401,7 @@ sub buildXsAll
         "\n" .
         "1;\n";
 
-    $strFile = 'lib/' . BACKREST_NAME . '/Common/ExceptionAuto.pm';
+    $strFile = 'lib/' . PROJECT_NAME . '/Common/ExceptionAuto.pm';
 
     if (buildPutDiffers($oStorage, "../${strFile}", $strContent))
     {

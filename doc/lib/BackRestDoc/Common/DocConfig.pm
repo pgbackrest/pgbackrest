@@ -395,9 +395,9 @@ sub manGet
     # Write the header
     my $strManPage =
         "NAME\n" .
-        '  ' . BACKREST_NAME . ' - ' . $oManifest->variableReplace($oIndexDoc->paramGet('subtitle')) . "\n\n" .
+        '  ' . PROJECT_NAME . ' - ' . $oManifest->variableReplace($oIndexDoc->paramGet('subtitle')) . "\n\n" .
         "SYNOPSIS\n" .
-        '  ' . BACKREST_EXE . ' [options] [command]';
+        '  ' . PROJECT_EXE . ' [options] [command]';
 
     # Output the description (first two paragraphs of index.xml introduction)
     my $iParaTotal = 0;
@@ -490,7 +490,7 @@ sub manGet
             {
                 if ($strOption eq CFGOPT_REPO_HOST_CMD || $strOption eq CFGOPT_PG_HOST_CMD)
                 {
-                    $strDefault = BACKREST_EXE;
+                    $strDefault = PROJECT_EXE;
                 }
                 elsif ($$hConfigDefine{$strOption}{&CFGDEF_TYPE} eq &CFGDEF_TYPE_BOOLEAN)
                 {
@@ -528,25 +528,25 @@ sub manGet
         "\n" .
         "  * Create a backup of the PostgreSQL `main` cluster:\n" .
         "\n" .
-        '    $ ' . BACKREST_EXE . ' --' . CFGOPT_STANZA . "=main backup\n" .
+        '    $ ' . PROJECT_EXE . ' --' . CFGOPT_STANZA . "=main backup\n" .
         "\n" .
         '    The `main` cluster should be configured in `' . docConfigOptionDefault(CFGOPT_CONFIG) . "`\n" .
         "\n" .
         "  * Show all available backups:\n" .
         "\n" .
-        '    $ ' . BACKREST_EXE . ' ' . CFGCMD_INFO . "\n" .
+        '    $ ' . PROJECT_EXE . ' ' . CFGCMD_INFO . "\n" .
         "\n" .
         "  * Show all available backups for a specific cluster:\n" .
         "\n" .
-        '    $ ' . BACKREST_EXE . ' --' . CFGOPT_STANZA . '=main ' . CFGCMD_INFO . "\n" .
+        '    $ ' . PROJECT_EXE . ' --' . CFGOPT_STANZA . '=main ' . CFGCMD_INFO . "\n" .
         "\n" .
         "  * Show backup specific options:\n" .
         "\n" .
-        '    $ ' . BACKREST_EXE . ' ' . CFGCMD_HELP . ' ' . CFGCMD_BACKUP . "\n" .
+        '    $ ' . PROJECT_EXE . ' ' . CFGCMD_HELP . ' ' . CFGCMD_BACKUP . "\n" .
         "\n" .
         "SEE ALSO\n" .
         "\n" .
-	    '  /usr/share/doc/' . BACKREST_EXE . "-doc/html/index.html\n" .
+	    '  /usr/share/doc/' . PROJECT_EXE . "-doc/html/index.html\n" .
         '  ' . $oManifest->variableReplace('{[backrest-url-base]}') . "\n";
 
     return $strManPage;
@@ -805,7 +805,7 @@ sub helpOptionGet
 
         if ($strOption eq CFGOPT_REPO_HOST_CMD || $strOption eq CFGOPT_PG_HOST_CMD)
         {
-            $strDefault = '[INSTALL-PATH]/' . BACKREST_EXE;
+            $strDefault = '[INSTALL-PATH]/' . PROJECT_EXE;
         }
         else
         {

@@ -27,6 +27,7 @@ static uint64_t timeMSecBegin;
 
 static const char *testExeData = NULL;
 static const char *testPathData = NULL;
+static const char *testRepoPathData = NULL;
 static const char *testExpectPathData = NULL;
 
 /***********************************************************************************************************************************
@@ -57,6 +58,30 @@ testExeSet(const char *testExe)
     FUNCTION_HARNESS_END();
 
     testExeData = testExe;
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Get and set the path for the pgbackrest repo
+***********************************************************************************************************************************/
+const char *
+testRepoPath(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RESULT(STRINGZ, testRepoPathData);
+}
+
+void
+testRepoPathSet(const char *testRepoPath)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, testRepoPath);
+
+        FUNCTION_HARNESS_ASSERT(testRepoPath != NULL);
+    FUNCTION_HARNESS_END();
+
+    testRepoPathData = testRepoPath;
 
     FUNCTION_HARNESS_RESULT_VOID();
 }

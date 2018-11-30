@@ -19,6 +19,7 @@ use pgBackRest::Common::String;
 use pgBackRest::Version;
 
 use BackRestDoc::Common::DocConfig;
+use BackRestDoc::Common::DocRender;
 
 use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Config::Data;

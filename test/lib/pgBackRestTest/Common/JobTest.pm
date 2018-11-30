@@ -287,7 +287,7 @@ sub run
                     # Skip all files except .c files (including .auto.c)
                     next if $strFile !~ /(?<!\.auto)\.c$/;
 
-                    # !!! Skip main for now until it can be rewritten
+                    # ??? Skip main for now until the function can be renamed to allow unit testing
                     next if $strFile =~ /main\.c$/;
 
                     # Skip test.c -- it will be added manually at the end
@@ -354,6 +354,7 @@ sub run
                 # Set globals
                 $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strVmTestPath/g;
                 $strTestC =~ s/\{\[C\_TEST\_EXPECT_PATH\]\}/$self->{strExpectPath}/g;
+                $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
 
                 # Set defalt log level
                 my $strLogLevelTestC = "logLevel" . ucfirst($self->{strLogLevelTest});
@@ -382,8 +383,9 @@ sub run
 
                 # Flags that are common to all builds
                 my $strCommonFlags =
-                    '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered `perl -MExtUtils::Embed -e ccopts`'
-                    . ($self->{bProfile} ? " -pg" : '') .
+                    '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered -D_POSIX_C_SOURCE=200112L' .
+                        ' `perl -MExtUtils::Embed -e ccopts` -DWITH_PERL' .
+                        ' `xml2-config --cflags`' . ($self->{bProfile} ? " -pg" : '') .
                     ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : " -DDEBUG_UNIT") .
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
                     ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
@@ -428,7 +430,7 @@ sub run
                     "BUILDFLAGS=${strBuildFlags}\n" .
                     "HARNESSFLAGS=${strHarnessFlags}\n" .
                     "TESTFLAGS=${strTestFlags}\n" .
-                    "LDFLAGS=-lcrypto -lssl -lz" .
+                    "LDFLAGS=-lcrypto -lssl -lxml2 -lz" .
                         (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? " -lgcov" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -lbacktrace' : '') .
                         " `perl -MExtUtils::Embed -e ldopts`\n" .
@@ -713,8 +715,8 @@ sub jobInstallC
         (defined($bCopyLibC) && $bCopyLibC ?
             "mkdir -p -m 755 ${strPerlAutoPath} && " .
             "cp ${strBuildLibCPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " : '') .
-        "cp ${strBuildBinPath}/" . BACKREST_EXE . ' /usr/bin/' . BACKREST_EXE . ' && ' .
-        'chmod 755 /usr/bin/' . BACKREST_EXE . "'");
+        "cp ${strBuildBinPath}/" . PROJECT_EXE . ' /usr/bin/' . PROJECT_EXE . ' && ' .
+        'chmod 755 /usr/bin/' . PROJECT_EXE . "'");
 }
 
 push(@EXPORT, qw(jobInstallC));

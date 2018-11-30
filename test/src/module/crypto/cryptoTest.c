@@ -29,10 +29,22 @@ testRun(void)
         EVP_MD_CTX *context = EVP_MD_CTX_create();
         TEST_ERROR(
             cryptoError(EVP_DigestInit_ex(context, NULL, NULL) != 1, "unable to initialize hash context"), CryptoError,
-            "unable to initialize hash context: no digest set");
+            "unable to initialize hash context: [101187723] no digest set");
         EVP_MD_CTX_destroy(context);
 
-        TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: no details available");
+        TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("cipherType() and cipherTypeName()"))
+    {
+        TEST_ERROR(cipherType(strNew(BOGUS_STR)), AssertError, "invalid cipher name 'BOGUS'");
+        TEST_RESULT_UINT(cipherType(strNew("none")), cipherTypeNone, "none type");
+        TEST_RESULT_UINT(cipherType(strNew("aes-256-cbc")), cipherTypeAes256Cbc, "aes-256-cbc type");
+
+        TEST_ERROR(cipherTypeName((CipherType)2), AssertError, "invalid cipher type 2");
+        TEST_RESULT_STR(strPtr(cipherTypeName(cipherTypeNone)), "none", "none name");
+        TEST_RESULT_STR(strPtr(cipherTypeName(cipherTypeAes256Cbc)), "aes-256-cbc", "aes-256-cbc name");
     }
 
     // *****************************************************************************************************************************

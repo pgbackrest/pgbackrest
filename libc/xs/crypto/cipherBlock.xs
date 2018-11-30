@@ -28,7 +28,7 @@ CODE:
 
         RETVAL->memContext = MEM_COMTEXT_XS();
 
-        RETVAL->pxPayload = cipherBlockNew(mode, type, key, keySize, digest);
+        RETVAL->pxPayload = cipherBlockNewC(mode, type, key, keySize, digest);
     }
     MEM_CONTEXT_XS_NEW_END();
 OUTPUT:
@@ -47,10 +47,10 @@ CODE:
         STRLEN tSize;
         const unsigned char *sourcePtr = (const unsigned char *)SvPV(source, tSize);
 
-        RETVAL = NEWSV(0, cipherBlockProcessSize(self->pxPayload, tSize));
+        RETVAL = NEWSV(0, cipherBlockProcessSizeC(self->pxPayload, tSize));
         SvPOK_only(RETVAL);
 
-        SvCUR_set(RETVAL, cipherBlockProcess(self->pxPayload, sourcePtr, tSize, (unsigned char *)SvPV_nolen(RETVAL)));
+        SvCUR_set(RETVAL, cipherBlockProcessC(self->pxPayload, sourcePtr, tSize, (unsigned char *)SvPV_nolen(RETVAL)));
     }
     MEM_CONTEXT_XS_END();
 OUTPUT:
@@ -65,10 +65,10 @@ CODE:
 
     MEM_CONTEXT_XS_BEGIN(self->memContext)
     {
-        RETVAL = NEWSV(0, cipherBlockProcessSize(self->pxPayload, 0));
+        RETVAL = NEWSV(0, cipherBlockProcessSizeC(self->pxPayload, 0));
         SvPOK_only(RETVAL);
 
-        SvCUR_set(RETVAL, cipherBlockFlush(self->pxPayload, (unsigned char *)SvPV_nolen(RETVAL)));
+        SvCUR_set(RETVAL, cipherBlockFlushC(self->pxPayload, (unsigned char *)SvPV_nolen(RETVAL)));
     }
     MEM_CONTEXT_XS_END();
 OUTPUT:

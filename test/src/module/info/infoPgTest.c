@@ -36,7 +36,8 @@ testRun(void)
 
         InfoPg *infoPg = NULL;
 
-        TEST_ASSIGN(infoPg, infoPgNew(storageLocal(), fileName, infoPgArchive), "new infoPg archive - load file");
+        TEST_ASSIGN(
+            infoPg, infoPgNew(storageLocal(), fileName, infoPgArchive, cipherTypeNone, NULL), "new infoPg archive - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
 
@@ -48,6 +49,7 @@ testRun(void)
         TEST_RESULT_INT(infoPgData.controlVersion, 0, "    control-version not set");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "    check pg data total");
         TEST_RESULT_STR(strPtr(infoPgArchiveId(infoPg, 0)), "9.4-1", "    check pg archive id");
+        TEST_RESULT_PTR(infoPgCipherPass(infoPg), NULL, "    no cipher passphrase");
 
         // Backup info
         //--------------------------------------------------------------------------------------------------------------------------
@@ -72,7 +74,8 @@ testRun(void)
 
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put info to file");
 
-        TEST_ASSIGN(infoPg, infoPgNew(storageLocal(), fileName, infoPgBackup), "new infoPg backup - load file");
+        TEST_ASSIGN(
+            infoPg, infoPgNew(storageLocal(), fileName, infoPgBackup, cipherTypeNone, NULL), "new infoPg backup - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
 
@@ -108,7 +111,8 @@ testRun(void)
 
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put info to file");
 
-        TEST_ASSIGN(infoPg, infoPgNew(storageLocal(), fileName, infoPgManifest), "new infoPg manifest - load file");
+        TEST_ASSIGN(
+            infoPg, infoPgNew(storageLocal(), fileName, infoPgManifest, cipherTypeNone, NULL), "new infoPg manifest - load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 2, "history record added");
 
@@ -143,9 +147,10 @@ testRun(void)
 
         // Errors
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(infoPgNew(storageLocal(), fileName, 10), AssertError, "invalid InfoPg type 10");
+        TEST_ERROR(infoPgNew(storageLocal(), fileName, 10, cipherTypeNone, NULL), AssertError, "invalid InfoPg type 10");
         TEST_ERROR(
-            infoPgNew(storageLocal(), NULL, infoPgManifest), AssertError, "function debug assertion 'fileName != NULL' failed");
+            infoPgNew(storageLocal(), NULL, infoPgManifest, cipherTypeNone, NULL), AssertError,
+            "function debug assertion 'fileName != NULL' failed");
 
         TEST_ERROR(infoPgDataCurrent(NULL), AssertError, "function debug assertion 'this != NULL' failed");
 

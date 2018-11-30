@@ -20,13 +20,15 @@ testRun(void)
 
 
         TEST_ERROR_FMT(
-            infoArchiveNew(storageLocal(), fileName, true), FileMissingError,
-            "unable to open %s/test.ini or %s/test.ini.copy\n"
-            "HINT: archive.info does not exist but is required to push/get WAL segments.\n"
-            "HINT: is archive_command configured in postgresql.conf?\n"
+            infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), FileOpenError,
+            "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
+            "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
+            "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory\n"
+            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
             "HINT: has a stanza-create been performed?\n"
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-            testPath(), testPath());
+            testPath(), testPath(), testPath(), testPath());
 
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
@@ -48,9 +50,10 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put archive info to file");
 
-        TEST_ASSIGN(info, infoArchiveNew(storageLocal(), fileName, true), "    new archive info");
+        TEST_ASSIGN(info, infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), "    new archive info");
         TEST_RESULT_STR(strPtr(infoArchiveId(info)), "9.4-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
+        TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "    no cipher passphrase");
 
         // Check PG version
         //--------------------------------------------------------------------------------------------------------------------------

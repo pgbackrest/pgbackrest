@@ -15,7 +15,6 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Version;
 
@@ -363,10 +362,10 @@ sub regExpReplaceAll
         $strLine =~ s/$self->{strPgSqlBin}/[PGSQL_BIN_PATH]/g;
     }
 
-    $strLine = $self->regExpReplace($strLine, 'BACKREST-NAME-VERSION', '^' . BACKREST_NAME . ' ' . BACKREST_VERSION,
+    $strLine = $self->regExpReplace($strLine, 'BACKREST-NAME-VERSION', '^' . PROJECT_NAME . ' ' . PROJECT_VERSION,
                                                 undef, false);
     $strLine = $self->regExpReplace(
-        $strLine, 'BACKREST-VERSION', ' begin ' . BACKREST_VERSION . '\:', BACKREST_VERSION, false);
+        $strLine, 'BACKREST-VERSION', ' begin ' . PROJECT_VERSION . '\:', PROJECT_VERSION, false);
 
     $strLine = $self->regExpReplace($strLine, undef, '^docker exec -u [a-z]* test-[0-9]+\-', 'test-[0-9]+\-', false);
     $strLine = $self->regExpReplace($strLine, 'CONTAINER-EXEC', '^docker exec -u [a-z]*', '^docker exec -u [a-z]*', false);
@@ -414,7 +413,7 @@ sub regExpReplaceAll
 
     $strLine = $self->regExpReplace($strLine, 'TS_PATH', "PG\\_[0-9]\\.[0-9]\\_[0-9]{9}");
     $strLine = $self->regExpReplace($strLine, 'VERSION',
-        "version[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}" . BACKREST_VERSION, BACKREST_VERSION . '$');
+        "version[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}" . PROJECT_VERSION, PROJECT_VERSION . '$');
 
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', 'timestamp"[ ]{0,1}:[ ]{0,1}[0-9]{10}','[0-9]{10}$');
 

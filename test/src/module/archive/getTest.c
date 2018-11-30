@@ -51,7 +51,7 @@ testRun(void)
                 "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"));
 
         TEST_ERROR(
-            archiveGetCheck(strNew("876543218765432187654321")), ArchiveMismatchError,
+            archiveGetCheck(strNew("876543218765432187654321"), cipherTypeNone, NULL), ArchiveMismatchError,
             "unable to retrieve the archive id for database version '10' and system-id '18072658121562454734'");
 
         // Nothing to find in empty archive dir
@@ -70,7 +70,8 @@ testRun(void)
                 "3={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n"
                 "4={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
 
-        TEST_RESULT_PTR(archiveGetCheck(strNew("876543218765432187654321")), NULL, "no segment found");
+        TEST_RESULT_PTR(
+            archiveGetCheck(strNew("876543218765432187654321"), cipherTypeNone, NULL).archiveFileActual, NULL, "no segment found");
 
         // Write segment into an older archive path
         // -------------------------------------------------------------------------------------------------------------------------
@@ -82,7 +83,7 @@ testRun(void)
             NULL);
 
         TEST_RESULT_STR(
-            strPtr(archiveGetCheck(strNew("876543218765432187654321"))),
+            strPtr(archiveGetCheck(strNew("876543218765432187654321"), cipherTypeNone, NULL).archiveFileActual),
             "10-2/8765432187654321/876543218765432187654321-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "segment found");
 
         // Write segment into an newer archive path
@@ -95,16 +96,21 @@ testRun(void)
             NULL);
 
         TEST_RESULT_STR(
-            strPtr(archiveGetCheck(strNew("876543218765432187654321"))),
+            strPtr(archiveGetCheck(strNew("876543218765432187654321"), cipherTypeNone, NULL).archiveFileActual),
             "10-4/8765432187654321/876543218765432187654321-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "newer segment found");
 
         // Get history file
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_PTR(archiveGetCheck(strNew("00000009.history")), NULL, "history file not found");
+        TEST_RESULT_PTR(
+            archiveGetCheck(strNew("00000009.history"), cipherTypeNone, NULL).archiveFileActual, NULL, "history file not found");
 
         storagePutNP(storageNewWriteNP(storageTest, strNew("repo/archive/test1/10-4/00000009.history")), NULL);
 
-        TEST_RESULT_STR(strPtr(archiveGetCheck(strNew("00000009.history"))), "10-4/00000009.history", "history file found");
+        TEST_RESULT_STR(
+            strPtr(
+                archiveGetCheck(
+                    strNew("00000009.history"), cipherTypeNone, NULL).archiveFileActual), "10-4/00000009.history",
+                    "history file found");
     }
 
     // *****************************************************************************************************************************
@@ -142,7 +148,7 @@ testRun(void)
         String *walDestination = strNewFmt("%s/db/pg_wal/RECOVERYXLOG", testPath());
         storagePathCreateNP(storageTest, strPath(walDestination));
 
-        TEST_RESULT_INT(archiveGetFile(archiveFile, walDestination), 1, "WAL segment missing");
+        TEST_RESULT_INT(archiveGetFile(archiveFile, walDestination, cipherTypeNone, NULL), 1, "WAL segment missing");
 
         // Create a WAL segment to copy
         // -------------------------------------------------------------------------------------------------------------------------
@@ -157,7 +163,7 @@ testRun(void)
                     "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
             buffer);
 
-        TEST_RESULT_INT(archiveGetFile(archiveFile, walDestination), 0, "WAL segment copied");
+        TEST_RESULT_INT(archiveGetFile(archiveFile, walDestination, cipherTypeNone, NULL), 0, "WAL segment copied");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, walDestination), true, "  check exists");
         TEST_RESULT_INT(storageInfoNP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
 
@@ -169,6 +175,28 @@ testRun(void)
 
         // Create a compressed WAL segment to copy
         // -------------------------------------------------------------------------------------------------------------------------
+        StorageFileWrite *infoWrite = storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info"));
+
+        ioWriteFilterGroupSet(
+            storageFileWriteIo(infoWrite),
+            ioFilterGroupAdd(
+                ioFilterGroupNew(),
+                cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, bufNewStr(strNew("12345678")), NULL))));
+
+        storagePutNP(
+            infoWrite,
+            bufNewZ(
+                "[backrest]\n"
+                "backrest-checksum=\"60bfcb0a5a2c91d203c11d7f1924e99dcdfa0b80\"\n"
+                "backrest-format=5\n"
+                "backrest-version=\"2.06\"\n"
+                "\n"
+                "[cipher]\n"
+                "cipher-pass=\"worstpassphraseever\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
+
         StorageFileWrite *destination = storageNewWriteNP(
             storageTest,
             strNew(
@@ -176,10 +204,16 @@ testRun(void)
 
         IoFilterGroup *filterGroup = ioFilterGroupNew();
         ioFilterGroupAdd(filterGroup, gzipCompressFilter(gzipCompressNew(3, false)));
+        ioFilterGroupAdd(
+            filterGroup,
+            cipherBlockFilter(
+                cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, bufNewStr(strNew("worstpassphraseever")), NULL)));
         ioWriteFilterGroupSet(storageFileWriteIo(destination), filterGroup);
         storagePutNP(destination, buffer);
 
-        TEST_RESULT_INT(archiveGetFile(archiveFile, walDestination), 0, "WAL segment copied");
+        TEST_RESULT_INT(
+            archiveGetFile(
+                archiveFile, walDestination, cipherTypeAes256Cbc, strNew("12345678")), 0, "WAL segment copied");
         TEST_RESULT_BOOL(storageExistsNP(storageTest, walDestination), true, "  check exists");
         TEST_RESULT_INT(storageInfoNP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
     }
@@ -311,13 +345,17 @@ testRun(void)
             HARNESS_FORK_CHILD()
             {
                 TEST_ERROR_FMT(
-                    cmdArchiveGet(), FileMissingError,
-                    "unable to open %s/archive/test1/archive.info or %s/archive/test1/archive.info.copy\n"
-                    "HINT: archive.info does not exist but is required to push/get WAL segments.\n"
-                    "HINT: is archive_command configured in postgresql.conf?\n"
+                    cmdArchiveGet(), FileOpenError,
+                    "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
+                    "FileMissingError: unable to open '%s/archive/test1/archive.info' for read: [2] No such file or directory\n"
+                    "FileMissingError: unable to open '%s/archive/test1/archive.info.copy' for read: [2] No such file or"
+                        " directory\n"
+                    "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+                    "HINT: is archive_command configured correctly in postgresql.conf?\n"
                     "HINT: has a stanza-create been performed?\n"
                     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
                         " scheme.",
+                    strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)),
                     strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)));
             }
         }
@@ -337,13 +375,17 @@ testRun(void)
             HARNESS_FORK_CHILD()
             {
                 TEST_ERROR_FMT(
-                    cmdArchiveGet(), FileMissingError,
-                    "unable to open %s/archive/test1/archive.info or %s/archive/test1/archive.info.copy\n"
-                    "HINT: archive.info does not exist but is required to push/get WAL segments.\n"
-                    "HINT: is archive_command configured in postgresql.conf?\n"
+                    cmdArchiveGet(), FileOpenError,
+                    "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
+                    "FileMissingError: unable to open '%s/archive/test1/archive.info' for read: [2] No such file or directory\n"
+                    "FileMissingError: unable to open '%s/archive/test1/archive.info.copy' for read: [2] No such file or"
+                        " directory\n"
+                    "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+                    "HINT: is archive_command configured correctly in postgresql.conf?\n"
                     "HINT: has a stanza-create been performed?\n"
                     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
                         " scheme.",
+                    strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)),
                     strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)));
             }
         }

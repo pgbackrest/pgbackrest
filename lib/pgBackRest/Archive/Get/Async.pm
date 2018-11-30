@@ -47,7 +47,7 @@ sub new
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strSpoolPath'},
-            {name => 'strBackRestBin', default => backrestBin()},
+            {name => 'strBackRestBin', default => projectBin()},
             {name => 'rstryWal'},
         );
 

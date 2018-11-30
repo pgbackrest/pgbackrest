@@ -111,8 +111,8 @@ sub greetingRead
     };
 
     # Error if greeting parameters do not match
-    for my $hParam ({strName => 'name', strExpected => BACKREST_NAME},
-                    {strName => 'version', strExpected => BACKREST_VERSION},
+    for my $hParam ({strName => 'name', strExpected => PROJECT_NAME},
+                    {strName => 'version', strExpected => PROJECT_VERSION},
                     {strName => 'service', strExpected => $self->{strName}})
     {
         if (!defined($hGreeting->{$hParam->{strName}}) || $hGreeting->{$hParam->{strName}} ne $hParam->{strExpected})

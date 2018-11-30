@@ -20,7 +20,7 @@ use File::Basename qw(dirname);
 ####################################################################################################################################
 # Storage object to use for all file operations
 ####################################################################################################################################
-use constant BACKREST_NAME                                          => 'pgBackRest';
+use constant PROJECT_NAME                                           => 'pgBackRest';
 
 ####################################################################################################################################
 # Make sure the makefile is being created in an expected test directory.  This should prevent users from building it in production.
@@ -72,6 +72,7 @@ my @stryCFile =
     'common/type/stringList.c',
     'common/type/variant.c',
     'common/type/variantList.c',
+    'common/type/xml.c',
     'common/wait.c',
     'compress/gzip.c',
     'compress/gzipCompress.c',
@@ -104,7 +105,7 @@ for (my $iFileIdx = 1; $iFileIdx < @stryCFile; $iFileIdx++)
 # Write the makefile
 WriteMakefile
 (
-    NAME => BACKREST_NAME . '::LibC',
+    NAME => PROJECT_NAME . '::LibC',
     VERSION => '999',
     AUTHOR => 'David Steele <david@pgbackrest.org>',
 
@@ -112,7 +113,9 @@ WriteMakefile
         -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -Wno-missing-field-initializers
         -o $@
         -std=c99
+        -D_POSIX_C_SOURCE=200112L
         -D_FILE_OFFSET_BITS=64
+        `xml2-config --cflags`
     )),
 
     INC => join(' ', qw(
@@ -122,7 +125,7 @@ WriteMakefile
 
     C => \@stryCFile,
 
-    LIBS => [-lcrypto],
+    LIBS => '-lcrypto -lssl -lxml2',
 
     OBJECT => '$(O_FILES)',
 );

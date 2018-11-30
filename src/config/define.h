@@ -23,7 +23,7 @@ typedef enum
 Define global section name
 ***********************************************************************************************************************************/
 #define CFGDEF_SECTION_GLOBAL                                       "global"
-    STRING_DECLARE(CFGDEF_SECTION_GLOBAL_STR)
+    STRING_DECLARE(CFGDEF_SECTION_GLOBAL_STR);
 
 /***********************************************************************************************************************************
 Functions

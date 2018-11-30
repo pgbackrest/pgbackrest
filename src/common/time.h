@@ -22,4 +22,12 @@ Functions
 void sleepMSec(TimeMSec sleepMSec);
 TimeMSec timeMSec(void);
 
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_DEBUG_TIME_MSEC_TYPE                                                                                              \
+    TimeMSec
+#define FUNCTION_DEBUG_TIME_MSEC_FORMAT(value, buffer, bufferSize)                                                                 \
+    cvtUInt64ToZ(value, buffer, bufferSize)
+
 #endif

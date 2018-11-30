@@ -219,7 +219,7 @@ sub connect
                 {
                     # Set application name for monitoring and debugging
                     $self->{hDb}->do(
-                        "set application_name = '" . BACKREST_NAME . ' [' .
+                        "set application_name = '" . PROJECT_NAME . ' [' .
                         (cfgOptionValid(CFGOPT_COMMAND) ? cfgOption(CFGOPT_COMMAND) : cfgCommandName(cfgCommandGet())) . "]'")
                         or confess &log(ERROR, $self->{hDb}->errstr, ERROR_DB_QUERY);
 
@@ -655,8 +655,8 @@ sub backupStart
     # database cluster.  This lock helps make the stop-auto option safe.
     if (!$self->executeSqlOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
     {
-        confess &log(ERROR, 'unable to acquire ' . BACKREST_NAME . " advisory lock\n" .
-                            'HINT: is another ' . BACKREST_NAME . ' backup already running on this cluster?', ERROR_LOCK_ACQUIRE);
+        confess &log(ERROR, 'unable to acquire ' . PROJECT_NAME . " advisory lock\n" .
+                            'HINT: is another ' . PROJECT_NAME . ' backup already running on this cluster?', ERROR_LOCK_ACQUIRE);
     }
 
     # If stop-auto is enabled check for a running backup.  This feature is not supported for PostgreSQL >= 9.6 since backups are
@@ -669,7 +669,7 @@ sub backupStart
             # If a backup is currently in progress emit a warning and then stop it
             if ($self->executeSqlOne('select pg_is_in_backup()'))
             {
-                &log(WARN, 'the cluster is already in backup mode but no ' . BACKREST_NAME . ' backup process is running.' .
+                &log(WARN, 'the cluster is already in backup mode but no ' . PROJECT_NAME . ' backup process is running.' .
                            ' pg_stop_backup() will be called so a new backup can be started.');
                 $self->backupStop();
             }
@@ -812,11 +812,11 @@ sub configValidate
         # Check if archive_command is set
         my $strArchiveCommand = $self->executeSqlOne('show archive_command');
 
-        if (index($strArchiveCommand, BACKREST_EXE) == -1)
+        if (index($strArchiveCommand, PROJECT_EXE) == -1)
         {
             confess &log(ERROR,
                 'archive_command ' . (defined($strArchiveCommand) ? "'${strArchiveCommand}'" : '[null]') . ' must contain \'' .
-                BACKREST_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
+                PROJECT_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
         }
     }
 
@@ -866,7 +866,7 @@ sub walSwitch
     # the user if there have been no writes since the last WAL switch.
     if ($self->{strDbVersion} >= PG_VERSION_91)
     {
-        $self->executeSql("select pg_create_restore_point('" . BACKREST_NAME . " Archive Check');");
+        $self->executeSql("select pg_create_restore_point('" . PROJECT_NAME . " Archive Check');");
     }
 
     my $strWalFileName = $self->executeSqlOne(

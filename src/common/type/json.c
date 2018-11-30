@@ -8,10 +8,7 @@ Convert JSON to/from KeyValue
 #include "common/type/json.h"
 
 /***********************************************************************************************************************************
-Internal helper functions
-***********************************************************************************************************************************/
-/***********************************************************************************************************************************
-jsonString - given a character array and its size, return a variant from the extracted string
+Given a character array and its size, return a variant from the extracted string
 ***********************************************************************************************************************************/
 static Variant *
 jsonString(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned int *valueBeginPos)
@@ -52,7 +49,7 @@ jsonString(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned in
 }
 
 /***********************************************************************************************************************************
-jsonNumeric - given a character array and its size, return a variant from the extracted numeric
+Given a character array and its size, return a variant from the extracted numeric
 ***********************************************************************************************************************************/
 static Variant *
 jsonNumeric(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned int *valueBeginPos)
@@ -86,7 +83,167 @@ jsonNumeric(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned i
 }
 
 /***********************************************************************************************************************************
-kvToJsonInternal - Internal recursive function to walk a KeyValue and return a json string
+Convert JSON to KeyValue object
+
+Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
+needed.  Since this function is only intended to read internally-generated JSON it is assumed to be well-formed with no extraneous
+whitespace.
+***********************************************************************************************************************************/
+KeyValue *
+jsonToKv(const String *json)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STRING, json);
+
+        FUNCTION_TEST_ASSERT(json != NULL);
+    FUNCTION_DEBUG_END();
+
+    KeyValue *result = kvNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // We'll examine the string byte by byte
+        const char *jsonC = strPtr(json);
+        unsigned int jsonPos = 0;
+
+        // Consume the initial delimiter
+        if (jsonC[jsonPos] == '[')
+            THROW(JsonFormatError, "arrays not supported");
+        else if (jsonC[jsonPos] != '{')
+            THROW_FMT(JsonFormatError, "expected '{' but found '%c'", jsonC[jsonPos]);
+
+        // Start parsing key/value pairs
+        do
+        {
+            Variant *value = NULL;
+
+            jsonPos++;
+
+            // Parse the key which should always be quoted
+            if (jsonC[jsonPos] != '"')
+                THROW_FMT(JsonFormatError, "expected '\"' but found '%c'", jsonC[jsonPos]);
+
+            unsigned int keyBeginPos = ++jsonPos;
+
+            while (jsonC[jsonPos] != '"' && jsonPos < strSize(json) - 1)
+                jsonPos++;
+
+            if (jsonC[jsonPos] != '"')
+                THROW_FMT(JsonFormatError, "expected '\"' but found '%c'", jsonC[jsonPos]);
+
+            String *key = strNewN(jsonC + keyBeginPos, jsonPos - keyBeginPos);
+
+            if (strSize(key) == 0)
+                THROW(JsonFormatError, "zero-length key not allowed");
+
+            if (jsonC[++jsonPos] != ':')
+                THROW_FMT(JsonFormatError, "expected ':' but found '%c'", jsonC[jsonPos]);
+
+            unsigned int valueBeginPos = ++jsonPos;
+
+            // The value appears to be a string
+            if (jsonC[jsonPos] == '"')
+            {
+                value = jsonString(jsonC, strSize(json), &jsonPos, &valueBeginPos);
+            }
+
+            // The value appears to be a number
+            else if (isdigit(jsonC[jsonPos]))
+            {
+                value = jsonNumeric(jsonC, strSize(json), &jsonPos, &valueBeginPos);
+            }
+
+            // The value appears to be a boolean
+            else if (jsonC[jsonPos] == 't' || jsonC[jsonPos] == 'f')
+            {
+                valueBeginPos = jsonPos;
+
+                while (jsonC[jsonPos] != 'e' && jsonPos < strSize(json) - 1)
+                    jsonPos++;
+
+                if (jsonC[jsonPos] != 'e')
+                    THROW_FMT(JsonFormatError, "expected boolean but found '%c'", jsonC[jsonPos]);
+
+                jsonPos++;
+
+                String *valueStr = strNewN(jsonC + valueBeginPos, jsonPos - valueBeginPos);
+
+                if (strCmpZ(valueStr, "true") != 0 && strCmpZ(valueStr, "false") != 0)
+                    THROW_FMT(JsonFormatError, "expected 'true' or 'false' but found '%s'", strPtr(valueStr));
+
+                value = varNewBool(varBoolForce(varNewStr(valueStr)));
+            }
+
+            // The value appears to be an array.
+            else if (jsonC[jsonPos] == '[')
+            {
+                // Add a pointer to an empty variant list as the value for the key.
+                Variant *valueList = varNewVarLst(varLstNew());
+                kvAdd(result, varNewStr(key), valueList);
+
+                // ??? Currently only working with same-type simple single-dimensional arrays
+                unsigned char arrayType = '\0';
+
+                do
+                {
+                    jsonPos++;
+                    valueBeginPos = jsonPos;
+
+                    // The value appears to be a string
+                    if (jsonC[jsonPos] == '"')
+                    {
+                        if (arrayType != '\0' && arrayType != 's')
+                            THROW_FMT(JsonFormatError, "string found in array of type '%c'", arrayType);
+
+                        arrayType = 's';
+
+                        value = jsonString(jsonC, strSize(json), &jsonPos, &valueBeginPos);
+                    }
+
+                    // The value appears to be a number
+                    else if (isdigit(jsonC[jsonPos]))
+                    {
+                        if (arrayType != '\0' && arrayType != 'n')
+                            THROW_FMT(JsonFormatError, "number found in array of type '%c'", arrayType);
+
+                        arrayType = 'n';
+
+                        value = jsonNumeric(jsonC, strSize(json), &jsonPos, &valueBeginPos);
+                    }
+
+                    else
+                        THROW(JsonFormatError, "unknown array value type");
+
+                    kvAdd(result, varNewStr(key), value);
+                }
+                while (jsonC[jsonPos] == ',');
+
+                if (jsonC[jsonPos] != ']')
+                    THROW_FMT(JsonFormatError, "expected array delimeter ']' but found '%c'", jsonC[jsonPos]);
+
+                jsonPos++;
+
+                continue;
+            }
+            // Else not sure what it is.  Currently nulls will error.
+            else
+                THROW(JsonFormatError, "unknown value type");
+
+            kvPut(result, varNewStr(key), value);
+        }
+        while (jsonC[jsonPos] == ',');
+
+        // Look for end delimiter
+        if (jsonC[jsonPos] != '}')
+            THROW_FMT(JsonFormatError, "expected '}' but found '%c'", jsonC[jsonPos]);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_DEBUG_RESULT(KEY_VALUE, result);
+}
+
+/***********************************************************************************************************************************
+Internal recursive function to walk a KeyValue and return a json string
 ***********************************************************************************************************************************/
 static String *
 kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
@@ -197,165 +354,6 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
 }
 
 /***********************************************************************************************************************************
-Convert JSON to KeyValue object
-
-Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
-needed.  Since this function is only intended to read internally-generated JSON it is assumed to be well-formed with no extraneous
-whitespace.
-***********************************************************************************************************************************/
-KeyValue *
-jsonToKv(const String *json)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, json);
-
-        FUNCTION_TEST_ASSERT(json != NULL);
-    FUNCTION_DEBUG_END();
-
-    KeyValue *result = kvNew();
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // We'll examine the string byte by byte
-        const char *jsonC = strPtr(json);
-        unsigned int jsonPos = 0;
-
-        // Consume the initial delimiter
-        if (jsonC[jsonPos] == '[')
-            THROW(JsonFormatError, "arrays not supported");
-        else if (jsonC[jsonPos] != '{')
-            THROW_FMT(JsonFormatError, "expected '{' but found '%c'", jsonC[jsonPos]);
-
-        // Start parsing key/value pairs
-        do
-        {
-            Variant *value = NULL;
-
-            jsonPos++;
-
-            // Parse the key which should always be quoted
-            if (jsonC[jsonPos] != '"')
-                THROW_FMT(JsonFormatError, "expected '\"' but found '%c'", jsonC[jsonPos]);
-
-            unsigned int keyBeginPos = ++jsonPos;
-
-            while (jsonC[jsonPos] != '"' && jsonPos < strSize(json) - 1)
-                jsonPos++;
-
-            if (jsonC[jsonPos] != '"')
-                THROW_FMT(JsonFormatError, "expected '\"' but found '%c'", jsonC[jsonPos]);
-
-            String *key = strNewN(jsonC + keyBeginPos, jsonPos - keyBeginPos);
-
-            if (strSize(key) == 0)
-                THROW(JsonFormatError, "zero-length key not allowed");
-
-            if (jsonC[++jsonPos] != ':')
-                THROW_FMT(JsonFormatError, "expected ':' but found '%c'", jsonC[jsonPos]);
-
-            unsigned int valueBeginPos = ++jsonPos;
-
-            // The value appears to be a string
-            if (jsonC[jsonPos] == '"')
-            {
-                value = jsonString(jsonC, strSize(json), &jsonPos, &valueBeginPos);
-            }
-
-            // The value appears to be a number
-            else if (isdigit(jsonC[jsonPos]))
-            {
-                value = jsonNumeric(jsonC, strSize(json), &jsonPos, &valueBeginPos);
-            }
-
-            // The value appears to be a boolean
-            else if (jsonC[jsonPos] == 't' || jsonC[jsonPos] == 'f')
-            {
-                valueBeginPos = jsonPos;
-
-                while (jsonC[jsonPos] != 'e' && jsonPos < strSize(json) - 1)
-                    jsonPos++;
-
-                if (jsonC[jsonPos] != 'e')
-                    THROW_FMT(JsonFormatError, "expected boolean but found '%c'", jsonC[jsonPos]);
-
-                jsonPos++;
-
-                String *valueStr = strNewN(jsonC + valueBeginPos, jsonPos - valueBeginPos);
-
-                if (strCmpZ(valueStr, "true") != 0 && strCmpZ(valueStr, "false") != 0)
-                    THROW_FMT(JsonFormatError, "expected 'true' or 'false' but found '%s'", strPtr(valueStr));
-
-                value = varNewBool(varBoolForce(varNewStr(valueStr)));
-            }
-
-            // The value appears to be an array.
-            else if (jsonC[jsonPos] == '[')
-            {
-                // Add a pointer to an empty variant list as the value for the key.
-                Variant *valueList = varNewVarLst(varLstNew());
-                kvAdd(result, varNewStr(key), valueList);
-
-                unsigned char arrayType = '\0';
-                // ??? Currently only working with same-type simple single-dimensional arrays
-                do
-                {
-                    jsonPos++;
-                    valueBeginPos = jsonPos;
-
-                    // The value appears to be a string
-                    if (jsonC[jsonPos] == '"')
-                    {
-                        if (arrayType != '\0' && arrayType != 's')
-                            THROW_FMT(JsonFormatError, "string found in array of type '%c'", arrayType);
-
-                        arrayType = 's';
-
-                        value = jsonString(jsonC, strSize(json), &jsonPos, &valueBeginPos);
-                    }
-
-                    // The value appears to be a number
-                    else if (isdigit(jsonC[jsonPos]))
-                    {
-                        if (arrayType != '\0' && arrayType != 'n')
-                            THROW_FMT(JsonFormatError, "number found in array of type '%c'", arrayType);
-
-                        arrayType = 'n';
-
-                        value = jsonNumeric(jsonC, strSize(json), &jsonPos, &valueBeginPos);
-                    }
-
-                    else
-                        THROW(JsonFormatError, "unknown array value type");
-
-                    kvAdd(result, varNewStr(key), value);
-                }
-                while (jsonC[jsonPos] == ',');
-
-                if (jsonC[jsonPos] != ']')
-                    THROW_FMT(JsonFormatError, "expected array delimeter ']' but found '%c'", jsonC[jsonPos]);
-
-                jsonPos++;
-
-                continue;
-            }
-            // Else not sure what it is.  Currently nulls will error.
-            else
-                THROW(JsonFormatError, "unknown value type");
-
-            kvPut(result, varNewStr(key), value);
-        }
-        while (jsonC[jsonPos] == ',');
-
-        // Look for end delimiter
-        if (jsonC[jsonPos] != '}')
-            THROW_FMT(JsonFormatError, "expected '}' but found '%c'", jsonC[jsonPos]);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_DEBUG_RESULT(KEY_VALUE, result);
-}
-
-/***********************************************************************************************************************************
 Convert KeyValue object to JSON string. If indent = 0 then no pretty format.
 
 Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
@@ -381,28 +379,26 @@ kvToJson(const KeyValue *kv, unsigned int indent)
         String *indentDepth = strNew("");
 
         // Set up the indent spacing (indent 0 will result in an empty string)
-        for (unsigned int idx = 0; idx < indent; idx++)
-        {
+        for (unsigned int indentIdx = 0; indentIdx < indent; indentIdx++)
             strCat(indentSpace, " ");
-        }
 
         // If indent > 0 (pretty printing) then add carriage return to the indent format
         if (indent > 0)
             strCat(indentDepth, "\n");
 
         strCat(indentDepth, strPtr(indentSpace));
-
         strCat(jsonStr, strPtr(kvToJsonInternal(kv, indentSpace, indentDepth)));
 
+        // Add terminating linefeed for pretty print if it is not already added
+        if (indent > 0 && !strEndsWithZ(jsonStr, "\n"))
+            strCat(jsonStr, "\n");
+
+        // Duplicate the string into the calling context
         memContextSwitch(MEM_CONTEXT_OLD());
         result = strDup(jsonStr);
         memContextSwitch(MEM_CONTEXT_TEMP());
     }
     MEM_CONTEXT_TEMP_END();
-
-    // Add terminating linefeed for pretty print if it is not already added
-    if (indent > 0 && !strEndsWithZ(result, "\n"))
-        strCat(result, "\n");
 
     FUNCTION_DEBUG_RESULT(STRING, result);
 }
@@ -411,8 +407,7 @@ kvToJson(const KeyValue *kv, unsigned int indent)
 Convert Variant object to JSON string. If indent = 0 then no pretty format.
 
 Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
-needed.  Since this function is only intended to read internally-generated JSON it is assumed to be well-formed with no extraneous
-whitespace.
+needed.
 ***********************************************************************************************************************************/
 String *
 varToJson(const Variant *var, unsigned int indent)
@@ -437,10 +432,8 @@ varToJson(const Variant *var, unsigned int indent)
         String *indentDepth = strNew("");
 
         // Set up the indent spacing (indent 0 will result in an empty string)
-        for (unsigned int idx = 0; idx < indent; idx++)
-        {
+        for (unsigned int indentIdx = 0; indentIdx < indent; indentIdx++)
             strCat(indentSpace, " ");
-        }
 
         // If indent > 0 (pretty printing) then add carriage return to the indent format
         if (indent > 0)
@@ -481,23 +474,19 @@ varToJson(const Variant *var, unsigned int indent)
             // Else empty array
             else
                 strCat(jsonStr, "[]");
-
-            memContextSwitch(MEM_CONTEXT_OLD());
-            result = strDup(jsonStr);
-            memContextSwitch(MEM_CONTEXT_TEMP());
         }
+        // Else just convert the KeyValue
         else
-        {
             strCat(jsonStr, strPtr(kvToJsonInternal(varKv(var), indentSpace, indentDepth)));
 
-            memContextSwitch(MEM_CONTEXT_OLD());
-            result = strDup(jsonStr);
-            memContextSwitch(MEM_CONTEXT_TEMP());
-        }
-
         // Add terminating linefeed for pretty print if it is not already added
-        if (indent > 0 && !strEndsWithZ(result, "\n"))
-            strCat(result, "\n");
+        if (indent > 0 && !strEndsWithZ(jsonStr, "\n"))
+            strCat(jsonStr, "\n");
+
+        // Duplicate the string into the calling context
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = strDup(jsonStr);
+        memContextSwitch(MEM_CONTEXT_TEMP());
     }
     MEM_CONTEXT_TEMP_END();
 

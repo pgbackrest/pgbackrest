@@ -203,6 +203,13 @@ unit:
           common/type/keyValue: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: type-xml
+        total: 1
+
+        coverage:
+          common/type/xml: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: io
         total: 4
 
@@ -217,6 +224,23 @@ unit:
           common/io/io: full
           common/io/read: full
           common/io/write: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: io-tls
+        total: 3
+
+        coverage:
+          common/io/tls/client: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: io-http
+        total: 4
+
+        coverage:
+          common/io/http/client: full
+          common/io/http/common: full
+          common/io/http/header: full
+          common/io/http/query: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: encode
@@ -292,7 +316,7 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto
-        total: 3
+        total: 4
 
         coverage:
           crypto/crypto: full
@@ -500,6 +524,16 @@ unit:
           storage/driver/posix/storage: full
           storage/fileRead: full
           storage/fileWrite: full
+          storage/helper: full
+          storage/storage: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: s3
+        total: 3
+
+        coverage:
+          storage/driver/s3/fileRead: full
+          storage/driver/s3/storage: full
           storage/helper: full
           storage/storage: full
 

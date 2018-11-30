@@ -182,9 +182,9 @@ sub configTestLoad
     $self->configFileWrite($strConfigFile, $self->{&CONFIGENVTEST});
 
     my @stryArg = $self->commandTestWrite(cfgCommandName($iCommandId), $strConfigFile, $self->{&CONFIGENVTEST});
-    my $strConfigJson = cfgParseTest(backrestBin(), join('|', @stryArg));
+    my $strConfigJson = cfgParseTest(projectBin(), join('|', @stryArg));
     $self->testResult(
-        sub {configLoad(false, backrestBin(), cfgCommandName($iCommandId), \$strConfigJson)},
+        sub {configLoad(false, projectBin(), cfgCommandName($iCommandId), \$strConfigJson)},
         true, 'config load: ' . join(" ", @stryArg));
 }
 

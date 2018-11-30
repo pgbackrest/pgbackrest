@@ -52,7 +52,7 @@ cmdBegin(bool logOption)
 
             if (logOption)
             {
-                strCatFmt(info, " %s:", PGBACKREST_VERSION);
+                strCatFmt(info, " %s:", PROJECT_VERSION);
 
                 // Add command parameters if they exist
                 const StringList *commandParamList = cfgCommandParam();

@@ -524,12 +524,15 @@
             </execute>
 
             <execute keyword="default" user="root">
-                <exe-cmd>apt-get install build-essential libssl-dev libperl-dev</exe-cmd>
+                <exe-cmd>apt-get install build-essential libssl-dev libxml2-dev libperl-dev</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute keyword="co6" user="root">
-                <exe-cmd>yum install build-essential gcc openssl-devel perl-ExtUtils-Embed</exe-cmd>
+                <exe-cmd>
+                    yum install build-essential gcc openssl-devel libxml2-devel
+                        perl-ExtUtils-Embed
+                </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
         </execute-list>
@@ -1999,7 +2002,8 @@
             <title>Setup Passwordless SSH</title>
 
             <block id="setup-ssh-intro">
-                <block-variable-replace key="bogus">bogus !!!</block-variable-replace>
+                <!-- ??? Bogus variable is set because the syntax currently requires at least one -->
+                <block-variable-replace key="bogus"></block-variable-replace>
             </block>
 
             <execute-list host="{[host-repo1]}">
@@ -2330,7 +2334,8 @@
             <title>Setup Passwordless SSH</title>
 
             <block id="setup-ssh-intro">
-                <block-variable-replace key="bogus">bogus !!!</block-variable-replace>
+                <!-- ??? Bogus variable is set because the syntax currently requires at least one -->
+                <block-variable-replace key="bogus"></block-variable-replace>
             </block>
 
             <block id="setup-ssh">

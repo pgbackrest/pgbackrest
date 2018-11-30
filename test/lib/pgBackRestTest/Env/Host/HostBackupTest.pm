@@ -114,7 +114,7 @@ sub new
     $self->{strLockPath} = $self->testPath() . '/' . HOST_PATH_LOCK;
 
     # Set conf file
-    $self->{strBackRestConfig} =  $self->testPath() . '/' . BACKREST_CONF;
+    $self->{strBackRestConfig} =  $self->testPath() . '/' . PROJECT_CONF;
 
     # Set LogTest object
     $self->{oLogTest} = $$oParam{oLogTest};
@@ -360,17 +360,17 @@ sub backupEnd
 
         if (defined($oHostGroup->hostGet(HOST_DB_MASTER, true)))
         {
-            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_DB_MASTER)->testPath() . '/' . BACKREST_CONF);
+            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_DB_MASTER)->testPath() . '/' . PROJECT_CONF);
         }
 
         if (defined($oHostGroup->hostGet(HOST_DB_STANDBY, true)))
         {
-            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_DB_STANDBY)->testPath() . '/' . BACKREST_CONF);
+            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_DB_STANDBY)->testPath() . '/' . PROJECT_CONF);
         }
 
         if (defined($oHostGroup->hostGet(HOST_BACKUP, true)))
         {
-            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_BACKUP)->testPath() . '/' . BACKREST_CONF);
+            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_BACKUP)->testPath() . '/' . PROJECT_CONF);
         }
 
         if ($self->synthetic() && $bManifestCompare)
@@ -466,7 +466,7 @@ sub backupCompare
         $oActualManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START);
     ${$oExpectedManifest}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} =
         $oActualManifest->get(INI_SECTION_BACKREST, INI_KEY_CHECKSUM);
-    ${$oExpectedManifest}{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = BACKREST_FORMAT + 0;
+    ${$oExpectedManifest}{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = REPOSITORY_FORMAT + 0;
 
     if (defined($oExpectedManifest->{&INI_SECTION_CIPHER}) &&
         defined($oExpectedManifest->{&INI_SECTION_CIPHER}{&INI_KEY_CIPHER_PASS}) &&

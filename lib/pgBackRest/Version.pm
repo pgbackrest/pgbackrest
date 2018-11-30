@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # VERSION MODULE
 #
-# Contains BackRest version and format numbers.
+# Contains project version and format numbers.
 ####################################################################################################################################
 package pgBackRest::Version;
 
@@ -16,38 +16,38 @@ use Exporter qw(import);
 #
 # Defines the official project name.
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant BACKREST_NAME                                          => 'pgBackRest';
-    push @EXPORT, qw(BACKREST_NAME);
-use constant BACKREST_EXE                                           => lc(BACKREST_NAME);
-    push @EXPORT, qw(BACKREST_EXE);
-use constant BACKREST_CONF                                          => BACKREST_EXE . '.conf';
-    push @EXPORT, qw(BACKREST_CONF);
+use constant PROJECT_NAME                                           => 'pgBackRest';
+    push @EXPORT, qw(PROJECT_NAME);
+use constant PROJECT_EXE                                            => lc(PROJECT_NAME);
+    push @EXPORT, qw(PROJECT_EXE);
+use constant PROJECT_CONF                                           => PROJECT_EXE . '.conf';
+    push @EXPORT, qw(PROJECT_CONF);
 
 # Binary location
 #
 # Stores the exe location.
 #-----------------------------------------------------------------------------------------------------------------------------------
-my $strBackRestBin;
+my $strProjectBin;
 
-sub backrestBin {return $strBackRestBin};
-sub backrestBinSet {$strBackRestBin = shift}
+sub projectBin {return $strProjectBin};
+sub projectBinSet {$strProjectBin = shift}
 
-push @EXPORT, qw(backrestBin backrestBinSet);
+push @EXPORT, qw(projectBin projectBinSet);
 
-# BackRest Version Number
+# Project Version Number
 #
 # Defines the current version of the BackRest executable.  The version number is used to track features but does not affect what
 # repositories or manifests can be read - that's the job of the format number.
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant BACKREST_VERSION                                       => '2.07dev';
-    push @EXPORT, qw(BACKREST_VERSION);
+use constant PROJECT_VERSION                                        => '2.08dev';
+    push @EXPORT, qw(PROJECT_VERSION);
 
-# Format Format Number
+# Repository Format Number
 #
 # Defines format for info and manifest files as well as on-disk structure.  If this number changes then the repository will be
 # invalid unless migration functions are written.
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant BACKREST_FORMAT                                        => 5;
-    push @EXPORT, qw(BACKREST_FORMAT);
+use constant REPOSITORY_FORMAT                                        => 5;
+    push @EXPORT, qw(REPOSITORY_FORMAT);
 
 1;

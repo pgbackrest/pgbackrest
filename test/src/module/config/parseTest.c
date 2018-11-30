@@ -47,9 +47,10 @@ testRun(void)
         String *configIncludePath = strNewFmt("%s/conf.d", testPath());
         mkdir(strPtr(configIncludePath), 0750);
 
-        // Check old config file constant
+        // Check old config file constants
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(PGBACKREST_CONFIG_ORIG_PATH_FILE, "/etc/pgbackrest.conf", "check old config path");
+        TEST_RESULT_STR(strPtr(PGBACKREST_CONFIG_ORIG_PATH_FILE_STR), "/etc/pgbackrest.conf", "check old config path str");
 
         // Confirm same behavior with multiple config include files
         //--------------------------------------------------------------------------------------------------------------------------

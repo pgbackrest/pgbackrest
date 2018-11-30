@@ -33,14 +33,14 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdBegin(true), "command begin with command parameter");
         harnessLogResult(
-            "P00   INFO: archive-get command begin " PGBACKREST_VERSION ": [param1] --compress");
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --compress");
 
         strLstAddZ(commandParamList, "param 2");
         cfgCommandParamSet(commandParamList);
 
         TEST_RESULT_VOID(cmdBegin(true), "command begin with command parameters");
         harnessLogResult(
-            "P00   INFO: archive-get command begin " PGBACKREST_VERSION ": [param1, \"param 2\"] --compress");
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1, \"param 2\"] --compress");
 
         cfgInit();
         cfgCommandSet(cfgCmdArchiveGet);
@@ -69,7 +69,6 @@ testRun(void)
         strLstAddZ(list, "db2");
         cfgOptionSet(cfgOptDbInclude, cfgSourceParam, varNewVarLst(varLstNewStrLst(list)));
 
-        // !!! WHY DO WE STILL NEED TO CREATE THE VAR KV EMPTY?
         cfgOptionValidSet(cfgOptRecoveryOption, true);
         Variant *recoveryVar = varNewKv();
         KeyValue *recoveryKv = varKv(recoveryVar);
@@ -79,7 +78,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdBegin(true), "command begin with option logging");
         harnessLogResult(
-            "P00   INFO: archive-get command begin " PGBACKREST_VERSION ": --no-config --db-include=db1 --db-include=db2"
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": --no-config --db-include=db1 --db-include=db2"
                 " --recovery-option=standby_mode=on --recovery-option=primary_conn_info=blah --reset-repo1-host"
                 " --repo1-path=\"/path/to the/repo\" --repo1-s3-key=<redacted>");
 

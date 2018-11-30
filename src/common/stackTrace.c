@@ -169,7 +169,7 @@ stackTraceParamIdx(int stackIdx)
     if (data->paramLog)
     {
         if (data->paramOverflow)
-            return "!!! buffer overflow - parameters not available !!!";
+            return "buffer full - parameters not available";
 
         if (data->paramSize == 0)
             return "void";

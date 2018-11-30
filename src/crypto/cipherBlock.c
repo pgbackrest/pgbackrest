@@ -6,11 +6,19 @@ Block Cipher
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
+#include "common/assert.h"
 #include "common/debug.h"
+#include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "crypto/cipherBlock.h"
 #include "crypto/crypto.h"
+
+/***********************************************************************************************************************************
+Filter type constant
+***********************************************************************************************************************************/
+#define CIPHER_BLOCK_FILTER_TYPE                                   "cipherBlock"
+    STRING_STATIC(CIPHER_BLOCK_FILTER_TYPE_STR,                    CIPHER_BLOCK_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Header constants and sizes
@@ -39,13 +47,36 @@ struct CipherBlock
     const EVP_CIPHER *cipher;                                       // Cipher object
     const EVP_MD *digest;                                           // Message digest object
     EVP_CIPHER_CTX *cipherContext;                                  // Encrypt/decrypt context
+
+    IoFilter *filter;                                               // Filter interface
+    Buffer *buffer;                                                 // Internal buffer is case destination buffer isn't large enough
+    bool inputSame;                                                 // Is the same input required on next process call?
+    bool done;                                                      // Is processing done?
 };
 
 /***********************************************************************************************************************************
 New block encrypt/decrypt object
 ***********************************************************************************************************************************/
 CipherBlock *
-cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pass, size_t passSize, const char *digestName)
+cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(ENUM, mode);
+        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+        FUNCTION_DEBUG_PARAM(BUFFER, pass);
+        FUNCTION_DEBUG_PARAM(STRING, digestName);
+
+        FUNCTION_DEBUG_ASSERT(cipherType == cipherTypeAes256Cbc);
+        FUNCTION_DEBUG_ASSERT(pass != NULL);
+        FUNCTION_DEBUG_ASSERT(bufSize(pass) > 0);
+    FUNCTION_DEBUG_END();
+
+    FUNCTION_DEBUG_RESULT(
+        CIPHER_BLOCK, cipherBlockNewC(mode, CIPHER_TYPE_AES_256_CBC, bufPtr(pass), bufSize(pass), strPtr(digestName)));
+}
+
+CipherBlock *
+cipherBlockNewC(CipherMode mode, const char *cipherName, const unsigned char *pass, size_t passSize, const char *digestName)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(ENUM, mode);
@@ -101,6 +132,12 @@ cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pas
         this->passSize = passSize;
         this->pass = memNewRaw(this->passSize);
         memcpy(this->pass, pass, this->passSize);
+
+        // Create filter interface
+        this->filter = ioFilterNewP(
+            CIPHER_BLOCK_FILTER_TYPE_STR, this, .done = (IoFilterInterfaceDone)cipherBlockDone,
+            .inOut = (IoFilterInterfaceProcessInOut)cipherBlockProcess,
+            .inputSame = (IoFilterInterfaceInputSame)cipherBlockInputSame);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -111,7 +148,7 @@ cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pas
 Determine how large the destination buffer should be
 ***********************************************************************************************************************************/
 size_t
-cipherBlockProcessSize(CipherBlock *this, size_t sourceSize)
+cipherBlockProcessSizeC(CipherBlock *this, size_t sourceSize)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(CIPHER_BLOCK, this);
@@ -134,7 +171,7 @@ cipherBlockProcessSize(CipherBlock *this, size_t sourceSize)
 Encrypt/decrypt data
 ***********************************************************************************************************************************/
 size_t
-cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t sourceSize, unsigned char *destination)
+cipherBlockProcessC(CipherBlock *this, const unsigned char *source, size_t sourceSize, unsigned char *destination)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(CIPHER_BLOCK, this);
@@ -143,7 +180,7 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t source
         FUNCTION_DEBUG_PARAM(UCHARP, destination);
 
         FUNCTION_DEBUG_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(source != NULL);
+        FUNCTION_DEBUG_ASSERT(source != NULL || sourceSize == 0);
         FUNCTION_DEBUG_ASSERT(destination != NULL);
     FUNCTION_DEBUG_END();
 
@@ -170,7 +207,7 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t source
             destinationSize += PKCS5_SALT_LEN;
         }
         // On decrypt the salt is read from the header
-        else
+        else if (sourceSize > 0)
         {
             // Check if the entire header has been read
             if (this->headerSize + sourceSize >= CIPHER_BLOCK_HEADER_SIZE)
@@ -249,7 +286,7 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, size_t source
 Flush the remaining data
 ***********************************************************************************************************************************/
 size_t
-cipherBlockFlush(CipherBlock *this, unsigned char *destination)
+cipherBlockFlushC(CipherBlock *this, unsigned char *destination)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(CIPHER_BLOCK, this);
@@ -275,6 +312,154 @@ cipherBlockFlush(CipherBlock *this, unsigned char *destination)
 }
 
 /***********************************************************************************************************************************
+Process function used by C filter
+***********************************************************************************************************************************/
+void
+cipherBlockProcess(CipherBlock *this, const Buffer *source, Buffer *destination)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(CIPHER_BLOCK, this);
+        FUNCTION_DEBUG_PARAM(BUFFER, source);
+        FUNCTION_DEBUG_PARAM(BUFFER, destination);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+        FUNCTION_DEBUG_ASSERT(destination != NULL);
+        FUNCTION_DEBUG_ASSERT(bufRemains(destination) > 0);
+    FUNCTION_DEBUG_END();
+
+    // Copy already buffered bytes
+    if (this->buffer != NULL && bufUsed(this->buffer) > 0)
+    {
+        if (bufRemains(destination) >= bufUsed(this->buffer))
+        {
+            bufCat(destination, this->buffer);
+            bufUsedZero(this->buffer);
+
+            this->inputSame = false;
+        }
+        else
+        {
+            size_t catSize = bufRemains(destination);
+            bufCatSub(destination, this->buffer, 0, catSize);
+
+            memmove(bufPtr(this->buffer), bufPtr(this->buffer) + catSize, bufUsed(this->buffer) - catSize);
+            bufUsedSet(this->buffer, bufUsed(this->buffer) - catSize);
+
+            this->inputSame = true;
+        }
+    }
+    else
+    {
+        ASSERT_DEBUG(this->buffer == NULL || bufUsed(this->buffer) == 0);
+
+        // Determine how much space is required in the output buffer
+        Buffer *outputActual = destination;
+
+        size_t destinationSize = cipherBlockProcessSizeC(this, source == NULL ? 0 : bufUsed(source));
+
+        if (destinationSize > bufRemains(destination))
+        {
+            // Allocate the buffer if needed
+            MEM_CONTEXT_BEGIN(this->memContext)
+            {
+                if (this->buffer == NULL)
+                {
+                    this->buffer = bufNew(destinationSize);
+                }
+                // Resize buffer if needed
+                else
+                    bufResize(this->buffer, destinationSize);
+            }
+            MEM_CONTEXT_END();
+
+            outputActual = this->buffer;
+        }
+
+        // Encrypt/decrypt bytes
+        size_t destinationSizeActual;
+
+        if (source == NULL)
+        {
+            // If salt was not generated it means that process() was never called with any data.  It's OK to encrypt a zero byte
+            // file but we need to call process to generate the header.
+            if (!this->saltDone)
+            {
+                destinationSizeActual = cipherBlockProcessC(this, NULL, 0, bufRemainsPtr(outputActual));
+                bufUsedInc(outputActual, destinationSizeActual);
+            }
+
+            destinationSizeActual = cipherBlockFlushC(this, bufRemainsPtr(outputActual));
+            this->done = true;
+        }
+        else
+            destinationSizeActual = cipherBlockProcessC(this, bufPtr(source), bufUsed(source), bufRemainsPtr(outputActual));
+
+        bufUsedInc(outputActual, destinationSizeActual);
+
+        // Copy from buffer to destination if needed
+        if (this->buffer != NULL && bufUsed(this->buffer) > 0)
+            cipherBlockProcess(this, source, destination);
+    }
+
+    FUNCTION_DEBUG_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
+Is cipher done?
+***********************************************************************************************************************************/
+bool
+cipherBlockDone(const CipherBlock *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CIPHER_BLOCK, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, this->done && !this->inputSame);
+}
+
+/***********************************************************************************************************************************
+Get filter interface
+***********************************************************************************************************************************/
+IoFilter *
+cipherBlockFilter(const CipherBlock *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CIPHER_BLOCK, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(IO_FILTER, this->filter);
+}
+
+/***********************************************************************************************************************************
+Should the same input be provided again?
+***********************************************************************************************************************************/
+bool
+cipherBlockInputSame(const CipherBlock *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CIPHER_BLOCK, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(BOOL, this->inputSame);
+}
+
+/***********************************************************************************************************************************
+Render as string for logging
+***********************************************************************************************************************************/
+String *
+cipherBlockToLog(const CipherBlock *this)
+{
+    return strNewFmt(
+        "{inputSame: %s, done: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done));
+}
+
+/***********************************************************************************************************************************
 Free memory
 ***********************************************************************************************************************************/
 void
@@ -282,17 +467,18 @@ cipherBlockFree(CipherBlock *this)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(CIPHER_BLOCK, this);
-
-        FUNCTION_DEBUG_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();
 
-    // Free cipher context
-    if (this->cipherContext)
-        EVP_CIPHER_CTX_cleanup(this->cipherContext);
+    if (this != NULL)
+    {
+        // Free cipher context
+        if (this->cipherContext)
+            EVP_CIPHER_CTX_cleanup(this->cipherContext);
 
-    // Free mem context
-    memContextCallbackClear(this->memContext);
-    memContextFree(this->memContext);
+        // Free mem context
+        memContextCallbackClear(this->memContext);
+        memContextFree(this->memContext);
+    }
 
     FUNCTION_DEBUG_RESULT_VOID();
 }

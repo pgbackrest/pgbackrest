@@ -15,7 +15,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Program name a version are used multiple times
-    const char *helpVersion = PGBACKREST_NAME " " PGBACKREST_VERSION;
+    const char *helpVersion = PROJECT_NAME " " PROJECT_VERSION;
 
     // General help text is used in more than one test
     const char *generalHelp = strPtr(strNewFmt(

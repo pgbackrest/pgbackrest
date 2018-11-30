@@ -25,18 +25,18 @@ Internal constants
 ***********************************************************************************************************************************/
 #define INFO_SECTION_DB                                             "db"
 #define INFO_SECTION_DB_HISTORY                                     INFO_SECTION_DB ":history"
-    STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                      INFO_SECTION_DB_HISTORY)
+    STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                      INFO_SECTION_DB_HISTORY);
 
 #define INFO_KEY_DB_ID                                              "db-id"
-    STRING_EXTERN(INFO_KEY_DB_ID_STR,                               INFO_KEY_DB_ID)
+    STRING_EXTERN(INFO_KEY_DB_ID_STR,                               INFO_KEY_DB_ID);
 #define INFO_KEY_DB_CATALOG_VERSION                                 "db-catalog-version"
-    STRING_STATIC(INFO_KEY_DB_CATALOG_VERSION_STR,                  INFO_KEY_DB_CATALOG_VERSION)
+    STRING_STATIC(INFO_KEY_DB_CATALOG_VERSION_STR,                  INFO_KEY_DB_CATALOG_VERSION);
 #define INFO_KEY_DB_CONTROL_VERSION                                 "db-control-version"
-    STRING_STATIC(INFO_KEY_DB_CONTROL_VERSION_STR,                  INFO_KEY_DB_CONTROL_VERSION)
+    STRING_STATIC(INFO_KEY_DB_CONTROL_VERSION_STR,                  INFO_KEY_DB_CONTROL_VERSION);
 #define INFO_KEY_DB_SYSTEM_ID                                       "db-system-id"
-    STRING_STATIC(INFO_KEY_DB_SYSTEM_ID_STR,                        INFO_KEY_DB_SYSTEM_ID)
+    STRING_STATIC(INFO_KEY_DB_SYSTEM_ID_STR,                        INFO_KEY_DB_SYSTEM_ID);
 #define INFO_KEY_DB_VERSION                                         "db-version"
-    STRING_STATIC(INFO_KEY_DB_VERSION_STR,                          INFO_KEY_DB_VERSION)
+    STRING_STATIC(INFO_KEY_DB_VERSION_STR,                          INFO_KEY_DB_VERSION);
 
 /***********************************************************************************************************************************
 Object type
@@ -57,10 +57,14 @@ Load an InfoPg object
 ??? Currently this assumes the file exists and loads data from it
 ***********************************************************************************************************************************/
 InfoPg *
-infoPgNew(const Storage *storage, const String *fileName, InfoPgType type)
+infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(STORAGE, storage);
         FUNCTION_DEBUG_PARAM(STRING, fileName);
+        FUNCTION_DEBUG_PARAM(ENUM, type);
+        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+        // cipherPass omitted for security
 
         FUNCTION_DEBUG_ASSERT(fileName != NULL);
     FUNCTION_DEBUG_END();
@@ -72,7 +76,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type)
         // Create object
         this = memNew(sizeof(InfoPg));
         this->memContext = MEM_CONTEXT_NEW();
-        this->info = infoNew(storage, fileName);
+        this->info = infoNew(storage, fileName, cipherType, cipherPass);
 
         // Get the pg history list
         this->history = lstNew(sizeof(InfoPgData));
@@ -169,6 +173,21 @@ infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx)
     InfoPgData pgData = infoPgData(this, pgDataIdx);
 
     FUNCTION_DEBUG_RESULT(STRING, strNewFmt("%s-%u", strPtr(pgVersionToStr(pgData.version)), pgData.id));
+}
+
+/***********************************************************************************************************************************
+Return the cipher passphrase
+***********************************************************************************************************************************/
+const String *
+infoPgCipherPass(const InfoPg *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_PG, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(CONST_STRING, infoCipherPass(this->info));
 }
 
 /***********************************************************************************************************************************

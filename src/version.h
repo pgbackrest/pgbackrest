@@ -5,24 +5,24 @@ Version Numbers and Names
 #define VERSION_H
 
 /***********************************************************************************************************************************
-Official name of the software, also used for Perl package name
+Official name of the project
 ***********************************************************************************************************************************/
-#define PGBACKREST_NAME                                             "pgBackRest"
+#define PROJECT_NAME                                                "pgBackRest"
 
 /***********************************************************************************************************************************
 Standard binary name
 ***********************************************************************************************************************************/
-#define PGBACKREST_BIN                                              "pgbackrest"
+#define PROJECT_BIN                                                 "pgbackrest"
 
 /***********************************************************************************************************************************
 Format Number -- defines format for info and manifest files as well as on-disk structure.  If this number changes then the
 repository will be invalid unless migration functions are written.
 ***********************************************************************************************************************************/
-#define PGBACKREST_FORMAT                                           5
+#define REPOSITORY_FORMAT                                           5
 
 /***********************************************************************************************************************************
 Software version.  Currently this value is maintained in Version.pm and updated by test.pl.
 ***********************************************************************************************************************************/
-#define PGBACKREST_VERSION                                          "2.07dev"
+#define PROJECT_VERSION                                             "2.08dev"
 
 #endif

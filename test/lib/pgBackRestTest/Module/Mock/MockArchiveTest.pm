@@ -81,9 +81,9 @@ sub run
 
     foreach my $bS3 (false, true)
     {
-    foreach my $bRemote ($bS3 ? (true) : (false, true))
+    foreach my $bRemote ($bS3 ? (false) : (false, true))
     {
-        my $bRepoEncrypt = $bRemote && !$bS3 ? true : false;
+        my $bRepoEncrypt = !$bRemote && !$bS3 ? true : false;
 
         # Increment the run, log, and decide whether this unit test should be run
         if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bRepoEncrypt}")) {next}
@@ -135,9 +135,12 @@ sub run
             $strCommandPush . " ${strWalPath}/${strSourceFile1}",
             {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $self->expect()});
 
+        # ??? C and Perl currently return different errors for info open failures -- this can be removed when Perl is gone
+        my $iExpectedError = !$bRemote ? ERROR_FILE_OPEN : ERROR_FILE_MISSING;
+
         $oHostDbMaster->executeSimple(
             $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $self->expect()});
+            {iExpectedExitStatus => $iExpectedError, oLogTest => $self->expect()});
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate(

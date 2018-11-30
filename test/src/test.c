@@ -73,6 +73,7 @@ main(int argListSize, const char *argList[])
     // Set globals
     testExeSet(argList[0]);
     testPathSet("{[C_TEST_PATH]}");
+    testRepoPathSet("{[C_TEST_REPO_PATH]}");
     testExpectPathSet("{[C_TEST_EXPECT_PATH]}");
 
     // Set default test log level

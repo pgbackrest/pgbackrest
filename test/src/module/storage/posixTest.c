@@ -749,7 +749,7 @@ testRun(void)
         TEST_RESULT_INT(bufUsed(outBuffer), 0, "    buffer is empty");
 
         TEST_RESULT_VOID(
-            storageDriverPosixFileRead(storageFileReadDriver(file), outBuffer), "    no data to load from driver either");
+            storageDriverPosixFileRead(storageFileReadDriver(file), outBuffer, true), "    no data to load from driver either");
         TEST_RESULT_INT(bufUsed(outBuffer), 0, "    buffer is empty");
 
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents (all loaded)");

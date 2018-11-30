@@ -24,49 +24,49 @@ Help Command
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-STRING_EXTERN(CFGOPTVAL_INFO_OUTPUT_TEXT,                           "text")
-STRING_EXTERN(CFGOPTVAL_INFO_OUTPUT_JSON,                           "json")
+STRING_EXTERN(CFGOPTVAL_INFO_OUTPUT_TEXT,                           "text");
+STRING_EXTERN(CFGOPTVAL_INFO_OUTPUT_JSON,                           "json");
 
 // Naming convention: <sectionname>_KEY_<keyname>_STR. If the key exists in multiple sections, then <sectionname>_ is omitted.
-STRING_STATIC(ARCHIVE_KEY_MIN_STR,                                  "min")
-STRING_STATIC(ARCHIVE_KEY_MAX_STR,                                  "max")
-STRING_STATIC(BACKREST_KEY_FORMAT_STR,                              "format")
-STRING_STATIC(BACKREST_KEY_VERSION_STR,                             "version")
-STRING_STATIC(BACKUP_KEY_BACKREST_STR,                              "backrest")
-STRING_STATIC(BACKUP_KEY_INFO_STR,                                  "info")
-STRING_STATIC(BACKUP_KEY_LABEL_STR,                                 "label")
-STRING_STATIC(BACKUP_KEY_PRIOR_STR,                                 "prior")
-STRING_STATIC(BACKUP_KEY_REFERENCE_STR,                             "reference")
-STRING_STATIC(BACKUP_KEY_TIMESTAMP_STR,                             "timestamp")
-STRING_STATIC(BACKUP_KEY_TYPE_STR,                                  "type")
-STRING_STATIC(DB_KEY_ID_STR,                                        "id")
-STRING_STATIC(DB_KEY_SYSTEM_ID_STR,                                 "system-id")
-STRING_STATIC(DB_KEY_VERSION_STR,                                   "version")
-STRING_STATIC(INFO_KEY_REPOSITORY_STR,                              "repository")
-STRING_STATIC(KEY_ARCHIVE_STR,                                      "archive")
-STRING_STATIC(KEY_DATABASE_STR,                                     "database")
-STRING_STATIC(KEY_DELTA_STR,                                        "delta")
-STRING_STATIC(KEY_SIZE_STR,                                         "size")
-STRING_STATIC(KEY_START_STR,                                        "start")
-STRING_STATIC(KEY_STOP_STR,                                         "stop")
-STRING_STATIC(STANZA_KEY_BACKUP_STR,                                "backup")
-STRING_STATIC(STANZA_KEY_CIPHER_STR,                                "cipher")
-STRING_STATIC(STANZA_KEY_NAME_STR,                                  "name")
-STRING_STATIC(STANZA_KEY_STATUS_STR,                                "status")
-STRING_STATIC(STANZA_KEY_DB_STR,                                    "db")
-STRING_STATIC(STATUS_KEY_CODE_STR,                                  "code")
-STRING_STATIC(STATUS_KEY_MESSAGE_STR,                               "message")
+STRING_STATIC(ARCHIVE_KEY_MIN_STR,                                  "min");
+STRING_STATIC(ARCHIVE_KEY_MAX_STR,                                  "max");
+STRING_STATIC(BACKREST_KEY_FORMAT_STR,                              "format");
+STRING_STATIC(BACKREST_KEY_VERSION_STR,                             "version");
+STRING_STATIC(BACKUP_KEY_BACKREST_STR,                              "backrest");
+STRING_STATIC(BACKUP_KEY_INFO_STR,                                  "info");
+STRING_STATIC(BACKUP_KEY_LABEL_STR,                                 "label");
+STRING_STATIC(BACKUP_KEY_PRIOR_STR,                                 "prior");
+STRING_STATIC(BACKUP_KEY_REFERENCE_STR,                             "reference");
+STRING_STATIC(BACKUP_KEY_TIMESTAMP_STR,                             "timestamp");
+STRING_STATIC(BACKUP_KEY_TYPE_STR,                                  "type");
+STRING_STATIC(DB_KEY_ID_STR,                                        "id");
+STRING_STATIC(DB_KEY_SYSTEM_ID_STR,                                 "system-id");
+STRING_STATIC(DB_KEY_VERSION_STR,                                   "version");
+STRING_STATIC(INFO_KEY_REPOSITORY_STR,                              "repository");
+STRING_STATIC(KEY_ARCHIVE_STR,                                      "archive");
+STRING_STATIC(KEY_DATABASE_STR,                                     "database");
+STRING_STATIC(KEY_DELTA_STR,                                        "delta");
+STRING_STATIC(KEY_SIZE_STR,                                         "size");
+STRING_STATIC(KEY_START_STR,                                        "start");
+STRING_STATIC(KEY_STOP_STR,                                         "stop");
+STRING_STATIC(STANZA_KEY_BACKUP_STR,                                "backup");
+STRING_STATIC(STANZA_KEY_CIPHER_STR,                                "cipher");
+STRING_STATIC(STANZA_KEY_NAME_STR,                                  "name");
+STRING_STATIC(STANZA_KEY_STATUS_STR,                                "status");
+STRING_STATIC(STANZA_KEY_DB_STR,                                    "db");
+STRING_STATIC(STATUS_KEY_CODE_STR,                                  "code");
+STRING_STATIC(STATUS_KEY_MESSAGE_STR,                               "message");
 
-STRING_STATIC(INFO_STANZA_STATUS_OK,                                "ok")
-STRING_STATIC(INFO_STANZA_STATUS_ERROR,                             "error")
+STRING_STATIC(INFO_STANZA_STATUS_OK,                                "ok");
+STRING_STATIC(INFO_STANZA_STATUS_ERROR,                             "error");
 #define INFO_STANZA_STATUS_CODE_OK                                  0
-STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_OK_STR,                    "ok")
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_OK_STR,                    "ok");
 #define INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH                 1
-STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR,   "missing stanza path")
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR,   "missing stanza path");
 #define INFO_STANZA_STATUS_CODE_NO_BACKUP                           2
-STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR,             "no valid backups")
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR,             "no valid backups");
 #define INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA                 3
-STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing stanza data")
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing stanza data");
 
 /***********************************************************************************************************************************
 Set error status code and message for the stanza to the code and message passed.
@@ -97,7 +97,7 @@ stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
 Set the data for the archive section of the stanza for the database info from the backup.info file.
 ***********************************************************************************************************************************/
 void
-archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archiveSection, bool currentDb)
+archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archiveSection, const InfoArchive *info, bool currentDb)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
@@ -109,9 +109,6 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
         FUNCTION_TEST_ASSERT(pgData != NULL);
         FUNCTION_TEST_ASSERT(archiveSection != NULL);
     FUNCTION_TEST_END();
-
-    InfoArchive *info = infoArchiveNew(
-        storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanza), INFO_ARCHIVE_FILE), false);
 
     // With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the
     // archive path must be built by retrieving the archive id given the db version and system id of the backup.info file.
@@ -354,8 +351,11 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
 
                 varLstAdd(dbSection, pgInfo);
 
-                // Get the archive info for the DB
-                archiveDbList(stanzaListName, &pgData, archiveSection, (pgIdx == 0 ? true : false));
+                // Get the archive info for the DB from te archive.info file
+                InfoArchive *info = infoArchiveNew(
+                    storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanza), INFO_ARCHIVE_FILE), false,
+                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
             }
             // Get data for all existing backups for this stanza
             backupList(stanzaListName, stanzaInfo, backupSection, info);
@@ -609,8 +609,6 @@ infoRender(void)
                         strPtr(varStr(kvGet(stanzaInfo, varNewStr(STANZA_KEY_CIPHER_STR)))));
 
                     formatTextDb(stanzaInfo, resultStr);
-
-
                 }
             }
             else

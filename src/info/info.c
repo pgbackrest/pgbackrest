@@ -9,6 +9,7 @@ Info Handler
 #include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "crypto/cipherBlock.h"
 #include "crypto/hash.h"
 #include "info/info.h"
 #include "storage/helper.h"
@@ -20,12 +21,16 @@ Internal constants
 #define INI_COPY_EXT                                                ".copy"
 
 #define INI_SECTION_BACKREST                                        "backrest"
-    STRING_STATIC(INI_SECTION_BACKREST_STR,                         INI_SECTION_BACKREST)
-#define INI_KEY_FORMAT                                              "backrest-format"
-    STRING_EXTERN(INI_KEY_FORMAT_STR,                               INI_KEY_FORMAT)
-STRING_EXTERN(INI_KEY_VERSION_STR,                                  "backrest-version")
+    STRING_STATIC(INI_SECTION_BACKREST_STR,                         INI_SECTION_BACKREST);
+#define INI_SECTION_CIPHER                                          "cipher"
+    STRING_STATIC(INI_SECTION_CIPHER_STR,                           INI_SECTION_CIPHER);
+
+#define INI_KEY_CIPHER_PASS                                         "cipher-pass"
+    STRING_STATIC(INI_KEY_CIPHER_PASS_STR,                          INI_KEY_CIPHER_PASS);
 #define INI_KEY_CHECKSUM                                            "backrest-checksum"
-    STRING_STATIC(INI_KEY_CHECKSUM_STR,                             INI_KEY_CHECKSUM)
+    STRING_STATIC(INI_KEY_CHECKSUM_STR,                             INI_KEY_CHECKSUM);
+STRING_EXTERN(INI_KEY_FORMAT_STR,                                   "backrest-format");
+STRING_EXTERN(INI_KEY_VERSION_STR,                                  "backrest-version");
 
 /***********************************************************************************************************************************
 Object type
@@ -35,6 +40,7 @@ struct Info
     MemContext *memContext;                                         // Context that contains the info
     String *fileName;                                               // Full path name of the file
     Ini *ini;                                                       // Parsed file contents
+    const String *cipherPass;                                       // Cipher passphrase if set
 };
 
 /***********************************************************************************************************************************
@@ -106,84 +112,17 @@ infoHash(const Ini *ini)
 }
 
 /***********************************************************************************************************************************
-Internal function to check if the information is valid or not
+Load and validate the info file (or copy)
 ***********************************************************************************************************************************/
 static bool
-infoValidInternal(
-        const Info *this,                                           // Info object to validate
-        bool ignoreError)                                           // ignore errors found?
+infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherType, const String *cipherPass)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO, this);
-        FUNCTION_TEST_PARAM(BOOL, ignoreError);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_TEST_END();
-
-    bool result = true;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Make sure the ini is valid by testing the checksum
-        String *infoChecksum = varStr(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_CHECKSUM_STR));
-
-        CryptoHash *hash = infoHash(this->ini);
-
-        // ??? Temporary hack until get json parser: add quotes around hash before comparing
-        if (!strEq(infoChecksum, strQuoteZ(bufHex(cryptoHash(hash)), "\"")))
-        {
-            // ??? Temporary hack until get json parser: remove quotes around hash before displaying in messsage & check < 3
-            String *chksumMsg = strNewFmt("invalid checksum in '%s', expected '%s' but found '%s'",
-            strPtr(this->fileName), strPtr(bufHex(cryptoHash(hash))), (strSize(infoChecksum) < 3) ?
-                "[undef]" : strPtr(strSubN(infoChecksum, 1, strSize(infoChecksum) - 2)));
-
-            if (!ignoreError)
-            {
-                THROW(ChecksumError, strPtr(chksumMsg));
-            }
-            else
-            {
-                LOG_WARN(strPtr(chksumMsg));
-                result = false;
-            }
-        }
-
-        // Make sure that the format is current, otherwise error
-        if (varIntForce(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_FORMAT_STR)) != PGBACKREST_FORMAT)
-        {
-            String *fmtMsg = strNewFmt(
-                "invalid format in '%s', expected %d but found %d",
-                strPtr(this->fileName), PGBACKREST_FORMAT,
-                varIntForce(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_FORMAT_STR)));
-
-            if (!ignoreError)
-            {
-                THROW(FormatError, strPtr(fmtMsg));
-            }
-            else
-            {
-                LOG_WARN(strPtr(fmtMsg));
-                result = false;
-            }
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RESULT(BOOL, result);
-}
-
-/***********************************************************************************************************************************
-Internal function to load the copy and check validity
-***********************************************************************************************************************************/
-static bool
-loadInternal(
-    Info *this,                                                     // Info object to load parsed buffer into
-    const Storage *storage,
-    bool copyFile)                                                  // Is this the copy file?
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+    FUNCTION_DEBUG_BEGIN(logLevelTrace)
         FUNCTION_DEBUG_PARAM(INFO, this);
-        FUNCTION_DEBUG_PARAM(BOOL, copyFile);
+        FUNCTION_DEBUG_PARAM(STORAGE, storage);
+        FUNCTION_DEBUG_PARAM(BOOL, copyFile);                       // Is this the copy file?
+        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+        // cipherPass omitted for security
 
         FUNCTION_DEBUG_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();
@@ -195,16 +134,46 @@ loadInternal(
         String *fileName = copyFile ? strCat(strDup(this->fileName), INI_COPY_EXT) : this->fileName;
 
         // Attempt to load the file
-        Buffer *buffer = storageGetNP(storageNewReadP(storage, fileName, .ignoreMissing = true));
+        StorageFileRead *infoRead = storageNewReadNP(storage, fileName);
 
-        // If the file exists, parse and validate it
-        if (buffer != NULL)
+        if (cipherType != cipherTypeNone)
         {
-            iniParse(this->ini, strNewBuf(buffer));
+            ioReadFilterGroupSet(
+                storageFileReadIo(infoRead),
+                ioFilterGroupAdd(
+                    ioFilterGroupNew(), cipherBlockFilter(cipherBlockNew(cipherModeDecrypt, cipherType, bufNewStr(cipherPass),
+                    NULL))));
+        }
 
-            // Do not ignore errors if the copy file is invalid
-            if (infoValidInternal(this, (copyFile ? false : true)))
-                result = true;
+        // Load and parse the info file
+        Buffer *buffer = storageGetNP(infoRead);
+        iniParse(this->ini, strNewBuf(buffer));
+
+        // Make sure the ini is valid by testing the checksum
+        String *infoChecksum = varStr(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_CHECKSUM_STR));
+
+        CryptoHash *hash = infoHash(this->ini);
+
+        // ??? Temporary hack until get json parser: add quotes around hash before comparing
+        if (!strEq(infoChecksum, strQuoteZ(bufHex(cryptoHash(hash)), "\"")))
+        {
+            // Is the checksum present?
+            bool checksumMissing = strSize(infoChecksum) < 3;
+
+            THROW_FMT(
+                ChecksumError, "invalid checksum in '%s', expected '%s' but %s%s%s", strPtr(fileName),
+                strPtr(bufHex(cryptoHash(hash))), checksumMissing ? "no checksum found" : "found '",
+                // ??? Temporary hack until get json parser: remove quotes around hash before displaying in messsage
+                checksumMissing ? "" : strPtr(strSubN(infoChecksum, 1, strSize(infoChecksum) - 2)),
+                checksumMissing ? "" : "'");
+        }
+
+        // Make sure that the format is current, otherwise error
+        if (varIntForce(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_FORMAT_STR)) != REPOSITORY_FORMAT)
+        {
+            THROW_FMT(
+                FormatError, "invalid format in '%s', expected %d but found %d", strPtr(fileName), REPOSITORY_FORMAT,
+                varIntForce(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_FORMAT_STR)));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -219,12 +188,13 @@ Load an Info object
 // ??? The file MUST exist currently, so this is not actually creating the object - rather it is loading it
 ***********************************************************************************************************************************/
 Info *
-infoNew(
-    const Storage *storage,
-    const String *fileName)                                         // Full path/filename to load
+infoNew(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STRING, fileName);
+        FUNCTION_DEBUG_PARAM(STORAGE, storage);
+        FUNCTION_DEBUG_PARAM(STRING, fileName);                     // Full path/filename to load
+        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+        // cipherPass omitted for security
 
         FUNCTION_DEBUG_ASSERT(fileName != NULL);
     FUNCTION_DEBUG_END();
@@ -240,16 +210,38 @@ infoNew(
         this->ini = iniNew();
         this->fileName = strDup(fileName);
 
-        // Attempt to load the main file. If it does not exist or is invalid, try to load the copy.
-        if (!loadInternal(this, storage, false))
+        // Attempt to load the primary file
+        TRY_BEGIN()
         {
-            if (!loadInternal(this, storage, true))
+            infoLoad(this, storage, false, cipherType, cipherPass);
+        }
+        CATCH_ANY()
+        {
+            // On error store the error and try to load the copy
+            String *primaryError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
+
+            TRY_BEGIN()
+            {
+                infoLoad(this, storage, true, cipherType, cipherPass);
+            }
+            CATCH_ANY()
             {
                 THROW_FMT(
-                    FileMissingError, "unable to open %s or %s",
-                    strPtr(storagePathNP(storage, this->fileName)),
-                    strPtr(strCat(storagePathNP(storage, this->fileName), INI_COPY_EXT)));
+                    FileOpenError, "unable to load info file '%s' or '%s" INI_COPY_EXT "':\n%s\n%s: %s",
+                    strPtr(storagePathNP(storage, this->fileName)), strPtr(storagePathNP(storage, this->fileName)),
+                    strPtr(primaryError), errorTypeName(errorType()), errorMessage());
             }
+            TRY_END();
+        }
+        TRY_END();
+
+        // Load the cipher passphrase if it exists
+        String *cipherPass = varStr(iniGetDefault(this->ini, INI_SECTION_CIPHER_STR, INI_KEY_CIPHER_PASS_STR, NULL));
+
+        if (cipherPass != NULL)
+        {
+            this->cipherPass = strSubN(cipherPass, 1, strSize(cipherPass) - 2);
+            strFree(cipherPass);
         }
     }
     MEM_CONTEXT_NEW_END();
@@ -259,34 +251,30 @@ infoNew(
 }
 
 /***********************************************************************************************************************************
-Free the info
-***********************************************************************************************************************************/
-void
-infoFree(Info *this)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO, this);
-    FUNCTION_DEBUG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_DEBUG_RESULT_VOID();
-}
-
-/***********************************************************************************************************************************
 Accessor functions
 ***********************************************************************************************************************************/
+const String *
+infoCipherPass(const Info *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(CONST_STRING, this->cipherPass);
+}
+
 Ini *
 infoIni(const Info *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(INFO, this);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
 
-    FUNCTION_DEBUG_RESULT(INI, this->ini);
+    FUNCTION_TEST_RESULT(INI, this->ini);
 }
 
 String *
@@ -299,4 +287,20 @@ infoFileName(const Info *this)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(STRING, this->fileName);
+}
+
+/***********************************************************************************************************************************
+Free the object
+***********************************************************************************************************************************/
+void
+infoFree(Info *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO, this);
+    FUNCTION_DEBUG_END();
+
+    if (this != NULL)
+        memContextFree(this->memContext);
+
+    FUNCTION_DEBUG_RESULT_VOID();
 }
