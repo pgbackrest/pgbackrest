@@ -190,16 +190,22 @@ sub backupFile
         # If source file exists
         if (defined($oSourceFileIo))
         {
+            my $oDestinationFileIo = $oStorageRepo->openWrite(
+                STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
+                {bPathCreate => true, bProtocolCompress => !$bCompress, strCipherPass => $strCipherPass});
+
             # Copy the file
-            $oStorageRepo->copy(
-                $oSourceFileIo,
-                $oStorageRepo->openWrite(
-                    STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-                    {bPathCreate => true, bProtocolCompress => !$bCompress, strCipherPass => $strCipherPass}));
+            $oStorageRepo->copy($oSourceFileIo, $oDestinationFileIo);
 
             # Get sha checksum and size
             $strCopyChecksum = $oSourceFileIo->result(STORAGE_FILTER_SHA);
             $lCopySize = $oSourceFileIo->result(COMMON_IO_HANDLE);
+            $lRepoSize = $oDestinationFileIo->result(COMMON_IO_HANDLE);
+
+            if (!defined($lRepoSize))
+            {
+                confess &log(ERROR, "REPO_SIZE IS NOT SET");
+            }
 
             # Get results of page checksum validation
             $rExtra = $bChecksumPage ? $oSourceFileIo->result(BACKUP_FILTER_PAGECHECKSUM) : undef;
@@ -211,9 +217,14 @@ sub backupFile
         }
     }
 
-    # If file was copied or checksum'd then get size in repo.  This has to be checked after the file is at rest because filesystem
-    # compression may affect the actual repo size and this cannot be calculated in stream.
-    if ($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY || $iCopyResult == BACKUP_FILE_CHECKSUM)
+    # If the file was copied get the repo size only if the storage can store the files with a different size than what was written.
+    # This has to be checked after the file is at rest because filesystem compression may affect the actual repo size and this
+    # cannot be calculated in stream.
+    #
+    # If the file was checksummed then get the size in all cases since we don't already have it.
+    if ((($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY) &&
+            $oStorageRepo->driver()->capability(STORAGE_CAPABILITY_SIZE_DIFF)) ||
+        $iCopyResult == BACKUP_FILE_CHECKSUM)
     {
         $lRepoSize = ($oStorageRepo->info(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}"))->size();
     }

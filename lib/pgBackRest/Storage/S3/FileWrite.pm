@@ -14,6 +14,7 @@ use Fcntl qw(O_RDONLY O_WRONLY O_CREAT O_TRUNC);
 use File::Basename qw(dirname);
 
 use pgBackRest::Common::Exception;
+use pgBackRest::Common::Io::Handle;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Xml;
 use pgBackRest::Storage::Base;
@@ -59,6 +60,9 @@ sub new
     # Has anything been written?
     $self->{bWritten} = false;
 
+    # How much has been written?
+    $self->{lSize} = 0;
+
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -98,6 +102,7 @@ sub write
     if (defined($rtBuffer))
     {
         $self->{rtBuffer} .= $$rtBuffer;
+        $self->{lSize} += length($$rtBuffer);
 
         # Wait until buffer is at least max before writing to avoid writing smaller files multi-part
         if (length($self->{rtBuffer}) >= S3_BUFFER_MAX)
@@ -182,6 +187,11 @@ sub close
                     hHeader => {'content-md5' => md5_base64($self->{rtBuffer}) . '=='}});
         }
     }
+
+    # This is how we report the write size back to the caller.  It's a bit hokey -- results are based on the object name and in all
+    # other cases I/O passes through Io::Handle.  It doesn't seem worth fixing since it could break things and this code is being
+    # migrated to C anyway.
+    $self->resultSet(COMMON_IO_HANDLE, $self->{lSize});
 
     return true;
 }

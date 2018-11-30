@@ -15,6 +15,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 
 use pgBackRest::Common::Log;
+use pgBackRest::Storage::Base;
 
 ####################################################################################################################################
 # Package name constant
@@ -48,7 +49,7 @@ sub pathSync
 ####################################################################################################################################
 # Getters/Setters
 ####################################################################################################################################
-sub capability {false}
+sub capability {shift eq STORAGE_CAPABILITY_SIZE_DIFF ? true : false}
 sub className {STORAGE_CIFS_DRIVER}
 
 1;

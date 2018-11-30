@@ -14,6 +14,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.08dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="matt.kunkel"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove request for S3 object info directly after putting it.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Enable S3 storage and encryption for <cmd>archive-get</cmd> command in C.</p>
@@ -5915,6 +5925,11 @@
         <contributor id="markus.nullmeier">
             <contributor-name-display>Markus Nullmeier</contributor-name-display>
             <contributor-id type="github">mnullmei</contributor-id>
+        </contributor>
+
+        <contributor id="matt.kunkel">
+            <contributor-name-display>Matt Kunkel</contributor-name-display>
+            <contributor-id type="github">mtkunkel</contributor-id>
         </contributor>
 
         <contributor id="michael.renner">
