@@ -20,6 +20,7 @@ Internal constants
 ***********************************************************************************************************************************/
 #define INI_COPY_EXT                                                ".copy"
 
+// CSHANG I think all the #defines below should be removed - there is no need for them. More often than not we will not need the #define - it is more the exception than the rule. Also I think we should change the name to be INFO_ vs INI_.
 #define INI_SECTION_BACKREST                                        "backrest"
     STRING_STATIC(INI_SECTION_BACKREST_STR,                         INI_SECTION_BACKREST);
 #define INI_SECTION_CIPHER                                          "cipher"

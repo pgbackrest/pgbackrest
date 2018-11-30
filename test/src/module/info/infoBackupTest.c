@@ -20,11 +20,13 @@ testRun(void)
         // File missing, ignoreMissing=false -- error
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), FileMissingError,
-            "unable to open %s/test.ini or %s/test.ini.copy\n"
+            infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), FileOpenError,
+            "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
+            "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
+            "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory\n"
             "HINT: backup.info does not exist and is required to perform a backup.\n"
             "HINT: has a stanza-create been performed?",
-            testPath(), testPath());
+            testPath(), testPath(), testPath(), testPath());
 
         // File exists, ignoreMissing=false, no backup:current section
         //--------------------------------------------------------------------------------------------------------------------------

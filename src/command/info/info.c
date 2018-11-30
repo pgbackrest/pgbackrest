@@ -318,7 +318,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
                 storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_BACKUP, strPtr(stanzaListName), INFO_BACKUP_FILE), false,
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
         }
-        CATCH(FileMissingError)
+        CATCH(FileOpenError)
         {
             // If there is no backup.info then set the status to indicate missing
             stanzaStatus(
@@ -352,7 +352,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
 
                 varLstAdd(dbSection, pgInfo);
 
-                // Get the archive info for the DB from te archive.info file
+                // Get the archive info for the DB from the archive.info file
                 InfoArchive *info = infoArchiveNew(
                     storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanza), INFO_ARCHIVE_FILE), false,
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
@@ -400,7 +400,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
 /***********************************************************************************************************************************
 Format the text output for each database of the stanza.
 ***********************************************************************************************************************************/
-void
+static void
 formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
 {
     FUNCTION_TEST_BEGIN();

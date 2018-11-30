@@ -89,13 +89,15 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
                 bufNewStr(content)), "put backup info to file");
 
-        TEST_ERROR_FMT(infoRender(), FileMissingError,
-            "unable to open %s/archive.info or %s/archive.info.copy\n"
+        TEST_ERROR_FMT(infoRender(), FileOpenError,
+            "unable to load info file '%s/archive.info' or '%s/archive.info.copy':\n"
+            "FileMissingError: unable to open '%s/archive.info' for read: [2] No such file or directory\n"
+            "FileMissingError: unable to open '%s/archive.info.copy' for read: [2] No such file or directory\n"
             "HINT: archive.info does not exist but is required to push/get WAL segments.\n"
             "HINT: is archive_command configured in postgresql.conf?\n"
             "HINT: has a stanza-create been performed?\n"
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-            strPtr(archiveStanza1Path), strPtr(archiveStanza1Path));
+            strPtr(archiveStanza1Path), strPtr(archiveStanza1Path), strPtr(archiveStanza1Path), strPtr(archiveStanza1Path));
 
         // backup.info/archive.info files exist, mismatched db ids, no backup:current section so no valid backups
         // Only the current db information from the db:history will be processed.
@@ -647,13 +649,15 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
                 bufNewStr(content)), "put backup info to file");
 
-        TEST_ERROR_FMT(infoRender(), FileMissingError,
-            "unable to open %s/archive.info or %s/archive.info.copy\n"
+        TEST_ERROR_FMT(infoRender(), FileOpenError,
+            "unable to load info file '%s/archive.info' or '%s/archive.info.copy':\n"
+            "FileMissingError: unable to open '%s/archive.info' for read: [2] No such file or directory\n"
+            "FileMissingError: unable to open '%s/archive.info.copy' for read: [2] No such file or directory\n"
             "HINT: archive.info does not exist but is required to push/get WAL segments.\n"
             "HINT: is archive_command configured in postgresql.conf?\n"
             "HINT: has a stanza-create been performed?\n"
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-            strPtr(archiveStanza1Path), strPtr(archiveStanza1Path));
+            strPtr(archiveStanza1Path), strPtr(archiveStanza1Path), strPtr(archiveStanza1Path), strPtr(archiveStanza1Path));
 
         // backup.info/archive.info files exist, mismatched db ids, no backup:current section so no valid backups
         // Only the current db information from the db:history will be processed.

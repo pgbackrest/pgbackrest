@@ -105,10 +105,10 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
         {
             this->infoPg = infoPgNew(storage, fileName, infoPgBackup, cipherType, cipherPass);
         }
-        CATCH(FileMissingError)
+        CATCH(FileOpenError)
         {
             THROW_FMT(
-                FileMissingError,
+                FileOpenError,
                 "%s\n"
                 "HINT: backup.info does not exist and is required to perform a backup.\n"
                 "HINT: has a stanza-create been performed?",

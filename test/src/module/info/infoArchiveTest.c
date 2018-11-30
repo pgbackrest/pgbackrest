@@ -98,7 +98,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put archive info to file");
 
-        TEST_ASSIGN(info, infoArchiveNew(storageLocal(), fileName, true), "new archive info");
+        TEST_ASSIGN(info, infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), "new archive info");
         TEST_RESULT_STR(strPtr(infoArchiveIdHistoryMatch(info, 2, 90500, 6626363367545678089)), "9.5-2", "  full match found");
 
         TEST_RESULT_STR(strPtr(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095702)), "9.4-1", "  partial match found");
