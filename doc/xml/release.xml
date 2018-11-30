@@ -22,6 +22,14 @@
 
                         <p>Remove request for S3 object info directly after putting it.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="ronan.dunklau"/>
+                        </release-item-contributor-list>
+
+                        <p>Correct <br-option>archive-get-queue-max</br-option> to be <id>size</id> type.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-development-list>
@@ -5965,6 +5973,11 @@
         <contributor id="nj.baliyan">
             <contributor-name-display>Nj Baliyan</contributor-name-display>
             <contributor-id type="github">nj3110</contributor-id>
+        </contributor>
+
+        <contributor id="ronan.dunklau">
+            <contributor-name-display>Ronan Dunklau</contributor-name-display>
+            <contributor-id type="github">rdunklau</contributor-id>
         </contributor>
 
         <contributor id="sarah.conway">
