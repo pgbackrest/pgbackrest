@@ -49,7 +49,7 @@ struct CipherBlock
     EVP_CIPHER_CTX *cipherContext;                                  // Encrypt/decrypt context
 
     IoFilter *filter;                                               // Filter interface
-    Buffer *buffer;                                                 // Internal buffer is case destination buffer isn't large enough
+    Buffer *buffer;                                                 // Internal buffer in case destination buffer isn't large enough
     bool inputSame;                                                 // Is the same input required on next process call?
     bool done;                                                      // Is processing done?
 };
