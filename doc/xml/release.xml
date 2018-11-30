@@ -128,6 +128,16 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="pritam.barhate"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify that region/endpoint must be configured correctly for the bucket.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Pre-build containers for any <id>execute</id> elements marked <id>pre</id>.</p>
@@ -5973,6 +5983,11 @@
         <contributor id="nj.baliyan">
             <contributor-name-display>Nj Baliyan</contributor-name-display>
             <contributor-id type="github">nj3110</contributor-id>
+        </contributor>
+
+        <contributor id="pritam.barhate">
+            <contributor-name-display>Pritam Barhate</contributor-name-display>
+            <contributor-id type="github">pritammobisoft</contributor-id>
         </contributor>
 
         <contributor id="ronan.dunklau">

@@ -1833,6 +1833,8 @@
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
 
+        <p>Note that the region and endpoint will need to be configured to where the bucket is located.  The values given here are for the <id>us-east-1</id> region.</p>
+
         <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible.  This sample policy will restrict all reads and writes to the bucket and repository path.</p>
 
         <code-block title="Sample S3 Policy">
