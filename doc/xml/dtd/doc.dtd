@@ -56,11 +56,11 @@
 
 <!ELEMENT execute-list (title, execute+)>
     <!ATTLIST execute-list host CDATA #REQUIRED>
-    <!ATTLIST execute-list keyword CDATA "">
+    <!ATTLIST execute-list if CDATA "">
     <!ATTLIST execute-list show CDATA "">
 <!ELEMENT execute (exe-cmd, exe-cmd-extra?, exe-user?,  exe-var?, exe-retry?, exe-output?, (exe-highlight-type?, exe-highlight)?,
                    exe-err-expect?, exe-err-suppress?, exe-err-suppress-stderr?)>
-    <!ATTLIST execute keyword CDATA "">
+    <!ATTLIST execute if CDATA "">
     <!ATTLIST execute pre CDATA "">
     <!ATTLIST execute user CDATA "">
     <!ATTLIST execute filter CDATA "">
@@ -85,18 +85,18 @@
 <!ELEMENT variable-list (variable+)>
 <!ELEMENT variable (#PCDATA)>
     <!ATTLIST variable key CDATA #REQUIRED>
-    <!ATTLIST variable keyword CDATA "default">
+    <!ATTLIST variable if CDATA "default">
     <!ATTLIST variable eval CDATA "n">
 
 <!ELEMENT backrest-config (title, backrest-config-option+)>
     <!ATTLIST backrest-config host CDATA #REQUIRED>
     <!ATTLIST backrest-config owner CDATA "">
     <!ATTLIST backrest-config show CDATA "">
-    <!ATTLIST backrest-config keyword CDATA "">
+    <!ATTLIST backrest-config if CDATA "">
     <!ATTLIST backrest-config reset CDATA "">
     <!ATTLIST backrest-config file CDATA #REQUIRED>
 <!ELEMENT backrest-config-option (#PCDATA)>
-    <!ATTLIST backrest-config-option keyword CDATA "">
+    <!ATTLIST backrest-config-option if CDATA "">
     <!ATTLIST backrest-config-option section CDATA #REQUIRED>
     <!ATTLIST backrest-config-option key CDATA #REQUIRED>
     <!ATTLIST backrest-config-option remove CDATA "n">
@@ -104,10 +104,10 @@
 <!ELEMENT postgres-config (title, postgres-config-option+)>
     <!ATTLIST postgres-config host CDATA #REQUIRED>
     <!ATTLIST postgres-config file CDATA #REQUIRED>
-    <!ATTLIST postgres-config keyword CDATA "">
+    <!ATTLIST postgres-config if CDATA "">
     <!ATTLIST postgres-config show CDATA "">
 <!ELEMENT postgres-config-option (#PCDATA)>
-    <!ATTLIST postgres-config-option keyword CDATA "">
+    <!ATTLIST postgres-config-option if CDATA "">
     <!ATTLIST postgres-config-option key CDATA #REQUIRED>
 
 <!ELEMENT option-description EMPTY>
@@ -120,7 +120,7 @@
                    ((p|list|table|host-add|execute-list|backrest-config|postgres-config|cmd-description|
                      option-description|code-block|block|section)*))>
     <!ATTLIST section id CDATA #REQUIRED>
-    <!ATTLIST section keyword CDATA "">
+    <!ATTLIST section if CDATA "">
     <!ATTLIST section depend CDATA "">
     <!ATTLIST section source CDATA "">
     <!ATTLIST section toc CDATA "">
@@ -189,7 +189,7 @@
 
 <!-- Host elements -->
 <!ELEMENT host-define (#PCDATA)>
-    <!ATTLIST host-define keyword CDATA "">
+    <!ATTLIST host-define if CDATA "">
     <!ATTLIST host-define image CDATA #REQUIRED>
     <!ATTLIST host-define from CDATA #REQUIRED>
 
@@ -224,7 +224,7 @@
                    br-setting|pg-option|pg-setting|link|user|proper)*>
 <!ELEMENT p (#PCDATA|quote|b|i|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|br-setting|
              pg-option|pg-setting|link|user|proper)*>
-    <!ATTLIST p keyword CDATA "">
+    <!ATTLIST p if CDATA "">
 <!ELEMENT text (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
                 br-setting|pg-option|pg-setting|link|user|proper)*>
 <!ELEMENT i (#PCDATA)>

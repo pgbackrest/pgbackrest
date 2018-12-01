@@ -138,8 +138,8 @@ eval
         # Generate deployment docs for RHEL/Centos 6
         &log(INFO, "Generate RHEL/CentOS 6 documentation");
 
-        executeTest("${strDocExe} --deploy --keyword=co6 --out=pdf", {bShowOutputAsync => true});
-        executeTest("${strDocExe} --deploy --cache-only --keyword=co6 --out=pdf --var=\"project-name=Crunchy BackRest\"");
+        executeTest("${strDocExe} --deploy --key-var=os-type=centos6 --out=pdf", {bShowOutputAsync => true});
+        executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos6 --out=pdf");
 
         # Generate deployment docs for Debian
         &log(INFO, "Generate Debian/Ubuntu documentation");
@@ -157,7 +157,7 @@ eval
 
         executeTest(
             $strDocExe . ($bDev ? '' : ' --deploy --cache-only') . ' --out=html --var=project-url-root=index.html' .
-            ($bDev ? ' --keyword=default --keyword=dev --no-exe' :  ' --exclude=release'));
+            ($bDev ? ' --dev --no-exe' :  ' --exclude=release'));
 
         # Deploy to repository
         &log(INFO, '...Deploy to repository');

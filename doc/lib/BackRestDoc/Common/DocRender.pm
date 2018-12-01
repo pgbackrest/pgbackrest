@@ -219,7 +219,8 @@ sub new
 
             $self->{oDoc} =
                 (new BackRestDoc::Custom::DocCustomRelease(
-                    ${$self->{oManifest}->sourceGet('release')}{doc}, $self->{oManifest}->keywordMatch('dev')))->docGet();
+                    ${$self->{oManifest}->sourceGet('release')}{doc},
+                    defined($self->{oManifest}->variableGet('dev')) && $self->{oManifest}->variableGet('dev') eq 'y'))->docGet();
         }
         else
         {
@@ -325,7 +326,7 @@ sub preExecute
 ####################################################################################################################################
 # build
 #
-# Build the section map and perform keyword matching.
+# Build the section map and perform filtering.
 ####################################################################################################################################
 sub build
 {
@@ -341,7 +342,8 @@ sub build
 
     if (defined($oParent))
     {
-        if (!$self->{oManifest}->keywordMatch($oNode->paramGet('keyword', false)))
+        # Evaluate if condition -- when false the node will be removed
+        if (!$self->{oManifest}->evaluateIf($oNode))
         {
             my $strDescription;
 

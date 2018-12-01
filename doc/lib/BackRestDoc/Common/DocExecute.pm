@@ -919,7 +919,7 @@ sub cachePop
         {
             confess &log(ERROR,
                 "keys at index $self->{iCacheIdx} do not match, cache is invalid." .
-                "\ncache key: " . $oJSON->encode($$hCache{key}) .
+                "\n  cache key: " . $oJSON->encode($$hCache{key}) .
                 "\ncurrent key: " . $oJSON->encode($hCacheKey), ERROR_FILE_INVALID);
         }
 

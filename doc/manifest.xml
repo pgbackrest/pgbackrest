@@ -19,6 +19,10 @@
         <variable key="project-logo">logo.png</variable>
         <variable key="project-favicon">favicon.png</variable>
 
+        <!-- Is this a development or debug build of the docs? -->
+        <variable key="dev">n</variable>
+        <variable key="debug">n</variable>
+
         <!-- Release date - static allows for reproducible builds -->
         <variable key="release-date-static">n</variable>
         <variable key="release-date" eval="y">

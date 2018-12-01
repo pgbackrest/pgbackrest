@@ -56,11 +56,11 @@ sub new
     (
         my $strOperation,
         $self->{oStorage},
-        $self->{stryKeyword},
         $self->{stryRequire},
         $self->{stryInclude},
         $self->{stryExclude},
-        my $oVariableOverride,
+        $self->{rhKeyVariableOverride},
+        my $rhVariableOverride,
         $self->{strDocPath},
         $self->{bDeploy},
         $self->{bCacheOnly},
@@ -70,11 +70,11 @@ sub new
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'oStorage'},
-            {name => 'stryKeyword'},
             {name => 'stryRequire'},
             {name => 'stryInclude'},
             {name => 'stryExclude'},
-            {name => 'oVariableOverride', required => false},
+            {name => 'rhKeyVariableOverride', required => false},
+            {name => 'rhVariableOverride', required => false},
             {name => 'strDocPath', required => false},
             {name => 'bDeploy', required => false},
             {name => 'bCacheOnly', required => false},
@@ -122,7 +122,7 @@ sub new
         $$oSourceHash{doc} = new BackRestDoc::Common::Doc("$self->{strDocPath}/xml/${strKey}.xml");
 
         # Read variables from source
-        $self->variableListParse($$oSourceHash{doc}->nodeGet('variable-list', false), $oVariableOverride);
+        $self->variableListParse($$oSourceHash{doc}->nodeGet('variable-list', false), $rhVariableOverride);
 
         ${$self->{oManifest}}{source}{$strKey} = $oSourceHash;
         ${$self->{oManifest}}{source}{$strKey}{strSourceType} = $strSourceType;
@@ -231,7 +231,7 @@ sub new
     $self->variableSet('doc-path', $self->{strDocPath});
 
     # Read variables from manifest
-    $self->variableListParse($self->{oManifestXml}->nodeGet('variable-list', false), $oVariableOverride);
+    $self->variableListParse($self->{oManifestXml}->nodeGet('variable-list', false), $rhVariableOverride);
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -254,29 +254,31 @@ sub isBackRest
 }
 
 ####################################################################################################################################
-# keywordMatch
-#
-# See if all the keywords were on the command line.
+# Evaluate the if condition for a node
 ####################################################################################################################################
-sub keywordMatch
+sub evaluateIf
 {
     my $self = shift;
-    my $strKeywordRequired = shift;
+    my $oNode = shift;
 
-    if (defined($strKeywordRequired))
+    my $bIf = true;
+
+    # Evaluate if condition
+    if (defined($oNode->paramGet('if', false)))
     {
-        for my $strKeyword (split(',', $strKeywordRequired))
-        {
-            $strKeyword = trim($strKeyword);
+        my $strIf = $self->variableReplace($oNode->paramGet('if'));
 
-            if (!grep(/^$strKeyword$/, @{$self->{stryKeyword}}))
-            {
-                return false;
-            }
+        # In this case we really do want to evaluate the contents and not treat it as a literal
+        $bIf = eval($strIf);                                        ## no critic (BuiltinFunctions::ProhibitStringyEval)
+
+        # Error if the eval failed
+        if ($@)
+        {
+            confess &log(ERROR, "unable to evaluate '${strIf}': $@");
         }
     }
 
-    return true;
+    return $bIf;
 }
 
 ####################################################################################################################################
@@ -293,20 +295,20 @@ sub variableListParse
     (
         $strOperation,
         $oVariableList,
-        $oVariableOverride
+        $rhVariableOverride
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->variableListParse', \@_,
             {name => '$oVariableList', required => false},
-            {name => '$oVariableOverride', required => false}
+            {name => '$rhVariableOverride', required => false}
         );
 
     if (defined($oVariableList))
     {
         foreach my $oVariable ($oVariableList->nodeList('variable'))
         {
-            if ($self->keywordMatch($oVariable->paramGet('keyword', false)))
+            if ($self->evaluateIf($oVariable))
             {
                 my $strKey = $oVariable->paramGet('key');
                 my $strValue = $self->variableReplace($oVariable->valueGet());
@@ -322,7 +324,7 @@ sub variableListParse
                     }
                 }
 
-                $self->variableSet($strKey, defined($$oVariableOverride{$strKey}) ? $$oVariableOverride{$strKey} : $strValue);
+                $self->variableSet($strKey, defined($rhVariableOverride->{$strKey}) ? $rhVariableOverride->{$strKey} : $strValue);
 
                 logDebugMisc
                 (
@@ -632,7 +634,14 @@ sub cacheKey
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->cacheKey');
 
-    my $strKeyword = join("\n", @{$self->{stryKeyword}});
+    # Generate a cache key from the variable override
+    my $strVariableKey = JSON::PP->new()->canonical()->allow_nonref()->encode($self->{rhKeyVariableOverride});
+
+    if ($strVariableKey eq '{}')
+    {
+        $strVariableKey = 'default';
+    }
+
     my $strRequire = defined($self->{stryRequire}) && @{$self->{stryRequire}} > 0 ?
         join("\n", @{$self->{stryRequire}}) : 'all';
 
@@ -640,7 +649,7 @@ sub cacheKey
     return logDebugReturn
     (
         $strOperation,
-        {name => 'strKeyword', value => $strKeyword},
+        {name => 'strVariableKey', value => $strVariableKey},
         {name => 'strRequire', value => $strRequire},
     );
 }
@@ -666,7 +675,7 @@ sub cacheRead
 
     if ($self->storage()->exists($strCacheFile))
     {
-        my ($strKeyword, $strRequire) = $self->cacheKey();
+        my ($strCacheKey, $strRequire) = $self->cacheKey();
         my $oJSON = JSON::PP->new()->allow_nonref();
         $self->{hCache} = $oJSON->decode(${$self->storage()->get($strCacheFile)});
 
@@ -674,10 +683,10 @@ sub cacheRead
         {
             my $hSource = ${$self->{oManifest}}{source}{$strSource};
 
-            if (defined(${$self->{hCache}}{$strKeyword}{$strRequire}{$strSource}))
+            if (defined(${$self->{hCache}}{$strCacheKey}{$strRequire}{$strSource}))
             {
-                $$hSource{hyCache} = ${$self->{hCache}}{$strKeyword}{$strRequire}{$strSource};
-                &log(DETAIL, "cache load $strSource (keyword = ${strKeyword}, require = ${strRequire})");
+                $$hSource{hyCache} = ${$self->{hCache}}{$strCacheKey}{$strRequire}{$strSource};
+                &log(DETAIL, "cache load $strSource (key = ${strCacheKey}, require = ${strRequire})");
             }
         }
     }
@@ -697,7 +706,7 @@ sub cacheWrite
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->cacheWrite');
 
     my $strCacheFile = $self->{bDeploy} ? $self->{strExeCacheDeploy} : $self->{strExeCacheLocal};
-    my ($strKeyword, $strRequire) = $self->cacheKey();
+    my ($strCacheKey, $strRequire) = $self->cacheKey();
 
     foreach my $strSource (sort(keys(%{${$self->{oManifest}}{source}})))
     {
@@ -705,8 +714,8 @@ sub cacheWrite
 
         if (defined($$hSource{hyCache}))
         {
-            ${$self->{hCache}}{$strKeyword}{$strRequire}{$strSource} = $$hSource{hyCache};
-            &log(DETAIL, "cache load $strSource (keyword = ${strKeyword}, require = ${strRequire})");
+            ${$self->{hCache}}{$strCacheKey}{$strRequire}{$strSource} = $$hSource{hyCache};
+            &log(DETAIL, "cache load $strSource (key = ${strCacheKey}, require = ${strRequire})");
         }
     }
 
