@@ -259,7 +259,8 @@ sub execute
 
     &log(DEBUG, ('    ' x $iIndent) . "execute: $strCommand");
 
-    if ($self->{oManifest}->variableReplace($oCommand->paramGet('skip', false, 'n')) ne 'y')
+    if ($self->{oManifest}->variableReplace($oCommand->paramGet('skip', false, 'n')) ne 'y' ||
+        $oCommand->paramGet('pre', false, 'n') eq 'y' && $self->{oManifest}->{bPre})
     {
         if ($self->{bExe} && $self->isRequired($oSection))
         {
@@ -918,7 +919,7 @@ sub cachePop
         {
             confess &log(ERROR,
                 "keys at index $self->{iCacheIdx} do not match, cache is invalid." .
-                "\ncache key: " . $oJSON->encode($$hCache{key}) .
+                "\n  cache key: " . $oJSON->encode($$hCache{key}) .
                 "\ncurrent key: " . $oJSON->encode($hCacheKey), ERROR_FILE_INVALID);
         }
 
@@ -1037,8 +1038,51 @@ sub sectionChildProcess
                 executeTest("rm -rf ~/data/$$hCacheKey{name}");
                 executeTest("mkdir -p ~/data/$$hCacheKey{name}/etc");
 
+                my $strHost = $hCacheKey->{name};
+                my $strImage = $hCacheKey->{image};
+
+                # Determine if a pre-built image should be created
+                if (defined($self->preExecute($strHost)))
+                {
+                    my $strPreImage = "${strImage}-${strHost}";
+                    my $strFrom = $strImage;
+
+                    &log(INFO, "Build vm '${strPreImage}' from '${strFrom}'");
+
+                    my $strCommandList;
+
+                    # Add all pre commands
+                    foreach my $oExecute ($self->preExecute($strHost))
+                    {
+                        my $hExecuteKey = $self->executeKey($strHost, $oExecute);
+                        my $strCommand =
+                            join("\n", @{$hExecuteKey->{cmd}}) .
+                            (defined($hExecuteKey->{'cmd-extra'}) ? ' ' . $hExecuteKey->{'cmd-extra'} : '');
+
+                        if (defined($strCommandList))
+                        {
+                            $strCommandList .= "\n";
+                        }
+
+                        $strCommandList .= "RUN ${strCommand}";
+
+                        &log(DETAIL, "    Pre command $strCommand");
+                    }
+
+                    # Build container
+                    my $strDockerfile = $self->{oManifest}{strDocPath} . "/output/doc-host.dockerfile";
+
+                    $self->{oManifest}{oStorage}->put(
+                        $strDockerfile,
+                        "FROM ${strFrom}\n\n" . trim($self->{oManifest}->variableReplace($strCommandList)) . "\n");
+                    executeTest("docker build -f ${strDockerfile} -t ${strPreImage} " . $self->{oManifest}{oStorage}->pathGet());
+
+                    # Use the pre-built image
+                    $strImage = $strPreImage;
+                }
+
                 my $oHost = new pgBackRestTest::Common::HostTest(
-                    $$hCacheKey{name}, "doc-$$hCacheKey{name}", $$hCacheKey{image},
+                    $$hCacheKey{name}, "doc-$$hCacheKey{name}", $strImage,
                     $self->{oManifest}->variableReplace($oChild->paramGet('user')), $$hCacheKey{os},
                     defined($oChild->paramGet('mount', false)) ?
                         [$self->{oManifest}->variableReplace($oChild->paramGet('mount'))] : undef,

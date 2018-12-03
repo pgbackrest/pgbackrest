@@ -62,19 +62,18 @@ doc.pl [options]
    --no-exe         Should commands be executed when building help? (for testing only)
    --no-cache       Don't use execution cache
    --cache-only     Only use the execution cache - don't attempt to generate it
-   --var            Override variables defined in the XML
+   --pre            Pre-build containers for execute elements marked pre
+   --var            Override defined variable
+   --var-key        Override defined variable and use in cache key
    --doc-path       Document path to render (manifest.xml should be located here)
    --out            Output types (html, pdf, markdown)
    --require        Require only certain sections of the document (to speed testing)
    --include        Include source in generation (links will reference website)
    --exclude        Exclude source from generation (links will reference website)
 
-Keyword Options:
-   --keyword        Keyword used to filter output
-   --keyword-add    Add keyword without overriding 'default' keyword
-   --dev            Add 'dev' keyword
-   --debug          Add 'debug' keyword
-   --pre            Add 'pre' keyword
+ Variable Options:
+   --dev            Set 'dev' variable to 'y'
+   --debug          Set 'debug' variable to 'y'
 =cut
 
 ####################################################################################################################################
@@ -87,11 +86,10 @@ my $strLogLevel = 'info';
 my $bNoExe = false;
 my $bNoCache = false;
 my $bCacheOnly = false;
-my $oVariableOverride = {};
+my $rhVariableOverride = {};
+my $rhKeyVariableOverride = {};
 my $strDocPath;
 my @stryOutput;
-my @stryKeyword;
-my @stryKeywordAdd;
 my @stryRequire;
 my @stryInclude;
 my @stryExclude;
@@ -105,8 +103,6 @@ GetOptions ('help' => \$bHelp,
             'quiet' => \$bQuiet,
             'log-level=s' => \$strLogLevel,
             'out=s@' => \@stryOutput,
-            'keyword=s@' => \@stryKeyword,
-            'keyword-add=s@' => \@stryKeywordAdd,
             'require=s@' => \@stryRequire,
             'include=s@' => \@stryInclude,
             'exclude=s@' => \@stryExclude,
@@ -117,7 +113,8 @@ GetOptions ('help' => \$bHelp,
             'debug', \$bDebug,
             'pre', \$bPre,
             'cache-only', \$bCacheOnly,
-            'var=s%', $oVariableOverride,
+            'key-var=s%', $rhKeyVariableOverride,
+            'var=s%', $rhVariableOverride,
             'doc-path=s', \$strDocPath)
     or pod2usage(2);
 
@@ -170,31 +167,16 @@ eval
         $strLogLevel = 'error';
     }
 
-    # If no keyword was passed then use default
-    if (@stryKeyword == 0)
-    {
-        @stryKeyword = ('default');
-    }
-
-    # Push added keywords
-    push(@stryKeyword, @stryKeywordAdd);
-
-    # If --dev passed then add the dev keyword
+    # If --dev passed then set the dev var to 'y'
     if ($bDev)
     {
-        push(@stryKeyword, 'dev');
+        $rhVariableOverride->{'dev'} = 'y';
     }
 
-    # If --debug passed then add the debug keyword
+    # If --debug passed then set the debug var to 'y'
     if ($bDebug)
     {
-        push(@stryKeyword, 'debug');
-    }
-
-    # If --pre passed then add the pre keyword
-    if ($bPre)
-    {
-        push(@stryKeyword, 'pre');
+        $rhVariableOverride->{'debug'} = 'y';
     }
 
     # Doesn't make sense to pass include and exclude
@@ -225,10 +207,21 @@ eval
             or confess &log(ERROR, "unable to create path ${strOutputPath}");
     }
 
+    # Merge key variables into the variable list and ensure there are no duplicates
+    foreach my $strKey (sort(keys(%{$rhKeyVariableOverride})))
+    {
+        if (defined($rhVariableOverride->{$strKey}))
+        {
+            confess &log(ERROR, "'${strKey}' canot be passed as --var and --key-var");
+        }
+
+        $rhVariableOverride->{$strKey} = $rhKeyVariableOverride->{$strKey};
+    }
+
     # Load the manifest
     my $oManifest = new BackRestDoc::Common::DocManifest(
-        $oStorageDoc, \@stryKeyword, \@stryRequire, \@stryInclude, \@stryExclude, $oVariableOverride, $strDocPath, $bDeploy,
-        $bCacheOnly);
+        $oStorageDoc, \@stryRequire, \@stryInclude, \@stryExclude, $rhKeyVariableOverride, $rhVariableOverride,
+        $strDocPath, $bDeploy, $bCacheOnly, $bPre);
 
     if (!$bNoCache)
     {
@@ -257,7 +250,7 @@ eval
 
                 foreach my $oHostDefine ($oManifest->sourceGet($strSource)->{doc}->nodeList('host-define', false))
                 {
-                    if ($oManifest->keywordMatch($oHostDefine->paramGet('keyword', false)))
+                    if ($oManifest->evaluateIf($oHostDefine))
                     {
                         my $strImage = $oManifest->variableReplace($oHostDefine->paramGet('image'));
                         my $strFrom = $oManifest->variableReplace($oHostDefine->paramGet('from'));

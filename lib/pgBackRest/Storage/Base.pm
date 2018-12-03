@@ -37,6 +37,12 @@ use constant CIPHER_MAGIC                                           => 'Salted__
 ####################################################################################################################################
 # Capability constants
 ####################################################################################################################################
+# Can the size in the storage be different than what was written?  For example, a ZFS filesystem could be doing compression of a
+# backup where compression was not enabled.  This affects how repo-size is calculated.  If the file system only stores what was
+# written or won't report differently then we can save some time by just setting repo-size to size.
+use constant STORAGE_CAPABILITY_SIZE_DIFF                           => 'size-diff';
+    push @EXPORT, qw(STORAGE_CAPABILITY_SIZE_DIFF);
+
 use constant STORAGE_CAPABILITY_LINK                                => 'link';
     push @EXPORT, qw(STORAGE_CAPABILITY_LINK);
 use constant STORAGE_CAPABILITY_PATH_SYNC                           => 'path-sync';

@@ -14,6 +14,24 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.08dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="matt.kunkel"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove request for S3 object info directly after putting it.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="ronan.dunklau"/>
+                        </release-item-contributor-list>
+
+                        <p>Correct <br-option>archive-get-queue-max</br-option> to be <id>size</id> type.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Enable S3 storage and encryption for <cmd>archive-get</cmd> command in C.</p>
@@ -108,6 +126,28 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="pritam.barhate"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify that region/endpoint must be configured correctly for the bucket.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Replace keywords with more flexible if statements.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Pre-build containers for any <id>execute</id> elements marked <id>pre</id>.</p>
+                    </release-item>
+                </release-development-list>
+            </release-doc-list>
 
             <release-test-list>
                 <release-development-list>
@@ -5917,6 +5957,11 @@
             <contributor-id type="github">mnullmei</contributor-id>
         </contributor>
 
+        <contributor id="matt.kunkel">
+            <contributor-name-display>Matt Kunkel</contributor-name-display>
+            <contributor-id type="github">mtkunkel</contributor-id>
+        </contributor>
+
         <contributor id="michael.renner">
             <contributor-name-display>Michael Renner</contributor-name-display>
             <contributor-id type="github">terrorobe</contributor-id>
@@ -5950,6 +5995,16 @@
         <contributor id="nj.baliyan">
             <contributor-name-display>Nj Baliyan</contributor-name-display>
             <contributor-id type="github">nj3110</contributor-id>
+        </contributor>
+
+        <contributor id="pritam.barhate">
+            <contributor-name-display>Pritam Barhate</contributor-name-display>
+            <contributor-id type="github">pritammobisoft</contributor-id>
+        </contributor>
+
+        <contributor id="ronan.dunklau">
+            <contributor-name-display>Ronan Dunklau</contributor-name-display>
+            <contributor-id type="github">rdunklau</contributor-id>
         </contributor>
 
         <contributor id="sarah.conway">

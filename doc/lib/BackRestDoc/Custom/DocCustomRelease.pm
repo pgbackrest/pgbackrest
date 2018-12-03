@@ -293,7 +293,7 @@ sub docGet
                 confess &log(ERROR, 'only one development release is allowed');
             }
 
-            $oSection = $oDoc->nodeAdd('section', undef, {id => 'development', keyword => 'dev'});
+            $oSection = $oDoc->nodeAdd('section', undef, {id => 'development', if => "'{[dev]}' eq 'y'"});
             $oSection->nodeAdd('title')->textSet("Development Notes");
 
             $iDevReleaseTotal++;
