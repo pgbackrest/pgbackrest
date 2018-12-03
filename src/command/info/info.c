@@ -18,6 +18,7 @@ Help Command
 #include "info/infoBackup.h"
 #include "info/infoManifest.h"
 #include "info/infoPg.h"
+#include "perl/exec.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
 
@@ -324,15 +325,14 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
             stanzaStatus(
                 INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR, stanzaInfo);
         }
-        // ??? Uncomment when encryption supported
-        // CATCH(CryptoError)
-        // {
-        //     THROW_FMT(
-        //         CryptoError,
-        //         "%s\n"
-        //         "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
-        //         errorMessage());
-        // }
+        CATCH(CryptoError)
+        {
+            THROW_FMT(
+                CryptoError,
+                "%s\n"
+                "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
+                errorMessage());
+        }
         TRY_END();
 
         // Set the stanza name and cipher
@@ -639,7 +639,13 @@ cmdInfo(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ioHandleWriteOneStr(STDOUT_FILENO, infoRender());
+        if (!cfgOptionTest(cfgOptRepoHost))                             // {uncovered - Perl code is covered in integration tests}
+        {
+            ioHandleWriteOneStr(STDOUT_FILENO, infoRender());
+        }
+        // Else do it in Perl
+        else
+            perlExec();                                                 // {+uncovered}
     }
     MEM_CONTEXT_TEMP_END();
 

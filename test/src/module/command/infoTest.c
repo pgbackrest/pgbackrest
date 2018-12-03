@@ -26,8 +26,10 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s", strPtr(repoPath)));
-        strLstAddZ(argList, "--output=json");
         strLstAddZ(argList, "info");
+        StringList *argListText = strLstDup(argList);
+
+        strLstAddZ(argList, "--output=json");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // No repo path
@@ -43,10 +45,20 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(strPtr(infoRender()), "[]\n", "json - repo but no stanzas");
 
+        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        TEST_RESULT_STR(strPtr(infoRender()),
+            strPtr(strNewFmt("No stanzas exist in %s\n", strPtr(storagePathNP(storageRepo(), NULL)))), "text - no stanzas");
+
         // Empty stanza
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), backupStanza1Path), "backup stanza1 directory");
         TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveStanza1Path), "archive stanza1 directory");
+        TEST_RESULT_STR(strPtr(infoRender()),
+            "stanza: stanza1\n"
+            "    status: error (missing stanza data)\n"
+            "    cipher: none\n", "empty stanza");
+
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
             "    {\n"
@@ -160,6 +172,16 @@ testRun(void)
             "        }\n"
             "    }\n"
             "]\n", "single stanza, no valid backups");
+
+        harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
+        TEST_RESULT_STR(strPtr(infoRender()),
+            "stanza: stanza1\n"
+            "    status: error (no valid backups)\n"
+            "    cipher: none\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.4-3): none present\n",
+            "no backups");
 
         // Coverage for stanzaStatus branches
         //--------------------------------------------------------------------------------------------------------------------------
@@ -599,70 +621,11 @@ testRun(void)
         strLstAddZ(argList, "info");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        // No repo path
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR_FMT(
-            infoRender(), PathOpenError,
-            "unable to open path '%s' for read: [2] No such file or directory", strPtr(backupPath));
-
-        storagePathCreateNP(storageLocalWrite(), archivePath);
-        storagePathCreateNP(storageLocalWrite(), backupPath);
-
-        // No stanzas have been created
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(strPtr(infoRender()),
-            strPtr(strNewFmt("No stanzas exist in %s\n", strPtr(storagePathNP(storageRepo(), NULL)))), "text - no stanzas");
-
-        // Empty stanza
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), backupStanza1Path), "backup stanza1 directory");
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveStanza1Path), "archive stanza1 directory");
-        TEST_RESULT_STR(strPtr(infoRender()),
-            "stanza: stanza1\n"
-            "    status: error (missing stanza data)\n"
-            "    cipher: none\n", "empty stanza");
-
-        // backup.info file exists, but archive.info does not
-        //--------------------------------------------------------------------------------------------------------------------------
-        String *content = strNew
-        (
-            "[backrest]\n"
-            "backrest-checksum=\"51774ffab293c5cfb07511d7d2e101e92416f4ed\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
-            "[db]\n"
-            "db-catalog-version=201409291\n"
-            "db-control-version=942\n"
-            "db-id=2\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666,"
-                "\"db-version\":\"9.3\"}\n"
-            "2={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
-                bufNewStr(content)), "put backup info to file");
-
-        TEST_ERROR_FMT(infoRender(), FileOpenError,
-            "unable to load info file '%s/archive.info' or '%s/archive.info.copy':\n"
-            "FileMissingError: unable to open '%s/archive.info' for read: [2] No such file or directory\n"
-            "FileMissingError: unable to open '%s/archive.info.copy' for read: [2] No such file or directory\n"
-            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-            "HINT: is archive_command configured correctly in postgresql.conf?\n"
-            "HINT: has a stanza-create been performed?\n"
-            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-            strPtr(archiveStanza1Path), strPtr(archiveStanza1Path), strPtr(archiveStanza1Path), strPtr(archiveStanza1Path));
 
         // backup.info/archive.info files exist, mismatched db ids, no backup:current section so no valid backups
         // Only the current db information from the db:history will be processed.
         //--------------------------------------------------------------------------------------------------------------------------
-        content = strNew
+        String *content = strNew
         (
             "[backrest]\n"
             "backrest-checksum=\"0da11608456bae64c42cc1dc8df4ae79b953d597\"\n"
@@ -1018,7 +981,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        const char *generalHelp = strPtr(strNewFmt("No stanzas exist in %s\n", testPath()));
+        const char *generalHelp = strPtr(strNewFmt("No stanzas exist in %s\n", strPtr(repoPath)));
 
         Storage *storage = storageDriverPosixInterface(
             storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL));

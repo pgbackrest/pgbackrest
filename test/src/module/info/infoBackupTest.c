@@ -24,7 +24,7 @@ testRun(void)
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
             "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
             "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory\n"
-            "HINT: backup.info does not exist and is required to perform a backup.\n"
+            "HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "HINT: has a stanza-create been performed?",
             testPath(), testPath(), testPath(), testPath());
 

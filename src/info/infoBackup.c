@@ -105,16 +105,15 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
         {
             this->infoPg = infoPgNew(storage, fileName, infoPgBackup, cipherType, cipherPass);
         }
-        CATCH(FileOpenError)
+        CATCH_ANY()
         {
-            THROW_FMT(
-                FileOpenError,
+            THROWP_FMT(
+                errorType(),
                 "%s\n"
-                "HINT: backup.info does not exist and is required to perform a backup.\n"
+                "HINT: backup.info cannot be opened and is required to perform a backup.\n"
                 "HINT: has a stanza-create been performed?",
                 errorMessage());
         }
-        // ??? Add encryption error
         TRY_END();
 
         const Ini *infoIni = infoPgIni(this->infoPg);

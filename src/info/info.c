@@ -147,7 +147,17 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
         }
 
         // Load and parse the info file
-        Buffer *buffer = storageGetNP(infoRead);
+        Buffer *buffer = NULL;
+        TRY_BEGIN()
+        {
+            buffer = storageGetNP(infoRead);
+        }
+        CATCH(CryptoError)
+        {
+            THROW_FMT(CryptoError, "'%s' %s\nHINT: Is or was the repo encrypted?", strPtr(fileName), errorMessage());
+        }
+        TRY_END();
+
         iniParse(this->ini, strNewBuf(buffer));
 
         // Make sure the ini is valid by testing the checksum
