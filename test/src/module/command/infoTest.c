@@ -94,7 +94,7 @@ testRun(void)
             "FileMissingError: unable to open '%s/archive.info' for read: [2] No such file or directory\n"
             "FileMissingError: unable to open '%s/archive.info.copy' for read: [2] No such file or directory\n"
             "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-            "HINT: is archive_command configured in postgresql.conf?\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
             "HINT: has a stanza-create been performed?\n"
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
             strPtr(archiveStanza1Path), strPtr(archiveStanza1Path), strPtr(archiveStanza1Path), strPtr(archiveStanza1Path));
@@ -654,7 +654,7 @@ testRun(void)
             "FileMissingError: unable to open '%s/archive.info' for read: [2] No such file or directory\n"
             "FileMissingError: unable to open '%s/archive.info.copy' for read: [2] No such file or directory\n"
             "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-            "HINT: is archive_command configured in postgresql.conf?\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
             "HINT: has a stanza-create been performed?\n"
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
             strPtr(archiveStanza1Path), strPtr(archiveStanza1Path), strPtr(archiveStanza1Path), strPtr(archiveStanza1Path));
