@@ -154,6 +154,10 @@
                     <release-item>
                         <p>Documentation may be built with user-specified packages.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Create common <id>if</id> expressions for testing <id>os-type</id>.</p>
+                    </release-item>
                 </release-development-list>
             </release-doc-list>
 
