@@ -150,6 +150,10 @@
                     <release-item>
                         <p>Pre-build containers for any <id>execute</id> elements marked <id>pre</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Documentation may be built with user-specified packages.</p>
+                    </release-item>
                 </release-development-list>
             </release-doc-list>
 

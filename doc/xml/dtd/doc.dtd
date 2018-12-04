@@ -132,6 +132,7 @@
       option-description|code-block|block)+|
     ((p|list)*, section+)|(p|list)*))>
     <!ATTLIST block-define id CDATA #REQUIRED>
+    <!ATTLIST block-define if CDATA "">
 
 <!ELEMENT block (block-variable-replace+)>
     <!ATTLIST block id CDATA #REQUIRED>
