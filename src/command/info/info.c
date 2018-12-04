@@ -297,7 +297,6 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
     VariantList *result = varLstNew();
     bool stanzaFound = false;
 
-// CSHANG - SEE IF CAN WRAP THIS IN MEM CONTEXT TO IMPROVE PERFORMANCE
     MEM_CONTEXT_TEMP_BEGIN()
     {
         VariantList *resultStanza = varLstNew();
@@ -335,13 +334,19 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
                 stanzaStatus(
                     INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR, stanzaInfo);
             }
-            CATCH(CryptoError)
+            CATCH(FileOpenError)
             {
-                THROW_FMT(
-                    CryptoError,
-                    "%s\n"
-                    "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
-                    errorMessage());
+                // If a reason for the error is due to a an ecryption error, add a hint
+                if (strstr(errorMessage(), errorTypeName(&CryptoError)) != NULL)
+                {
+                    THROW_FMT(
+                        FileOpenError,
+                        "%s\n"
+                        "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
+                        errorMessage());
+                }
+                else
+                    RETHROW();
             }
             TRY_END();
 
