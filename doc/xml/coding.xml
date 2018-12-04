@@ -46,12 +46,31 @@
                 <p><code>#define</code> constants should be all caps with <id>_</id> separators.</p>
 
                 <code-block type="c">
-#DEFINE MY_CONSTANT "STRING"
+#define MY_CONSTANT                                                 "STRING"
                 </code-block>
 
                 <p>The value should be aligned at column 69 whenever possible.</p>
 
                 <p>This type of constant should mostly be used for strings.  Use enums whenever possible for integer constants.</p>
+
+                <p><b>String Constants</b></p>
+
+                <p>String constants can be declared using the <code>STRING_STATIC()</code> macro for local strings and <code>STRING_EXTERN()</code> for strings that will be extern'd for use in other modules.</p>
+
+                <p>Extern'd strings should be declared in the header file as:</p>
+
+                <code-block type="c">
+#define SAMPLE_VALUE                                                "STRING"
+    STRING_DECLARE(SAMPLE_VALUE_STR);
+                </code-block>
+
+                <p>And in the C file as:</p>
+
+                <code-block type="c">
+STRING_EXTERN(SAMPLE_VALUE_STR,                                     SAMPLE_VALUE);
+                </code-block>
+
+                <p>Static strings declared in the C file are not required to have a <code>#define</code> if the <code>#define</code> version is not used.  Extern'd strings must always have the <code>#define</code> in the header file.</p>
 
                 <p><b>Enum Constants</b></p>
 
