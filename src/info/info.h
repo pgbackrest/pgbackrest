@@ -17,8 +17,10 @@ typedef struct Info Info;
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-STRING_DECLARE(INI_KEY_VERSION_STR);
-STRING_DECLARE(INI_KEY_FORMAT_STR);
+#define INFO_KEY_FORMAT                                             "backrest-format"
+    STRING_DECLARE(INFO_KEY_VERSION_STR);
+#define INFO_KEY_VERSION                                            "backrest-version"
+    STRING_DECLARE(INFO_KEY_FORMAT_STR);
 
 /***********************************************************************************************************************************
 Constructor

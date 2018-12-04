@@ -190,86 +190,94 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
 /***********************************************************************************************************************************
 For each current backup in the backup.info file of the stanza, set the data for the backup section.
 ***********************************************************************************************************************************/
-void
-backupList(const String *stanza, Variant *stanzaInfo, VariantList *backupSection, InfoBackup *info)
+VariantList *
+backupList(const String *stanza, InfoBackup *info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
-        FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
-        FUNCTION_TEST_PARAM(VARIANT, backupSection);
         FUNCTION_TEST_PARAM(INFO_BACKUP, info);
 
         FUNCTION_TEST_ASSERT(stanza != NULL);
-        FUNCTION_TEST_ASSERT(stanzaInfo != NULL);
-        FUNCTION_TEST_ASSERT(backupSection != NULL);
         FUNCTION_TEST_ASSERT(info != NULL);
     FUNCTION_TEST_END();
+
+    VariantList *result = varLstNew();
 
     // For each current backup, get the label and corresponding data
     StringList *backupKey = infoBackupCurrentKeyGet(info);
 
     if (backupKey != NULL)
     {
-        // Build the backup section
-        for (unsigned int keyIdx = 0; keyIdx < strLstSize(backupKey); keyIdx++)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            String *backupLabel = strLstGet(backupKey, keyIdx);
-            Variant *backupInfo = varNewKv();
+            VariantList *backupSection = varLstNew();
 
-            // main keys
-            kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_LABEL_STR), varNewStr(backupLabel));
-            kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_TYPE_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_TYPE_STR));
-            kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_PRIOR_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_PRIOR_STR));
-            kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_REFERENCE_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_REFERENCE_STR));
+            // Build the backup section
+            for (unsigned int keyIdx = 0; keyIdx < strLstSize(backupKey); keyIdx++)
+            {
+                String *backupLabel = strLstGet(backupKey, keyIdx);
+                Variant *backupInfo = varNewKv();
 
-            // archive section
-            KeyValue *archiveInfo = kvPutKv(varKv(backupInfo), varNewStr(KEY_ARCHIVE_STR));
-            kvAdd(archiveInfo, varNewStr(KEY_START_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_STR));
-            kvAdd(archiveInfo, varNewStr(KEY_STOP_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR));
+                // main keys
+                kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_LABEL_STR), varNewStr(backupLabel));
+                kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_TYPE_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_TYPE_STR));
+                kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_PRIOR_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_PRIOR_STR));
+                kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_REFERENCE_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_REFERENCE_STR));
 
-            // backrest section
-            KeyValue *backrestInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_BACKREST_STR));
-            kvAdd(backrestInfo, varNewStr(BACKREST_KEY_FORMAT_STR),
-                infoBackupCurrentGet(info, backupLabel, INI_KEY_FORMAT_STR));
-            kvAdd(backrestInfo, varNewStr(BACKREST_KEY_VERSION_STR),
-                infoBackupCurrentGet(info, backupLabel, INI_KEY_VERSION_STR));
+                // archive section
+                KeyValue *archiveInfo = kvPutKv(varKv(backupInfo), varNewStr(KEY_ARCHIVE_STR));
+                kvAdd(archiveInfo, varNewStr(KEY_START_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_STR));
+                kvAdd(archiveInfo, varNewStr(KEY_STOP_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR));
 
-            // database section
-            KeyValue *dbInfo = kvPutKv(varKv(backupInfo), varNewStr(KEY_DATABASE_STR));
-            kvAdd(dbInfo, varNewStr(DB_KEY_ID_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_KEY_DB_ID_STR));
+                // backrest section
+                KeyValue *backrestInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_BACKREST_STR));
+                kvAdd(backrestInfo, varNewStr(BACKREST_KEY_FORMAT_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_KEY_FORMAT_STR));
+                kvAdd(backrestInfo, varNewStr(BACKREST_KEY_VERSION_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_KEY_VERSION_STR));
 
-            // info section
-            KeyValue *infoInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_INFO_STR));
-            kvAdd(infoInfo, varNewStr(KEY_SIZE_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR));
-            kvAdd(infoInfo, varNewStr(KEY_DELTA_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR));
+                // database section
+                KeyValue *dbInfo = kvPutKv(varKv(backupInfo), varNewStr(KEY_DATABASE_STR));
+                kvAdd(dbInfo, varNewStr(DB_KEY_ID_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_KEY_DB_ID_STR));
 
-            // info:repository section
-            KeyValue *repoInfo = kvPutKv(infoInfo, varNewStr(INFO_KEY_REPOSITORY_STR));
-            kvAdd(repoInfo, varNewStr(KEY_SIZE_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR));
-            kvAdd(repoInfo, varNewStr(KEY_DELTA_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR));
+                // info section
+                KeyValue *infoInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_INFO_STR));
+                kvAdd(infoInfo, varNewStr(KEY_SIZE_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR));
+                kvAdd(infoInfo, varNewStr(KEY_DELTA_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR));
 
-            // timestamp section
-            KeyValue *timeInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_TIMESTAMP_STR));
-            kvAdd(timeInfo, varNewStr(KEY_START_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR));
-            kvAdd(timeInfo, varNewStr(KEY_STOP_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR));
+                // info:repository section
+                KeyValue *repoInfo = kvPutKv(infoInfo, varNewStr(INFO_KEY_REPOSITORY_STR));
+                kvAdd(repoInfo, varNewStr(KEY_SIZE_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR));
+                kvAdd(repoInfo, varNewStr(KEY_DELTA_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR));
 
-            varLstAdd(backupSection, backupInfo);
+                // timestamp section
+                KeyValue *timeInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_TIMESTAMP_STR));
+                kvAdd(timeInfo, varNewStr(KEY_START_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR));
+                kvAdd(timeInfo, varNewStr(KEY_STOP_STR),
+                    infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR));
+
+                varLstAdd(backupSection, backupInfo);
+            }
+
+            memContextSwitch(MEM_CONTEXT_OLD());
+            result = varLstDup(backupSection);
+            memContextSwitch(MEM_CONTEXT_TEMP());
         }
+        MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RESULT(VARIANT_LIST, result);
 }
 
 
@@ -289,110 +297,117 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
     VariantList *result = varLstNew();
     bool stanzaFound = false;
 
-    // Sort the list
-    stanzaList = strLstSort(stanzaList, sortOrderAsc);
-
-    for (unsigned int idx = 0; idx < strLstSize(stanzaList); idx++)
+// CSHANG - SEE IF CAN WRAP THIS IN MEM CONTEXT TO IMPROVE PERFORMANCE
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *stanzaListName = strLstGet(stanzaList, idx);
-        // If a specific stanza has been requested and this is not it, then continue to the next in the list else indicate found
-        if (stanza != NULL)
-        {
-            if (!strEq(stanza, stanzaListName))
-                continue;
-            else
-                stanzaFound = true;
-        }
+        VariantList *resultStanza = varLstNew();
 
-        // Create the stanzaInfo and section variables
-        Variant *stanzaInfo = varNewKv();
-        VariantList *dbSection = varLstNew();
-        VariantList *backupSection = varLstNew();
-        VariantList *archiveSection = varLstNew();
-        InfoBackup *info = NULL;
-
-        // Catch certain errors
-        TRY_BEGIN()
+        for (unsigned int idx = 0; idx < strLstSize(stanzaList); idx++)
         {
-            // Attempt to load the backup info file
-            info = infoBackupNew(
-                storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_BACKUP, strPtr(stanzaListName), INFO_BACKUP_FILE), false,
-                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
-        }
-        CATCH(FileOpenError)
-        {
-            // If there is no backup.info then set the status to indicate missing
-            stanzaStatus(
-                INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR, stanzaInfo);
-        }
-        CATCH(CryptoError)
-        {
-            THROW_FMT(
-                CryptoError,
-                "%s\n"
-                "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
-                errorMessage());
-        }
-        TRY_END();
-
-        // Set the stanza name and cipher
-        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_NAME_STR), varNewStr(stanzaListName));
-        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_CIPHER_STR), varNewStr(cfgOptionStr(cfgOptRepoCipherType)));
-
-        // If the backup.info file exists, get the database history information (newest to oldest) and corresponding archive
-        if (info != NULL)
-        {
-            for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoBackupPg(info)); pgIdx++)
+            String *stanzaListName = strLstGet(stanzaList, idx);
+            // If a specific stanza has been requested and this is not it, then continue to the next in the list else indicate found
+            if (stanza != NULL)
             {
-                InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);
-                Variant *pgInfo = varNewKv();
-                kvPut(varKv(pgInfo), varNewStr(DB_KEY_ID_STR), varNewUInt64(pgData.id));
-                kvPut(varKv(pgInfo), varNewStr(DB_KEY_SYSTEM_ID_STR), varNewUInt64(pgData.systemId));
-                kvPut(varKv(pgInfo), varNewStr(DB_KEY_VERSION_STR), varNewStr(pgVersionToStr(pgData.version)));
-
-                varLstAdd(dbSection, pgInfo);
-
-                // Get the archive info for the DB from the archive.info file
-                InfoArchive *info = infoArchiveNew(
-                    storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanzaListName), INFO_ARCHIVE_FILE), false,
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
-                archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
+                if (!strEq(stanza, stanzaListName))
+                    continue;
+                else
+                    stanzaFound = true;
             }
-            // Get data for all existing backups for this stanza
-            backupList(stanzaListName, stanzaInfo, backupSection, info);
+
+            // Create the stanzaInfo and section variables
+            Variant *stanzaInfo = varNewKv();
+            VariantList *dbSection = varLstNew();
+            VariantList *backupSection = varLstNew();
+            VariantList *archiveSection = varLstNew();
+            InfoBackup *info = NULL;
+
+            // Catch certain errors
+            TRY_BEGIN()
+            {
+                // Attempt to load the backup info file
+                info = infoBackupNew(
+                    storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_BACKUP, strPtr(stanzaListName), INFO_BACKUP_FILE), false,
+                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+            }
+            CATCH(FileMissingError)
+            {
+                // If there is no backup.info then set the status to indicate missing
+                stanzaStatus(
+                    INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR, stanzaInfo);
+            }
+            CATCH(CryptoError)
+            {
+                THROW_FMT(
+                    CryptoError,
+                    "%s\n"
+                    "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
+                    errorMessage());
+            }
+            TRY_END();
+
+            // Set the stanza name and cipher
+            kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_NAME_STR), varNewStr(stanzaListName));
+            kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_CIPHER_STR), varNewStr(cfgOptionStr(cfgOptRepoCipherType)));
+
+            // If the backup.info file exists, get the database history information (newest to oldest) and corresponding archive
+            if (info != NULL)
+            {
+                for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoBackupPg(info)); pgIdx++)
+                {
+                    InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);
+                    Variant *pgInfo = varNewKv();
+                    kvPut(varKv(pgInfo), varNewStr(DB_KEY_ID_STR), varNewUInt64(pgData.id));
+                    kvPut(varKv(pgInfo), varNewStr(DB_KEY_SYSTEM_ID_STR), varNewUInt64(pgData.systemId));
+                    kvPut(varKv(pgInfo), varNewStr(DB_KEY_VERSION_STR), varNewStr(pgVersionToStr(pgData.version)));
+
+                    varLstAdd(dbSection, pgInfo);
+
+                    // Get the archive info for the DB from the archive.info file
+                    InfoArchive *info = infoArchiveNew(
+                        storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanzaListName), INFO_ARCHIVE_FILE), false,
+                        cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                    archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
+                }
+                // Get data for all existing backups for this stanza
+                backupSection = backupList(stanzaListName, info);
+            }
+
+            // Add the database history, backup and archive sections to the stanza info
+            kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_DB_STR), varNewVarLst(dbSection));
+            kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_BACKUP_STR), varNewVarLst(backupSection));
+            kvPut(varKv(stanzaInfo), varNewStr(KEY_ARCHIVE_STR), varNewVarLst(archiveSection));
+
+            // If a status has not already been set and there are no backups then set status to no backup
+            if (kvGet(varKv(stanzaInfo), varNewStr(STANZA_KEY_STATUS_STR)) == NULL &&
+                varLstSize(kvGetList(varKv(stanzaInfo), varNewStr(STANZA_KEY_BACKUP_STR))) == 0)
+            {
+                stanzaStatus(INFO_STANZA_STATUS_CODE_NO_BACKUP, INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR, stanzaInfo);
+            }
+
+            // If a status has still not been set then set it to OK
+            if (kvGet(varKv(stanzaInfo), varNewStr(STANZA_KEY_STATUS_STR)) == NULL)
+                stanzaStatus(INFO_STANZA_STATUS_CODE_OK, INFO_STANZA_STATUS_MESSAGE_OK_STR, stanzaInfo);
+
+            varLstAdd(resultStanza, stanzaInfo);
         }
 
-        // Add the database history, backup and archive sections to the stanza info
-        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_DB_STR), varNewVarLst(dbSection));
-        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_BACKUP_STR), varNewVarLst(backupSection));
-        kvPut(varKv(stanzaInfo), varNewStr(KEY_ARCHIVE_STR), varNewVarLst(archiveSection));
-
-        // If a status has not already been set and there are no backups then set status to no backup
-        if (kvGet(varKv(stanzaInfo), varNewStr(STANZA_KEY_STATUS_STR)) == NULL &&
-            varLstSize(kvGetList(varKv(stanzaInfo), varNewStr(STANZA_KEY_BACKUP_STR))) == 0)
+        // If looking for a specific stanza and it was not found, set minimum info and the status
+        if (stanza != NULL && !stanzaFound)
         {
-            stanzaStatus(INFO_STANZA_STATUS_CODE_NO_BACKUP, INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR, stanzaInfo);
+            Variant *stanzaInfo = varNewKv();
+            kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_NAME_STR), varNewStr(stanza));
+
+            kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_DB_STR), varNewVarLst(varLstNew()));
+            kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_BACKUP_STR), varNewVarLst(varLstNew()));
+
+            stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR, stanzaInfo);
+            varLstAdd(resultStanza, stanzaInfo);
         }
-
-        // If a status has still not been set then set it to OK
-        if (kvGet(varKv(stanzaInfo), varNewStr(STANZA_KEY_STATUS_STR)) == NULL)
-            stanzaStatus(INFO_STANZA_STATUS_CODE_OK, INFO_STANZA_STATUS_MESSAGE_OK_STR, stanzaInfo);
-
-        varLstAdd(result, stanzaInfo);
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = varLstDup(resultStanza);
+        memContextSwitch(MEM_CONTEXT_TEMP());
     }
-
-    // If looking for a specific stanza and it was not found, set minimum info and the status
-    if (stanza != NULL && !stanzaFound)
-    {
-        Variant *stanzaInfo = varNewKv();
-        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_NAME_STR), varNewStr(stanza));
-
-        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_DB_STR), varNewVarLst(varLstNew()));
-        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_BACKUP_STR), varNewVarLst(varLstNew()));
-
-        stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR, stanzaInfo);
-        varLstAdd(result, stanzaInfo);
-    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RESULT(VARIANT_LIST, result);
 }
@@ -560,7 +575,11 @@ infoRender(void)
 
         // If the backup storage exists, then search for and process any stanzas
         if (strLstSize(stanzaList) > 0)
+        {
+            // Sort the list
+            stanzaList = strLstSort(stanzaList, sortOrderAsc);
             infoList = stanzaInfoList(stanza, stanzaList);
+        }
 
         if (strEqZ(cfgOptionStr(cfgOptOutput), strPtr(CFGOPTVAL_INFO_OUTPUT_TEXT)))
         {
