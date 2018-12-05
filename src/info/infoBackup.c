@@ -25,11 +25,11 @@ Internal constants
 #define INFO_BACKUP_SECTION                                         "backup"
 #define INFO_BACKUP_SECTION_BACKUP_CURRENT                          INFO_BACKUP_SECTION ":current"
 
-STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR,            "backup-info-repo-size");
-STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR,      "backup-info-repo-size-delta");
-STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR,                 "backup-info-size");
-STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR,           "backup-info-size-delta");
-STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR,                 "backup-reference");
+STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR,            INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE);
+STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR,      INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA);
+STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR,                 INFO_BACKUP_KEY_BACKUP_INFO_SIZE);
+STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR,           INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA);
+STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR,                 INFO_BACKUP_KEY_BACKUP_REFERENCE);
 
 /***********************************************************************************************************************************
 Object type

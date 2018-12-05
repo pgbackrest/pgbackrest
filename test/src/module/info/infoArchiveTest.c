@@ -20,7 +20,7 @@ testRun(void)
 
 
         TEST_ERROR_FMT(
-            infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), FileOpenError,
+            infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), FileMissingError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
             "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
             "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory\n"

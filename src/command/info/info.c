@@ -25,8 +25,8 @@ Help Command
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-STRING_EXTERN(CFGOPTVAL_INFO_OUTPUT_TEXT,                           "text");
-STRING_EXTERN(CFGOPTVAL_INFO_OUTPUT_JSON,                           "json");
+STRING_EXTERN(CFGOPTVAL_INFO_OUTPUT_TEXT_STR,                       CFGOPTVAL_INFO_OUTPUT_TEXT);
+STRING_EXTERN(CFGOPTVAL_INFO_OUTPUT_JSON_STR,                       CFGOPTVAL_INFO_OUTPUT_JSON);
 
 // Naming convention: <sectionname>_KEY_<keyname>_STR. If the key exists in multiple sections, then <sectionname>_ is omitted.
 STRING_STATIC(ARCHIVE_KEY_MIN_STR,                                  "min");

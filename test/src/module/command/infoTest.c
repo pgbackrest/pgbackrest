@@ -736,6 +736,41 @@ testRun(void)
             "        wal archive min/max (9.4-1): none present\n"
             ,"text - multiple stanzas - selected found");
 
+        // FileOpenError rethrow
+        //--------------------------------------------------------------------------------------------------------------------------
+        content = strNew
+        (
+            "[backrest]\n"
+            "backrest-checksum=\"2393c52cb48aff2d6c6e87e21a34a3e28200f42e\"\n"
+            "backrest-format=4\n"
+            "backrest-version=\"2.08dev\"\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6625633699176220261\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625633699176220261,"
+                "\"db-version\":\"9.4\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza2Path))),
+                bufNewStr(content)), "put backup info to file - stanza2");
+
+        TEST_ERROR_FMT(
+            infoRender(), FileOpenError,
+            "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
+            "ChecksumError: invalid checksum in 'backup/stanza2/backup.info', expected "
+            "'8d1c2f89e45a2cbddf6c8ad34c4b46bb5c0b6d66' but found '2393c52cb48aff2d6c6e87e21a34a3e28200f42e'\n"
+            "FileMissingError: unable to open '%s/backup.info.copy' for read: [2] No such file or directory\n"
+            "HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "HINT: has a stanza-create been performed?"
+            ,strPtr(backupStanza2Path), strPtr(backupStanza2Path), strPtr(backupStanza2Path));
+
         // Crypto error
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew

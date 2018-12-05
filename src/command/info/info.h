@@ -7,8 +7,10 @@ Info Command
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-STRING_DECLARE(CFGOPTVAL_INFO_OUTPUT_TEXT);
-STRING_DECLARE(CFGOPTVAL_INFO_OUTPUT_JSON);
+#define CFGOPTVAL_INFO_OUTPUT_TEXT                                  "text"
+    STRING_DECLARE(CFGOPTVAL_INFO_OUTPUT_TEXT_STR);
+#define CFGOPTVAL_INFO_OUTPUT_JSON                                  "json"
+    STRING_DECLARE(CFGOPTVAL_INFO_OUTPUT_JSON_STR);
 
 /***********************************************************************************************************************************
 Functions

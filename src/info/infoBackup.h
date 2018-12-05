@@ -16,13 +16,18 @@ typedef struct InfoBackup InfoBackup;
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define INFO_BACKUP_FILE                                           "backup.info"
+#define INFO_BACKUP_FILE                                            "backup.info"
 
-STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR);
-STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR);
-STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR);
-STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR);
-STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR);
+#define INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE                       "backup-info-repo-size"
+    STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR);
+#define INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA                 "backup-info-repo-size-delta"
+    STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR);
+#define INFO_BACKUP_KEY_BACKUP_INFO_SIZE                            "backup-info-size"
+    STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR);
+#define INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA                      "backup-info-size-delta"
+    STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR);
+#define INFO_BACKUP_KEY_BACKUP_REFERENCE                            "backup-reference"
+    STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR);
 
 /***********************************************************************************************************************************
 Constructor

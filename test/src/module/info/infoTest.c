@@ -37,7 +37,7 @@ testRun(void)
         // Info files missing and at least one is required
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
-            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileOpenError,
+            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileMissingError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"

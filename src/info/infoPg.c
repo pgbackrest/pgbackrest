@@ -27,16 +27,11 @@ Internal constants
 #define INFO_SECTION_DB_HISTORY                                     INFO_SECTION_DB ":history"
     STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                      INFO_SECTION_DB_HISTORY);
 
-#define INFO_KEY_DB_ID                                              "db-id"
-    STRING_EXTERN(INFO_KEY_DB_ID_STR,                               INFO_KEY_DB_ID);
-#define INFO_KEY_DB_CATALOG_VERSION                                 "db-catalog-version"
-    STRING_STATIC(INFO_KEY_DB_CATALOG_VERSION_STR,                  INFO_KEY_DB_CATALOG_VERSION);
-#define INFO_KEY_DB_CONTROL_VERSION                                 "db-control-version"
-    STRING_STATIC(INFO_KEY_DB_CONTROL_VERSION_STR,                  INFO_KEY_DB_CONTROL_VERSION);
-#define INFO_KEY_DB_SYSTEM_ID                                       "db-system-id"
-    STRING_STATIC(INFO_KEY_DB_SYSTEM_ID_STR,                        INFO_KEY_DB_SYSTEM_ID);
-#define INFO_KEY_DB_VERSION                                         "db-version"
-    STRING_STATIC(INFO_KEY_DB_VERSION_STR,                          INFO_KEY_DB_VERSION);
+STRING_EXTERN(INFO_KEY_DB_ID_STR,                                   INFO_KEY_DB_ID);
+STRING_STATIC(INFO_KEY_DB_CATALOG_VERSION_STR,                      "db-catalog-version");
+STRING_STATIC(INFO_KEY_DB_CONTROL_VERSION_STR,                      "db-control-version");
+STRING_STATIC(INFO_KEY_DB_SYSTEM_ID_STR,                            "db-system-id");
+STRING_STATIC(INFO_KEY_DB_VERSION_STR,                              "db-version");
 
 /***********************************************************************************************************************************
 Object type
