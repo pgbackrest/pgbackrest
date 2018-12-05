@@ -31,6 +31,7 @@ static struct
     Storage *storageSpoolWrite;                                     // Spool write storage
 
     String *stanza;                                                 // Stanza for storage
+    bool stanzaInit;                                                // Has the stanza been initialized?
     RegExp *walRegExp;                                              // Regular expression for identifying wal files
 } storageHelper;
 
@@ -58,19 +59,25 @@ storageHelperInit(void)
 Initialize the stanza and error if it changes
 ***********************************************************************************************************************************/
 static void
-storageHelperStanzaInit(void)
+storageHelperStanzaInit(const bool stanzaRequired)
 {
     FUNCTION_TEST_VOID();
 
-    if (storageHelper.stanza == NULL)
+    // If the stanza is NULL and the storage has not already been initialized then initialize the stanza
+    if (storageHelper.stanza == NULL && !storageHelper.stanzaInit)
     {
+        if (stanzaRequired && cfgOptionStr(cfgOptStanza) == NULL)
+            THROW(AssertError, "stanza cannot be NULL for this storage object");
+
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
             storageHelper.stanza = strDup(cfgOptionStr(cfgOptStanza));
+            storageHelper.stanzaInit = true;
         }
         MEM_CONTEXT_END();
     }
-    else if (!strEq(storageHelper.stanza, cfgOptionStr(cfgOptStanza)))
+    else if ((storageHelper.stanza == NULL && cfgOptionStr(cfgOptStanza) != NULL) ||
+        (cfgOptionStr(cfgOptStanza) != NULL && !strEq(storageHelper.stanza, cfgOptionStr(cfgOptStanza))))
     {
         THROW_FMT(
             AssertError, "stanza has changed from '%s' to '%s'", strPtr(storageHelper.stanza), strPtr(cfgOptionStr(cfgOptStanza)));
@@ -140,13 +147,14 @@ storageRepoPathExpression(const String *expression, const String *path)
         FUNCTION_TEST_PARAM(STRING, path);
 
         FUNCTION_TEST_ASSERT(expression != NULL);
+        FUNCTION_TEST_ASSERT(storageHelper.stanza != NULL);
     FUNCTION_TEST_END();
 
     String *result = NULL;
 
     if (strEqZ(expression, STORAGE_REPO_ARCHIVE))
     {
-        result = strNewFmt("archive/%s", strPtr(storageHelper.stanza));
+        result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strPtr(storageHelper.stanza));
 
         if (path != NULL)
         {
@@ -219,7 +227,7 @@ storageRepo(void)
     if (storageHelper.storageRepo == NULL)
     {
         storageHelperInit();
-        storageHelperStanzaInit();
+        storageHelperStanzaInit(false);
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
@@ -243,6 +251,7 @@ storageSpoolPathExpression(const String *expression, const String *path)
         FUNCTION_TEST_PARAM(STRING, path);
 
         FUNCTION_TEST_ASSERT(expression != NULL);
+        FUNCTION_TEST_ASSERT(storageHelper.stanza != NULL);
     FUNCTION_TEST_END();
 
     String *result = NULL;
@@ -250,16 +259,16 @@ storageSpoolPathExpression(const String *expression, const String *path)
     if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_IN))
     {
         if (path == NULL)
-            result = strNewFmt("archive/%s/in", strPtr(storageHelper.stanza));
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/in", strPtr(storageHelper.stanza));
         else
-            result = strNewFmt("archive/%s/in/%s", strPtr(storageHelper.stanza), strPtr(path));
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/in/%s", strPtr(storageHelper.stanza), strPtr(path));
     }
     else if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_OUT))
     {
         if (path == NULL)
-            result = strNewFmt("archive/%s/out", strPtr(storageHelper.stanza));
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/out", strPtr(storageHelper.stanza));
         else
-            result = strNewFmt("archive/%s/out/%s", strPtr(storageHelper.stanza), strPtr(path));
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/out/%s", strPtr(storageHelper.stanza), strPtr(path));
     }
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));
@@ -278,7 +287,7 @@ storageSpool(void)
     if (storageHelper.storageSpool == NULL)
     {
         storageHelperInit();
-        storageHelperStanzaInit();
+        storageHelperStanzaInit(true);
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
@@ -304,7 +313,7 @@ storageSpoolWrite(void)
     if (storageHelper.storageSpoolWrite == NULL)
     {
         storageHelperInit();
-        storageHelperStanzaInit();
+        storageHelperStanzaInit(true);
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {

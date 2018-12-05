@@ -20,17 +20,13 @@ Internal constants
 ***********************************************************************************************************************************/
 #define INI_COPY_EXT                                                ".copy"
 
-#define INI_SECTION_BACKREST                                        "backrest"
-    STRING_STATIC(INI_SECTION_BACKREST_STR,                         INI_SECTION_BACKREST);
-#define INI_SECTION_CIPHER                                          "cipher"
-    STRING_STATIC(INI_SECTION_CIPHER_STR,                           INI_SECTION_CIPHER);
+STRING_STATIC(INFO_SECTION_BACKREST_STR,                            "backrest");
+STRING_STATIC(INFO_SECTION_CIPHER_STR,                              "cipher");
 
-#define INI_KEY_CIPHER_PASS                                         "cipher-pass"
-    STRING_STATIC(INI_KEY_CIPHER_PASS_STR,                          INI_KEY_CIPHER_PASS);
-#define INI_KEY_FORMAT                                              "backrest-format"
-    STRING_STATIC(INI_KEY_FORMAT_STR,                               INI_KEY_FORMAT);
-#define INI_KEY_CHECKSUM                                            "backrest-checksum"
-    STRING_STATIC(INI_KEY_CHECKSUM_STR,                             INI_KEY_CHECKSUM);
+STRING_STATIC(INFO_KEY_CIPHER_PASS_STR,                             "cipher-pass");
+STRING_STATIC(INFO_KEY_CHECKSUM_STR,                                "backrest-checksum");
+STRING_EXTERN(INFO_KEY_FORMAT_STR,                                  INFO_KEY_FORMAT);
+STRING_EXTERN(INFO_KEY_VERSION_STR,                                 INFO_KEY_VERSION);
 
 /***********************************************************************************************************************************
 Object type
@@ -87,8 +83,8 @@ infoHash(const Ini *ini)
                 String *key = strLstGet(keyList, keyIdx);
 
                 // Skip the backrest checksum in the file
-                if ((strEq(section, INI_SECTION_BACKREST_STR) && !strEq(key, INI_KEY_CHECKSUM_STR)) ||
-                    !strEq(section, INI_SECTION_BACKREST_STR))
+                if ((strEq(section, INFO_SECTION_BACKREST_STR) && !strEq(key, INFO_KEY_CHECKSUM_STR)) ||
+                    !strEq(section, INFO_SECTION_BACKREST_STR))
                 {
                     cryptoHashProcessC(result, (const unsigned char *)"\"", 1);
                     cryptoHashProcessStr(result, key);
@@ -146,11 +142,21 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
         }
 
         // Load and parse the info file
-        Buffer *buffer = storageGetNP(infoRead);
+        Buffer *buffer = NULL;
+        TRY_BEGIN()
+        {
+            buffer = storageGetNP(infoRead);
+        }
+        CATCH(CryptoError)
+        {
+            THROW_FMT(CryptoError, "'%s' %s\nHINT: Is or was the repo encrypted?", strPtr(fileName), errorMessage());
+        }
+        TRY_END();
+
         iniParse(this->ini, strNewBuf(buffer));
 
         // Make sure the ini is valid by testing the checksum
-        String *infoChecksum = varStr(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_CHECKSUM_STR));
+        String *infoChecksum = varStr(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR));
 
         CryptoHash *hash = infoHash(this->ini);
 
@@ -169,11 +175,11 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
         }
 
         // Make sure that the format is current, otherwise error
-        if (varIntForce(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_FORMAT_STR)) != REPOSITORY_FORMAT)
+        if (varIntForce(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR)) != REPOSITORY_FORMAT)
         {
             THROW_FMT(
                 FormatError, "invalid format in '%s', expected %d but found %d", strPtr(fileName), REPOSITORY_FORMAT,
-                varIntForce(iniGet(this->ini, INI_SECTION_BACKREST_STR, INI_KEY_FORMAT_STR)));
+                varIntForce(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR)));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -220,14 +226,21 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
             // On error store the error and try to load the copy
             String *primaryError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
 
+            bool primaryMissing = false;
+
+            if (errorType() == &FileMissingError)
+                primaryMissing = true;
+
             TRY_BEGIN()
             {
                 infoLoad(this, storage, true, cipherType, cipherPass);
             }
             CATCH_ANY()
             {
-                THROW_FMT(
-                    FileOpenError, "unable to load info file '%s' or '%s" INI_COPY_EXT "':\n%s\n%s: %s",
+                // If both copies of the file are missing, throw a file missing error, else throw an open error
+                THROWP_FMT(
+                    errorType() == &FileMissingError && primaryMissing ? &FileMissingError : &FileOpenError,
+                    "unable to load info file '%s' or '%s" INI_COPY_EXT "':\n%s\n%s: %s",
                     strPtr(storagePathNP(storage, this->fileName)), strPtr(storagePathNP(storage, this->fileName)),
                     strPtr(primaryError), errorTypeName(errorType()), errorMessage());
             }
@@ -236,7 +249,7 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
         TRY_END();
 
         // Load the cipher passphrase if it exists
-        String *cipherPass = varStr(iniGetDefault(this->ini, INI_SECTION_CIPHER_STR, INI_KEY_CIPHER_PASS_STR, NULL));
+        String *cipherPass = varStr(iniGetDefault(this->ini, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, NULL));
 
         if (cipherPass != NULL)
         {

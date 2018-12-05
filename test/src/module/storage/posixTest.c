@@ -975,6 +975,39 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_ERROR(storageRepo(), AssertError, "stanza has changed from 'db' to 'other'");
+
+        // Change the stanza to NULL with the stanzaInit flag still true and make sure helper fails
+        // -------------------------------------------------------------------------------------------------------------------------
+        storageHelper.storageRepo = NULL;
+        storageHelper.stanza = NULL;
+        TEST_RESULT_BOOL(storageHelper.stanzaInit, true, "stanza initialized");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=other");
+        strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
+        strLstAddZ(argList, "archive-get");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(storageRepo(), AssertError, "stanza has changed from '(null)' to 'other'");
+
+        // Change the stanza to NULL with the stanzaInit flag still true and make sure helper fails when stanza option not set
+        // -------------------------------------------------------------------------------------------------------------------------
+        storageHelper.storageRepo = NULL;
+        storageHelper.stanza = NULL;
+        TEST_RESULT_BOOL(storageHelper.stanzaInit, true, "stanza initialized");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
+        strLstAddZ(argList, "info");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ASSIGN(storage, storageRepo(), "new repo storage no stanza");
+        TEST_RESULT_PTR(storageHelper.stanza, NULL, "stanza NULL");
+
+        // Reset init flag
+        storageHelper.stanzaInit = false;
     }
 
     // *****************************************************************************************************************************
@@ -1023,6 +1056,22 @@ testRun(void)
         TEST_RESULT_PTR(storageSpoolWrite(), storage, "get cached storage");
 
         TEST_RESULT_VOID(storageNewWriteNP(storage, writeFile), "writes are allowed");
+
+        // Change the stanza to NULL, stanzaInit flag to false and make sure helper fails because stanza is required
+        // -------------------------------------------------------------------------------------------------------------------------
+        storageHelper.storageSpool = NULL;
+        storageHelper.storageSpoolWrite = NULL;
+        storageHelper.stanzaInit = false;
+        storageHelper.stanza = NULL;
+
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
+        strLstAddZ(argList, "info");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(storageSpool(), AssertError, "stanza cannot be NULL for this storage object");
+        TEST_ERROR(storageSpoolWrite(), AssertError, "stanza cannot be NULL for this storage object");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
