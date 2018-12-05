@@ -172,6 +172,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Fix test binary name for <file>gprof</file>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow arbitrary multiplier and flush character in <code>IoTestFilterMultiply</code>.</p>
                     </release-item>
 

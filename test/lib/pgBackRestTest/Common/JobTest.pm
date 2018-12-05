@@ -529,11 +529,11 @@ sub end
         {
             executeTest(
                 'docker exec -i -u ' . TEST_USER . " ${strImage} " .
-                "gprof --flat-profile $self->{strGCovPath}/test $self->{strGCovPath}/gmon.out > $self->{strGCovPath}/gprof.flat.txt");
+                    "gprof $self->{strGCovPath}/test.bin $self->{strGCovPath}/gmon.out > $self->{strGCovPath}/gprof.txt");
 
             $self->{oStorageTest}->pathCreate("$self->{strBackRestBase}/test/profile", {strMode => '0750', bIgnoreExists => true});
             $self->{oStorageTest}->copy(
-                "$self->{strGCovPath}/gprof.flat.txt", "$self->{strBackRestBase}/test/profile/gprof.flat.txt");
+                "$self->{strGCovPath}/gprof.txt", "$self->{strBackRestBase}/test/profile/gprof.txt");
         }
 
         # If C code generate coverage info
