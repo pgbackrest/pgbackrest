@@ -232,10 +232,14 @@ sub request
                 {
                     my $rstrResponseBody = $oHttpClient->responseBody();
 
+                    # Redact authorization header because it contains the access key
+                    my $strRequestHeader = $oHttpClient->requestHeaderText();
+                    $strRequestHeader =~ s/^${\S3_HEADER_AUTHORIZATION}:.*$/${\S3_HEADER_AUTHORIZATION}: <redacted>/mg;
+
                     confess &log(ERROR,
                         'S3 request error' . ($iRetryTotal > 0 ? " after " . (S3_RETRY_MAX + 1) . " tries" : '') .
                             " [$iResponseCode] " . $oHttpClient->responseMessage() .
-                            "\n*** request header ***\n" . $oHttpClient->requestHeaderText() .
+                            "\n*** request header ***\n${strRequestHeader}" .
                             ($iResponseCode == S3_RESPONSE_CODE_ERROR_AUTH ?
                                 "\n*** canonical request ***\n" . $strCanonicalRequest .
                                 "\n*** signed headers ***\n" . $strSignedHeaders .
