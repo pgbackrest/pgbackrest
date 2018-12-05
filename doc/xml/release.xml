@@ -70,6 +70,14 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
+                        <p>Convert <cmd>info</cmd> command to C and only execute C code when processing the command locally.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
                         <p>Improve JSON to <code>Variant</code> conversion and add <code>Variant</code> to JSON conversion.</p>
                     </release-item>
 
