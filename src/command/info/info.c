@@ -7,6 +7,7 @@ Help Command
 #include <unistd.h>
 
 #include "command/archive/common.h"
+#include "command/info/info.h"
 #include "common/debug.h"
 #include "common/io/handle.h"
 #include "common/log.h"
@@ -586,7 +587,7 @@ infoRender(void)
             infoList = stanzaInfoList(stanza, stanzaList);
         }
 
-        if (strEqZ(cfgOptionStr(cfgOptOutput), strPtr(CFGOPTVAL_INFO_OUTPUT_TEXT)))
+        if (strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
         {
             // Process any stanza directories
             if  (varLstSize(infoList) > 0)
@@ -639,7 +640,7 @@ infoRender(void)
             else
                 resultStr = strNewFmt("No stanzas exist in %s\n", strPtr(storagePathNP(storageRepo(), NULL)));
         }
-        else if (strEqZ(cfgOptionStr(cfgOptOutput), strPtr(CFGOPTVAL_INFO_OUTPUT_JSON)))
+        else if (strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_JSON_STR))
         {
             resultStr = varToJson(varNewVarLst(infoList), 4);
         }
