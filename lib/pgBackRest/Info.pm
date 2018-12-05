@@ -253,8 +253,6 @@ sub formatText
                     $strOutput .= $strOutputBackup;
                 }
             }
-
-            $bDbCurrent = false;
         }
     }
 
