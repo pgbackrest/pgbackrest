@@ -977,7 +977,7 @@ sub recovery
                 }
             }
 
-            # Write pause_at_recovery_target
+            # Write pause_at_recovery_target/recovery_target_action
             if (cfgOptionTest(CFGOPT_TARGET_ACTION))
             {
                 my $strTargetAction = cfgOption(CFGOPT_TARGET_ACTION);
@@ -990,6 +990,13 @@ sub recovery
                     }
                     elsif  ($strDbVersion >= PG_VERSION_91)
                     {
+                        if ($strTargetAction eq CFGOPTVAL_RESTORE_TARGET_ACTION_SHUTDOWN)
+                        {
+                            confess &log(ERROR,
+                                cfgOptionName(CFGOPT_TARGET_ACTION) .  '=' . CFGOPTVAL_RESTORE_TARGET_ACTION_SHUTDOWN .
+                                    ' is only available in PostgreSQL >= ' . PG_VERSION_95)
+                        }
+
                         $strRecovery .= "pause_at_recovery_target = 'false'\n";
                     }
                     else

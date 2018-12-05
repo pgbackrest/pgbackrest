@@ -30,6 +30,10 @@
 
                         <p>Correct <br-option>archive-get-queue-max</br-option> to be <id>size</id> type.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Error when <br-option>--target-action=shutdown</br-option> specified for <postgres/> &lt; 9.5.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
