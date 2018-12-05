@@ -156,6 +156,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add Centos/RHEL 7 option to documentation build.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Create common <id>if</id> expressions for testing <id>os-type</id>.</p>
                     </release-item>
                 </release-development-list>
