@@ -8,7 +8,7 @@
 
         Documentation for the <proper>v1</proper> release can be found <link url="{[backrest-url-base]}/1">here</link>.
 
-        The notes for a release may also contain <quote>Additional Notes</quote> but changes in this section are only to documentation or the test suite and have no direct impact the on the <backrest/> codebase.</text>
+        The notes for a release may also contain <quote>Additional Notes</quote> but changes in this section are only to documentation or the test suite and have no direct impact on the <backrest/> codebase.</text>
     </intro>
 
     <release-list>
