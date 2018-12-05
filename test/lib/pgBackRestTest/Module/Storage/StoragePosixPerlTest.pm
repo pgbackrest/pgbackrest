@@ -19,6 +19,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Storage::Posix::Driver;
 
+use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
 
@@ -311,6 +312,42 @@ sub run
 
         $self->testException(
             sub {$oPosixIo->close()}, ERROR_FILE_WRITE, "unable to set time for '${strFile}': No such file or directory");
+    }
+
+    ################################################################################################################################
+    if ($self->begin('owner()'))
+    {
+        my $strFile = $self->testPath() . "/test.txt";
+
+        $self->testException(
+            sub {$oPosix->owner($strFile, {strUser => 'root'})}, ERROR_FILE_MISSING,
+            "unable to stat '${strFile}': No such file or directory");
+
+        executeTest("touch ${strFile}");
+
+        $self->testException(
+            sub {$oPosix->owner($strFile, {strUser => BOGUS})}, ERROR_FILE_OWNER,
+            "unable to set ownership for '${strFile}' because user 'bogus' does not exist");
+        $self->testException(
+            sub {$oPosix->owner($strFile, {strGroup => BOGUS})}, ERROR_FILE_OWNER,
+            "unable to set ownership for '${strFile}' because group 'bogus' does not exist");
+
+        $self->testResult(sub {$oPosix->owner($strFile)}, undef, "no ownership changes");
+        $self->testResult(sub {$oPosix->owner($strFile, {strUser => TEST_USER})}, undef, "same user");
+        $self->testResult(sub {$oPosix->owner($strFile, {strGroup => TEST_GROUP})}, undef, "same group");
+        $self->testResult(
+            sub {$oPosix->owner($strFile, {strUser => TEST_USER, strGroup => TEST_GROUP})}, undef, "same user, group");
+
+        $self->testException(
+            sub {$oPosix->owner($strFile, {strUser => 'root'})}, ERROR_FILE_OWNER,
+            "unable to set ownership for '${strFile}': Operation not permitted");
+        $self->testException(
+            sub {$oPosix->owner($strFile, {strGroup => 'root'})}, ERROR_FILE_OWNER,
+            "unable to set ownership for '${strFile}': Operation not permitted");
+
+        executeTest("sudo chown :root ${strFile}");
+        $self->testResult(
+            sub {$oPosix->owner($strFile, {strGroup => TEST_GROUP})}, undef, "change group back from root");
     }
 
     ################################################################################################################################
