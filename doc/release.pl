@@ -135,6 +135,12 @@ eval
         # Remove all docker containers to get consistent IP address assignments
         executeTest('docker rm -f $(docker ps -a -q)', {bSuppressError => true});
 
+        # Generate deployment docs for RHEL/Centos 7
+        &log(INFO, "Generate RHEL/CentOS 7 documentation");
+
+        executeTest("${strDocExe} --deploy --key-var=os-type=centos7 --out=pdf", {bShowOutputAsync => true});
+        executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --out=pdf");
+
         # Generate deployment docs for RHEL/Centos 6
         &log(INFO, "Generate RHEL/CentOS 6 documentation");
 

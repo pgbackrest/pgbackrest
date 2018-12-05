@@ -122,6 +122,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add coding standards for <code>String</code> constants.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add missing <code>LOG_DEBUG()</code> macro.</p>
                     </release-item>
                 </release-development-list>
@@ -146,6 +150,18 @@
                     <release-item>
                         <p>Pre-build containers for any <id>execute</id> elements marked <id>pre</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Documentation may be built with user-specified packages.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add Centos/RHEL 7 option to documentation build.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Create common <id>if</id> expressions for testing <id>os-type</id>.</p>
+                    </release-item>
                 </release-development-list>
             </release-doc-list>
 
@@ -156,7 +172,15 @@
                     </release-item>
 
                     <release-item>
+                        <p>Fix test binary name for <file>gprof</file>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow arbitrary multiplier and flush character in <code>IoTestFilterMultiply</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Update URL for Docker install.</p>
                     </release-item>
 
                     <release-item>

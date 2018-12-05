@@ -10,37 +10,53 @@
         <variable key="os-centos6">centos6</variable>
         <variable key="os-centos7">centos7</variable>
 
+        <!-- User-defined package to use in documentation -->
+        <variable key="package">none</variable>
+
         <!-- Defines the general OS type that will be used to generate commands.  Also supported: centos6, centos7 -->
         <variable key="os-type">debian</variable>
 
-        <variable key="user-guide-subtitle" if="'{[os-type]}' eq '{[os-debian]}'">Debian &amp; Ubuntu</variable>
-        <variable key="user-guide-subtitle" if="'{[os-type]}' eq '{[os-centos6]}'">RHEL &amp; CentOS 6</variable>
+        <!-- Common if expressions for testing os-type -->
+        <variable key="os-type-is-debian">'{[os-type]}' eq '{[os-debian]}'</variable>
+        <variable key="os-type-is-centos6">'{[os-type]}' eq '{[os-centos6]}'</variable>
+        <variable key="os-type-is-centos7">'{[os-type]}' eq '{[os-centos7]}'</variable>
+        <variable key="os-type-is-centos">{[os-type-is-centos6]} || {[os-type-is-centos7]}</variable>
 
-        <variable key="user-guide-os" if="'{[os-type]}' eq '{[os-debian]}'">Debian/Ubuntu</variable>
-        <variable key="user-guide-os" if="'{[os-type]}' eq '{[os-centos6]}'">RHEL/CentOS 6</variable>
+        <!-- Defines the container image that will be used to build the host -->
+        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:16.04</variable>
+        <variable key="os-image" if="{[os-type-is-centos6]}">centos:6</variable>
+        <variable key="os-image" if="{[os-type-is-centos7]}">centos:7</variable>
 
-        <variable key="pgbackrest-base-dir" eval="y">
+        <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">Debian &amp; Ubuntu</variable>
+        <variable key="user-guide-subtitle" if="{[os-type-is-centos6]}">RHEL &amp; CentOS 6</variable>
+        <variable key="user-guide-subtitle" if="{[os-type-is-centos7]}">RHEL &amp; CentOS 7</variable>
+
+        <variable key="user-guide-os" if="{[os-type-is-debian]}">Debian/Ubuntu</variable>
+        <variable key="user-guide-os" if="{[os-type-is-centos6]}">RHEL/CentOS 6</variable>
+        <variable key="user-guide-os" if="{[os-type-is-centos7]}">RHEL/CentOS 7</variable>
+
+        <variable key="pgbackrest-path" eval="y">
             use File::Basename qw(dirname);
             use Cwd qw(abs_path);
 
             dirname(dirname(abs_path($0)));
         </variable>
 
-        <variable key="pg-version" if="'{[os-type]}' eq '{[os-debian]}'">9.4</variable>
-        <variable key="pg-version" if="'{[os-type]}' eq '{[os-centos6]}'">9.5</variable>
+        <variable key="pg-version" if="{[os-type-is-debian]}">9.4</variable>
+        <variable key="pg-version" if="{[os-type-is-centos]}">9.5</variable>
         <variable key="pg-version-nodot">95</variable>
-        <variable key="pg-version-upgrade" if="'{[os-type]}' eq '{[os-debian]}'">9.5</variable>
-        <variable key="pg-version-upgrade" if="'{[os-type]}' eq '{[os-centos6]}'">9.6</variable>
-        <variable key="pg-version-upgrade-nodot" if="'{[os-type]}' eq '{[os-centos6]}'">96</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">9.5</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-centos]}">9.6</variable>
+        <variable key="pg-version-upgrade-nodot" if="{[os-type-is-centos]}">96</variable>
 
-        <variable key="pg-bin-path" if="'{[os-type]}' eq '{[os-debian]}'">/usr/lib/postgresql/{[pg-version]}/bin</variable>
-        <variable key="pg-bin-path" if="'{[os-type]}' eq '{[os-centos6]}'">/usr/pgsql-{[pg-version]}/bin</variable>
+        <variable key="pg-bin-path" if="{[os-type-is-debian]}">/usr/lib/postgresql/{[pg-version]}/bin</variable>
+        <variable key="pg-bin-path" if="{[os-type-is-centos]}">/usr/pgsql-{[pg-version]}/bin</variable>
 
-        <variable key="pg-bin-upgrade-path" if="'{[os-type]}' eq '{[os-debian]}'">/usr/lib/postgresql/{[pg-version-upgrade]}/bin</variable>
-        <variable key="pg-bin-upgrade-path" if="'{[os-type]}' eq '{[os-centos6]}'">/usr/pgsql-{[pg-version-upgrade]}/bin</variable>
+        <variable key="pg-bin-upgrade-path" if="{[os-type-is-debian]}">/usr/lib/postgresql/{[pg-version-upgrade]}/bin</variable>
+        <variable key="pg-bin-upgrade-path" if="{[os-type-is-centos]}">/usr/pgsql-{[pg-version-upgrade]}/bin</variable>
 
-        <variable key="pg-home-path" if="'{[os-type]}' eq '{[os-debian]}'">/var/lib/postgresql</variable>
-        <variable key="pg-home-path" if="'{[os-type]}' eq '{[os-centos6]}'">/var/lib/pgsql</variable>
+        <variable key="pg-home-path" if="{[os-type-is-debian]}">/var/lib/postgresql</variable>
+        <variable key="pg-home-path" if="{[os-type-is-centos]}">/var/lib/pgsql</variable>
 
         <variable key="pg-group">postgres</variable>
 
@@ -58,51 +74,50 @@
         <variable key="postgres-cluster-demo">demo</variable>
         <variable key="backrest-config-path">/etc/{[project-exe]}</variable>
         <variable key="backrest-config-include-path">{[backrest-config-path]}/conf.d</variable>
-        <variable key="backrest-config-demo">{[backrest-config-path]}/{[project-exe]}.conf</variable>
+        <variable if="'{[package]}' eq 'none'" key="backrest-config-demo">{[backrest-config-path]}/{[project-exe]}.conf</variable>
+        <variable if="'{[package]}' ne 'none'" key="backrest-config-demo">/etc/{[project-exe]}.conf</variable>
 
-        <variable key="pg-path-default" if="'{[os-type]}' eq '{[os-debian]}'">/var/lib/postgresql/[version]/[cluster]</variable>
-        <variable key="pg-path-default" if="'{[os-type]}' eq '{[os-centos6]}'">/var/lib/pgsql/[version]/data</variable>
+        <variable key="pg-path-default" if="{[os-type-is-debian]}">/var/lib/postgresql/[version]/[cluster]</variable>
+        <variable key="pg-path-default" if="{[os-type-is-centos]}">/var/lib/pgsql/[version]/data</variable>
 
-        <variable key="pg-path" if="'{[os-type]}' eq '{[os-debian]}'">/var/lib/postgresql/{[pg-version]}/{[postgres-cluster-demo]}</variable>
-        <variable key="pg-path" if="'{[os-type]}' eq '{[os-centos6]}'">/var/lib/pgsql/{[pg-version]}/data</variable>
+        <variable key="pg-path" if="{[os-type-is-debian]}">/var/lib/postgresql/{[pg-version]}/{[postgres-cluster-demo]}</variable>
+        <variable key="pg-path" if="{[os-type-is-centos]}">/var/lib/pgsql/{[pg-version]}/data</variable>
 
-        <variable key="pg-path-upgrade" if="'{[os-type]}' eq '{[os-debian]}'">/var/lib/postgresql/{[pg-version-upgrade]}/{[postgres-cluster-demo]}</variable>
-        <variable key="pg-path-upgrade" if="'{[os-type]}' eq '{[os-centos6]}'">/var/lib/pgsql/{[pg-version-upgrade]}/data</variable>
+        <variable key="pg-path-upgrade" if="{[os-type-is-debian]}">/var/lib/postgresql/{[pg-version-upgrade]}/{[postgres-cluster-demo]}</variable>
+        <variable key="pg-path-upgrade" if="{[os-type-is-centos]}">/var/lib/pgsql/{[pg-version-upgrade]}/data</variable>
 
         <variable key="spool-path">/var/spool/pgbackrest</variable>
 
-        <variable key="postgres-config-demo" if="'{[os-type]}' eq '{[os-debian]}'">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
-        <variable key="postgres-config-demo" if="'{[os-type]}' eq '{[os-centos6]}'">{[pg-path]}/postgresql.conf</variable>
+        <variable key="postgres-config-demo" if="{[os-type-is-debian]}">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
+        <variable key="postgres-config-demo" if="{[os-type-is-centos]}">{[pg-path]}/postgresql.conf</variable>
 
-        <variable key="postgres-config-demo-upgrade" if="'{[os-type]}' eq '{[os-debian]}'">/etc/postgresql/{[pg-version-upgrade]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
-        <variable key="postgres-config-demo-upgrade" if="'{[os-type]}' eq '{[os-centos6]}'">{[pg-path-upgrade]}/postgresql.conf</variable>
+        <variable key="postgres-config-demo-upgrade" if="{[os-type-is-debian]}">/etc/postgresql/{[pg-version-upgrade]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
+        <variable key="postgres-config-demo-upgrade" if="{[os-type-is-centos]}">{[pg-path-upgrade]}/postgresql.conf</variable>
 
-        <variable key="postgres-hba-demo" if="'{[os-type]}' eq '{[os-debian]}'">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/pg_hba.conf</variable>
-        <variable key="postgres-hba-demo" if="'{[os-type]}' eq '{[os-centos6]}'">{[pg-path]}/pg_hba.conf</variable>
+        <variable key="postgres-hba-demo" if="{[os-type-is-debian]}">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/pg_hba.conf</variable>
+        <variable key="postgres-hba-demo" if="{[os-type-is-centos]}">{[pg-path]}/pg_hba.conf</variable>
 
-        <variable key="postgres-hba-demo-upgrade" if="'{[os-type]}' eq '{[os-debian]}'">/etc/postgresql/{[pg-version-upgrade]}/{[postgres-cluster-demo]}/pg_hba.conf</variable>
-        <variable key="postgres-hba-demo-upgrade" if="'{[os-type]}' eq '{[os-centos6]}'">{[pg-path-upgrade]}/pg_hba.conf</variable>
+        <variable key="postgres-hba-demo-upgrade" if="{[os-type-is-debian]}">/etc/postgresql/{[pg-version-upgrade]}/{[postgres-cluster-demo]}/pg_hba.conf</variable>
+        <variable key="postgres-hba-demo-upgrade" if="{[os-type-is-centos]}">{[pg-path-upgrade]}/pg_hba.conf</variable>
 
         <variable key="postgres-pgpass">{[pg-home-path]}/.pgpass</variable>
 
-        <variable key="postgres-log-demo" if="'{[os-type]}' eq '{[os-debian]}'">/var/log/postgresql/postgresql-{[pg-version]}-{[postgres-cluster-demo]}.log</variable>
-        <variable key="postgres-log-demo" if="'{[os-type]}' eq '{[os-centos6]}'">{[pg-path]}/pg_log/postgresql.log</variable>
+        <variable key="postgres-log-demo" if="{[os-type-is-debian]}">/var/log/postgresql/postgresql-{[pg-version]}-{[postgres-cluster-demo]}.log</variable>
+        <variable key="postgres-log-demo" if="{[os-type-is-centos]}">{[pg-path]}/pg_log/postgresql.log</variable>
 
-        <variable key="postgres-log-pgstartup-demo" if="'{[os-type]}' eq '{[os-centos6]}'">/var/lib/pgsql/{[pg-version]}/pgstartup.log</variable>
+        <variable key="postgres-log-pgstartup-demo" if="{[os-type-is-centos]}">/var/lib/pgsql/{[pg-version]}/pgstartup.log</variable>
 
-        <variable key="postgres-recovery-demo" if="'{[os-type]}' eq '{[os-debian]}'">{[pg-path]}/recovery.conf</variable>
-        <variable key="postgres-recovery-demo" if="'{[os-type]}' eq '{[os-centos6]}'">{[pg-path]}/recovery.conf</variable>
+        <variable key="postgres-recovery-demo">{[pg-path]}/recovery.conf</variable>
 
         <variable key="pg-switch-wal">pg_switch_xlog</variable>
 
         <!-- Hosts -->
-        <variable key="host-os" if="'{[os-type]}' eq '{[os-debian]}'">u16</variable>
-        <variable key="host-os" if="'{[os-type]}' eq '{[os-centos6]}'">co6</variable>
+        <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
 
-        <variable key="host-image">pgbackrest/doc:{[host-os]}</variable>
+        <variable key="host-option">-v /sys/fs/cgroup:/sys/fs/cgroup:ro -v /tmp/$(mktemp -d):/run</variable>
 
         <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
-        <variable key="host-mount">{[pgbackrest-base-dir]}:/backrest</variable>
+        <variable key="host-mount">{[pgbackrest-path]}:/backrest</variable>
         <variable key="image-repo">pgbackrest/test</variable>
 
         <variable key="host-s3-id">s3</variable>
@@ -141,28 +156,37 @@
         <!-- Database cluster commmands -->
         <variable key="pg-cluster-wait">sleep 2</variable>
 
-        <variable key="pg-cluster-create" if="'{[os-type]}' eq '{[os-debian]}'">pg_createcluster {[pg-version]} {[postgres-cluster-demo]}</variable>
-        <variable key="pg-cluster-create" if="'{[os-type]}' eq '{[os-centos6]}'">service postgresql-{[pg-version]} initdb</variable>
+        <variable key="pg-cluster-create" if="{[os-type-is-debian]}">pg_createcluster {[pg-version]} {[postgres-cluster-demo]}</variable>
 
-        <variable key="pg-cluster-create-upgrade" if="'{[os-type]}' eq '{[os-debian]}'">pg_createcluster {[pg-version-upgrade]} {[postgres-cluster-demo]}</variable>
+        <variable key="pg-cluster-create-upgrade" if="{[os-type-is-debian]}">pg_createcluster {[pg-version-upgrade]} {[postgres-cluster-demo]}</variable>
 
-        <variable key="pg-cluster-start" if="'{[os-type]}' eq '{[os-debian]}'">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} start</variable>
-        <variable key="pg-cluster-start" if="'{[os-type]}' eq '{[os-centos6]}'">service postgresql-{[pg-version]} start</variable>
+        <variable key="pg-cluster-start" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} start</variable>
+        <variable key="pg-cluster-start" if="{[os-type-is-centos6]}">service postgresql-{[pg-version]} start</variable>
+        <variable key="pg-cluster-start" if="{[os-type-is-centos7]}">systemctl start postgresql-{[pg-version]}.service</variable>
 
-        <variable key="pg-cluster-start-upgrade" if="'{[os-type]}' eq '{[os-debian]}'">pg_ctlcluster {[pg-version-upgrade]} {[postgres-cluster-demo]} start</variable>
-        <variable key="pg-cluster-start-upgrade" if="'{[os-type]}' eq '{[os-centos6]}'">service postgresql-{[pg-version-upgrade]} start</variable>
+        <variable key="pg-cluster-start-upgrade" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version-upgrade]} {[postgres-cluster-demo]} start</variable>
+        <variable key="pg-cluster-start-upgrade" if="{[os-type-is-centos6]}">service postgresql-{[pg-version-upgrade]} start</variable>
+        <variable key="pg-cluster-start-upgrade" if="{[os-type-is-centos7]}">systemctl start postgresql-{[pg-version-upgrade]}.service</variable>
 
-        <variable key="pg-cluster-stop" if="'{[os-type]}' eq '{[os-debian]}'">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} stop</variable>
-        <variable key="pg-cluster-stop" if="'{[os-type]}' eq '{[os-centos6]}'">service postgresql-{[pg-version]} stop</variable>
+        <variable key="pg-cluster-stop" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} stop</variable>
+        <variable key="pg-cluster-stop" if="{[os-type-is-centos6]}">service postgresql-{[pg-version]} stop</variable>
+        <variable key="pg-cluster-stop" if="{[os-type-is-centos7]}">systemctl stop postgresql-{[pg-version]}.service</variable>
 
-        <variable key="pg-cluster-restart" if="'{[os-type]}' eq '{[os-debian]}'">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} restart</variable>
-        <variable key="pg-cluster-restart" if="'{[os-type]}' eq '{[os-centos6]}'">service postgresql-{[pg-version]} restart</variable>
+        <variable key="pg-cluster-restart" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} restart</variable>
+        <variable key="pg-cluster-restart" if="{[os-type-is-centos6]}">service postgresql-{[pg-version]} restart</variable>
+        <variable key="pg-cluster-restart" if="{[os-type-is-centos7]}">systemctl restart postgresql-{[pg-version]}.service</variable>
 
-        <variable key="pg-cluster-reload" if="'{[os-type]}' eq '{[os-debian]}'">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} reload</variable>
-        <variable key="pg-cluster-reload" if="'{[os-type]}' eq '{[os-centos6]}'">service postgresql-{[pg-version]} reload</variable>
+        <variable key="pg-cluster-reload" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} reload</variable>
+        <variable key="pg-cluster-reload" if="{[os-type-is-centos6]}">service postgresql-{[pg-version]} reload</variable>
+        <variable key="pg-cluster-reload" if="{[os-type-is-centos7]}">systemctl reload postgresql-{[pg-version]}.service</variable>
 
-        <variable key="pg-cluster-check-upgrade" if="'{[os-type]}' eq '{[os-debian]}'">pg_lsclusters</variable>
-        <variable key="pg-cluster-check-upgrade" if="'{[os-type]}' eq '{[os-centos6]}'">service postgresql-{[pg-version-upgrade]} status</variable>
+        <variable key="pg-cluster-check" if="{[os-type-is-debian]}">pg_lsclusters</variable>
+        <variable key="pg-cluster-check" if="{[os-type-is-centos6]}">service postgresql-{[pg-version]} status</variable>
+        <variable key="pg-cluster-check" if="{[os-type-is-centos7]}">systemctl status postgresql-{[pg-version]}.service</variable>
+
+        <variable key="pg-cluster-check-upgrade" if="{[os-type-is-debian]}">pg_lsclusters</variable>
+        <variable key="pg-cluster-check-upgrade" if="{[os-type-is-centos6]}">service postgresql-{[pg-version-upgrade]} status</variable>
+        <variable key="pg-cluster-check-upgrade" if="{[os-type-is-centos7]}">systemctl status postgresql-{[pg-version-upgrade]}.service</variable>
 
         <!-- Common commands -->
         <variable key="ssh-key-install">
@@ -191,10 +215,7 @@
 
     <!-- Setup hosts used to build the documentation
     ============================================================================================================================ -->
-    <host-define if="'{[os-type]}' eq '{[os-debian]}'" image="{[host-image]}" from="ubuntu:16.04">
-        # Update apt repositories
-        RUN apt-get update
-
+    <host-define if="{[os-type-is-debian]}" image="{[host-image]}" from="{[os-image]}">
         # Fix root tty
         RUN sed -i 's/^mesg n/tty -s \&amp;\&amp; mesg n/g' /root/.profile &amp;&amp; \
 
@@ -202,10 +223,12 @@
             rm /etc/apt/apt.conf.d/70debconf
 
         # Install base packages
-        RUN apt-get install -y sudo ssh wget vim 2>&amp;1
+        RUN apt-get update &amp;&amp; \
+            apt-get install -y sudo ssh wget vim gnupg lsb-release 2>&amp;1
 
         # Install PostgreSQL
-        RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main' | \
+        RUN RELEASE_CODENAME=`lsb_release -c | awk '{print $2}'` &amp;&amp; \
+            echo 'deb http://apt.postgresql.org/pub/repos/apt/ '${RELEASE_CODENAME?}'-pgdg main' | \
                 tee -a /etc/apt/sources.list.d/pgdg.list &amp;&amp; \
             wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - &amp;&amp; \
             apt-get update &amp;&amp; \
@@ -224,7 +247,7 @@
         ENTRYPOINT service ssh restart &amp;&amp; bash
     </host-define>
 
-    <host-define if="'{[os-type]}' eq '{[os-centos6]}'" image="{[host-image]}" from="centos:6">
+    <host-define if="{[os-type-is-centos6]}" image="{[host-image]}" from="{[os-image]}">
         # Install packages
         RUN yum install -y openssh-server openssh-clients sudo wget vim 2>&amp;1
 
@@ -233,8 +256,15 @@
             ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key
 
         # Install PostgreSQL
-        RUN rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-3.noarch.rpm \
-                     http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm &amp;&amp; \
+        RUN rpm -ivh http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm \
+                     http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-6.noarch.rpm \
+                     http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-8.noarch.rpm \
+                     http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-3.noarch.rpm \
+                     http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-3.noarch.rpm \
+                     http://yum.postgresql.org/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-3.noarch.rpm \
+                     http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm \
+                     http://yum.postgresql.org/10/redhat/rhel-6-x86_64/pgdg-centos10-10-2.noarch.rpm \
+                     http://yum.postgresql.org/11/redhat/rhel-6-x86_64/pgdg-centos11-11-2.noarch.rpm &amp;&amp; \
             yum install -y postgresql{[pg-version-nodot]}-server postgresql{[pg-version-upgrade-nodot]}-server
 
         # Create an ssh key for root so all hosts can ssh to each other as root
@@ -245,6 +275,50 @@
             echo '{[host-user]}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/{[host-user]}
 
         ENTRYPOINT /usr/sbin/sshd -D
+    </host-define>
+
+    <host-define if="{[os-type-is-centos7]}" image="{[host-image]}" from="{[os-image]}">
+        ENV container docker
+
+        RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
+            systemd-tmpfiles-setup.service ] || rm -f $i; done); \
+            rm -f /lib/systemd/system/multi-user.target.wants/*;\
+            rm -f /etc/systemd/system/*.wants/*;\
+            rm -f /lib/systemd/system/local-fs.target.wants/*; \
+            rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
+            rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
+            rm -f /lib/systemd/system/basic.target.wants/*;\
+            rm -f /lib/systemd/system/anaconda.target.wants/*;
+
+        VOLUME [ "/sys/fs/cgroup" ]
+
+        # Install packages
+        RUN yum install -y openssh-server openssh-clients sudo wget vim 2>&amp;1
+
+        # Regenerate SSH keys
+        RUN rm -f /etc/ssh/ssh_host_rsa_key* &amp;&amp; \
+            ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key &amp;&amp; \
+            rm -f /etc/ssh/ssh_host_dsa_key* &amp;&amp; \
+            ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key
+
+        # Install PostgreSQL
+        RUN rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-7-x86_64/pgdg-centos92-9.2-3.noarch.rpm \
+                     http://yum.postgresql.org/9.3/redhat/rhel-7-x86_64/pgdg-centos93-9.3-3.noarch.rpm \
+                     http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-3.noarch.rpm \
+                     http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-3.noarch.rpm \
+                     http://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm \
+                     http://yum.postgresql.org/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm \
+                     http://yum.postgresql.org/11/redhat/rhel-7-x86_64/pgdg-centos11-11-2.noarch.rpm &amp;&amp; \
+            yum install -y postgresql{[pg-version-nodot]}-server postgresql{[pg-version-upgrade-nodot]}-server
+
+        # Create an ssh key for root so all hosts can ssh to each other as root
+        RUN \ {[ssh-key-install]}
+
+        # Add doc user with sudo privileges
+        RUN adduser -n {[host-user]} &amp;&amp; \
+            echo '{[host-user]}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/{[host-user]}
+
+        CMD ["/usr/sbin/init"]
     </host-define>
 
     <!-- ======================================================================================================================= -->
@@ -315,7 +389,7 @@
     </block-define>
 
     <!-- ======================================================================================================================= -->
-    <block-define id="br-install">
+    <block-define if="'{[package]}' eq 'none'" id="br-install">
         <p><backrest/> needs to be installed from a package or installed manually as shown here.</p>
 
         <execute-list host="{[br-install-host]}">
@@ -337,14 +411,19 @@
         <execute-list host="{[br-install-host]}">
             <title>Install required Perl packages</title>
 
-            <execute if="'{[os-type]}' eq '{[os-debian]}'" user="root" pre="y">
-                <exe-cmd>apt-get install libdbd-pg-perl libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
+            <execute if="{[os-type-is-debian]}" user="root" pre="y">
+                <exe-cmd>apt-get install libdbd-pg-perl</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="'{[os-type]}' eq '{[os-centos6]}'" user="root" pre="y">
+            <execute if="{[os-type-is-centos6]}" user="root" pre="y">
                 <exe-cmd>yum install perl perl-Time-HiRes perl-parent perl-JSON
-                    perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
+                    perl-Digest-SHA perl-DBD-Pg</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <execute if="{[os-type-is-centos7]}" user="root" pre="y">
+                <exe-cmd>yum install perl perl-Time-HiRes perl-Digest-SHA perl-DBD-Pg perl-JSON-PP</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
         </execute-list>
@@ -378,8 +457,48 @@
         </execute-list>
     </block-define>
 
-    <block-define id="br-install-repo">
+    <block-define if="'{[package]}' ne 'none'" id="br-install">
         <execute-list host="{[br-install-host]}">
+            <title>Install <backrest/> from package</title>
+
+            <execute if="{[os-type-is-debian]}" user="root" err-suppress="y" show="n">
+                <exe-cmd>dpkg -i {[pgbackrest-path]}/{[package]}</exe-cmd>
+                <exe-cmd-extra> 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <execute if="{[os-type-is-debian]}" user="root" show="n">
+                <exe-cmd>apt-get -y install -f</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <execute if="{[os-type-is-debian]}" user="root" skip="y">
+                <exe-cmd>apt-get install pgbackrest</exe-cmd>
+            </execute>
+
+            <execute if="{[os-type-is-centos]}" user="root" show="n">
+                <exe-cmd>yum -y install {[pgbackrest-path]}/{[package]}</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <execute if="{[os-type-is-centos]}" user="root" skip="y">
+                <exe-cmd>yum install pgbackrest</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list if="'{[br-install-user]}' ne 'postgres'" host="{[br-install-host]}">
+            <title>Update permissions on configuration file and directories</title>
+
+            <execute user="root">
+                <exe-cmd>chown {[br-install-user]}:{[br-install-group]} /var/log/pgbackrest</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chown {[br-install-user]}:{[br-install-group]} {[backrest-config-demo]}</exe-cmd>
+            </execute>
+        </execute-list>
+    </block-define>
+
+    <block-define id="br-install-repo">
+        <execute-list if="'{[package]}' eq 'none'" host="{[br-install-host]}">
             <title>Create the <backrest/> repository</title>
 
             <execute user="root">
@@ -388,6 +507,14 @@
             <execute user="root">
                 <exe-cmd>chmod 750 {[backrest-repo-path]}</exe-cmd>
             </execute>
+            <execute user="root">
+                <exe-cmd>chown {[br-install-user]}:{[br-install-group]} {[backrest-repo-path]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list if="'{[package]}' ne 'none' &amp;&amp; '{[br-install-user]}' ne 'postgres'" host="{[br-install-host]}">
+            <title>Update permissions on the <backrest/> repository</title>
+
             <execute user="root">
                 <exe-cmd>chown {[br-install-user]}:{[br-install-group]} {[backrest-repo-path]}</exe-cmd>
             </execute>
@@ -483,22 +610,14 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="build">
+    <section if="'{[package]}' eq 'none'" id="build">
         <title>Build</title>
 
-        <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="pgbackrest/test:s3-server-20180612A" os="{[host-os]}">
-            <!-- Set host entries to redirect AWS to local s3 server -->
-            <execute user="root" user-force="y">
-                <exe-cmd>echo "{[host-s3-ip]} demo-bucket.s3.amazonaws.com s3.amazonaws.com" | tee -a /etc/hosts</exe-cmd>
-            </execute>
-        </host-add>
+        <p if="{[os-type-is-debian]}">{[user-guide-os]} packages for <backrest/> are available at <link url="https://www.postgresql.org/download/linux/ubuntu/">apt.postgresql.org</link>.  If they are not provided for your distribution/version it is easy to download the source and install manually.</p>
 
-        <p if="'{[os-type]}' eq '{[os-debian]}'">{[user-guide-os]} packages for <backrest/> are available at <link url="https://www.postgresql.org/download/linux/ubuntu/">apt.postgresql.org</link>.  If they are not provided for your distribution/version it is easy to download the source and install manually.</p>
+        <p if="{[os-type-is-centos]}">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
 
-        <p if="'{[os-type]}' eq '{[os-centos6]}'">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
-
-        <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[host-os]}" mount="{[host-build-mount]}"/>
+        <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[os-type]}" mount="{[host-build-mount]}" option="{[host-option]}"/>
 
         <p>When building from source it is best to use a build host rather than building on production.  Many of the tools required for the build should generally not be installed in production.  <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
 
@@ -527,18 +646,26 @@
         <execute-list host="{[host-build]}">
             <title>Install build dependencies</title>
 
-            <execute if="'{[os-type]}' eq '{[os-debian]}'" user="root" show="n" pre="y">
+            <execute if="{[os-type-is-debian]}" user="root" show="n" pre="y">
                 <exe-cmd>apt-get update</exe-cmd>
             </execute>
 
-            <execute if="'{[os-type]}' eq '{[os-debian]}'" user="root" pre="y">
+            <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>apt-get install build-essential libssl-dev libxml2-dev libperl-dev</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="'{[os-type]}' eq '{[os-centos6]}'" user="root" pre="y">
+            <execute if="{[os-type-is-centos6]}" user="root" pre="y">
                 <exe-cmd>
                     yum install build-essential gcc openssl-devel libxml2-devel
+                        perl-ExtUtils-Embed
+                </exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <execute if="{[os-type-is-centos7]}" user="root" pre="y">
+                <exe-cmd>
+                    yum install build-essential gcc make openssl-devel libxml2-devel
                         perl-ExtUtils-Embed
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
@@ -558,7 +685,7 @@
         <p>The <backrest/> executable is written in C.  This allows certain time-critical commands (like async <cmd>archive-push</cmd>/<cmd>archive-get</cmd>) to run more quickly.</p>
 
         <execute-list host="{[host-build]}">
-            <title>Build <backrest/> executable</title>
+            <title>Build <backrest/> package</title>
 
             <execute user="root">
                 <exe-cmd>make -s -C /root/pgbackrest-release-{[version]}/src</exe-cmd>
@@ -570,17 +697,25 @@
     <section id="installation">
         <title>Installation</title>
 
+        <!-- Create S3 server first to allow it time to boot before being used -->
+        <host-add id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="pgbackrest/test:s3-server-20180612A" os="{[os-type]}">
+            <!-- Set host entries to redirect AWS to local s3 server -->
+            <execute user="root" user-force="y">
+                <exe-cmd>echo "{[host-s3-ip]} demo-bucket.s3.amazonaws.com s3.amazonaws.com" | tee -a /etc/hosts</exe-cmd>
+            </execute>
+        </host-add>
+
         <p>A new host named <host>pg1</host> is created to contain the demo cluster and run <backrest/> examples.</p>
 
-        <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[host-os]}" mount="{[host-pg1-mount]}"/>
+        <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[os-type]}" mount="{[host-pg1-mount]}" option="{[host-option]}"/>
 
         <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
             <title>Create <user>{[br-user]}</user> user</title>
 
-            <execute if="'{[os-type]}' eq '{[os-debian]}'" user="root">
+            <execute if="{[os-type-is-debian]}" user="root">
                 <exe-cmd>adduser --ingroup {[pg-group]} --disabled-password --gecos "" {[br-user]}</exe-cmd>
             </execute>
-            <execute if="'{[os-type]}' eq '{[os-centos6]}'" user="root">
+            <execute if="{[os-type-is-centos]}" user="root">
                 <exe-cmd>adduser -g{[pg-group]} -n {[br-user]}</exe-cmd>
             </execute>
         </execute-list>
@@ -623,7 +758,7 @@
                             -D {[pg-path]} -k -A peer</exe-cmd>
                 </execute>
 
-                <execute if="'{[os-type]}' eq '{[os-debian]}'" user="root" output="y" filter="n">
+                <execute if="{[os-type-is-debian]}" user="root" output="y" filter="n">
                     <exe-cmd>{[pg-cluster-create]}</exe-cmd>
                 </execute>
             </execute-list>
@@ -644,9 +779,9 @@
                 <postgres-config-option key="log_line_prefix">''</postgres-config-option>
             </postgres-config>
 
-            <p if="'{[os-type]}' eq '{[os-centos6]}'">By default {[user-guide-os]} includes the day of the week in the log filename.  This makes automating the user guide a bit more complicated so the <pg-option>log_filename</pg-option> is set to a constant.</p>
+            <p if="{[os-type-is-centos]}">By default {[user-guide-os]} includes the day of the week in the log filename.  This makes automating the user guide a bit more complicated so the <pg-option>log_filename</pg-option> is set to a constant.</p>
 
-            <postgres-config host="{[host-pg1]}" if="'{[os-type]}' eq '{[os-centos6]}'" file="{[postgres-config-demo]}">
+            <postgres-config host="{[host-pg1]}" if="{[os-type-is-centos]}" file="{[postgres-config-demo]}">
                 <title>Set <pg-option>log_filename</pg-option></title>
 
                 <postgres-config-option key="log_filename">'postgresql.log'</postgres-config-option>
@@ -961,26 +1096,27 @@
             <execute-list host="{[host-pg1]}">
                 <title>Attempt to start the corrupted {[postgres-cluster-demo]} cluster</title>
 
-                <execute if="'{[os-type]}' eq '{[os-debian]}'" user="root" output="y" err-expect="1">
+                <execute if="{[os-type-is-debian]}" user="root" output="y" err-expect="1">
                     <exe-cmd>{[pg-cluster-start]}</exe-cmd>
                     <exe-highlight>could not find the database system</exe-highlight>
                 </execute>
 
-                <execute user="postgres" show="n">
-                    <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
-                </execute>
-
-                <execute if="'{[os-type]}' eq '{[os-centos6]}'" user="root" show="n">
+                <execute if="{[os-type-is-centos6]}" user="root" show="n">
                     <exe-cmd>rm -f {[postgres-log-pgstartup-demo]}</exe-cmd>
                 </execute>
 
-                <execute if="'{[os-type]}' eq '{[os-centos6]}'" user="root" err-expect="1">
+                <execute if="{[os-type-is-centos]}" user="root" err-expect="1">
                     <exe-cmd>{[pg-cluster-start]}</exe-cmd>
                 </execute>
 
-                <execute if="'{[os-type]}' eq '{[os-centos6]}'" user="root" output="y">
+                <execute if="{[os-type-is-centos6]}" user="root" output="y">
                     <exe-cmd>cat {[postgres-log-pgstartup-demo]}</exe-cmd>
                     <exe-highlight-type>error</exe-highlight-type>
+                    <exe-highlight>could not find the database system</exe-highlight>
+                </execute>
+
+                <execute if="{[os-type-is-centos7]}" user="root" output="y" err-expect="3">
+                    <exe-cmd>{[pg-cluster-check]}</exe-cmd>
                     <exe-highlight>could not find the database system</exe-highlight>
                 </execute>
             </execute-list>
@@ -1190,7 +1326,7 @@
             </execute-list>
         </section>
 
-        <section if="'{[os-type]}' eq '{[os-debian]}'" id="jq">
+        <section if="{[os-type-is-debian]}" id="jq">
             <title>Using <proper>jq</proper></title>
 
             <p><proper>jq</proper> is a command-line utility that can easily extract data from JSON.</p>
@@ -1809,6 +1945,20 @@
     <section id="s3-support" depend="/quickstart/configure-archiving">
         <title>S3 Support</title>
 
+        <execute-list host="{[host-pg1]}">
+            <title>Install packages required for S3 support</title>
+
+            <execute if="{[os-type-is-debian]}" user="root" pre="y">
+                <exe-cmd>apt-get install libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+             <execute if="{[os-type-is-centos]}" user="root" pre="y">
+                 <exe-cmd>yum install perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
+                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+             </execute>
+        </execute-list>
+
         <p><backrest/> supports storing repositories in <proper>Amazon S3</proper>.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so S3 logs or other data can also be stored in the bucket without conflicts.</p>
 
         <execute-list host="{[host-s3]}" show="n">
@@ -1977,20 +2127,20 @@
 
             <p>A new host named <host>repository</host> is created to store the cluster backups.</p>
 
-            <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[host-os]}" mount="{[host-repo1-mount]}"/>
+            <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[os-type]}" mount="{[host-repo1-mount]}" option="{[host-option]}"/>
 
             <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository.  Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
 
             <execute-list host="{[host-repo1]}">
                 <title>Create <user>{[br-user]}</user> user</title>
 
-                <execute if="'{[os-type]}' eq '{[os-debian]}'" user="root">
+                <execute if="{[os-type-is-debian]}" user="root">
                     <exe-cmd>adduser --disabled-password --gecos "" {[br-user]}</exe-cmd>
                 </execute>
-                <execute if="'{[os-type]}' eq '{[os-centos6]}'" user="root">
+                <execute if="{[os-type-is-centos]}" user="root">
                     <exe-cmd>groupadd {[br-group]}</exe-cmd>
                 </execute>
-                <execute if="'{[os-type]}' eq '{[os-centos6]}'" user="root">
+                <execute if="{[os-type-is-centos]}" user="root">
                     <exe-cmd>adduser -g{[br-group]} -n {[br-user]}</exe-cmd>
                 </execute>
             </execute-list>
@@ -2319,15 +2469,15 @@
 
             <p>A new host named <host>{[host-pg2]}</host> is created to run the standby.</p>
 
-            <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[host-os]}" mount="{[host-pg2-mount]}"/>
+            <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[os-type]}" mount="{[host-pg2-mount]}" option="{[host-option]}"/>
 
             <execute-list if="{[pg-version]} >= 11" host="{[host-pg2]}">
                 <title>Create <user>{[br-user]}</user> user</title>
 
-                <execute if="'{[os-type]}' eq '{[os-debian]}'" user="root">
+                <execute if="{[os-type-is-debian]}" user="root">
                     <exe-cmd>adduser --ingroup {[pg-group]} --disabled-password --gecos "" {[br-user]}</exe-cmd>
                 </execute>
-                <execute if="'{[os-type]}' eq '{[os-centos6]}'" user="root">
+                <execute if="{[os-type-is-centos]}" user="root">
                     <exe-cmd>adduser -g{[pg-group]} -n {[br-user]}</exe-cmd>
                 </execute>
             </execute-list>
@@ -2384,9 +2534,9 @@
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
-            <p if="'{[os-type]}' eq '{[os-debian]}'">The demo cluster must be created (even though it will be overwritten on restore) in order to create the <postgres/> configuration files.</p>
+            <p if="{[os-type-is-debian]}">The demo cluster must be created (even though it will be overwritten on restore) in order to create the <postgres/> configuration files.</p>
 
-            <execute-list if="'{[os-type]}' eq '{[os-debian]}'" host="{[host-pg2]}">
+            <execute-list if="{[os-type-is-debian]}" host="{[host-pg2]}">
                 <title>Create demo cluster</title>
 
                 <execute user="root">
@@ -2394,9 +2544,9 @@
                 </execute>
             </execute-list>
 
-            <p if="'{[os-type]}' eq '{[os-centos6]}'">Create the path where <postgres/> will be restored.</p>
+            <p if="{[os-type-is-centos]}">Create the path where <postgres/> will be restored.</p>
 
-            <execute-list if="'{[os-type]}' eq '{[os-centos6]}'" host="{[host-pg2]}">
+            <execute-list if="{[os-type-is-centos]}" host="{[host-pg2]}">
                 <title>Create <postgres/> path</title>
 
                 <execute user="postgres">
@@ -2411,11 +2561,11 @@
             <execute-list host="{[host-pg2]}">
                 <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 
-                <execute user="postgres" if="'{[os-type]}' eq '{[os-debian]}'">
+                <execute user="postgres" if="{[os-type-is-debian]}">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
                 </execute>
 
-                <execute user="postgres" if="'{[os-type]}' eq '{[os-centos6]}'">
+                <execute user="postgres" if="{[os-type-is-centos]}">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} restore</exe-cmd>
                 </execute>
 
@@ -2611,9 +2761,9 @@
                 </execute>
             </execute-list>
 
-            <p if="'{[os-type]}' eq '{[os-centos6]}'">By default {[user-guide-os]} stores the <file>postgresql.conf</file> file in the <postgres/> data directory.  That means the change made to <file>postgresql.conf</file> was overwritten by the last restore and the <pg-option>hot_standby</pg-option> setting must be enabled again.  Other solutions to this problem are to store the <file>postgresql.conf</file> file elsewhere or to enable the <pg-option>hot_standby</pg-option> setting on the <host>{[host-pg1]}</host> host where it will be ignored.</p>
+            <p if="{[os-type-is-centos]}">By default {[user-guide-os]} stores the <file>postgresql.conf</file> file in the <postgres/> data directory.  That means the change made to <file>postgresql.conf</file> was overwritten by the last restore and the <pg-option>hot_standby</pg-option> setting must be enabled again.  Other solutions to this problem are to store the <file>postgresql.conf</file> file elsewhere or to enable the <pg-option>hot_standby</pg-option> setting on the <host>{[host-pg1]}</host> host where it will be ignored.</p>
 
-            <postgres-config host="{[host-pg2]}" if="'{[os-type]}' eq '{[os-centos6]}'" file="{[postgres-config-demo]}">
+            <postgres-config host="{[host-pg2]}" if="{[os-type-is-centos]}" file="{[postgres-config-demo]}">
                 <title>Enable <pg-option>hot_standby</pg-option></title>
 
                 <postgres-config-option key="hot_standby">on</postgres-config-option>
@@ -2898,11 +3048,11 @@
                 </exe-cmd>
             </execute>
 
-            <execute user="root" if="'{[os-type]}' eq '{[os-debian]}'">
+            <execute user="root" if="{[os-type-is-debian]}">
                 <exe-cmd>{[pg-cluster-create-upgrade]}</exe-cmd>
             </execute>
 
-            <execute user="postgres" output="y" if="'{[os-type]}' eq '{[os-debian]}'">
+            <execute user="postgres" output="y" if="{[os-type-is-debian]}">
                 <exe-cmd>sh -c 'cd /var/lib/postgresql &amp;&amp;
                         /usr/lib/postgresql/{[pg-version-upgrade]}/bin/pg_upgrade
                             {[dash]}-old-bindir=/usr/lib/postgresql/{[pg-version]}/bin
@@ -2915,7 +3065,7 @@
                 <exe-highlight>Upgrade Complete</exe-highlight>
             </execute>
 
-            <execute user="postgres" output="y" if="'{[os-type]}' eq '{[os-centos6]}'">
+            <execute user="postgres" output="y" if="{[os-type-is-centos]}">
                 <exe-cmd>sh -c 'cd /var/lib/pgsql &amp;&amp;
                         /usr/pgsql-{[pg-version-upgrade]}/bin/pg_upgrade
                             {[dash]}-old-bindir=/usr/pgsql-{[pg-version]}/bin
@@ -3016,11 +3166,11 @@
         <execute-list host="{[host-pg1]}">
             <title>Remove old cluster</title>
 
-            <execute if="'{[os-type]}' eq '{[os-debian]}'" user="root">
+            <execute if="{[os-type-is-debian]}" user="root">
                 <exe-cmd>pg_dropcluster {[pg-version]} {[postgres-cluster-demo]}</exe-cmd>
             </execute>
 
-            <execute if="'{[os-type]}' eq '{[os-centos6]}'" user="root">
+            <execute if="{[os-type-is-centos]}" user="root">
                 <exe-cmd>rm -rf {[pg-path]}</exe-cmd>
             </execute>
         </execute-list>
@@ -3030,21 +3180,21 @@
         <execute-list host="{[host-pg2]}">
             <title>Remove old cluster and create the new cluster</title>
 
-            <execute if="'{[os-type]}' eq '{[os-debian]}'" user="root">
+            <execute if="{[os-type-is-debian]}" user="root">
                 <exe-cmd>pg_dropcluster {[pg-version]} {[postgres-cluster-demo]}</exe-cmd>
             </execute>
 
-            <execute if="'{[os-type]}' eq '{[os-centos6]}'" user="root">
+            <execute if="{[os-type-is-centos]}" user="root">
                 <exe-cmd>rm -rf {[pg-path]}</exe-cmd>
             </execute>
 
-            <execute user="postgres" if="'{[os-type]}' eq '{[os-centos6]}'">
+            <execute user="postgres" if="{[os-type-is-centos]}">
                 <exe-cmd>
                     mkdir -p -m 700 {[pg-bin-upgrade-path]}
                 </exe-cmd>
             </execute>
 
-            <execute user="root" if="'{[os-type]}' eq '{[os-debian]}'">
+            <execute user="root" if="{[os-type-is-debian]}">
                 <exe-cmd>{[pg-cluster-create-upgrade]}</exe-cmd>
             </execute>
         </execute-list>
@@ -3072,11 +3222,11 @@
         <execute-list host="{[host-pg2]}">
             <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 
-            <execute user="postgres" if="'{[os-type]}' eq '{[os-debian]}'">
+            <execute user="postgres" if="{[os-type-is-debian]}">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
             </execute>
 
-            <execute user="postgres" if="'{[os-type]}' eq '{[os-centos6]}'">
+            <execute user="postgres" if="{[os-type-is-centos]}">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} restore</exe-cmd>
             </execute>
         </execute-list>

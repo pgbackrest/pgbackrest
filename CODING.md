@@ -32,11 +32,26 @@ Type names use camel case with the first letter upper case:
 
 `#define` constants should be all caps with `_` separators.
 ```c
-#DEFINE MY_CONSTANT "STRING"
+#define MY_CONSTANT                                                 "STRING"
 ```
 The value should be aligned at column 69 whenever possible.
 
 This type of constant should mostly be used for strings. Use enums whenever possible for integer constants.
+
+**String Constants**
+
+String constants can be declared using the `STRING_STATIC()` macro for local strings and `STRING_EXTERN()` for strings that will be extern'd for use in other modules.
+
+Extern'd strings should be declared in the header file as:
+```c
+#define SAMPLE_VALUE                                                "STRING"
+    STRING_DECLARE(SAMPLE_VALUE_STR);
+```
+And in the C file as:
+```c
+STRING_EXTERN(SAMPLE_VALUE_STR,                                     SAMPLE_VALUE);
+```
+Static strings declared in the C file are not required to have a `#define` if the `#define` version is not used. Extern'd strings must always have the `#define` in the header file.
 
 **Enum Constants**
 
