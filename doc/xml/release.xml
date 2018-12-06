@@ -96,7 +96,12 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve error message when info files are missing/corrupt.</p>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve error messages when info files are missing/corrupt.</p>
                     </release-item>
 
                     <release-item>

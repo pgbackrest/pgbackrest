@@ -37,7 +37,7 @@ testRun(void)
         // Info files missing and at least one is required
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
-            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileOpenError,
+            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileMissingError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
@@ -197,6 +197,19 @@ testRun(void)
                         " no checksum found\n"
                     "ChecksumError: invalid checksum in '%s/test.ini.copy', expected '4306ec205f71417c301e403c4714090e61c8a736'"
                         " but found '4306ec205f71417c301e403c4714090e61c8a999'",
+                testPath(), testPath(), testPath(), testPath())));
+
+        // Encryption error
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_ERROR(
+            infoNew(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678")), FileOpenError,
+            strPtr(
+                strNewFmt(
+                    "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
+                    "CryptoError: '%s/test.ini' cipher header invalid\n"
+                    "HINT: Is or was the repo encrypted?\n"
+                    "CryptoError: '%s/test.ini.copy' cipher header invalid\n"
+                    "HINT: Is or was the repo encrypted?",
                 testPath(), testPath(), testPath(), testPath())));
 
         storageRemoveNP(storageLocalWrite(), fileName);
