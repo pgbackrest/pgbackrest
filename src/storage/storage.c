@@ -126,7 +126,7 @@ storageCopy(StorageFileRead *source, StorageFileWrite *destination)
 }
 
 /***********************************************************************************************************************************
-Does a file/path exist?
+Does a file exist? This function is only for files, not directories.
 ***********************************************************************************************************************************/
 bool
 storageExists(const Storage *this, const String *pathExp, StorageExistsParam param)
@@ -143,7 +143,7 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Build the path
+        // Build the path to the file
         String *path = storagePathNP(this, pathExp);
 
         // Create Wait object of timeout > 0
