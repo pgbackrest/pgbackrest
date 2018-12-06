@@ -320,10 +320,8 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
         {
             // Attempt to load the backup info file
             info = infoBackupNew(
-                storageRepo(),
-                strNewFmt(
-                    "%s/%s/%s", STORAGE_PATH_BACKUP, strPtr(stanzaListName), INFO_BACKUP_FILE), false,
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_BACKUP, strPtr(stanzaListName), INFO_BACKUP_FILE), false,
+                cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
         }
         CATCH(FileMissingError)
         {
@@ -366,10 +364,8 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
 
                 // Get the archive info for the DB from the archive.info file
                 InfoArchive *info = infoArchiveNew(
-                    storageRepo(),
-                    strNewFmt(
-                        "%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanzaListName), INFO_ARCHIVE_FILE), false,
-                        cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                    storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanzaListName), INFO_ARCHIVE_FILE),  false,
+                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
                 archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
             }
 
