@@ -144,7 +144,7 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the path to the file
-        String *filepath = storagePathNP(this, pathExp);
+        String *path = storagePathNP(this, pathExp);
 
         // Create Wait object of timeout > 0
         Wait *wait = param.timeout != 0 ? waitNew(param.timeout) : NULL;
@@ -153,7 +153,7 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
         do
         {
             // Call driver function
-            result = this->interface.exists(this->driver, filepath);
+            result = this->interface.exists(this->driver, path);
         }
         while (!result && wait != NULL && waitMore(wait));
     }

@@ -228,11 +228,6 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
             String *primaryError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
             bool primaryMissing = errorType() == &FileMissingError;
 
-            bool primaryMissing = false;
-
-            if (errorType() == &FileMissingError)
-                primaryMissing = true;
-
             TRY_BEGIN()
             {
                 infoLoad(this, storage, true, cipherType, cipherPass);
