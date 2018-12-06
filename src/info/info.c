@@ -146,7 +146,18 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
         }
 
         // Load and parse the info file
-        Buffer *buffer = storageGetNP(infoRead);
+        Buffer *buffer = NULL;
+
+        TRY_BEGIN()
+        {
+            buffer = storageGetNP(infoRead);
+        }
+        CATCH(CryptoError)
+        {
+            THROW_FMT(CryptoError, "'%s' %s\nHINT: Is or was the repo encrypted?", strPtr(fileName), errorMessage());
+        }
+        TRY_END();
+
         iniParse(this->ini, strNewBuf(buffer));
 
         // Make sure the ini is valid by testing the checksum
@@ -219,6 +230,7 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
         {
             // On error store the error and try to load the copy
             String *primaryError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
+            bool primaryMissing = errorType() == &FileMissingError;
 
             TRY_BEGIN()
             {
@@ -226,8 +238,10 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
             }
             CATCH_ANY()
             {
-                THROW_FMT(
-                    FileOpenError, "unable to load info file '%s' or '%s" INI_COPY_EXT "':\n%s\n%s: %s",
+                // If both copies of the file are missing, throw a file missing error, else throw an open error
+                THROWP_FMT(
+                    errorType() == &FileMissingError && primaryMissing ? &FileMissingError : &FileOpenError,
+                    "unable to load info file '%s' or '%s" INI_COPY_EXT "':\n%s\n%s: %s",
                     strPtr(storagePathNP(storage, this->fileName)), strPtr(storagePathNP(storage, this->fileName)),
                     strPtr(primaryError), errorTypeName(errorType()), errorMessage());
             }
