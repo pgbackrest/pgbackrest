@@ -143,6 +143,7 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
 
         // Load and parse the info file
         Buffer *buffer = NULL;
+
         TRY_BEGIN()
         {
             buffer = storageGetNP(infoRead);
@@ -225,6 +226,7 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
         {
             // On error store the error and try to load the copy
             String *primaryError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
+            bool primaryMissing = errorType() == &FileMissingError;
 
             bool primaryMissing = false;
 
