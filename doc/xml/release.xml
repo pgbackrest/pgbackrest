@@ -32,6 +32,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="camilo.aguilar"/>
+                        </release-item-contributor-list>
+
+                        <p>Add error message when current user <id>uid</id>/<id>gid</id> does not map to a name.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Error when <br-option>--target-action=shutdown</br-option> specified for <postgres/> &lt; 9.5.</p>
                     </release-item>
                 </release-bug-list>

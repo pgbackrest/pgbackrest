@@ -101,6 +101,11 @@ sub manifestOwnershipCheck
     else
     {
         $oOwnerTypeHash{&MANIFEST_SUBKEY_USER} = getpwuid($<);
+
+        if (!defined($oOwnerTypeHash{&MANIFEST_SUBKEY_USER}))
+        {
+            confess &log(ERROR_USER_MISSING, 'current user uid does not map to a name');
+        }
     }
 
     if ($oManifest->test(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_GROUP) &&
@@ -112,6 +117,11 @@ sub manifestOwnershipCheck
     else
     {
         $oOwnerTypeHash{&MANIFEST_SUBKEY_GROUP} = getgrgid($();
+
+        if (!defined($oOwnerTypeHash{&MANIFEST_SUBKEY_GROUP}))
+        {
+            confess &log(ERROR_GROUP_MISSING, 'current user gid does not map to a name');
+        }
     }
 
     # Loop through owner types (user, group)
