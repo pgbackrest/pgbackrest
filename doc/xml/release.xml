@@ -194,6 +194,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Pick <code>pg_switch_wal()</code>/<code>pg_switch_xlog()</code> based on <postgres/> version.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Create common <id>if</id> expressions for testing <id>os-type</id>.</p>
                     </release-item>
                 </release-development-list>

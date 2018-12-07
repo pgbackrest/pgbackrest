@@ -109,7 +109,9 @@
 
         <variable key="postgres-recovery-demo">{[pg-path]}/recovery.conf</variable>
 
-        <variable key="pg-switch-wal">pg_switch_xlog</variable>
+        <!-- Select correct WAL switch function based on the version of PostgreSQL -->
+        <variable key="pg-switch-wal" if="{[pg-version]} &lt; 10">pg_switch_xlog</variable>
+        <variable key="pg-switch-wal" if="{[pg-version]} &gt;= 10">pg_switch_wal</variable>
 
         <!-- Hosts -->
         <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
