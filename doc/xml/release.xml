@@ -198,6 +198,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add configuration to the standby so it works as a primary when promoted.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Create common <id>if</id> expressions for testing <id>os-type</id>.</p>
                     </release-item>
                 </release-development-list>
