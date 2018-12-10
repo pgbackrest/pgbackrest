@@ -150,7 +150,9 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
         }
         CATCH(CryptoError)
         {
-            THROW_FMT(CryptoError, "'%s' %s\nHINT: Is or was the repo encrypted?", strPtr(fileName), errorMessage());
+            THROW_FMT(
+                CryptoError, "'%s' %s\nHINT: Is or was the repo encrypted?", strPtr(storagePathNP(storage, fileName)),
+                errorMessage());
         }
         TRY_END();
 
@@ -168,7 +170,7 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
             bool checksumMissing = strSize(infoChecksum) < 3;
 
             THROW_FMT(
-                ChecksumError, "invalid checksum in '%s', expected '%s' but %s%s%s", strPtr(fileName),
+                ChecksumError, "invalid checksum in '%s', expected '%s' but %s%s%s", strPtr(storagePathNP(storage, fileName)),
                 strPtr(bufHex(cryptoHash(hash))), checksumMissing ? "no checksum found" : "found '",
                 // ??? Temporary hack until get json parser: remove quotes around hash before displaying in messsage
                 checksumMissing ? "" : strPtr(strSubN(infoChecksum, 1, strSize(infoChecksum) - 2)),
@@ -227,6 +229,7 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
             // On error store the error and try to load the copy
             String *primaryError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
             bool primaryMissing = errorType() == &FileMissingError;
+            const ErrorType *primaryErrorType = errorType();
 
             TRY_BEGIN()
             {
@@ -234,9 +237,13 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
             }
             CATCH_ANY()
             {
-                // If both copies of the file are missing, throw a file missing error, else throw an open error
+                // If both copies of the file have the same error then throw that error,
+                // else if one file is missing but the other is in error and it is not missing, throw that error
+                // else throw an open error
                 THROWP_FMT(
-                    errorType() == &FileMissingError && primaryMissing ? &FileMissingError : &FileOpenError,
+                    errorType() == primaryErrorType ? errorType() :
+                        (errorType() == &FileMissingError ? primaryErrorType :
+                        (primaryMissing ? errorType() : &FileOpenError)),
                     "unable to load info file '%s' or '%s" INI_COPY_EXT "':\n%s\n%s: %s",
                     strPtr(storagePathNP(storage, this->fileName)), strPtr(storagePathNP(storage, this->fileName)),
                     strPtr(primaryError), errorTypeName(errorType()), errorMessage());

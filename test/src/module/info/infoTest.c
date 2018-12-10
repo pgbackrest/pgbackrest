@@ -121,7 +121,7 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put invalid br format to file");
 
         TEST_ERROR(
-            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileOpenError,
+            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FormatError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
@@ -129,7 +129,28 @@ testRun(void)
                     "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory",
                 testPath(), testPath(), testPath(), testPath())));
 
-        storageCopyNP(storageNewReadNP(storageLocal(), fileName), storageNewWriteNP(storageLocalWrite(), fileNameCopy));
+        content = strNew
+        (
+            "[backrest]\n"
+            "backrest-checksum=\"14617b089cb5c9b3224e739bb794e865b9bcdf4b\"\n"
+            "backrest-format=4\n"
+            "backrest-version=\"2.05\"\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+            "\"db-version\":\"9.4\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutNP(
+                storageNewWriteNP(storageLocalWrite(), fileNameCopy), bufNewStr(content)), "put invalid info to copy file");
 
         TEST_ERROR(
             infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileOpenError,
@@ -137,7 +158,8 @@ testRun(void)
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
                     "FormatError: invalid format in '%s/test.ini', expected 5 but found 4\n"
-                    "FormatError: invalid format in '%s/test.ini.copy', expected 5 but found 4",
+                    "ChecksumError: invalid checksum in '%s/test.ini.copy', expected 'af92308095d6141bcda6b2df6d574f98d1115163'"
+                        " but found '14617b089cb5c9b3224e739bb794e865b9bcdf4b'",
                 testPath(), testPath(), testPath(), testPath())));
 
         // Invalid checksum
@@ -189,7 +211,7 @@ testRun(void)
 
         // Copy file error
         TEST_ERROR(
-            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileOpenError,
+            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), ChecksumError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
@@ -201,18 +223,17 @@ testRun(void)
 
         // Encryption error
         //--------------------------------------------------------------------------------------------------------------------------
+        storageRemoveNP(storageLocalWrite(), fileName);
         TEST_ERROR(
-            infoNew(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678")), FileOpenError,
+            infoNew(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678")), CryptoError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-                    "CryptoError: '%s/test.ini' cipher header invalid\n"
-                    "HINT: Is or was the repo encrypted?\n"
+                    "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
                     "CryptoError: '%s/test.ini.copy' cipher header invalid\n"
                     "HINT: Is or was the repo encrypted?",
                 testPath(), testPath(), testPath(), testPath())));
 
-        storageRemoveNP(storageLocalWrite(), fileName);
         storageRemoveNP(storageLocalWrite(), fileNameCopy);
 
         // infoFree()

@@ -154,7 +154,8 @@ infoArchiveCipherPass(const InfoArchive *this)
 Given a backrest history id and PG systemId and version, return the archiveId of the best PG match.
 ***********************************************************************************************************************************/
 const String *
-infoArchiveIdHistoryMatch(const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId)
+infoArchiveIdHistoryMatch(
+    const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
         FUNCTION_DEBUG_PARAM(INFO_ARCHIVE, this);

@@ -410,7 +410,7 @@ storagePath(const Storage *this, const String *pathExp)
 
     String *result = NULL;
 
-    // If there there is no path expression then return the base storage path
+    // If there is no path expression then return the base storage path
     if (pathExp == NULL)
     {
         result = strDup(this->path);

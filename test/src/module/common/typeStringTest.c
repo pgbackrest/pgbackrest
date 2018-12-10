@@ -210,5 +210,18 @@ testRun(void)
         TEST_RESULT_STR(strPtr(strToLog(strNew("test"))), "{\"test\"}", "format string");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("strSizeFormat()"))
+    {
+        TEST_RESULT_STR(strPtr(strSizeFormat(0)), "0B", "zero bytes");
+        TEST_RESULT_STR(strPtr(strSizeFormat(1023)), "1023B", "1023 bytes");
+        TEST_RESULT_STR(strPtr(strSizeFormat(1024)), "1KB", "1 KB");
+        TEST_RESULT_STR(strPtr(strSizeFormat(2200)), "2.1KB", "2.1 KB");
+        TEST_RESULT_STR(strPtr(strSizeFormat(1048576)), "1MB", "1 MB");
+        TEST_RESULT_STR(strPtr(strSizeFormat(20162900)), "19.2MB", "19.2 MB");
+        TEST_RESULT_STR(strPtr(strSizeFormat(1073741824)), "1GB", "1 GB");
+        TEST_RESULT_STR(strPtr(strSizeFormat(UINT64_MAX)), "17179869184.0GB", "uint64 max");
+    }
+
     FUNCTION_HARNESS_RESULT_VOID();
 }

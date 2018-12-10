@@ -17,6 +17,9 @@ Storage path constants
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_IN_STR,                         STORAGE_SPOOL_ARCHIVE_IN);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_OUT_STR,                        STORAGE_SPOOL_ARCHIVE_OUT);
 
+#define STORAGE_PATH_ARCHIVE                                        "archive"
+#define STORAGE_PATH_BACKUP                                         "backup"
+
 /***********************************************************************************************************************************
 Local variables
 ***********************************************************************************************************************************/
@@ -137,7 +140,7 @@ storageLocalWrite(void)
 }
 
 /***********************************************************************************************************************************
-Get a spool storage object
+Construct a repo path from an expression and path
 ***********************************************************************************************************************************/
 static String *
 storageRepoPathExpression(const String *expression, const String *path)
@@ -147,15 +150,19 @@ storageRepoPathExpression(const String *expression, const String *path)
         FUNCTION_TEST_PARAM(STRING, path);
 
         FUNCTION_TEST_ASSERT(expression != NULL);
-        FUNCTION_TEST_ASSERT(storageHelper.stanza != NULL);
     FUNCTION_TEST_END();
 
     String *result = NULL;
 
     if (strEqZ(expression, STORAGE_REPO_ARCHIVE))
     {
-        result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strPtr(storageHelper.stanza));
+        // Contruct the base path
+        if (storageHelper.stanza != NULL)
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strPtr(storageHelper.stanza));
+        else
+            result = strNew(STORAGE_PATH_ARCHIVE);
 
+        // If a subpath should be appended, determine if it is WAL path, else just append the subpath
         if (path != NULL)
         {
             StringList *pathSplit = strLstNewSplitZ(path, "/");
@@ -166,6 +173,18 @@ storageRepoPathExpression(const String *expression, const String *path)
             else
                 strCatFmt(result, "/%s", strPtr(path));
         }
+    }
+    else if (strEqZ(expression, STORAGE_REPO_BACKUP))
+    {
+        // Contruct the base path
+        if (storageHelper.stanza != NULL)
+            result = strNewFmt(STORAGE_PATH_BACKUP "/%s", strPtr(storageHelper.stanza));
+        else
+            result = strNew(STORAGE_PATH_BACKUP);
+
+        // Append subpath if provided
+        if (path != NULL)
+            strCatFmt(result, "/%s", strPtr(path));
     }
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));

@@ -116,7 +116,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     // If there is no match, an error will be thrown.
     const String *archiveId = infoArchiveIdHistoryMatch(info, pgData->id, pgData->version, pgData->systemId);
 
-    String *archivePath = strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanza), strPtr(archiveId));
+    String *archivePath = strNewFmt("%s/%s/%s", STORAGE_REPO_ARCHIVE, strPtr(stanza), strPtr(archiveId));
     String *archiveStart = NULL;
     String *archiveStop = NULL;
     Variant *archiveInfo = varNewKv();
@@ -320,7 +320,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
         {
             // Attempt to load the backup info file
             info = infoBackupNew(
-                storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_BACKUP, strPtr(stanzaListName), INFO_BACKUP_FILE), false,
+                storageRepo(), strNewFmt("%s/%s/%s", STORAGE_REPO_BACKUP, strPtr(stanzaListName), INFO_BACKUP_FILE), false,
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
         }
         CATCH(FileMissingError)
@@ -329,19 +329,14 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
             stanzaStatus(
                 INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR, stanzaInfo);
         }
-        CATCH(FileOpenError)
+        CATCH(CryptoError)
         {
             // If a reason for the error is due to a an ecryption error, add a hint
-            if (strstr(errorMessage(), errorTypeName(&CryptoError)) != NULL)
-            {
-                THROW_FMT(
-                    FileOpenError,
-                    "%s\n"
-                    "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
-                    errorMessage());
-            }
-            else
-                RETHROW();
+            THROW_FMT(
+                CryptoError,
+                "%s\n"
+                "HINT: use option --stanza if encryption settings are different for the stanza than the global settings",
+                errorMessage());
         }
         TRY_END();
 
@@ -364,7 +359,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
 
                 // Get the archive info for the DB from the archive.info file
                 InfoArchive *info = infoArchiveNew(
-                    storageRepo(), strNewFmt("%s/%s/%s", STORAGE_PATH_ARCHIVE, strPtr(stanzaListName), INFO_ARCHIVE_FILE),  false,
+                    storageRepo(), strNewFmt("%s/%s/%s", STORAGE_REPO_ARCHIVE, strPtr(stanzaListName), INFO_ARCHIVE_FILE),  false,
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
                 archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
             }
@@ -505,12 +500,12 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
                 strCat(backupResult, "            database size: ");
 
                 if (kvGet(info, varNewStr(KEY_SIZE_STR)) != NULL)
-                    strCatFmt(backupResult, "%s", strPtr(varStrForce(kvGet(info, varNewStr(KEY_SIZE_STR)))));
+                    strCatFmt(backupResult, "%s", strPtr(strSizeFormat(varUInt64Force(kvGet(info, varNewStr(KEY_SIZE_STR))))));
 
                 strCat(backupResult, ", backup size: ");
 
                 if (kvGet(info, varNewStr(KEY_DELTA_STR)) != NULL)
-                    strCatFmt(backupResult, "%s", strPtr(varStrForce(kvGet(info, varNewStr(KEY_DELTA_STR)))));
+                    strCatFmt(backupResult, "%s", strPtr(strSizeFormat(varUInt64Force(kvGet(info, varNewStr(KEY_DELTA_STR))))));
 
                 strCat(backupResult, "\n");
 
@@ -518,12 +513,15 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
                 strCat(backupResult, "            repository size: ");
 
                 if (kvGet(repoInfo, varNewStr(KEY_SIZE_STR)) != NULL)
-                    strCatFmt(backupResult, "%s", strPtr(varStrForce(kvGet(repoInfo, varNewStr(KEY_SIZE_STR)))));
+                    strCatFmt(backupResult, "%s", strPtr(strSizeFormat(varUInt64Force(kvGet(repoInfo, varNewStr(KEY_SIZE_STR))))));
 
                 strCat(backupResult, ", repository backup size: ");
 
                 if (kvGet(repoInfo, varNewStr(KEY_DELTA_STR)) != NULL)
-                    strCatFmt(backupResult, "%s", strPtr(varStrForce(kvGet(repoInfo, varNewStr(KEY_DELTA_STR)))));
+                {
+                    strCatFmt(
+                        backupResult, "%s", strPtr(strSizeFormat(varUInt64Force(kvGet(repoInfo, varNewStr(KEY_DELTA_STR))))));
+                }
 
                 strCat(backupResult, "\n");
 
@@ -567,7 +565,7 @@ infoRender(void)
         const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
 
         // Get a list of stanzas in the backup directory.
-        StringList *stanzaList = storageListP(storageRepo(), strNew(STORAGE_PATH_BACKUP), .errorOnMissing = true);
+        StringList *stanzaList = storageListP(storageRepo(), strNew(STORAGE_REPO_BACKUP), .errorOnMissing = true);
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
 

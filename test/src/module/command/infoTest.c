@@ -15,13 +15,13 @@ testRun(void)
 
     // Create the repo directories
     String *repoPath = strNewFmt("%s/repo", testPath());
-    String *archivePath = strNewFmt("%s/%s", strPtr(repoPath), STORAGE_PATH_ARCHIVE);
-    String *backupPath = strNewFmt("%s/%s", strPtr(repoPath), STORAGE_PATH_BACKUP);
+    String *archivePath = strNewFmt("%s/%s", strPtr(repoPath), "archive");
+    String *backupPath = strNewFmt("%s/%s", strPtr(repoPath), "backup");
     String *archiveStanza1Path = strNewFmt("%s/stanza1", strPtr(archivePath));
     String *backupStanza1Path = strNewFmt("%s/stanza1", strPtr(backupPath));
 
     // *****************************************************************************************************************************
-    if (testBegin("infoRender() - json"))
+    if (testBegin("infoRender()"))
     {
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
@@ -639,21 +639,21 @@ testRun(void)
             "        full backup: 20181119-152138F\n"
             "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:51\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
-            "            database size: 20162900, backup size: 20162900\n"
-            "            repository size: 2369186, repository backup size: 2369186\n"
+            "            database size: 19.2MB, backup size: 19.2MB\n"
+            "            repository size: 2.3MB, repository backup size: 2.3MB\n"
             "\n"
             "        diff backup: 20181119-152138F_20181119-152152D\n"
             "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
             "            wal start/stop: 000000010000000000000003 / 000000010000000000000003\n"
-            "            database size: 20162900, backup size: 8428\n"
-            "            repository size: 2369186, repository backup size: 346\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repository size: 2.3MB, repository backup size: 346B\n"
             "            backup reference list: 20181119-152138F\n"
             "\n"
             "        incr backup: 20181119-152138F_20181119-152152I\n"
             "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
             "            wal start/stop: n/a\n"
-            "            database size: 20162900, backup size: 8428\n"
-            "            repository size: 2369186, repository backup size: 346\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repository size: 2.3MB, repository backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "\n"
             "stanza: stanza2\n"
@@ -736,41 +736,6 @@ testRun(void)
             "        wal archive min/max (9.4-1): none present\n"
             ,"text - multiple stanzas - selected found");
 
-        // FileOpenError rethrow
-        //--------------------------------------------------------------------------------------------------------------------------
-        content = strNew
-        (
-            "[backrest]\n"
-            "backrest-checksum=\"2393c52cb48aff2d6c6e87e21a34a3e28200f42e\"\n"
-            "backrest-format=4\n"
-            "backrest-version=\"2.08dev\"\n"
-            "\n"
-            "[db]\n"
-            "db-catalog-version=201409291\n"
-            "db-control-version=942\n"
-            "db-id=1\n"
-            "db-system-id=6625633699176220261\n"
-            "db-version=\"9.4\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625633699176220261,"
-                "\"db-version\":\"9.4\"}\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza2Path))),
-                bufNewStr(content)), "put backup info to file - stanza2");
-
-        TEST_ERROR_FMT(
-            infoRender(), FileOpenError,
-            "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
-            "ChecksumError: invalid checksum in 'backup/stanza2/backup.info', expected "
-            "'8d1c2f89e45a2cbddf6c8ad34c4b46bb5c0b6d66' but found '2393c52cb48aff2d6c6e87e21a34a3e28200f42e'\n"
-            "FileMissingError: unable to open '%s/backup.info.copy' for read: [2] No such file or directory\n"
-            "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-            "HINT: has a stanza-create been performed?"
-            ,strPtr(backupStanza2Path), strPtr(backupStanza2Path), strPtr(backupStanza2Path));
-
         // Crypto error
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
@@ -786,18 +751,18 @@ testRun(void)
         strLstAdd(argListText, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
         harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
         TEST_ERROR_FMT(
-            infoRender(), FileOpenError,
+            infoRender(), CryptoError,
             "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
-            "CryptoError: 'backup/stanza2/backup.info' cipher header invalid\n"
+            "CryptoError: '%s/backup.info' cipher header invalid\n"
             "HINT: Is or was the repo encrypted?\n"
             "FileMissingError: unable to open '%s/backup.info.copy' for read: [2] No such file or directory\n"
             "HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "HINT: has a stanza-create been performed?\n"
             "HINT: use option --stanza if encryption settings are different for the stanza than the global settings"
-            ,strPtr(backupStanza2Path), strPtr(backupStanza2Path), strPtr(backupStanza2Path));
+            ,strPtr(backupStanza2Path), strPtr(backupStanza2Path), strPtr(backupStanza2Path), strPtr(backupStanza2Path));
     }
 
-    /*****************************************************************************************************************************/
+    //******************************************************************************************************************************
     if (testBegin("formatTextDb()"))
     {
         // These tests cover branches not covered in other tests
@@ -846,7 +811,7 @@ testRun(void)
             ,"formatTextDb only backup section (code cverage only)");
     }
 
-    /*****************************************************************************************************************************/
+    //******************************************************************************************************************************
     if (testBegin("cmdInfo()"))
     {
         StringList *argList = strLstNew();

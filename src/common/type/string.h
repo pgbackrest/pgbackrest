@@ -18,6 +18,8 @@ old context and then back. Below is a simplified example:
 #ifndef COMMON_TYPE_STRING_H
 #define COMMON_TYPE_STRING_H
 
+#include <stdint.h>
+
 /***********************************************************************************************************************************
 String object
 ***********************************************************************************************************************************/
@@ -62,6 +64,7 @@ String *strSubN(const String *this, size_t start, size_t size);
 String *strTrim(String *this);
 int strChr(const String *this, char chr);
 String *strTrunc(String *this, int idx);
+String *strSizeFormat(const uint64_t fileSize);
 
 void strFree(String *this);
 
