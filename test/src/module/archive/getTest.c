@@ -345,7 +345,7 @@ testRun(void)
             HARNESS_FORK_CHILD()
             {
                 TEST_ERROR_FMT(
-                    cmdArchiveGet(), FileOpenError,
+                    cmdArchiveGet(), FileMissingError,
                     "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
                     "FileMissingError: unable to open '%s/archive/test1/archive.info' for read: [2] No such file or directory\n"
                     "FileMissingError: unable to open '%s/archive/test1/archive.info.copy' for read: [2] No such file or"
@@ -375,7 +375,7 @@ testRun(void)
             HARNESS_FORK_CHILD()
             {
                 TEST_ERROR_FMT(
-                    cmdArchiveGet(), FileOpenError,
+                    cmdArchiveGet(), FileMissingError,
                     "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
                     "FileMissingError: unable to open '%s/archive/test1/archive.info' for read: [2] No such file or directory\n"
                     "FileMissingError: unable to open '%s/archive/test1/archive.info.copy' for read: [2] No such file or"
