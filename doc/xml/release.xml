@@ -104,7 +104,7 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Allow <code>NULL</code> stanza in storage helper.</p>
+                        <p>Storage helper improvements.  Allow <code>NULL</code> stanza in storage helper.  Add path expression for repository backup.</p>
                     </release-item>
 
                     <release-item>
