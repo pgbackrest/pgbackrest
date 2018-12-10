@@ -309,14 +309,6 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
-                        </release-item-contributor-list>
-
-                        <p>Update internal json parser to parse booleans and numeric-only or string-only one-dimensional arrays.</p>
-                    </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="cynthia.shang"/>
                             <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
