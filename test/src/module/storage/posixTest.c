@@ -962,6 +962,9 @@ testRun(void)
             strPtr(storagePathNP(storage, strNew(STORAGE_REPO_ARCHIVE "/9.4-1/000000010000014C0000001A.00000028.backup"))),
             strPtr(strNewFmt("%s/archive/db/9.4-1/000000010000014C/000000010000014C0000001A.00000028.backup", testPath())),
             "check archive backup path");
+        TEST_RESULT_STR(
+            strPtr(storagePathNP(storage, strNew(STORAGE_REPO_BACKUP))), strPtr(strNewFmt("%s/backup/db", testPath())),
+            "check backup path");
 
         // Change the stanza name and make sure helper fails
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1012,6 +1015,12 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(storagePathNP(storage, strNew(STORAGE_REPO_ARCHIVE "/simple"))),
             strPtr(strNewFmt("%s/archive/simple", testPath())), "check simple archive path - NULL stanza");
+        TEST_RESULT_STR(
+            strPtr(storagePathNP(storage, strNew(STORAGE_REPO_BACKUP))), strPtr(strNewFmt("%s/backup", testPath())),
+            "check backup path - NULL stanza");
+        TEST_RESULT_STR(
+            strPtr(storagePathNP(storage, strNew(STORAGE_REPO_BACKUP "/simple"))),
+            strPtr(strNewFmt("%s/backup/simple", testPath())), "check simple backup path - NULL stanza");
 
         // Reset init flag
         storageHelper.stanzaInit = false;

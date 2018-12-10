@@ -18,6 +18,7 @@ STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_IN_STR,                         STORAGE_SPOO
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_OUT_STR,                        STORAGE_SPOOL_ARCHIVE_OUT);
 
 #define STORAGE_PATH_ARCHIVE                                        "archive"
+#define STORAGE_PATH_BACKUP                                         "backup"
 
 /***********************************************************************************************************************************
 Local variables
@@ -172,6 +173,18 @@ storageRepoPathExpression(const String *expression, const String *path)
             else
                 strCatFmt(result, "/%s", strPtr(path));
         }
+    }
+    else if (strEqZ(expression, STORAGE_REPO_BACKUP))
+    {
+        // Contruct the base path
+        if (storageHelper.stanza != NULL)
+            result = strNewFmt(STORAGE_PATH_BACKUP "/%s", strPtr(storageHelper.stanza));
+        else
+            result = strNew(STORAGE_PATH_BACKUP);
+
+        // Append subpath if provided
+        if (path != NULL)
+            strCatFmt(result, "/%s", strPtr(path));
     }
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));
