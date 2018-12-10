@@ -147,11 +147,6 @@ size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
 #define FUNCTION_DEBUG_INTP_FORMAT(value, buffer, bufferSize)                                                                      \
     ptrToLog(value, "int *", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_UINTP_TYPE                                                                                                   \
-    unsigned int *
-#define FUNCTION_DEBUG_UINTP_FORMAT(value, buffer, bufferSize)                                                                      \
-    ptrToLog(value, "unsigned int *", buffer, bufferSize)
-
 #define FUNCTION_DEBUG_INT64_TYPE                                                                                                  \
     int64_t
 #define FUNCTION_DEBUG_INT64_FORMAT(value, buffer, bufferSize)                                                                     \
