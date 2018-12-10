@@ -23,9 +23,7 @@ PostgreSQL Info Handler
 /***********************************************************************************************************************************
 Internal constants
 ***********************************************************************************************************************************/
-#define INFO_SECTION_DB                                             "db"
-#define INFO_SECTION_DB_HISTORY                                     INFO_SECTION_DB ":history"
-    STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                      INFO_SECTION_DB_HISTORY);
+STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                          "db:history");
 
 STRING_EXTERN(INFO_KEY_DB_ID_STR,                                   INFO_KEY_DB_ID);
 STRING_STATIC(INFO_KEY_DB_CATALOG_VERSION_STR,                      "db-catalog-version");
