@@ -120,7 +120,7 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Info module improvements.  Rename constants in <code>Info</code> module for consistency.  Remove <code>#define</code> statements in the <code>InfoPg</code> module to conform with newly-adopted coding standards.</p>
+                        <p>Info module improvements.  Rename constants in <code>Info</code> module for consistency.  Remove <code>#define</code> statements in the <code>InfoPg</code> module to conform with newly-adopted coding standards.  Use cast to make for loop more readable in <code>InfoPg</code> module.</p>
                     </release-item>
 
                     <release-item>

@@ -119,7 +119,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
                 else if (type != infoPgArchive)
                     THROW_FMT(AssertError, "invalid InfoPg type %u", type);
 
-                // Using lstAdd because more efficient than lstInsert and loading this file is in some critical code paths
+                // Using lstAdd because it is more efficient than lstInsert and loading this file is in critical code paths
                 lstAdd(this->history, &infoPgData);
             }
         }
