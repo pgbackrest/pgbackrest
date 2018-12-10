@@ -100,6 +100,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <code>NULL</code> stanza in storage helper.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow I/O read interface to explicitly request blocking reads.</p>
                     </release-item>
 
