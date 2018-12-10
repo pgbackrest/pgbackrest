@@ -121,6 +121,65 @@ infoArchiveCheckPg(const InfoArchive *this, unsigned int pgVersion, uint64_t pgS
 }
 
 /***********************************************************************************************************************************
+Given a backrest history id and postgres systemId and version, return the archiveId of the best match
+***********************************************************************************************************************************/
+const String *
+infoArchiveIdHistoryMatch(
+    const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_DEBUG_PARAM(UINT, historyId);
+        FUNCTION_DEBUG_PARAM(UINT, pgVersion);
+        FUNCTION_DEBUG_PARAM(UINT64, pgSystemId);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
+    String *archiveId = NULL;
+    InfoPg *infoPg = infoArchivePg(this);
+
+    // Search the history list, from newest to oldest
+    for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoPg); pgIdx++)
+    {
+        InfoPgData pgDataArchive = infoPgData(infoPg, pgIdx);
+
+        // If there is an exact match with the history, system and version then get the archiveId and stop
+        if (historyId == pgDataArchive.id && pgSystemId == pgDataArchive.systemId && pgVersion == pgDataArchive.version)
+        {
+            archiveId = infoPgArchiveId(infoPg, pgIdx);
+            break;
+        }
+    }
+
+    // If there was not an exact match, then search for the first matching database system-id and version
+    if (archiveId == NULL)
+    {
+        for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoPg); pgIdx++)
+        {
+            InfoPgData pgDataArchive = infoPgData(infoPg, pgIdx);
+
+            if (pgSystemId == pgDataArchive.systemId && pgVersion == pgDataArchive.version)
+            {
+                archiveId = infoPgArchiveId(infoPg, pgIdx);
+                break;
+            }
+        }
+    }
+
+    // If the archive id has not been found, then error
+    if (archiveId == NULL)
+    {
+        THROW_FMT(
+            ArchiveMismatchError,
+            "unable to retrieve the archive id for database version '%s' and system-id '%" PRIu64 "'",
+            strPtr(pgVersionToStr(pgVersion)), pgSystemId);
+    }
+
+    FUNCTION_TEST_RESULT(STRING, archiveId);
+}
+
+/***********************************************************************************************************************************
 Get the current archive id
 ***********************************************************************************************************************************/
 const String *
@@ -148,63 +207,6 @@ infoArchiveCipherPass(const InfoArchive *this)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(CONST_STRING, infoPgCipherPass(this->infoPg));
-}
-
-/***********************************************************************************************************************************
-Given a backrest history id and PG systemId and version, return the archiveId of the best PG match.
-***********************************************************************************************************************************/
-const String *
-infoArchiveIdHistoryMatch(
-    const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_ARCHIVE, this);
-        FUNCTION_DEBUG_PARAM(UINT, historyId);
-        FUNCTION_DEBUG_PARAM(UINT, pgVersion);
-        FUNCTION_DEBUG_PARAM(UINT64, pgSystemId);
-
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
-
-    String *archiveId = NULL;
-    InfoPg *infoPg = infoArchivePg(this);
-
-    // Search the history list, from newest to oldest
-    for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoPg); pgIdx++)
-    {
-        InfoPgData pgDataArchive = infoPgData(infoPg, pgIdx);
-        // If there is an exact match with the history, system and version then get the archiveId and stop
-        if (historyId == pgDataArchive.id && pgSystemId == pgDataArchive.systemId && pgVersion == pgDataArchive.version)
-        {
-            archiveId = infoPgArchiveId(infoPg, pgIdx);
-            break;
-        }
-    }
-
-    // If there was not an exact match, then search for the first matching database system-id and version
-    if (archiveId == NULL)
-    {
-        for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoPg); pgIdx++)
-        {
-            InfoPgData pgDataArchive = infoPgData(infoPg, pgIdx);
-            if (pgSystemId == pgDataArchive.systemId && pgVersion == pgDataArchive.version)
-            {
-                archiveId = infoPgArchiveId(infoPg, pgIdx);
-                break;
-            }
-        }
-    }
-
-    // If the archive id has not been found, then error
-    if (archiveId == NULL)
-    {
-        THROW_FMT(
-            ArchiveMismatchError,
-            "unable to retrieve the archive id for database version '%s' and system-id '%" PRIu64 "'",
-            strPtr(pgVersionToStr(pgVersion)), pgSystemId);
-    }
-
-    FUNCTION_TEST_RESULT(STRING, archiveId);
 }
 
 /***********************************************************************************************************************************
