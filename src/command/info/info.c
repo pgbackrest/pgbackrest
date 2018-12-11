@@ -17,7 +17,7 @@ Info Command
 #include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
-#include "info/infoManifest.h"
+#include "info/infoManifest.h"  // CHSNAG Maybe should be able to remove?
 #include "info/infoPg.h"
 #include "perl/exec.h"
 #include "postgres/interface.h"
@@ -203,13 +203,14 @@ backupList(const String *stanza, VariantList *backupSection, InfoBackup *info)
     FUNCTION_TEST_END();
 
     // For each current backup, get the label and corresponding data
-    StringList *backupKey = infoBackupCurrentKeyGet(info);
-
-    if (backupKey != NULL)
+    if (infoBackupDataList(info) != NULL)
     {
         // Build the backup section
-        for (unsigned int keyIdx = 0; keyIdx < strLstSize(backupKey); keyIdx++)
+        for (unsigned int keyIdx = 0; keyIdx < strLstSize(infoBackupDataList(info)); keyIdx++)
         {
+            // Get the backup data
+            InfoBackupData backupData = InfoBackupData(info, keyIdx);
+// CSHANG Stopped here
             String *backupLabel = strLstGet(backupKey, keyIdx);
             Variant *backupInfo = varNewKv();
 

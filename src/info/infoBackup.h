@@ -30,6 +30,33 @@ Constants
     STRING_DECLARE(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR);
 
 /***********************************************************************************************************************************
+Information about an existing backup
+***********************************************************************************************************************************/
+typedef struct InfoBackupData
+{
+    const String *backupLabel;
+    int backrestFormat;
+    const String *backrestVersion;
+    const String *backupArchiveStart;
+    const String *backupArchiveStop;
+    uint64_t backupInfoRepoSize;
+    uint64_t backupInfoRepoSizeDelta;
+    uint64_t backupInfoSize;
+    uint64_t backupInfoSizeDelta;
+    const String *backupPrior;
+    StringList *backupReference;
+    const String *backupType;
+    unsigned int backupPgId;
+    // bool optionArchiveCheck;
+    // bool optionArchiveCopy;
+    // bool optionBackupStandby;
+    // bool optionChecksumPage;
+    // bool optionCompress;
+    // bool optionHardlink;
+    // bool optionOnline;
+} InfoBackupData;
+
+/***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
 InfoBackup *infoBackupNew(
@@ -47,6 +74,8 @@ Getters
 ***********************************************************************************************************************************/
 InfoPg *infoBackupPg(const InfoBackup *this);
 const Variant *infoBackupCurrentGet(const InfoBackup *this, const String *section, const String *key);
+InfoBackupData *infoBackupDataList(const InfoBackup *this);
+InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
 
 /***********************************************************************************************************************************
 Destructor
@@ -60,5 +89,13 @@ Macros for function logging
     InfoBackup *
 #define FUNCTION_DEBUG_INFO_BACKUP_FORMAT(value, buffer, bufferSize)                                                              \
     objToLog(value, "InfoBackup", buffer, bufferSize)
+#define FUNCTION_DEBUG_INFO_BACKUP_DATA_TYPE                                                                                           \
+    InfoBackupData
+#define FUNCTION_DEBUG_INFO_BACKUP_DATA_FORMAT(value, buffer, bufferSize)                                                              \
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(&value, infoBackupDataToLog, buffer, bufferSize)
+#define FUNCTION_DEBUG_INFO_BACKUP_DATAP_TYPE                                                                                          \
+    InfoBackupData *
+#define FUNCTION_DEBUG_INFO_BACKUP_DATAP_FORMAT(value, buffer, bufferSize)                                                             \
+    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, infoBackupDataToLog, buffer, bufferSize)
 
 #endif

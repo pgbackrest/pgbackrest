@@ -14,6 +14,7 @@ Backup Info Handler
 #include "common/type/list.h"
 #include "info/info.h"
 #include "info/infoBackup.h"
+#include "info/infoManifest.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
@@ -38,42 +39,9 @@ struct InfoBackup
 {
     MemContext *memContext;                                         // Context that contains the InfoBackup
     InfoPg *infoPg;                                                 // Contents of the DB data
-    KeyValue *backupCurrent;                                        // List of backup labels and their keyValues
+    List *backup;                                                   // List of current backups and their associated data
 };
 
-/***********************************************************************************************************************************
-Set a key/value in the backup current list
-??? Internal until able to write via c then it will be added to .h file and can be moved below the constructor
-***********************************************************************************************************************************/
-void
-infoBackupCurrentSet(InfoBackup *this, const String *section, const String *key, const Variant *value)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
-        FUNCTION_TEST_PARAM(STRING, section);
-        FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(VARIANT, value);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(section != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
-        FUNCTION_TEST_ASSERT(value != NULL);
-    FUNCTION_TEST_END();
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        Variant *sectionKey = varNewStr(section);
-        KeyValue *sectionKv = varKv(kvGet(this->backupCurrent, sectionKey));
-
-        if (sectionKv == NULL)
-            sectionKv = kvPutKv(this->backupCurrent, sectionKey);
-
-        kvAdd(sectionKv, varNewStr(key), value);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RESULT_VOID();
-}
 
 /***********************************************************************************************************************************
 Create a new InfoBackup object
@@ -119,25 +87,40 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
         const Ini *infoIni = infoPgIni(this->infoPg);
         const String *backupCurrentSection = strNew(INFO_BACKUP_SECTION_BACKUP_CURRENT);
 
-        // If there are current backups, then parse the json for each into a key/value object
+        // If there are current backups, then parse the json for each into a list object
         if (strLstExists(iniSectionList(infoIni), backupCurrentSection))
         {
             // Initialize the store and get the list of backup labels
-            this->backupCurrent = kvNew();
+            this->backup = lstNew(sizeof(InfoBackupData));
             const StringList *backupLabelList = iniSectionKeyList(infoIni, backupCurrentSection);
 
-            // For each backup label, store the information as key/value pairs
+            // For each backup label, store the information
             for (unsigned int backupLabelIdx = 0; backupLabelIdx < strLstSize(backupLabelList); backupLabelIdx++)
             {
                 const String *backupLabelKey = strLstGet(backupLabelList, backupLabelIdx);
                 const KeyValue *backupKv = jsonToKv(varStr(iniGet(infoIni, backupCurrentSection, backupLabelKey)));
-                const VariantList *keyList = kvKeyList(backupKv);
 
-                for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+                InfoBackupData infoBackupData =
                 {
-                    infoBackupCurrentSet(
-                        this, backupLabelKey, varStr(varLstGet(keyList, keyIdx)), kvGet(backupKv, varLstGet(keyList, keyIdx)));
-                }
+                    .backupLabel = strDup(backupLabelKey),
+                    .backrestFormat = varIntForce(kvGet(backupKv, varNewStr(INFO_KEY_FORMAT_STR))),
+                    .backrestVersion = varStr(kvGet(backupKv, varNewStr(INFO_KEY_VERSION_STR))),
+                    .backupArchiveStart = varStr(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_STR))),
+                    .backupArchiveStop = varStr(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR))),
+                    .backupInfoRepoSize = varUInt64Force(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR))),
+                    .backupInfoRepoSizeDelta = varUInt64Force(
+                        kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR))),
+                    .backupInfoSize = varUInt64Force(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR))),
+                    .backupInfoSizeDelta = varUInt64Force(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR))),
+                    .backupPrior = varStr(kvGet(backupKv, varNewStr(INFO_KEY_VERSION_STR))),
+                    .backupReference = strLstNewVarLst(
+                        varVarLst(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR)))),
+                    .backupType = varStr(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_TYPE_STR))),
+                    .backupPgId = cvtZToUInt(strPtr(varStr(kvGet(backupKv, varNewStr(INFO_KEY_DB_ID_STR))))),
+                };
+
+                // Add the backup data to the list
+                lstAdd(this->backup, &infoBackupData);
             }
         }
     }
@@ -173,6 +156,7 @@ infoBackupCurrentKeyGet(const InfoBackup *this)
 
     FUNCTION_TEST_RESULT(STRING_LIST, result);
 }
+
 
 /***********************************************************************************************************************************
 Get a value of a key from a specific backup in the backup current list
@@ -262,6 +246,37 @@ infoBackupPg(const InfoBackup *this)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(INFO_PG, this->infoPg);
+}
+
+/***********************************************************************************************************************************
+Get pointer to list of current backups
+***********************************************************************************************************************************/
+InfoBackupData *
+infoBackupDataList(const InfoBackup *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(INFO_BACKUP_DATAP, this->backup);
+}
+
+/***********************************************************************************************************************************
+Return a structure of the backup data from a specific index
+***********************************************************************************************************************************/
+InfoBackupData
+infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO_PG, this);
+        FUNCTION_DEBUG_PARAM(UINT, backupDataIdx);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
+    FUNCTION_DEBUG_RESULT(INFO_BACKUP_DATA, *((InfoBackupData *)lstGet(this->backup, backupDataIdx)));
 }
 
 /***********************************************************************************************************************************
