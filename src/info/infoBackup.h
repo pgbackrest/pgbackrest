@@ -23,7 +23,7 @@ Information about an existing backup
 ***********************************************************************************************************************************/
 typedef struct InfoBackupData
 {
-    int backrestFormat;
+    unsigned int backrestFormat;
     const String *backrestVersion;
     const String *backupArchiveStart;
     const String *backupArchiveStop;
