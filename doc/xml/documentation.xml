@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc SYSTEM "doc.dtd">
+<doc title="{[project]}" subtitle="Building Documentation" toc="y">
+    <description>Building {[project]} Documentation</description>
+
+    <section id="general">
+        <title>General Builds</title>
+
+        <p>The <backrest/> documentation can output a variety of formats and target several platforms and <postgres/> versions.</p>
+
+        <p>This will build all documentation with defaults:</p>
+
+        <code-block type="bash">
+./doc.pl
+        </code-block>
+
+        <p>The user guide can be built for different platforms: <id>centos6</id>, <id>centos7</id>, and <id>debian</id>. This will build the HTML user guide for CentOS/RHEL 7:</p>
+
+        <code-block type="bash">
+./doc.pl --out=html --include=user-guide --var=os-type=centos7
+        </code-block>
+
+        <p>Documentation generation will build a cache of all executed statements and use the cache to build the documentation quickly if no executed statements have changed.  This makes proofing text-only edits very fast, but sometimes it is useful to do a full build without using the cache:</p>
+
+        <code-block type="bash">
+./doc.pl --out=html --include=user-guide --var=os-type=centos6 --no-cache
+        </code-block>
+
+        <p>Each <id>os-type</id> has a default container image that will be used as a base for creating hosts.  For <id>centos6</id>/<id>centos7</id> these defaults are generally fine, but for <id>debian</id> it can be useful to change the image.</p>
+
+        <code-block type="bash">
+./doc.pl --out=html --include=user-guide --var=os-type=debian --var=os-image=debian:9
+        </code-block>
+    </section>
+
+    <section id="package">
+        <title>Building with Packages</title>
+
+        <p>A user-specified package can be used when building the documentation.  Since the documentation exercises most <backrest/> functionality this is a great way to smoke-test packages.</p>
+
+        <p>The package must be located within the <backrest/> repo and the specified path should be relative to the repository base.  <path>test/package</path> is a good default path to use.</p>
+
+        <p>Ubuntu 16.04:</p>
+
+        <code-block type="bash">
+./doc.pl --out=html --include=user-guide --no-cache --var=os-type=debian --var=os-image=ubuntu:16.04 --var=package=test/package/pgbackrest_2.08-0_amd64.deb
+        </code-block>
+
+        <p>CentOS/RHEL 6:</p>
+
+        <code-block type="bash">
+./doc.pl --out=html --include=user-guide --no-cache --var=os-type=centos6 --var=package=test/package/pgbackrest-2.08-1.el6.x86_64.rpm
+        </code-block>
+
+        <p>CentOS/RHEL 7:</p>
+
+        <code-block type="bash">
+./doc.pl --out=html --include=user-guide --no-cache --var=os-type=centos7 --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
+        </code-block>
+
+    </section>
+</doc>

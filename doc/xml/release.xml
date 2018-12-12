@@ -203,6 +203,10 @@
 
                         <p>Clarify that region/endpoint must be configured correctly for the bucket.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add documentation for building the documentation.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
