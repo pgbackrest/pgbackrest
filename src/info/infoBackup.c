@@ -26,11 +26,11 @@ Internal constants
 #define INFO_BACKUP_SECTION                                         "backup"
 #define INFO_BACKUP_SECTION_BACKUP_CURRENT                          INFO_BACKUP_SECTION ":current"
 
-STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR,            INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE);
-STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR,      INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA);
-STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR,                 INFO_BACKUP_KEY_BACKUP_INFO_SIZE);
-STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR,           INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA);
-STRING_EXTERN(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR,                 INFO_BACKUP_KEY_BACKUP_REFERENCE);
+STRING_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR,            "backup-info-repo-size");
+STRING_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR,      "backup-info-repo-size-delta");
+STRING_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR,                 "backup-info-size");
+STRING_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR,           "backup-info-size-delta");
+STRING_STATIC(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR,                 "backup-reference");
 
 /***********************************************************************************************************************************
 Object type
@@ -41,7 +41,6 @@ struct InfoBackup
     InfoPg *infoPg;                                                 // Contents of the DB data
     List *backup;                                                   // List of current backups and their associated data
 };
-
 
 /***********************************************************************************************************************************
 Create a new InfoBackup object
@@ -102,21 +101,24 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
 
                 InfoBackupData infoBackupData =
                 {
-                    .backupLabel = strDup(backupLabelKey),
                     .backrestFormat = varIntForce(kvGet(backupKv, varNewStr(INFO_KEY_FORMAT_STR))),
-                    .backrestVersion = varStr(kvGet(backupKv, varNewStr(INFO_KEY_VERSION_STR))),
-                    .backupArchiveStart = varStr(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_STR))),
-                    .backupArchiveStop = varStr(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR))),
-                    .backupInfoRepoSize = varUInt64Force(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR))),
-                    .backupInfoRepoSizeDelta = varUInt64Force(
+                    .backrestVersion = varStrForce(kvGet(backupKv, varNewStr(INFO_KEY_VERSION_STR))),
+                    .backupArchiveStart = varStrForce(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_STR))),
+                    .backupArchiveStop = varStrForce(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR))),
+                    .backupInfoRepoSize = varUInt64(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR))),
+                    .backupInfoRepoSizeDelta = varUInt64(
                         kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR))),
-                    .backupInfoSize = varUInt64Force(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR))),
-                    .backupInfoSizeDelta = varUInt64Force(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR))),
-                    .backupPrior = varStr(kvGet(backupKv, varNewStr(INFO_KEY_VERSION_STR))),
-                    .backupReference = strLstNewVarLst(
-                        varVarLst(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR)))),
-                    .backupType = varStr(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_TYPE_STR))),
-                    .backupPgId = cvtZToUInt(strPtr(varStr(kvGet(backupKv, varNewStr(INFO_KEY_DB_ID_STR))))),
+                    .backupInfoSize = varUInt64(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR))),
+                    .backupInfoSizeDelta = varUInt64(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR))),
+                    .backupLabel = strDup(backupLabelKey),
+                    .backupPgId = cvtZToUInt(strPtr(varStrForce(kvGet(backupKv, varNewStr(INFO_KEY_DB_ID_STR))))),
+                    .backupPrior = varStr(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_PRIOR_STR))),
+                    .backupReference = (kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR)) != NULL ?
+                        strLstNewVarLst(varVarLst(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR)))) :
+                        NULL),
+                    .backupTimestampStart = varUInt64(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR))),
+                    .backupTimestampStop= varUInt64(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR))),
+                    .backupType = varStrForce(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_TYPE_STR))),
                 };
 
                 // Add the backup data to the list
@@ -128,66 +130,6 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
 
     // Return buffer
     FUNCTION_DEBUG_RESULT(INFO_BACKUP, this);
-}
-
-/***********************************************************************************************************************************
-Get the list of keys (backup labels) from the backup current list
-***********************************************************************************************************************************/
-StringList *
-infoBackupCurrentKeyGet(const InfoBackup *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_TEST_END();
-
-    StringList *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        if (this->backupCurrent != NULL)
-        {
-            result = strLstNewVarLst(kvKeyList(this->backupCurrent));
-            strLstMove(result, MEM_CONTEXT_OLD());
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RESULT(STRING_LIST, result);
-}
-
-
-/***********************************************************************************************************************************
-Get a value of a key from a specific backup in the backup current list
-***********************************************************************************************************************************/
-const Variant *
-infoBackupCurrentGet(const InfoBackup *this, const String *section, const String *key)
-{
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_BACKUP, this);
-        FUNCTION_DEBUG_PARAM(STRING, section);
-        FUNCTION_DEBUG_PARAM(STRING, key);
-
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(section != NULL);
-        FUNCTION_DEBUG_ASSERT(key != NULL);
-    FUNCTION_DEBUG_END();
-
-    const Variant *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Get the section
-        KeyValue *sectionKv = varKv(kvGet(this->backupCurrent, varNewStr(section)));
-
-        // Section must exist to get the value
-        if (sectionKv != NULL)
-            result = kvGet(sectionKv, varNewStr(key));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_DEBUG_RESULT(CONST_VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -249,10 +191,10 @@ infoBackupPg(const InfoBackup *this)
 }
 
 /***********************************************************************************************************************************
-Get pointer to list of current backups
+Get total current backups
 ***********************************************************************************************************************************/
-InfoBackupData *
-infoBackupDataList(const InfoBackup *this)
+unsigned int
+infoBackupDataTotal(const InfoBackup *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_BACKUP, this);
@@ -260,7 +202,7 @@ infoBackupDataList(const InfoBackup *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(INFO_BACKUP_DATAP, this->backup);
+    FUNCTION_TEST_RESULT(UINT, (this->backup == NULL ? 0 : lstSize(this->backup)));
 }
 
 /***********************************************************************************************************************************
@@ -270,13 +212,22 @@ InfoBackupData
 infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_PG, this);
+        FUNCTION_DEBUG_PARAM(INFO_BACKUP, this);
         FUNCTION_DEBUG_PARAM(UINT, backupDataIdx);
 
         FUNCTION_DEBUG_ASSERT(this != NULL);
     FUNCTION_DEBUG_END();
 
     FUNCTION_DEBUG_RESULT(INFO_BACKUP_DATA, *((InfoBackupData *)lstGet(this->backup, backupDataIdx)));
+}
+
+/***********************************************************************************************************************************
+Render as string for logging
+***********************************************************************************************************************************/
+String *
+infoBackupDataToLog(const InfoBackupData *this)
+{
+    return strNewFmt("{label: %s, pgId: %u}", strPtr(this->backupLabel), this->backupPgId);
 }
 
 /***********************************************************************************************************************************

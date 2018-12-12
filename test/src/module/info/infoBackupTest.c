@@ -15,7 +15,7 @@ testRun(void)
     InfoBackup *infoBackup = NULL;
 
     // *****************************************************************************************************************************
-    if (testBegin("infoBackupNew(), infoBackupCurrentSet(), infoBackupCurrentKeyGet(), infoBackupCheckPg(), infoBackupFree()"))
+    if (testBegin("infoBackupNew(), infoBackupDataTotal(), infoBackupCheckPg(), infoBackupFree()"))
     {
         // File missing, ignoreMissing=false -- error
         //--------------------------------------------------------------------------------------------------------------------------
@@ -54,8 +54,8 @@ testRun(void)
 
         TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), "    new backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
-        TEST_RESULT_PTR(infoBackup->backupCurrent, NULL, "    backupCurrent NULL");
-        TEST_RESULT_PTR(infoBackupCurrentKeyGet(infoBackup),  NULL, "    infoBackupCurrentKeyGet returns NULL");
+        TEST_RESULT_PTR(infoBackup->backup, NULL, "    backupCurrent NULL");
+        TEST_RESULT_INT(infoBackupDataTotal(infoBackup),  0, "    infoBackupDataTotal returns 0");
 
         // infoBackupCheckPg
         //--------------------------------------------------------------------------------------------------------------------------
@@ -91,14 +91,14 @@ testRun(void)
         TEST_RESULT_VOID(infoBackupFree(NULL), "    NULL ptr");
     }
     // *****************************************************************************************************************************
-    if (testBegin("infoBackupCurrentGet(), infoBackupCurrentKeyGet()"))
+    if (testBegin("infoBackupData(), infoBackupDataTotal(), infoBackupDataToLog()"))
     {
         // File exists, ignoreMissing=false, backup:current section exists
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"1d29626cbe8f405074d325c586d70a2d87e16bad\"\n"
+            "backrest-checksum=\"ae30660533636e236d15319efe3a16fb17bb7ff9\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.04\"\n"
             "\n"
@@ -120,7 +120,7 @@ testRun(void)
             "20161219-212741F_20161219-212803D={\"backrest-format\":5,\"backrest-version\":\"2.04\","
             "\"backup-archive-start\":\"00000008000000000000001E\",\"backup-archive-stop\":\"00000008000000000000001E\","
             "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"
-            "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"test-reference\":[2,3,1],"
+            "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\"],"
             "\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,\"backup-type\":\"diff\",\"db-id\":1,"
             "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
@@ -128,7 +128,8 @@ testRun(void)
             "\"backup-archive-start\":\"00000008000000000000001E\",\"backup-archive-stop\":\"00000008000000000000001E\","
             "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"
             "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\","
-            "\"20161219-212741F_20161219-212803D\"],\"backup-type\":\"incr\",\"db-id\":1,"
+            "\"20161219-212741F_20161219-212803D\"],"
+            "\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,\"backup-type\":\"incr\",\"db-id\":1,"
             "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "\n"
@@ -141,43 +142,49 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put backup info current to file");
 
         TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), "    new backup info");
-        TEST_RESULT_PTR_NE(infoBackup->backupCurrent, NULL, "    backupCurrent not NULL");
+        TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 3, "    backup list contains backups");
 
-        TEST_RESULT_PTR(infoBackupCurrentGet(infoBackup, strNew("section-not-exist"), strNew("backup-timestamp-start")),
-            NULL, "empty section returns NULL");
+        InfoBackupData backupData = infoBackupData(infoBackup, 0);
 
-        StringList *backupLabelList = infoBackupCurrentKeyGet(infoBackup);
-        String *backupLabel = strLstGet(backupLabelList, 0);
+        TEST_RESULT_STR(strPtr(backupData.backupLabel), "20161219-212741F", "full backup label");
+        TEST_RESULT_STR(strPtr(backupData.backupType), "full", "    backup type full");
+        TEST_RESULT_INT(backupData.backrestFormat, 5, "    backrest format");
+        TEST_RESULT_STR(strPtr(backupData.backrestVersion), "2.04", "    backrest version");
+        TEST_RESULT_STR(strPtr(backupData.backupArchiveStart), "00000007000000000000001C", "    archive start");
+        TEST_RESULT_STR(strPtr(backupData.backupArchiveStop), "00000007000000000000001C", "    archive stop");
+        TEST_RESULT_INT(backupData.backupInfoRepoSize, 3159776, "    repo size");
+        TEST_RESULT_INT(backupData.backupInfoRepoSizeDelta, 3159776, "    repo delta");
+        TEST_RESULT_INT(backupData.backupInfoSize, 26897030, "    backup size");
+        TEST_RESULT_INT(backupData.backupInfoSizeDelta, 26897030, "    backup delta");
+        TEST_RESULT_INT(backupData.backupPgId, 1, "    pg id");
+        TEST_RESULT_PTR(backupData.backupPrior, NULL, "    backup prior NULL");
+        TEST_RESULT_PTR(backupData.backupReference, NULL, "    backup reference NULL");
+        TEST_RESULT_INT(backupData.backupTimestampStart, 1482182846, "    timestamp start");
+        TEST_RESULT_INT(backupData.backupTimestampStop, 1482182861, "    timestamp stop");
 
-        TEST_RESULT_STR(strPtr(backupLabel), "20161219-212741F", "full backup label");
-        TEST_RESULT_INT(varIntForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("backrest-format"))), 5,
-            "    check first kv");
-        TEST_RESULT_STR(strPtr(varStrForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("backup-type")))), "full",
-            "    check string");
-        TEST_RESULT_INT(varIntForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("db-id"))), 1,
-            "    check int");
-        TEST_RESULT_BOOL(varBoolForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("option-archive-check"))), true,
-            "    check bool");
+        backupData = infoBackupData(infoBackup, 1);
+        TEST_RESULT_STR(strPtr(backupData.backupLabel), "20161219-212741F_20161219-212803D", "diff backup label");
+        TEST_RESULT_STR(strPtr(backupData.backupType), "diff", "    backup type diff");
+        TEST_RESULT_INT(backupData.backupInfoRepoSize, 3159811, "    repo size");
+        TEST_RESULT_INT(backupData.backupInfoRepoSizeDelta, 15765, "    repo delta");
+        TEST_RESULT_INT(backupData.backupInfoSize, 26897030, "    backup size");
+        TEST_RESULT_INT(backupData.backupInfoSizeDelta, 163866, "    backup delta");
+        TEST_RESULT_STR(strPtr(backupData.backupPrior), "20161219-212741F", "    backup prior exists");
+        TEST_RESULT_BOOL(
+            (strLstSize(backupData.backupReference) == 1 && strLstExistsZ(backupData.backupReference, "20161219-212741F")), true,
+            "    backup reference exists");
 
-        backupLabel = strLstGet(backupLabelList, 1);
-        VariantList *testArray = varVarLst(infoBackupCurrentGet(infoBackup, backupLabel, strNew("test-reference")));
+        backupData = infoBackupData(infoBackup, 2);
+        TEST_RESULT_STR(strPtr(backupData.backupLabel), "20161219-212741F_20161219-212918I", "incr backup label");
+        TEST_RESULT_STR(strPtr(backupData.backupType), "incr", "    backup type incr");
+        TEST_RESULT_STR(strPtr(backupData.backupPrior), "20161219-212741F", "    backup prior exists");
+        TEST_RESULT_BOOL(
+            (strLstSize(backupData.backupReference) == 2 && strLstExistsZ(backupData.backupReference, "20161219-212741F") &&
+            strLstExistsZ(backupData.backupReference, "20161219-212741F_20161219-212803D")), true, "    backup reference exists");
 
-        TEST_RESULT_INT(varLstSize(testArray), 3, "    check int array size");
-        TEST_RESULT_INT(varIntForce(varLstGet(testArray, 0)), 2, "        first array element");
-        TEST_RESULT_INT(varIntForce(varLstGet(testArray, 1)), 3, "        middle array element");
-        TEST_RESULT_INT(varIntForce(varLstGet(testArray, 2)), 1, "        last array element");
-        TEST_RESULT_INT(varIntForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("backup-timestamp-start"))), 1482182877,
-            "    check int after array");
-
-        backupLabel = strLstGet(backupLabelList, 2);
-        backupLabelList = strLstNewVarLst(varVarLst(infoBackupCurrentGet(infoBackup, backupLabel, strNew("backup-reference"))));
-
-        TEST_RESULT_INT(strLstSize(backupLabelList), 2, "    check string array size");
-        TEST_RESULT_STR(strPtr(strLstGet(backupLabelList, 0)), "20161219-212741F",
-            "        first array element");
-        TEST_RESULT_STR(strPtr(strLstGet(backupLabelList, 1)), "20161219-212741F_20161219-212803D",
-            "        last array element");
-        TEST_RESULT_STR(strPtr(varStrForce(infoBackupCurrentGet(infoBackup, backupLabel, strNew("backup-type")))), "incr",
-            "    check string after array");
+        // infoBackupDataToLog
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_STR(
+            strPtr(infoBackupDataToLog(&backupData)), "{label: 20161219-212741F_20161219-212918I, pgId: 1}", "check log format");
     }
 }
