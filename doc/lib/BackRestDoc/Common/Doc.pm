@@ -8,6 +8,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Cwd qw(abs_path);
 use File::Basename qw(dirname);
 use Scalar::Util qw(blessed);
 use XML::Checker::Parser;
@@ -45,7 +46,8 @@ sub new
     if (defined($self->{strFileName}))
     {
         my $oParser = XML::Checker::Parser->new(ErrorContext => 2, Style => 'Tree');
-        $oParser->set_sgml_search_path(defined($strSgmlSearchPath) ? $strSgmlSearchPath : dirname(dirname($0)) . '/doc/xml/dtd');
+        $oParser->set_sgml_search_path(
+            defined($strSgmlSearchPath) ? $strSgmlSearchPath : dirname(dirname(abs_path($0))) . '/doc/xml/dtd');
 
         my $oTree;
 

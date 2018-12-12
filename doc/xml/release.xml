@@ -223,6 +223,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Use absolute paths so that <file>./doc.pl</file> runs.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Pick <code>pg_switch_wal()</code>/<code>pg_switch_xlog()</code> based on <postgres/> version.</p>
                     </release-item>
 
