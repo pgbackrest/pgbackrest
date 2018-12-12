@@ -241,6 +241,10 @@
                     <release-item>
                         <p>Create common <id>if</id> expressions for testing <id>os-type</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <id>zlib1g-dev</id> to <proper>Debian</proper> builds.</p>
+                    </release-item>
                 </release-development-list>
             </release-doc-list>
 

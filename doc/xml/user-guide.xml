@@ -658,7 +658,7 @@
             </execute>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>apt-get install build-essential libssl-dev libxml2-dev libperl-dev</exe-cmd>
+                <exe-cmd>apt-get install build-essential libssl-dev libxml2-dev libperl-dev zlib1g-dev</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
