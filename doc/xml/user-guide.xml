@@ -116,7 +116,7 @@
         <!-- Hosts -->
         <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
 
-        <variable key="host-option">-v /sys/fs/cgroup:/sys/fs/cgroup:ro -v /tmp/$(mktemp -d):/run</variable>
+        <variable key="host-option">-v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /tmp/$(mktemp -d):/run</variable>
 
         <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
         <variable key="host-mount">{[pgbackrest-path]}:/backrest</variable>
@@ -319,6 +319,11 @@
         # Add doc user with sudo privileges
         RUN adduser -n {[host-user]} &amp;&amp; \
             echo '{[host-user]}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/{[host-user]}
+
+        # Enable the user session service so logons are allowed
+        RUN systemctl enable systemd-user-sessions.service &amp;&amp; \
+            ln -s /usr/lib/systemd/system/systemd-user-sessions.service \
+                /etc/systemd/system/default.target.wants/systemd-user-sessions.service
 
         CMD ["/usr/sbin/init"]
     </host-define>
