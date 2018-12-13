@@ -64,6 +64,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Migrate local <cmd>info</cmd> command to C.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <proper>S3</proper> storage driver.</p>
                     </release-item>
 
