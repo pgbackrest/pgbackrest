@@ -17,7 +17,6 @@ Info Command
 #include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
-#include "info/infoManifest.h"  // CHSNAG Maybe should be able to remove?
 #include "info/infoPg.h"
 #include "perl/exec.h"
 #include "postgres/interface.h"
@@ -202,77 +201,60 @@ backupList(const String *stanza, VariantList *backupSection, InfoBackup *info)
         FUNCTION_TEST_ASSERT(info != NULL);
     FUNCTION_TEST_END();
 
-    // For each current backup, get the label and corresponding data
-    if (infoBackupDataList(info) != NULL)
+    // For each current backup, get the label and corresponding data and build the backup section
+    for (unsigned int keyIdx = 0; keyIdx < infoBackupDataTotal(info); keyIdx++)
     {
-        // Build the backup section
-        for (unsigned int keyIdx = 0; keyIdx < strLstSize(infoBackupDataList(info)); keyIdx++)
-        {
-            // Get the backup data
-            InfoBackupData backupData = InfoBackupData(info, keyIdx);
-// CSHANG Stopped here
-            String *backupLabel = strLstGet(backupKey, keyIdx);
-            Variant *backupInfo = varNewKv();
+        // Get the backup data
+        InfoBackupData backupData = infoBackupData(info, keyIdx);
 
-            // main keys
-            kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_LABEL_STR), varNewStr(backupLabel));
-            kvPut(
-                varKv(backupInfo), varNewStr(BACKUP_KEY_TYPE_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_TYPE_STR));
-            kvPut(
-                varKv(backupInfo), varNewStr(BACKUP_KEY_PRIOR_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_PRIOR_STR));
-            kvPut(
-                varKv(backupInfo), varNewStr(BACKUP_KEY_REFERENCE_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_REFERENCE_STR));
+        Variant *backupInfo = varNewKv();
 
-            // archive section
-            KeyValue *archiveInfo = kvPutKv(varKv(backupInfo), varNewStr(KEY_ARCHIVE_STR));
-            kvAdd(
-                archiveInfo, varNewStr(KEY_START_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_STR));
-            kvAdd(
-                archiveInfo, varNewStr(KEY_STOP_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR));
+        // main keys
+        kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_LABEL_STR), varNewStr(backupData.backupLabel));
+        kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_TYPE_STR), varNewStr(backupData.backupType));
+        kvPut(
+            varKv(backupInfo), varNewStr(BACKUP_KEY_PRIOR_STR),
+            (backupData.backupPrior != NULL ? varNewStr(backupData.backupPrior) : NULL));
+        kvPut(
+            varKv(backupInfo), varNewStr(BACKUP_KEY_REFERENCE_STR),
+            (backupData.backupReference != NULL ? varNewVarLst(varLstNewStrLst(backupData.backupReference)) : NULL));
 
-            // backrest section
-            KeyValue *backrestInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_BACKREST_STR));
-            kvAdd(backrestInfo, varNewStr(BACKREST_KEY_FORMAT_STR), infoBackupCurrentGet(info, backupLabel, INFO_KEY_FORMAT_STR));
-            kvAdd(backrestInfo, varNewStr(BACKREST_KEY_VERSION_STR), infoBackupCurrentGet(info, backupLabel, INFO_KEY_VERSION_STR));
+        // archive section
+        KeyValue *archiveInfo = kvPutKv(varKv(backupInfo), varNewStr(KEY_ARCHIVE_STR));
+        kvAdd(
+            archiveInfo, varNewStr(KEY_START_STR),
+            (backupData.backupArchiveStart != NULL ? varNewStr(backupData.backupArchiveStart) : NULL));
+        kvAdd(
+            archiveInfo, varNewStr(KEY_STOP_STR),
+            (backupData.backupArchiveStop != NULL ? varNewStr(backupData.backupArchiveStop) : NULL));
 
-            // database section
-            KeyValue *dbInfo = kvPutKv(varKv(backupInfo), varNewStr(KEY_DATABASE_STR));
-            kvAdd(dbInfo, varNewStr(DB_KEY_ID_STR), infoBackupCurrentGet(info, backupLabel, INFO_KEY_DB_ID_STR));
+        // backrest section
+        KeyValue *backrestInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_BACKREST_STR));
+        kvAdd(backrestInfo, varNewStr(BACKREST_KEY_FORMAT_STR), varNewUInt64(backupData.backrestFormat));
+        kvAdd(backrestInfo, varNewStr(BACKREST_KEY_VERSION_STR), varNewStr(backupData.backrestVersion));
 
-            // info section
-            KeyValue *infoInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_INFO_STR));
-            kvAdd(
-                infoInfo, varNewStr(KEY_SIZE_STR), infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_STR));
-            kvAdd(
-                infoInfo, varNewStr(KEY_DELTA_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR));
+        // database section
+        KeyValue *dbInfo = kvPutKv(varKv(backupInfo), varNewStr(KEY_DATABASE_STR));
+        kvAdd(dbInfo, varNewStr(DB_KEY_ID_STR), varNewUInt64(backupData.backupPgId));
 
-            // info:repository section
-            KeyValue *repoInfo = kvPutKv(infoInfo, varNewStr(INFO_KEY_REPOSITORY_STR));
-            kvAdd(
-                repoInfo, varNewStr(KEY_SIZE_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR));
-            kvAdd(
-                repoInfo, varNewStr(KEY_DELTA_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR));
+        // info section
+        KeyValue *infoInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_INFO_STR));
+        kvAdd(infoInfo, varNewStr(KEY_SIZE_STR), varNewUInt64(backupData.backupInfoSize));
+        kvAdd(infoInfo, varNewStr(KEY_DELTA_STR), varNewUInt64(backupData.backupInfoSizeDelta));
 
-            // timestamp section
-            KeyValue *timeInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_TIMESTAMP_STR));
-            kvAdd(
-                timeInfo, varNewStr(KEY_START_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR));
-            kvAdd(
-                timeInfo, varNewStr(KEY_STOP_STR),
-                infoBackupCurrentGet(info, backupLabel, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR));
+        // info:repository section
+        KeyValue *repoInfo = kvPutKv(infoInfo, varNewStr(INFO_KEY_REPOSITORY_STR));
+        kvAdd(repoInfo, varNewStr(KEY_SIZE_STR), varNewUInt64(backupData.backupInfoRepoSize));
+        kvAdd(repoInfo, varNewStr(KEY_DELTA_STR), varNewUInt64(backupData.backupInfoRepoSizeDelta));
 
-            varLstAdd(backupSection, backupInfo);
-        }
+        // timestamp section
+        KeyValue *timeInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_TIMESTAMP_STR));
+        kvAdd(timeInfo, varNewStr(KEY_START_STR), varNewUInt64(backupData.backupTimestampStart));
+        kvAdd(timeInfo, varNewStr(KEY_STOP_STR), varNewUInt64(backupData.backupTimestampStop));
+
+        varLstAdd(backupSection, backupInfo);
     }
+
 
     FUNCTION_TEST_RESULT_VOID();
 }
@@ -433,7 +415,6 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
 
         // Get the min/max archive information for the database
         String *archiveResult = strNew("");
-
         for (unsigned int archiveIdx = 0; archiveIdx < varLstSize(archiveSection); archiveIdx++)
         {
             KeyValue *archiveInfo = varKv(varLstGet(archiveSection, archiveIdx));
@@ -477,8 +458,8 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
                 // Get and format the backup start/stop time
                 static char timeBufferStart[20];
                 static char timeBufferStop[20];
-                time_t timeStart = (time_t) varUInt64Force(kvGet(timestampInfo, varNewStr(KEY_START_STR)));
-                time_t timeStop = (time_t) varUInt64Force(kvGet(timestampInfo, varNewStr(KEY_STOP_STR)));
+                time_t timeStart = (time_t) varUInt64(kvGet(timestampInfo, varNewStr(KEY_START_STR)));
+                time_t timeStop = (time_t) varUInt64(kvGet(timestampInfo, varNewStr(KEY_STOP_STR)));
                 strftime(timeBufferStart, 20, "%Y-%m-%d %H:%M:%S", localtime(&timeStart));
                 strftime(timeBufferStop, 20, "%Y-%m-%d %H:%M:%S", localtime(&timeStop));
 
@@ -498,33 +479,16 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
                     strCat(backupResult, "n/a\n");
 
                 KeyValue *info = varKv(kvGet(backupInfo, varNewStr(BACKUP_KEY_INFO_STR)));
-                strCat(backupResult, "            database size: ");
-
-                if (kvGet(info, varNewStr(KEY_SIZE_STR)) != NULL)
-                    strCatFmt(backupResult, "%s", strPtr(strSizeFormat(varUInt64Force(kvGet(info, varNewStr(KEY_SIZE_STR))))));
-
-                strCat(backupResult, ", backup size: ");
-
-                if (kvGet(info, varNewStr(KEY_DELTA_STR)) != NULL)
-                    strCatFmt(backupResult, "%s", strPtr(strSizeFormat(varUInt64Force(kvGet(info, varNewStr(KEY_DELTA_STR))))));
-
-                strCat(backupResult, "\n");
+                strCatFmt(
+                    backupResult, "            database size: %s, backup size: %s\n",
+                    strPtr(strSizeFormat(varUInt64Force(kvGet(info, varNewStr(KEY_SIZE_STR))))),
+                    strPtr(strSizeFormat(varUInt64Force(kvGet(info, varNewStr(KEY_DELTA_STR))))));
 
                 KeyValue *repoInfo = varKv(kvGet(info, varNewStr(INFO_KEY_REPOSITORY_STR)));
-                strCat(backupResult, "            repository size: ");
-
-                if (kvGet(repoInfo, varNewStr(KEY_SIZE_STR)) != NULL)
-                    strCatFmt(backupResult, "%s", strPtr(strSizeFormat(varUInt64Force(kvGet(repoInfo, varNewStr(KEY_SIZE_STR))))));
-
-                strCat(backupResult, ", repository backup size: ");
-
-                if (kvGet(repoInfo, varNewStr(KEY_DELTA_STR)) != NULL)
-                {
-                    strCatFmt(
-                        backupResult, "%s", strPtr(strSizeFormat(varUInt64Force(kvGet(repoInfo, varNewStr(KEY_DELTA_STR))))));
-                }
-
-                strCat(backupResult, "\n");
+                strCatFmt(
+                    backupResult, "            repository size: %s, repository backup size: %s\n",
+                    strPtr(strSizeFormat(varUInt64Force(kvGet(repoInfo, varNewStr(KEY_SIZE_STR))))),
+                    strPtr(strSizeFormat(varUInt64Force(kvGet(repoInfo, varNewStr(KEY_DELTA_STR))))));
 
                 if (kvGet(backupInfo, varNewStr(BACKUP_KEY_REFERENCE_STR)) != NULL)
                 {

@@ -38,13 +38,13 @@ typedef struct InfoBackupData
     uint64_t backupTimestampStart;
     uint64_t backupTimestampStop;
     const String *backupType;
-    // bool optionArchiveCheck;  // CSHANG Add comment and comma separate this list to be added later
-    // bool optionArchiveCopy;
-    // bool optionBackupStandby;
-    // bool optionChecksumPage;
-    // bool optionCompress;
-    // bool optionHardlink;
-    // bool optionOnline;
+    bool optionArchiveCheck;
+    bool optionArchiveCopy;
+    bool optionBackupStandby;
+    bool optionChecksumPage;
+    bool optionCompress;
+    bool optionHardlink;
+    bool optionOnline;
 } InfoBackupData;
 
 /***********************************************************************************************************************************

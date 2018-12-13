@@ -103,8 +103,6 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
                 {
                     .backrestFormat = (unsigned int) varUInt64(kvGet(backupKv, varNewStr(INFO_KEY_FORMAT_STR))),
                     .backrestVersion = varStrForce(kvGet(backupKv, varNewStr(INFO_KEY_VERSION_STR))),
-                    .backupArchiveStart = varStrForce(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_STR))),
-                    .backupArchiveStop = varStrForce(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR))),
                     .backupInfoRepoSize = varUInt64(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR))),
                     .backupInfoRepoSizeDelta = varUInt64(
                         kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_STR))),
@@ -112,13 +110,26 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
                     .backupInfoSizeDelta = varUInt64(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_STR))),
                     .backupLabel = strDup(backupLabelKey),
                     .backupPgId = cvtZToUInt(strPtr(varStrForce(kvGet(backupKv, varNewStr(INFO_KEY_DB_ID_STR))))),
+                    .backupTimestampStart = varUInt64(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR))),
+                    .backupTimestampStop= varUInt64(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR))),
+                    .backupType = varStrForce(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_TYPE_STR))),
+
+                    // Possible NULL values
+                    .backupArchiveStart = varStr(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_STR))),
+                    .backupArchiveStop = varStr(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR))),
                     .backupPrior = varStr(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_PRIOR_STR))),
                     .backupReference = (kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR)) != NULL ?
                         strLstNewVarLst(varVarLst(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_REFERENCE_STR)))) :
                         NULL),
-                    .backupTimestampStart = varUInt64(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR))),
-                    .backupTimestampStop= varUInt64(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR))),
-                    .backupType = varStrForce(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_BACKUP_TYPE_STR))),
+
+                    // Options
+                    .optionArchiveCheck = varBool(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_OPT_ARCHIVE_CHECK_STR))),
+                    .optionArchiveCopy = varBool(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_OPT_ARCHIVE_COPY_STR))),
+                    .optionBackupStandby = varBool(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_OPT_BACKUP_STANDBY_STR))),
+                    .optionChecksumPage = varBool(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_OPT_CHECKSUM_PAGE_STR))),
+                    .optionCompress = varBool(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_OPT_COMPRESS_STR))),
+                    .optionHardlink = varBool(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_OPT_HARDLINK_STR))),
+                    .optionOnline = varBool(kvGet(backupKv, varNewStr(INFO_MANIFEST_KEY_OPT_ONLINE_STR))),
                 };
 
                 // Add the backup data to the list

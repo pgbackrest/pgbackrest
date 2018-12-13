@@ -210,7 +210,7 @@ testRun(void)
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"63ac8ee2df35cfd965efb3957c55164b61c1f93f\"\n"
+            "backrest-checksum=\"2edbac400200cc0bd559951f1ee166de5c6f5f49\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.04\"\n"
             "\n"
@@ -222,11 +222,13 @@ testRun(void)
             "db-version=\"9.4\"\n"
             "\n"
             "[backup:current]\n"
-            "20181116-154756F={"
-            "\"backrest-format\":5,\"backrest-version\":\"2.04\","
-            "\"backup-timestamp-start\":1542383276,\"backup-timestamp-stop\":1542383289,\"backup-type\":\"full\","
-            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181116-154756F={\"backrest-format\":5,\"backrest-version\":\"2.04\","
+            "\"backup-archive-start\":null,\"backup-archive-stop\":null,"
+            "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159,\"backup-info-size\":26897030,"
+            "\"backup-info-size-delta\":26897030,\"backup-timestamp-start\":1542383276,\"backup-timestamp-stop\":1542383289,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"
+            "\"option-backup-standby\":false,\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,"
+            "\"option-online\":true}\n"
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
@@ -276,12 +278,12 @@ testRun(void)
             "                    \"id\" : 1\n"
             "                },\n"
             "                \"info\" : {\n"
-            "                    \"delta\" : null,\n"
+            "                    \"delta\" : 26897030,\n"
             "                    \"repository\" : {\n"
-            "                        \"delta\" : null,\n"
-            "                        \"size\" : null\n"
+            "                        \"delta\" : 3159,\n"
+            "                        \"size\" : 3159776\n"
             "                    },\n"
-            "                    \"size\" : null\n"
+            "                    \"size\" : 26897030\n"
             "                },\n"
             "                \"label\" : \"20181116-154756F\",\n"
             "                \"prior\" : null,\n"
@@ -334,8 +336,8 @@ testRun(void)
             "        full backup: 20181116-154756F\n"
             "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
             "            wal start/stop: n/a\n"
-            "            database size: , backup size: \n"
-            "            repository size: , repository backup size: \n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repository size: 3MB, repository backup size: 3KB\n"
             ,"text - single stanza, valid backup, no priors, no archives in latest DB");
 
         // backup.info/archive.info files exist, backups exist, archives exist
@@ -785,7 +787,11 @@ testRun(void)
         kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_TYPE_STR), varNewStr(strNew("full")));
         kvPutKv(varKv(backupInfo), varNewStr(KEY_ARCHIVE_STR));
         KeyValue *infoInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_INFO_STR));
-        kvPutKv(infoInfo, varNewStr(INFO_KEY_REPOSITORY_STR));
+        kvPut(infoInfo, varNewStr(KEY_SIZE_STR), varNewUInt64(0));
+        kvPut(infoInfo, varNewStr(KEY_DELTA_STR), varNewUInt64(0));
+        KeyValue *repoInfo = kvPutKv(infoInfo, varNewStr(INFO_KEY_REPOSITORY_STR));
+        kvAdd(repoInfo, varNewStr(KEY_SIZE_STR), varNewUInt64(0));
+        kvAdd(repoInfo, varNewStr(KEY_DELTA_STR), varNewUInt64(0));
         KeyValue *databaseInfo = kvPutKv(varKv(backupInfo), varNewStr(KEY_DATABASE_STR));
         kvAdd(databaseInfo, varNewStr(DB_KEY_ID_STR), varNewUInt64(1));
         KeyValue *timeInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_TIMESTAMP_STR));
@@ -806,8 +812,8 @@ testRun(void)
             "        full backup: 20181119-152138F\n"
             "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
             "            wal start/stop: n/a\n"
-            "            database size: , backup size: \n"
-            "            repository size: , repository backup size: \n"
+            "            database size: 0B, backup size: 0B\n"
+            "            repository size: 0B, repository backup size: 0B\n"
             ,"formatTextDb only backup section (code cverage only)");
     }
 

@@ -98,7 +98,7 @@ testRun(void)
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"ae30660533636e236d15319efe3a16fb17bb7ff9\"\n"
+            "backrest-checksum=\"b944d83dcfa33ac0eb88d41b16efc5aaa5da7ec1\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.04\"\n"
             "\n"
@@ -125,7 +125,7 @@ testRun(void)
             "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","
-            "\"backup-archive-start\":\"00000008000000000000001E\",\"backup-archive-stop\":\"00000008000000000000001E\","
+            "\"backup-archive-start\":null,\"backup-archive-stop\":null,"
             "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"
             "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\","
             "\"20161219-212741F_20161219-212803D\"],"
@@ -176,11 +176,20 @@ testRun(void)
 
         backupData = infoBackupData(infoBackup, 2);
         TEST_RESULT_STR(strPtr(backupData.backupLabel), "20161219-212741F_20161219-212918I", "incr backup label");
+        TEST_RESULT_PTR(backupData.backupArchiveStart, NULL, "    archive start NULL");
+        TEST_RESULT_PTR(backupData.backupArchiveStop, NULL, "    archive stop NULL");
         TEST_RESULT_STR(strPtr(backupData.backupType), "incr", "    backup type incr");
         TEST_RESULT_STR(strPtr(backupData.backupPrior), "20161219-212741F", "    backup prior exists");
         TEST_RESULT_BOOL(
             (strLstSize(backupData.backupReference) == 2 && strLstExistsZ(backupData.backupReference, "20161219-212741F") &&
             strLstExistsZ(backupData.backupReference, "20161219-212741F_20161219-212803D")), true, "    backup reference exists");
+        TEST_RESULT_BOOL(backupData.optionArchiveCheck, true, "    option archive check");
+        TEST_RESULT_BOOL(backupData.optionArchiveCopy, false, "    option archive copy");
+        TEST_RESULT_BOOL(backupData.optionBackupStandby, false, "    option backup standby");
+        TEST_RESULT_BOOL(backupData.optionChecksumPage, false, "    option checksum page");
+        TEST_RESULT_BOOL(backupData.optionCompress, true, "    option compress");
+        TEST_RESULT_BOOL(backupData.optionHardlink, false, "    option hardlink");
+        TEST_RESULT_BOOL(backupData.optionOnline, true, "    option online");
 
         // infoBackupDataToLog
         //--------------------------------------------------------------------------------------------------------------------------
