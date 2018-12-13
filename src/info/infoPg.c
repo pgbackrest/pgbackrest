@@ -25,7 +25,7 @@ Internal constants
 ***********************************************************************************************************************************/
 STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                          "db:history");
 
-STRING_STATIC(INFO_KEY_DB_ID_STR,                                   "db-id");
+STRING_EXTERN(INFO_KEY_DB_ID_STR,                                   INFO_KEY_DB_ID);
 STRING_STATIC(INFO_KEY_DB_CATALOG_VERSION_STR,                      "db-catalog-version");
 STRING_STATIC(INFO_KEY_DB_CONTROL_VERSION_STR,                      "db-control-version");
 STRING_STATIC(INFO_KEY_DB_SYSTEM_ID_STR,                            "db-system-id");
@@ -227,6 +227,21 @@ infoPgDataTotal(const InfoPg *this)
     FUNCTION_DEBUG_END();
 
     FUNCTION_DEBUG_RESULT(UINT, lstSize(this->history));
+}
+
+/***********************************************************************************************************************************
+Return the ini object
+***********************************************************************************************************************************/
+Ini *
+infoPgIni(const InfoPg *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO_PG, this);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
+    FUNCTION_DEBUG_RESULT(INI, infoIni(this->info));
 }
 
 /***********************************************************************************************************************************

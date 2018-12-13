@@ -25,7 +25,8 @@ STRING_STATIC(INFO_SECTION_CIPHER_STR,                              "cipher");
 
 STRING_STATIC(INFO_KEY_CIPHER_PASS_STR,                             "cipher-pass");
 STRING_STATIC(INFO_KEY_CHECKSUM_STR,                                "backrest-checksum");
-STRING_STATIC(INFO_KEY_FORMAT_STR,                                  "backrest-format");
+STRING_EXTERN(INFO_KEY_FORMAT_STR,                                  INFO_KEY_FORMAT);
+STRING_EXTERN(INFO_KEY_VERSION_STR,                                 INFO_KEY_VERSION);
 
 /***********************************************************************************************************************************
 Object type

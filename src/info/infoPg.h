@@ -13,6 +13,13 @@ typedef struct InfoPg InfoPg;
 
 #include "crypto/crypto.h"
 #include "storage/storage.h"
+#include "common/ini.h"
+
+/***********************************************************************************************************************************
+Constants
+***********************************************************************************************************************************/
+#define INFO_KEY_DB_ID                                              "db-id"
+    STRING_DECLARE(INFO_KEY_DB_ID_STR);
 
 /***********************************************************************************************************************************
 Information about the PostgreSQL cluster
@@ -54,6 +61,7 @@ const String *infoPgCipherPass(const InfoPg *this);
 InfoPgData infoPgData(const InfoPg *this, unsigned int pgDataIdx);
 InfoPgData infoPgDataCurrent(const InfoPg *this);
 unsigned int infoPgDataTotal(const InfoPg *this);
+Ini *infoPgIni(const InfoPg *this);
 
 /***********************************************************************************************************************************
 Destructor
