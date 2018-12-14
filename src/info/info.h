@@ -15,6 +15,14 @@ typedef struct Info Info;
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
+Constants
+***********************************************************************************************************************************/
+#define INFO_KEY_FORMAT                                             "backrest-format"
+    STRING_DECLARE(INFO_KEY_VERSION_STR);
+#define INFO_KEY_VERSION                                            "backrest-version"
+    STRING_DECLARE(INFO_KEY_FORMAT_STR);
+
+/***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
 Info *infoNew(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);

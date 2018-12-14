@@ -225,7 +225,28 @@ jsonToKv(const String *json)
 
                 continue;
             }
-            // Else not sure what it is.  Currently nulls will error.
+            // Appears to be a null
+            else if (jsonC[jsonPos] == 'n')
+            {
+                valueBeginPos = jsonPos;
+
+                while (jsonC[jsonPos] != 'l' && jsonPos < strSize(json) - 1)
+                    jsonPos++;
+
+                if (jsonC[jsonPos] != 'l')
+                    THROW_FMT(JsonFormatError, "expected null delimit but found '%c'", jsonC[jsonPos]);
+
+                jsonPos++;
+                if (jsonPos == strSize(json) || jsonC[jsonPos] != 'l')
+                    THROW_FMT(JsonFormatError, "null delimit not found");
+
+                jsonPos++;
+                String *valueStr = strNewN(jsonC + valueBeginPos, jsonPos - valueBeginPos);
+
+                if (strCmpZ(valueStr, "null") != 0)
+                    THROW_FMT(JsonFormatError, "expected 'null' but found '%s'", strPtr(valueStr));
+            }
+            // Else not sure what it is.
             else
                 THROW(JsonFormatError, "unknown value type");
 

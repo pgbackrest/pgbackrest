@@ -109,12 +109,14 @@
 
         <variable key="postgres-recovery-demo">{[pg-path]}/recovery.conf</variable>
 
-        <variable key="pg-switch-wal">pg_switch_xlog</variable>
+        <!-- Select correct WAL switch function based on the version of PostgreSQL -->
+        <variable key="pg-switch-wal" if="{[pg-version]} &lt; 10">pg_switch_xlog</variable>
+        <variable key="pg-switch-wal" if="{[pg-version]} &gt;= 10">pg_switch_wal</variable>
 
         <!-- Hosts -->
         <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
 
-        <variable key="host-option">-v /sys/fs/cgroup:/sys/fs/cgroup:ro -v /tmp/$(mktemp -d):/run</variable>
+        <variable key="host-option">-v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /tmp/$(mktemp -d):/run</variable>
 
         <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
         <variable key="host-mount">{[pgbackrest-path]}:/backrest</variable>
@@ -317,6 +319,11 @@
         # Add doc user with sudo privileges
         RUN adduser -n {[host-user]} &amp;&amp; \
             echo '{[host-user]}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/{[host-user]}
+
+        # Enable the user session service so logons are allowed
+        RUN systemctl enable systemd-user-sessions.service &amp;&amp; \
+            ln -s /usr/lib/systemd/system/systemd-user-sessions.service \
+                /etc/systemd/system/default.target.wants/systemd-user-sessions.service
 
         CMD ["/usr/sbin/init"]
     </host-define>
@@ -651,7 +658,7 @@
             </execute>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>apt-get install build-essential libssl-dev libxml2-dev libperl-dev</exe-cmd>
+                <exe-cmd>apt-get install build-essential libssl-dev libxml2-dev libperl-dev zlib1g-dev</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
@@ -2576,12 +2583,16 @@
 
             <p>Note that the <pg-setting>standby_mode</pg-setting> setting has been written into the <file>recovery.conf</file> file.  Configuring recovery settings in <backrest/> means that the <file>recovery.conf</file> file does not need to be stored elsewhere since it will be properly recreated with each restore.  The <br-setting>--type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>recovery.conf</file> file in place if that behavior is preferred.</p>
 
-            <p>The <pg-setting>hot_standby</pg-setting> setting must be enabled before starting <postgres/> to allow read-only connections on <host>{[host-pg2]}</host>.  Otherwise, connection attempts will be refused.</p>
+            <p>The <pg-setting>hot_standby</pg-setting> setting must be enabled before starting <postgres/> to allow read-only connections on <host>{[host-pg2]}</host>.  Otherwise, connection attempts will be refused.  The rest of the configuration is in case the standby is promoted to a primary.</p>
 
             <postgres-config host="{[host-pg2]}" file="{[postgres-config-demo]}">
-                <title>Enable <pg-option>hot_standby</pg-option> and configure logging</title>
+                <title>Configure <postgres/></title>
 
                 <postgres-config-option key="hot_standby">on</postgres-config-option>
+                <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
+                <postgres-config-option key="archive_mode">on</postgres-config-option>
+                <postgres-config-option key="wal_level">hot_standby</postgres-config-option>
+                <postgres-config-option key="max_wal_senders">3</postgres-config-option>
                 <postgres-config-option key="log_filename">'postgresql.log'</postgres-config-option>
                 <postgres-config-option key="log_line_prefix">''</postgres-config-option>
             </postgres-config>

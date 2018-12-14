@@ -11,7 +11,7 @@ P00  ERROR: [055]: archive.info does not exist but is required to push/get WAL s
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [041]: unable to load info file '/archive/db/archive.info' or '/archive/db/archive.info.copy':
+P00  ERROR: [055]: unable to load info file '/archive/db/archive.info' or '/archive/db/archive.info.copy':
             FileMissingError: unable to open '/archive/db/archive.info': No such file or directory
             FileMissingError: unable to open '/archive/db/archive.info.copy': No such file or directory
             HINT: archive.info cannot be opened but is required to push/get WAL segments.

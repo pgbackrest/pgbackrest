@@ -23,21 +23,13 @@ PostgreSQL Info Handler
 /***********************************************************************************************************************************
 Internal constants
 ***********************************************************************************************************************************/
-#define INFO_SECTION_DB                                             "db"
-#define INFO_SECTION_DB_HISTORY                                     INFO_SECTION_DB ":history"
-    STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                      INFO_SECTION_DB_HISTORY);
-#define INFO_SECTION_DB_MANIFEST                                    "backup:" INFO_SECTION_DB
+STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                          "db:history");
 
-#define INFO_KEY_DB_ID                                              "db-id"
-    STRING_STATIC(INFO_KEY_DB_ID_STR,                               INFO_KEY_DB_ID);
-#define INFO_KEY_DB_CATALOG_VERSION                                 "db-catalog-version"
-    STRING_STATIC(INFO_KEY_DB_CATALOG_VERSION_STR,                  INFO_KEY_DB_CATALOG_VERSION);
-#define INFO_KEY_DB_CONTROL_VERSION                                 "db-control-version"
-    STRING_STATIC(INFO_KEY_DB_CONTROL_VERSION_STR,                  INFO_KEY_DB_CONTROL_VERSION);
-#define INFO_KEY_DB_SYSTEM_ID                                       "db-system-id"
-    STRING_STATIC(INFO_KEY_DB_SYSTEM_ID_STR,                        INFO_KEY_DB_SYSTEM_ID);
-#define INFO_KEY_DB_VERSION                                         "db-version"
-    STRING_STATIC(INFO_KEY_DB_VERSION_STR,                          INFO_KEY_DB_VERSION);
+STRING_EXTERN(INFO_KEY_DB_ID_STR,                                   INFO_KEY_DB_ID);
+STRING_STATIC(INFO_KEY_DB_CATALOG_VERSION_STR,                      "db-catalog-version");
+STRING_STATIC(INFO_KEY_DB_CONTROL_VERSION_STR,                      "db-control-version");
+STRING_STATIC(INFO_KEY_DB_SYSTEM_ID_STR,                            "db-system-id");
+STRING_STATIC(INFO_KEY_DB_VERSION_STR,                              "db-version");
 
 /***********************************************************************************************************************************
 Object type
@@ -96,8 +88,8 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
 
             // Iterate in reverse because we would like the most recent pg history to be in position 0.  If we need to look at the
             // history list at all we'll be iterating from newest to oldest and putting newest in position 0 makes for more natural
-            // looping.
-            for (unsigned int pgHistoryIdx = strLstSize(pgHistoryKey) - 1; pgHistoryIdx < strLstSize(pgHistoryKey); pgHistoryIdx--)
+            // looping. Cast the index check to an integer to test for >= 0 (for readability).
+            for (unsigned int pgHistoryIdx = strLstSize(pgHistoryKey) - 1; (int)pgHistoryIdx >= 0; pgHistoryIdx--)
             {
                 // Load JSON data into a KeyValue
                 const KeyValue *pgDataKv = jsonToKv(
@@ -127,6 +119,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
                 else if (type != infoPgArchive)
                     THROW_FMT(AssertError, "invalid InfoPg type %u", type);
 
+                // Using lstAdd because it is more efficient than lstInsert and loading this file is in critical code paths
                 lstAdd(this->history, &infoPgData);
             }
         }
@@ -234,6 +227,21 @@ infoPgDataTotal(const InfoPg *this)
     FUNCTION_DEBUG_END();
 
     FUNCTION_DEBUG_RESULT(UINT, lstSize(this->history));
+}
+
+/***********************************************************************************************************************************
+Return the ini object
+***********************************************************************************************************************************/
+Ini *
+infoPgIni(const InfoPg *this)
+{
+    FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(INFO_PG, this);
+
+        FUNCTION_DEBUG_ASSERT(this != NULL);
+    FUNCTION_DEBUG_END();
+
+    FUNCTION_DEBUG_RESULT(INI, infoIni(this->info));
 }
 
 /***********************************************************************************************************************************

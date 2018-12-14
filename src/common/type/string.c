@@ -796,6 +796,46 @@ strToLog(const String *this)
 }
 
 /***********************************************************************************************************************************
+Format sizes (file, buffer, etc.) in human-readable form
+***********************************************************************************************************************************/
+String *
+strSizeFormat(const uint64_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, size);
+
+    FUNCTION_TEST_END();
+
+    String *result = NULL;
+
+    if (size < 1024)
+        result = strNewFmt("%" PRIu64 "B", size);
+    else if (size < (1024 * 1024))
+    {
+        if ((int)((double)size / 102.4) % 10 != 0)
+            result = strNewFmt("%.1fKB", ((double)size / 102.4) / 10);
+        else
+            result = strNewFmt("%dKB", (int)((double)size / 102.4) / 10);
+    }
+    else if (size < (1024 * 1024 * 1024))
+    {
+        if ((int)((double)size / 1024 / 102.4) % 10 != 0)
+            result = strNewFmt("%.1fMB", ((double)size / 1024 / 102.4) / 10);
+        else
+            result = strNewFmt("%dMB", (int)((double)size / 1024 / 102.4) / 10);
+    }
+    else
+    {
+        if ((int)((double)size / 1024 / 1024 / 102.4) % 10 != 0)
+            result = strNewFmt("%.1fGB", ((double)size / 1024 / 1024 / 102.4) / 10);
+        else
+            result = strNewFmt("%dGB", (int)((double)size / 1024 / 1024 / 102.4) / 10);
+    }
+
+    FUNCTION_TEST_RESULT(STRING, result);
+}
+
+/***********************************************************************************************************************************
 Free the string
 ***********************************************************************************************************************************/
 void

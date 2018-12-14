@@ -19,10 +19,10 @@ use Getopt::Long qw(GetOptions);
 use Pod::Usage qw(pod2usage);
 use Storable;
 
-use lib dirname($0) . '/lib';
-use lib dirname(dirname($0)) . '/lib';
-use lib dirname(dirname($0)) . '/build/lib';
-use lib dirname(dirname($0)) . '/test/lib';
+use lib dirname(abs_path($0)) . '/lib';
+use lib dirname(dirname(abs_path($0))) . '/lib';
+use lib dirname(dirname(abs_path($0))) . '/build/lib';
+use lib dirname(dirname(abs_path($0))) . '/test/lib';
 
 use BackRestDoc::Common::Doc;
 use BackRestDoc::Common::DocConfig;

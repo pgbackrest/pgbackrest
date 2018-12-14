@@ -1088,12 +1088,14 @@
                     <option id="target-action" name="Target Action">
                         <summary>Action to take when recovery target is reached.</summary>
 
-                        <text>The following actions are supported:
+                        <text>This option is effective when <setting>hot_standby=on</setting> is configured in <file>postgresql.conf</file>, otherwise the cluster will be promoted when the target is reached or there is no more WAL in the archive.
+
+                            The following actions are supported:
                         <ul>
-                            <li><id>pause</id> - pause when recovery target is reached.</li>
-                            <li><id>promote</id> - promote and switch timeline when recovery target is reached.</li>
-                            <li><id>shutdown</id> - shutdown server when recovery target is reached.</li>
-                        </ul>This option is only supported on <postgres/> &gt;= 9.5.</text>
+                            <li><id>pause</id> - pause when recovery target is reached. (<postgres/> &gt;= 9.1)</li>
+                            <li><id>promote</id> - promote and switch timeline when recovery target is reached. (<postgres/> &gt;= 9.1)</li>
+                            <li><id>shutdown</id> - shutdown server when recovery target is reached. (<postgres/> &gt;= 9.5)</li>
+                        </ul></text>
 
                         <example>promote</example>
                     </option>

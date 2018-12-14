@@ -33,6 +33,11 @@ testRun(void)
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[1}")), JsonFormatError, "expected array delimeter ']' but found '}'");
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[]}")), JsonFormatError, "unknown array value type");
         TEST_ERROR(jsonToKv(strNew("{}")), JsonFormatError, "expected '\"' but found '}'");
+        TEST_ERROR(jsonToKv(strNew("{\"key1\":nu")), JsonFormatError, "expected null delimit but found 'u'");
+        TEST_ERROR(jsonToKv(strNew("{\"key1\":nul")), JsonFormatError, "null delimit not found");
+        TEST_ERROR(jsonToKv(strNew("{\"key1\":nult")), JsonFormatError, "null delimit not found");
+        TEST_ERROR(jsonToKv(strNew("{\"key1\":noll")), JsonFormatError, "expected 'null' but found 'noll'");
+        TEST_ERROR(jsonToKv(strNew("{\"key1\":nully}")), JsonFormatError, "expected '}' but found 'y'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         KeyValue *kv = NULL;
@@ -48,6 +53,9 @@ testRun(void)
 
         TEST_ASSIGN(kv, jsonToKv(strNew("{\"key1\":false}")), "boolean false");
         TEST_RESULT_BOOL(varBool(kvGet(kv, varNewStr(strNew("key1")))), false, "  check boolean");
+
+        TEST_ASSIGN(kv, jsonToKv(strNew("{\"key1\":null}")), "single null value");
+        TEST_RESULT_PTR(varStr(kvGet(kv, varNewStr(strNew("key1")))), NULL, "  check null");
 
         TEST_ASSIGN(
             kv,
@@ -78,8 +86,8 @@ testRun(void)
                 strNew(
                 "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
                 "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
-                "\"checksum-page-error\":[1],\"backup-timestamp-start\":1482182951}")),
-            "multpile values with array");
+                "\"null-value\":null,\"checksum-page-error\":[1],\"backup-timestamp-start\":1482182951}")),
+            "multpile values with array and null");
         TEST_RESULT_UINT(varUInt64(kvGet(kv, varNewStr(strNew("backup-info-size-delta")))), 1982702, "  check integer");
         TEST_RESULT_STR(strPtr(varStr(kvGet(kv, varNewStr(strNew("backup-prior"))))), "20161219-212741F_20161219-212803I",
             "  check string");
@@ -87,6 +95,7 @@ testRun(void)
             "20161219-212741F", "  check string array[0]");
         TEST_RESULT_STR(strPtr(varStr(varLstGet(varVarLst(kvGet(kv, varNewStr(strNew("backup-reference")))), 1))),
             "20161219-212741F_20161219-212803I", "  check string array[1]");
+        TEST_RESULT_PTR(varStr(kvGet(kv, varNewStr(strNew("null-value")))), NULL, "  check null");
         TEST_RESULT_UINT(varUInt64(varLstGet(varVarLst(kvGet(kv, varNewStr(strNew("checksum-page-error")))), 0)), 1,
             "  check integer array[0]");
         TEST_RESULT_UINT(varUInt64(kvGet(kv, varNewStr(strNew("backup-timestamp-start")))), 1482182951, "  check integer");

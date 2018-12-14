@@ -4117,13 +4117,14 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Action to take when recovery target is reached.")
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
                 (
+                    "This option is effective when hot_standby=on is configured in postgresql.conf, otherwise the cluster will be "
+                        "promoted when the target is reached or there is no more WAL in the archive.\n"
+                    "\n"
                     "The following actions are supported:\n"
                     "\n"
-                    "* pause - pause when recovery target is reached.\n"
-                    "* promote - promote and switch timeline when recovery target is reached.\n"
-                    "* shutdown - shutdown server when recovery target is reached.\n"
-                    "\n"
-                    "This option is only supported on PostgreSQL >= 9.5."
+                    "* pause - pause when recovery target is reached. (PostgreSQL >= 9.1)\n"
+                    "* promote - promote and switch timeline when recovery target is reached. (PostgreSQL >= 9.1)\n"
+                    "* shutdown - shutdown server when recovery target is reached. (PostgreSQL >= 9.5)"
                 )
             )
         )

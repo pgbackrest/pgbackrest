@@ -698,19 +698,16 @@ sub owner
 
         # If the user or group is not defined then get it by stat'ing the file.  This is because the chown function requires that
         # both user and group be set.
-        if (!(defined($strUser) && defined($strGroup)))
+        my $oStat = $self->info($strFilePath);
+
+        if (!defined($strUser))
         {
-            my $oStat = $self->info($strFilePath);
+            $iUserId = $oStat->uid;
+        }
 
-            if (!defined($strUser))
-            {
-                $iUserId = $oStat->uid;
-            }
-
-            if (!defined($strGroup))
-            {
-                $iGroupId = $oStat->gid;
-            }
+        if (!defined($strGroup))
+        {
+            $iGroupId = $oStat->gid;
         }
 
         # Lookup user if specified
@@ -735,15 +732,13 @@ sub owner
             }
         }
 
-        # Set ownership on the file
-        if (!chown($iUserId, $iGroupId, $strFilePath))
+        # Set ownership on the file if the user or group would be changed
+        if ($iUserId != $oStat->uid || $iGroupId != $oStat->gid)
         {
-            if ($OS_ERROR{ENOENT})
+            if (!chown($iUserId, $iGroupId, $strFilePath))
             {
-                logErrorResult(ERROR_FILE_OWNER, "${strMessage} because it is missing");
+                logErrorResult(ERROR_FILE_OWNER, "${strMessage}", $OS_ERROR);
             }
-
-            logErrorResult(ERROR_FILE_OWNER, "${strMessage}", $OS_ERROR);
         }
     }
 
