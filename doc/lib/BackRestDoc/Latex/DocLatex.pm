@@ -112,7 +112,8 @@ sub process
     # ??? Temp hack for underscores in filename
     $strLatex =~ s/pgaudit\\\_doc/pgaudit\_doc/g;
 
-    foreach my $strPageId ($self->{oManifest}->renderOutList(RENDER_TYPE_PDF))
+    # Process the sources in the order listed in the manifest.xml
+    foreach my $strPageId (@{${$self->{oManifest}->renderGet(RENDER_TYPE_PDF)}{stryOrder}})
     {
         &log(INFO, "    render out: ${strPageId}");
 

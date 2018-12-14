@@ -93,9 +93,9 @@
         <render type="html">
             <render-source key="index" menu="Home"/>
             <render-source key="user-guide" menu="User Guide"/>
+            <render-source key="release" menu="Releases"/>
             <render-source key="configuration" source="reference" menu="Configuration"/>
             <render-source key="command" source="reference" menu="Commands"/>
-            <render-source key="release" menu="Releases"/>
         </render>
 
         <render type="pdf" file="{[pdf-file]}">

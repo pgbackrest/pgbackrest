@@ -83,6 +83,7 @@ sub process
 
     # Working variables
     my $oPage = $self->{oDoc};
+    my $oRender = $self->{oManifest}->renderGet(RENDER_TYPE_HTML);
 
     # Initialize page
     my $strTitle = $oPage->paramGet('title');
@@ -126,19 +127,11 @@ sub process
     {
         my $oMenuBody = $oHtmlBuilder->bodyGet()->addNew(HTML_DIV, 'page-menu')->addNew(HTML_DIV, 'menu-body');
 
-        if ($self->{strRenderOutKey} ne 'index' && defined($self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, 'index', true)))
+        # Get the menu in the order listed in the manifest.xml
+        foreach my $strRenderOutKey (@{${$oRender}{stryOrder}})
         {
-            my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, 'index');
-
-            $oMenuBody->
-                addNew(HTML_DIV, 'menu')->
-                    addNew(HTML_A, 'menu-link', {strContent => $$oRenderOut{menu}, strRef => '{[project-url-root]}'});
-        }
-
-        # ??? The sort order here is hokey and only works for backrest - will need to be changed
-        foreach my $strRenderOutKey (sort {$b cmp $a} $self->{oManifest}->renderOutList(RENDER_TYPE_HTML))
-        {
-            if ($strRenderOutKey ne $self->{strRenderOutKey} && $strRenderOutKey ne 'index')
+            # Do not output the menu item for the page the user is on (e.g. on Command page, the Command menu item will not appear)
+            if ($strRenderOutKey ne $self->{strRenderOutKey})
             {
                 my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, $strRenderOutKey);
 

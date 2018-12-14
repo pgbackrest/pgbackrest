@@ -178,6 +178,9 @@ sub new
                 next;
             }
 
+            # Preserve natural order
+            push(@{$${oRenderHash}{stryOrder}}, $strKey);
+
             $$oRenderOutHash{source} = $strSource;
 
             # Get the filename
