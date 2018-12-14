@@ -412,8 +412,8 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
     VariantList *archiveSection = kvGetList(stanzaInfo, varNewStr(KEY_ARCHIVE_STR));
     VariantList *backupSection = kvGetList(stanzaInfo, varNewStr(STANZA_KEY_BACKUP_STR));
 
-    // For each database find the corresponding archive and backup info
-    for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
+    // For each database (working from oldest to newest) find the corresponding archive and backup info
+    for (unsigned int dbIdx = varLstSize(dbSection) - 1; (int)dbIdx >= 0; dbIdx--)
     {
         KeyValue *pgInfo = varKv(varLstGet(dbSection, dbIdx));
         uint64_t dbId = varUInt64(kvGet(pgInfo, varNewStr(DB_KEY_ID_STR)));

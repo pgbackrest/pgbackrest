@@ -346,6 +346,12 @@ sub run
         $hyStanza = $oInfo->stanzaList($self->stanza());
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
             "stanza: db\n    status: ok\n    cipher: none\n" .
+            "\n    db (prior)\n" .
+            "        full backup: 20161206-155728F\n" .
+            "            timestamp start/stop: 2016-12-06 15:57:28 / 2016-12-06 15:57:28\n" .
+            "            wal start/stop: n/a\n" .
+            "            database size: 0B, backup size: 0B\n" .
+            "            repository size: 0B, repository backup size: 0B\n" .
             "\n    db (current)\n" .
             "        wal archive min/max (9.5-2): 000000010000000000000000 / 000000010000000000000003\n\n" .
             "        full backup: 20161207-155728F\n" .
@@ -356,12 +362,6 @@ sub run
             "        diff backup: 20161207-155728F_20161208-155728D\n" .
             "            timestamp start/stop: 2016-12-08 15:57:28 / 2016-12-08 15:57:28\n" .
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n" .
-            "            database size: 0B, backup size: 0B\n" .
-            "            repository size: 0B, repository backup size: 0B\n" .
-            "\n    db (prior)\n" .
-            "        full backup: 20161206-155728F\n" .
-            "            timestamp start/stop: 2016-12-06 15:57:28 / 2016-12-06 15:57:28\n" .
-            "            wal start/stop: n/a\n" .
             "            database size: 0B, backup size: 0B\n" .
             "            repository size: 0B, repository backup size: 0B\n",
             "formatText() multiple DB versions");

@@ -46,6 +46,15 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="ryan.lambert"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Reorder <cmd>info</cmd> command text output so most recent backup is output last.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Change file ownership only when required.</p>
                     </release-item>
 
@@ -6120,6 +6129,11 @@
         <contributor id="ronan.dunklau">
             <contributor-name-display>Ronan Dunklau</contributor-name-display>
             <contributor-id type="github">rdunklau</contributor-id>
+        </contributor>
+
+        <contributor id="ryan.lambert">
+            <contributor-name-display>Ryan Lambert</contributor-name-display>
+            <contributor-id type="github">rustprooflabs</contributor-id>
         </contributor>
 
         <contributor id="sarah.conway">
