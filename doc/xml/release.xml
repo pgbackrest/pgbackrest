@@ -47,6 +47,14 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="ronan.dunklau"/>
+                        </release-item-contributor-list>
+
+                        <p>Set TCP keepalives on <proper>S3</proper> connections.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="ryan.lambert"/>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>

@@ -12,6 +12,7 @@ use English '-no_match_vars';
 use Exporter qw(import);
     our @EXPORT = qw();
 use IO::Socket::SSL;
+use Socket qw(SOL_SOCKET SO_KEEPALIVE);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Io::Buffered;
@@ -100,7 +101,7 @@ sub new
             {
                 $oSocket = IO::Socket::SSL->new(
                     PeerHost => $strHost, PeerPort => $iPort, SSL_verify_mode => $bVerifySsl ? SSL_VERIFY_PEER : SSL_VERIFY_NONE,
-                    SSL_ca_path => $strCaPath, SSL_ca_file => $strCaFile);
+                    SSL_ca_path => $strCaPath, SSL_ca_file => $strCaFile, Sockopts => [[SOL_SOCKET, SO_KEEPALIVE]]);
 
                 return 1;
             }

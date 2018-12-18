@@ -307,6 +307,32 @@ tlsClientOpen(TlsClient *this)
                     if (connect(this->socket, (struct sockaddr *)&socketAddr, sizeof(socketAddr)) == -1)
                         THROW_SYS_ERROR_FMT(FileOpenError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
 
+                    // Enable TCP keepalives
+                    int socketValue = 1;
+
+                    THROW_ON_SYS_ERROR(
+                        setsockopt(this->socket, SOL_SOCKET, SO_KEEPALIVE, &socketValue, sizeof(int)) == -1, ProtocolError,
+                         "unable set SO_KEEPALIVE");
+
+                    // Set per-connection keepalive options if they are available
+#ifdef TCP_KEEPIDLE
+                    socketValue = 3;
+
+                    THROW_ON_SYS_ERROR(
+                        setsockopt(this->socket, SOL_SOCKET, TCP_KEEPIDLE, &socketValue, sizeof(int)) == -1, ProtocolError,
+                         "unable set SO_KEEPIDLE");
+
+                    THROW_ON_SYS_ERROR(
+                        setsockopt(this->socket, SOL_SOCKET, TCP_KEEPINTVL, &socketValue, sizeof(int)) == -1, ProtocolError,
+                         "unable set SO_KEEPINTVL");
+
+                    socketValue = this->timeout / socketValue;
+
+                    THROW_ON_SYS_ERROR(
+                        setsockopt(this->socket, SOL_SOCKET, TCP_KEEPCNT, &socketValue, sizeof(int)) == -1, ProtocolError,
+                         "unable set SO_KEEPCNT");
+#endif
+
                     // Negotiate TLS
                     cryptoError((this->session = SSL_new(this->context)) == NULL, "unable to create TLS context");
 
