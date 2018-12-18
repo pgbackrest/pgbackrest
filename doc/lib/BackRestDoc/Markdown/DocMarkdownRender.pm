@@ -365,8 +365,15 @@ sub sectionProcess
                 $oTableTitle = $oChild->nodeGet('title');
             }
 
-            my $oHeader = $oChild->nodeGet('table-header');
-            my @oyColumn = $oHeader->nodeList('table-column');
+            my $oHeader;
+            my @oyColumn;
+
+            if ($oChild->nodeTest('table-header'))
+            {
+                $oHeader = $oChild->nodeGet('table-header');
+                @oyColumn = $oHeader->nodeList('table-column');
+            }
+
             if (defined($oTableTitle))
             {
                 # Print the label (e.g. Table 1:) in front of the title if one exists
@@ -379,35 +386,49 @@ sub sectionProcess
                 $strMarkdown .= "\n\n";
             }
 
-            my ($strHeaderText, $strHeaderIndicator);
+            my $strHeaderText = "| ";
+            my $strHeaderIndicator = "| ";
 
             for (my $iColCellIdx = 0; $iColCellIdx < @oyColumn; $iColCellIdx++)
             {
                 my $strAlign = $oyColumn[$iColCellIdx]->paramGet("align", false, 'left');
 
                 $strHeaderText .= $self->processText($oyColumn[$iColCellIdx]->textGet()) .
-                    (($iColCellIdx < @oyColumn - 1) ? " | " : "\n");
+                    (($iColCellIdx < @oyColumn - 1) ? " | " : " |\n");
                 $strHeaderIndicator .= ($strAlign eq 'left' || $strAlign eq 'center') ? ":---" : "---";
                 $strHeaderIndicator .= ($strAlign eq 'right' || $strAlign eq 'center') ? "---:" : "";
-                $strHeaderIndicator .= ($iColCellIdx < @oyColumn - 1) ? " | " : "\n";
+                $strHeaderIndicator .= ($iColCellIdx < @oyColumn - 1) ? " | " : " |\n";
             }
 
-            $strMarkdown .= $strHeaderText .$strHeaderIndicator;
+            # Markdown requires a table header so if not provided then create an empty header row and default the column alignment
+            # left by using the number of columns in the 1st row
+            if (!defined($oHeader))
+            {
+                my @oyRow = $oChild->nodeGet('table-data')->nodeList('table-row');
+                foreach my $oRowCell ($oyRow[0]->nodeList('table-cell'))
+                {
+                    $strHeaderText .= "     | ";
+                    $strHeaderIndicator .= ":--- | ";
+                }
+                $strHeaderText .= "\n";
+                $strHeaderIndicator .= "\n";
+            }
+
+            $strMarkdown .= (defined($strHeaderText) ? $strHeaderText : '') . $strHeaderIndicator;
 
             # Build the rows
             foreach my $oRow ($oChild->nodeGet('table-data')->nodeList('table-row'))
             {
                 my @oRowCellList = $oRow->nodeList('table-cell');
+                $strMarkdown .= "| ";
 
                 for (my $iRowCellIdx = 0; $iRowCellIdx < @oRowCellList; $iRowCellIdx++)
                 {
                     my $oRowCell = $oRowCellList[$iRowCellIdx];
 
                     $strMarkdown .= $self->processText($oRowCell->textGet()) .
-                        (($iRowCellIdx < @oRowCellList -1) ? " | " : "");
+                        (($iRowCellIdx < @oRowCellList -1) ? " | " : " |\n");
                 }
-
-                $strMarkdown .= "\n";
             }
         }
          # Check if the child can be processed by a parent

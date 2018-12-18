@@ -394,6 +394,57 @@ sub sectionProcess
             $oSectionBodyElement->addNew(
                 HTML_PRE, 'code-block', {strContent => $strValue, bPre => true});
         }
+        # Add table
+        elsif ($oChild->nameGet() eq 'table')
+        {
+            my $oTableTitle;
+            if ($oChild->nodeTest('title'))
+            {
+                $oTableTitle = $oChild->nodeGet('title');
+            }
+
+            my $oTableElement = $oSectionBodyElement->addNew(HTML_TABLE, 'table');
+            my @oyColumn;
+
+            # Build the header
+            if ($oChild->nodeTest('table-header'))
+            {
+                my $oHeader = $oChild->nodeGet('table-header');
+                @oyColumn = $oHeader->nodeList('table-column');
+
+                my $oHeaderRowElement = $oTableElement->addNew(HTML_TR, 'table-header-row');
+
+                foreach my $oColumn (@oyColumn)
+                {
+                    # Each column can have different alignment properties - if not set, then default to align left
+                    my $strAlign = $oColumn->paramGet("align", false, 'left');
+                    my $bFill = $oColumn->paramTest('fill', 'y');
+
+                    $oHeaderRowElement->addNew(
+                        HTML_TH,
+                        "table-header-${strAlign}" . ($bFill ? ",table-header-fill" : ""),
+                        {strContent => $self->processText($oColumn->textGet())});
+                }
+            }
+
+            # Build the rows
+            foreach my $oRow ($oChild->nodeGet('table-data')->nodeList('table-row'))
+            {
+                my $oRowElement = $oTableElement->addNew(HTML_TR, 'table-row');
+                my @oRowCellList = $oRow->nodeList('table-cell');
+
+                for (my $iRowCellIdx = 0; $iRowCellIdx < @oRowCellList; $iRowCellIdx++)
+                {
+                    my $oRowCell = $oRowCellList[$iRowCellIdx];
+
+                    # If a header row was defined, then get the column alignment, else default to left
+                    my $strAlign = @oyColumn > 0 ? $oyColumn[$iRowCellIdx]->paramGet("align", false, 'left') : 'left';
+
+                    $oRowElement->addNew(
+                        HTML_TD, "table-data-${strAlign}", {strContent => $self->processText($oRowCell->textGet())});
+                }
+            }
+        }
         # Add descriptive text
         elsif ($oChild->nameGet() eq 'p')
         {

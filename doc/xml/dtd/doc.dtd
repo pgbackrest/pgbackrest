@@ -206,7 +206,7 @@
     <!ATTLIST host-add mount CDATA "">
 
 <!-- Table elements -->
-<!ELEMENT table (title?, table-header, table-data)>
+<!ELEMENT table (title?, table-header?, table-data)>
 
 <!ELEMENT table-header (table-column+)>
     <!ATTLIST table-header width CDATA "">

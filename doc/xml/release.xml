@@ -240,6 +240,14 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
+                        <p>Add HTML table rendering and update PDF/Markdown renderers to support header-less tables.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
                         <p>Base menu ordering on natural ordering in the manifest.</p>
                     </release-item>
 

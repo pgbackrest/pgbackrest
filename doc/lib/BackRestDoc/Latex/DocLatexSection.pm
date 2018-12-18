@@ -228,23 +228,31 @@ sub sectionProcess
         # Add table
         elsif ($oChild->nameGet() eq 'table')
         {
-            my $oHeader = $oChild->nodeGet('table-header');
-            my @oyColumn = $oHeader->nodeList('table-column');
+            my $oHeader;
+            my @oyColumn;
+
+            if ($oChild->nodeTest('table-header'))
+            {
+                $oHeader = $oChild->nodeGet('table-header');
+                @oyColumn = $oHeader->nodeList('table-column');
+            }
 
             my $strWidth =
-                '{' . ($oHeader->paramTest('width') ? ($oHeader->paramGet('width') / 100) . '\textwidth' : '\textwidth') . '}';
+                '{' . (defined($oHeader) && $oHeader->paramTest('width') ? ($oHeader->paramGet('width') / 100) .
+                '\textwidth' : '\textwidth') . '}';
 
             # Build the table header
             $strLatex .= "\\vspace{1em}\\newline\n";
 
-            $strLatex .= "\\begin{tabularx}${strWidth}{ | ";
+            $strLatex .= "\\begin{tabularx}${strWidth}{|";
 
             foreach my $oColumn (@oyColumn)
             {
                 my $strAlignCode;
                 my $strAlign = $oColumn->paramGet("align", false);
 
-                if ($oColumn->paramGet('fill', false, 'y') eq 'y')
+                # If fill is specified then use X or the custom designed alignments in the preamble to fill and justify the columns.
+                if ($oColumn->paramTest('fill') && $oColumn->paramGet('fill', false) eq 'y')
                 {
                     if (!defined($strAlign) || $strAlign eq 'left')
                     {
@@ -253,6 +261,10 @@ sub sectionProcess
                     elsif ($strAlign eq 'right')
                     {
                         $strAlignCode = 'R';
+                    }
+                    elsif ($strAlign eq 'center')
+                    {
+                        $strAlignCode = 'C';
                     }
                     else
                     {
@@ -283,6 +295,16 @@ sub sectionProcess
                 $strLatex .= $strAlignCode . ' | ';
             }
 
+            # If table-header not provided then default the column alignment and fill by using the number of columns in the 1st row
+            if (!defined($oHeader))
+            {
+                my @oyRow = $oChild->nodeGet('table-data')->nodeList('table-row');
+                foreach my $oRowCell ($oyRow[0]->nodeList('table-cell'))
+                {
+                    $strLatex .= 'X|';
+                }
+            }
+
             $strLatex .= "}\n";
 
             if ($oChild->nodeGet("title", false))
@@ -290,17 +312,20 @@ sub sectionProcess
                 $strLatex .= "\\caption{" . $self->processText($oChild->nodeGet("title")->textGet()) . ":}\\\\\n";
             }
 
-            $strLatex .= "\\hline";
-            $strLatex .= "\\rowcolor{ltgray}\n";
-
             my $strLine;
 
-            foreach my $oColumn (@oyColumn)
+            if (defined($oHeader))
             {
-                $strLine .= (defined($strLine) ? ' & ' : '') . '\textbf{' . $self->processText($oColumn->textGet()) . '}';
-            }
+                $strLatex .= "\\hline";
+                $strLatex .= "\\rowcolor{ltgray}\n";
 
-            $strLatex .= "${strLine}\\\\";
+                foreach my $oColumn (@oyColumn)
+                {
+                    $strLine .= (defined($strLine) ? ' & ' : '') . '\textbf{' . $self->processText($oColumn->textGet()) . '}';
+                }
+
+                $strLatex .= "${strLine}\\\\";
+            }
 
             # Build the rows
             foreach my $oRow ($oChild->nodeGet('table-data')->nodeList('table-row'))

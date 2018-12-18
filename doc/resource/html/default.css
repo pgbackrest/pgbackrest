@@ -299,6 +299,56 @@ Section
 /*.section-body*/
 
 /*******************************************************************************
+Table Elements
+*******************************************************************************/
+.table
+{
+}
+
+.table-header-row
+{
+}
+
+.table-header-left
+{
+    text-align: left;
+}
+
+.table-header-center
+{
+    text-align: center;
+}
+
+.table-header-right
+{
+    text-align: right;
+}
+
+.table-header-fill
+{
+    width: 100%;
+}
+
+.table-row
+{
+}
+
+.table-data-left
+{
+    text-align: left;
+}
+
+.table-data-center
+{
+    text-align: center;
+}
+
+.table-data-right
+{
+    text-align: right;
+}
+
+/*******************************************************************************
 Config, Execute, Code Block, Release Elements
 *******************************************************************************/
 .section-body-text
