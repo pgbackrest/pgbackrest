@@ -256,6 +256,14 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
+                        <p>Escape special characters in latex when not in a code block.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
                         <p>Base menu ordering on natural ordering in the manifest.</p>
                     </release-item>
 

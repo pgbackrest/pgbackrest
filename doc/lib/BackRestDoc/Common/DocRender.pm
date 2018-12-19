@@ -890,6 +890,33 @@ sub processText
         $strBuffer =~ s/\<\=/\$\\leq\$/g;
         $strBuffer =~ s/\>\=/\$\\geq\$/g;
         # $strBuffer =~ s/\_/\\_/g;
+
+        # If not a code-block, which is to be taken AS IS, then escape special characters in latex
+        if ($oText->nameGet() ne 'code-block')
+        {
+            # If the previous character is not already a slash (e.g. not already escaped) then insert a slash
+            $strBuffer =~ s/(?<!\\)\#/\\#/g;
+            $strBuffer =~ s/(?<!\\)\%/\\%/g;
+            $strBuffer =~ s/(?<!\\)\_/\\_/g;
+            # $strBuffer =~ s/(?<!\\)\$/\\\$/g;
+
+            # Escape square brackest in list items since they are used for reformatting the bullet item with what is in brackets,
+            # which is not the intention.
+            if ($oText->nameGet() eq 'list-item')
+            {
+                $strBuffer =~ s/\[/\{\[/g;
+                $strBuffer =~ s/\]/\]\}/g;
+            }
+
+            $strBuffer =~ s/\&copy\;/{\\textcopyright}/g;
+            $strBuffer =~ s/\&trade\;/{\\texttrademark}/g;
+            $strBuffer =~ s/\&reg\;/{\\textregistered}/g;
+
+            $strBuffer =~ s/\&rarr\;/{\\textrightarrow}/g;
+
+            # Escape all ampersands after making any other conversions above
+            $strBuffer =~ s/(?<!\\)\&/\\&/g;
+        }
     }
 
     if ($strType eq 'text')
