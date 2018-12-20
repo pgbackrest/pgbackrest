@@ -378,7 +378,7 @@ sub sectionProcess
             {
                 # Print the label (e.g. Table 1:) in front of the title if one exists
                 $strMarkdown .= "\n\n**" . ($oTableTitle->paramTest('label') ?
-                    ($oTableTitle->paramGet('label') . $self->processText($oTableTitle->textGet())) :
+                    ($oTableTitle->paramGet('label') . ': ' . $self->processText($oTableTitle->textGet())) :
                     $self->processText($oTableTitle->textGet())) . "**\n\n";
             }
             else

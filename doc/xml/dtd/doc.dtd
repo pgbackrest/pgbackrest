@@ -207,6 +207,7 @@
 
 <!-- Table elements -->
 <!ELEMENT table (title?, table-header?, table-data)>
+    <!ATTLIST title label CDATA "">
 
 <!ELEMENT table-header (table-column+)>
     <!ATTLIST table-header width CDATA "">

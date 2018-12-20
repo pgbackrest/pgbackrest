@@ -248,7 +248,7 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Add HTML table rendering and update PDF/Markdown renderers to support header-less tables.</p>
+                        <p>Add HTML table rendering and update PDF/Markdown renderers to support header-less tables. Add optional table captions.</p>
                     </release-item>
 
                     <release-item>

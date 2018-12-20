@@ -28,6 +28,8 @@ use constant HTML_SPAN                                              => 'span';
     push @EXPORT, qw(HTML_SPAN);
 use constant HTML_TABLE                                             => 'table';
     push @EXPORT, qw(HTML_TABLE);
+use constant HTML_TABLE_CAPTION                                     => 'caption';
+    push @EXPORT, qw(HTML_TABLE_CAPTION);
 use constant HTML_TD                                                => 'td';
     push @EXPORT, qw(HTML_TD);
 use constant HTML_TH                                                => 'th';

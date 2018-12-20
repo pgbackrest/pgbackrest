@@ -241,11 +241,10 @@ sub sectionProcess
                 '{' . (defined($oHeader) && $oHeader->paramTest('width') ? ($oHeader->paramGet('width') / 100) .
                 '\textwidth' : '\textwidth') . '}';
 
+            # Build the table
+            $strLatex .= "\\vspace{1em}\\newline\n\\begin{table}\n\\begin{tabularx}${strWidth}{|";
+
             # Build the table header
-            $strLatex .= "\\vspace{1em}\\newline\n";
-
-            $strLatex .= "\\begin{tabularx}${strWidth}{|";
-
             foreach my $oColumn (@oyColumn)
             {
                 my $strAlignCode;
@@ -307,11 +306,6 @@ sub sectionProcess
 
             $strLatex .= "}\n";
 
-            if ($oChild->nodeGet("title", false))
-            {
-                $strLatex .= "\\caption{" . $self->processText($oChild->nodeGet("title")->textGet()) . ":}\\\\\n";
-            }
-
             my $strLine;
 
             if (defined($oHeader))
@@ -342,6 +336,15 @@ sub sectionProcess
             }
 
             $strLatex .= "\\hline\n\\end{tabularx}\n";
+
+            # If there is a title for the table, add it. Ignore the label since LaTex will automatically generate numbered labels.
+            # e.g. Table 1:
+            if ($oChild->nodeGet("title", false))
+            {
+                $strLatex .= "\\caption{" . $self->processText($oChild->nodeGet("title")->textGet()) . "}\n";
+            }
+
+            $strLatex .= "\\end{table}\n";
         }
         # Add descriptive text
         elsif ($oChild->nameGet() eq 'p')

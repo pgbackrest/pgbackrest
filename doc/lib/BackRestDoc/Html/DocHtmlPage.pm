@@ -406,6 +406,17 @@ sub sectionProcess
             my $oTableElement = $oSectionBodyElement->addNew(HTML_TABLE, 'table');
             my @oyColumn;
 
+            # If there is a title element then add it as the caption for the table
+            if (defined($oTableTitle))
+            {
+                # Print the label (e.g. Table 1:) in front of the title if one exists
+                my $strTableTitle = $oTableTitle->paramTest('label') ?
+                    ($oTableTitle->paramGet('label') . ': '. $self->processText($oTableTitle->textGet())) :
+                    $self->processText($oTableTitle->textGet());
+
+                $oTableElement->addNew(HTML_TABLE_CAPTION, 'table-caption', {strContent => $strTableTitle});
+            }
+
             # Build the header
             if ($oChild->nodeTest('table-header'))
             {
