@@ -145,8 +145,10 @@ static ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LI
         CFGDEFDATA_COMMAND_HELP_SUMMARY("Delete a stanza.")
         CFGDEFDATA_COMMAND_HELP_DESCRIPTION
         (
-            "The stanza-delete command removes data in the repository associated with a stanza. Use this command with caution -- "
-                "it will permanently remove all backups and archives from the pgBackRest repository for the specified stanza.\n"
+            "The stanza-delete command removes data in the repository associated with a stanza.\n"
+            "WARNING: Use this command with caution -- it will permanently remove all backups and archives from the pgBackRest "
+                "repository for the specified stanza.\n"
+            "\n"
             "\n"
             "To delete a stanza:\n"
             "\n"
@@ -914,9 +916,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "This feature allows only selected databases to be restored. Databases not specifically included will be restored as "
                 "sparse, zeroed files to save space but still allow PostgreSQL to perform recovery. After recovery the databases "
-                "that were not included will not be accessible but can be removed with the drop database command.\n"
-            "\n"
-            "Note that built-in databases (template0, template1, and postgres) are always restored.\n"
+                "that were not included will not be accessible but can be removed with the drop database command. \n"
+            "NOTE: built-in databases (template0, template1, and postgres) are always restored.\n"
             "\n"
             "The --db-include option can be passed multiple times to specify more than one database to include."
         )
@@ -1030,9 +1031,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "\n"
             "All excluded files will be logged at info level along with the exclusion rule. Be sure to audit the list of excluded "
                 "files to ensure nothing unexpected is being excluded.\n"
-            "\n"
-            "Note that exclusions are not honored on delta restores. Any files/directories that were excluded by the backup will "
-                "be removed on delta restore.\n"
+            "NOTE: Exclusions are not honored on delta restores. Any files/directories that were excluded by the backup will be "
+                "removed on delta restore.\n"
             "\n"
             "This option should not be used to exclude PostgreSQL logs from a backup. Logs can be moved out of the PGDATA "
                 "directory using the PostgreSQL log_directory setting, which has the benefit of allowing logs to be preserved "
@@ -1119,7 +1119,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Force stanza creation.")
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
                 (
-                    "Caution: Use --force only as a last resort, when all else fails. If data is missing from the repository then "
+                    "CAUTION: Use --force only as a last resort, when all else fails. If data is missing from the repository then "
                         "the recreated .info files will likely be corrupt.\n"
                     "\n"
                     "If the required stanza .info files do not exist in the repository but backups or WAL segments do exist, then "
@@ -2433,8 +2433,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on recovery.conf options (replace X.X "
                 "with your PostgreSQL version). This option can be used multiple times.\n"
-            "\n"
-            "Note: The restore_command option will be automatically generated but can be overridden with this option. Be careful "
+            "NOTE: The restore_command option will be automatically generated but can be overridden with this option. Be careful "
                 "about specifying your own restore_command as pgBackRest is designed to handle this for you. Target Recovery "
                 "options (recovery_target_name, recovery_target_time, etc.) are generated automatically by pgBackRest and should "
                 "not be set with this option.\n"
@@ -2987,8 +2986,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Number of backups worth of continuous WAL to retain.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Note that the WAL segments required to make a backup consistent are always retained until the backup is expired "
-                "regardless of how this option is configured.\n"
+            "NOTE: WAL segments required to make a backup consistent are always retained until the backup is expired regardless of "
+                "how this option is configured.\n"
             "\n"
             "If this value is not set, then the archive to expire will default to the repo-retention-full (or repo-retention-diff) "
                 "value corresponding to the repo-retention-archive-type if set to full (or diff). This will ensure that WAL is "

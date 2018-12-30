@@ -51,7 +51,8 @@ my $oRenderTag =
         # 'exe' => [undef, ''],
         'backrest' => [undef, ''],
         'proper' => ['', ''],
-        'postgres' => ['PostgreSQL', '']
+        'postgres' => ['PostgreSQL', ''],
+        'admonition' => ["\n> **", "\n"],
     },
 
     'text' =>
@@ -77,7 +78,8 @@ my $oRenderTag =
         'exe' => [undef, ''],
         'backrest' => [undef, ''],
         'proper' => ['', ''],
-        'postgres' => ['PostgreSQL', '']
+        'postgres' => ['PostgreSQL', ''],
+        'admonition' => ["\n", "\n\n"],
     },
 
     'latex' =>
@@ -108,7 +110,8 @@ my $oRenderTag =
         # 'exe' => [undef, ''],
         'backrest' => [undef, ''],
         'proper' => ['\textnormal{\texttt{', '}}'],
-        'postgres' => ['PostgreSQL', '']
+        'postgres' => ['PostgreSQL', ''],
+        'admonition' => ["\n\\begin{leftbar}\n\\textit{\\textbf{", "}\n\\end{leftbar}\n"],
     },
 
     'html' =>
@@ -136,7 +139,8 @@ my $oRenderTag =
         'setting' => ['<span class="br-setting">', '</span>'], # ??? This will need to be fixed
         'backrest' => [undef, ''],
         'proper' => ['<span class="host">', '</span>'],
-        'postgres' => ['<span class="postgres">PostgreSQL</span>', '']
+        'postgres' => ['<span class="postgres">PostgreSQL</span>', ''],
+        'admonition' => ['<div class="admonition">', '</div>'],
     }
 };
 
@@ -802,7 +806,15 @@ sub processTag
 
         $strBuffer .= $strStart;
 
-        if ($strTag eq 'p' || $strTag eq 'title' || $strTag eq 'li' || $strTag eq 'code-block' || $strTag eq 'summary')
+        # Admonitions in the reference materials are tags of the text element rather than field elements of the document so special
+        # handling is required
+        if ($strTag eq 'admonition')
+        {
+            $strBuffer .= $self->processAdmonitionStart($oTag);
+        }
+
+        if ($strTag eq 'p' || $strTag eq 'title' || $strTag eq 'li' || $strTag eq 'code-block' || $strTag eq 'summary'
+            || $strTag eq 'admonition')
         {
             $strBuffer .= $self->processText($oTag);
         }
@@ -818,7 +830,94 @@ sub processTag
             }
         }
 
+        if ($strTag eq 'admonition')
+        {
+            $strBuffer .= $self->processAdmonitionEnd($oTag);
+        }
+
         $strBuffer .= $strStop;
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strBuffer', value => $strBuffer, trace => true}
+    );
+}
+
+####################################################################################################################################
+# processAdmonitionStart
+####################################################################################################################################
+sub processAdmonitionStart
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oTag
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->processAdmonitionStart', \@_,
+            {name => 'oTag', trace => true}
+        );
+
+    my $strType = $self->{strType};
+    my $strBuffer = '';
+
+    # Note that any changes to the way the HTML, markdown or latex display tags may also need to be made here
+    if ($strType eq 'html')
+    {
+        my $strType = $oTag->paramGet('type');
+        $strBuffer = '<div class="' . $strType . '">' . uc($strType) . ':</div>' .
+            '<div class="' . $strType . '-text">';
+    }
+    elsif ($strType eq 'text' || $strType eq 'markdown')
+    {
+        $strBuffer = uc($oTag->paramGet('type')) . ": ";
+    }
+    elsif ($strType eq 'latex')
+    {
+        $strBuffer = uc($oTag->paramGet('type')) . ": }";
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strBuffer', value => $strBuffer, trace => true}
+    );
+}
+
+####################################################################################################################################
+# processAdmonitionEnd
+####################################################################################################################################
+sub processAdmonitionEnd
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oTag
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->processAdmonitionEnd', \@_,
+            {name => 'oTag', trace => true}
+        );
+
+    my $strType = $self->{strType};
+    my $strBuffer = '';
+
+    # Note that any changes to the way the HTML, markdown or latex display tags may also need to be made here
+    if ($strType eq 'html')
+    {
+        $strBuffer = '</div>';
     }
 
     # Return from function and log return values if any

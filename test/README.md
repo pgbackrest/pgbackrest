@@ -5,8 +5,7 @@
 pgBackRest uses Docker to run tests and generate documentation. Docker's light-weight virualization provides the a good balance between proper OS emulation and performance (especially startup)
 
 A `Vagrantfile` is provided that contains the complete configuration required to run pgBackRest tests and build documentation. If Vagrant is not suitable then the `Vagrantfile` still contains the configuration steps required to build a test system.
-
-Note that this is not required for normal operation of pgBackRest.
+> **NOTE:** this is not required for normal operation of pgBackRest.
 
 ## Testing
 
@@ -44,13 +43,13 @@ _Run Tests for a Specific OS, Module, Test, and Process Max_:
 ```
 /backrest/test/test.pl --vm=co6 --module=backup --test=full --process-max=4
 ```
-Note that process-max is only applicable to the `synthetic` and `full` tests in the `backup` module.
+> **NOTE:** process-max is only applicable to the `synthetic` and `full` tests in the `backup` module.
 
 _Run Tests for a Specific OS, Module, Test, Process Max, and Database Version_:
 ```
 /backrest/test/test.pl --vm=co6 --module=backup --test=full --process-max=4 --pg-version=9.4
 ```
-Note that pg-version is only applicable to the `full` test in the `backup` module.
+> **NOTE:** pg-version is only applicable to the `full` test in the `backup` module.
 
 _Iterate All Possible Test Combinations_:
 ```

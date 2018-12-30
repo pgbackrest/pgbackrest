@@ -332,6 +332,39 @@ testRun(void)
         TEST_RESULT_VOID(
             configParse(strLstSize(argList), strLstPtr(argList), false), "help for backup command, repo-hardlink option");
         TEST_RESULT_STR(strPtr(helpRender()), optionHelp, "    check text");
+
+        // Check admonition
+        // -------------------------------------------------------------------------------------------------------------------------
+        optionHelp = strPtr(strNewFmt(
+            "%s - 'backup' command - 'repo-retention-archive' option help\n"
+            "\n"
+            "Number of backups worth of continuous WAL to retain.\n"
+            "\n"
+            "NOTE: WAL segments required to make a backup consistent are always retained\n"
+            "until the backup is expired regardless of how this option is configured.\n"
+            "\n"
+            "If this value is not set, then the archive to expire will default to the\n"
+            "repo-retention-full (or repo-retention-diff) value corresponding to the\n"
+            "repo-retention-archive-type if set to full (or diff). This will ensure that WAL\n"
+            "is only expired for backups that are already expired.\n"
+            "\n"
+            "This option must be set if repo-retention-archive-type is set to incr. If disk\n"
+            "space is at a premium, then this setting, in conjunction with\n"
+            "repo-retention-archive-type, can be used to aggressively expire WAL segments.\n"
+            "However, doing so negates the ability to perform PITR from the backups with\n"
+            "expired WAL and is therefore not recommended.\n"
+            "\n"
+            "deprecated name: retention-archive\n",
+            helpVersion));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "backup");
+        strLstAddZ(argList, "repo-retention-archive");
+        TEST_RESULT_VOID(
+            configParse(strLstSize(argList), strLstPtr(argList), false), "help for backup command, repo-retention-archive option");
+        TEST_RESULT_STR(strPtr(helpRender()), optionHelp, "    check admonition text");
     }
 
     // *****************************************************************************************************************************

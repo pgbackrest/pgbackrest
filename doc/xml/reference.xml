@@ -10,9 +10,7 @@
         <config-section-list title="Settings">
             <!-- CONFIG - LOG -->
             <config-section id="log" name="Log">
-                <text>The <setting>log</setting> section defines logging-related settings.
-
-                <b>IMPORTANT NOTE</b>: Trace-level logging may expose secrets such as keys and passwords.  Use with caution!</text>
+                <text>The <setting>log</setting> section defines logging-related settings.<admonition type="caution">Trace-level logging may expose secrets such as keys and passwords.  Use with caution!</admonition></text>
 
                 <!-- CONFIG - LOG SECTION - LOG-LEVEL-FILE KEY -->
                 <config-key-list>
@@ -358,9 +356,7 @@
                     <config-key id="repo-retention-archive" name="Archive Retention">
                         <summary>Number of backups worth of continuous WAL to retain.</summary>
 
-                        <text>Note that the WAL segments required to make a backup consistent are always retained until the backup is expired regardless of how this option is configured.
-
-                        If this value is not set, then the archive to expire will default to the <setting>repo-retention-full</setting> (or <setting>repo-retention-diff</setting>) value corresponding to the <setting>repo-retention-archive-type</setting> if set to <setting>full</setting> (or <setting>diff</setting>). This will ensure that WAL is only expired for backups that are already expired.
+                        <text><admonition type="note">WAL segments required to make a backup consistent are always retained until the backup is expired regardless of how this option is configured.</admonition>If this value is not set, then the archive to expire will default to the <setting>repo-retention-full</setting> (or <setting>repo-retention-diff</setting>) value corresponding to the <setting>repo-retention-archive-type</setting> if set to <setting>full</setting> (or <setting>diff</setting>). This will ensure that WAL is only expired for backups that are already expired.
 
                         This option must be set if <setting>repo-retention-archive-type</setting> is set to <setting>incr</setting>.  If disk space is at a premium, then this setting, in conjunction with <setting>repo-retention-archive-type</setting>, can be used to aggressively expire WAL segments. However, doing so negates the ability to perform PITR from the backups with expired WAL and is therefore <b>not</b> recommended.</text>
 
@@ -555,11 +551,7 @@
 
                         <b>Be careful using this feature -- it is very easy to exclude something critical that will make the backup inconsistent.  Be sure to test your restores!</b>
 
-                        All excluded files will be logged at <id>info</id> level along with the exclusion rule.  Be sure to audit the list of excluded files to ensure nothing unexpected is being excluded.
-
-                        Note that exclusions are not honored on delta restores.  Any files/directories that were excluded by the backup will be <i>removed</i> on delta restore.
-
-                        This option should not be used to exclude <postgres/> logs from a backup.  Logs can be moved out of the <id>PGDATA</id> directory using the <postgres/> <setting>log_directory</setting> setting, which has the benefit of allowing logs to be preserved after a restore.
+                        All excluded files will be logged at <id>info</id> level along with the exclusion rule.  Be sure to audit the list of excluded files to ensure nothing unexpected is being excluded.<admonition type="note">Exclusions are not honored on delta restores.  Any files/directories that were excluded by the backup will be <i>removed</i> on delta restore.</admonition>This option should not be used to exclude <postgres/> logs from a backup.  Logs can be moved out of the <id>PGDATA</id> directory using the <postgres/> <setting>log_directory</setting> setting, which has the benefit of allowing logs to be preserved after a restore.
 
                         Multiple exclusions may be specified on the command-line or in a configuration file.</text>
 
@@ -679,11 +671,7 @@
                     <config-key id="db-include" name="Include Database">
                         <summary>Restore only specified databases.</summary>
 
-                        <text>This feature allows only selected databases to be restored.  Databases not specifically included will be restored as sparse, zeroed files to save space but still allow <postgres/> to perform recovery.  After recovery the databases that were not included will not be accessible but can be removed with the <id>drop database</id> command.
-
-                        Note that built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.
-
-                        The <setting>{[dash]}-db-include</setting> option can be passed multiple times to specify more than one database to include.</text>
+                        <text>This feature allows only selected databases to be restored.  Databases not specifically included will be restored as sparse, zeroed files to save space but still allow <postgres/> to perform recovery.  After recovery the databases that were not included will not be accessible but can be removed with the <id>drop database</id> command. <admonition type="note">built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.</admonition>The <setting>{[dash]}-db-include</setting> option can be passed multiple times to specify more than one database to include.</text>
 
                         <example>db_main</example>
                     </config-key>
@@ -710,11 +698,7 @@
                     <config-key id="recovery-option" name="Recovery Option">
                         <summary>Set an option in <file>recovery.conf</file>.</summary>
 
-                        <text>See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on recovery.conf options (replace X.X with your <postgres/> version).  This option can be used multiple times.
-
-                        Note: The <setting>restore_command</setting> option will be automatically generated but can be overridden with this option.  Be careful about specifying your own <setting>restore_command</setting> as <backrest/> is designed to handle this for you.  Target Recovery options (recovery_target_name, recovery_target_time, etc.) are generated automatically by <backrest/> and should not be set with this option.
-
-                        Since <backrest/> does not start <postgres/> after writing the <file>recovery.conf</file> file, it is always possible to edit/check <file>recovery.conf</file> before manually restarting.</text>
+                        <text>See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on recovery.conf options (replace X.X with your <postgres/> version).  This option can be used multiple times.<admonition type="note">The <setting>restore_command</setting> option will be automatically generated but can be overridden with this option.  Be careful about specifying your own <setting>restore_command</setting> as <backrest/> is designed to handle this for you.  Target Recovery options (recovery_target_name, recovery_target_time, etc.) are generated automatically by <backrest/> and should not be set with this option.</admonition>Since <backrest/> does not start <postgres/> after writing the <file>recovery.conf</file> file, it is always possible to edit/check <file>recovery.conf</file> before manually restarting.</text>
 
                         <example>primary_conninfo=db.mydomain.com</example>
                     </config-key>
@@ -1262,9 +1246,7 @@
                     <option id="force" name="Force">
                         <summary>Force stanza creation.</summary>
 
-                        <text><b>Caution</b>: Use <br-option>--force</br-option> only as a last resort, when all else fails.  If data is missing from the repository then the recreated <file>.info</file> files will likely be corrupt.
-
-                        If the required stanza <file>.info</file> files do not exist in the repository but backups or WAL segments do exist, then this option can be used to force the stanza to be created from the existing data in the repository.  This is most likely to be useful after corruption or an incomplete restore of the repository from elsewhere.</text>
+                        <text><admonition type="caution">Use <br-option>--force</br-option> only as a last resort, when all else fails.  If data is missing from the repository then the recreated <file>.info</file> files will likely be corrupt.</admonition>If the required stanza <file>.info</file> files do not exist in the repository but backups or WAL segments do exist, then this option can be used to force the stanza to be created from the existing data in the repository.  This is most likely to be useful after corruption or an incomplete restore of the repository from elsewhere.</text>
 
                         <example>n</example>
                     </option>
@@ -1322,8 +1304,7 @@
             <command id="stanza-delete" name="Stanza Delete">
                 <summary>Delete a stanza.</summary>
 
-                <text>The <cmd>stanza-delete</cmd> command removes data in the repository associated with a stanza. Use this command with caution &amp;mdash; it will permanently remove all backups and archives from the <backrest/> repository for the specified stanza.
-
+                <text>The <cmd>stanza-delete</cmd> command removes data in the repository associated with a stanza.<admonition type="warning">Use this command with caution &amp;mdash; it will permanently remove all backups and archives from the <backrest/> repository for the specified stanza.</admonition>
                 To delete a stanza:
                 <ul>
                     <li>Shut down the <postgres/> cluster associated with the stanza (or use --force to override).</li>

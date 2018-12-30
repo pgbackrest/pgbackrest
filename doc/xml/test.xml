@@ -10,7 +10,7 @@
 
         <p>A `Vagrantfile` is provided that contains the complete configuration required to run <backrest/> tests and build documentation.  If Vagrant is not suitable then the `Vagrantfile` still contains the configuration steps required to build a test system.</p>
 
-        <p>Note that this is not required for normal operation of <backrest/>.</p>
+        <admonition type="note">this is not required for normal operation of <backrest/>.</admonition>
     </section>
 
     <section id="testing">
@@ -50,13 +50,13 @@ vagrant ssh
 /backrest/test/test.pl --vm=co6 --module=backup --test=full --process-max=4
         </code-block>
 
-        <p>Note that process-max is only applicable to the <id>synthetic</id> and <id>full</id> tests in the <id>backup</id> module.</p>
+        <admonition type="note">process-max is only applicable to the <id>synthetic</id> and <id>full</id> tests in the <id>backup</id> module.</admonition>
 
         <code-block title="Run Tests for a Specific OS, Module, Test, Process Max, and Database Version">
 /backrest/test/test.pl --vm=co6 --module=backup --test=full --process-max=4 --pg-version=9.4
         </code-block>
 
-        <p>Note that pg-version is only applicable to the <id>full</id> test in the <id>backup</id> module.</p>
+        <admonition type="note">pg-version is only applicable to the <id>full</id> test in the <id>backup</id> module.</admonition>
 
         <code-block title="Iterate All Possible Test Combinations">
 /backrest/test/test.pl --dry-run

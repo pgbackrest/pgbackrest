@@ -118,7 +118,7 @@
 
 <!ELEMENT section (title?,
                    ((p|list|table|host-add|execute-list|backrest-config|postgres-config|cmd-description|
-                     option-description|code-block|block|section)*))>
+                     option-description|code-block|block|section|admonition)*))>
     <!ATTLIST section id CDATA #REQUIRED>
     <!ATTLIST section if CDATA "">
     <!ATTLIST section depend CDATA "">
@@ -222,13 +222,16 @@
                       br-setting|pg-option|pg-setting|link|user|proper)*>
 
 <!-- Formatted elements -->
+<!-- adminition type can be note, important, warning, caution and tip -->
+<!ELEMENT admonition ANY>
+    <!ATTLIST admonition type CDATA #REQUIRED>
 <!ELEMENT summary (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
                    br-setting|pg-option|pg-setting|link|user|proper)*>
 <!ELEMENT p (#PCDATA|quote|b|i|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|br-setting|
              pg-option|pg-setting|link|user|proper)*>
     <!ATTLIST p if CDATA "">
 <!ELEMENT text (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
-                br-setting|pg-option|pg-setting|link|user|proper)*>
+                br-setting|pg-option|pg-setting|link|user|proper|admonition)*>
 <!ELEMENT i (#PCDATA)>
 <!ELEMENT b (#PCDATA)>
 <!ELEMENT ul (li+)>

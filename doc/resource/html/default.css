@@ -483,6 +483,28 @@ li.list-unordered
 }
 
 /*******************************************************************************
+Admonition
+*******************************************************************************/
+.admonition
+{
+    padding-left: 20px;
+    font-style: italic;
+    margin: 10px 0px;
+}
+
+.admonition>.note, .admonition>.warning, .admonition>.caution, .admonition>.important, .admonition>.tip
+{
+    font-weight: bold;
+    float: left;
+    padding-right: 10px;
+}
+
+.admonition>.note-text, .admonition>.warning-text, .admonition>.caution-text, .admonition>.important-text, .admonition>.tip-text
+{
+    overflow: hidden;
+}
+
+/*******************************************************************************
 Keywords
 *******************************************************************************/
 .backrest, .cmd, .postgres, .host, .proper

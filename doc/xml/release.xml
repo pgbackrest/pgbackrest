@@ -248,6 +248,14 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
+                        <p>Add <code>admonitions</code> to all documentation renderers (HTML, PDF, Markdown and help text) and update <file>xml</file> files accordingly.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
                         <p>Add HTML table rendering and update PDF/Markdown renderers to support header-less tables. Add optional table captions.</p>
                     </release-item>
 

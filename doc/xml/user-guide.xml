@@ -838,7 +838,7 @@
                 <list-item>[global]</list-item>
             </list>
 
-            <p><b>Note:</b> <br-option>--config</br-option>, <br-option>--config-include-path</br-option> and <br-option>--config-path</br-option> are command-line only options.</p>
+            <admonition type="note"><br-option>--config</br-option>, <br-option>--config-include-path</br-option> and <br-option>--config-path</br-option> are command-line only options.</admonition>
 
             <p><backrest/> can also be configured using environment variables as described in the <link url="command.html">command reference</link>.</p>
 
@@ -1261,7 +1261,7 @@
 
             <p>Although useful this feature may not be appropriate when another third-party backup solution is being used to take online backups as <backrest/> will not recognize that the other software is running and may terminate a backup started by that software.  However, it would be unusual to run more than one third-party backup solution at the same time so this is not likely to be a problem.</p>
 
-            <p>Note that <id>pg_dump</id> and <id>pg_basebackup</id> do not take online backups so are not affected.  It is safe to run them in conjunction with <backrest/>.</p>
+            <admonition type="note"><id>pg_dump</id> and <id>pg_basebackup</id> do not take online backups so are not affected.  It is safe to run them in conjunction with <backrest/>.</admonition>
         </section>
 
         <!-- SECTION => BACKUP - ARCHIVE-TIMEOUT -->
@@ -1373,7 +1373,7 @@
                 </execute>
             </execute-list>
 
-            <p>Note that this syntax requires <proper>jq v1.5</proper>.</p>
+            <admonition type="note">This syntax requires <proper>jq v1.5</proper>.</admonition>
         </section>
     </section>
 
@@ -1998,7 +1998,7 @@
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
 
-        <p>Note that the region and endpoint will need to be configured to where the bucket is located.  The values given here are for the <id>us-east-1</id> region.</p>
+        <admonition type="note">The region and endpoint will need to be configured to where the bucket is located.  The values given here are for the <id>us-east-1</id> region.</admonition>
 
         <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible.  This sample policy will restrict all reads and writes to the bucket and repository path.</p>
 
@@ -2191,7 +2191,7 @@
                 <block-variable-replace key="setup-ssh-user-home-path">{[pg-home-path]}</block-variable-replace>
             </block>
 
-            <p>Note that ssh has been configured to only allow <backrest/> to be run via passwordless ssh.  This enhances security in the event that one of the service accounts is hijacked.</p>
+            <admonition type="note">ssh has been configured to only allow <backrest/> to be run via passwordless ssh.  This enhances security in the event that one of the service accounts is hijacked.</admonition>
 
             <!-- <block if="{[pg-version]} >= 11" id="setup-ssh">
                 <block-variable-replace key="setup-ssh-host">{[host-pg1]}</block-variable-replace>
@@ -2581,7 +2581,7 @@
                 </execute>
             </execute-list>
 
-            <p>Note that the <pg-setting>standby_mode</pg-setting> setting has been written into the <file>recovery.conf</file> file.  Configuring recovery settings in <backrest/> means that the <file>recovery.conf</file> file does not need to be stored elsewhere since it will be properly recreated with each restore.  The <br-setting>--type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>recovery.conf</file> file in place if that behavior is preferred.</p>
+            <admonition type="note">The <pg-setting>standby_mode</pg-setting> setting has been written into the <file>recovery.conf</file> file.  Configuring recovery settings in <backrest/> means that the <file>recovery.conf</file> file does not need to be stored elsewhere since it will be properly recreated with each restore.  The <br-setting>--type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>recovery.conf</file> file in place if that behavior is preferred.</admonition>
 
             <p>The <pg-setting>hot_standby</pg-setting> setting must be enabled before starting <postgres/> to allow read-only connections on <host>{[host-pg2]}</host>.  Otherwise, connection attempts will be refused.  The rest of the configuration is in case the standby is promoted to a primary.</p>
 
@@ -2887,7 +2887,7 @@
             <backrest-config-option section="global:archive-get" key="process-max">2</backrest-config-option>
         </backrest-config>
 
-        <p>Note that <br-option>process-max</br-option> is configured using command sections so that the option is not used by backup and restore.  This also allows different values for <cmd>archive-push</cmd> and <cmd>archive-get</cmd>.</p>
+        <admonition type="note"><br-option>process-max</br-option> is configured using command sections so that the option is not used by backup and restore.  This also allows different values for <cmd>archive-push</cmd> and <cmd>archive-get</cmd>.</admonition>
 
         <p>For demonstration purposes streaming replication will be broken to force <postgres/> to get WAL using the <pg-option>restore_command</pg-option>.</p>
 
@@ -2916,7 +2916,7 @@
 
             <p>The spool path holds the current status of WAL archiving.  Status files written into the spool directory are typically zero length and should consume a minimal amount of space (a few MB at most) and very little IO.  All the information in this directory can be recreated so it is not necessary to preserve the spool directory if the cluster is moved to new hardware.</p>
 
-            <p><b>NOTE:</b> In the original implementation of asynchronous archiving, WAL segments were copied to the spool directory before compression and transfer.  The new implementation copies WAL directly from the <path>pg_xlog</path> directory.  If asynchronous archiving was utilized in <proper>v1.12</proper> or prior, read the <proper>v1.13</proper> release notes carefully before upgrading.</p>
+            <admonition type="important">In the original implementation of asynchronous archiving, WAL segments were copied to the spool directory before compression and transfer.  The new implementation copies WAL directly from the <path>pg_xlog</path> directory.  If asynchronous archiving was utilized in <proper>v1.12</proper> or prior, read the <proper>v1.13</proper> release notes carefully before upgrading.</admonition>
 
             <p>The <file>[stanza]-archive-push-async.log</file> file can be used to monitor the activity of the asynchronous process.  A good way to test this is to quickly push a number of WAL segments.</p>
 

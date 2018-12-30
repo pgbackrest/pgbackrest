@@ -552,6 +552,14 @@ sub sectionProcess
 
             $iSectionNo++;
         }
+        # Add an admonition (e.g. NOTE, WARNING, etc)
+        elsif ($oChild->nameGet() eq 'admonition')
+        {
+            my $oAdmonition = $oSectionBodyElement->addNew(HTML_DIV, 'admonition');
+            $oAdmonition->addNew(HTML_DIV, $oChild->paramGet('type'), {strContent => uc($oChild->paramGet('type')) . ": "});
+            $oAdmonition->addNew(HTML_DIV, $oChild->paramGet('type') . '-text',
+                {strContent => $self->processText($oChild->textGet())});
+        }
         # Check if the child can be processed by a parent
         else
         {

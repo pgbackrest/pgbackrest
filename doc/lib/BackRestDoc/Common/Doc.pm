@@ -117,7 +117,8 @@ sub parse
     my %oOut;
     my $iIndex = 0;
     my $bText = $strName eq 'text' || $strName eq 'li' || $strName eq 'p' || $strName eq 'title' ||
-                $strName eq 'summary' || $strName eq 'table-cell' || $strName eq 'table-column' || $strName eq 'list-item';
+                $strName eq 'summary' || $strName eq 'table-cell' || $strName eq 'table-column' || $strName eq 'list-item' ||
+                $strName eq 'admonition';
 
     # Store the node name
     $oOut{name} = $strName;
@@ -232,7 +233,8 @@ sub build
     }
 
     if ($$oDoc{name} eq 'p' || $$oDoc{name} eq 'title' || $$oDoc{name} eq 'summary' ||
-        $$oDoc{name} eq 'table-cell' || $$oDoc{name} eq 'table-column' || $$oDoc{name} eq 'list-item')
+        $$oDoc{name} eq 'table-cell' || $$oDoc{name} eq 'table-column' || $$oDoc{name} eq 'list-item' ||
+        $$oDoc{name} eq 'admonition')
     {
         $$oOut{field}{text} = $oDoc;
     }

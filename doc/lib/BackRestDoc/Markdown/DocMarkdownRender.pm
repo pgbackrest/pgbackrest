@@ -431,6 +431,11 @@ sub sectionProcess
                 }
             }
         }
+        # Add an admonition (e.g. NOTE, WARNING, etc)
+        elsif ($oChild->nameGet() eq 'admonition')
+        {
+            $strMarkdown .= "\n> **" . uc($oChild->paramGet('type')) . ":** " . $self->processText($oChild->textGet());
+        }
          # Check if the child can be processed by a parent
         else
         {

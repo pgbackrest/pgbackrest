@@ -399,6 +399,14 @@ sub sectionProcess
         {
             $strLatex .= "\n" . $self->sectionProcess($oChild, $strSection, $iDepth + 1);
         }
+        # Add an admonition (e.g. NOTE, WARNING, etc)
+        elsif ($oChild->nameGet() eq 'admonition')
+        {
+            $strLatex .= "\n\\begin{leftbar}";
+            $strLatex .= "\n\\textit{\\textbf{" . uc($oChild->paramGet('type')) . ": }";
+            $strLatex .= $self->processText($oChild->textGet()) . "}";
+            $strLatex .= "\n\\end{leftbar}\n";
+        }
         # Check if the child can be processed by a parent
         else
         {
