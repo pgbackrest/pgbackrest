@@ -94,16 +94,20 @@ sub process
 
     my $oRender = $self->{oManifest}->renderGet(RENDER_TYPE_PDF);
 
-    # Should the logo be pulled from the doc path or the bin path?
-    my $strLogoFile = "$self->{oManifest}{strDocPath}/resource/latex/cds-logo.eps";
+    my $strLogo = $self->{oManifest}->variableGet('pdf-resource-logo');
 
-    if (!$self->{oManifest}->storage()->exists($strLogoFile))
+    if (!defined($strLogo))
     {
-        $strLogoFile = "$self->{oManifest}{strBinPath}/resource/latex/cds-logo.eps";
+        $strLogo = 'blank.eps';
     }
 
+    my ($strExt) = $strLogo =~ /(\.[^.]+)$/;
+    my $strLogoPath = defined($self->{oManifest}->variableGet('pdf-resource-path')) ?
+        $self->{oManifest}->variableGet('pdf-resource-path') :
+        "$self->{oManifest}{strDocPath}/resource/latex/";
+
     # Copy the logo
-    copy($strLogoFile, "$self->{strLatexPath}/logo.eps")
+    copy($strLogoPath . $strLogo, "$self->{strLatexPath}/logo$strExt")
         or confess &log(ERROR, "unable to copy logo");
 
     my $strLatex = $self->{oManifest}->variableReplace(

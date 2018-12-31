@@ -54,9 +54,6 @@
             $stryMonth[$month] . ' ' . $mday . ', ' . $year;
         </variable>
 
-        <!-- Logo locations -->
-        <variable key="logo">{[doc-path]}/output/latex/logo</variable>
-
         <!-- HTML variables  -->
         <variable key="html-footer" eval='y'>
             'Copyright &amp;copy; 2015' . '-' . substr('{[release-date]}', length('{[release-date]}') - 4) .
@@ -66,11 +63,14 @@
         <!-- <variable key="html-logo">&lt;img src=&quot;{[project-logo]}&quot;&gt;</variable> -->
 
         <!-- PDF variables  -->
+        <variable key="pdf-logo">{[doc-path]}/output/latex/logo</variable>
+
         <variable key="pdf-title1">{[project]} User Guide</variable>
         <variable key="pdf-title2">Open Source PostgreSQL Backup and Restore Utility</variable>
         <variable key="pdf-title3">Version {[version]}</variable>
 
         <variable key="pdf-organization">Crunchy Data Solutions, Inc.</variable>
+        <variable key="pdf-resource-logo">cds-logo.eps</variable>
 
         <variable key='pdf-footer-left'>{[pdf-title1]}\\{[pdf-title3]}</variable>
         <variable key='pdf-footer-center'>\ \\-\ \thepage\ -</variable>
