@@ -39,6 +39,23 @@ strLstAddInternal(StringList *this, String *string)
 }
 
 /***********************************************************************************************************************************
+Internal insert -- the string must have been created in the list's mem context before being passed
+***********************************************************************************************************************************/
+static StringList *
+strLstInsertInternal(StringList *this, unsigned int listIdx, String *string)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(UINT, listIdx);
+        FUNCTION_TEST_PARAM(STRING, string);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(STRING_LIST, (StringList *)lstInsert((List *)this, listIdx, &string));
+}
+
+/***********************************************************************************************************************************
 Split a string into a string list based on a delimiter
 ***********************************************************************************************************************************/
 StringList *
@@ -287,7 +304,7 @@ strLstExistsZ(const StringList *this, const char *cstring)
 }
 
 /***********************************************************************************************************************************
-Wrapper for lstAdd()
+Add String to the list
 ***********************************************************************************************************************************/
 StringList *
 strLstAdd(StringList *this, const String *string)
@@ -348,6 +365,57 @@ strLstGet(const StringList *this, unsigned int listIdx)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RESULT(STRING, *(String **)lstGet((List *)this, listIdx));
+}
+
+
+/***********************************************************************************************************************************
+Insert String into the list
+***********************************************************************************************************************************/
+StringList *
+strLstInsert(StringList *this, unsigned int listIdx, const String *string)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(UINT, listIdx);
+        FUNCTION_TEST_PARAM(STRING, string);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    StringList *result = NULL;
+
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        result = strLstInsertInternal(this, listIdx, strDup(string));
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RESULT(STRING_LIST, result);
+}
+
+/***********************************************************************************************************************************
+Insert zero-terminated string into the list
+***********************************************************************************************************************************/
+StringList *
+strLstInsertZ(StringList *this, unsigned int listIdx, const char *string)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(UINT, listIdx);
+        FUNCTION_TEST_PARAM(STRINGZ, string);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    StringList *result = NULL;
+
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        result = strLstInsertInternal(this, listIdx, strNew(string));
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RESULT(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************

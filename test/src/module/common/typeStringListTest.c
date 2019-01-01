@@ -12,7 +12,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("strLstNew(), strLstAdd, strLstGet(), strLstMove(), strLstSize(), and strLstFree()"))
+    if (testBegin("strLstNew(), strLstAdd*(), strLstGet(), strLstMove(), strLstSize(), and strLstFree()"))
     {
         // Add strings to the list
         // -------------------------------------------------------------------------------------------------------------------------
@@ -180,11 +180,11 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(strLstToLog(list)), "{[]}", "format empty list");
 
-        strLstAddZ(list, "item1");
-        TEST_RESULT_STR(strPtr(strLstToLog(list)), "{[\"item1\"]}", "format 1 item list");
+        strLstInsertZ(list, 0, "item3");
+        TEST_RESULT_STR(strPtr(strLstToLog(list)), "{[\"item3\"]}", "format 1 item list");
 
-        strLstAddZ(list, "item2");
-        strLstAddZ(list, "item3");
+        strLstInsert(list, 0, strNew("item1"));
+        strLstInsertZ(list, 1, "item2");
         TEST_RESULT_STR(strPtr(strLstToLog(list)), "{[\"item1\", \"item2\", \"item3\"]}", "format 3 item list");
     }
 

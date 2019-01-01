@@ -170,6 +170,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>strLstInsert()</code> and <code>strLstInsertZ()</code> to <code>StringList</code> object.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Rename <code>PGBACKREST</code>/<code>BACKREST</code> constants to <code>PROJECT</code>.</p>
                     </release-item>
 
