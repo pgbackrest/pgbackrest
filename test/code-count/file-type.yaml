@@ -1643,10 +1643,6 @@ test/src/module/common/typeListTest.c:
   class: test/module
   type: c
 
-test/src/module/common/typeStringListTest.c:
-  class: test/module
-  type: c
-
 test/src/module/common/typeStringTest.c:
   class: test/module
   type: c

@@ -354,6 +354,10 @@
                     <release-item>
                         <p>Add <code>testRepoPath()</code> to let C unit tests know where the code repository is located.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Merge <file>common/typeStringListTest</file> module into <file>common/typeStringTest</file>.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
