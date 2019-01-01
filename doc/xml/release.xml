@@ -358,6 +358,10 @@
                     <release-item>
                         <p>Merge <file>common/typeStringListTest</file> module into <file>common/typeStringTest</file>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Merge <file>common/typeVariantListTest</file> module into <file>common/typeVariantTest</file>.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
