@@ -21696,7 +21696,7 @@ static const EmbeddedModule embeddedModule[] =
             "\n"
             "push @EXPORT, qw(projectBin projectBinSet);\n"
             "\n\n\n\n\n\n"
-            "use constant PROJECT_VERSION => '2.08dev';\n"
+            "use constant PROJECT_VERSION => '2.08';\n"
             "push @EXPORT, qw(PROJECT_VERSION);\n"
             "\n\n\n\n\n\n"
             "use constant REPOSITORY_FORMAT => 5;\n"

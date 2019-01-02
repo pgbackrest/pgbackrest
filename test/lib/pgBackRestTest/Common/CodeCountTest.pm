@@ -54,6 +54,7 @@ sub codeCountScan
                  $strFile =~ '^doc/site/' ||
                  $strFile eq 'libc/typemap' ||
                  $strFile eq 'test/Vagrantfile' ||
+                 $strFile =~ '^test/certificate/' ||
                  $strFile =~ '^test/code-count/' ||
                  $strFile =~ '^test/coverage/' ||
                  $strFile =~ '^test/data/' ||
