@@ -13,6 +13,17 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.09dev" title="UNDER DEVELOPMENT">
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="bruce.burdick"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify that encryption is always performed client-side.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2019-01-02" version="2.08" title="Minor Improvements and Bug Fixes">
@@ -5992,6 +6003,11 @@
         <contributor id="brian.faherty">
             <contributor-name-display>Brian Faherty</contributor-name-display>
             <contributor-id type="github">scrummyin</contributor-id>
+        </contributor>
+
+        <contributor id="bruce.burdick">
+            <contributor-name-display>Bruce Burdick</contributor-name-display>
+            <contributor-id type="github">baburdick</contributor-id>
         </contributor>
 
         <contributor id="camilo.aguilar">

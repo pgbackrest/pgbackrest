@@ -941,7 +941,7 @@
         <section id="configure-encryption">
             <title>Configure Repository Encryption</title>
 
-            <p>The repository will be configured with a cipher type and key to demonstrate encryption.</p>
+            <p>The repository will be configured with a cipher type and key to demonstrate encryption.  Encryption is always performed client-side even if the repository type (e.g. S3) supports encryption.</p>
 
             <p>It is important to use a long, random passphrase for the cipher key.  A good way to generate one is to run: <code>openssl rand -base64 48</code>.</p>
 

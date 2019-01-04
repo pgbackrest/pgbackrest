@@ -477,7 +477,7 @@
                         <ul>
                             <li><id>none</id> - The repository is not encrypted</li>
                             <li><id>aes-256-cbc</id> - Advanced Encryption Standard with 256 bit key length</li>
-                        </ul></text>
+                        </ul>Note that encryption is always performed client-side even if the repository type (e.g. S3) supports encryption.</text>
 
                         <default>none</default>
                         <example>aes-256-cbc</example>
