@@ -2529,7 +2529,9 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "The following repository types are supported:\n"
             "\n"
             "* none - The repository is not encrypted\n"
-            "* aes-256-cbc - Advanced Encryption Standard with 256 bit key length"
+            "* aes-256-cbc - Advanced Encryption Standard with 256 bit key length\n"
+            "\n"
+            "Note that encryption is always performed client-side even if the repository type (e.g. S3) supports encryption."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
