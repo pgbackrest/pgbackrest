@@ -22,7 +22,7 @@ ioHandleWriteOneStr(int handle, const String *string)
     FUNCTION_DEBUG_END();
 
     if (write(handle, strPtr(string), strSize(string)) != (int)strSize(string))
-        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write to %zu byte(s) to handle", strSize(string));
+        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write %zu byte(s) to handle", strSize(string));
 
     FUNCTION_DEBUG_RESULT_VOID();
 }

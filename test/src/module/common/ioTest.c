@@ -455,7 +455,7 @@ testRun(void)
     {
         TEST_ERROR(
             ioHandleWriteOneStr(999999, strNew("test")), FileWriteError,
-            "unable to write to 4 byte(s) to handle: [9] Bad file descriptor");
+            "unable to write 4 byte(s) to handle: [9] Bad file descriptor");
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/test.txt", testPath());
