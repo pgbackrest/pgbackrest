@@ -82,6 +82,9 @@ exitInit(void)
     signal(SIGINT, exitOnSignal);
     signal(SIGTERM, exitOnSignal);
 
+    // Ignore SIGPIPE and check for EPIPE errors on write() instead
+    signal(SIGPIPE, SIG_IGN);
+
     FUNCTION_DEBUG_RESULT_VOID();
 }
 

@@ -16,6 +16,7 @@ the includes which are required for the test code.
 /***********************************************************************************************************************************
 The test code is included directly so it can freely interact with the included C files
 ***********************************************************************************************************************************/
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,6 +72,9 @@ main(int argListSize, const char *argList[])
 
     // Set neutral umask for testing
     umask(0000);
+
+    // Ignore SIGPIPE and check for EPIPE errors on write() instead
+    signal(SIGPIPE, SIG_IGN);
 
     // Set globals
     testExeSet(argList[0]);

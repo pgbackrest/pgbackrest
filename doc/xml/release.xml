@@ -26,6 +26,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Ignore <id>SIGPIPE</id> signals and check <id>EPIPE</id> result instead.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Rename <code>common/io/handle</code> module to <code>common/io/handleWrite</code>.</p>
                     </release-item>
                 </release-development-list>
