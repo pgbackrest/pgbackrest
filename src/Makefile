@@ -7,8 +7,8 @@
 ####################################################################################################################################
 CC=gcc
 
-# Compile using C99 and Posix 2001 standards
-CSTD = -std=c99 -D_POSIX_C_SOURCE=200112L
+# Compile using C99 and Posix 2001 standards (also _DARWIN_C_SOURCE for MacOS)
+CSTD = -std=c99 -D_POSIX_C_SOURCE=200112L -D_DARWIN_C_SOURCE
 
 # Compile optimizations
 COPT = -O2

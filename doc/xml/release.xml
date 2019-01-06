@@ -14,6 +14,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.09dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="douglas.j.hunley"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <id>_DARWIN_C_SOURCE</id> flag to Makefile for <proper>MacOS</proper> builds.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Rename <code>common/io/handle</code> module to <code>common/io/handleWrite</code>.</p>
