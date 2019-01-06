@@ -28,7 +28,7 @@ Defaults
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-StorageDriverS3 * storageDriverS3New(
+StorageDriverS3 *storageDriverS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, const String *region, const String *accessKey, const String *secretAccessKey,
     const String *securityToken, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile,

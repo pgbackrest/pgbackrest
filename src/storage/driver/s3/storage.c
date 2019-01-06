@@ -219,6 +219,9 @@ storageDriverS3New(
     const String *caPath)
 {
     FUNCTION_DEBUG_BEGIN(logLevelDebug);
+        FUNCTION_DEBUG_PARAM(STRING, path);
+        FUNCTION_DEBUG_PARAM(BOOL, write);
+        FUNCTION_DEBUG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_DEBUG_PARAM(STRING, bucket);
         FUNCTION_DEBUG_PARAM(STRING, endPoint);
         FUNCTION_DEBUG_PARAM(STRING, region);
@@ -232,6 +235,7 @@ storageDriverS3New(
         FUNCTION_DEBUG_PARAM(STRING, caFile);
         FUNCTION_DEBUG_PARAM(STRING, caPath);
 
+        FUNCTION_TEST_ASSERT(path != NULL);
         FUNCTION_TEST_ASSERT(bucket != NULL);
         FUNCTION_TEST_ASSERT(endPoint != NULL);
         FUNCTION_TEST_ASSERT(region != NULL);
