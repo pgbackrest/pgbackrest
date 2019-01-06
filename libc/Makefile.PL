@@ -54,7 +54,7 @@ my @stryCFile =
     'common/io/filter/filter.c',
     'common/io/filter/group.c',
     'common/io/filter/size.c',
-    'common/io/handle.c',
+    'common/io/handleWrite.c',
     'common/io/io.c',
     'common/io/read.c',
     'common/io/write.c',

@@ -9,7 +9,7 @@ Lock Handler
 
 #include "common/assert.h"
 #include "common/debug.h"
-#include "common/io/handle.h"
+#include "common/io/handleWrite.h"
 #include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"

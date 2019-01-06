@@ -13,6 +13,14 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.09dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Rename <code>common/io/handle</code> module to <code>common/io/handleWrite</code>.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>

@@ -7,7 +7,7 @@ Help Command
 
 #include "common/assert.h"
 #include "common/debug.h"
-#include "common/io/handle.h"
+#include "common/io/handleWrite.h"
 #include "common/memContext.h"
 #include "config/config.h"
 #include "config/define.h"

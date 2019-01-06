@@ -1,10 +1,10 @@
 /***********************************************************************************************************************************
-Handle IO
+Handle IO Write
 
-Simple IO functions operating on handles.  These will be superceded by general IoRead/IoWrite functionality.
+Simple IO write functions operating on handles.  These will be superceded by general IoRead/IoWrite functionality.
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_HANDLE_H
-#define COMMON_IO_HANDLE_H
+#ifndef COMMON_IO_HANDLEWRITE_H
+#define COMMON_IO_HANDLEWRITE_H
 
 #include "common/type/string.h"
 

@@ -703,11 +703,11 @@ src/common/io/filter/size.h:
   class: core
   type: c/h
 
-src/common/io/handle.c:
+src/common/io/handleWrite.c:
   class: core
   type: c
 
-src/common/io/handle.h:
+src/common/io/handleWrite.h:
   class: core
   type: c/h
 
