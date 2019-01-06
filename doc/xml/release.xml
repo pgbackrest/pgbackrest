@@ -32,6 +32,14 @@
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Move C module include in <file>test.c</file> above headers included for testing.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2019-01-02" version="2.08" title="Minor Improvements and Bug Fixes">

@@ -3,6 +3,19 @@ C Test Wrapper
 
 This wrapper runs the the C unit tests.
 ***********************************************************************************************************************************/
+
+/***********************************************************************************************************************************
+C files to be tested
+
+The files are included directly so the test can see and manipulate variables and functions in the module without the need to extern.
+If a .c file does not exist for a module then the header file will be included instead.  They are included first so they won't see
+the includes which are required for the test code.
+***********************************************************************************************************************************/
+{[C_INCLUDE]}
+
+/***********************************************************************************************************************************
+The test code is included directly so it can freely interact with the included C files
+***********************************************************************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,17 +38,6 @@ This wrapper runs the the C unit tests.
     #include "common/memContext.h"
 #endif
 
-/***********************************************************************************************************************************
-C files to be tested
-
-The files are included directly so the test can see and manipulate variables and functions in the module without the need to extern.
-If a .c file does not exist for a module then the header file will be included instead.
-***********************************************************************************************************************************/
-{[C_INCLUDE]}
-
-/***********************************************************************************************************************************
-The test code is included directly so it can freely interact with the included C files
-***********************************************************************************************************************************/
 {[C_TEST_INCLUDE]}
 
 /***********************************************************************************************************************************
