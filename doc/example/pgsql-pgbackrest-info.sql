@@ -1,7 +1,7 @@
--- An example of monitoring pgBackRest from within PostgresSQL
+-- An example of monitoring pgBackRest from within PostgreSQL
 --
 -- Use copy to export data from the pgBackRest info command into the jsonb
--- type so it can be queried directly by PostgresSQL.
+-- type so it can be queried directly by PostgreSQL.
 
 -- Create monitor schema
 create schema monitor;
