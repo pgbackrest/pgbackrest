@@ -486,8 +486,8 @@ strLstMove(StringList *this, MemContext *parentNew)
 }
 
 /***********************************************************************************************************************************
-Return an array of pointers to the zero-terminated strings in this list.  DO NOT override const and modify any of the strings in
-this array, though it is OK to modify the array itself.
+Return a null-terminated array of pointers to the zero-terminated strings in this list.  DO NOT override const and modify any of the
+strings in this array, though it is OK to modify the array itself.
 ***********************************************************************************************************************************/
 const char **
 strLstPtr(const StringList *this)
@@ -498,7 +498,7 @@ strLstPtr(const StringList *this)
         FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    const char **list = memNew(strLstSize(this) * sizeof(char *));
+    const char **list = memNew((strLstSize(this) + 1) * sizeof(char *));
 
     for (unsigned int listIdx = 0; listIdx < strLstSize(this); listIdx++)
     {
@@ -507,6 +507,8 @@ strLstPtr(const StringList *this)
         else
             list[listIdx] = strPtr(strLstGet(this, listIdx));
     }
+
+    list[strLstSize(this)] = NULL;
 
     FUNCTION_TEST_RESULT(CONST_CHARPP, list);
 }

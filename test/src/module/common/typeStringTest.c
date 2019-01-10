@@ -335,6 +335,8 @@ testRun(void)
                 TEST_RESULT_STR(szList[listIdx], strPtr(strNewFmt("STR%02u", listIdx)), "check item %u", listIdx);
         }
 
+        TEST_RESULT_PTR(szList[strLstSize(list)], NULL, "check null terminator");
+
         strLstFree(list);
     }
 
