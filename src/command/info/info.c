@@ -96,7 +96,7 @@ stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
 /***********************************************************************************************************************************
 Set the data for the archive section of the stanza for the database info from the backup.info file.
 ***********************************************************************************************************************************/
-void
+static void
 archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archiveSection, const InfoArchive *info, bool currentDb)
 {
     FUNCTION_TEST_BEGIN();
@@ -149,7 +149,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
         }
 
         // Iterate through the directory list in the reverse so processing newest first. Cast comparison to an int for readability.
-        for (unsigned int idx = sizeWalDir - 1; (int)idx > 0; idx--)
+        for (unsigned int idx = sizeWalDir - 1; (int)idx >= 0; idx--)
         {
             // Get a list of all WAL in this WAL dir
             StringList *list = storageListP(
@@ -189,15 +189,13 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
 /***********************************************************************************************************************************
 For each current backup in the backup.info file of the stanza, set the data for the backup section.
 ***********************************************************************************************************************************/
-void
-backupList(const String *stanza, VariantList *backupSection, InfoBackup *info)
+static void
+backupList(VariantList *backupSection, InfoBackup *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, stanza);
         FUNCTION_TEST_PARAM(VARIANT, backupSection);
         FUNCTION_TEST_PARAM(INFO_BACKUP, info);
 
-        FUNCTION_TEST_ASSERT(stanza != NULL);
         FUNCTION_TEST_ASSERT(backupSection != NULL);
         FUNCTION_TEST_ASSERT(info != NULL);
     FUNCTION_TEST_END();
@@ -310,7 +308,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
         {
             // Attempt to load the backup info file
             info = infoBackupNew(
-                storageRepo(), strNewFmt("%s/%s/%s", STORAGE_REPO_BACKUP, strPtr(stanzaListName), INFO_BACKUP_FILE), false,
+                storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strPtr(stanzaListName), INFO_BACKUP_FILE), false,
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
         }
         CATCH(FileMissingError)
@@ -337,7 +335,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
         // If the backup.info file exists, get the database history information (newest to oldest) and corresponding archive
         if (info != NULL)
         {
-            for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoBackupPg(info)); pgIdx++)
+            for (unsigned int pgIdx = infoPgDataTotal(infoBackupPg(info)) - 1; (int)pgIdx >= 0; pgIdx--)
             {
                 InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);
                 Variant *pgInfo = varNewKv();
@@ -350,13 +348,13 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
 
                 // Get the archive info for the DB from the archive.info file
                 InfoArchive *info = infoArchiveNew(
-                    storageRepo(), strNewFmt("%s/%s/%s", STORAGE_REPO_ARCHIVE, strPtr(stanzaListName), INFO_ARCHIVE_FILE),  false,
+                    storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanzaListName), INFO_ARCHIVE_FILE),  false,
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
                 archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
             }
 
             // Get data for all existing backups for this stanza
-            backupList(stanzaListName, backupSection, info);
+            backupList(backupSection, info);
         }
 
         // Add the database history, backup and archive sections to the stanza info
@@ -413,13 +411,13 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
     VariantList *backupSection = kvGetList(stanzaInfo, varNewStr(STANZA_KEY_BACKUP_STR));
 
     // For each database (working from oldest to newest) find the corresponding archive and backup info
-    for (unsigned int dbIdx = varLstSize(dbSection) - 1; (int)dbIdx >= 0; dbIdx--)
+    for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
     {
         KeyValue *pgInfo = varKv(varLstGet(dbSection, dbIdx));
         uint64_t dbId = varUInt64(kvGet(pgInfo, varNewStr(DB_KEY_ID_STR)));
 
         // List is ordered so 0 is always the current DB index
-        if (dbIdx == 0)
+        if (dbIdx == varLstSize(dbSection) - 1)
             strCat(resultStr, "\n    db (current)");
 
         // Get the min/max archive information for the database
@@ -515,7 +513,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
         // If there is data to display, then display it.
         if (strSize(archiveResult) > 0 || strSize(backupResult) > 0)
         {
-            if (dbIdx != 0)
+            if (dbIdx != varLstSize(dbSection) - 1)
                 strCat(resultStr, "\n    db (prior)");
 
             if (strSize(archiveResult) > 0)
@@ -544,12 +542,12 @@ infoRender(void)
         const String *stanza = cfgOptionTest(cfgOptStanza) ? cfgOptionStr(cfgOptStanza) : NULL;
 
         // Get a list of stanzas in the backup directory.
-        StringList *stanzaList = storageListP(storageRepo(), strNew(STORAGE_REPO_BACKUP), .errorOnMissing = true);
+        StringList *stanzaList = storageListP(storageRepo(), STORAGE_PATH_BACKUP_STR, .errorOnMissing = false);
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
 
         // If the backup storage exists, then search for and process any stanzas
-        if (strLstSize(stanzaList) > 0)
+        if (stanzaList != NULL && strLstSize(stanzaList) > 0)
             infoList = stanzaInfoList(stanza, stanzaList);
 
         // Format text output
@@ -604,7 +602,7 @@ infoRender(void)
                 }
             }
             else
-                resultStr = strNewFmt("No stanzas exist in %s\n", strPtr(storagePathNP(storageRepo(), NULL)));
+                resultStr = strNewFmt("No stanzas exist in %s.\n", strPtr(storagePathNP(storageRepo(), NULL)));
         }
         // Format json output
         else

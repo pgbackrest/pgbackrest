@@ -17,6 +17,11 @@ Storage path constants
 #define STORAGE_REPO_ARCHIVE                                        "<REPO:ARCHIVE>"
 #define STORAGE_REPO_BACKUP                                         "<REPO:BACKUP>"
 
+#define STORAGE_PATH_ARCHIVE                                        "archive"
+    STRING_DECLARE(STORAGE_PATH_ARCHIVE_STR);
+#define STORAGE_PATH_BACKUP                                         "backup"
+    STRING_DECLARE(STORAGE_PATH_BACKUP_STR);
+
 /***********************************************************************************************************************************
 Repository storage types
 ***********************************************************************************************************************************/

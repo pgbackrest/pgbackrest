@@ -32,22 +32,16 @@ testRun(void)
         strLstAddZ(argList, "--output=json");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        // No repo path
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR_FMT(
-            infoRender(), PathOpenError,
-            "unable to open path '%s' for read: [2] No such file or directory", strPtr(backupPath));
-
-        storagePathCreateNP(storageLocalWrite(), archivePath);
-        storagePathCreateNP(storageLocalWrite(), backupPath);
-
         // No stanzas have been created
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(strPtr(infoRender()), "[]\n", "json - repo but no stanzas");
 
         harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
         TEST_RESULT_STR(strPtr(infoRender()),
-            strPtr(strNewFmt("No stanzas exist in %s\n", strPtr(storagePathNP(storageRepo(), NULL)))), "text - no stanzas");
+            strPtr(strNewFmt("No stanzas exist in %s.\n", strPtr(storagePathNP(storageRepo(), NULL)))), "text - no stanzas");
+
+        storagePathCreateNP(storageLocalWrite(), archivePath);
+        storagePathCreateNP(storageLocalWrite(), backupPath);
 
         // Empty stanza
         //--------------------------------------------------------------------------------------------------------------------------
@@ -155,14 +149,14 @@ testRun(void)
             "        \"cipher\" : \"none\",\n"
             "        \"db\" : [\n"
             "            {\n"
-            "                \"id\" : 2,\n"
-            "                \"system-id\" : 6569239123849665679,\n"
-            "                \"version\" : \"9.4\"\n"
-            "            },\n"
-            "            {\n"
             "                \"id\" : 1,\n"
             "                \"system-id\" : 6569239123849665666,\n"
             "                \"version\" : \"9.3\"\n"
+            "            },\n"
+            "            {\n"
+            "                \"id\" : 2,\n"
+            "                \"system-id\" : 6569239123849665679,\n"
+            "                \"version\" : \"9.4\"\n"
             "            }\n"
             "        ],\n"
             "        \"name\" : \"stanza1\",\n"
@@ -249,19 +243,19 @@ testRun(void)
             "        \"archive\" : [\n"
             "            {\n"
             "                \"database\" : {\n"
-            "                    \"id\" : 3\n"
-            "                },\n"
-            "                \"id\" : \"9.4-3\",\n"
-            "                \"max\" : null,\n"
-            "                \"min\" : null\n"
-            "            },\n"
-            "            {\n"
-            "                \"database\" : {\n"
             "                    \"id\" : 1\n"
             "                },\n"
             "                \"id\" : \"9.4-1\",\n"
             "                \"max\" : \"000000020000000000000003\",\n"
             "                \"min\" : \"000000010000000000000002\"\n"
+            "            },\n"
+            "            {\n"
+            "                \"database\" : {\n"
+            "                    \"id\" : 3\n"
+            "                },\n"
+            "                \"id\" : \"9.4-3\",\n"
+            "                \"max\" : null,\n"
+            "                \"min\" : null\n"
             "            }\n"
             "        ],\n"
             "        \"backup\" : [\n"
@@ -298,7 +292,7 @@ testRun(void)
             "        \"cipher\" : \"none\",\n"
             "        \"db\" : [\n"
             "            {\n"
-            "                \"id\" : 3,\n"
+            "                \"id\" : 1,\n"
             "                \"system-id\" : 6569239123849665679,\n"
             "                \"version\" : \"9.4\"\n"
             "            },\n"
@@ -308,7 +302,7 @@ testRun(void)
             "                \"version\" : \"9.3\"\n"
             "            },\n"
             "            {\n"
-            "                \"id\" : 1,\n"
+            "                \"id\" : 3,\n"
             "                \"system-id\" : 6569239123849665679,\n"
             "                \"version\" : \"9.4\"\n"
             "            }\n"
@@ -470,19 +464,19 @@ testRun(void)
             "        \"archive\" : [\n"
             "            {\n"
             "                \"database\" : {\n"
-            "                    \"id\" : 2\n"
-            "                },\n"
-            "                \"id\" : \"9.5-2\",\n"
-            "                \"max\" : null,\n"
-            "                \"min\" : null\n"
-            "            },\n"
-            "            {\n"
-            "                \"database\" : {\n"
             "                    \"id\" : 1\n"
             "                },\n"
             "                \"id\" : \"9.4-1\",\n"
             "                \"max\" : \"000000020000000000000003\",\n"
             "                \"min\" : \"000000010000000000000002\"\n"
+            "            },\n"
+            "            {\n"
+            "                \"database\" : {\n"
+            "                    \"id\" : 2\n"
+            "                },\n"
+            "                \"id\" : \"9.5-2\",\n"
+            "                \"max\" : null,\n"
+            "                \"min\" : null\n"
             "            }\n"
             "        ],\n"
             "        \"backup\" : [\n"
@@ -582,14 +576,14 @@ testRun(void)
             "        \"cipher\" : \"none\",\n"
             "        \"db\" : [\n"
             "            {\n"
-            "                \"id\" : 2,\n"
-            "                \"system-id\" : 6626363367545678089,\n"
-            "                \"version\" : \"9.5\"\n"
-            "            },\n"
-            "            {\n"
             "                \"id\" : 1,\n"
             "                \"system-id\" : 6625592122879095702,\n"
             "                \"version\" : \"9.4\"\n"
+            "            },\n"
+            "            {\n"
+            "                \"id\" : 2,\n"
+            "                \"system-id\" : 6626363367545678089,\n"
+            "                \"version\" : \"9.5\"\n"
             "            }\n"
             "        ],\n"
             "        \"name\" : \"stanza1\",\n"
@@ -842,7 +836,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        const char *generalHelp = strPtr(strNewFmt("No stanzas exist in %s\n", strPtr(repoPath)));
+        const char *generalHelp = strPtr(strNewFmt("No stanzas exist in %s.\n", strPtr(repoPath)));
 
         Storage *storage = storageDriverPosixInterface(
             storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL));

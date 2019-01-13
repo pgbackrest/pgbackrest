@@ -62,6 +62,7 @@ SRCS = \
 	command/archive/get/get.c \
 	command/archive/push/push.c \
 	command/help/help.c \
+	command/info/info.c \
 	command/command.c \
 	command/control/control.c \
 	common/debug.c \
@@ -115,6 +116,8 @@ SRCS = \
 	crypto/crypto.c \
 	info/info.c \
 	info/infoArchive.c \
+	info/infoBackup.c \
+	info/infoManifest.c \
 	info/infoPg.c \
 	perl/config.c \
 	perl/exec.c \
@@ -348,7 +351,7 @@ info/infoManifest.o: info/infoManifest.c common/error.auto.h common/error.h comm
 info/infoPg.o: info/infoPg.c common/assert.h common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h crypto/crypto.h crypto/hash.h info/info.h info/infoPg.h postgres/interface.h postgres/version.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
 	$(CC) $(CFLAGS) -c info/infoPg.c -o info/infoPg.o
 
-main.o: main.c command/archive/get/get.h command/archive/push/push.h command/command.h command/help/help.h common/debug.h common/error.auto.h common/error.h common/exit.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h perl/exec.h postgres/interface.h version.h
+main.o: main.c command/archive/get/get.h command/archive/push/push.h command/command.h command/help/help.h command/info/info.h common/debug.h common/error.auto.h common/error.h common/exit.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h perl/exec.h postgres/interface.h version.h
 	$(CC) $(CFLAGS) -c main.c -o main.o
 
 perl/config.o: perl/config.c common/debug.h common/error.auto.h common/error.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h

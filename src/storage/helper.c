@@ -17,8 +17,8 @@ Storage path constants
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_IN_STR,                         STORAGE_SPOOL_ARCHIVE_IN);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_OUT_STR,                        STORAGE_SPOOL_ARCHIVE_OUT);
 
-#define STORAGE_PATH_ARCHIVE                                        "archive"
-#define STORAGE_PATH_BACKUP                                         "backup"
+STRING_EXTERN(STORAGE_PATH_ARCHIVE_STR,                             STORAGE_PATH_ARCHIVE);
+STRING_EXTERN(STORAGE_PATH_BACKUP_STR,                              STORAGE_PATH_BACKUP);
 
 /***********************************************************************************************************************************
 Local variables
