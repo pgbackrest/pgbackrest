@@ -220,7 +220,8 @@ testRun(void)
         TEST_RESULT_STR(strPtr(strSizeFormat(1048576)), "1MB", "1 MB");
         TEST_RESULT_STR(strPtr(strSizeFormat(20162900)), "19.2MB", "19.2 MB");
         TEST_RESULT_STR(strPtr(strSizeFormat(1073741824)), "1GB", "1 GB");
-        TEST_RESULT_STR(strPtr(strSizeFormat(UINT64_MAX)), "17179869184.0GB", "uint64 max");
+        TEST_RESULT_STR(strPtr(strSizeFormat(1073741824 + 107374183)), "1.1GB", "1.1 GB");
+        TEST_RESULT_STR(strPtr(strSizeFormat(UINT64_MAX)), "17179869183GB", "uint64 max");
     }
 
     // *****************************************************************************************************************************

@@ -30,6 +30,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve accuracy of <code>strSizeFormat()</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Null-terminate list returned by <code>strLstPtr()</code>.</p>
                     </release-item>
 

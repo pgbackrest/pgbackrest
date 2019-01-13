@@ -812,24 +812,24 @@ strSizeFormat(const uint64_t size)
         result = strNewFmt("%" PRIu64 "B", size);
     else if (size < (1024 * 1024))
     {
-        if ((int)((double)size / 102.4) % 10 != 0)
-            result = strNewFmt("%.1fKB", ((double)size / 102.4) / 10);
+        if ((uint64_t)((double)size / 102.4) % 10 != 0)
+            result = strNewFmt("%.1lfKB", (double)size / 1024);
         else
-            result = strNewFmt("%dKB", (int)((double)size / 102.4) / 10);
+            result = strNewFmt("%" PRIu64 "KB", size / 1024);
     }
     else if (size < (1024 * 1024 * 1024))
     {
-        if ((int)((double)size / 1024 / 102.4) % 10 != 0)
-            result = strNewFmt("%.1fMB", ((double)size / 1024 / 102.4) / 10);
+        if ((uint64_t)((double)size / (1024 * 102.4)) % 10 != 0)
+            result = strNewFmt("%.1lfMB", (double)size / (1024 * 1024));
         else
-            result = strNewFmt("%dMB", (int)((double)size / 1024 / 102.4) / 10);
+            result = strNewFmt("%" PRIu64 "MB", size / (1024 * 1024));
     }
     else
     {
-        if ((int)((double)size / 1024 / 1024 / 102.4) % 10 != 0)
-            result = strNewFmt("%.1fGB", ((double)size / 1024 / 1024 / 102.4) / 10);
+        if ((uint64_t)((double)size / (1024 * 1024 * 102.4)) % 10 != 0)
+            result = strNewFmt("%.1lfGB", (double)size / (1024 * 1024 * 1024));
         else
-            result = strNewFmt("%dGB", (int)((double)size / 1024 / 1024 / 102.4) / 10);
+            result = strNewFmt("%" PRIu64 "GB", size / (1024 * 1024 * 1024));
     }
 
     FUNCTION_TEST_RESULT(STRING, result);
