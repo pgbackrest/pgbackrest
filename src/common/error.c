@@ -109,7 +109,7 @@ errorTypeFromCode(int code)
 
     // Error if type was not found
     if (result == NULL)
-        THROW_FMT(AssertError, "could not find error type for code '%d'", code);
+        result = &UnknownError;
 
     return result;
 }

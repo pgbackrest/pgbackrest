@@ -247,8 +247,8 @@ testRun(void)
         }
         CATCH_ANY()
         {
-            assert(errorCode() == AssertError.code);
-            assert(strcmp(errorMessage(), "could not find error type for code '777'") == 0);
+            assert(errorCode() == UnknownError.code);
+            assert(strcmp(errorMessage(), "message") == 0);
         }
         TRY_END();
     }

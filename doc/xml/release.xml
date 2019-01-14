@@ -42,6 +42,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Return <code>UnknownError</code> from <code>errorTypeFromCode()</code> for invalid error codes.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Null-terminate list returned by <code>strLstPtr()</code>.</p>
                     </release-item>
 
