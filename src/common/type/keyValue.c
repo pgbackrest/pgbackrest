@@ -343,6 +343,25 @@ kvGetList(const KeyValue *this, const Variant *key)
 }
 
 /***********************************************************************************************************************************
+Move to a new mem context
+***********************************************************************************************************************************/
+KeyValue *
+kvMove(KeyValue *this, MemContext *parentNew)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
+
+        FUNCTION_TEST_ASSERT(parentNew != NULL);
+    FUNCTION_TEST_END();
+
+    if (this != NULL)
+        memContextMove(this->memContext, parentNew);
+
+    FUNCTION_TEST_RESULT(KEY_VALUE, this);
+}
+
+/***********************************************************************************************************************************
 Free the string
 ***********************************************************************************************************************************/
 void

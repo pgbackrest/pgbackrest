@@ -114,6 +114,24 @@ varLstSize(const VariantList *this)
 }
 
 /***********************************************************************************************************************************
+Move to a new mem context
+***********************************************************************************************************************************/
+VariantList *
+varLstMove(VariantList *this, MemContext *parentNew)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VARIANT_LIST, this);
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
+
+        FUNCTION_TEST_ASSERT(parentNew != NULL);
+    FUNCTION_TEST_END();
+
+    lstMove((List *)this, parentNew);
+
+    FUNCTION_TEST_RESULT(VARIANT_LIST, this);
+}
+
+/***********************************************************************************************************************************
 Wrapper for lstFree()
 ***********************************************************************************************************************************/
 void

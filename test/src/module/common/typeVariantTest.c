@@ -318,7 +318,13 @@ testRun(void)
     {
         VariantList *list = NULL;
 
-        TEST_ASSIGN(list, varLstNew(), "new list");
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(list, varLstNew(), "new list");
+            TEST_RESULT_PTR(varLstMove(NULL, MEM_CONTEXT_OLD()), NULL, "move null to old context");
+            TEST_RESULT_PTR(varLstMove(list, MEM_CONTEXT_OLD()), list, "move var list to old context");
+        }
+        MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_PTR(varLstAdd(list, varNewInt(27)), list, "add int");
         TEST_RESULT_PTR(varLstAdd(list, varNewStr(strNew("test-str"))), list, "add string");

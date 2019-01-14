@@ -50,6 +50,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>kvMove()</code> and <code>varLstMove()</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Rename <code>common/io/handle</code> module to <code>common/io/handleWrite</code>.</p>
                     </release-item>
                 </release-development-list>

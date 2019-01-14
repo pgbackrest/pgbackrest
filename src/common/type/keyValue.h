@@ -18,6 +18,7 @@ KeyValue *kvNew(void);
 KeyValue *kvDup(const KeyValue *source);
 KeyValue *kvAdd(KeyValue *this, const Variant *key, const Variant *value);
 const VariantList *kvKeyList(const KeyValue *this);
+KeyValue *kvMove(KeyValue *this, MemContext *parentNew);
 KeyValue *kvPut(KeyValue *this, const Variant *key, const Variant *value);
 KeyValue *kvPutKv(KeyValue *this, const Variant *key);
 const Variant *kvGet(const KeyValue *this, const Variant *key);
