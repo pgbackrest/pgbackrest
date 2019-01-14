@@ -181,6 +181,13 @@ jsonToKv(const String *json)
                 Variant *valueList = varNewVarLst(varLstNew());
                 kvAdd(result, varNewStr(key), valueList);
 
+                // Continue if empty array
+                if (jsonC[jsonPos + 1] == ']')
+                {
+                    jsonPos += 2;
+                    continue;
+                }
+
                 // ??? Currently only working with same-type simple single-dimensional arrays
                 unsigned char arrayType = '\0';
 

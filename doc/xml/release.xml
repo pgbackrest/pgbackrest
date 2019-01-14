@@ -38,6 +38,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow empty arrays in JSON parser.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Null-terminate list returned by <code>strLstPtr()</code>.</p>
                     </release-item>
 
