@@ -271,6 +271,79 @@ jsonToKv(const String *json)
 }
 
 /***********************************************************************************************************************************
+Output and escape a string
+***********************************************************************************************************************************/
+static void
+jsonStringRender(String *json, const String *string)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, json);
+        FUNCTION_TEST_PARAM(STRING, string);
+
+        FUNCTION_TEST_ASSERT(json != NULL);
+    FUNCTION_TEST_END();
+
+    // If string is null
+    if (string == NULL)
+    {
+        strCat(json, "null");
+    }
+    // Else escape and output string
+    else
+    {
+        strCatChr(json, '"');
+
+        for (unsigned int stringIdx = 0; stringIdx < strSize(string); stringIdx++)
+        {
+            char stringChr = strPtr(string)[stringIdx];
+
+            switch (stringChr)
+            {
+                case '"':
+                    strCat(json, "\\\"");
+                    break;
+
+                case '\\':
+                    strCat(json, "\\\\");
+                    break;
+
+                case '/':
+                    strCat(json, "\\/");
+                    break;
+
+                case '\n':
+                    strCat(json, "\\n");
+                    break;
+
+                case '\r':
+                    strCat(json, "\\r");
+                    break;
+
+                case '\t':
+                    strCat(json, "\\t");
+                    break;
+
+                case '\b':
+                    strCat(json, "\\b");
+                    break;
+
+                case '\f':
+                    strCat(json, "\\f");
+                    break;
+
+                default:
+                    strCatChr(json, stringChr);
+                    break;
+            }
+        }
+
+        strCatChr(json, '"');
+    }
+
+    FUNCTION_TEST_RESULT_VOID();
+}
+
+/***********************************************************************************************************************************
 Internal recursive function to walk a KeyValue and return a json string
 ***********************************************************************************************************************************/
 static String *
@@ -344,10 +417,7 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
                         // If the type is a string, add leading and trailing double quotes
                         if (type == varTypeString)
                         {
-                            if (strPtr(varStr(arrayValue)) == NULL)
-                                strCatFmt(result, "null");
-                            else
-                                strCatFmt(result, "\"%s\"", strPtr(varStr(arrayValue)));
+                            jsonStringRender(result, varStr(arrayValue));
                         }
                         else if (type == varTypeKeyValue)
                         {
@@ -368,10 +438,7 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
             // String
             else if (varType(value) == varTypeString)
             {
-                if (strPtr(varStr(value)) == NULL)
-                    strCatFmt(result, "null");
-                else
-                    strCatFmt(result, "\"%s\"", strPtr(varStr(value)));
+                jsonStringRender(result, varStr(value));
             }
             // Numeric, Boolean or other type
             else
