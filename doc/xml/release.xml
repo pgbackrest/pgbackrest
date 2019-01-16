@@ -72,6 +72,10 @@
                     <release-item>
                         <p>Rename <code>common/io/handle</code> module to <code>common/io/handleWrite</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <code>const VariantList *</code> debug type.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
