@@ -31,12 +31,15 @@ struct StorageDriverS3FileRead
 /***********************************************************************************************************************************
 Create a new file
 ***********************************************************************************************************************************/
-StorageDriverS3FileRead *storageDriverS3FileReadNew(StorageDriverS3 *storage, const String *name, bool ignoreMissing)
+StorageDriverS3FileRead *
+storageDriverS3FileReadNew(StorageDriverS3 *storage, const String *name, bool ignoreMissing)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
+        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, storage);
         FUNCTION_DEBUG_PARAM(STRING, name);
         FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
 
+        FUNCTION_TEST_ASSERT(storage != NULL);
         FUNCTION_TEST_ASSERT(name != NULL);
     FUNCTION_DEBUG_END();
 
