@@ -46,6 +46,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Update Perl repo rules to work when stanza is not specified.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Null-terminate list returned by <code>strLstPtr()</code>.</p>
                     </release-item>
 

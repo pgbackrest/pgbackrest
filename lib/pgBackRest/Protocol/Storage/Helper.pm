@@ -96,7 +96,7 @@ sub storageRepoRule
     # Return archive path
     if ($strRule eq STORAGE_REPO_ARCHIVE)
     {
-        $strResultFile = "archive/${strStanza}";
+        $strResultFile = "archive" . (defined($strStanza) ? "/${strStanza}" : '');
 
         # If file is not defined nothing further to do
         if (defined($strFile))
@@ -118,7 +118,7 @@ sub storageRepoRule
     # Return backup path
     elsif ($strRule eq STORAGE_REPO_BACKUP)
     {
-        $strResultFile = "backup/${strStanza}" . (defined($strFile) ? "/${strFile}" : '');
+        $strResultFile = "backup" . (defined($strStanza) ? "/${strStanza}" : '') . (defined($strFile) ? "/${strFile}" : '');
     }
     # Else error
     else
@@ -164,23 +164,18 @@ sub storageRepo
         if (isRepoLocal())
         {
             # Path rules
-            my $hRule;
-
-            if ($strStanza ne STORAGE_REPO)
+            my $hRule =
             {
-                $hRule =
+                &STORAGE_REPO_ARCHIVE =>
                 {
-                    &STORAGE_REPO_ARCHIVE =>
-                    {
-                        fnRule => \&storageRepoRule,
-                        xData => $strStanza,
-                    },
-                    &STORAGE_REPO_BACKUP =>
-                    {
-                        fnRule => \&storageRepoRule,
-                        xData => $strStanza,
-                    },
-                }
+                    fnRule => \&storageRepoRule,
+                    xData => $strStanza eq STORAGE_REPO ? undef : $strStanza,
+                },
+                &STORAGE_REPO_BACKUP =>
+                {
+                    fnRule => \&storageRepoRule,
+                    xData => $strStanza eq STORAGE_REPO ? undef : $strStanza,
+                },
             };
 
             # Create the driver
