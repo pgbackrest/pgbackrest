@@ -211,7 +211,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("String"))
     {
-        TEST_ERROR(varNewStr(NULL), AssertError, "function test assertion 'data != NULL' failed");
+        TEST_RESULT_PTR(strPtr(varStr(varNewStr(NULL))), NULL, "new null str");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *string = varNewStr(strNew("test-str"));
@@ -255,7 +255,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(strPtr(varStr(varNewStrZ("test-z-str"))), "test-z-str", "new zero-terminated string");
-        TEST_ERROR(varNewStrZ(NULL), AssertError, "function test assertion 'data != NULL' failed");
+        TEST_RESULT_PTR(strPtr(varStr(varNewStrZ(NULL))), NULL, "new null strz");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(strPtr(varStr(varDup(varNewStr(strNew("yabba-dabba-doo"))))), "yabba-dabba-doo", "dup string");

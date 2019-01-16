@@ -54,6 +54,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow string <code>Variant</code> objects to contain <code>null</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Rename <code>common/io/handle</code> module to <code>common/io/handleWrite</code>.</p>
                     </release-item>
                 </release-development-list>

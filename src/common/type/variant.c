@@ -761,8 +761,6 @@ varNewStr(const String *data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, data);
-
-        FUNCTION_TEST_ASSERT(data != NULL);
     FUNCTION_TEST_END();
 
     // Create a copy of the string for the variant
@@ -779,12 +777,13 @@ varNewStrZ(const char *data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, data);
-
-        FUNCTION_TEST_ASSERT(data != NULL);
     FUNCTION_TEST_END();
 
     // Create a string for the variant
-    String *dataCopy = strNew(data);
+    String *dataCopy = NULL;
+
+    if (data != NULL)
+        dataCopy = strNew(data);
 
     FUNCTION_TEST_RESULT(VARIANT, varNewInternal(varTypeString, (void *)&dataCopy, sizeof(dataCopy)));
 }
