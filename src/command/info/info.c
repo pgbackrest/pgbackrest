@@ -14,6 +14,7 @@ Info Command
 #include "common/memContext.h"
 #include "common/type/json.h"
 #include "config/config.h"
+#include "crypto/crypto.h"
 #include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
@@ -51,6 +52,7 @@ STRING_STATIC(KEY_START_STR,                                        "start");
 STRING_STATIC(KEY_STOP_STR,                                         "stop");
 STRING_STATIC(STANZA_KEY_BACKUP_STR,                                "backup");
 STRING_STATIC(STANZA_KEY_CIPHER_STR,                                "cipher");
+STRING_STATIC(STANZA_VALUE_CIPHER_NONE_STR,                         "none");
 STRING_STATIC(STANZA_KEY_NAME_STR,                                  "name");
 STRING_STATIC(STANZA_KEY_STATUS_STR,                                "status");
 STRING_STATIC(STANZA_KEY_DB_STR,                                    "db");
@@ -330,11 +332,18 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
 
         // Set the stanza name and cipher
         kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_NAME_STR), varNewStr(stanzaListName));
-        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_CIPHER_STR), varNewStr(cfgOptionStr(cfgOptRepoCipherType)));
+        kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_CIPHER_STR), varNewStr(STANZA_VALUE_CIPHER_NONE_STR));
 
         // If the backup.info file exists, get the database history information (newest to oldest) and corresponding archive
         if (info != NULL)
         {
+            // Determine if encryption is enabled by checking for a cipher passphrase.  This is not ideal since it does not tell us
+            // what type of encryption is in use, but to figure that out we need a way to query the (possibly) remote repo to find
+            // out.  No such mechanism exists so this will have to do for now.  Probably the easiest thing to do is store the
+            // cipher type in the info file.
+            if (infoPgCipherPass(infoBackupPg(info)) != NULL)
+                kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_CIPHER_STR), varNewStr(CIPHER_TYPE_AES_256_CBC_STR));
+
             for (unsigned int pgIdx = infoPgDataTotal(infoBackupPg(info)) - 1; (int)pgIdx >= 0; pgIdx--)
             {
                 InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);

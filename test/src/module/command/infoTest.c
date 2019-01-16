@@ -72,9 +72,12 @@ testRun(void)
         String *content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"51774ffab293c5cfb07511d7d2e101e92416f4ed\"\n"
+            "backrest-checksum=\"80798255547bafa3eee805ab0fccaa1da03cab0e\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.04\"\n"
+            "\n"
+            "[cipher]\n"
+            "cipher-pass=12345\n"
             "\n"
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -145,7 +148,7 @@ testRun(void)
             "            }\n"
             "        ],\n"
             "        \"backup\" : [],\n"
-            "        \"cipher\" : \"none\",\n"
+            "        \"cipher\" : \"aes-256-cbc\",\n"
             "        \"db\" : [\n"
             "            {\n"
             "                \"id\" : 1,\n"
@@ -170,7 +173,7 @@ testRun(void)
         TEST_RESULT_STR(strPtr(infoRender()),
             "stanza: stanza1\n"
             "    status: error (no valid backups)\n"
-            "    cipher: none\n"
+            "    cipher: aes-256-cbc\n"
             "\n"
             "    db (current)\n"
             "        wal archive min/max (9.4-3): none present\n",
