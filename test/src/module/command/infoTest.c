@@ -37,8 +37,7 @@ testRun(void)
         TEST_RESULT_STR(strPtr(infoRender()), "[]\n", "json - repo but no stanzas");
 
         harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
-        TEST_RESULT_STR(strPtr(infoRender()),
-            strPtr(strNewFmt("No stanzas exist in %s.\n", strPtr(storagePathNP(storageRepo(), NULL)))), "text - no stanzas");
+        TEST_RESULT_STR(strPtr(infoRender()), "No stanzas exist in the repository.\n", "text - no stanzas");
 
         storagePathCreateNP(storageLocalWrite(), archivePath);
         storagePathCreateNP(storageLocalWrite(), backupPath);
@@ -836,11 +835,11 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        const char *generalHelp = strPtr(strNewFmt("No stanzas exist in %s.\n", strPtr(repoPath)));
-
         Storage *storage = storageDriverPosixInterface(
             storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL));
-        TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))), generalHelp, "    check text");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))), "No stanzas exist in the repository.\n",
+            "    check text");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

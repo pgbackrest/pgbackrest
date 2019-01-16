@@ -4,7 +4,7 @@ run 002 - rmt 1, s3 0, enc 0
 info all stanzas - no stanzas exist (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn info
 ------------------------------------------------------------------------------------------------------------------------------------
-No stanzas exist in [TEST_PATH]/backup/repo.
+No stanzas exist in the repository.
 
 info all stanzas - no stanzas exist (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --output=json info

@@ -118,7 +118,7 @@ sub process
         }
         else
         {
-            syswrite(*STDOUT, 'No stanzas exist in ' . storageRepo()->pathGet() . ".\n");
+            syswrite(*STDOUT, "No stanzas exist in the repository.\n");
         }
     }
     elsif (cfgOptionTest(CFGOPT_OUTPUT, CFGOPTVAL_INFO_OUTPUT_JSON))

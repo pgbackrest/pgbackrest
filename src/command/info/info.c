@@ -602,7 +602,7 @@ infoRender(void)
                 }
             }
             else
-                resultStr = strNewFmt("No stanzas exist in %s.\n", strPtr(storagePathNP(storageRepo(), NULL)));
+                resultStr = strNew("No stanzas exist in the repository.\n");
         }
         // Format json output
         else

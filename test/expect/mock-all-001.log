@@ -16,7 +16,7 @@ Displays installed pgBackRest version.
 info all stanzas - no stanzas exist (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn info
 ------------------------------------------------------------------------------------------------------------------------------------
-No stanzas exist in [TEST_PATH]/db-master/repo.
+No stanzas exist in the repository.
 
 info all stanzas - no stanzas exist (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --output=json info

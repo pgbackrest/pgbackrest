@@ -16,6 +16,10 @@
             <release-core-list>
                 <release-improvement-list>
                     <release-item>
+                        <p>Simplify <cmd>info</cmd> command text message when no stanza are present by replacing the repository path with <quote>the repository</quote>.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="douglas.j.hunley"/>
                         </release-item-contributor-list>
