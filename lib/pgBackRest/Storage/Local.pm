@@ -301,7 +301,7 @@ sub list
         logDebugParam
         (
             __PACKAGE__ . '->list', \@_,
-            {name => 'strPathExp'},
+            {name => 'strPathExp', required => false},
             {name => 'strExpression', optional => true},
             {name => 'strSortOrder', optional => true, default => 'forward'},
             {name => 'bIgnoreMissing', optional => true, default => false},

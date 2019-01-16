@@ -50,6 +50,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Update <code>Storage::Local->list()</code> to accept an undefined path.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Null-terminate list returned by <code>strLstPtr()</code>.</p>
                     </release-item>
 
