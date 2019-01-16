@@ -129,6 +129,7 @@ testRun(void)
         kvPutKv(keyValue, varNewStr(strNew("empty")));
         kvPut(keyValue, varNewStrZ("bool1"), varNewBool(true));
         kvPut(keyValue, varNewStrZ("bool2"), varNewBool(false));
+        kvPut(keyValue, varNewStrZ("null-str"), varNewStr(NULL));
         kvPut(keyValue, varNewStrZ("checknull"), (Variant *)NULL);
 
         VariantList *dbList = varLstNew();
@@ -152,7 +153,8 @@ testRun(void)
             "      \"version\" : \"9.4\"\n"
             "    }\n"
             "  ],\n"
-            "  \"empty\" : {}\n"
+            "  \"empty\" : {},\n"
+            "  \"null-str\" : null\n"
             "}\n", "  formatted kv with empty array, kv, varList with values");
 
         TEST_ASSIGN(
@@ -187,6 +189,7 @@ testRun(void)
         TEST_ASSIGN(listVar, varNewVarLst(varLstNew()), "  new string array to kv");
         varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F"));
         varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F_20161219-212803I"));
+        varLstAdd(varVarLst(listVar), varNewStrZ(NULL));
         kvPut(varKv(keyValue), varNewStrZ("backup-reference"), listVar);
         kvPut(varKv(keyValue), varNewStrZ("backup-timestamp-start"), varNewInt(1482182951));
 
@@ -205,7 +208,7 @@ testRun(void)
         TEST_ASSIGN(json, varToJson(keyValue, 0), "KeyValue no indent");
         TEST_RESULT_STR(strPtr(json),
             "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
             "\"section\":{\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}",
             "  sorted json string result, no pretty print");
@@ -217,7 +220,8 @@ testRun(void)
             "    \"backup-prior\" : \"20161219-212741F_20161219-212803I\",\n"
             "    \"backup-reference\" : [\n"
             "        \"20161219-212741F\",\n"
-            "        \"20161219-212741F_20161219-212803I\"\n"
+            "        \"20161219-212741F_20161219-212803I\",\n"
+            "        null\n"
             "    ],\n"
             "    \"backup-timestamp-start\" : 1482182951,\n"
             "    \"checksum-page-error\" : [\n"
@@ -243,7 +247,7 @@ testRun(void)
         TEST_ASSIGN(json, varToJson(varListOuter, 0), "VariantList - no indent");
         TEST_RESULT_STR(strPtr(json),
             "[{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
             "\"section\":{\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]",
             "  sorted json string result no pretty print");
@@ -254,11 +258,11 @@ testRun(void)
         TEST_ASSIGN(json, varToJson(varListOuter, 0), "VariantList - no indent - multiple elements");
         TEST_RESULT_STR(strPtr(json),
             "[{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
             "\"section\":{\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}},"
             "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
+            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
             "\"section\":{\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]",
             "  sorted json string result no pretty print");
@@ -271,7 +275,8 @@ testRun(void)
             "    \"backup-prior\" : \"20161219-212741F_20161219-212803I\",\n"
             "    \"backup-reference\" : [\n"
             "      \"20161219-212741F\",\n"
-            "      \"20161219-212741F_20161219-212803I\"\n"
+            "      \"20161219-212741F_20161219-212803I\",\n"
+            "      null\n"
             "    ],\n"
             "    \"backup-timestamp-start\" : 1482182951,\n"
             "    \"checksum-page-error\" : [\n"
@@ -288,7 +293,8 @@ testRun(void)
             "    \"backup-prior\" : \"20161219-212741F_20161219-212803I\",\n"
             "    \"backup-reference\" : [\n"
             "      \"20161219-212741F\",\n"
-            "      \"20161219-212741F_20161219-212803I\"\n"
+            "      \"20161219-212741F_20161219-212803I\",\n"
+            "      null\n"
             "    ],\n"
             "    \"backup-timestamp-start\" : 1482182951,\n"
             "    \"checksum-page-error\" : [\n"

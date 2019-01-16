@@ -343,7 +343,12 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
 
                         // If the type is a string, add leading and trailing double quotes
                         if (type == varTypeString)
-                            strCatFmt(result, "\"%s\"", strPtr(varStr(arrayValue)));
+                        {
+                            if (strPtr(varStr(arrayValue)) == NULL)
+                                strCatFmt(result, "null");
+                            else
+                                strCatFmt(result, "\"%s\"", strPtr(varStr(arrayValue)));
+                        }
                         else if (type == varTypeKeyValue)
                         {
                             strCat(indentDepth, strPtr(indentSpace));
@@ -362,7 +367,12 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
             }
             // String
             else if (varType(value) == varTypeString)
-                strCatFmt(result, "\"%s\"", strPtr(varStr(value)));
+            {
+                if (strPtr(varStr(value)) == NULL)
+                    strCatFmt(result, "null");
+                else
+                    strCatFmt(result, "\"%s\"", strPtr(varStr(value)));
+            }
             // Numeric, Boolean or other type
             else
                 strCat(result, strPtr(varStrForce(value)));
