@@ -34,6 +34,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>cfgExecParam()</code> to generate parameters for executing commands.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Ignore <id>SIGPIPE</id> signals and check <id>EPIPE</id> result instead.</p>
                     </release-item>
 
