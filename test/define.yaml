@@ -208,6 +208,7 @@ unit:
           common/io/filter/filter: full
           common/io/filter/group: full
           common/io/filter/size: full
+          common/io/handleRead: full
           common/io/handleWrite: full
           common/io/io: full
           common/io/read: full

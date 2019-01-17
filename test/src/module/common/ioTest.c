@@ -5,6 +5,8 @@ Test IO
 
 #include "common/assert.h"
 
+#include "common/harnessFork.h"
+
 /***********************************************************************************************************************************
 Test functions for IoRead that are not covered by testing the IoBufferRead object
 ***********************************************************************************************************************************/
@@ -451,11 +453,104 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("ioHandleWriteOneStr()"))
+    if (testBegin("IoHandleRead, IoHandleWrite, and ioHandleWriteOneStr()"))
     {
+        ioBufferSizeSet(16);
+
+        // Create pipe for testing
+        int pipeTest[2];
+        THROW_ON_SYS_ERROR(pipe(pipeTest) == -1, KernelError, "unable to create test pipe");
+
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD()
+            {
+                close(pipeTest[0]);
+                IoHandleWrite *write = NULL;
+
+                MEM_CONTEXT_TEMP_BEGIN()
+                {
+                    TEST_RESULT_VOID(ioHandleWriteMove(NULL, MEM_CONTEXT_OLD()), "move null write");
+                    TEST_ASSIGN(
+                        write, ioHandleWriteMove(ioHandleWriteNew(strNew("write test"), pipeTest[1]), MEM_CONTEXT_OLD()),
+                        "move write");
+                }
+                MEM_CONTEXT_TEMP_END();
+
+                ioWriteOpen(ioHandleWriteIo(write));
+
+                // Write a line to be read
+                TEST_RESULT_VOID(ioWriteLine(ioHandleWriteIo(write), strNew("test string 1")), "write test string");
+                ioWriteFlush(ioHandleWriteIo(write));
+
+                // Sleep so the other side will timeout
+                Buffer *buffer = bufNewStr(strNew("12345678"));
+                TEST_RESULT_VOID(ioWrite(ioHandleWriteIo(write), buffer), "write buffer");
+                sleepMSec(1250);
+
+                // Write a buffer in two parts and sleep in the middle so it will be read on the other side in two parts
+                TEST_RESULT_VOID(ioWrite(ioHandleWriteIo(write), buffer), "write buffer");
+                sleepMSec(500);
+                TEST_RESULT_VOID(ioWrite(ioHandleWriteIo(write), buffer), "write buffer");
+                ioWriteFlush(ioHandleWriteIo(write));
+
+                // Free object
+                TEST_RESULT_VOID(ioHandleWriteFree(NULL), "free null write");
+                TEST_RESULT_VOID(ioHandleWriteFree(write), "free write");
+
+                close(pipeTest[1]);
+            }
+
+            HARNESS_FORK_PARENT()
+            {
+                close(pipeTest[1]);
+                IoHandleRead *read = NULL;
+
+                MEM_CONTEXT_TEMP_BEGIN()
+                {
+                    TEST_RESULT_VOID(ioHandleReadMove(NULL, MEM_CONTEXT_OLD()), "move null read");
+                    TEST_ASSIGN(
+                        read, ioHandleReadMove(ioHandleReadNew(strNew("read test"), pipeTest[0], 1000), MEM_CONTEXT_OLD()),
+                        "move read");
+                }
+                MEM_CONTEXT_TEMP_END();
+
+                ioReadOpen(ioHandleReadIo(read));
+
+                // Read a string
+                TEST_RESULT_STR(strPtr(ioReadLine(ioHandleReadIo(read))), "test string 1", "read test string");
+
+                // Only part of the buffer is written before timeout
+                Buffer *buffer = bufNew(16);
+
+                TEST_ERROR(ioRead(ioHandleReadIo(read), buffer), FileReadError, "unable to read data from read test after 1000ms");
+                TEST_RESULT_UINT(bufSize(buffer), 16, "buffer is only partially read");
+
+                // Not read a buffer that is transmitted in two parts
+                buffer = bufNew(16);
+
+                TEST_RESULT_UINT(ioRead(ioHandleReadIo(read), buffer), 16, "read buffer");
+                TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "1234567812345678", "check buffer");
+
+                // Check EOF
+                buffer = bufNew(16);
+
+                TEST_RESULT_UINT(ioHandleRead(read, buffer, true), 0, "read buffer at eof");
+                TEST_RESULT_UINT(ioHandleRead(read, buffer, true), 0, "read buffer at eof again");
+
+                // Free object
+                TEST_RESULT_VOID(ioHandleReadFree(NULL), "free null read");
+                TEST_RESULT_VOID(ioHandleReadFree(read), "free read");
+
+                close(pipeTest[0]);
+            }
+        }
+        HARNESS_FORK_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
             ioHandleWriteOneStr(999999, strNew("test")), FileWriteError,
-            "unable to write 4 byte(s) to handle: [9] Bad file descriptor");
+            "unable to write to handle: [9] Bad file descriptor");
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/test.txt", testPath());

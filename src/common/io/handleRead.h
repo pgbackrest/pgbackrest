@@ -1,50 +1,47 @@
 /***********************************************************************************************************************************
-Handle IO Write
+Handle IO Read
 
-Write to a handle using the IoWrite interface.
+Read from a handle using the IoRead interface.
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_HANDLEWRITE_H
-#define COMMON_IO_HANDLEWRITE_H
+#ifndef COMMON_IO_HANDLEREAD_H
+#define COMMON_IO_HANDLEREAD_H
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct IoHandleWrite IoHandleWrite;
+typedef struct IoHandleRead IoHandleRead;
 
-#include "common/io/write.h"
+#include "common/io/read.h"
+#include "common/time.h"
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-IoHandleWrite *ioHandleWriteNew(const String *name, int handle);
+IoHandleRead *ioHandleReadNew(const String *name, int handle, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void ioHandleWrite(IoHandleWrite *this, Buffer *buffer);
-IoHandleWrite *ioHandleWriteMove(IoHandleWrite *this, MemContext *parentNew);
+size_t ioHandleRead(IoHandleRead *this, Buffer *buffer, bool block);
+IoHandleRead *ioHandleReadMove(IoHandleRead *this, MemContext *parentNew);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-IoWrite *ioHandleWriteIo(const IoHandleWrite *this);
+bool ioHandleReadEof(const IoHandleRead *this);
+IoRead *ioHandleReadIo(const IoHandleRead *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void ioHandleWriteFree(IoHandleWrite *this);
-
-/***********************************************************************************************************************************
-Helper functions
-***********************************************************************************************************************************/
-void ioHandleWriteOneStr(int handle, const String *string);
+void ioHandleReadFree(IoHandleRead *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_IO_HANDLE_WRITE_TYPE                                                                                        \
-    IoHandleWrite *
-#define FUNCTION_DEBUG_IO_HANDLE_WRITE_FORMAT(value, buffer, bufferSize)                                                           \
-    objToLog(value, "IoHandleWrite", buffer, bufferSize)
+#define FUNCTION_DEBUG_IO_HANDLE_READ_TYPE                                                                                         \
+    IoHandleRead *
+#define FUNCTION_DEBUG_IO_HANDLE_READ_FORMAT(value, buffer, bufferSize)                                                            \
+    objToLog(value, "IoHandleRead", buffer, bufferSize)
 
 #endif
