@@ -535,7 +535,7 @@ testRun(void)
                 TEST_ERROR(ioRead(ioHandleReadIo(read), buffer), FileReadError, "unable to read data from read test after 1000ms");
                 TEST_RESULT_UINT(bufSize(buffer), 16, "buffer is only partially read");
 
-                // Not read a buffer that is transmitted in two parts
+                // Read a buffer that is transmitted in two parts
                 buffer = bufNew(16);
 
                 TEST_RESULT_UINT(ioRead(ioHandleReadIo(read), buffer), 16, "read buffer");
