@@ -7,7 +7,9 @@ Storage Helper
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "config/config.h"
+#include "protocol/helper.h"
 #include "storage/driver/posix/storage.h"
+#include "storage/driver/remote/storage.h"
 #include "storage/driver/s3/storage.h"
 #include "storage/helper.h"
 
@@ -208,9 +210,17 @@ storageRepoGet(const String *type, bool write)
 
     Storage *result = NULL;
 
+    // If the repo is remote then use remote storage
+    if (!repoIsLocal())
+    {
+        result = storageDriverRemoteInterface(
+            storageDriverRemoteNew(
+                cfgOptionStr(cfgOptRepoPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write,
+                storageRepoPathExpression, remoteTypeRepo, 1));
+    }
     // For now treat posix and cifs drivers as if they are the same.  This won't be true once the repository storage becomes
     // writable but for now it's OK.  The assertion above should pop if we try to create writable repo storage.
-    if (strEqZ(type, STORAGE_TYPE_POSIX) || strEqZ(type, STORAGE_TYPE_CIFS))
+    else if (strEqZ(type, STORAGE_TYPE_POSIX) || strEqZ(type, STORAGE_TYPE_CIFS))
     {
         result = storageDriverPosixInterface(
             storageDriverPosixNew(

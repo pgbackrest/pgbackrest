@@ -30,6 +30,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Add remote storage objects.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>ProtocolClient</code> object and helper functions.</p>
                     </release-item>
 

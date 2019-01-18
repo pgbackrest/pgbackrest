@@ -26,6 +26,7 @@ struct Storage
     mode_t modeFile;
     mode_t modePath;
     bool write;
+    bool pathResolve;
     StoragePathExpressionCallback pathExpressionFunction;
 };
 
@@ -34,7 +35,7 @@ New storage object
 ***********************************************************************************************************************************/
 Storage *
 storageNew(
-    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
+    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write, bool pathResolve,
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface)
 {
     FUNCTION_DEBUG_BEGIN(logLevelTrace);
@@ -43,6 +44,7 @@ storageNew(
         FUNCTION_DEBUG_PARAM(MODE, modeFile);
         FUNCTION_DEBUG_PARAM(MODE, modePath);
         FUNCTION_DEBUG_PARAM(BOOL, write);
+        FUNCTION_DEBUG_PARAM(BOOL, pathResolve);
         FUNCTION_DEBUG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_DEBUG_PARAM(VOIDP, driver);
         FUNCTION_DEBUG_PARAM(STORAGE_INTERFACE, interface);
@@ -72,6 +74,7 @@ storageNew(
     this->modeFile = modeFile;
     this->modePath = modePath;
     this->write = write;
+    this->pathResolve = pathResolve;
     this->pathExpressionFunction = pathExpressionFunction;
 
     FUNCTION_DEBUG_RESULT(STORAGE, this);
@@ -410,8 +413,13 @@ storagePath(const Storage *this, const String *pathExp)
 
     String *result = NULL;
 
+    // If the path will not be resolved here then just make a copy
+    if (!this->pathResolve)
+    {
+        result = strDup(pathExp);
+    }
     // If there is no path expression then return the base storage path
-    if (pathExp == NULL)
+    else if (pathExp == NULL)
     {
         result = strDup(this->path);
     }

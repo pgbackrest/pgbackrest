@@ -47,11 +47,11 @@ typedef struct StorageInterface
     StorageInterfaceRemove remove;
 } StorageInterface;
 
-#define storageNewP(type, path, modeFile, modePath, write, pathExpressionFunction, driver, ...)                                    \
-    storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
+#define storageNewP(type, path, modeFile, modePath, write, pathResolve, pathExpressionFunction, driver, ...)                       \
+    storageNew(type, path, modeFile, modePath, write, pathResolve, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
 
 Storage *storageNew(
-    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
+    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write, bool pathResolve,
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface);
 
 /***********************************************************************************************************************************

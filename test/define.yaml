@@ -531,6 +531,17 @@ unit:
           storage/storage: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: remote
+        total: 1
+        perlReq: true
+
+        coverage:
+          storage/driver/remote/fileRead: full
+          storage/driver/remote/storage: full
+          storage/helper: full
+          storage/storage: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: s3
         total: 3
 
