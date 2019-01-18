@@ -37,6 +37,7 @@ Getters
 bool execEof(Exec *this);
 IoRead *execIoRead(const Exec *this);
 IoWrite *execIoWrite(const Exec *this);
+MemContext *execMemContext(const Exec *this);
 
 /***********************************************************************************************************************************
 Destructor

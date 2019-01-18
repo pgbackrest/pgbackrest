@@ -26,6 +26,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(exec, execNew(strNew("cat"), NULL, strNew("cat"), 1000), "new cat exec");
+        TEST_RESULT_PTR(execMemContext(exec), exec->memContext, "get mem context");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
         String *message = strNew("ACKBYACK");
@@ -69,6 +70,7 @@ testRun(void)
         ioWriteLine(execIoWrite(exec), strNew(""));
         TEST_ERROR(ioWriteFlush(execIoWrite(exec)), FileWriteError, "unable to write to sleep write: [9] Bad file descriptor");
 
+        sleepMSec(500);
         TEST_RESULT_VOID(execFree(exec), "sleep exited as expected");
         TEST_RESULT_VOID(execFree(NULL), "free null exec");
     }

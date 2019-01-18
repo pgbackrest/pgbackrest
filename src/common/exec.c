@@ -320,6 +320,21 @@ execIoWrite(const Exec *this)
 }
 
 /***********************************************************************************************************************************
+Get the object mem context
+***********************************************************************************************************************************/
+MemContext *
+execMemContext(const Exec *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(EXEC, this);
+
+        FUNCTION_TEST_ASSERT(this != NULL);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RESULT(MEM_CONTEXT, this->memContext);
+}
+
+/***********************************************************************************************************************************
 Free the object
 ***********************************************************************************************************************************/
 void
@@ -331,6 +346,8 @@ execFree(Exec *this)
 
     if (this != NULL)
     {
+        memContextCallbackClear(this->memContext);
+
         // Close the io handles
         close(this->handleRead);
         close(this->handleWrite);
@@ -360,7 +377,6 @@ execFree(Exec *this)
         }
 
         // Free mem context
-        memContextCallbackClear(this->memContext);
         memContextFree(this->memContext);
     }
 

@@ -11,6 +11,7 @@ Exit Routines
 #include "common/lock.h"
 #include "common/log.h"
 #include "config/config.h"
+#include "protocol/helper.h"
 
 #ifdef WITH_PERL
     #include "perl/exec.h"
@@ -137,6 +138,13 @@ exitSafe(int result, bool error, SignalType signalType)
     TRY_BEGIN()
     {
         lockRelease(false);
+    }
+    TRY_END();
+
+    // Free protocol objects but ignore errors
+    TRY_BEGIN()
+    {
+        protocolFree();
     }
     TRY_END();
 

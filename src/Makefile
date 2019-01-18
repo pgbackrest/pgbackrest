@@ -137,6 +137,8 @@ SRCS = \
 	postgres/interface/v100.c \
 	postgres/interface/v110.c \
 	postgres/pageChecksum.c \
+	protocol/client.c \
+	protocol/helper.c \
 	storage/driver/posix/storage.c \
 	storage/driver/posix/common.c \
 	storage/driver/posix/fileRead.c \
@@ -207,7 +209,7 @@ common/error.o: common/error.c common/error.auto.c common/error.auto.h common/er
 common/exec.o: common/exec.c common/assert.h common/debug.h common/error.auto.h common/error.h common/exec.h common/io/filter/filter.h common/io/filter/group.h common/io/handleRead.h common/io/handleWrite.h common/io/io.h common/io/read.h common/io/read.intern.h common/io/write.h common/io/write.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/wait.h
 	$(CC) $(CFLAGS) -c common/exec.c -o common/exec.o
 
-common/exit.o: common/exit.c command/command.h common/debug.h common/error.auto.h common/error.h common/exit.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h perl/exec.h
+common/exit.o: common/exit.c command/command.h common/debug.h common/error.auto.h common/error.h common/exit.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h perl/exec.h protocol/client.h protocol/helper.h
 	$(CC) $(CFLAGS) -c common/exit.c -o common/exit.o
 
 common/fork.o: common/fork.c common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h
@@ -410,6 +412,12 @@ postgres/interface/v110.o: postgres/interface/v110.c common/debug.h common/error
 
 postgres/pageChecksum.o: postgres/pageChecksum.c common/assert.h common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h postgres/pageChecksum.h
 	$(CC) $(CFLAGS) -funroll-loops -ftree-vectorize -c postgres/pageChecksum.c -o postgres/pageChecksum.o
+
+protocol/client.o: protocol/client.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h protocol/client.h version.h
+	$(CC) $(CFLAGS) -c protocol/client.c -o protocol/client.o
+
+protocol/helper.o: protocol/helper.c common/debug.h common/error.auto.h common/error.h common/exec.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/exec.h protocol/client.h protocol/helper.h
+	$(CC) $(CFLAGS) -c protocol/helper.c -o protocol/helper.o
 
 storage/driver/posix/common.o: storage/driver/posix/common.c common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h storage/driver/posix/common.h
 	$(CC) $(CFLAGS) -c storage/driver/posix/common.c -o storage/driver/posix/common.o
