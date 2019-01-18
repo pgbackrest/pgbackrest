@@ -38,3 +38,38 @@ ioBufferSizeSet(size_t bufferSizeParam)
 
     FUNCTION_TEST_RESULT_VOID();
 }
+
+/***********************************************************************************************************************************
+Read all IO into a buffer
+***********************************************************************************************************************************/
+Buffer *
+ioReadBuf(IoRead *read)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, read);
+
+        FUNCTION_TEST_ASSERT(read != NULL);
+    FUNCTION_TEST_END();
+
+    Buffer *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Read IO into the buffer
+        result = bufNew(0);
+
+        do
+        {
+            bufResize(result, bufSize(result) + ioBufferSize());
+            ioRead(read, result);
+        }
+        while (!ioReadEof(read));
+
+        // Resize the buffer and move to calling context
+        bufResize(result, bufUsed(result));
+        bufMove(result, MEM_CONTEXT_OLD());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RESULT(BUFFER, result);
+}

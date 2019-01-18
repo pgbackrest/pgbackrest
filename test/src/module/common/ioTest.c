@@ -228,7 +228,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("IoRead, IoBufferRead, IoBuffer, IoSize, IoFilter, and IoFilterGroup"))
+    if (testBegin("IoRead, IoBufferRead, IoBuffer, IoSize, IoFilter, IoFilterGroup, and ioReadBuf()"))
     {
         IoRead *read = NULL;
         Buffer *buffer = bufNew(2);
@@ -375,6 +375,15 @@ testRun(void)
         read = ioBufferReadIo(ioBufferReadNew(bufNewZ("0123456789")));
         ioReadOpen(read);
         TEST_ERROR(ioReadLine(read), FileReadError, "unable to find line in 10 byte buffer");
+
+        // Read IO into a buffer
+        // -------------------------------------------------------------------------------------------------------------------------
+        ioBufferSizeSet(8);
+
+        bufferRead = ioBufferReadNew(bufNewStr(strNew("a test string")));
+        ioReadOpen(ioBufferReadIo(bufferRead));
+
+        TEST_RESULT_STR(strPtr(strNewBuf(ioReadBuf(ioBufferReadIo(bufferRead)))), "a test string", "read into buffer");
     }
 
     // *****************************************************************************************************************************

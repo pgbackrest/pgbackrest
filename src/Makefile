@@ -325,6 +325,9 @@ config/config.o: config/config.c common/assert.h common/debug.h common/error.aut
 config/define.o: config/define.c common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h config/define.auto.c config/define.auto.h config/define.h
 	$(CC) $(CFLAGS) -c config/define.c -o config/define.o
 
+config/exec.o: config/exec.c common/debug.h common/error.auto.h common/error.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/exec.h
+	$(CC) $(CFLAGS) -c config/exec.c -o config/exec.o
+
 config/load.o: config/load.c command/command.h common/debug.h common/error.auto.h common/error.h common/io/io.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h config/parse.h
 	$(CC) $(CFLAGS) -c config/load.c -o config/load.o
 

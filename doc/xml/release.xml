@@ -50,6 +50,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>ioReadBuf()</code> to easily read into a buffer.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>JSON improvements.  Allow empty arrays in JSON parser.  Fix null output in JSON renderer.  Fix escaping in JSON string renderer.</p>
                     </release-item>
 
