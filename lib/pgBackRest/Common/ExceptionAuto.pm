@@ -171,6 +171,8 @@ use constant ERROR_KERNEL                                           => 100;
 push @EXPORT, qw(ERROR_KERNEL);
 use constant ERROR_SERVICE                                          => 101;
 push @EXPORT, qw(ERROR_SERVICE);
+use constant ERROR_EXECUTE                                          => 102;
+push @EXPORT, qw(ERROR_EXECUTE);
 use constant ERROR_RUNTIME                                          => 122;
 push @EXPORT, qw(ERROR_RUNTIME);
 use constant ERROR_INVALID                                          => 123;

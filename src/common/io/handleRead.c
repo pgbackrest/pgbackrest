@@ -88,7 +88,7 @@ ioHandleRead(IoHandleRead *this, Buffer *buffer, bool block)
 
             // Determine if there is data to be read
             int result = select(this->handle + 1, &selectSet, NULL, NULL, &timeoutSelect);
-            THROW_ON_SYS_ERROR_FMT(result == -1, AssertError, "unable to select from %s", strPtr(this->name));
+            THROW_ON_SYS_ERROR_FMT(result == -1, FileReadError, "unable to select from %s", strPtr(this->name));
 
             // If no data read after time allotted then error
             if (!result)

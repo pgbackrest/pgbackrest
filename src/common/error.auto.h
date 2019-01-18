@@ -85,6 +85,7 @@ ERROR_DECLARE(FileInfoError);
 ERROR_DECLARE(JsonFormatError);
 ERROR_DECLARE(KernelError);
 ERROR_DECLARE(ServiceError);
+ERROR_DECLARE(ExecuteError);
 ERROR_DECLARE(RuntimeError);
 ERROR_DECLARE(InvalidError);
 ERROR_DECLARE(UnhandledError);

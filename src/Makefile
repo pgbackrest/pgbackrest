@@ -69,6 +69,7 @@ SRCS = \
 	common/encode.c \
 	common/encode/base64.c \
 	common/error.c \
+	common/exec.c \
 	common/exit.c \
 	common/fork.c \
 	common/io/bufferRead.c \
@@ -110,6 +111,7 @@ SRCS = \
 	compress/gzipDecompress.c \
 	config/config.c \
 	config/define.c \
+	config/exec.c \
 	config/load.c \
 	config/parse.c \
 	crypto/cipherBlock.c \
@@ -201,6 +203,9 @@ common/encode/base64.o: common/encode/base64.c common/debug.h common/encode/base
 
 common/error.o: common/error.c common/error.auto.c common/error.auto.h common/error.h common/logLevel.h common/stackTrace.h
 	$(CC) $(CFLAGS) -c common/error.c -o common/error.o
+
+common/exec.o: common/exec.c common/assert.h common/debug.h common/error.auto.h common/error.h common/exec.h common/io/filter/filter.h common/io/filter/group.h common/io/handleRead.h common/io/handleWrite.h common/io/io.h common/io/read.h common/io/read.intern.h common/io/write.h common/io/write.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/wait.h
+	$(CC) $(CFLAGS) -c common/exec.c -o common/exec.o
 
 common/exit.o: common/exit.c command/command.h common/debug.h common/error.auto.h common/error.h common/exit.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h perl/exec.h
 	$(CC) $(CFLAGS) -c common/exit.c -o common/exit.o
