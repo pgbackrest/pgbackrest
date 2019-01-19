@@ -120,6 +120,10 @@
                     <release-item>
                         <p>Move C module include in <file>test.c</file> above headers included for testing.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Increase timeout in <id>storage/s3</id> module to improve reliability.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>

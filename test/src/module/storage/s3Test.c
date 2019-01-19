@@ -340,7 +340,7 @@ testRun(void)
         testS3Server();
 
         StorageDriverS3 *s3Driver = storageDriverS3New(
-            path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, host, port, 250, true, NULL, NULL);
+            path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, host, port, 1000, true, NULL, NULL);
         Storage *s3 = storageDriverS3Interface(s3Driver);
 
         // Coverage for noop functions
