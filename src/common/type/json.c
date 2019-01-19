@@ -11,31 +11,77 @@ Convert JSON to/from KeyValue
 Given a character array and its size, return a variant from the extracted string
 ***********************************************************************************************************************************/
 static Variant *
-jsonString(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned int *valueBeginPos)
+jsonString(const char *jsonC, unsigned int *jsonPos)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARPY, jsonC);
-        FUNCTION_TEST_PARAM(SIZE, strSize);
         FUNCTION_TEST_PARAM(UINTP, jsonPos);
-        FUNCTION_TEST_PARAM(UINTP, valueBeginPos);
     FUNCTION_TEST_END();
 
     Variant *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        *valueBeginPos = *valueBeginPos + 1;
         *jsonPos = *jsonPos + 1;
 
-        // Find the end of the string within the entire character array
-        while (jsonC[*jsonPos] != '"' && *jsonPos < strSize - 1)
+        String *resultStr = strNew("");
+
+        while (jsonC[*jsonPos] != '"')
+        {
+            if (jsonC[*jsonPos] == '\\')
+            {
+                *jsonPos = *jsonPos + 1;
+
+                switch (jsonC[*jsonPos])
+                {
+                    case '"':
+                        strCatChr(resultStr, '"');
+                        break;
+
+                    case '\\':
+                        strCatChr(resultStr, '\\');
+                        break;
+
+                    case '/':
+                        strCatChr(resultStr, '/');
+                        break;
+
+                    case 'n':
+                        strCatChr(resultStr, '\n');
+                        break;
+
+                    case 'r':
+                        strCatChr(resultStr, '\r');
+                        break;
+
+                    case 't':
+                        strCatChr(resultStr, '\t');
+                        break;
+
+                    case 'b':
+                        strCatChr(resultStr, '\b');
+                        break;
+
+                    case 'f':
+                        strCatChr(resultStr, '\f');
+                        break;
+
+                    default:
+                        THROW_FMT(JsonFormatError, "invalid escape character '%c'", jsonC[*jsonPos]);
+                }
+            }
+            else
+            {
+                if (jsonC[*jsonPos] == '\0')
+                    THROW(JsonFormatError, "expected '\"' but found null delimiter");
+
+                strCatChr(resultStr, jsonC[*jsonPos]);
+            }
+
             *jsonPos = *jsonPos + 1;
+        };
 
-        if (jsonC[*jsonPos] != '"')
-            THROW_FMT(JsonFormatError, "expected '\"' but found '%c'", jsonC[*jsonPos]);
-
-        // Extract the string, including the enclosing quotes and return it as a variant
-        String *resultStr = strNewN(jsonC + *valueBeginPos, *jsonPos - *valueBeginPos);
+        // Create a variant result for the string
         memContextSwitch(MEM_CONTEXT_OLD());
         result = varNewStr(resultStr);
         memContextSwitch(MEM_CONTEXT_TEMP());
@@ -144,14 +190,11 @@ jsonToKv(const String *json)
             // The value appears to be a string
             if (jsonC[jsonPos] == '"')
             {
-                value = jsonString(jsonC, strSize(json), &jsonPos, &valueBeginPos);
+                value = jsonString(jsonC, &jsonPos);
             }
-
             // The value appears to be a number
             else if (isdigit(jsonC[jsonPos]))
-            {
                 value = jsonNumeric(jsonC, strSize(json), &jsonPos, &valueBeginPos);
-            }
 
             // The value appears to be a boolean
             else if (jsonC[jsonPos] == 't' || jsonC[jsonPos] == 'f')
@@ -204,7 +247,7 @@ jsonToKv(const String *json)
 
                         arrayType = 's';
 
-                        value = jsonString(jsonC, strSize(json), &jsonPos, &valueBeginPos);
+                        value = jsonString(jsonC, &jsonPos);
                     }
 
                     // The value appears to be a number

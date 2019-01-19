@@ -42,8 +42,10 @@ testRun(void)
         storagePathCreateNP(storageTest, strNew("repo/testy"));
         TEST_RESULT_STR(strPtr(strLstJoin(storageListNP(storageRemote, NULL), ",")), "testy" , "list path");
 
-        storagePathCreateNP(storageTest, strNew("repo/testy2"));
-        TEST_RESULT_STR(strPtr(strLstJoin(storageListNP(storageRemote, NULL), ",")), "testy,testy2" , "list 2 paths");
+        storagePathCreateNP(storageTest, strNew("repo/testy2\""));
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(storageListNP(storageRemote, strNewFmt("%s/repo", testPath())), ",")), "testy,testy2\"" ,
+            "list 2 paths");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *contentBuf = bufNew(32768);

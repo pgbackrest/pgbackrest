@@ -26,7 +26,7 @@ testRun(void)
             JsonFormatError, "expected '}' but found 'h'");
         TEST_ERROR(jsonToKv(strNew("{\"key1\":123")), JsonFormatError, "expected '}' but found '3'");
         TEST_ERROR(jsonToKv(strNew("{\"key1\":123>")), JsonFormatError, "expected '}' but found '>'");
-        TEST_ERROR(jsonToKv(strNew("{\"key1\":\"123'}")), JsonFormatError, "expected '\"' but found '}'");
+        TEST_ERROR(jsonToKv(strNew("{\"key1\":\"123'}")), JsonFormatError, "expected '\"' but found null delimiter");
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[\"\",]}")), JsonFormatError, "unknown array value type");
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[\"\",1]}")), JsonFormatError, "number found in array of type 's'");
         TEST_ERROR(jsonToKv(strNew("{\"key1\":[1,\"\"]}")), JsonFormatError, "string found in array of type 'n'");
@@ -37,6 +37,7 @@ testRun(void)
         TEST_ERROR(jsonToKv(strNew("{\"key1\":nult")), JsonFormatError, "null delimit not found");
         TEST_ERROR(jsonToKv(strNew("{\"key1\":noll")), JsonFormatError, "expected 'null' but found 'noll'");
         TEST_ERROR(jsonToKv(strNew("{\"key1\":nully}")), JsonFormatError, "expected '}' but found 'y'");
+        TEST_ERROR(jsonToKv(strNew("{\"key1\":\"\\j\"}")), JsonFormatError, "invalid escape character 'j'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         KeyValue *kv = NULL;
@@ -46,6 +47,9 @@ testRun(void)
 
         TEST_ASSIGN(kv, jsonToKv(strNew("{\"key1\":\"value1\"}")), "single string value");
         TEST_RESULT_STR(strPtr(varStr(kvGet(kv, varNewStr(strNew("key1"))))), "value1", "  check string");
+
+        TEST_ASSIGN(kv, jsonToKv(strNew("{\"key1\":\"\\\"\\\\\\/\\b\\n\\r\\t\\f\"}")), "single string value with escapes");
+        TEST_RESULT_STR(strPtr(varStr(kvGet(kv, varNewStr(strNew("key1"))))), "\"\\/\b\n\r\t\f", "  check string");
 
         TEST_ASSIGN(kv, jsonToKv(strNew("{\"key1\":true}")), "boolean true");
         TEST_RESULT_BOOL(varBool(kvGet(kv, varNewStr(strNew("key1")))), true, "  check boolean");
