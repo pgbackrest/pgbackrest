@@ -28,9 +28,9 @@ StorageFileRead *storageFileReadNew(const String *type, void *driver, StorageFil
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_FILE_READ_INTERFACE_TYPE                                                                            \
+#define FUNCTION_LOG_STORAGE_FILE_READ_INTERFACE_TYPE                                                                              \
     StorageFileReadInterface
-#define FUNCTION_DEBUG_STORAGE_FILE_READ_INTERFACE_FORMAT(value, buffer, bufferSize)                                               \
+#define FUNCTION_LOG_STORAGE_FILE_READ_INTERFACE_FORMAT(value, buffer, bufferSize)                                                 \
     objToLog(&value, "StorageFileReadInterface", buffer, bufferSize)
 
 #endif

@@ -32,13 +32,13 @@ New object
 IoWrite *
 ioWriteNew(void *driver, IoWriteInterface interface)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(VOIDP, driver);
-        FUNCTION_DEBUG_PARAM(IO_WRITE_INTERFACE, interface);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(VOIDP, driver);
+        FUNCTION_LOG_PARAM(IO_WRITE_INTERFACE, interface);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(driver != NULL);
-        FUNCTION_TEST_ASSERT(interface.write != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(driver != NULL);
+    ASSERT(interface.write != NULL);
 
     IoWrite *this = NULL;
 
@@ -52,7 +52,7 @@ ioWriteNew(void *driver, IoWriteInterface interface)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(IO_WRITE, this);
+    FUNCTION_LOG_RETURN(IO_WRITE, this);
 }
 
 /***********************************************************************************************************************************
@@ -61,12 +61,12 @@ Open the IO
 void
 ioWriteOpen(IoWrite *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_WRITE, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(!this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(!this->opened && !this->closed);
 
     if (this->interface.open != NULL)
         this->interface.open(this->driver);
@@ -81,7 +81,7 @@ ioWriteOpen(IoWrite *this)
     this->opened = true;
 #endif
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -90,13 +90,13 @@ Write data to IO and process filters
 void
 ioWrite(IoWrite *this, const Buffer *buffer)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_WRITE, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->opened && !this->closed);
 
     // Only write if there is data to write
     if (buffer != NULL && bufUsed(buffer) > 0)
@@ -115,7 +115,7 @@ ioWrite(IoWrite *this, const Buffer *buffer)
         while (ioFilterGroupInputSame(this->filterGroup));
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -124,14 +124,14 @@ Write linefeed-terminated string
 void
 ioWriteLine(IoWrite *this, const String *string)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_WRITE, this);
-        FUNCTION_DEBUG_PARAM(STRING, string);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+        FUNCTION_LOG_PARAM(STRING, string);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(string != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(string != NULL);
+    ASSERT(this->opened && !this->closed);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -146,7 +146,7 @@ ioWriteLine(IoWrite *this, const String *string)
     }
     MEM_CONTEXT_TEMP_END()
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -157,12 +157,12 @@ This does not end writing and if there are filters that are not done it might no
 void
 ioWriteFlush(IoWrite *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_WRITE, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->opened && !this->closed);
 
     if (bufUsed(this->output) > 0)
     {
@@ -170,7 +170,7 @@ ioWriteFlush(IoWrite *this)
         bufUsedZero(this->output);
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -179,12 +179,12 @@ Close the IO and write any additional data that has not been written yet
 void
 ioWriteClose(IoWrite *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_WRITE, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->opened && !this->closed);
 
     // Flush remaining data
     do
@@ -211,7 +211,7 @@ ioWriteClose(IoWrite *this)
     this->closed = true;
 #endif
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -224,30 +224,30 @@ ioWriteFilterGroup(const IoWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && this->closed);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_FILTER_GROUP, this->filterGroup);
+    ASSERT(this != NULL);
+    ASSERT(this->opened && this->closed);
+
+    FUNCTION_TEST_RETURN(IO_FILTER_GROUP, this->filterGroup);
 }
 
 void
 ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_WRITE, this);
-        FUNCTION_DEBUG_PARAM(IO_FILTER_GROUP, filterGroup);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(filterGroup != NULL);
-        FUNCTION_TEST_ASSERT(this->filterGroup == NULL);
-        FUNCTION_TEST_ASSERT(!this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(filterGroup != NULL);
+    ASSERT(this->filterGroup == NULL);
+    ASSERT(!this->opened && !this->closed);
 
     this->filterGroup = filterGroup;
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -256,12 +256,12 @@ Free the object
 void
 ioWriteFree(IoWrite *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_WRITE, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

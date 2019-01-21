@@ -9,32 +9,32 @@ static void
 testFunction3(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 static void
 testFunction2(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelTrace);
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     testFunction3();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 static int
 testFunction1(int paramInt, bool paramBool, double paramDouble, mode_t paramMode)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(INT, paramInt);
-        FUNCTION_DEBUG_PARAM(BOOL, paramBool);
-        FUNCTION_DEBUG_PARAM(DOUBLE, paramDouble);
-        FUNCTION_DEBUG_PARAM(MODE, paramMode);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INT, paramInt);
+        FUNCTION_LOG_PARAM(BOOL, paramBool);
+        FUNCTION_LOG_PARAM(DOUBLE, paramDouble);
+        FUNCTION_LOG_PARAM(MODE, paramMode);
+    FUNCTION_LOG_END();
 
     testFunction2();
 
-    FUNCTION_DEBUG_RESULT(INT, 1);
+    FUNCTION_LOG_RETURN(INT, 1);
 }
 
 /***********************************************************************************************************************************
@@ -109,7 +109,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("FUNCTION_DEBUG() and FUNCTION_DEBUG_RESULT()"))
+    if (testBegin("FUNCTION_DEBUG() and FUNCTION_LOG_RETURN()"))
     {
         harnessLogLevelSet(logLevelTrace);
         testFunction1(99, false, 1.17, 0755);

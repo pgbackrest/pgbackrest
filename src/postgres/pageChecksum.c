@@ -64,7 +64,6 @@ minimize register spilling. For less sophisticated compilers it might be benefic
 ***********************************************************************************************************************************/
 #include <string.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/log.h"
@@ -140,9 +139,9 @@ pageChecksumBlock(const unsigned char *page, unsigned int pageSize)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UCHARP, page);
         FUNCTION_TEST_PARAM(UINT, pageSize);
-
-        FUNCTION_TEST_ASSERT(page != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(page != NULL);
 
     uint32_t sums[N_SUMS];
     uint32_t (*dataArray)[N_SUMS] = (uint32_t (*)[N_SUMS])page;
@@ -166,7 +165,7 @@ pageChecksumBlock(const unsigned char *page, unsigned int pageSize)
     for (i = 0; i < N_SUMS; i++)
         result ^= sums[i];
 
-    FUNCTION_TEST_RESULT(UINT32, result);
+    FUNCTION_TEST_RETURN(UINT32, result);
 }
 
 /***********************************************************************************************************************************
@@ -182,9 +181,9 @@ pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageS
         FUNCTION_TEST_PARAM(UCHARP, page);
         FUNCTION_TEST_PARAM(UINT, blockNo);
         FUNCTION_TEST_PARAM(UINT, pageSize);
-
-        FUNCTION_TEST_ASSERT(page != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(page != NULL);
 
     // Save pd_checksum and temporarily set it to zero, so that the checksum calculation isn't affected by the old checksum stored
     // on the page. Restore it after, because actually updating the checksum is NOT part of the API of this function.
@@ -199,7 +198,7 @@ pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageS
     checksum ^= blockNo;
 
     // Reduce to a uint16 with an offset of one. That avoids checksums of zero, which seems like a good idea.
-    FUNCTION_TEST_RESULT(UINT16, (uint16_t)(checksum % 65535 + 1));
+    FUNCTION_TEST_RETURN(UINT16, (uint16_t)(checksum % 65535 + 1));
 }
 
 /***********************************************************************************************************************************
@@ -215,11 +214,11 @@ pageChecksumTest(
         FUNCTION_TEST_PARAM(UINT, pageSize);
         FUNCTION_TEST_PARAM(UINT32, ignoreWalId);
         FUNCTION_TEST_PARAM(UINT32, ignoreWalOffset);
-
-        FUNCTION_TEST_ASSERT(page != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(
+    ASSERT(page != NULL);
+
+    FUNCTION_TEST_RETURN(
         BOOL,
         // This is a new page so don't test checksum
         ((PageHeader)page)->pd_upper == 0 ||
@@ -237,18 +236,18 @@ pageChecksumBufferTest(
     const unsigned char *pageBuffer, unsigned int pageBufferSize, unsigned int blockNoBegin, unsigned int pageSize,
     uint32_t ignoreWalId, uint32_t ignoreWalOffset)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(UCHARP, pageBuffer);
-        FUNCTION_DEBUG_PARAM(UINT, pageBufferSize);
-        FUNCTION_DEBUG_PARAM(UINT, blockNoBegin);
-        FUNCTION_DEBUG_PARAM(UINT, pageSize);
-        FUNCTION_DEBUG_PARAM(UINT32, ignoreWalId);
-        FUNCTION_DEBUG_PARAM(UINT32, ignoreWalOffset);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(UCHARP, pageBuffer);
+        FUNCTION_LOG_PARAM(UINT, pageBufferSize);
+        FUNCTION_LOG_PARAM(UINT, blockNoBegin);
+        FUNCTION_LOG_PARAM(UINT, pageSize);
+        FUNCTION_LOG_PARAM(UINT32, ignoreWalId);
+        FUNCTION_LOG_PARAM(UINT32, ignoreWalOffset);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(pageBuffer != NULL);
-        FUNCTION_DEBUG_ASSERT(pageBufferSize > 0);
-        FUNCTION_DEBUG_ASSERT(pageBufferSize % pageSize == 0);
-    FUNCTION_DEBUG_END();
+    ASSERT(pageBuffer != NULL);
+    ASSERT(pageBufferSize > 0);
+    ASSERT(pageBufferSize % pageSize == 0);
 
     bool result = true;
 
@@ -265,5 +264,5 @@ pageChecksumBufferTest(
         }
     }
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }

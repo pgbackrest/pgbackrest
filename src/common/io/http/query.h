@@ -38,9 +38,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *httpQueryToLog(const HttpQuery *this);
 
-#define FUNCTION_DEBUG_HTTP_QUERY_TYPE                                                                                             \
+#define FUNCTION_LOG_HTTP_QUERY_TYPE                                                                                               \
     HttpQuery *
-#define FUNCTION_DEBUG_HTTP_QUERY_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, httpQueryToLog, buffer, bufferSize)
+#define FUNCTION_LOG_HTTP_QUERY_FORMAT(value, buffer, bufferSize)                                                                  \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpQueryToLog, buffer, bufferSize)
 
 #endif

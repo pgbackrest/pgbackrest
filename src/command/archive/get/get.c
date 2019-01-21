@@ -7,7 +7,6 @@ Archive Get Command
 #include "command/archive/common.h"
 #include "command/archive/get/file.h"
 #include "command/command.h"
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/fork.h"
 #include "common/log.h"
@@ -27,15 +26,15 @@ Clean the queue and prepare a list of WAL segments that the async process should
 static StringList *
 queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegmentSize, unsigned int pgVersion)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STRING, walSegment);
-        FUNCTION_DEBUG_PARAM(BOOL, found);
-        FUNCTION_DEBUG_PARAM(SIZE, queueSize);
-        FUNCTION_DEBUG_PARAM(SIZE, walSegmentSize);
-        FUNCTION_DEBUG_PARAM(UINT, pgVersion);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, walSegment);
+        FUNCTION_LOG_PARAM(BOOL, found);
+        FUNCTION_LOG_PARAM(SIZE, queueSize);
+        FUNCTION_LOG_PARAM(SIZE, walSegmentSize);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(walSegment != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(walSegment != NULL);
 
     StringList *result = strLstNew();
 
@@ -90,7 +89,7 @@ queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegm
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING_LIST, result);
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -99,7 +98,7 @@ Push a WAL segment to the repository
 int
 cmdArchiveGet(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelDebug);
+    FUNCTION_LOG_VOID(logLevelDebug);
 
     // Set the result assuming the archive file will not be found
     int result = 1;
@@ -293,5 +292,5 @@ cmdArchiveGet(void)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(INT, result);
+    FUNCTION_LOG_RETURN(INT, result);
 }

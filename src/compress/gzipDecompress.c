@@ -37,9 +37,9 @@ New object
 GzipDecompress *
 gzipDecompressNew(bool raw)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(BOOL, raw);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BOOL, raw);
+    FUNCTION_LOG_END();
 
     GzipDecompress *this = NULL;
 
@@ -64,7 +64,7 @@ gzipDecompressNew(bool raw)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(GZIP_DECOMPRESS, this);
+    FUNCTION_LOG_RETURN(GZIP_DECOMPRESS, this);
 }
 
 /***********************************************************************************************************************************
@@ -73,16 +73,16 @@ Decompress data
 void
 gzipDecompressProcess(GzipDecompress *this, const Buffer *compressed, Buffer *uncompressed)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(GZIP_DECOMPRESS, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, compressed);
-        FUNCTION_DEBUG_PARAM(BUFFER, uncompressed);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(GZIP_DECOMPRESS, this);
+        FUNCTION_LOG_PARAM(BUFFER, compressed);
+        FUNCTION_LOG_PARAM(BUFFER, uncompressed);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(this->stream != NULL);
-        FUNCTION_DEBUG_ASSERT(compressed != NULL);
-        FUNCTION_DEBUG_ASSERT(uncompressed != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->stream != NULL);
+    ASSERT(compressed != NULL);
+    ASSERT(uncompressed != NULL);
 
     if (!this->inputSame)
     {
@@ -104,7 +104,7 @@ gzipDecompressProcess(GzipDecompress *this, const Buffer *compressed, Buffer *un
     // Is the same input expected on the next call?
     this->inputSame = this->done ? false : this->stream->avail_in != 0;
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -115,11 +115,11 @@ gzipDecompressDone(const GzipDecompress *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(GZIP_DECOMPRESS, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->done);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->done);
 }
 
 /***********************************************************************************************************************************
@@ -130,11 +130,11 @@ gzipDecompressFilter(const GzipDecompress *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(GZIP_DECOMPRESS, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_FILTER, this->filter);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_FILTER, this->filter);
 }
 
 /***********************************************************************************************************************************
@@ -145,11 +145,11 @@ gzipDecompressInputSame(const GzipDecompress *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(GZIP_DECOMPRESS, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->inputSame);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /***********************************************************************************************************************************
@@ -169,9 +169,9 @@ Free memory
 void
 gzipDecompressFree(GzipDecompress *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(GZIP_DECOMPRESS, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(GZIP_DECOMPRESS, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
     {
@@ -181,5 +181,5 @@ gzipDecompressFree(GzipDecompress *this)
         memContextFree(this->memContext);
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

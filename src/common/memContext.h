@@ -192,9 +192,9 @@ MEM_CONTEXT_TEMP_END();
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_MEM_CONTEXT_TYPE                                                                                            \
+#define FUNCTION_LOG_MEM_CONTEXT_TYPE                                                                                              \
     MemContext *
-#define FUNCTION_DEBUG_MEM_CONTEXT_FORMAT(value, buffer, bufferSize)                                                               \
+#define FUNCTION_LOG_MEM_CONTEXT_FORMAT(value, buffer, bufferSize)                                                                 \
     objToLog(value, "MemContext", buffer, bufferSize)
 
 #endif

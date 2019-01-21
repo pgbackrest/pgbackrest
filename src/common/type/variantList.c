@@ -17,7 +17,7 @@ VariantList *
 varLstNew(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RESULT(VARIANT_LIST, (VariantList *)lstNew(sizeof(Variant *)));
+    FUNCTION_TEST_RETURN(VARIANT_LIST, (VariantList *)lstNew(sizeof(Variant *)));
 }
 
 /***********************************************************************************************************************************
@@ -40,7 +40,7 @@ varLstNewStrLst(const StringList *stringList)
             varLstAdd(result, varNewStr(strLstGet(stringList, listIdx)));
     }
 
-    FUNCTION_TEST_RESULT(VARIANT_LIST, result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -63,7 +63,7 @@ varLstDup(const VariantList *source)
             varLstAdd(result, varDup(varLstGet(source, listIdx)));
     }
 
-    FUNCTION_TEST_RESULT(VARIANT_LIST, result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -75,11 +75,11 @@ varLstAdd(VariantList *this, Variant *data)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, this);
         FUNCTION_TEST_PARAM(VARIANT, data);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VARIANT_LIST, (VariantList *)lstAdd((List *)this, &data));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(VARIANT_LIST, (VariantList *)lstAdd((List *)this, &data));
 }
 
 /***********************************************************************************************************************************
@@ -91,11 +91,11 @@ varLstGet(const VariantList *this, unsigned int listIdx)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, this);
         FUNCTION_TEST_PARAM(UINT, listIdx);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VARIANT, *(Variant **)lstGet((List *)this, listIdx));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(VARIANT, *(Variant **)lstGet((List *)this, listIdx));
 }
 
 /***********************************************************************************************************************************
@@ -106,11 +106,11 @@ varLstSize(const VariantList *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(UINT, lstSize((List *)this));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(UINT, lstSize((List *)this));
 }
 
 /***********************************************************************************************************************************
@@ -122,13 +122,13 @@ varLstMove(VariantList *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     lstMove((List *)this, parentNew);
 
-    FUNCTION_TEST_RESULT(VARIANT_LIST, this);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, this);
 }
 
 /***********************************************************************************************************************************
@@ -143,5 +143,5 @@ varLstFree(VariantList *this)
 
     lstFree((List *)this);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

@@ -35,9 +35,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *storageFileReadToLog(const StorageFileRead *this);
 
-#define FUNCTION_DEBUG_STORAGE_FILE_READ_TYPE                                                                                      \
+#define FUNCTION_LOG_STORAGE_FILE_READ_TYPE                                                                                        \
     StorageFileRead *
-#define FUNCTION_DEBUG_STORAGE_FILE_READ_FORMAT(value, buffer, bufferSize)                                                         \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, storageFileReadToLog, buffer, bufferSize)
+#define FUNCTION_LOG_STORAGE_FILE_READ_FORMAT(value, buffer, bufferSize)                                                           \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageFileReadToLog, buffer, bufferSize)
 
 #endif

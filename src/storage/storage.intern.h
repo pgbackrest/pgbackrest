@@ -57,9 +57,9 @@ Storage *storageNew(
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_INTERFACE_TYPE                                                                                      \
+#define FUNCTION_LOG_STORAGE_INTERFACE_TYPE                                                                                        \
     StorageInterface
-#define FUNCTION_DEBUG_STORAGE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                         \
+#define FUNCTION_LOG_STORAGE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                           \
     objToLog(&value, "StorageInterface", buffer, bufferSize)
 
 #endif

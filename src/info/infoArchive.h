@@ -47,9 +47,9 @@ void infoArchiveFree(InfoArchive *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_INFO_ARCHIVE_TYPE                                                                                           \
+#define FUNCTION_LOG_INFO_ARCHIVE_TYPE                                                                                             \
     InfoArchive *
-#define FUNCTION_DEBUG_INFO_ARCHIVE_FORMAT(value, buffer, bufferSize)                                                              \
+#define FUNCTION_LOG_INFO_ARCHIVE_FORMAT(value, buffer, bufferSize)                                                                \
     objToLog(value, "InfoArchive", buffer, bufferSize)
 
 #endif

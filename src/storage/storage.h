@@ -217,9 +217,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *storageToLog(const Storage *this);
 
-#define FUNCTION_DEBUG_STORAGE_TYPE                                                                                                \
+#define FUNCTION_LOG_STORAGE_TYPE                                                                                                  \
     Storage *
-#define FUNCTION_DEBUG_STORAGE_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, storageToLog, buffer, bufferSize)
+#define FUNCTION_LOG_STORAGE_FORMAT(value, buffer, bufferSize)                                                                     \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageToLog, buffer, bufferSize)
 
 #endif

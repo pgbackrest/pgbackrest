@@ -49,9 +49,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *cipherBlockToLog(const CipherBlock *this);
 
-#define FUNCTION_DEBUG_CIPHER_BLOCK_TYPE                                                                                           \
+#define FUNCTION_LOG_CIPHER_BLOCK_TYPE                                                                                             \
     CipherBlock *
-#define FUNCTION_DEBUG_CIPHER_BLOCK_FORMAT(value, buffer, bufferSize)                                                              \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, cipherBlockToLog, buffer, bufferSize)
+#define FUNCTION_LOG_CIPHER_BLOCK_FORMAT(value, buffer, bufferSize)                                                                \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, cipherBlockToLog, buffer, bufferSize)
 
 #endif

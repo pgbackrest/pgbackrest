@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 Http Client
 ***********************************************************************************************************************************/
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
@@ -61,15 +60,15 @@ Read content
 static size_t
 httpClientRead(HttpClient *this, Buffer *buffer, bool block)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(HTTP_CLIENT, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-        FUNCTION_DEBUG_PARAM(BOOL, block);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+        FUNCTION_LOG_PARAM(BOOL, block);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(buffer != NULL);
-        FUNCTION_TEST_ASSERT(!bufFull(buffer));
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+    ASSERT(!bufFull(buffer));
 
     // Read if EOF has not been reached
     size_t actualBytes = 0;
@@ -133,7 +132,7 @@ httpClientRead(HttpClient *this, Buffer *buffer, bool block)
             tlsClientClose(this->tls);
     }
 
-    FUNCTION_DEBUG_RESULT(SIZE, (size_t)actualBytes);
+    FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
 }
 
 /***********************************************************************************************************************************
@@ -142,13 +141,13 @@ Has all content been read?
 static bool
 httpClientEof(const HttpClient *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(HTTP_CLIENT, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
-    FUNCTION_DEBUG_RESULT(BOOL, this->contentEof);
+    FUNCTION_LOG_RETURN(BOOL, this->contentEof);
 }
 
 /***********************************************************************************************************************************
@@ -158,16 +157,16 @@ HttpClient *
 httpClientNew(
     const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug)
-        FUNCTION_DEBUG_PARAM(STRING, host);
-        FUNCTION_DEBUG_PARAM(UINT, port);
-        FUNCTION_DEBUG_PARAM(TIME_MSEC, timeout);
-        FUNCTION_DEBUG_PARAM(BOOL, verifyPeer);
-        FUNCTION_DEBUG_PARAM(STRING, caFile);
-        FUNCTION_DEBUG_PARAM(STRING, caPath);
+    FUNCTION_LOG_BEGIN(logLevelDebug)
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(UINT, port);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+        FUNCTION_LOG_PARAM(BOOL, verifyPeer);
+        FUNCTION_LOG_PARAM(STRING, caFile);
+        FUNCTION_LOG_PARAM(STRING, caPath);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(host != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(host != NULL);
 
     HttpClient *this = NULL;
 
@@ -182,7 +181,7 @@ httpClientNew(
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(HTTP_CLIENT, this);
+    FUNCTION_LOG_RETURN(HTTP_CLIENT, this);
 }
 
 /***********************************************************************************************************************************
@@ -193,17 +192,17 @@ httpClientRequest(
     HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
     bool returnContent)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug)
-        FUNCTION_DEBUG_PARAM(HTTP_CLIENT, this);
-        FUNCTION_DEBUG_PARAM(STRING, verb);
-        FUNCTION_DEBUG_PARAM(STRING, uri);
-        FUNCTION_DEBUG_PARAM(HTTP_QUERY, query);
-        FUNCTION_DEBUG_PARAM(HTTP_HEADER, requestHeader);
+    FUNCTION_LOG_BEGIN(logLevelDebug)
+        FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
+        FUNCTION_LOG_PARAM(STRING, verb);
+        FUNCTION_LOG_PARAM(STRING, uri);
+        FUNCTION_LOG_PARAM(HTTP_QUERY, query);
+        FUNCTION_LOG_PARAM(HTTP_HEADER, requestHeader);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(verb != NULL);
-        FUNCTION_TEST_ASSERT(uri != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(verb != NULL);
+    ASSERT(uri != NULL);
 
     // Buffer for returned content
     Buffer *result = NULL;
@@ -418,7 +417,7 @@ httpClientRequest(
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(BUFFER, result);
+    FUNCTION_LOG_RETURN(BUFFER, result);
 }
 
 /***********************************************************************************************************************************
@@ -429,11 +428,11 @@ httpClientIoRead(const HttpClient *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_CLIENT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_READ, this->ioRead);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_READ, this->ioRead);
 }
 
 /***********************************************************************************************************************************
@@ -444,11 +443,11 @@ httpClientResponseCode(const HttpClient *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_CLIENT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(UINT, this->responseCode);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(UINT, this->responseCode);
 }
 
 /***********************************************************************************************************************************
@@ -459,11 +458,11 @@ httpClientReponseHeader(const HttpClient *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_CLIENT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(HTTP_HEADER, this->responseHeader);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this->responseHeader);
 }
 
 /***********************************************************************************************************************************
@@ -474,11 +473,11 @@ httpClientResponseMessage(const HttpClient *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_CLIENT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING, this->responseMessage);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STRING, this->responseMessage);
 }
 
 /***********************************************************************************************************************************
@@ -494,5 +493,5 @@ httpClientFree(HttpClient *this)
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

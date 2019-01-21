@@ -53,7 +53,7 @@ exitSignalName(int signalType)
             THROW(AssertError, "no name for signal none");
     }
 
-    FUNCTION_TEST_RESULT(STRINGZ, name);
+    FUNCTION_TEST_RETURN(STRINGZ, name);
 }
 
 /***********************************************************************************************************************************
@@ -62,13 +62,13 @@ Catch signals
 static void
 exitOnSignal(int signalType)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INT, signalType);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, signalType);
+    FUNCTION_LOG_END();
 
     exit(exitSafe(errorTypeCode(&TermError), false, (SignalType)signalType));
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -77,7 +77,7 @@ Setup signal handlers
 void
 exitInit(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelTrace);
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     signal(SIGHUP, exitOnSignal);
     signal(SIGINT, exitOnSignal);
@@ -86,7 +86,7 @@ exitInit(void)
     // Ignore SIGPIPE and check for EPIPE errors on write() instead
     signal(SIGPIPE, SIG_IGN);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -95,11 +95,11 @@ Do cleanup and return result code
 int
 exitSafe(int result, bool error, SignalType signalType)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(INT, result);
-        FUNCTION_DEBUG_PARAM(BOOL, error);
-        FUNCTION_DEBUG_PARAM(ENUM, signalType);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INT, result);
+        FUNCTION_LOG_PARAM(BOOL, error);
+        FUNCTION_LOG_PARAM(ENUM, signalType);
+    FUNCTION_LOG_END();
 
     // Report error if one was thrown
     if (error)
@@ -186,5 +186,5 @@ exitSafe(int result, bool error, SignalType signalType)
     }
 
     // Return result - caller should immediate pass this result to exit()
-    FUNCTION_DEBUG_RESULT(INT, result);
+    FUNCTION_LOG_RETURN(INT, result);
 }

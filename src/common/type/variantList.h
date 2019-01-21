@@ -27,14 +27,14 @@ void varLstFree(VariantList *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_VARIANT_LIST_TYPE                                                                                           \
+#define FUNCTION_LOG_VARIANT_LIST_TYPE                                                                                             \
     VariantList *
-#define FUNCTION_DEBUG_VARIANT_LIST_FORMAT(value, buffer, bufferSize)                                                              \
+#define FUNCTION_LOG_VARIANT_LIST_FORMAT(value, buffer, bufferSize)                                                                \
     objToLog(value, "VariantList", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_CONST_VARIANT_LIST_TYPE                                                                                     \
+#define FUNCTION_LOG_CONST_VARIANT_LIST_TYPE                                                                                       \
     const VariantList *
-#define FUNCTION_DEBUG_CONST_VARIANT_LIST_FORMAT(value, buffer, bufferSize)                                                        \
+#define FUNCTION_LOG_CONST_VARIANT_LIST_FORMAT(value, buffer, bufferSize)                                                          \
     objToLog(value, "VariantList", buffer, bufferSize)
 
 #endif

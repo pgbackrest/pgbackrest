@@ -4,7 +4,6 @@ Memory Context Manager
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/memContext.h"
@@ -82,7 +81,7 @@ memAllocInternal(size_t size, bool zero)
         memset(buffer, 0, size);
 
     // Return the buffer
-    FUNCTION_TEST_RESULT(VOIDP, buffer);
+    FUNCTION_TEST_RETURN(VOIDP, buffer);
 }
 
 /***********************************************************************************************************************************
@@ -96,9 +95,9 @@ memReAllocInternal(void *bufferOld, size_t sizeOld, size_t sizeNew, bool zeroNew
         FUNCTION_TEST_PARAM(SIZE, sizeOld);
         FUNCTION_TEST_PARAM(SIZE, sizeNew);
         FUNCTION_TEST_PARAM(BOOL, zeroNew);
-
-        FUNCTION_TEST_ASSERT(bufferOld != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(bufferOld != NULL);
 
     // Allocate memory
     void *bufferNew = realloc(bufferOld, sizeNew);
@@ -112,7 +111,7 @@ memReAllocInternal(void *bufferOld, size_t sizeOld, size_t sizeNew, bool zeroNew
         memset((unsigned char *)bufferNew + sizeOld, 0, sizeNew - sizeOld);
 
     // Return the buffer
-    FUNCTION_TEST_RESULT(VOIDP, bufferNew);
+    FUNCTION_TEST_RETURN(VOIDP, bufferNew);
 }
 
 /***********************************************************************************************************************************
@@ -123,13 +122,13 @@ memFreeInternal(void *buffer)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VOIDP, buffer);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     free(buffer);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -141,9 +140,9 @@ memContextNewIndex(MemContext *memContext, bool allowFree)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, memContext);
         FUNCTION_TEST_PARAM(BOOL, allowFree);
-
-        FUNCTION_TEST_ASSERT(memContext != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(memContext != NULL);
 
     // Try to find space for the new context
     unsigned int contextIdx;
@@ -185,7 +184,7 @@ memContextNewIndex(MemContext *memContext, bool allowFree)
         }
     }
 
-    FUNCTION_TEST_RESULT(UINT, contextIdx);
+    FUNCTION_TEST_RETURN(UINT, contextIdx);
 }
 
 /***********************************************************************************************************************************
@@ -196,9 +195,9 @@ memContextNew(const char *name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, name);
-
-        FUNCTION_TEST_ASSERT(name != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(name != NULL);
 
     // Check context name length
     if (strlen(name) == 0 || strlen(name) > MEM_CONTEXT_NAME_SIZE)
@@ -228,7 +227,7 @@ memContextNew(const char *name)
     this->contextParent = memContextCurrent();
 
     // Return context
-    FUNCTION_TEST_RESULT(MEM_CONTEXT, this);
+    FUNCTION_TEST_RETURN(MEM_CONTEXT, this);
 }
 
 /***********************************************************************************************************************************
@@ -241,10 +240,10 @@ memContextCallback(MemContext *this, void (*callbackFunction)(void *), void *cal
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
         FUNCTION_TEST_PARAM(FUNCTIONP, callbackFunction);
         FUNCTION_TEST_PARAM(VOIDP, callbackArgument);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(callbackFunction != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(callbackFunction != NULL);
 
     // Error if context is not active
     if (this->state != memContextStateActive)
@@ -262,7 +261,7 @@ memContextCallback(MemContext *this, void (*callbackFunction)(void *), void *cal
     this->callbackFunction = callbackFunction;
     this->callbackArgument = callbackArgument;
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -274,9 +273,9 @@ memContextCallbackClear(MemContext *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     // Error if context is not active or freeing
     ASSERT(this->state == memContextStateActive || this->state == memContextStateFreeing);
@@ -288,7 +287,7 @@ memContextCallbackClear(MemContext *this)
     this->callbackFunction = NULL;
     this->callbackArgument = NULL;
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -343,7 +342,7 @@ memContextAlloc(size_t size, bool zero)
     memContextCurrent()->allocList[allocIdx].buffer = memAllocInternal(size, zero);
 
     // Return buffer
-    FUNCTION_TEST_RESULT(VOIDP, memContextCurrent()->allocList[allocIdx].buffer);
+    FUNCTION_TEST_RETURN(VOIDP, memContextCurrent()->allocList[allocIdx].buffer);
 }
 
 /***********************************************************************************************************************************
@@ -354,9 +353,9 @@ memFind(const void *buffer)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VOIDP, buffer);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     // Find memory allocation
     unsigned int allocIdx;
@@ -369,7 +368,7 @@ memFind(const void *buffer)
     if (allocIdx == memContextCurrent()->allocListSize)
         THROW(AssertError, "unable to find allocation");
 
-    FUNCTION_TEST_RESULT(UINT, allocIdx);
+    FUNCTION_TEST_RETURN(UINT, allocIdx);
 }
 
 /***********************************************************************************************************************************
@@ -382,7 +381,7 @@ memNew(size_t size)
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VOIDP, memContextAlloc(size, true));
+    FUNCTION_TEST_RETURN(VOIDP, memContextAlloc(size, true));
 }
 
 /***********************************************************************************************************************************
@@ -394,9 +393,9 @@ memGrowRaw(const void *buffer, size_t size)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VOIDP, buffer);
         FUNCTION_TEST_PARAM(SIZE, size);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     // Find the allocation
     MemContextAlloc *alloc = &(memContextCurrent()->allocList[memFind(buffer)]);
@@ -405,7 +404,7 @@ memGrowRaw(const void *buffer, size_t size)
     alloc->buffer = memReAllocInternal(alloc->buffer, alloc->size, size, false);
     alloc->size = (unsigned int)size;
 
-    FUNCTION_TEST_RESULT(VOIDP, alloc->buffer);
+    FUNCTION_TEST_RETURN(VOIDP, alloc->buffer);
 }
 
 /***********************************************************************************************************************************
@@ -418,7 +417,7 @@ memNewRaw(size_t size)
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VOIDP, memContextAlloc(size, false));
+    FUNCTION_TEST_RETURN(VOIDP, memContextAlloc(size, false));
 }
 
 /***********************************************************************************************************************************
@@ -429,9 +428,9 @@ memFree(void *buffer)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VOIDP, buffer);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     // Find the allocation
     MemContextAlloc *alloc = &(memContextCurrent()->allocList[memFind(buffer)]);
@@ -440,7 +439,7 @@ memFree(void *buffer)
     memFreeInternal(alloc->buffer);
     alloc->active = false;
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -454,9 +453,9 @@ memContextMove(MemContext *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     // Only move if a valid mem context is provided and the old and new parents are not the same
     if (this != NULL && this->contextParent != parentNew)
@@ -481,14 +480,14 @@ memContextMove(MemContext *this, MemContext *parentNew)
         // Find a place in the new parent context and assign it. The child list may be moved while finding a new index so store the
         // index and use it with (what might be) the new pointer.
         contextIdx = memContextNewIndex(parentNew, false);
-        ASSERT_DEBUG(parentNew->contextChildList[contextIdx] == NULL);
+        ASSERT(parentNew->contextChildList[contextIdx] == NULL);
         parentNew->contextChildList[contextIdx] = this;
 
         // Assign new parent
         this->contextParent = parentNew;
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -499,9 +498,9 @@ memContextSwitch(MemContext *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     // Error if context is not active
     if (this->state != memContextStateActive)
@@ -510,7 +509,7 @@ memContextSwitch(MemContext *this)
     MemContext *memContextOld = memContextCurrent();
     contextCurrent = this;
 
-    FUNCTION_TEST_RESULT(MEM_CONTEXT, memContextOld);
+    FUNCTION_TEST_RETURN(MEM_CONTEXT, memContextOld);
 }
 
 /***********************************************************************************************************************************
@@ -520,7 +519,7 @@ MemContext *
 memContextTop(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RESULT(MEM_CONTEXT, &contextTop);
+    FUNCTION_TEST_RETURN(MEM_CONTEXT, &contextTop);
 }
 
 /***********************************************************************************************************************************
@@ -530,7 +529,7 @@ MemContext *
 memContextCurrent(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RESULT(MEM_CONTEXT, contextCurrent);
+    FUNCTION_TEST_RETURN(MEM_CONTEXT, contextCurrent);
 }
 
 /***********************************************************************************************************************************
@@ -541,15 +540,15 @@ memContextName(MemContext *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     // Error if context is not active
     if (this->state != memContextStateActive)
         THROW(AssertError, "cannot get name for inactive context");
 
-    FUNCTION_TEST_RESULT(STRINGZ, this->name);
+    FUNCTION_TEST_RETURN(STRINGZ, this->name);
 }
 
 /***********************************************************************************************************************************
@@ -560,9 +559,9 @@ memContextFree(MemContext *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     // If context is already freeing then return if memContextFree() is called again - this can happen in callbacks
     if (this->state != memContextStateFreeing)
@@ -623,5 +622,5 @@ memContextFree(MemContext *this)
             memset(this, 0, sizeof(MemContext));
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

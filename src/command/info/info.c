@@ -80,11 +80,11 @@ stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
         FUNCTION_TEST_PARAM(INT, code);
         FUNCTION_TEST_PARAM(STRING, message);
         FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
-
-        FUNCTION_TEST_ASSERT(code >= 0 && code <= 3);
-        FUNCTION_TEST_ASSERT(message != NULL);
-        FUNCTION_TEST_ASSERT(stanzaInfo != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(code >= 0 && code <= 3);
+    ASSERT(message != NULL);
+    ASSERT(stanzaInfo != NULL);
 
     Variant *stanzaStatus = varNewStr(STANZA_KEY_STATUS_STR);
     KeyValue *statusKv = kvPutKv(varKv(stanzaInfo), stanzaStatus);
@@ -92,7 +92,7 @@ stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
     kvAdd(statusKv, varNewStr(STATUS_KEY_CODE_STR), varNewInt(code));
     kvAdd(statusKv, varNewStr(STATUS_KEY_MESSAGE_STR), varNewStr(message));
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -106,11 +106,11 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
         FUNCTION_TEST_PARAM(INFO_PG_DATAP, pgData);
         FUNCTION_TEST_PARAM(VARIANT, archiveSection);
         FUNCTION_TEST_PARAM(BOOL, currentDb);
-
-        FUNCTION_TEST_ASSERT(stanza != NULL);
-        FUNCTION_TEST_ASSERT(pgData != NULL);
-        FUNCTION_TEST_ASSERT(archiveSection != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(stanza != NULL);
+    ASSERT(pgData != NULL);
+    ASSERT(archiveSection != NULL);
 
     // With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the
     // archive path must be built by retrieving the archive id given the db version and system id of the backup.info file.
@@ -185,7 +185,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
         varLstAdd(archiveSection, archiveInfo);
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -197,10 +197,10 @@ backupList(VariantList *backupSection, InfoBackup *info)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, backupSection);
         FUNCTION_TEST_PARAM(INFO_BACKUP, info);
-
-        FUNCTION_TEST_ASSERT(backupSection != NULL);
-        FUNCTION_TEST_ASSERT(info != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(backupSection != NULL);
+    ASSERT(info != NULL);
 
     // For each current backup, get the label and corresponding data and build the backup section
     for (unsigned int keyIdx = 0; keyIdx < infoBackupDataTotal(info); keyIdx++)
@@ -263,7 +263,7 @@ backupList(VariantList *backupSection, InfoBackup *info)
     }
 
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -275,9 +275,9 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
         FUNCTION_TEST_PARAM(STRING_LIST, stanzaList);
-
-        FUNCTION_TEST_ASSERT(stanzaList != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(stanzaList != NULL);
 
     VariantList *result = varLstNew();
     bool stanzaFound = false;
@@ -399,7 +399,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
         varLstAdd(result, stanzaInfo);
     }
 
-    FUNCTION_TEST_RESULT(VARIANT_LIST, result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -411,9 +411,9 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, stanzaInfo);
         FUNCTION_TEST_PARAM(STRING, resultStr);
-
-        FUNCTION_TEST_ASSERT(stanzaInfo != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(stanzaInfo != NULL);
 
     VariantList *dbSection = kvGetList(stanzaInfo, varNewStr(STANZA_KEY_DB_STR));
     VariantList *archiveSection = kvGetList(stanzaInfo, varNewStr(KEY_ARCHIVE_STR));
@@ -532,7 +532,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
                 strCat(resultStr, strPtr(backupResult));
         }
     }
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -541,7 +541,7 @@ Render the information for the stanza based on the command parameters.
 static String *
 infoRender(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelDebug);
+    FUNCTION_LOG_VOID(logLevelDebug);
 
     String *result = NULL;
 
@@ -623,7 +623,7 @@ infoRender(void)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING, result);
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -632,7 +632,7 @@ Render info and output to stdout
 void
 cmdInfo(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelDebug);
+    FUNCTION_LOG_VOID(logLevelDebug);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -640,5 +640,5 @@ cmdInfo(void)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

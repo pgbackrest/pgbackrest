@@ -35,13 +35,13 @@ New object
 IoRead *
 ioReadNew(void *driver, IoReadInterface interface)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(VOIDP, driver);
-        FUNCTION_DEBUG_PARAM(IO_READ_INTERFACE, interface);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(VOIDP, driver);
+        FUNCTION_LOG_PARAM(IO_READ_INTERFACE, interface);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(driver != NULL);
-        FUNCTION_TEST_ASSERT(interface.read != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(driver != NULL);
+    ASSERT(interface.read != NULL);
 
     IoRead *this = NULL;
 
@@ -55,7 +55,7 @@ ioReadNew(void *driver, IoReadInterface interface)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(IO_READ, this);
+    FUNCTION_LOG_RETURN(IO_READ, this);
 }
 
 /***********************************************************************************************************************************
@@ -64,12 +64,12 @@ Open the IO
 bool
 ioReadOpen(IoRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_READ, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(!this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(!this->opened && !this->closed);
 
     // Open if the driver has an open function
     bool result = this->interface.open != NULL ? this->interface.open(this->driver) : true;
@@ -88,7 +88,7 @@ ioReadOpen(IoRead *this)
     this->opened = result;
 #endif
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -99,14 +99,14 @@ This is different from the overall eof because filters may still be holding buff
 static bool
 ioReadEofDriver(const IoRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_READ, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->opened && !this->closed);
 
-    FUNCTION_DEBUG_RESULT(BOOL, this->interface.eof != NULL ? this->interface.eof(this->driver) : false);
+    FUNCTION_LOG_RETURN(BOOL, this->interface.eof != NULL ? this->interface.eof(this->driver) : false);
 }
 
 /***********************************************************************************************************************************
@@ -115,15 +115,15 @@ Read data from IO and process filters
 static void
 ioReadInternal(IoRead *this, Buffer *buffer, bool block)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_READ, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-        FUNCTION_DEBUG_PARAM(BOOL, block);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+        FUNCTION_LOG_PARAM(BOOL, block);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(buffer != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+    ASSERT(this->opened && !this->closed);
 
     // Loop until EOF or the output buffer is full
     size_t bufferUsedBegin = bufUsed(buffer);
@@ -166,7 +166,7 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
         this->eofAll = ioReadEofDriver(this) && ioFilterGroupDone(this->filterGroup);
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -175,15 +175,15 @@ Read data and use buffered line read output when present
 size_t
 ioRead(IoRead *this, Buffer *buffer)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_READ, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-        FUNCTION_DEBUG_PARAM(BUFFER, this->output);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+        FUNCTION_LOG_PARAM(BUFFER, this->output);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(buffer != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+    ASSERT(this->opened && !this->closed);
 
     // Store size of remaining portion of buffer to calculate total read at the end
     size_t outputRemains = bufRemains(buffer);
@@ -205,7 +205,7 @@ ioRead(IoRead *this, Buffer *buffer)
     // Read data
     ioReadInternal(this, buffer, true);
 
-    FUNCTION_DEBUG_RESULT(SIZE, outputRemains - bufRemains(buffer));
+    FUNCTION_LOG_RETURN(SIZE, outputRemains - bufRemains(buffer));
 }
 
 /***********************************************************************************************************************************
@@ -216,13 +216,13 @@ The entire string to search for must fit within a single buffer.
 String *
 ioReadLine(IoRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_READ, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, this->output);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+        FUNCTION_LOG_PARAM(BUFFER, this->output);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->opened && !this->closed);
 
     // Allocate the output buffer if it has not already been allocated.  This buffer is not allocated at object creation because it
     // is not always used.
@@ -274,7 +274,7 @@ ioReadLine(IoRead *this)
     }
     while (result == NULL);
 
-    FUNCTION_DEBUG_RESULT(STRING, result);
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -283,12 +283,12 @@ Close the IO
 void
 ioReadClose(IoRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_READ, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->opened && !this->closed);
 
     // Close the filter group and gather results
     ioFilterGroupClose(this->filterGroup);
@@ -301,7 +301,7 @@ ioReadClose(IoRead *this)
     this->closed = true;
 #endif
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -312,14 +312,14 @@ All driver reads are complete and all data has been flushed from the filters (if
 bool
 ioReadEof(const IoRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_READ, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->opened && !this->closed);
 
-    FUNCTION_DEBUG_RESULT(BOOL, this->eofAll);
+    FUNCTION_LOG_RETURN(BOOL, this->eofAll);
 }
 
 /***********************************************************************************************************************************
@@ -332,29 +332,29 @@ ioReadFilterGroup(const IoRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_FILTER_GROUP, this->filterGroup);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_FILTER_GROUP, this->filterGroup);
 }
 
 void
 ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_READ, this);
-        FUNCTION_DEBUG_PARAM(IO_FILTER_GROUP, filterGroup);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(filterGroup != NULL);
-        FUNCTION_TEST_ASSERT(this->filterGroup == NULL);
-        FUNCTION_TEST_ASSERT(!this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(filterGroup != NULL);
+    ASSERT(this->filterGroup == NULL);
+    ASSERT(!this->opened && !this->closed);
 
     this->filterGroup = filterGroup;
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -363,12 +363,12 @@ Free the object
 void
 ioReadFree(IoRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_READ, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

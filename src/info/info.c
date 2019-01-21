@@ -47,9 +47,9 @@ infoHash(const Ini *ini)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, ini);
-
-        FUNCTION_TEST_ASSERT(ini != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(ini != NULL);
 
     CryptoHash *result = cryptoHashNew(HASH_TYPE_SHA1_STR);
 
@@ -104,7 +104,7 @@ infoHash(const Ini *ini)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RESULT(CRYPTO_HASH, result);
+    FUNCTION_TEST_RETURN(CRYPTO_HASH, result);
 }
 
 /***********************************************************************************************************************************
@@ -113,15 +113,15 @@ Load and validate the info file (or copy)
 static bool
 infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherType, const String *cipherPass)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace)
-        FUNCTION_DEBUG_PARAM(INFO, this);
-        FUNCTION_DEBUG_PARAM(STORAGE, storage);
-        FUNCTION_DEBUG_PARAM(BOOL, copyFile);                       // Is this the copy file?
-        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+    FUNCTION_LOG_BEGIN(logLevelTrace)
+        FUNCTION_LOG_PARAM(INFO, this);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(BOOL, copyFile);                       // Is this the copy file?
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
         // cipherPass omitted for security
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     bool result = false;
 
@@ -187,7 +187,7 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -199,14 +199,14 @@ Load an Info object
 Info *
 infoNew(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, storage);
-        FUNCTION_DEBUG_PARAM(STRING, fileName);                     // Full path/filename to load
-        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);                     // Full path/filename to load
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
         // cipherPass omitted for security
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(fileName != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(fileName != NULL);
 
     Info *this = NULL;
 
@@ -264,7 +264,7 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
     MEM_CONTEXT_NEW_END();
 
     // Return buffer
-    FUNCTION_DEBUG_RESULT(INFO, this);
+    FUNCTION_LOG_RETURN(INFO, this);
 }
 
 /***********************************************************************************************************************************
@@ -275,11 +275,11 @@ infoCipherPass(const Info *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, this->cipherPass);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(CONST_STRING, this->cipherPass);
 }
 
 Ini *
@@ -287,11 +287,11 @@ infoIni(const Info *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(INI, this->ini);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(INI, this->ini);
 }
 
 String *
@@ -299,11 +299,11 @@ infoFileName(const Info *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING, this->fileName);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STRING, this->fileName);
 }
 
 /***********************************************************************************************************************************
@@ -312,12 +312,12 @@ Free the object
 void
 infoFree(Info *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

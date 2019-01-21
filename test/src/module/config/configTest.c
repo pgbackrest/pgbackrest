@@ -20,7 +20,7 @@ testRun(void)
         TEST_RESULT_INT(cfgCommandId("archive-push"), cfgCmdArchivePush, "command id from name");
 
         TEST_ERROR(
-            cfgCommandDefIdFromId(CFG_COMMAND_TOTAL), AssertError, "function test assertion 'commandId < cfgCmdNone' failed");
+            cfgCommandDefIdFromId(CFG_COMMAND_TOTAL), AssertError, "assertion 'commandId < cfgCmdNone' failed");
         TEST_RESULT_INT(cfgCommandDefIdFromId(cfgCmdBackup), cfgDefCmdBackup, "command id to def id");
 
         TEST_RESULT_STR(cfgCommandName(cfgCmdBackup), "backup", "command name from id");
@@ -32,13 +32,13 @@ testRun(void)
 
         TEST_ERROR(
             cfgOptionIdFromDefId(cfgDefOptionTotal(), 6), AssertError,
-            "function test assertion 'optionDefId < cfgDefOptionTotal()' failed");
+            "assertion 'optionDefId < cfgDefOptionTotal()' failed");
         TEST_ERROR(
             cfgOptionIdFromDefId(0, 999999), AssertError,
-            "function test assertion 'index < cfgDefOptionIndexTotal(optionDefId)' failed");
+            "assertion 'index < cfgDefOptionIndexTotal(optionDefId)' failed");
         TEST_RESULT_INT(cfgOptionIdFromDefId(cfgDefOptPgHost, 6), cfgOptPgHost + 6, "option def id to id");
 
-        TEST_ERROR(cfgOptionIndex(CFG_OPTION_TOTAL), AssertError, "function test assertion 'optionId < CFG_OPTION_TOTAL' failed");
+        TEST_ERROR(cfgOptionIndex(CFG_OPTION_TOTAL), AssertError, "assertion 'optionId < CFG_OPTION_TOTAL' failed");
         TEST_RESULT_INT(cfgOptionIndex(cfgOptPgHostCmd + 6), 6, "option index");
         TEST_RESULT_INT(cfgOptionIndex(cfgOptCompressLevel), 0, "option index");
 
@@ -123,10 +123,10 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "online source is set");
         TEST_ERROR(
             cfgOptionDbl(cfgOptOnline), AssertError,
-            "function debug assertion 'varType(configOptionValue[optionId].value) == varTypeDouble' failed");
+            "assertion 'varType(configOptionValue[optionId].value) == varTypeDouble' failed");
         TEST_ERROR(
             cfgOptionInt64(cfgOptOnline), AssertError,
-            "function debug assertion 'varType(configOptionValue[optionId].value) == varTypeInt64' failed");
+            "assertion 'varType(configOptionValue[optionId].value) == varTypeInt64' failed");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptCompressLevel, cfgSourceParam, varNewInt64(1)), "set compress-level");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 1, "compress-level is set");
@@ -135,7 +135,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceDefault, "compress source is set");
         TEST_ERROR(
             cfgOptionBool(cfgOptCompressLevel), AssertError,
-            "function debug assertion 'varType(configOptionValue[optionId].value) == varTypeBool' failed");
+            "assertion 'varType(configOptionValue[optionId].value) == varTypeBool' failed");
 
         TEST_RESULT_VOID(
             cfgOptionSet(cfgOptArchivePushQueueMax, cfgSourceParam, varNewInt64(999999999999)), "set archive-push-queue-max");
@@ -148,7 +148,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptProtocolTimeout), cfgSourceConfig, "protocol-timeout source is set");
         TEST_ERROR(
             cfgOptionKv(cfgOptProtocolTimeout), AssertError,
-            "function debug assertion 'varType(configOptionValue[optionId].value) == varTypeKeyValue' failed");
+            "assertion 'varType(configOptionValue[optionId].value) == varTypeKeyValue' failed");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceConfig, NULL), "set protocol-timeout to NULL");
         TEST_RESULT_PTR(cfgOption(cfgOptProtocolTimeout), NULL, "protocol-timeout is not set");
@@ -160,7 +160,7 @@ testRun(void)
         TEST_RESULT_INT(varLstSize(kvKeyList(cfgOptionKv(cfgOptRecoveryOption))), 0, "recovery-option is set");
         TEST_ERROR(
             cfgOptionLst(cfgOptRecoveryOption), AssertError,
-            "function debug assertion 'configOptionValue[optionId].value == NULL"
+            "assertion 'configOptionValue[optionId].value == NULL"
                 " || varType(configOptionValue[optionId].value) == varTypeVariantList' failed");
 
         TEST_RESULT_INT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 0, "db-include defaults to empty");
@@ -171,7 +171,7 @@ testRun(void)
         TEST_RESULT_INT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 0, "db-include is set");
         TEST_ERROR(
             cfgOptionStr(cfgOptDbInclude), AssertError,
-            "function debug assertion 'configOptionValue[optionId].value == NULL"
+            "assertion 'configOptionValue[optionId].value == NULL"
                 " || varType(configOptionValue[optionId].value) == varTypeString' failed");
 
         TEST_RESULT_PTR(cfgOptionStr(cfgOptStanza), NULL, "stanza defaults to null");
@@ -182,7 +182,7 @@ testRun(void)
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptStanza)), "db", "stanza is set");
         TEST_ERROR(
             cfgOptionInt(cfgOptStanza), AssertError,
-            "function debug assertion 'varType(configOptionValue[optionId].value) == varTypeInt64' failed");
+            "assertion 'varType(configOptionValue[optionId].value) == varTypeInt64' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cfgInit(), "config init resets value");

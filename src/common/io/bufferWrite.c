@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 Buffer IO Write
 ***********************************************************************************************************************************/
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/write.intern.h"
@@ -24,11 +23,11 @@ New object
 IoBufferWrite *
 ioBufferWriteNew(Buffer *buffer)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(buffer != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(buffer != NULL);
 
     IoBufferWrite *this = NULL;
 
@@ -41,7 +40,7 @@ ioBufferWriteNew(Buffer *buffer)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(IO_BUFFER_WRITE, this);
+    FUNCTION_LOG_RETURN(IO_BUFFER_WRITE, this);
 }
 
 /***********************************************************************************************************************************
@@ -50,17 +49,17 @@ Write to the buffer
 void
 ioBufferWrite(IoBufferWrite *this, Buffer *buffer)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_BUFFER_WRITE, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_BUFFER_WRITE, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(buffer != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
 
     bufCat(this->write, buffer);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -72,14 +71,14 @@ ioBufferWriteMove(IoBufferWrite *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_BUFFER_WRITE, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RESULT(IO_BUFFER_WRITE, this);
+    FUNCTION_TEST_RETURN(IO_BUFFER_WRITE, this);
 }
 
 /***********************************************************************************************************************************
@@ -90,11 +89,11 @@ ioBufferWriteIo(const IoBufferWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_BUFFER_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_WRITE, this->io);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_WRITE, this->io);
 }
 
 /***********************************************************************************************************************************
@@ -103,12 +102,12 @@ Free the object
 void
 ioBufferWriteFree(IoBufferWrite *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_BUFFER_WRITE, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_BUFFER_WRITE, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

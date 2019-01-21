@@ -77,9 +77,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *protocolClientToLog(const ProtocolClient *this);
 
-#define FUNCTION_DEBUG_PROTOCOL_CLIENT_TYPE                                                                                        \
+#define FUNCTION_LOG_PROTOCOL_CLIENT_TYPE                                                                                          \
     ProtocolClient *
-#define FUNCTION_DEBUG_PROTOCOL_CLIENT_FORMAT(value, buffer, bufferSize)                                                           \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, protocolClientToLog, buffer, bufferSize)
+#define FUNCTION_LOG_PROTOCOL_CLIENT_FORMAT(value, buffer, bufferSize)                                                             \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, protocolClientToLog, buffer, bufferSize)
 
 #endif

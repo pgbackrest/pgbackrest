@@ -8,7 +8,6 @@ Execute Process
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/exec.h"
@@ -49,16 +48,16 @@ New object
 Exec *
 execNew(const String *command, const StringList *param, const String *name, TimeMSec timeout)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug)
-        FUNCTION_DEBUG_PARAM(STRING, command);
-        FUNCTION_DEBUG_PARAM(STRING_LIST, param);
-        FUNCTION_DEBUG_PARAM(STRING, name);
-        FUNCTION_DEBUG_PARAM(TIME_MSEC, timeout);
+    FUNCTION_LOG_BEGIN(logLevelDebug)
+        FUNCTION_LOG_PARAM(STRING, command);
+        FUNCTION_LOG_PARAM(STRING_LIST, param);
+        FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(command != NULL);
-        FUNCTION_TEST_ASSERT(name != NULL);
-        FUNCTION_TEST_ASSERT(timeout > 0);
-    FUNCTION_DEBUG_END();
+    ASSERT(command != NULL);
+    ASSERT(name != NULL);
+    ASSERT(timeout > 0);
 
     Exec *this = NULL;
 
@@ -83,7 +82,7 @@ execNew(const String *command, const StringList *param, const String *name, Time
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(EXEC, this);
+    FUNCTION_LOG_RETURN(EXEC, this);
 }
 
 /***********************************************************************************************************************************
@@ -92,11 +91,11 @@ Execute command
 void
 execOpen(Exec *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug)
-        FUNCTION_DEBUG_PARAM(EXEC, this);
+    FUNCTION_LOG_BEGIN(logLevelDebug)
+        FUNCTION_LOG_PARAM(EXEC, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     // Create pipes to communicate with the subprocess.  The names of the pipes are from the perspective of the parent process since
     // the child process will use them only briefly before exec'ing.
@@ -162,7 +161,7 @@ execOpen(Exec *this)
     // Set a callback so the handles will get freed
     memContextCallback(this->memContext, (MemContextCallback)execFree, this);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -174,11 +173,11 @@ then the original error should be rethrown.
 static void
 execCheck(Exec *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(EXEC, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(EXEC, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     int processStatus;
     int processResult;
@@ -209,7 +208,7 @@ execCheck(Exec *this)
         THROW_FMT(ExecuteError, "%s terminated unexpectedly on signal %d", strPtr(this->name), WTERMSIG(processStatus));
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -218,14 +217,14 @@ Read from the process
 void
 execRead(Exec *this, Buffer *buffer, bool block)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(EXEC, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-        FUNCTION_DEBUG_PARAM(BOOL, block);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(EXEC, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+        FUNCTION_LOG_PARAM(BOOL, block);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(buffer != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
 
     TRY_BEGIN()
     {
@@ -238,7 +237,7 @@ execRead(Exec *this, Buffer *buffer, bool block)
     }
     TRY_END();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -247,13 +246,13 @@ Write to the process
 void
 execWrite(Exec *this, Buffer *buffer)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(EXEC, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(EXEC, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(buffer != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
 
     TRY_BEGIN()
     {
@@ -267,7 +266,7 @@ execWrite(Exec *this, Buffer *buffer)
     }
     TRY_END();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -276,17 +275,17 @@ Is the process eof?
 bool
 execEof(Exec *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(EXEC, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(EXEC, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     // Check that the process is still running on eof
     if (ioHandleReadEof(this->ioReadHandle))
         execCheck(this);
 
-    FUNCTION_DEBUG_RESULT(BOOL, false);
+    FUNCTION_LOG_RETURN(BOOL, false);
 }
 
 /***********************************************************************************************************************************
@@ -297,11 +296,11 @@ execIoRead(const Exec *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(EXEC, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_READ, this->ioReadExec);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_READ, this->ioReadExec);
 }
 
 /***********************************************************************************************************************************
@@ -312,11 +311,11 @@ execIoWrite(const Exec *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(EXEC, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_WRITE, this->ioWriteExec);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_WRITE, this->ioWriteExec);
 }
 
 /***********************************************************************************************************************************
@@ -327,11 +326,11 @@ execMemContext(const Exec *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(EXEC, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(MEM_CONTEXT, this->memContext);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(MEM_CONTEXT, this->memContext);
 }
 
 /***********************************************************************************************************************************
@@ -380,5 +379,5 @@ execFree(Exec *this)
         memContextFree(this->memContext);
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

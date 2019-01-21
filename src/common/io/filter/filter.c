@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 IO Filter Interface
 ***********************************************************************************************************************************/
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
@@ -26,23 +25,22 @@ Allocations will be in the memory context of the caller.
 IoFilter *
 ioFilterNew(const String *type, void *driver, IoFilterInterface interface)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, type);
-        FUNCTION_DEBUG_PARAM(VOIDP, driver);
-        FUNCTION_DEBUG_PARAM(IO_FILTER_INTERFACE, interface);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(VOIDP, driver);
+        FUNCTION_LOG_PARAM(IO_FILTER_INTERFACE, interface);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(type != NULL);
-        FUNCTION_TEST_ASSERT(driver != NULL);
-        // One of processIn or processInOut must be set
-        FUNCTION_TEST_ASSERT(interface.in != NULL || interface.inOut != NULL);
-        // But not both of them
-        FUNCTION_TEST_ASSERT(!(interface.in != NULL && interface.inOut != NULL));
-        // If the filter does not produce output then it should produce a result
-        FUNCTION_TEST_ASSERT(
-            interface.in == NULL || (interface.result != NULL && interface.done == NULL && interface.inputSame == NULL));
-        // Filters that produce output will not always be able to dump all their output and will need to get the same input again
-        FUNCTION_TEST_ASSERT(interface.inOut == NULL || interface.inputSame != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(type != NULL);
+    ASSERT(driver != NULL);
+    // One of processIn or processInOut must be set
+    ASSERT(interface.in != NULL || interface.inOut != NULL);
+    // But not both of them
+    ASSERT(!(interface.in != NULL && interface.inOut != NULL));
+    // If the filter does not produce output then it should produce a result
+    ASSERT(interface.in == NULL || (interface.result != NULL && interface.done == NULL && interface.inputSame == NULL));
+    // Filters that produce output will not always be able to dump all their output and will need to get the same input again
+    ASSERT(interface.inOut == NULL || interface.inputSame != NULL);
 
     IoFilter *this = memNew(sizeof(IoFilter));
     this->memContext = memContextCurrent();
@@ -50,7 +48,7 @@ ioFilterNew(const String *type, void *driver, IoFilterInterface interface)
     this->driver = driver;
     this->interface = interface;
 
-    FUNCTION_DEBUG_RESULT(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
 
 /***********************************************************************************************************************************
@@ -62,14 +60,14 @@ ioFilterProcessIn(IoFilter *this, const Buffer *input)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER, this);
         FUNCTION_TEST_PARAM(BUFFER, input);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->interface.in != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->interface.in != NULL);
 
     this->interface.in(this->driver, input);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -82,15 +80,15 @@ ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output)
         FUNCTION_TEST_PARAM(IO_FILTER, this);
         FUNCTION_TEST_PARAM(BUFFER, input);
         FUNCTION_TEST_PARAM(BUFFER, output);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(output != NULL);
-        FUNCTION_TEST_ASSERT(this->interface.inOut != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(output != NULL);
+    ASSERT(this->interface.inOut != NULL);
 
     this->interface.inOut(this->driver, input, output);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -102,14 +100,14 @@ ioFilterMove(IoFilter *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RESULT(IO_FILTER, this);
+    FUNCTION_TEST_RETURN(IO_FILTER, this);
 }
 
 /***********************************************************************************************************************************
@@ -122,11 +120,11 @@ ioFilterDone(const IoFilter *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->interface.done != NULL ? this->interface.done(this->driver) : !ioFilterInputSame(this));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->interface.done != NULL ? this->interface.done(this->driver) : !ioFilterInputSame(this));
 }
 
 /***********************************************************************************************************************************
@@ -139,11 +137,11 @@ ioFilterInputSame(const IoFilter *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->interface.inputSame != NULL ? this->interface.inputSame(this->driver) : false);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->interface.inputSame != NULL ? this->interface.inputSame(this->driver) : false);
 }
 
 /***********************************************************************************************************************************
@@ -156,11 +154,11 @@ ioFilterOutput(const IoFilter *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->interface.inOut != NULL);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->interface.inOut != NULL);
 }
 
 /***********************************************************************************************************************************
@@ -171,11 +169,11 @@ ioFilterResult(const IoFilter *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VARIANT, this->interface.result ? this->interface.result(this->driver) : NULL);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(VARIANT, this->interface.result ? this->interface.result(this->driver) : NULL);
 }
 
 /***********************************************************************************************************************************
@@ -188,9 +186,9 @@ ioFilterType(const IoFilter *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, this->type);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(CONST_STRING, this->type);
 }

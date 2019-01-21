@@ -42,9 +42,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *httpHeaderToLog(const HttpHeader *this);
 
-#define FUNCTION_DEBUG_HTTP_HEADER_TYPE                                                                                            \
+#define FUNCTION_LOG_HTTP_HEADER_TYPE                                                                                              \
     HttpHeader *
-#define FUNCTION_DEBUG_HTTP_HEADER_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, httpHeaderToLog, buffer, bufferSize)
+#define FUNCTION_LOG_HTTP_HEADER_FORMAT(value, buffer, bufferSize)                                                                 \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpHeaderToLog, buffer, bufferSize)
 
 #endif

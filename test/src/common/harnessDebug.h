@@ -31,7 +31,7 @@ C Debug Harness
         stackTraceParamLog()
 
     #define FUNCTION_HARNESS_PARAM(typeMacroPrefix, param)                                                                         \
-        FUNCTION_DEBUG_PARAM(typeMacroPrefix, param)
+        FUNCTION_LOG_PARAM(typeMacroPrefix, param)
 
     #define FUNCTION_HARNESS_END()
 

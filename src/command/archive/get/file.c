@@ -19,9 +19,9 @@ Archive Get File
 /***********************************************************************************************************************************
 Check if a WAL file exists in the repository
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_ARCHIVE_GET_CHECK_RESULT_TYPE                                                                               \
+#define FUNCTION_LOG_ARCHIVE_GET_CHECK_RESULT_TYPE                                                                               \
     ArchiveGetCheckResult
-#define FUNCTION_DEBUG_ARCHIVE_GET_CHECK_RESULT_FORMAT(value, buffer, bufferSize)                                                  \
+#define FUNCTION_LOG_ARCHIVE_GET_CHECK_RESULT_FORMAT(value, buffer, bufferSize)                                                  \
     objToLog(&value, "ArchiveGetCheckResult", buffer, bufferSize)
 
 typedef struct ArchiveGetCheckResult
@@ -33,13 +33,13 @@ typedef struct ArchiveGetCheckResult
 ArchiveGetCheckResult
 archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *cipherPass)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STRING, archiveFile);
-        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, archiveFile);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
         // cipherPass omitted for security
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(archiveFile != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(archiveFile != NULL);
 
     ArchiveGetCheckResult result = {0};
 
@@ -105,7 +105,7 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(ARCHIVE_GET_CHECK_RESULT, result);
+    FUNCTION_LOG_RETURN(ARCHIVE_GET_CHECK_RESULT, result);
 }
 
 /***********************************************************************************************************************************
@@ -114,15 +114,15 @@ Copy a file from the archive to the specified destination
 int
 archiveGetFile(const String *archiveFile, const String *walDestination, CipherType cipherType, const String *cipherPass)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STRING, archiveFile);
-        FUNCTION_DEBUG_PARAM(STRING, walDestination);
-        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, archiveFile);
+        FUNCTION_LOG_PARAM(STRING, walDestination);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
         // cipherPass omitted for security
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(archiveFile != NULL);
-        FUNCTION_TEST_ASSERT(walDestination != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(archiveFile != NULL);
+    ASSERT(walDestination != NULL);
 
     // By default result indicates WAL segment not found
     int result = 1;
@@ -173,5 +173,5 @@ archiveGetFile(const String *archiveFile, const String *walDestination, CipherTy
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(INT, result);
+    FUNCTION_LOG_RETURN(INT, result);
 }

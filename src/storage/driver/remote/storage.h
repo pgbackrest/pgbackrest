@@ -55,9 +55,9 @@ void storageDriverRemoteFree(StorageDriverRemote *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_DRIVER_REMOTE_TYPE                                                                                  \
+#define FUNCTION_LOG_STORAGE_DRIVER_REMOTE_TYPE                                                                                    \
     StorageDriverRemote *
-#define FUNCTION_DEBUG_STORAGE_DRIVER_REMOTE_FORMAT(value, buffer, bufferSize)                                                     \
+#define FUNCTION_LOG_STORAGE_DRIVER_REMOTE_FORMAT(value, buffer, bufferSize)                                                       \
     objToLog(value, "StorageDriverRemote", buffer, bufferSize)
 
 #endif

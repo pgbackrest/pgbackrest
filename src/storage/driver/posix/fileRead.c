@@ -4,7 +4,6 @@ Posix Storage File Read Driver
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/read.intern.h"
 #include "common/log.h"
@@ -35,12 +34,12 @@ Create a new file
 StorageDriverPosixFileRead *
 storageDriverPosixFileReadNew(StorageDriverPosix *storage, const String *name, bool ignoreMissing)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, name);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(name != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(name != NULL);
 
     StorageDriverPosixFileRead *this = NULL;
 
@@ -68,7 +67,7 @@ storageDriverPosixFileReadNew(StorageDriverPosix *storage, const String *name, b
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(STORAGE_DRIVER_POSIX_FILE_READ, this);
+    FUNCTION_LOG_RETURN(STORAGE_DRIVER_POSIX_FILE_READ, this);
 }
 
 /***********************************************************************************************************************************
@@ -77,12 +76,12 @@ Open the file
 bool
 storageDriverPosixFileReadOpen(StorageDriverPosixFileRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->handle == -1);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->handle == -1);
 
     bool result = false;
 
@@ -96,7 +95,7 @@ storageDriverPosixFileReadOpen(StorageDriverPosixFileRead *this)
         result = true;
     }
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -105,14 +104,14 @@ Read from a file
 size_t
 storageDriverPosixFileRead(StorageDriverPosixFileRead *this, Buffer *buffer, bool block)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-        FUNCTION_DEBUG_PARAM(BOOL, block);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+        FUNCTION_LOG_PARAM(BOOL, block);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL && this->handle != -1);
-        FUNCTION_DEBUG_ASSERT(buffer != NULL && !bufFull(buffer));
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL && this->handle != -1);
+    ASSERT(buffer != NULL && !bufFull(buffer));
 
     // Read if EOF has not been reached
     ssize_t actualBytes = 0;
@@ -136,7 +135,7 @@ storageDriverPosixFileRead(StorageDriverPosixFileRead *this, Buffer *buffer, boo
             this->eof = true;
     }
 
-    FUNCTION_DEBUG_RESULT(SIZE, (size_t)actualBytes);
+    FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
 }
 
 /***********************************************************************************************************************************
@@ -145,11 +144,11 @@ Close the file
 void
 storageDriverPosixFileReadClose(StorageDriverPosixFileRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     // Close if the file has not already been closed
     if (this->handle != -1)
@@ -160,7 +159,7 @@ storageDriverPosixFileReadClose(StorageDriverPosixFileRead *this)
         this->handle = -1;
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -171,11 +170,11 @@ storageDriverPosixFileReadEof(const StorageDriverPosixFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->eof);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->eof);
 }
 
 /***********************************************************************************************************************************
@@ -186,11 +185,11 @@ storageDriverPosixFileReadIgnoreMissing(const StorageDriverPosixFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->ignoreMissing);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->ignoreMissing);
 }
 
 /***********************************************************************************************************************************
@@ -201,11 +200,11 @@ storageDriverPosixFileReadInterface(const StorageDriverPosixFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STORAGE_FILE_READ, this->interface);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STORAGE_FILE_READ, this->interface);
 }
 
 /***********************************************************************************************************************************
@@ -216,11 +215,11 @@ storageDriverPosixFileReadIo(const StorageDriverPosixFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_READ, this->io);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_READ, this->io);
 }
 
 /***********************************************************************************************************************************
@@ -231,11 +230,11 @@ storageDriverPosixFileReadName(const StorageDriverPosixFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, this->name);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(CONST_STRING, this->name);
 }
 
 /***********************************************************************************************************************************
@@ -244,9 +243,9 @@ Free the file
 void
 storageDriverPosixFileReadFree(StorageDriverPosixFileRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
     {
@@ -256,5 +255,5 @@ storageDriverPosixFileReadFree(StorageDriverPosixFileRead *this)
         memContextFree(this->memContext);
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

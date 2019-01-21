@@ -3,7 +3,6 @@ IO Filter Group
 ***********************************************************************************************************************************/
 #include <stdio.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/filter/buffer.h"
 #include "common/io/filter/filter.intern.h"
@@ -27,9 +26,9 @@ typedef struct IoFilterData
 } IoFilterData;
 
 // Macros for logging
-#define FUNCTION_DEBUG_IO_FILTER_DATA_TYPE                                                                                         \
+#define FUNCTION_LOG_IO_FILTER_DATA_TYPE                                                                                           \
     IoFilterData *
-#define FUNCTION_DEBUG_IO_FILTER_DATA_FORMAT(value, buffer, bufferSize)                                                            \
+#define FUNCTION_LOG_IO_FILTER_DATA_FORMAT(value, buffer, bufferSize)                                                              \
     objToLog(value, "IoFilterData", buffer, bufferSize)
 
 /***********************************************************************************************************************************
@@ -57,7 +56,7 @@ New Object
 IoFilterGroup *
 ioFilterGroupNew(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelTrace);
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     IoFilterGroup *this = NULL;
 
@@ -70,7 +69,7 @@ ioFilterGroupNew(void)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(IO_FILTER_GROUP, this);
+    FUNCTION_LOG_RETURN(IO_FILTER_GROUP, this);
 }
 
 /***********************************************************************************************************************************
@@ -79,14 +78,14 @@ Add a filter
 IoFilterGroup *
 ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(IO_FILTER_GROUP, this);
-        FUNCTION_DEBUG_PARAM(IO_FILTER, filter);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+        FUNCTION_LOG_PARAM(IO_FILTER, filter);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(!this->opened && !this->closed);
-        FUNCTION_TEST_ASSERT(filter != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(!this->opened && !this->closed);
+    ASSERT(filter != NULL);
 
     // Move the filter to this object's mem context
     ioFilterMove(filter, this->memContext);
@@ -95,7 +94,7 @@ ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter)
     IoFilterData filterData = {.filter = filter};
     lstAdd(this->filterList, &filterData);
 
-    FUNCTION_DEBUG_RESULT(IO_FILTER_GROUP, this);
+    FUNCTION_LOG_RETURN(IO_FILTER_GROUP, this);
 }
 
 /***********************************************************************************************************************************
@@ -107,11 +106,11 @@ ioFilterGroupGet(IoFilterGroup *this, unsigned int filterIdx)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER_GROUP, this);
         FUNCTION_TEST_PARAM(UINT, filterIdx);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_FILTER_DATA, (IoFilterData *)lstGet(this->filterList, filterIdx));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_FILTER_DATA, (IoFilterData *)lstGet(this->filterList, filterIdx));
 }
 
 /***********************************************************************************************************************************
@@ -122,11 +121,11 @@ Setup the filter group and allocate any required buffers.
 void
 ioFilterGroupOpen(IoFilterGroup *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_FILTER_GROUP, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -174,7 +173,7 @@ ioFilterGroupOpen(IoFilterGroup *this)
     this->opened = true;
 #endif
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -183,17 +182,17 @@ Process filters
 void
 ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_FILTER_GROUP, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, input);
-        FUNCTION_DEBUG_PARAM(BUFFER, output);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+        FUNCTION_LOG_PARAM(BUFFER, input);
+        FUNCTION_LOG_PARAM(BUFFER, output);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
-        FUNCTION_TEST_ASSERT(!this->flushing || input == NULL);
-        FUNCTION_TEST_ASSERT(output != NULL);
-        FUNCTION_TEST_ASSERT(bufRemains(output) > 0);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->opened && !this->closed);
+    ASSERT(!this->flushing || input == NULL);
+    ASSERT(output != NULL);
+    ASSERT(bufRemains(output) > 0);
 
     // Once input goes to NULL then flushing has started
 #ifdef DEBUG
@@ -311,7 +310,7 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
             this->done = false;
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -320,12 +319,12 @@ Close filter group and gather results
 void
 ioFilterGroupClose(IoFilterGroup *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_FILTER_GROUP, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->opened && !this->closed);
 
     for (unsigned int filterIdx = 0; filterIdx < lstSize(this->filterList); filterIdx++)
     {
@@ -353,7 +352,7 @@ ioFilterGroupClose(IoFilterGroup *this)
     this->closed = true;
 #endif
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -364,12 +363,12 @@ ioFilterGroupDone(const IoFilterGroup *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER_GROUP, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->done);
+    ASSERT(this != NULL);
+    ASSERT(this->opened && !this->closed);
+
+    FUNCTION_TEST_RETURN(BOOL, this->done);
 }
 
 /***********************************************************************************************************************************
@@ -382,12 +381,12 @@ ioFilterGroupInputSame(const IoFilterGroup *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER_GROUP, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && !this->closed);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->inputSame);
+    ASSERT(this != NULL);
+    ASSERT(this->opened && !this->closed);
+
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /***********************************************************************************************************************************
@@ -396,14 +395,14 @@ Get filter results
 const Variant *
 ioFilterGroupResult(const IoFilterGroup *this, const String *filterType)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(IO_FILTER_GROUP, this);
-        FUNCTION_DEBUG_PARAM(STRING, filterType);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+        FUNCTION_LOG_PARAM(STRING, filterType);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->opened && this->closed);
-        FUNCTION_TEST_ASSERT(filterType != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->opened && this->closed);
+    ASSERT(filterType != NULL);
 
     const Variant *result = NULL;
 
@@ -413,7 +412,7 @@ ioFilterGroupResult(const IoFilterGroup *this, const String *filterType)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(CONST_VARIANT, result);
+    FUNCTION_LOG_RETURN(CONST_VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -431,12 +430,12 @@ Free the filter group
 void
 ioFilterGroupFree(IoFilterGroup *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_FILTER_GROUP, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

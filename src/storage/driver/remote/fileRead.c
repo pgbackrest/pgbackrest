@@ -4,7 +4,6 @@ Remote Storage File Read Driver
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/read.intern.h"
 #include "common/log.h"
@@ -58,16 +57,16 @@ Create a new file
 StorageDriverRemoteFileRead *
 storageDriverRemoteFileReadNew(StorageDriverRemote *storage, ProtocolClient *client, const String *name, bool ignoreMissing)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_REMOTE, storage);
-        FUNCTION_DEBUG_PARAM(PROTOCOL_CLIENT, client);
-        FUNCTION_DEBUG_PARAM(STRING, name);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE, storage);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
+        FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(storage != NULL);
-        FUNCTION_TEST_ASSERT(client != NULL);
-        FUNCTION_TEST_ASSERT(name != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(storage != NULL);
+    ASSERT(client != NULL);
+    ASSERT(name != NULL);
 
     StorageDriverRemoteFileRead *this = NULL;
 
@@ -109,7 +108,7 @@ storageDriverRemoteFileReadNew(StorageDriverRemote *storage, ProtocolClient *cli
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(STORAGE_DRIVER_REMOTE_FILE_READ, this);
+    FUNCTION_LOG_RETURN(STORAGE_DRIVER_REMOTE_FILE_READ, this);
 }
 
 /***********************************************************************************************************************************
@@ -118,11 +117,11 @@ Open the file
 bool
 storageDriverRemoteFileReadOpen(StorageDriverRemoteFileRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_REMOTE_FILE_READ, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE_FILE_READ, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     bool result = false;
 
@@ -145,7 +144,7 @@ storageDriverRemoteFileReadOpen(StorageDriverRemoteFileRead *this)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -154,16 +153,16 @@ Get size of the next transfer block
 static size_t
 storageDriverRemoteFileReadBlockSize(const String *message)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, message);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, message);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(message != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(message != NULL);
 
     if (!regExpMatch(storageDriverRemoteFileReadLocal.blockRegExp, message))
         THROW_FMT(ProtocolError, "'%s' is not a valid block size message", strPtr(message));
 
-    FUNCTION_DEBUG_RESULT(SIZE, (size_t)cvtZToUInt64(strPtr(message) + sizeof(BLOCK_HEADER) - 1));
+    FUNCTION_LOG_RETURN(SIZE, (size_t)cvtZToUInt64(strPtr(message) + sizeof(BLOCK_HEADER) - 1));
 }
 
 /***********************************************************************************************************************************
@@ -172,14 +171,14 @@ Read from a file
 size_t
 storageDriverRemoteFileRead(StorageDriverRemoteFileRead *this, Buffer *buffer, bool block)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_REMOTE_FILE_READ, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-        FUNCTION_DEBUG_PARAM(BOOL, block);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE_FILE_READ, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+        FUNCTION_LOG_PARAM(BOOL, block);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(buffer != NULL && !bufFull(buffer));
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL && !bufFull(buffer));
 
     size_t result = 0;
 
@@ -229,7 +228,7 @@ storageDriverRemoteFileRead(StorageDriverRemoteFileRead *this, Buffer *buffer, b
         while (!this->eof && !bufFull(buffer));
     }
 
-    FUNCTION_DEBUG_RESULT(SIZE, result);
+    FUNCTION_LOG_RETURN(SIZE, result);
 }
 
 /***********************************************************************************************************************************
@@ -240,11 +239,11 @@ storageDriverRemoteFileReadEof(const StorageDriverRemoteFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_REMOTE_FILE_READ, this);
-
-        FUNCTION_DEBUG_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->eof);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->eof);
 }
 
 /***********************************************************************************************************************************
@@ -255,11 +254,11 @@ storageDriverRemoteFileReadIgnoreMissing(const StorageDriverRemoteFileRead *this
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_REMOTE_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->ignoreMissing);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->ignoreMissing);
 }
 
 /***********************************************************************************************************************************
@@ -270,11 +269,11 @@ storageDriverRemoteFileReadInterface(const StorageDriverRemoteFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_REMOTE_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STORAGE_FILE_READ, this->interface);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STORAGE_FILE_READ, this->interface);
 }
 
 /***********************************************************************************************************************************
@@ -285,11 +284,11 @@ storageDriverRemoteFileReadIo(const StorageDriverRemoteFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_REMOTE_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_READ, this->io);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_READ, this->io);
 }
 
 /***********************************************************************************************************************************
@@ -300,9 +299,9 @@ storageDriverRemoteFileReadName(const StorageDriverRemoteFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_REMOTE_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, this->name);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(CONST_STRING, this->name);
 }

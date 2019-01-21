@@ -21,9 +21,9 @@ void waitFree(Wait *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_WAIT_TYPE                                                                                                   \
+#define FUNCTION_LOG_WAIT_TYPE                                                                                                     \
     Wait *
-#define FUNCTION_DEBUG_WAIT_FORMAT(value, buffer, bufferSize)                                                                      \
+#define FUNCTION_LOG_WAIT_FORMAT(value, buffer, bufferSize)                                                                        \
     objToLog(value, "Wait", buffer, bufferSize)
 
 #endif

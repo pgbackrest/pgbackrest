@@ -7,7 +7,6 @@ String Handler
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/memContext.h"
 #include "common/type/string.h"
@@ -43,9 +42,9 @@ strNew(const char *string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, string);
-
-        FUNCTION_TEST_ASSERT(string != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(string != NULL);
 
     // Create object
     String *this = memNew(sizeof(String));
@@ -56,7 +55,7 @@ strNew(const char *string)
     this->common.buffer = memNewRaw(this->common.size + 1);
     strcpy(this->common.buffer, string);
 
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -70,9 +69,9 @@ strNewBuf(const Buffer *buffer)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, buffer);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     // Create object
     String *this = memNew(sizeof(String));
@@ -84,7 +83,7 @@ strNewBuf(const Buffer *buffer)
     memcpy(this->common.buffer, (char *)bufPtr(buffer), this->common.size);
     this->common.buffer[this->common.size] = 0;
 
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -95,9 +94,9 @@ strNewFmt(const char *format, ...)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, format);
-
-        FUNCTION_TEST_ASSERT(format != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(format != NULL);
 
     // Create object
     String *this = memNew(sizeof(String));
@@ -115,7 +114,7 @@ strNewFmt(const char *format, ...)
     vsnprintf(this->common.buffer, this->common.size + 1, format, argumentList);
     va_end(argumentList);
 
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -129,9 +128,9 @@ strNewN(const char *string, size_t size)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, string);
         FUNCTION_TEST_PARAM(SIZE, size);
-
-        FUNCTION_TEST_ASSERT(string != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(string != NULL);
 
     // Create object
     String *this = memNew(sizeof(String));
@@ -144,7 +143,7 @@ strNewN(const char *string, size_t size)
     this->common.buffer[this->common.size] = 0;
 
     // Return buffer
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -155,16 +154,16 @@ strBase(const String *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     const char *end = this->common.buffer + this->common.size;
 
     while (end > this->common.buffer && *(end - 1) != '/')
         end--;
 
-    FUNCTION_TEST_RESULT(STRING, strNew(end));
+    FUNCTION_TEST_RETURN(STRING, strNew(end));
 }
 
 /***********************************************************************************************************************************
@@ -176,12 +175,12 @@ strBeginsWith(const String *this, const String *beginsWith)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(STRING, beginsWith);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(beginsWith != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, strBeginsWithZ(this, strPtr(beginsWith)));
+    ASSERT(this != NULL);
+    ASSERT(beginsWith != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, strBeginsWithZ(this, strPtr(beginsWith)));
 }
 
 bool
@@ -190,10 +189,10 @@ strBeginsWithZ(const String *this, const char *beginsWith)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(STRINGZ, beginsWith);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(beginsWith != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(beginsWith != NULL);
 
     bool result = false;
     unsigned int beginsWithSize = (unsigned int)strlen(beginsWith);
@@ -201,7 +200,7 @@ strBeginsWithZ(const String *this, const char *beginsWith)
     if (this->common.size >= beginsWithSize)
         result = strncmp(strPtr(this), beginsWith, beginsWithSize) == 0;
 
-    FUNCTION_TEST_RESULT(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -213,10 +212,10 @@ strCat(String *this, const char *cat)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(STRINGZ, cat);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(cat != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(cat != NULL);
 
     // Determine length of string to append
     size_t sizeGrow = strlen(cat);
@@ -231,7 +230,7 @@ strCat(String *this, const char *cat)
     strcpy(this->common.buffer + this->common.size, cat);
     this->common.size += sizeGrow;
 
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -243,10 +242,10 @@ strCatChr(String *this, char cat)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(CHAR, cat);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(cat != 0);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(cat != 0);
 
     // Allocate and append character
     MEM_CONTEXT_BEGIN(this->memContext)
@@ -258,7 +257,7 @@ strCatChr(String *this, char cat)
     this->common.buffer[this->common.size++] = cat;
     this->common.buffer[this->common.size] = 0;
 
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -270,10 +269,10 @@ strCatFmt(String *this, const char *format, ...)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(STRINGZ, format);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(format != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(format != NULL);
 
     // Determine how long the allocated string needs to be
     va_list argumentList;
@@ -294,7 +293,7 @@ strCatFmt(String *this, const char *format, ...)
 
     this->common.size += sizeGrow;
 
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -306,12 +305,12 @@ strCmp(const String *this, const String *compare)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(STRING, compare);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(compare != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(INT, strcmp(strPtr(this), strPtr(compare)));
+    ASSERT(this != NULL);
+    ASSERT(compare != NULL);
+
+    FUNCTION_TEST_RETURN(INT, strcmp(strPtr(this), strPtr(compare)));
 }
 
 int
@@ -320,12 +319,12 @@ strCmpZ(const String *this, const char *compare)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(STRINGZ, compare);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(compare != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(INT, strcmp(strPtr(this), compare));
+    ASSERT(this != NULL);
+    ASSERT(compare != NULL);
+
+    FUNCTION_TEST_RETURN(INT, strcmp(strPtr(this), compare));
 }
 
 /***********************************************************************************************************************************
@@ -343,7 +342,7 @@ strDup(const String *this)
     if (this != NULL)
         result = strNew(strPtr(this));
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -356,7 +355,7 @@ strEmpty(const String *this)
         FUNCTION_TEST_PARAM(STRING, this);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, strSize(this) == 0);
+    FUNCTION_TEST_RETURN(BOOL, strSize(this) == 0);
 }
 
 /***********************************************************************************************************************************
@@ -368,12 +367,12 @@ strEndsWith(const String *this, const String *endsWith)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(STRING, endsWith);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(endsWith != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, strEndsWithZ(this, strPtr(endsWith)));
+    ASSERT(this != NULL);
+    ASSERT(endsWith != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, strEndsWithZ(this, strPtr(endsWith)));
 }
 
 bool
@@ -382,10 +381,10 @@ strEndsWithZ(const String *this, const char *endsWith)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(STRINGZ, endsWith);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(endsWith != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(endsWith != NULL);
 
     bool result = false;
     unsigned int endsWithSize = (unsigned int)strlen(endsWith);
@@ -393,7 +392,7 @@ strEndsWithZ(const String *this, const char *endsWith)
     if (this->common.size >= endsWithSize)
         result = strcmp(strPtr(this) + (this->common.size - endsWithSize), endsWith) == 0;
 
-    FUNCTION_TEST_RESULT(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -408,17 +407,17 @@ strEq(const String *this, const String *compare)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(STRING, compare);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(compare != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(compare != NULL);
 
     bool result = false;
 
     if (this->common.size == compare->common.size)
         result = strcmp(strPtr(this), strPtr(compare)) == 0;
 
-    FUNCTION_TEST_RESULT(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 bool
@@ -427,12 +426,12 @@ strEqZ(const String *this, const char *compare)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(STRINGZ, compare);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(compare != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, strcmp(strPtr(this), compare) == 0);
+    ASSERT(this != NULL);
+    ASSERT(compare != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, strcmp(strPtr(this), compare) == 0);
 }
 
 /***********************************************************************************************************************************
@@ -443,14 +442,14 @@ strFirstUpper(String *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     if (this->common.size > 0)
         this->common.buffer[0] = (char)toupper(this->common.buffer[0]);
 
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -461,14 +460,14 @@ strFirstLower(String *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     if (this->common.size > 0)
         this->common.buffer[0] = (char)tolower(this->common.buffer[0]);
 
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -479,15 +478,15 @@ strUpper(String *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     if (this->common.size > 0)
         for (unsigned int idx = 0; idx <= this->common.size; idx++)
             this->common.buffer[idx] = (char)toupper(this->common.buffer[idx]);
 
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -498,15 +497,15 @@ strLower(String *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     if (this->common.size > 0)
         for (unsigned int idx = 0; idx <= this->common.size; idx++)
             this->common.buffer[idx] = (char)tolower(this->common.buffer[idx]);
 
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -517,16 +516,16 @@ strPath(const String *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     const char *end = this->common.buffer + this->common.size;
 
     while (end > this->common.buffer && *(end - 1) != '/')
         end--;
 
-    FUNCTION_TEST_RESULT(
+    FUNCTION_TEST_RETURN(
         STRING,
         strNewN(
             this->common.buffer,
@@ -548,7 +547,7 @@ strPtr(const String *this)
     if (this != NULL)
         result = this->common.buffer;
 
-    FUNCTION_TEST_RESULT(CHARP, result);
+    FUNCTION_TEST_RETURN(CHARP, result);
 }
 
 /***********************************************************************************************************************************
@@ -560,12 +559,12 @@ strQuote(const String *this, const String *quote)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(STRING, quote);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(quote != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING, strQuoteZ(this, strPtr(quote)));
+    ASSERT(this != NULL);
+    ASSERT(quote != NULL);
+
+    FUNCTION_TEST_RETURN(STRING, strQuoteZ(this, strPtr(quote)));
 }
 
 String *
@@ -574,12 +573,12 @@ strQuoteZ(const String *this, const char *quote)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(STRINGZ, quote);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(quote != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING, strNewFmt("%s%s%s", quote, strPtr(this), quote));
+    ASSERT(this != NULL);
+    ASSERT(quote != NULL);
+
+    FUNCTION_TEST_RETURN(STRING, strNewFmt("%s%s%s", quote, strPtr(this), quote));
 }
 
 /***********************************************************************************************************************************
@@ -592,9 +591,9 @@ strReplaceChr(String *this, char find, char replace)
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(CHAR, find);
         FUNCTION_TEST_PARAM(CHAR, replace);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     for (unsigned int stringIdx = 0; stringIdx < this->common.size; stringIdx++)
     {
@@ -602,7 +601,7 @@ strReplaceChr(String *this, char find, char replace)
             this->common.buffer[stringIdx] = replace;
     }
 
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -614,12 +613,12 @@ strSub(const String *this, size_t start)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(SIZE, start);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(start < this->common.size);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING, strSubN(this, start, this->common.size - start));
+    ASSERT(this != NULL);
+    ASSERT(start < this->common.size);
+
+    FUNCTION_TEST_RETURN(STRING, strSubN(this, start, this->common.size - start));
 }
 
 /***********************************************************************************************************************************
@@ -632,13 +631,13 @@ strSubN(const String *this, size_t start, size_t size)
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(SIZE, start);
         FUNCTION_TEST_PARAM(SIZE, size);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(start < this->common.size);
-        FUNCTION_TEST_ASSERT(start + size <= this->common.size);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING, strNewN(this->common.buffer + start, size));
+    ASSERT(this != NULL);
+    ASSERT(start < this->common.size);
+    ASSERT(start + size <= this->common.size);
+
+    FUNCTION_TEST_RETURN(STRING, strNewN(this->common.buffer + start, size));
 }
 
 /***********************************************************************************************************************************
@@ -649,11 +648,11 @@ strSize(const String *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(SIZE, this->common.size);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(SIZE, this->common.size);
 }
 
 /***********************************************************************************************************************************
@@ -664,9 +663,9 @@ strTrim(String *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     // Nothing to trim if size is zero
     if (this->common.size > 0)
@@ -704,7 +703,7 @@ strTrim(String *this)
         }
     }
 
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -716,9 +715,9 @@ strChr(const String *this, char chr)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
         FUNCTION_TEST_PARAM(CHAR, chr);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     int result = -1;
 
@@ -730,7 +729,7 @@ strChr(const String *this, char chr)
             result = (int)(ptr - this->common.buffer);
     }
 
-    FUNCTION_TEST_RESULT(INT, result);
+    FUNCTION_TEST_RETURN(INT, result);
 }
 
 /***********************************************************************************************************************************
@@ -741,10 +740,10 @@ strTrunc(String *this, int idx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(idx >= 0 && (size_t)idx <= this->common.size);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(idx >= 0 && (size_t)idx <= this->common.size);
 
     if (this->common.size > 0)
     {
@@ -760,7 +759,7 @@ strTrunc(String *this, int idx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RESULT(STRING, this);
+    FUNCTION_TEST_RETURN(STRING, this);
 }
 
 /***********************************************************************************************************************************
@@ -832,7 +831,7 @@ strSizeFormat(const uint64_t size)
             result = strNewFmt("%" PRIu64 "GB", size / (1024 * 1024 * 1024));
     }
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -855,5 +854,5 @@ strFree(String *this)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

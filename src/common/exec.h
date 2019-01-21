@@ -47,9 +47,9 @@ void execFree(Exec *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_EXEC_TYPE                                                                                                   \
+#define FUNCTION_LOG_EXEC_TYPE                                                                                                     \
     Exec *
-#define FUNCTION_DEBUG_EXEC_FORMAT(value, buffer, bufferSize)                                                                      \
+#define FUNCTION_LOG_EXEC_FORMAT(value, buffer, bufferSize)                                                                        \
     objToLog(value, "Exec", buffer, bufferSize)
 
 #endif

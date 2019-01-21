@@ -45,7 +45,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-on
-        total: 2
+        total: 1
         define-test: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
 
         coverage:
@@ -53,7 +53,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-off
-        total: 2
+        total: 1
         define: -DNDEBUG
         define-test: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
         debugUnitSuppress: true

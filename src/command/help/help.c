@@ -5,7 +5,6 @@ Help Command
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/handleWrite.h"
 #include "common/memContext.h"
@@ -24,15 +23,15 @@ Helper function for helpRender() to make output look good on a console
 static String *
 helpRenderText(const String *text, size_t indent, bool indentFirst, size_t length)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, text);
-        FUNCTION_DEBUG_PARAM(SIZE, indent);
-        FUNCTION_DEBUG_PARAM(BOOL, indentFirst);
-        FUNCTION_DEBUG_PARAM(SIZE, length);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, text);
+        FUNCTION_LOG_PARAM(SIZE, indent);
+        FUNCTION_LOG_PARAM(BOOL, indentFirst);
+        FUNCTION_LOG_PARAM(SIZE, length);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(text != NULL);
-        FUNCTION_DEBUG_ASSERT(length > 0);
-    FUNCTION_DEBUG_END();
+    ASSERT(text != NULL);
+    ASSERT(length > 0);
 
     String *result = strNew("");
 
@@ -66,7 +65,7 @@ helpRenderText(const String *text, size_t indent, bool indentFirst, size_t lengt
         }
     }
 
-    FUNCTION_DEBUG_RESULT(STRING, result);
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -75,9 +74,9 @@ Helper function for helpRender() to output values as strings
 static const String *
 helpRenderValue(const Variant *value)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(VARIANT, value);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(VARIANT, value);
+    FUNCTION_LOG_END();
 
     const String *result = NULL;
 
@@ -129,7 +128,7 @@ helpRenderValue(const Variant *value)
             result = varStrForce(value);
     }
 
-    FUNCTION_DEBUG_RESULT(CONST_STRING, result);
+    FUNCTION_LOG_RETURN(CONST_STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -138,7 +137,7 @@ Render help to a string
 static String *
 helpRender(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelDebug);
+    FUNCTION_LOG_VOID(logLevelDebug);
 
     String *result = strNew(PROJECT_NAME " " PROJECT_VERSION);
 
@@ -380,7 +379,7 @@ helpRender(void)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING, result);
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -389,7 +388,7 @@ Render help and output to stdout
 void
 cmdHelp(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelDebug);
+    FUNCTION_LOG_VOID(logLevelDebug);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -397,5 +396,5 @@ cmdHelp(void)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

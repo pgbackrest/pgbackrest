@@ -19,7 +19,7 @@ testRun(void)
     {
         TEST_ERROR(pgVersionFromStr(strNew("9.3.4")), AssertError, "version 9.3.4 format is invalid");
         TEST_ERROR(pgVersionFromStr(strNew("abc")), AssertError, "version abc format is invalid");
-        TEST_ERROR(pgVersionFromStr(NULL), AssertError, "function debug assertion 'version != NULL' failed");
+        TEST_ERROR(pgVersionFromStr(NULL), AssertError, "assertion 'version != NULL' failed");
 
         TEST_RESULT_INT(pgVersionFromStr(strNew("10")), PG_VERSION_10, "valid pg version 10");
         TEST_RESULT_INT(pgVersionFromStr(strNew("9.6")), 90600, "valid pg version 9.6");

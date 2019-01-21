@@ -28,9 +28,9 @@ bool iniFileExists(const Ini *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_INI_TYPE                                                                                                    \
+#define FUNCTION_LOG_INI_TYPE                                                                                                      \
     Ini *
-#define FUNCTION_DEBUG_INI_FORMAT(value, buffer, bufferSize)                                                                       \
+#define FUNCTION_LOG_INI_FORMAT(value, buffer, bufferSize)                                                                         \
     objToLog(value, "Ini", buffer, bufferSize)
 
 #endif

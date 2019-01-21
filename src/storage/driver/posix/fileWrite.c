@@ -5,7 +5,6 @@ Posix Storage File Write Driver
 #include <stdio.h>
 #include <unistd.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/write.intern.h"
 #include "common/log.h"
@@ -53,19 +52,19 @@ storageDriverPosixFileWriteNew(
     StorageDriverPosix *storage, const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile,
     bool syncPath, bool atomic)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, name);
-        FUNCTION_DEBUG_PARAM(MODE, modeFile);
-        FUNCTION_DEBUG_PARAM(MODE, modePath);
-        FUNCTION_DEBUG_PARAM(BOOL, createPath);
-        FUNCTION_DEBUG_PARAM(BOOL, syncFile);
-        FUNCTION_DEBUG_PARAM(BOOL, syncPath);
-        FUNCTION_DEBUG_PARAM(BOOL, atomic);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(MODE, modeFile);
+        FUNCTION_LOG_PARAM(MODE, modePath);
+        FUNCTION_LOG_PARAM(BOOL, createPath);
+        FUNCTION_LOG_PARAM(BOOL, syncFile);
+        FUNCTION_LOG_PARAM(BOOL, syncPath);
+        FUNCTION_LOG_PARAM(BOOL, atomic);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(name != NULL);
-        FUNCTION_TEST_ASSERT(modeFile != 0);
-        FUNCTION_TEST_ASSERT(modePath != 0);
-    FUNCTION_DEBUG_END();
+    ASSERT(name != NULL);
+    ASSERT(modeFile != 0);
+    ASSERT(modePath != 0);
 
     StorageDriverPosixFileWrite *this = NULL;
 
@@ -105,7 +104,7 @@ storageDriverPosixFileWriteNew(
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
+    FUNCTION_LOG_RETURN(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
 }
 
 /***********************************************************************************************************************************
@@ -114,12 +113,12 @@ Open the file
 void
 storageDriverPosixFileWriteOpen(StorageDriverPosixFileWrite *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->handle == -1);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->handle == -1);
 
     // Open the file and handle errors
     this->handle = storageDriverPosixFileOpen(
@@ -139,7 +138,7 @@ storageDriverPosixFileWriteOpen(StorageDriverPosixFileWrite *this)
     else
         memContextCallback(this->memContext, (MemContextCallback)storageDriverPosixFileWriteFree, this);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -148,20 +147,20 @@ Write to a file
 void
 storageDriverPosixFileWrite(StorageDriverPosixFileWrite *this, const Buffer *buffer)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(buffer != NULL);
-        FUNCTION_TEST_ASSERT(this->handle != -1);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+    ASSERT(this->handle != -1);
 
     // Write the data
     if (write(this->handle, bufPtr(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
         THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strPtr(this->name));
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -170,11 +169,11 @@ Close the file
 void
 storageDriverPosixFileWriteClose(StorageDriverPosixFileWrite *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     // Close if the file has not already been closed
     if (this->handle != -1)
@@ -201,7 +200,7 @@ storageDriverPosixFileWriteClose(StorageDriverPosixFileWrite *this)
         this->handle = -1;
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -214,11 +213,11 @@ storageDriverPosixFileWriteAtomic(const StorageDriverPosixFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->atomic);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->atomic);
 }
 
 /***********************************************************************************************************************************
@@ -229,11 +228,11 @@ storageDriverPosixFileWriteCreatePath(const StorageDriverPosixFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->createPath);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->createPath);
 }
 
 /***********************************************************************************************************************************
@@ -244,11 +243,11 @@ storageDriverPosixFileWriteInterface(const StorageDriverPosixFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STORAGE_FILE_WRITE, this->interface);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STORAGE_FILE_WRITE, this->interface);
 }
 
 /***********************************************************************************************************************************
@@ -259,11 +258,11 @@ storageDriverPosixFileWriteIo(const StorageDriverPosixFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_WRITE, this->io);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_WRITE, this->io);
 }
 
 /***********************************************************************************************************************************
@@ -274,11 +273,11 @@ storageDriverPosixFileWriteModeFile(const StorageDriverPosixFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(MODE, this->modeFile);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(MODE, this->modeFile);
 }
 
 /***********************************************************************************************************************************
@@ -289,11 +288,11 @@ storageDriverPosixFileWriteModePath(const StorageDriverPosixFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(MODE, this->modePath);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(MODE, this->modePath);
 }
 
 /***********************************************************************************************************************************
@@ -304,11 +303,11 @@ storageDriverPosixFileWriteName(const StorageDriverPosixFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, this->name);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(CONST_STRING, this->name);
 }
 
 /***********************************************************************************************************************************
@@ -319,11 +318,11 @@ storageDriverPosixFileWriteSyncFile(const StorageDriverPosixFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->syncFile);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->syncFile);
 }
 
 /***********************************************************************************************************************************
@@ -334,11 +333,11 @@ storageDriverPosixFileWriteSyncPath(const StorageDriverPosixFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->syncPath);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->syncPath);
 }
 
 /***********************************************************************************************************************************
@@ -347,9 +346,9 @@ Free the file
 void
 storageDriverPosixFileWriteFree(StorageDriverPosixFileWrite *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
     {
@@ -359,5 +358,5 @@ storageDriverPosixFileWriteFree(StorageDriverPosixFileWrite *this)
         memContextFree(this->memContext);
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

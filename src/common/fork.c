@@ -14,7 +14,7 @@ startup because the parent process may continue to run and perform work for some
 void
 forkDetach(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelTrace);
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     // Change the working directory to / so we won't error if the old working directory goes away
     THROW_ON_SYS_ERROR(chdir("/") == -1, PathMissingError, "unable to change directory to '/'");
@@ -27,5 +27,5 @@ forkDetach(void)
     THROW_ON_SYS_ERROR(close(STDOUT_FILENO) == -1, FileCloseError, "unable to close stdout");
     THROW_ON_SYS_ERROR(close(STDERR_FILENO) == -1, FileCloseError, "unable to close stderr");
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

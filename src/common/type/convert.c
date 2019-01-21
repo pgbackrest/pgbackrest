@@ -8,7 +8,6 @@ Convert Base Data Types
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/type/convert.h"
 
@@ -27,15 +26,15 @@ cvtZToIntValid(int errNo, int base, const char *value, const char *endPtr, const
         FUNCTION_TEST_PARAM(CHARP, value);
         FUNCTION_TEST_PARAM(CHARP, endPtr);
         FUNCTION_TEST_PARAM(CHARP, type);
-
-        FUNCTION_TEST_ASSERT(value != NULL);
-        FUNCTION_TEST_ASSERT(endPtr != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
+    ASSERT(endPtr != NULL);
 
     if (errNo != 0 || *value == '\0' || isspace(*value) || *endPtr != '\0')
         THROW_FMT(FormatError, "unable to convert base %d string '%s' to %s", base, value, type);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -47,10 +46,10 @@ cvtZToInt64Internal(const char *value, const char *type, int base)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, value);
         FUNCTION_TEST_PARAM(CHARP, type);
-
-        FUNCTION_TEST_ASSERT(value != NULL);
-        FUNCTION_TEST_ASSERT(type != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
+    ASSERT(type != NULL);
 
     // Convert from string
     errno = 0;
@@ -60,7 +59,7 @@ cvtZToInt64Internal(const char *value, const char *type, int base)
     // Validate the result
     cvtZToIntValid(errno, base, value, endPtr, type);
 
-    FUNCTION_TEST_RESULT(INT64, result);
+    FUNCTION_TEST_RETURN(INT64, result);
 }
 
 /***********************************************************************************************************************************
@@ -72,10 +71,10 @@ cvtZToUInt64Internal(const char *value, const char *type, int base)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, value);
         FUNCTION_TEST_PARAM(CHARP, type);
-
-        FUNCTION_TEST_ASSERT(value != NULL);
-        FUNCTION_TEST_ASSERT(type != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
+    ASSERT(type != NULL);
 
     // Convert from string
     errno = 0;
@@ -85,7 +84,7 @@ cvtZToUInt64Internal(const char *value, const char *type, int base)
     // Validate the result
     cvtZToIntValid(errno, base, value, endPtr, type);
 
-    FUNCTION_TEST_RESULT(UINT64, result);
+    FUNCTION_TEST_RETURN(UINT64, result);
 }
 
 /***********************************************************************************************************************************
@@ -98,16 +97,16 @@ cvtBoolToZ(bool value, char *buffer, size_t bufferSize)
         FUNCTION_TEST_PARAM(BOOL, value);
         FUNCTION_TEST_PARAM(CHARP, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     size_t result = (size_t)snprintf(buffer, bufferSize, "%s", cvtBoolToConstZ(value));
 
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RESULT(SIZE, result);
+    FUNCTION_TEST_RETURN(SIZE, result);
 }
 
 // Since booleans only have two possible values we can return a const with the value.  This is useful when a boolean needs to be
@@ -128,16 +127,16 @@ cvtCharToZ(char value, char *buffer, size_t bufferSize)
         FUNCTION_TEST_PARAM(BOOL, value);
         FUNCTION_TEST_PARAM(CHARP, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     size_t result = (size_t)snprintf(buffer, bufferSize, "%c", value);
 
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RESULT(SIZE, result);
+    FUNCTION_TEST_RETURN(SIZE, result);
 }
 
 /***********************************************************************************************************************************
@@ -150,9 +149,9 @@ cvtDoubleToZ(double value, char *buffer, size_t bufferSize)
         FUNCTION_TEST_PARAM(DOUBLE, value);
         FUNCTION_TEST_PARAM(CHARP, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     // Convert to a string
     size_t result = (size_t)snprintf(buffer, bufferSize, "%lf", value);
@@ -161,9 +160,9 @@ cvtDoubleToZ(double value, char *buffer, size_t bufferSize)
         THROW(AssertError, "buffer overflow");
 
     // Any formatted double should be at least 8 characters, i.e. 0.000000
-    ASSERT_DEBUG(strlen(buffer) >= 8);
+    ASSERT(strlen(buffer) >= 8);
     // Any formatted double should have a decimal point
-    ASSERT_DEBUG(strchr(buffer, '.') != NULL);
+    ASSERT(strchr(buffer, '.') != NULL);
 
     // Strip off any final 0s and the decimal point if there are no non-zero digits after it
     char *end = buffer + strlen(buffer) - 1;
@@ -171,7 +170,7 @@ cvtDoubleToZ(double value, char *buffer, size_t bufferSize)
     while (*end == '0' || *end == '.')
     {
         // It should not be possible to go past the beginning because format "%lf" will always write a decimal point
-        ASSERT_DEBUG(end > buffer);
+        ASSERT(end > buffer);
 
         end--;
 
@@ -183,7 +182,7 @@ cvtDoubleToZ(double value, char *buffer, size_t bufferSize)
     end[1] = 0;
 
     // Return string length
-    FUNCTION_TEST_RESULT(SIZE, (size_t)(end - buffer + 1));
+    FUNCTION_TEST_RETURN(SIZE, (size_t)(end - buffer + 1));
 }
 
 double
@@ -191,9 +190,9 @@ cvtZToDouble(const char *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, value);
-
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
 
     double result = 0;
     sscanf(value, "%lf", &result);
@@ -201,7 +200,7 @@ cvtZToDouble(const char *value)
     if (result == 0 && strcmp(value, "0") != 0)
         THROW_FMT(FormatError, "unable to convert string '%s' to double", value);
 
-    FUNCTION_TEST_RESULT(DOUBLE, result);
+    FUNCTION_TEST_RETURN(DOUBLE, result);
 }
 
 /***********************************************************************************************************************************
@@ -214,16 +213,16 @@ cvtIntToZ(int value, char *buffer, size_t bufferSize)
         FUNCTION_TEST_PARAM(INT, value);
         FUNCTION_TEST_PARAM(CHARP, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     size_t result = (size_t)snprintf(buffer, bufferSize, "%d", value);
 
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RESULT(SIZE, result);
+    FUNCTION_TEST_RETURN(SIZE, result);
 }
 
 int
@@ -231,16 +230,16 @@ cvtZToIntBase(const char *value, int base)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, value);
-
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
 
     int64_t result = cvtZToInt64Internal(value, "int", base);
 
     if (result > INT_MAX || result < INT_MIN)
         THROW_FMT(FormatError, "unable to convert base %d string '%s' to int", base, value);
 
-    FUNCTION_TEST_RESULT(INT, (int)result);
+    FUNCTION_TEST_RETURN(INT, (int)result);
 }
 
 int
@@ -248,11 +247,11 @@ cvtZToInt(const char *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, value);
-
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(INT, cvtZToIntBase(value, 10));
+    ASSERT(value != NULL);
+
+    FUNCTION_TEST_RETURN(INT, cvtZToIntBase(value, 10));
 }
 
 /***********************************************************************************************************************************
@@ -265,16 +264,16 @@ cvtInt64ToZ(int64_t value, char *buffer, size_t bufferSize)
         FUNCTION_TEST_PARAM(INT64, value);
         FUNCTION_TEST_PARAM(CHARP, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     size_t result = (size_t)snprintf(buffer, bufferSize, "%" PRId64, value);
 
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RESULT(SIZE, result);
+    FUNCTION_TEST_RETURN(SIZE, result);
 }
 
 int64_t
@@ -282,11 +281,11 @@ cvtZToInt64Base(const char *value, int base)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, value);
-
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(INT64, cvtZToInt64Internal(value, "int64", base));
+    ASSERT(value != NULL);
+
+    FUNCTION_TEST_RETURN(INT64, cvtZToInt64Internal(value, "int64", base));
 }
 
 int64_t
@@ -294,11 +293,11 @@ cvtZToInt64(const char *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, value);
-
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(INT64, cvtZToInt64Base(value, 10));
+    ASSERT(value != NULL);
+
+    FUNCTION_TEST_RETURN(INT64, cvtZToInt64Base(value, 10));
 }
 
 /***********************************************************************************************************************************
@@ -311,16 +310,16 @@ cvtModeToZ(mode_t value, char *buffer, size_t bufferSize)
         FUNCTION_TEST_PARAM(MODE, value);
         FUNCTION_TEST_PARAM(CHARP, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     size_t result = (size_t)snprintf(buffer, bufferSize, "%04o", value);
 
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RESULT(SIZE, result);
+    FUNCTION_TEST_RETURN(SIZE, result);
 }
 
 /***********************************************************************************************************************************
@@ -333,16 +332,16 @@ cvtSizeToZ(size_t value, char *buffer, size_t bufferSize)
         FUNCTION_TEST_PARAM(SIZE, value);
         FUNCTION_TEST_PARAM(CHARP, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     size_t result = (size_t)snprintf(buffer, bufferSize, "%zu", value);
 
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RESULT(SIZE, result);
+    FUNCTION_TEST_RETURN(SIZE, result);
 }
 
 /***********************************************************************************************************************************
@@ -355,16 +354,16 @@ cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize)
         FUNCTION_TEST_PARAM(UINT, value);
         FUNCTION_TEST_PARAM(CHARP, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     size_t result = (size_t)snprintf(buffer, bufferSize, "%u", value);
 
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RESULT(SIZE, result);
+    FUNCTION_TEST_RETURN(SIZE, result);
 }
 
 unsigned int
@@ -372,9 +371,9 @@ cvtZToUIntBase(const char *value, int base)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, value);
-
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
 
     uint64_t result = cvtZToUInt64Internal(value, "unsigned int", base);
 
@@ -382,7 +381,7 @@ cvtZToUIntBase(const char *value, int base)
     if (*value == '-' || result > UINT_MAX)
         THROW_FMT(FormatError, "unable to convert base %d string '%s' to unsigned int", base, value);
 
-    FUNCTION_TEST_RESULT(UINT, (unsigned int)result);
+    FUNCTION_TEST_RETURN(UINT, (unsigned int)result);
 }
 
 unsigned int
@@ -390,11 +389,11 @@ cvtZToUInt(const char *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, value);
-
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(UINT, cvtZToUIntBase(value, 10));
+    ASSERT(value != NULL);
+
+    FUNCTION_TEST_RETURN(UINT, cvtZToUIntBase(value, 10));
 }
 
 /***********************************************************************************************************************************
@@ -407,16 +406,16 @@ cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize)
         FUNCTION_TEST_PARAM(UINT64, value);
         FUNCTION_TEST_PARAM(CHARP, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     size_t result = (size_t)snprintf(buffer, bufferSize, "%" PRIu64, value);
 
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RESULT(SIZE, result);
+    FUNCTION_TEST_RETURN(SIZE, result);
 }
 
 uint64_t
@@ -424,9 +423,9 @@ cvtZToUInt64Base(const char *value, int base)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, value);
-
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
 
     uint64_t result = cvtZToUInt64Internal(value, "uint64", base);
 
@@ -434,7 +433,7 @@ cvtZToUInt64Base(const char *value, int base)
     if (*value == '-')
         THROW_FMT(FormatError, "unable to convert base %d string '%s' to uint64", base, value);
 
-    FUNCTION_TEST_RESULT(UINT64, result);
+    FUNCTION_TEST_RETURN(UINT64, result);
 }
 
 uint64_t
@@ -442,9 +441,9 @@ cvtZToUInt64(const char *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHARP, value);
-
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(UINT64, cvtZToUInt64Base(value, 10));
+    ASSERT(value != NULL);
+
+    FUNCTION_TEST_RETURN(UINT64, cvtZToUInt64Base(value, 10));
 }

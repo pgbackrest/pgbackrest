@@ -12,7 +12,6 @@ TLS Client
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/io/tls/client.h"
@@ -51,16 +50,16 @@ TlsClient *
 tlsClientNew(
     const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug)
-        FUNCTION_DEBUG_PARAM(STRING, host);
-        FUNCTION_DEBUG_PARAM(UINT, port);
-        FUNCTION_DEBUG_PARAM(TIME_MSEC, timeout);
-        FUNCTION_DEBUG_PARAM(BOOL, verifyPeer);
-        FUNCTION_DEBUG_PARAM(STRING, caFile);
-        FUNCTION_DEBUG_PARAM(STRING, caPath);
+    FUNCTION_LOG_BEGIN(logLevelDebug)
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(UINT, port);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+        FUNCTION_LOG_PARAM(BOOL, verifyPeer);
+        FUNCTION_LOG_PARAM(STRING, caFile);
+        FUNCTION_LOG_PARAM(STRING, caPath);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(host != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(host != NULL);
 
     TlsClient *this = NULL;
 
@@ -113,7 +112,7 @@ tlsClientNew(
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(TLS_CLIENT, this);
+    FUNCTION_LOG_RETURN(TLS_CLIENT, this);
 }
 
 /***********************************************************************************************************************************
@@ -130,7 +129,7 @@ asn1ToStr(ASN1_STRING *nameAsn1)
     if (nameAsn1 == NULL)
         THROW(CryptoError, "TLS certificate name entry is missing");
 
-    FUNCTION_TEST_RESULT(
+    FUNCTION_TEST_RETURN(
         STRING, strNewN(
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
             (const char *)ASN1_STRING_data(nameAsn1),
@@ -148,13 +147,13 @@ Matching is always case-insensitive since DNS is case insensitive.
 static bool
 tlsClientHostVerifyName(const String *host, const String *name)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, host);
-        FUNCTION_DEBUG_PARAM(STRING, name);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(STRING, name);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(host != NULL);
-        FUNCTION_TEST_ASSERT(name != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(host != NULL);
+    ASSERT(name != NULL);
 
     // Reject embedded nulls in certificate common or alternative name to prevent attacks like CVE-2009-4034
     if (strlen(strPtr(name)) != strSize(name))
@@ -184,7 +183,7 @@ tlsClientHostVerifyName(const String *host, const String *name)
         result = true;
     }
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -195,12 +194,12 @@ The certificate's Common Name and Subject Alternative Names are considered.
 static bool
 tlsClientHostVerify(const String *host, X509 *certificate)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, host);
-        FUNCTION_DEBUG_PARAM(VOIDP, certificate);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(VOIDP, certificate);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(host != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(host != NULL);
 
     bool result = false;
 
@@ -252,7 +251,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -261,11 +260,11 @@ Open connection if this is a new client or if the connection was closed by the s
 void
 tlsClientOpen(TlsClient *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace)
-        FUNCTION_DEBUG_PARAM(TLS_CLIENT, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace)
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     if (this->session == NULL)
     {
@@ -396,7 +395,7 @@ tlsClientOpen(TlsClient *this)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -405,16 +404,16 @@ Read from the TLS session
 size_t
 tlsClientRead(TlsClient *this, Buffer *buffer, bool block)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(TLS_CLIENT, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-        FUNCTION_DEBUG_PARAM(BOOL, block);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+        FUNCTION_LOG_PARAM(BOOL, block);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->session != NULL);
-        FUNCTION_TEST_ASSERT(buffer != NULL);
-        FUNCTION_TEST_ASSERT(!bufFull(buffer));
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->session != NULL);
+    ASSERT(buffer != NULL);
+    ASSERT(!bufFull(buffer));
 
     ssize_t actualBytes = 0;
 
@@ -467,7 +466,7 @@ tlsClientRead(TlsClient *this, Buffer *buffer, bool block)
     }
     while (block && bufRemains(buffer) > 0);
 
-    FUNCTION_DEBUG_RESULT(SIZE, (size_t)actualBytes);
+    FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
 }
 
 /***********************************************************************************************************************************
@@ -476,18 +475,18 @@ Write to the tls session
 void
 tlsClientWrite(TlsClient *this, const Buffer *buffer)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(TLS_CLIENT, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->session != NULL);
-        FUNCTION_TEST_ASSERT(buffer != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->session != NULL);
+    ASSERT(buffer != NULL);
 
     cryptoError(SSL_write(this->session, bufPtr(buffer), (int)bufUsed(buffer)) != (int)bufUsed(buffer), "unable to write");
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -496,11 +495,11 @@ Close the connection
 void
 tlsClientClose(TlsClient *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(TLS_CLIENT, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     // Close the socket
     if (this->socket != -1)
@@ -516,7 +515,7 @@ tlsClientClose(TlsClient *this)
         this->session = NULL;
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -525,13 +524,13 @@ Has session been closed by the server?
 bool
 tlsClientEof(const TlsClient *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(TLS_CLIENT, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
-    FUNCTION_DEBUG_RESULT(BOOL, this->session == NULL);
+    FUNCTION_LOG_RETURN(BOOL, this->session == NULL);
 }
 
 /***********************************************************************************************************************************
@@ -542,11 +541,11 @@ tlsClientIoRead(const TlsClient *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(TLS_CLIENT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_READ, this->read);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_READ, this->read);
 }
 
 /***********************************************************************************************************************************
@@ -557,11 +556,11 @@ tlsClientIoWrite(const TlsClient *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(TLS_CLIENT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_WRITE, this->write);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_WRITE, this->write);
 }
 
 /***********************************************************************************************************************************
@@ -583,5 +582,5 @@ tlsClientFree(TlsClient *this)
         memContextFree(this->memContext);
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

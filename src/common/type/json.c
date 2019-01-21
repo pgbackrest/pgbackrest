@@ -91,7 +91,7 @@ jsonString(const char *jsonC, unsigned int *jsonPos)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RESULT(VARIANT, result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -125,7 +125,7 @@ jsonNumeric(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned i
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RESULT(VARIANT, result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -138,11 +138,11 @@ whitespace.
 KeyValue *
 jsonToKv(const String *json)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, json);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, json);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(json != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(json != NULL);
 
     KeyValue *result = kvNew();
 
@@ -310,7 +310,7 @@ jsonToKv(const String *json)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(KEY_VALUE, result);
+    FUNCTION_LOG_RETURN(KEY_VALUE, result);
 }
 
 /***********************************************************************************************************************************
@@ -322,9 +322,9 @@ jsonStringRender(String *json, const String *string)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, json);
         FUNCTION_TEST_PARAM(STRING, string);
-
-        FUNCTION_TEST_ASSERT(json != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(json != NULL);
 
     // If string is null
     if (string == NULL)
@@ -383,7 +383,7 @@ jsonStringRender(String *json, const String *string)
         strCatChr(json, '"');
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -396,11 +396,11 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
         FUNCTION_TEST_PARAM(KEY_VALUE, kv);
         FUNCTION_TEST_PARAM(STRING, indentSpace);
         FUNCTION_TEST_PARAM(STRING, indentDepth);
-
-        FUNCTION_TEST_ASSERT(kv != NULL);
-        FUNCTION_TEST_ASSERT(indentSpace != NULL);
-        FUNCTION_TEST_ASSERT(indentDepth != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(kv != NULL);
+    ASSERT(indentSpace != NULL);
+    ASSERT(indentDepth != NULL);
 
     String *result = strNew("{");
 
@@ -498,7 +498,7 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -511,12 +511,12 @@ whitespace.
 String *
 kvToJson(const KeyValue *kv, unsigned int indent)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(KEY_VALUE, kv);
-        FUNCTION_DEBUG_PARAM(UINT, indent);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(KEY_VALUE, kv);
+        FUNCTION_LOG_PARAM(UINT, indent);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(kv != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(kv != NULL);
 
     String *result = NULL;
 
@@ -548,7 +548,7 @@ kvToJson(const KeyValue *kv, unsigned int indent)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING, result);
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -560,12 +560,12 @@ needed.
 String *
 varToJson(const Variant *var, unsigned int indent)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(VARIANT, var);
-        FUNCTION_DEBUG_PARAM(UINT, indent);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(VARIANT, var);
+        FUNCTION_LOG_PARAM(UINT, indent);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(var != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(var != NULL);
 
     String *result = NULL;
 
@@ -638,5 +638,5 @@ varToJson(const Variant *var, unsigned int indent)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING, result);
+    FUNCTION_LOG_RETURN(STRING, result);
 }

@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 Storage File Read Interface
 ***********************************************************************************************************************************/
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -24,17 +23,17 @@ Create a new storage file
 StorageFileRead *
 storageFileReadNew(const String *type, void *driver, StorageFileReadInterface interface)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, type);
-        FUNCTION_DEBUG_PARAM(VOIDP, driver);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ_INTERFACE, interface);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(VOIDP, driver);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_READ_INTERFACE, interface);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(type != NULL);
-        FUNCTION_TEST_ASSERT(driver != NULL);
-        FUNCTION_TEST_ASSERT(interface.ignoreMissing != NULL);
-        FUNCTION_TEST_ASSERT(interface.io != NULL);
-        FUNCTION_TEST_ASSERT(interface.name != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(type != NULL);
+    ASSERT(driver != NULL);
+    ASSERT(interface.ignoreMissing != NULL);
+    ASSERT(interface.io != NULL);
+    ASSERT(interface.name != NULL);
 
     StorageFileRead *this = NULL;
 
@@ -44,7 +43,7 @@ storageFileReadNew(const String *type, void *driver, StorageFileReadInterface in
     this->interface = interface;
     this->driver = driver;
 
-    FUNCTION_DEBUG_RESULT(STORAGE_FILE_READ, this);
+    FUNCTION_LOG_RETURN(STORAGE_FILE_READ, this);
 }
 
 /***********************************************************************************************************************************
@@ -56,14 +55,14 @@ storageFileReadMove(StorageFileRead *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_READ, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RESULT(STORAGE_FILE_READ, this);
+    FUNCTION_TEST_RETURN(STORAGE_FILE_READ, this);
 }
 
 /***********************************************************************************************************************************
@@ -74,11 +73,11 @@ storageFileReadDriver(const StorageFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VOIDP, this->driver);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(VOIDP, this->driver);
 }
 
 /***********************************************************************************************************************************
@@ -89,11 +88,11 @@ storageFileReadIgnoreMissing(const StorageFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->interface.ignoreMissing(this->driver));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->interface.ignoreMissing(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -104,11 +103,11 @@ storageFileReadIo(const StorageFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_READ, this->interface.io(this->driver));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_READ, this->interface.io(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -119,11 +118,11 @@ storageFileReadName(const StorageFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, this->interface.name(this->driver));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(CONST_STRING, this->interface.name(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -134,11 +133,11 @@ storageFileReadType(const StorageFileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, this->type);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(CONST_STRING, this->type);
 }
 
 /***********************************************************************************************************************************
@@ -158,12 +157,12 @@ Free the file
 void
 storageFileReadFree(const StorageFileRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_READ, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

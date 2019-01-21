@@ -13,10 +13,10 @@ Load log settings
 StringList *
 cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(ENUM, commandId);
-        FUNCTION_DEBUG_PARAM(KEY_VALUE, optionReplace);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, commandId);
+        FUNCTION_LOG_PARAM(KEY_VALUE, optionReplace);
+    FUNCTION_LOG_END();
 
     StringList *result = NULL;
 
@@ -109,5 +109,5 @@ cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING_LIST, result);
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }

@@ -52,11 +52,11 @@ iniGetInternal(const Ini *this, const String *section, const String *key)
         FUNCTION_TEST_PARAM(INI, this);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(section != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(section != NULL);
+    ASSERT(key != NULL);
 
     const Variant *result = NULL;
 
@@ -71,7 +71,7 @@ iniGetInternal(const Ini *this, const String *section, const String *key)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RESULT(CONST_VARIANT, result);
+    FUNCTION_TEST_RETURN(CONST_VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -84,11 +84,11 @@ iniGet(const Ini *this, const String *section, const String *key)
         FUNCTION_TEST_PARAM(INI, this);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(section != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(section != NULL);
+    ASSERT(key != NULL);
 
     // Get the value
     const Variant *result = iniGetInternal(this, section, key);
@@ -97,7 +97,7 @@ iniGet(const Ini *this, const String *section, const String *key)
     if (result == NULL)
         THROW_FMT(FormatError, "section '%s', key '%s' does not exist", strPtr(section), strPtr(key));
 
-    FUNCTION_TEST_RESULT(CONST_VARIANT, result);
+    FUNCTION_TEST_RETURN(CONST_VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -111,11 +111,11 @@ iniGetDefault(const Ini *this, const String *section, const String *key, Variant
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_TEST_PARAM(VARIANT, defaultValue);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(section != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(section != NULL);
+    ASSERT(key != NULL);
 
     // Get the value
     const Variant *result = iniGetInternal(this, section, key);
@@ -124,7 +124,7 @@ iniGetDefault(const Ini *this, const String *section, const String *key, Variant
     if (result == NULL)
         result = defaultValue;
 
-    FUNCTION_TEST_RESULT(CONST_VARIANT, result);
+    FUNCTION_TEST_RETURN(CONST_VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -136,10 +136,10 @@ iniSectionKeyList(const Ini *this, const String *section)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, this);
         FUNCTION_TEST_PARAM(STRING, section);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(section != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(section != NULL);
 
     StringList *result = NULL;
 
@@ -159,7 +159,7 @@ iniSectionKeyList(const Ini *this, const String *section)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, result);
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -170,9 +170,9 @@ iniSectionList(const Ini *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     StringList *result = NULL;
 
@@ -185,7 +185,7 @@ iniSectionList(const Ini *this)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, result);
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -197,9 +197,9 @@ iniParse(Ini *this, const String *content)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, this);
         FUNCTION_TEST_PARAM(STRING, content);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -267,7 +267,7 @@ iniParse(Ini *this, const String *content)
     }
     MEM_CONTEXT_END()
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -281,12 +281,12 @@ iniSet(Ini *this, const String *section, const String *key, const Variant *value
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_TEST_PARAM(VARIANT, value);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(section != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(section != NULL);
+    ASSERT(key != NULL);
+    ASSERT(value != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -300,7 +300,7 @@ iniSet(Ini *this, const String *section, const String *key, const Variant *value
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -316,5 +316,5 @@ iniFree(Ini *this)
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

@@ -3,7 +3,6 @@ Handle IO Read
 ***********************************************************************************************************************************/
 #include <unistd.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/handleRead.h"
 #include "common/io/read.intern.h"
@@ -29,11 +28,11 @@ New object
 IoHandleRead *
 ioHandleReadNew(const String *name, int handle, TimeMSec timeout)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INT, handle);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, handle);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(handle != -1);
-    FUNCTION_DEBUG_END();
+    ASSERT(handle != -1);
 
     IoHandleRead *this = NULL;
 
@@ -48,7 +47,7 @@ ioHandleReadNew(const String *name, int handle, TimeMSec timeout)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(IO_HANDLE_READ, this);
+    FUNCTION_LOG_RETURN(IO_HANDLE_READ, this);
 }
 
 /***********************************************************************************************************************************
@@ -57,15 +56,15 @@ Read data from the handle
 size_t
 ioHandleRead(IoHandleRead *this, Buffer *buffer, bool block)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_HANDLE_READ, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-        FUNCTION_DEBUG_PARAM(BOOL, block);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_HANDLE_READ, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+        FUNCTION_LOG_PARAM(BOOL, block);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(buffer != NULL);
-        FUNCTION_TEST_ASSERT(!bufFull(buffer));
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+    ASSERT(!bufFull(buffer));
 
     ssize_t actualBytes = 0;
 
@@ -109,7 +108,7 @@ ioHandleRead(IoHandleRead *this, Buffer *buffer, bool block)
         while (bufRemains(buffer) > 0 && !this->eof && block);
     }
 
-    FUNCTION_DEBUG_RESULT(SIZE, (size_t)actualBytes);
+    FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
 }
 
 /***********************************************************************************************************************************
@@ -121,14 +120,14 @@ ioHandleReadMove(IoHandleRead *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_HANDLE_READ, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RESULT(IO_HANDLE_READ, this);
+    FUNCTION_TEST_RETURN(IO_HANDLE_READ, this);
 }
 
 /***********************************************************************************************************************************
@@ -137,13 +136,13 @@ Have all bytes been read from the buffer?
 bool
 ioHandleReadEof(const IoHandleRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_HANDLE_READ, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_HANDLE_READ, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
-    FUNCTION_DEBUG_RESULT(BOOL, this->eof);
+    FUNCTION_LOG_RETURN(BOOL, this->eof);
 }
 
 /***********************************************************************************************************************************
@@ -154,11 +153,11 @@ ioHandleReadIo(const IoHandleRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_HANDLE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_READ, this->io);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_READ, this->io);
 }
 
 /***********************************************************************************************************************************
@@ -167,12 +166,12 @@ Free the object
 void
 ioHandleReadFree(IoHandleRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_HANDLE_READ, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_HANDLE_READ, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

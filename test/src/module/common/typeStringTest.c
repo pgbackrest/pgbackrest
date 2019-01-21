@@ -192,8 +192,8 @@ testRun(void)
         String *val = strNew("abcdef");
         TEST_ERROR(
             strTrunc(val, (int)(strSize(val) + 1)), AssertError,
-            "function test assertion 'idx >= 0 && (size_t)idx <= this->common.size' failed");
-        TEST_ERROR(strTrunc(val, -1), AssertError, "function test assertion 'idx >= 0 && (size_t)idx <= this->common.size' failed");
+            "assertion 'idx >= 0 && (size_t)idx <= this->common.size' failed");
+        TEST_ERROR(strTrunc(val, -1), AssertError, "assertion 'idx >= 0 && (size_t)idx <= this->common.size' failed");
 
         TEST_RESULT_STR(strPtr(strTrunc(val, strChr(val, 'd'))), "abc", "simple string truncated");
         strCat(val, "\r\n to end");

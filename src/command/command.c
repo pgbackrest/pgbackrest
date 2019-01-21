@@ -4,7 +4,6 @@ Common Command Routines
 #include <inttypes.h>
 #include <string.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -23,11 +22,11 @@ Capture time at the very start of main so total time is more accurate
 void
 cmdInit(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelTrace);
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     timeBegin = timeMSec();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -36,11 +35,11 @@ Begin the command
 void
 cmdBegin(bool logOption)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(BOOL, logOption);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BOOL, logOption);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(cfgCommand() != cfgCmdNone);
-    FUNCTION_DEBUG_END();
+    ASSERT(cfgCommand() != cfgCmdNone);
 
     // This is fairly expensive log message to generate so skip it if it won't be output
     if (logWill(cfgLogLevelDefault()))
@@ -157,7 +156,7 @@ cmdBegin(bool logOption)
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -166,12 +165,12 @@ End the command
 void
 cmdEnd(int code, const String *errorMessage)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INT, code);
-        FUNCTION_DEBUG_PARAM(STRING, errorMessage);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, code);
+        FUNCTION_LOG_PARAM(STRING, errorMessage);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(cfgCommand() != cfgCmdNone);
-    FUNCTION_DEBUG_END();
+    ASSERT(cfgCommand() != cfgCmdNone);
 
     // Skip this log message if it won't be output.  It's not too expensive but since we skipped cmdBegin(), may as well.
     if (logWill(cfgLogLevelDefault()))
@@ -199,5 +198,5 @@ cmdEnd(int code, const String *errorMessage)
     // Reset timeBegin in case there is another command following this one
     timeBegin = timeMSec();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

@@ -25,10 +25,10 @@ main(int argListSize, const char *argList[])
     stackTraceInit(argList[0]);
 #endif
 
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(INT, argListSize);
-        FUNCTION_DEBUG_PARAM(CHARPY, argList);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INT, argListSize);
+        FUNCTION_LOG_PARAM(CHARPY, argList);
+    FUNCTION_LOG_END();
 
     // Initialize command with the start time
     cmdInit();
@@ -117,5 +117,5 @@ main(int argListSize, const char *argList[])
     }
     TRY_END();
 
-    FUNCTION_DEBUG_RESULT(INT, exitSafe(result, error, 0));
+    FUNCTION_LOG_RETURN(INT, exitSafe(result, error, 0));
 }

@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 Remote Storage Driver
 ***********************************************************************************************************************************/
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -40,17 +39,17 @@ storageDriverRemoteNew(
     const String *path, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction,
     RemoteType remoteType, unsigned int remoteId)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STRING, path);
-        FUNCTION_DEBUG_PARAM(MODE, modeFile);
-        FUNCTION_DEBUG_PARAM(MODE, modePath);
-        FUNCTION_DEBUG_PARAM(BOOL, write);
-        FUNCTION_DEBUG_PARAM(FUNCTIONP, pathExpressionFunction);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(MODE, modeFile);
+        FUNCTION_LOG_PARAM(MODE, modePath);
+        FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(path != NULL);
-        FUNCTION_TEST_ASSERT(modeFile != 0);
-        FUNCTION_TEST_ASSERT(modePath != 0);
-    FUNCTION_DEBUG_END();
+    ASSERT(path != NULL);
+    ASSERT(modeFile != 0);
+    ASSERT(modePath != 0);
 
     // Create the object
     StorageDriverRemote *this = NULL;
@@ -75,7 +74,7 @@ storageDriverRemoteNew(
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(STORAGE_DRIVER_REMOTE, this);
+    FUNCTION_LOG_RETURN(STORAGE_DRIVER_REMOTE, this);
 }
 
 /***********************************************************************************************************************************
@@ -84,19 +83,19 @@ Does a file/path exist?
 bool
 storageDriverRemoteExists(StorageDriverRemote *this, const String *path)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_REMOTE, this);
-        FUNCTION_DEBUG_PARAM(STRING, path);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(path != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
 
     bool result = false;
 
     THROW(AssertError, "NOT YET IMPLEMENTED");
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -105,18 +104,18 @@ File/path info
 StorageInfo
 storageDriverRemoteInfo(StorageDriverRemote *this, const String *file, bool ignoreMissing)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_REMOTE, this);
-        FUNCTION_DEBUG_PARAM(STRING, file);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(file != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(file != NULL);
 
     THROW(AssertError, "NOT YET IMPLEMENTED");
 
-    FUNCTION_DEBUG_RESULT(STORAGE_INFO, (StorageInfo){0});
+    FUNCTION_LOG_RETURN(STORAGE_INFO, (StorageInfo){0});
 }
 
 /***********************************************************************************************************************************
@@ -125,15 +124,15 @@ Get a list of files from a directory
 StringList *
 storageDriverRemoteList(StorageDriverRemote *this, const String *path, bool errorOnMissing, const String *expression)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_REMOTE, this);
-        FUNCTION_DEBUG_PARAM(STRING, path);
-        FUNCTION_DEBUG_PARAM(BOOL, errorOnMissing);
-        FUNCTION_DEBUG_PARAM(STRING, expression);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
+        FUNCTION_LOG_PARAM(STRING, expression);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(!errorOnMissing);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(!errorOnMissing);
 
     StringList *result = NULL;
 
@@ -157,7 +156,7 @@ storageDriverRemoteList(StorageDriverRemote *this, const String *path, bool erro
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING_LIST, result);
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -166,15 +165,15 @@ New file read object
 StorageFileRead *
 storageDriverRemoteNewRead(StorageDriverRemote *this, const String *file, bool ignoreMissing)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_REMOTE, this);
-        FUNCTION_DEBUG_PARAM(STRING, file);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
-    FUNCTION_DEBUG_RESULT(
+    FUNCTION_LOG_RETURN(
         STORAGE_FILE_READ,
         storageDriverRemoteFileReadInterface(storageDriverRemoteFileReadNew(this, this->client, file, ignoreMissing)));
 }
@@ -187,23 +186,23 @@ storageDriverRemoteNewWrite(
     StorageDriverRemote *this, const String *file, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile,
     bool syncPath, bool atomic)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_REMOTE, this);
-        FUNCTION_DEBUG_PARAM(STRING, file);
-        FUNCTION_DEBUG_PARAM(MODE, modeFile);
-        FUNCTION_DEBUG_PARAM(MODE, modePath);
-        FUNCTION_DEBUG_PARAM(BOOL, createPath);
-        FUNCTION_DEBUG_PARAM(BOOL, syncFile);
-        FUNCTION_DEBUG_PARAM(BOOL, syncPath);
-        FUNCTION_DEBUG_PARAM(BOOL, atomic);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(MODE, modeFile);
+        FUNCTION_LOG_PARAM(MODE, modePath);
+        FUNCTION_LOG_PARAM(BOOL, createPath);
+        FUNCTION_LOG_PARAM(BOOL, syncFile);
+        FUNCTION_LOG_PARAM(BOOL, syncPath);
+        FUNCTION_LOG_PARAM(BOOL, atomic);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(file != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(file != NULL);
 
     THROW(AssertError, "NOT YET IMPLEMENTED");
 
-    FUNCTION_DEBUG_RESULT(STORAGE_FILE_WRITE, NULL);
+    FUNCTION_LOG_RETURN(STORAGE_FILE_WRITE, NULL);
 }
 
 /***********************************************************************************************************************************
@@ -212,20 +211,20 @@ Create a path.  There are no physical paths on S3 so just return success.
 void
 storageDriverRemotePathCreate(StorageDriverRemote *this, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_REMOTE, this);
-        FUNCTION_DEBUG_PARAM(STRING, path);
-        FUNCTION_DEBUG_PARAM(BOOL, errorOnExists);
-        FUNCTION_DEBUG_PARAM(BOOL, noParentCreate);
-        FUNCTION_DEBUG_PARAM(MODE, mode);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(BOOL, errorOnExists);
+        FUNCTION_LOG_PARAM(BOOL, noParentCreate);
+        FUNCTION_LOG_PARAM(MODE, mode);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(path != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
 
     THROW(AssertError, "NOT YET IMPLEMENTED");
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -234,19 +233,19 @@ Remove a path
 void
 storageDriverRemotePathRemove(StorageDriverRemote *this, const String *path, bool errorOnMissing, bool recurse)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_REMOTE, this);
-        FUNCTION_DEBUG_PARAM(STRING, path);
-        FUNCTION_DEBUG_PARAM(BOOL, errorOnMissing);
-        FUNCTION_DEBUG_PARAM(BOOL, recurse);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
+        FUNCTION_LOG_PARAM(BOOL, recurse);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(path != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
 
     THROW(AssertError, "NOT YET IMPLEMENTED");
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -255,18 +254,18 @@ Sync a path.  There's no need for this on S3 so just return success.
 void
 storageDriverRemotePathSync(StorageDriverRemote *this, const String *path, bool ignoreMissing)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_REMOTE, this);
-        FUNCTION_DEBUG_PARAM(STRING, path);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(path != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
 
     THROW(AssertError, "NOT YET IMPLEMENTED");
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -275,18 +274,18 @@ Remove a file
 void
 storageDriverRemoteRemove(StorageDriverRemote *this, const String *file, bool errorOnMissing)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_REMOTE, this);
-        FUNCTION_DEBUG_PARAM(STRING, file);
-        FUNCTION_DEBUG_PARAM(BOOL, errorOnMissing);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(file != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(file != NULL);
 
     THROW(AssertError, "NOT YET IMPLEMENTED");
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -296,10 +295,10 @@ Storage *
 storageDriverRemoteInterface(const StorageDriverRemote *this)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_REMOTE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE, this);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STORAGE, this->interface);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STORAGE, this->interface);
 }

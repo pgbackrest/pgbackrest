@@ -20,7 +20,7 @@ Load log settings
 void
 cfgLoadLogSetting(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelTrace);
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     // Initialize logging
     LogLevel logLevelConsole = logLevelOff;
@@ -48,7 +48,7 @@ cfgLoadLogSetting(void)
 
     logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -57,7 +57,7 @@ Update options that have complex rules
 void
 cfgLoadUpdateOption(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelTrace);
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     // Set default for repo-host-cmd
     if (cfgOptionTest(cfgOptRepoHost) && cfgOptionSource(cfgOptRepoHostCmd) == cfgSourceDefault)
@@ -195,7 +195,7 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -215,10 +215,10 @@ Load the configuration
 void
 cfgLoad(unsigned int argListSize, const char *argList[])
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(UINT, argListSize);
-        FUNCTION_DEBUG_PARAM(CHARPY, argList);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, argListSize);
+        FUNCTION_LOG_PARAM(CHARPY, argList);
+    FUNCTION_LOG_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -275,5 +275,5 @@ cfgLoad(unsigned int argListSize, const char *argList[])
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 IO Functions
 ***********************************************************************************************************************************/
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -24,7 +23,7 @@ size_t
 ioBufferSize(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RESULT(SIZE, bufferSize);
+    FUNCTION_TEST_RETURN(SIZE, bufferSize);
 }
 
 void
@@ -36,7 +35,7 @@ ioBufferSizeSet(size_t bufferSizeParam)
 
     bufferSize = bufferSizeParam;
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -47,9 +46,9 @@ ioReadBuf(IoRead *read)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_READ, read);
-
-        FUNCTION_TEST_ASSERT(read != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(read != NULL);
 
     Buffer *result = NULL;
 
@@ -71,5 +70,5 @@ ioReadBuf(IoRead *read)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RESULT(BUFFER, result);
+    FUNCTION_TEST_RETURN(BUFFER, result);
 }

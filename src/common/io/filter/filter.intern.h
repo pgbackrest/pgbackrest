@@ -76,9 +76,9 @@ bool ioFilterOutput(const IoFilter *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_IO_FILTER_INTERFACE_TYPE                                                                                    \
+#define FUNCTION_LOG_IO_FILTER_INTERFACE_TYPE                                                                                      \
     IoFilterInterface *
-#define FUNCTION_DEBUG_IO_FILTER_INTERFACE_FORMAT(value, buffer, bufferSize)                                                       \
+#define FUNCTION_LOG_IO_FILTER_INTERFACE_FORMAT(value, buffer, bufferSize)                                                         \
     objToLog(&value, "IoFilterInterface", buffer, bufferSize)
 
 #endif

@@ -4,7 +4,6 @@ S3 Storage File Read Driver
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/read.intern.h"
@@ -34,14 +33,14 @@ Create a new file
 StorageDriverS3FileRead *
 storageDriverS3FileReadNew(StorageDriverS3 *storage, const String *name, bool ignoreMissing)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, storage);
-        FUNCTION_DEBUG_PARAM(STRING, name);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, storage);
+        FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(storage != NULL);
-        FUNCTION_TEST_ASSERT(name != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(storage != NULL);
+    ASSERT(name != NULL);
 
     StorageDriverS3FileRead *this = NULL;
 
@@ -66,7 +65,7 @@ storageDriverS3FileReadNew(StorageDriverS3 *storage, const String *name, bool ig
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(STORAGE_DRIVER_S3_FILE_READ, this);
+    FUNCTION_LOG_RETURN(STORAGE_DRIVER_S3_FILE_READ, this);
 }
 
 /***********************************************************************************************************************************
@@ -75,12 +74,12 @@ Open the file
 bool
 storageDriverS3FileReadOpen(StorageDriverS3FileRead *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->httpClient == NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->httpClient == NULL);
 
     bool result = false;
 
@@ -97,7 +96,7 @@ storageDriverS3FileReadOpen(StorageDriverS3FileRead *this)
     else if (!this->ignoreMissing)
         THROW_FMT(FileMissingError, "unable to open '%s': No such file or directory", strPtr(this->name));
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -106,16 +105,16 @@ Read from a file
 size_t
 storageDriverS3FileRead(StorageDriverS3FileRead *this, Buffer *buffer, bool block)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-        FUNCTION_DEBUG_PARAM(BOOL, block);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+        FUNCTION_LOG_PARAM(BOOL, block);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL && this->httpClient != NULL);
-        FUNCTION_DEBUG_ASSERT(buffer != NULL && !bufFull(buffer));
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL && this->httpClient != NULL);
+    ASSERT(buffer != NULL && !bufFull(buffer));
 
-    FUNCTION_DEBUG_RESULT(SIZE, ioRead(httpClientIoRead(this->httpClient), buffer));
+    FUNCTION_LOG_RETURN(SIZE, ioRead(httpClientIoRead(this->httpClient), buffer));
 }
 
 /***********************************************************************************************************************************
@@ -126,11 +125,11 @@ storageDriverS3FileReadEof(const StorageDriverS3FileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
-
-        FUNCTION_DEBUG_ASSERT(this != NULL && this->httpClient != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, ioReadEof(httpClientIoRead(this->httpClient)));
+    ASSERT(this != NULL && this->httpClient != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpClientIoRead(this->httpClient)));
 }
 
 /***********************************************************************************************************************************
@@ -141,11 +140,11 @@ storageDriverS3FileReadIgnoreMissing(const StorageDriverS3FileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->ignoreMissing);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->ignoreMissing);
 }
 
 /***********************************************************************************************************************************
@@ -156,11 +155,11 @@ storageDriverS3FileReadInterface(const StorageDriverS3FileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STORAGE_FILE_READ, this->interface);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STORAGE_FILE_READ, this->interface);
 }
 
 /***********************************************************************************************************************************
@@ -171,11 +170,11 @@ storageDriverS3FileReadIo(const StorageDriverS3FileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_READ, this->io);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_READ, this->io);
 }
 
 /***********************************************************************************************************************************
@@ -186,9 +185,9 @@ storageDriverS3FileReadName(const StorageDriverS3FileRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, this->name);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(CONST_STRING, this->name);
 }

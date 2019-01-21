@@ -174,11 +174,11 @@ Get info from pg_control
 PgControl
 pgControlFromBuffer(const Buffer *controlFile)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(BUFFER, controlFile);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BUFFER, controlFile);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(controlFile != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(controlFile != NULL);
 
     // Search for the version of PostgreSQL that uses this control file
     const PgInterface *interface = NULL;
@@ -220,7 +220,7 @@ pgControlFromBuffer(const Buffer *controlFile)
     if (result.pageSize != PG_PAGE_SIZE_DEFAULT)
         THROW_FMT(FormatError, "page size is %u but must be %u", result.pageSize, PG_PAGE_SIZE_DEFAULT);
 
-    FUNCTION_DEBUG_RESULT(PG_CONTROL, result);
+    FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
 
 /***********************************************************************************************************************************
@@ -229,11 +229,11 @@ Get info from pg_control
 PgControl
 pgControlFromFile(const String *pgPath)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STRING, pgPath);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, pgPath);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(pgPath != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(pgPath != NULL);
 
     PgControl result = {0};
 
@@ -248,7 +248,7 @@ pgControlFromFile(const String *pgPath)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(PG_CONTROL, result);
+    FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
 
 /***********************************************************************************************************************************
@@ -291,7 +291,7 @@ pgControlTestToBuffer(PgControl pgControl)
     // Generate pg_control
     interface->controlTest(pgControl, result);
 
-    FUNCTION_TEST_RESULT(BUFFER, result);
+    FUNCTION_TEST_RETURN(BUFFER, result);
 }
 
 #endif
@@ -302,11 +302,11 @@ Convert version string to version number
 unsigned int
 pgVersionFromStr(const String *version)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, version);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, version);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(version != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(version != NULL);
 
     unsigned int result = 0;
 
@@ -334,7 +334,7 @@ pgVersionFromStr(const String *version)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(UINT, result);
+    FUNCTION_LOG_RETURN(UINT, result);
 }
 
 /***********************************************************************************************************************************
@@ -343,14 +343,14 @@ Convert version number to string
 String *
 pgVersionToStr(unsigned int version)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(UINT, version);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(UINT, version);
+    FUNCTION_LOG_END();
 
     String *result = version >= PG_VERSION_10 ?
         strNewFmt("%u", version / 10000) : strNewFmt("%u.%u", version / 10000, version % 10000 / 100);
 
-    FUNCTION_DEBUG_RESULT(STRING, result);
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************

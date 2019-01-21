@@ -39,9 +39,9 @@ void ioWriteFree(IoWrite *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_IO_WRITE_TYPE                                                                                               \
+#define FUNCTION_LOG_IO_WRITE_TYPE                                                                                                 \
     IoWrite *
-#define FUNCTION_DEBUG_IO_WRITE_FORMAT(value, buffer, bufferSize)                                                                  \
+#define FUNCTION_LOG_IO_WRITE_FORMAT(value, buffer, bufferSize)                                                                    \
     objToLog(value, "IoWrite", buffer, bufferSize)
 
 #endif

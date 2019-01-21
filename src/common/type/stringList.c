@@ -6,7 +6,6 @@ String List Handler
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/memContext.h"
 #include "common/type/list.h"
@@ -19,7 +18,7 @@ StringList *
 strLstNew(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RESULT(STRING_LIST, (StringList *)lstNew(sizeof(String *)));
+    FUNCTION_TEST_RETURN(STRING_LIST, (StringList *)lstNew(sizeof(String *)));
 }
 
 /***********************************************************************************************************************************
@@ -31,11 +30,11 @@ strLstAddInternal(StringList *this, String *string)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(STRING, string);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, (StringList *)lstAdd((List *)this, &string));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STRING_LIST, (StringList *)lstAdd((List *)this, &string));
 }
 
 /***********************************************************************************************************************************
@@ -48,11 +47,11 @@ strLstInsertInternal(StringList *this, unsigned int listIdx, String *string)
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(UINT, listIdx);
         FUNCTION_TEST_PARAM(STRING, string);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, (StringList *)lstInsert((List *)this, listIdx, &string));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STRING_LIST, (StringList *)lstInsert((List *)this, listIdx, &string));
 }
 
 /***********************************************************************************************************************************
@@ -64,12 +63,12 @@ strLstNewSplit(const String *string, const String *delimiter)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, string);
         FUNCTION_TEST_PARAM(STRING, delimiter);
-
-        FUNCTION_TEST_ASSERT(string != NULL);
-        FUNCTION_TEST_ASSERT(delimiter != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, strLstNewSplitZ(string, strPtr(delimiter)));
+    ASSERT(string != NULL);
+    ASSERT(delimiter != NULL);
+
+    FUNCTION_TEST_RETURN(STRING_LIST, strLstNewSplitZ(string, strPtr(delimiter)));
 }
 
 StringList *
@@ -78,10 +77,10 @@ strLstNewSplitZ(const String *string, const char *delimiter)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, string);
         FUNCTION_TEST_PARAM(STRINGZ, delimiter);
-
-        FUNCTION_TEST_ASSERT(string != NULL);
-        FUNCTION_TEST_ASSERT(delimiter != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(string != NULL);
+    ASSERT(delimiter != NULL);
 
     // Create the list
     StringList *this = strLstNew();
@@ -113,7 +112,7 @@ strLstNewSplitZ(const String *string, const char *delimiter)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, this);
+    FUNCTION_TEST_RETURN(STRING_LIST, this);
 }
 
 /***********************************************************************************************************************************
@@ -129,12 +128,12 @@ strLstNewSplitSize(const String *string, const String *delimiter, size_t size)
         FUNCTION_TEST_PARAM(STRING, string);
         FUNCTION_TEST_PARAM(STRING, delimiter);
         FUNCTION_TEST_PARAM(SIZE, size);
-
-        FUNCTION_TEST_ASSERT(string != NULL);
-        FUNCTION_TEST_ASSERT(delimiter != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, strLstNewSplitSizeZ(string, strPtr(delimiter), size));
+    ASSERT(string != NULL);
+    ASSERT(delimiter != NULL);
+
+    FUNCTION_TEST_RETURN(STRING_LIST, strLstNewSplitSizeZ(string, strPtr(delimiter), size));
 }
 
 StringList *
@@ -144,10 +143,10 @@ strLstNewSplitSizeZ(const String *string, const char *delimiter, size_t size)
         FUNCTION_TEST_PARAM(STRING, string);
         FUNCTION_TEST_PARAM(STRINGZ, delimiter);
         FUNCTION_TEST_PARAM(SIZE, size);
-
-        FUNCTION_TEST_ASSERT(string != NULL);
-        FUNCTION_TEST_ASSERT(delimiter != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(string != NULL);
+    ASSERT(delimiter != NULL);
 
     // Create the list
     StringList *this = strLstNew();
@@ -197,7 +196,7 @@ strLstNewSplitSizeZ(const String *string, const char *delimiter, size_t size)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, this);
+    FUNCTION_TEST_RETURN(STRING_LIST, this);
 }
 
 /***********************************************************************************************************************************
@@ -208,9 +207,9 @@ strLstNewVarLst(const VariantList *sourceList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, sourceList);
-
-        FUNCTION_TEST_ASSERT(sourceList != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(sourceList != NULL);
 
     // Create the list
     StringList *this = strLstNew();
@@ -223,7 +222,7 @@ strLstNewVarLst(const VariantList *sourceList)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, this);
+    FUNCTION_TEST_RETURN(STRING_LIST, this);
 }
 
 /***********************************************************************************************************************************
@@ -234,9 +233,9 @@ strLstDup(const StringList *sourceList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, sourceList);
-
-        FUNCTION_TEST_ASSERT(sourceList != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(sourceList != NULL);
 
     // Create the list
     StringList *this = strLstNew();
@@ -249,7 +248,7 @@ strLstDup(const StringList *sourceList)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, this);
+    FUNCTION_TEST_RETURN(STRING_LIST, this);
 }
 
 /***********************************************************************************************************************************
@@ -261,9 +260,9 @@ strLstExists(const StringList *this, const String *string)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(STRING, string);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     bool result = false;
 
@@ -276,7 +275,7 @@ strLstExists(const StringList *this, const String *string)
         }
     }
 
-    FUNCTION_TEST_RESULT(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 bool
@@ -285,9 +284,9 @@ strLstExistsZ(const StringList *this, const char *cstring)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(STRINGZ, cstring);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     bool result = false;
 
@@ -300,7 +299,7 @@ strLstExistsZ(const StringList *this, const char *cstring)
         }
     }
 
-    FUNCTION_TEST_RESULT(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -312,9 +311,9 @@ strLstAdd(StringList *this, const String *string)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(STRING, string);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     StringList *result = NULL;
 
@@ -324,7 +323,7 @@ strLstAdd(StringList *this, const String *string)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, result);
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -336,9 +335,9 @@ strLstAddZ(StringList *this, const char *string)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(STRINGZ, string);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     StringList *result = NULL;
 
@@ -348,7 +347,7 @@ strLstAddZ(StringList *this, const char *string)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, result);
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -360,11 +359,11 @@ strLstGet(const StringList *this, unsigned int listIdx)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(UINT, listIdx);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING, *(String **)lstGet((List *)this, listIdx));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STRING, *(String **)lstGet((List *)this, listIdx));
 }
 
 
@@ -378,9 +377,9 @@ strLstInsert(StringList *this, unsigned int listIdx, const String *string)
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(UINT, listIdx);
         FUNCTION_TEST_PARAM(STRING, string);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     StringList *result = NULL;
 
@@ -390,7 +389,7 @@ strLstInsert(StringList *this, unsigned int listIdx, const String *string)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, result);
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -403,9 +402,9 @@ strLstInsertZ(StringList *this, unsigned int listIdx, const char *string)
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(UINT, listIdx);
         FUNCTION_TEST_PARAM(STRINGZ, string);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     StringList *result = NULL;
 
@@ -415,7 +414,7 @@ strLstInsertZ(StringList *this, unsigned int listIdx, const char *string)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, result);
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -427,12 +426,12 @@ strLstJoin(const StringList *this, const char *separator)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(STRINGZ, separator);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(separator != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING, strLstJoinQuote(this, separator, ""));
+    ASSERT(this != NULL);
+    ASSERT(separator != NULL);
+
+    FUNCTION_TEST_RETURN(STRING, strLstJoinQuote(this, separator, ""));
 }
 
 /***********************************************************************************************************************************
@@ -445,11 +444,11 @@ strLstJoinQuote(const StringList *this, const char *separator, const char *quote
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(STRINGZ, separator);
         FUNCTION_TEST_PARAM(STRINGZ, quote);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(separator != NULL);
-        FUNCTION_TEST_ASSERT(quote != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(separator != NULL);
+    ASSERT(quote != NULL);
 
     String *join = strNew("");
 
@@ -464,7 +463,7 @@ strLstJoinQuote(const StringList *this, const char *separator, const char *quote
             strCatFmt(join, "%s%s%s", quote, strPtr(strLstGet(this, listIdx)), quote);
     }
 
-    FUNCTION_TEST_RESULT(STRING, join);
+    FUNCTION_TEST_RETURN(STRING, join);
 }
 
 /***********************************************************************************************************************************
@@ -476,13 +475,13 @@ strLstMove(StringList *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     lstMove((List *)this, parentNew);
 
-    FUNCTION_TEST_RESULT(STRING_LIST, this);
+    FUNCTION_TEST_RETURN(STRING_LIST, this);
 }
 
 /***********************************************************************************************************************************
@@ -494,9 +493,9 @@ strLstPtr(const StringList *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     const char **list = memNew((strLstSize(this) + 1) * sizeof(char *));
 
@@ -510,7 +509,7 @@ strLstPtr(const StringList *this)
 
     list[strLstSize(this)] = NULL;
 
-    FUNCTION_TEST_RESULT(CONST_CHARPP, list);
+    FUNCTION_TEST_RETURN(CONST_CHARPP, list);
 }
 
 /***********************************************************************************************************************************
@@ -521,11 +520,11 @@ strLstSize(const StringList *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(UINT, lstSize((List *)this));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(UINT, lstSize((List *)this));
 }
 
 /***********************************************************************************************************************************
@@ -537,12 +536,12 @@ sortAscComparator(const void *item1, const void *item2)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VOIDP, item1);
         FUNCTION_TEST_PARAM(VOIDP, item2);
-
-        FUNCTION_TEST_ASSERT(item1 != NULL);
-        FUNCTION_TEST_ASSERT(item2 != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(INT, strCmp(*(String **)item1, *(String **)item2));
+    ASSERT(item1 != NULL);
+    ASSERT(item2 != NULL);
+
+    FUNCTION_TEST_RETURN(INT, strCmp(*(String **)item1, *(String **)item2));
 }
 
 static int
@@ -551,12 +550,12 @@ sortDescComparator(const void *item1, const void *item2)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VOIDP, item1);
         FUNCTION_TEST_PARAM(VOIDP, item2);
-
-        FUNCTION_TEST_ASSERT(item1 != NULL);
-        FUNCTION_TEST_ASSERT(item2 != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(INT, strCmp(*(String **)item2, *(String **)item1));
+    ASSERT(item1 != NULL);
+    ASSERT(item2 != NULL);
+
+    FUNCTION_TEST_RETURN(INT, strCmp(*(String **)item2, *(String **)item1));
 }
 
 StringList *
@@ -565,9 +564,9 @@ strLstSort(StringList *this, SortOrder sortOrder)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(ENUM, sortOrder);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     switch (sortOrder)
     {
@@ -584,7 +583,7 @@ strLstSort(StringList *this, SortOrder sortOrder)
         }
     }
 
-    FUNCTION_TEST_RESULT(STRING_LIST, this);
+    FUNCTION_TEST_RETURN(STRING_LIST, this);
 }
 
 /***********************************************************************************************************************************
@@ -608,5 +607,5 @@ strLstFree(StringList *this)
 
     lstFree((List *)this);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

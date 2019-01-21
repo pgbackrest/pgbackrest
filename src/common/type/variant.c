@@ -9,7 +9,6 @@ Variant Data Type
 #include <string.h>
 #include <strings.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/memContext.h"
 #include "common/type/convert.h"
@@ -49,10 +48,10 @@ varNewInternal(VariantType type, void *data, size_t dataSize)
         FUNCTION_TEST_PARAM(ENUM, type);
         FUNCTION_TEST_PARAM(VOIDP, data);
         FUNCTION_TEST_PARAM(SIZE, dataSize);
-
-        FUNCTION_TEST_ASSERT(data != NULL);
-        FUNCTION_TEST_ASSERT(dataSize > 0);
     FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
+    ASSERT(dataSize > 0);
 
     // Allocate memory for the variant and set the type
     Variant *this = memNew(sizeof(Variant) + dataSize);
@@ -62,7 +61,7 @@ varNewInternal(VariantType type, void *data, size_t dataSize)
     // Copy data
     memcpy((unsigned char *)this + sizeof(Variant), data, dataSize);
 
-    FUNCTION_TEST_RESULT(VARIANT, this);
+    FUNCTION_TEST_RETURN(VARIANT, this);
 }
 
 /***********************************************************************************************************************************
@@ -73,11 +72,11 @@ varData(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VOIDP, (void *)((unsigned char *)this + sizeof(Variant)));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(VOIDP, (void *)((unsigned char *)this + sizeof(Variant)));
 }
 
 /***********************************************************************************************************************************
@@ -147,7 +146,7 @@ varDup(const Variant *this)
         }
     }
 
-    FUNCTION_TEST_RESULT(VARIANT, result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -217,7 +216,7 @@ varEq(const Variant *this1, const Variant *this2)
     else
         result = this1 == NULL && this2 == NULL;
 
-    FUNCTION_TEST_RESULT(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -228,11 +227,11 @@ varType(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(ENUM, this->type);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(ENUM, this->type);
 }
 
 /***********************************************************************************************************************************
@@ -245,7 +244,7 @@ varNewBool(bool data)
         FUNCTION_TEST_PARAM(BOOL, data);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VARIANT, varNewInternal(varTypeBool, (void *)&data, sizeof(data)));
+    FUNCTION_TEST_RETURN(VARIANT, varNewInternal(varTypeBool, (void *)&data, sizeof(data)));
 }
 
 /***********************************************************************************************************************************
@@ -256,13 +255,13 @@ varBool(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     ASSERT(this->type == varTypeBool);
 
-    FUNCTION_TEST_RESULT(BOOL, *((bool *)varData(this)));
+    FUNCTION_TEST_RETURN(BOOL, *((bool *)varData(this)));
 }
 
 /***********************************************************************************************************************************
@@ -273,9 +272,9 @@ varBoolForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     bool result = false;
 
@@ -328,7 +327,7 @@ varBoolForce(const Variant *this)
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeBool]);
     }
 
-    FUNCTION_TEST_RESULT(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -341,7 +340,7 @@ varNewDbl(double data)
         FUNCTION_TEST_PARAM(DOUBLE, data);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VARIANT, varNewInternal(varTypeDouble, (unsigned char *)&data, sizeof(data)));
+    FUNCTION_TEST_RETURN(VARIANT, varNewInternal(varTypeDouble, (unsigned char *)&data, sizeof(data)));
 }
 
 /***********************************************************************************************************************************
@@ -352,13 +351,13 @@ varDbl(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     ASSERT(this->type == varTypeDouble);
 
-    FUNCTION_TEST_RESULT(DOUBLE, *((double *)varData(this)));
+    FUNCTION_TEST_RETURN(DOUBLE, *((double *)varData(this)));
 }
 
 /***********************************************************************************************************************************
@@ -369,9 +368,9 @@ varDblForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     double result = 0;
 
@@ -417,7 +416,7 @@ varDblForce(const Variant *this)
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeDouble]);
     }
 
-    FUNCTION_TEST_RESULT(DOUBLE, result);
+    FUNCTION_TEST_RETURN(DOUBLE, result);
 }
 
 /***********************************************************************************************************************************
@@ -430,7 +429,7 @@ varNewInt(int data)
         FUNCTION_TEST_PARAM(INT, data);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VARIANT, varNewInternal(varTypeInt, (void *)&data, sizeof(data)));
+    FUNCTION_TEST_RETURN(VARIANT, varNewInternal(varTypeInt, (void *)&data, sizeof(data)));
 }
 
 /***********************************************************************************************************************************
@@ -441,13 +440,13 @@ varInt(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     ASSERT(this->type == varTypeInt);
 
-    FUNCTION_TEST_RESULT(INT, *((int *)varData(this)));
+    FUNCTION_TEST_RETURN(INT, *((int *)varData(this)));
 }
 
 /***********************************************************************************************************************************
@@ -458,9 +457,9 @@ varIntForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     int result = 0;
 
@@ -516,7 +515,7 @@ varIntForce(const Variant *this)
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt]);
     }
 
-    FUNCTION_TEST_RESULT(INT, result);
+    FUNCTION_TEST_RETURN(INT, result);
 }
 
 /***********************************************************************************************************************************
@@ -529,7 +528,7 @@ varNewInt64(int64_t data)
         FUNCTION_TEST_PARAM(INT64, data);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VARIANT, varNewInternal(varTypeInt64, (void *)&data, sizeof(data)));
+    FUNCTION_TEST_RETURN(VARIANT, varNewInternal(varTypeInt64, (void *)&data, sizeof(data)));
 }
 
 /***********************************************************************************************************************************
@@ -540,13 +539,13 @@ varInt64(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     ASSERT(this->type == varTypeInt64);
 
-    FUNCTION_TEST_RESULT(INT64, *((int64_t *)varData(this)));
+    FUNCTION_TEST_RETURN(INT64, *((int64_t *)varData(this)));
 }
 
 /***********************************************************************************************************************************
@@ -557,9 +556,9 @@ varInt64Force(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     int64_t result = 0;
 
@@ -610,7 +609,7 @@ varInt64Force(const Variant *this)
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt64]);
     }
 
-    FUNCTION_TEST_RESULT(INT64, result);
+    FUNCTION_TEST_RETURN(INT64, result);
 }
 
 /***********************************************************************************************************************************
@@ -623,7 +622,7 @@ varNewUInt64(uint64_t data)
         FUNCTION_TEST_PARAM(UINT64, data);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VARIANT, varNewInternal(varTypeUInt64, (void *)&data, sizeof(data)));
+    FUNCTION_TEST_RETURN(VARIANT, varNewInternal(varTypeUInt64, (void *)&data, sizeof(data)));
 }
 
 /***********************************************************************************************************************************
@@ -634,13 +633,13 @@ varUInt64(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     ASSERT(this->type == varTypeUInt64);
 
-    FUNCTION_TEST_RESULT(UINT64, *((uint64_t *)varData(this)));
+    FUNCTION_TEST_RETURN(UINT64, *((uint64_t *)varData(this)));
 }
 
 /***********************************************************************************************************************************
@@ -651,9 +650,9 @@ varUInt64Force(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     uint64_t result = 0;
 
@@ -715,7 +714,7 @@ varUInt64Force(const Variant *this)
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUInt64]);
     }
 
-    FUNCTION_TEST_RESULT(UINT64, result);
+    FUNCTION_TEST_RETURN(UINT64, result);
 }
 
 /***********************************************************************************************************************************
@@ -729,7 +728,7 @@ varNewKv(void)
     // Create a new kv for the variant
     KeyValue *data = kvNew();
 
-    FUNCTION_TEST_RESULT(VARIANT, varNewInternal(varTypeKeyValue, (void *)&data, sizeof(data)));
+    FUNCTION_TEST_RETURN(VARIANT, varNewInternal(varTypeKeyValue, (void *)&data, sizeof(data)));
 }
 
 /***********************************************************************************************************************************
@@ -750,7 +749,7 @@ varKv(const Variant *this)
         result = *((KeyValue **)varData(this));
     }
 
-    FUNCTION_TEST_RESULT(KEY_VALUE, result);
+    FUNCTION_TEST_RETURN(KEY_VALUE, result);
 }
 
 /***********************************************************************************************************************************
@@ -766,7 +765,7 @@ varNewStr(const String *data)
     // Create a copy of the string for the variant
     String *dataCopy = strDup(data);
 
-    FUNCTION_TEST_RESULT(VARIANT, varNewInternal(varTypeString, (void *)&dataCopy, sizeof(dataCopy)));
+    FUNCTION_TEST_RETURN(VARIANT, varNewInternal(varTypeString, (void *)&dataCopy, sizeof(dataCopy)));
 }
 
 /***********************************************************************************************************************************
@@ -785,7 +784,7 @@ varNewStrZ(const char *data)
     if (data != NULL)
         dataCopy = strNew(data);
 
-    FUNCTION_TEST_RESULT(VARIANT, varNewInternal(varTypeString, (void *)&dataCopy, sizeof(dataCopy)));
+    FUNCTION_TEST_RETURN(VARIANT, varNewInternal(varTypeString, (void *)&dataCopy, sizeof(dataCopy)));
 }
 
 /***********************************************************************************************************************************
@@ -806,7 +805,7 @@ varStr(const Variant *this)
         result = *((String **)varData(this));
     }
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -817,9 +816,9 @@ varStrForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     String *result = NULL;
 
@@ -880,7 +879,7 @@ varStrForce(const Variant *this)
             THROW_FMT(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeString]);
     }
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -891,14 +890,14 @@ varNewVarLst(const VariantList *data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, data);
-
-        FUNCTION_TEST_ASSERT(data != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
 
     // Copy variant list for the variant
     VariantList *dataCopy = varLstDup(data);
 
-    FUNCTION_TEST_RESULT(VARIANT, varNewInternal(varTypeVariantList, (void *)&dataCopy, sizeof(dataCopy)));
+    FUNCTION_TEST_RETURN(VARIANT, varNewInternal(varTypeVariantList, (void *)&dataCopy, sizeof(dataCopy)));
 }
 
 /***********************************************************************************************************************************
@@ -919,7 +918,7 @@ varVarLst(const Variant *this)
         result = *((VariantList **)varData(this));
     }
 
-    FUNCTION_TEST_RESULT(VARIANT_LIST, result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -1012,5 +1011,5 @@ varFree(Variant *this)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

@@ -57,7 +57,7 @@ storageHelperInit(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -88,7 +88,7 @@ storageHelperStanzaInit(const bool stanzaRequired)
             AssertError, "stanza has changed from '%s' to '%s'", strPtr(storageHelper.stanza), strPtr(cfgOptionStr(cfgOptStanza)));
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -112,7 +112,7 @@ storageLocal(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RESULT(STORAGE, storageHelper.storageLocal);
+    FUNCTION_TEST_RETURN(STORAGE, storageHelper.storageLocal);
 }
 
 /***********************************************************************************************************************************
@@ -138,7 +138,7 @@ storageLocalWrite(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RESULT(STORAGE, storageHelper.storageLocalWrite);
+    FUNCTION_TEST_RETURN(STORAGE, storageHelper.storageLocalWrite);
 }
 
 /***********************************************************************************************************************************
@@ -150,9 +150,9 @@ storageRepoPathExpression(const String *expression, const String *path)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, expression);
         FUNCTION_TEST_PARAM(STRING, path);
-
-        FUNCTION_TEST_ASSERT(expression != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(expression != NULL);
 
     String *result = NULL;
 
@@ -191,7 +191,7 @@ storageRepoPathExpression(const String *expression, const String *path)
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -203,10 +203,10 @@ storageRepoGet(const String *type, bool write)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, type);
         FUNCTION_TEST_PARAM(BOOL, write);
-
-        FUNCTION_TEST_ASSERT(type != NULL);
-        FUNCTION_TEST_ASSERT(write == false);                       // ??? Need to create cifs driver before storage can be writable
     FUNCTION_TEST_END();
+
+    ASSERT(type != NULL);
+    ASSERT(write == false);                                         // ??? Need to create cifs driver before storage can be writable
 
     Storage *result = NULL;
 
@@ -242,7 +242,7 @@ storageRepoGet(const String *type, bool write)
     else
         THROW_FMT(AssertError, "invalid storage type '%s'", strPtr(type));
 
-    FUNCTION_TEST_RESULT(STORAGE, result);
+    FUNCTION_TEST_RETURN(STORAGE, result);
 }
 
 /***********************************************************************************************************************************
@@ -266,7 +266,7 @@ storageRepo(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RESULT(STORAGE, storageHelper.storageRepo);
+    FUNCTION_TEST_RETURN(STORAGE, storageHelper.storageRepo);
 }
 
 /***********************************************************************************************************************************
@@ -278,10 +278,10 @@ storageSpoolPathExpression(const String *expression, const String *path)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, expression);
         FUNCTION_TEST_PARAM(STRING, path);
-
-        FUNCTION_TEST_ASSERT(expression != NULL);
-        FUNCTION_TEST_ASSERT(storageHelper.stanza != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(expression != NULL);
+    ASSERT(storageHelper.stanza != NULL);
 
     String *result = NULL;
 
@@ -302,7 +302,7 @@ storageSpoolPathExpression(const String *expression, const String *path)
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -328,7 +328,7 @@ storageSpool(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RESULT(STORAGE, storageHelper.storageSpool);
+    FUNCTION_TEST_RETURN(STORAGE, storageHelper.storageSpool);
 }
 
 /***********************************************************************************************************************************
@@ -354,5 +354,5 @@ storageSpoolWrite(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RESULT(STORAGE, storageHelper.storageSpoolWrite);
+    FUNCTION_TEST_RETURN(STORAGE, storageHelper.storageSpoolWrite);
 }

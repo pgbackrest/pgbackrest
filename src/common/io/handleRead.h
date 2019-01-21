@@ -39,9 +39,9 @@ void ioHandleReadFree(IoHandleRead *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_IO_HANDLE_READ_TYPE                                                                                         \
+#define FUNCTION_LOG_IO_HANDLE_READ_TYPE                                                                                           \
     IoHandleRead *
-#define FUNCTION_DEBUG_IO_HANDLE_READ_FORMAT(value, buffer, bufferSize)                                                            \
+#define FUNCTION_LOG_IO_HANDLE_READ_FORMAT(value, buffer, bufferSize)                                                              \
     objToLog(value, "IoHandleRead", buffer, bufferSize)
 
 #endif

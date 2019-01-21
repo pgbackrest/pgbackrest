@@ -58,6 +58,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Rename FUNCTION_DEBUG_* and consolidate ASSERT_* macros for consistency.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Make the <proper>C</proper> version of the <cmd>info</cmd> command conform to the <proper>Perl</proper> version.</p>
                     </release-item>
 

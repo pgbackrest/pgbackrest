@@ -37,7 +37,7 @@ httpHeaderNew(const StringList *redactList)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_TEST_RESULT(HTTP_HEADER, this);
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
 
 /***********************************************************************************************************************************
@@ -50,11 +50,11 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
         FUNCTION_TEST_PARAM(HTTP_HEADER, this);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_TEST_PARAM(STRING, value);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+    ASSERT(value != NULL);
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -69,7 +69,7 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(HTTP_HEADER, this);
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
 
 /***********************************************************************************************************************************
@@ -81,10 +81,10 @@ httpHeaderGet(const HttpHeader *this, const String *key)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_HEADER, this);
         FUNCTION_TEST_PARAM(STRING, key);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
 
     String *result = NULL;
 
@@ -94,7 +94,7 @@ httpHeaderGet(const HttpHeader *this, const String *key)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -105,11 +105,11 @@ httpHeaderList(const HttpHeader *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_HEADER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STRING_LIST, strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
 }
 
 /***********************************************************************************************************************************
@@ -121,14 +121,14 @@ httpHeaderMove(HttpHeader *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_HEADER, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RESULT(HTTP_HEADER, this);
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
 
 /***********************************************************************************************************************************
@@ -141,11 +141,11 @@ httpHeaderPut(HttpHeader *this, const String *key, const String *value)
         FUNCTION_TEST_PARAM(HTTP_HEADER, this);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_TEST_PARAM(STRING, value);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+    ASSERT(value != NULL);
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -154,7 +154,7 @@ httpHeaderPut(HttpHeader *this, const String *key, const String *value)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(HTTP_HEADER, this);
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
 
 /***********************************************************************************************************************************
@@ -166,12 +166,12 @@ httpHeaderRedact(const HttpHeader *this, const String *key)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_HEADER, this);
         FUNCTION_TEST_PARAM(STRING, key);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->redactList != NULL && strLstExists(this->redactList, key));
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->redactList != NULL && strLstExists(this->redactList, key));
 }
 
 /***********************************************************************************************************************************
@@ -214,5 +214,5 @@ httpHeaderFree(HttpHeader *this)
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

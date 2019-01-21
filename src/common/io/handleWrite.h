@@ -42,9 +42,9 @@ void ioHandleWriteOneStr(int handle, const String *string);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_IO_HANDLE_WRITE_TYPE                                                                                        \
+#define FUNCTION_LOG_IO_HANDLE_WRITE_TYPE                                                                                          \
     IoHandleWrite *
-#define FUNCTION_DEBUG_IO_HANDLE_WRITE_FORMAT(value, buffer, bufferSize)                                                           \
+#define FUNCTION_LOG_IO_HANDLE_WRITE_FORMAT(value, buffer, bufferSize)                                                             \
     objToLog(value, "IoHandleWrite", buffer, bufferSize)
 
 #endif

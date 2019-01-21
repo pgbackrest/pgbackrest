@@ -40,7 +40,7 @@ testRun(void)
         if (sizeof(size_t) == 8)
         {
             TEST_ERROR(memAllocInternal((size_t)5629499534213120, false), MemoryError, "unable to allocate 5629499534213120 bytes");
-            TEST_ERROR(memFreeInternal(NULL), AssertError, "function test assertion 'buffer != NULL' failed");
+            TEST_ERROR(memFreeInternal(NULL), AssertError, "assertion 'buffer != NULL' failed");
 
             // Check that bad realloc is caught
             void *buffer = memAllocInternal(sizeof(size_t), false);
@@ -211,7 +211,7 @@ testRun(void)
             memFree(memContextCurrent()->allocList[MEM_CONTEXT_ALLOC_INITIAL_SIZE].buffer), AssertError,
             "unable to find allocation");
 
-        TEST_ERROR(memFree(NULL), AssertError, "function test assertion 'buffer != NULL' failed");
+        TEST_ERROR(memFree(NULL), AssertError, "assertion 'buffer != NULL' failed");
         TEST_ERROR(memFree((void *)0x01), AssertError, "unable to find allocation");
         memFree(buffer);
 

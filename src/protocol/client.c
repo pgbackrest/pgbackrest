@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 Protocol Client
 ***********************************************************************************************************************************/
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -47,15 +46,15 @@ Create a new storage file
 ProtocolClient *
 protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, name);
-        FUNCTION_DEBUG_PARAM(IO_READ, read);
-        FUNCTION_DEBUG_PARAM(IO_WRITE, write);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(IO_READ, read);
+        FUNCTION_LOG_PARAM(IO_WRITE, write);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(name != NULL);
-        FUNCTION_TEST_ASSERT(read != NULL);
-        FUNCTION_TEST_ASSERT(write != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(name != NULL);
+    ASSERT(read != NULL);
+    ASSERT(write != NULL);
 
     ProtocolClient *this = NULL;
 
@@ -114,7 +113,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(PROTOCOL_CLIENT, this);
+    FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, this);
 }
 
 /***********************************************************************************************************************************
@@ -123,12 +122,12 @@ Read the command output
 const VariantList *
 protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_DEBUG_PARAM(BOOL, outputRequired);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_LOG_PARAM(BOOL, outputRequired);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     const VariantList *result = NULL;
 
@@ -171,7 +170,7 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(CONST_VARIANT_LIST, result);
+    FUNCTION_LOG_RETURN(CONST_VARIANT_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -180,13 +179,13 @@ Write the protocol command
 void
 protocolClientWriteCommand(ProtocolClient *this, const KeyValue *command)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_DEBUG_PARAM(KEY_VALUE, command);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_LOG_PARAM(KEY_VALUE, command);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(command != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(command != NULL);
 
     // Write out the command
     ioWriteLine(this->write, kvToJson(command, 0));
@@ -195,7 +194,7 @@ protocolClientWriteCommand(ProtocolClient *this, const KeyValue *command)
     // Reset the keep alive time
     this->keepAliveTime = timeMSec();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -204,18 +203,18 @@ Execute a protocol command and get the output
 const VariantList *
 protocolClientExecute(ProtocolClient *this, const KeyValue *command, bool outputRequired)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_DEBUG_PARAM(KEY_VALUE, command);
-        FUNCTION_DEBUG_PARAM(BOOL, outputRequired);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_LOG_PARAM(KEY_VALUE, command);
+        FUNCTION_LOG_PARAM(BOOL, outputRequired);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(command != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(command != NULL);
 
     protocolClientWriteCommand(this, command);
 
-    FUNCTION_DEBUG_RESULT(CONST_VARIANT_LIST, protocolClientReadOutput(this, outputRequired));
+    FUNCTION_LOG_RETURN(CONST_VARIANT_LIST, protocolClientReadOutput(this, outputRequired));
 }
 
 /***********************************************************************************************************************************
@@ -227,14 +226,14 @@ protocolClientMove(ProtocolClient *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RESULT(PROTOCOL_CLIENT, this);
+    FUNCTION_TEST_RETURN(PROTOCOL_CLIENT, this);
 }
 
 /***********************************************************************************************************************************
@@ -243,11 +242,11 @@ Send noop to test connection or keep it alive
 void
 protocolClientNoOp(ProtocolClient *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(PROTOCOL_CLIENT, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -255,7 +254,7 @@ protocolClientNoOp(ProtocolClient *this)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -266,11 +265,11 @@ protocolClientIoRead(const ProtocolClient *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_READ, this->read);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_READ, this->read);
 }
 
 /***********************************************************************************************************************************
@@ -281,11 +280,11 @@ protocolClientIoWrite(const ProtocolClient *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_WRITE, this->write);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_WRITE, this->write);
 }
 
 /***********************************************************************************************************************************
@@ -303,9 +302,9 @@ Free the file
 void
 protocolClientFree(ProtocolClient *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(PROTOCOL_CLIENT, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
     {
@@ -321,5 +320,5 @@ protocolClientFree(ProtocolClient *this)
         memContextFree(this->memContext);
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

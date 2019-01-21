@@ -41,9 +41,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *gzipDecompressToLog(const GzipDecompress *this);
 
-#define FUNCTION_DEBUG_GZIP_DECOMPRESS_TYPE                                                                                        \
+#define FUNCTION_LOG_GZIP_DECOMPRESS_TYPE                                                                                          \
     GzipDecompress *
-#define FUNCTION_DEBUG_GZIP_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                           \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, gzipDecompressToLog, buffer, bufferSize)
+#define FUNCTION_LOG_GZIP_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                             \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, gzipDecompressToLog, buffer, bufferSize)
 
 #endif

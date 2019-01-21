@@ -125,7 +125,7 @@ typedef String *(*StrObjToLogFormat)(const void *object);
 
 size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffer, size_t bufferSize);
 
-#define FUNCTION_DEBUG_STRING_OBJECT_FORMAT(object, formatFunc, buffer, bufferSize)                                                \
+#define FUNCTION_LOG_STRING_OBJECT_FORMAT(object, formatFunc, buffer, bufferSize)                                                  \
     strObjToLog(object, (StrObjToLogFormat)formatFunc, buffer, bufferSize)
 
 /***********************************************************************************************************************************
@@ -133,19 +133,19 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *strToLog(const String *this);
 
-#define FUNCTION_DEBUG_CONST_STRING_TYPE                                                                                           \
+#define FUNCTION_LOG_CONST_STRING_TYPE                                                                                             \
     const String *
-#define FUNCTION_DEBUG_CONST_STRING_FORMAT(value, buffer, bufferSize)                                                              \
-    FUNCTION_DEBUG_STRING_FORMAT(value, buffer, bufferSize)
+#define FUNCTION_LOG_CONST_STRING_FORMAT(value, buffer, bufferSize)                                                                \
+    FUNCTION_LOG_STRING_FORMAT(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_STRING_TYPE                                                                                                 \
+#define FUNCTION_LOG_STRING_TYPE                                                                                                   \
     String *
-#define FUNCTION_DEBUG_STRING_FORMAT(value, buffer, bufferSize)                                                                    \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, strToLog, buffer, bufferSize)
+#define FUNCTION_LOG_STRING_FORMAT(value, buffer, bufferSize)                                                                      \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, strToLog, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_STRINGP_TYPE                                                                                                \
+#define FUNCTION_LOG_STRINGP_TYPE                                                                                                  \
     const String **
-#define FUNCTION_DEBUG_STRINGP_FORMAT(value, buffer, bufferSize)                                                                   \
+#define FUNCTION_LOG_STRINGP_FORMAT(value, buffer, bufferSize)                                                                     \
     ptrToLog(value, "String **", buffer, bufferSize)
 
 #endif

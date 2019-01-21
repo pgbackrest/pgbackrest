@@ -23,7 +23,7 @@ timeMSec(void)
     struct timeval currentTime;
     gettimeofday(&currentTime, NULL);
 
-    FUNCTION_TEST_RESULT(UINT64, ((TimeMSec)currentTime.tv_sec * MSEC_PER_SEC) + (TimeMSec)currentTime.tv_usec / MSEC_PER_USEC);
+    FUNCTION_TEST_RETURN(UINT64, ((TimeMSec)currentTime.tv_sec * MSEC_PER_SEC) + (TimeMSec)currentTime.tv_usec / MSEC_PER_USEC);
 }
 
 /***********************************************************************************************************************************
@@ -41,5 +41,5 @@ sleepMSec(TimeMSec sleepMSec)
     delay.tv_usec = (time_t)(sleepMSec % MSEC_PER_SEC * 1000);
     select(0, NULL, NULL, NULL, &delay);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

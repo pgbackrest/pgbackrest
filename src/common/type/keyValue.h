@@ -28,9 +28,9 @@ void kvFree(KeyValue *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_KEY_VALUE_TYPE                                                                                              \
+#define FUNCTION_LOG_KEY_VALUE_TYPE                                                                                                \
     KeyValue *
-#define FUNCTION_DEBUG_KEY_VALUE_FORMAT(value, buffer, bufferSize)                                                                 \
+#define FUNCTION_LOG_KEY_VALUE_FORMAT(value, buffer, bufferSize)                                                                   \
     objToLog(value, "KeyValue", buffer, bufferSize)
 
 #endif

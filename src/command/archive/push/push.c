@@ -21,7 +21,7 @@ Push a WAL segment to the repository
 void
 cmdArchivePush(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelDebug);
+    FUNCTION_LOG_VOID(logLevelDebug);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -127,5 +127,5 @@ cmdArchivePush(void)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

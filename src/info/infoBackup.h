@@ -76,13 +76,13 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *infoBackupDataToLog(const InfoBackupData *this);
 
-#define FUNCTION_DEBUG_INFO_BACKUP_TYPE                                                                                            \
+#define FUNCTION_LOG_INFO_BACKUP_TYPE                                                                                              \
     InfoBackup *
-#define FUNCTION_DEBUG_INFO_BACKUP_FORMAT(value, buffer, bufferSize)                                                               \
+#define FUNCTION_LOG_INFO_BACKUP_FORMAT(value, buffer, bufferSize)                                                                 \
     objToLog(value, "InfoBackup", buffer, bufferSize)
-#define FUNCTION_DEBUG_INFO_BACKUP_DATA_TYPE                                                                                       \
+#define FUNCTION_LOG_INFO_BACKUP_DATA_TYPE                                                                                         \
     InfoBackupData
-#define FUNCTION_DEBUG_INFO_BACKUP_DATA_FORMAT(value, buffer, bufferSize)                                                          \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(&value, infoBackupDataToLog, buffer, bufferSize)
+#define FUNCTION_LOG_INFO_BACKUP_DATA_FORMAT(value, buffer, bufferSize)                                                            \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(&value, infoBackupDataToLog, buffer, bufferSize)
 
 #endif

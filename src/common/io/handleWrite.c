@@ -3,7 +3,6 @@ Handle IO Write
 ***********************************************************************************************************************************/
 #include <unistd.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/handleWrite.h"
 #include "common/io/write.intern.h"
@@ -27,9 +26,9 @@ New object
 IoHandleWrite *
 ioHandleWriteNew(const String *name, int handle)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INT, handle);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, handle);
+    FUNCTION_LOG_END();
 
     IoHandleWrite *this = NULL;
 
@@ -43,7 +42,7 @@ ioHandleWriteNew(const String *name, int handle)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(IO_HANDLE_WRITE, this);
+    FUNCTION_LOG_RETURN(IO_HANDLE_WRITE, this);
 }
 
 /***********************************************************************************************************************************
@@ -52,18 +51,18 @@ Write to the handle
 void
 ioHandleWrite(IoHandleWrite *this, Buffer *buffer)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_HANDLE_WRITE, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_HANDLE_WRITE, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(buffer != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
 
     THROW_ON_SYS_ERROR_FMT(
         write(this->handle, bufPtr(buffer), bufUsed(buffer)) == -1, FileWriteError, "unable to write to %s", strPtr(this->name));
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -75,14 +74,14 @@ ioHandleWriteMove(IoHandleWrite *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_HANDLE_WRITE, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RESULT(IO_HANDLE_WRITE, this);
+    FUNCTION_TEST_RETURN(IO_HANDLE_WRITE, this);
 }
 
 /***********************************************************************************************************************************
@@ -93,11 +92,11 @@ ioHandleWriteIo(const IoHandleWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_HANDLE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_WRITE, this->io);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_WRITE, this->io);
 }
 
 /***********************************************************************************************************************************
@@ -106,14 +105,14 @@ Free the object
 void
 ioHandleWriteFree(IoHandleWrite *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_HANDLE_WRITE, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_HANDLE_WRITE, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -122,15 +121,15 @@ Write a string to the specified handle
 void
 ioHandleWriteOneStr(int handle, const String *string)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INT, handle);
-        FUNCTION_DEBUG_PARAM(STRING, string);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, handle);
+        FUNCTION_LOG_PARAM(STRING, string);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(string != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(string != NULL);
 
     if (write(handle, strPtr(string), strSize(string)) != (int)strSize(string))
         THROW_SYS_ERROR(FileWriteError, "unable to write to handle");
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

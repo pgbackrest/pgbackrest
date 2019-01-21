@@ -6,7 +6,6 @@ PostgreSQL Info Handler
 #include <stdio.h>
 #include <string.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -52,15 +51,15 @@ Load an InfoPg object
 InfoPg *
 infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, storage);
-        FUNCTION_DEBUG_PARAM(STRING, fileName);
-        FUNCTION_DEBUG_PARAM(ENUM, type);
-        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
         // cipherPass omitted for security
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(fileName != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(fileName != NULL);
 
     InfoPg *this = NULL;
 
@@ -128,7 +127,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
     MEM_CONTEXT_NEW_END();
 
     // Return buffer
-    FUNCTION_DEBUG_RESULT(INFO_PG, this);
+    FUNCTION_LOG_RETURN(INFO_PG, this);
 }
 
 /***********************************************************************************************************************************
@@ -137,17 +136,17 @@ Add Postgres data to the history list at position 0 to ensure the latest history
 void
 infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(INFO_PG, this);
-        FUNCTION_DEBUG_PARAM(INFO_PG_DATAP, infoPgData);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_PG, this);
+        FUNCTION_LOG_PARAM(INFO_PG_DATAP, infoPgData);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(infoPgData != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(infoPgData != NULL);
 
     lstInsert(this->history, 0, infoPgData);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -156,16 +155,16 @@ Construct archive id
 String *
 infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_PG, this);
-        FUNCTION_DEBUG_PARAM(UINT, pgDataIdx);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_PG, this);
+        FUNCTION_LOG_PARAM(UINT, pgDataIdx);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     InfoPgData pgData = infoPgData(this, pgDataIdx);
 
-    FUNCTION_DEBUG_RESULT(STRING, strNewFmt("%s-%u", strPtr(pgVersionToStr(pgData.version)), pgData.id));
+    FUNCTION_LOG_RETURN(STRING, strNewFmt("%s-%u", strPtr(pgVersionToStr(pgData.version)), pgData.id));
 }
 
 /***********************************************************************************************************************************
@@ -176,11 +175,11 @@ infoPgCipherPass(const InfoPg *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_PG, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, infoCipherPass(this->info));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(CONST_STRING, infoCipherPass(this->info));
 }
 
 /***********************************************************************************************************************************
@@ -189,14 +188,14 @@ Return a structure of the Postgres data from a specific index
 InfoPgData
 infoPgData(const InfoPg *this, unsigned int pgDataIdx)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_PG, this);
-        FUNCTION_DEBUG_PARAM(UINT, pgDataIdx);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_PG, this);
+        FUNCTION_LOG_PARAM(UINT, pgDataIdx);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
-    FUNCTION_DEBUG_RESULT(INFO_PG_DATA, *((InfoPgData *)lstGet(this->history, pgDataIdx)));
+    FUNCTION_LOG_RETURN(INFO_PG_DATA, *((InfoPgData *)lstGet(this->history, pgDataIdx)));
 }
 
 /***********************************************************************************************************************************
@@ -205,13 +204,13 @@ Return a structure of the current Postgres data
 InfoPgData
 infoPgDataCurrent(const InfoPg *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(INFO_PG, this);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_PG, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
-    FUNCTION_DEBUG_RESULT(INFO_PG_DATA, infoPgData(this, 0));
+    FUNCTION_LOG_RETURN(INFO_PG_DATA, infoPgData(this, 0));
 }
 
 /***********************************************************************************************************************************
@@ -220,13 +219,13 @@ Return total Postgres data in the history
 unsigned int
 infoPgDataTotal(const InfoPg *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_PG, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_PG, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
-    FUNCTION_DEBUG_RESULT(UINT, lstSize(this->history));
+    FUNCTION_LOG_RETURN(UINT, lstSize(this->history));
 }
 
 /***********************************************************************************************************************************
@@ -235,13 +234,13 @@ Return the ini object
 Ini *
 infoPgIni(const InfoPg *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_PG, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_PG, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
-    FUNCTION_DEBUG_RESULT(INI, infoIni(this->info));
+    FUNCTION_LOG_RETURN(INI, infoIni(this->info));
 }
 
 /***********************************************************************************************************************************
@@ -261,12 +260,12 @@ Free the info
 void
 infoPgFree(InfoPg *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_PG, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_PG, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

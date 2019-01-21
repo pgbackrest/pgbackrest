@@ -10,7 +10,6 @@ Log Handler
 #include <time.h>
 #include <unistd.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/log.h"
@@ -38,8 +37,8 @@ DEBUG_UNIT_EXTERN bool logTimestamp = false;
 /***********************************************************************************************************************************
 Test Asserts
 ***********************************************************************************************************************************/
-#define FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel)                                                                                   \
-    FUNCTION_TEST_ASSERT(logLevel >= LOG_LEVEL_MIN && logLevel <= LOG_LEVEL_MAX)
+#define ASSERT_LOG_LEVEL(logLevel)                                                                                                 \
+    ASSERT(logLevel >= LOG_LEVEL_MIN && logLevel <= LOG_LEVEL_MAX)
 
 /***********************************************************************************************************************************
 Log buffer -- used to format log header and message
@@ -69,9 +68,9 @@ logLevelEnum(const char *logLevel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, logLevel);
-
-        FUNCTION_TEST_ASSERT(logLevel != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(logLevel != NULL);
 
     LogLevel result = logLevelOff;
 
@@ -84,7 +83,7 @@ logLevelEnum(const char *logLevel)
     if (result == LOG_LEVEL_TOTAL)
         THROW_FMT(AssertError, "log level '%s' not found", logLevel);
 
-    FUNCTION_TEST_RESULT(ENUM, result);
+    FUNCTION_TEST_RETURN(ENUM, result);
 }
 
 const char *
@@ -92,11 +91,11 @@ logLevelStr(LogLevel logLevel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);
-
-        FUNCTION_TEST_ASSERT(logLevel <= LOG_LEVEL_MAX);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRINGZ, logLevelList[logLevel]);
+    ASSERT(logLevel <= LOG_LEVEL_MAX);
+
+    FUNCTION_TEST_RETURN(STRINGZ, logLevelList[logLevel]);
 }
 
 /***********************************************************************************************************************************
@@ -110,18 +109,18 @@ logInit(LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel log
         FUNCTION_TEST_PARAM(ENUM, logLevelStdErrParam);
         FUNCTION_TEST_PARAM(ENUM, logLevelFileParam);
         FUNCTION_TEST_PARAM(BOOL, logTimestampParam);
-
-        FUNCTION_TEST_ASSERT(logLevelStdOutParam <= LOG_LEVEL_MAX);
-        FUNCTION_TEST_ASSERT(logLevelStdErrParam <= LOG_LEVEL_MAX);
-        FUNCTION_TEST_ASSERT(logLevelFileParam <= LOG_LEVEL_MAX);
     FUNCTION_TEST_END();
+
+    ASSERT(logLevelStdOutParam <= LOG_LEVEL_MAX);
+    ASSERT(logLevelStdErrParam <= LOG_LEVEL_MAX);
+    ASSERT(logLevelFileParam <= LOG_LEVEL_MAX);
 
     logLevelStdOut = logLevelStdOutParam;
     logLevelStdErr = logLevelStdErrParam;
     logLevelFile = logLevelFileParam;
     logTimestamp = logTimestampParam;
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -134,9 +133,9 @@ logFileSet(const char *logFile)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, logFile);
-
-        FUNCTION_TEST_ASSERT(logFile != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(logFile != NULL);
 
     // Close the file handle if it is already open
     if (logHandleFile != -1)
@@ -164,7 +163,7 @@ logFileSet(const char *logFile)
         logFileBanner = false;
     }
 
-    FUNCTION_TEST_RESULT(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -177,11 +176,11 @@ logWillFile(LogLevel logLevel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);
-
-        FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(ENUM, logLevel <= logLevelFile && logHandleFile != -1);
+    ASSERT_LOG_LEVEL(logLevel);
+
+    FUNCTION_TEST_RETURN(ENUM, logLevel <= logLevelFile && logHandleFile != -1);
 }
 
 static bool
@@ -189,11 +188,11 @@ logWillStdErr(LogLevel logLevel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);
-
-        FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(ENUM, logLevel <= logLevelStdErr);
+    ASSERT_LOG_LEVEL(logLevel);
+
+    FUNCTION_TEST_RETURN(ENUM, logLevel <= logLevelStdErr);
 }
 
 static bool
@@ -201,11 +200,11 @@ logWillStdOut(LogLevel logLevel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);
-
-        FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(ENUM, logLevel <= logLevelStdOut);
+    ASSERT_LOG_LEVEL(logLevel);
+
+    FUNCTION_TEST_RETURN(ENUM, logLevel <= logLevelStdOut);
 }
 
 bool
@@ -213,11 +212,11 @@ logWill(LogLevel logLevel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);
-
-        FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, logWillStdOut(logLevel) || logWillStdErr(logLevel) || logWillFile(logLevel));
+    ASSERT_LOG_LEVEL(logLevel);
+
+    FUNCTION_TEST_RETURN(BOOL, logWillStdOut(logLevel) || logWillStdErr(logLevel) || logWillFile(logLevel));
 }
 
 /***********************************************************************************************************************************
@@ -230,14 +229,14 @@ logRange(LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax)
         FUNCTION_TEST_PARAM(ENUM, logLevel);
         FUNCTION_TEST_PARAM(ENUM, logRangeMin);
         FUNCTION_TEST_PARAM(ENUM, logRangeMax);
-
-        FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel);
-        FUNCTION_TEST_ASSERT_LOG_LEVEL(logRangeMin);
-        FUNCTION_TEST_ASSERT_LOG_LEVEL(logRangeMax);
-        FUNCTION_TEST_ASSERT(logRangeMin <= logRangeMax);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, logLevel >= logRangeMin && logLevel <= logRangeMax);
+    ASSERT_LOG_LEVEL(logLevel);
+    ASSERT_LOG_LEVEL(logRangeMin);
+    ASSERT_LOG_LEVEL(logRangeMax);
+    ASSERT(logRangeMin <= logRangeMax);
+
+    FUNCTION_TEST_RETURN(BOOL, logLevel >= logRangeMin && logLevel <= logRangeMax);
 }
 
 /***********************************************************************************************************************************
@@ -251,17 +250,17 @@ logWrite(int handle, const char *message, size_t messageSize, const char *errorD
         FUNCTION_TEST_PARAM(STRINGZ, message);
         FUNCTION_TEST_PARAM(SIZE, messageSize);
         FUNCTION_TEST_PARAM(STRINGZ, errorDetail);
-
-        FUNCTION_TEST_ASSERT(handle != -1);
-        FUNCTION_TEST_ASSERT(message != NULL);
-        FUNCTION_TEST_ASSERT(messageSize != 0);
-        FUNCTION_TEST_ASSERT(errorDetail != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(handle != -1);
+    ASSERT(message != NULL);
+    ASSERT(messageSize != 0);
+    ASSERT(errorDetail != NULL);
 
     if ((size_t)write(handle, message, messageSize) != messageSize)
         THROW_SYS_ERROR_FMT(FileWriteError, "unable to write %s", errorDetail);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -278,12 +277,12 @@ logWriteIndent(int handle, const char *message, size_t indentSize, const char *e
         FUNCTION_TEST_PARAM(STRINGZ, message);
         FUNCTION_TEST_PARAM(SIZE, indentSize);
         FUNCTION_TEST_PARAM(STRINGZ, errorDetail);
-
-        FUNCTION_TEST_ASSERT(handle != -1);
-        FUNCTION_TEST_ASSERT(message != NULL);
-        FUNCTION_TEST_ASSERT(indentSize > 0 && indentSize < sizeof(indentBuffer));
-        FUNCTION_TEST_ASSERT(errorDetail != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(handle != -1);
+    ASSERT(message != NULL);
+    ASSERT(indentSize > 0 && indentSize < sizeof(indentBuffer));
+    ASSERT(errorDetail != NULL);
 
     // Indent all lines after the first
     const char *linefeedPtr = strchr(message, '\n');
@@ -302,7 +301,7 @@ logWriteIndent(int handle, const char *message, size_t indentSize, const char *e
         linefeedPtr = strchr(message, '\n');
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -321,18 +320,18 @@ logInternal(
         FUNCTION_TEST_PARAM(STRINGZ, functionName);
         FUNCTION_TEST_PARAM(INT, code);
         FUNCTION_TEST_PARAM(STRINGZ, format);
-
-        FUNCTION_TEST_ASSERT_LOG_LEVEL(logLevel);
-        FUNCTION_TEST_ASSERT_LOG_LEVEL(logRangeMin);
-        FUNCTION_TEST_ASSERT_LOG_LEVEL(logRangeMax);
-        FUNCTION_TEST_ASSERT(logRangeMin <= logRangeMax);
-        FUNCTION_TEST_ASSERT(fileName != NULL);
-        FUNCTION_TEST_ASSERT(functionName != NULL);
-        FUNCTION_TEST_ASSERT(
-            (code == 0 && logLevel > logLevelError) || (logLevel == logLevelError && code != errorTypeCode(&AssertError)) ||
-            (logLevel == logLevelAssert && code == errorTypeCode(&AssertError)));
-        FUNCTION_TEST_ASSERT(format != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT_LOG_LEVEL(logLevel);
+    ASSERT_LOG_LEVEL(logRangeMin);
+    ASSERT_LOG_LEVEL(logRangeMax);
+    ASSERT(logRangeMin <= logRangeMax);
+    ASSERT(fileName != NULL);
+    ASSERT(functionName != NULL);
+    ASSERT(
+        (code == 0 && logLevel > logLevelError) || (logLevel == logLevelError && code != errorTypeCode(&AssertError)) ||
+        (logLevel == logLevelAssert && code == errorTypeCode(&AssertError)));
+    ASSERT(format != NULL);
 
     size_t bufferPos = 0;   // Current position in the buffer
 
@@ -416,5 +415,5 @@ logInternal(
         logWriteIndent(logHandleFile, logBuffer, indentSize, "log to file");
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

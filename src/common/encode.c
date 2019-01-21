@@ -33,7 +33,7 @@ encodeToStr(EncodeType encodeType, const unsigned char *source, size_t sourceSiz
     else
         ENCODE_TYPE_INVALID_ERROR(encodeType);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -54,7 +54,7 @@ encodeToStrSize(EncodeType encodeType, size_t sourceSize)
     else
         ENCODE_TYPE_INVALID_ERROR(encodeType);
 
-    FUNCTION_TEST_RESULT(SIZE, destinationSize);
+    FUNCTION_TEST_RETURN(SIZE, destinationSize);
 }
 
 /***********************************************************************************************************************************
@@ -74,7 +74,7 @@ decodeToBin(EncodeType encodeType, const char *source, unsigned char *destinatio
     else
         ENCODE_TYPE_INVALID_ERROR(encodeType);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -95,7 +95,7 @@ decodeToBinSize(EncodeType encodeType, const char *source)
     else
         ENCODE_TYPE_INVALID_ERROR(encodeType);
 
-    FUNCTION_TEST_RESULT(SIZE, destinationSize);
+    FUNCTION_TEST_RETURN(SIZE, destinationSize);
 }
 
 /***********************************************************************************************************************************
@@ -121,7 +121,7 @@ decodeToBinValid(EncodeType encodeType, const char *source)
     }
     TRY_END();
 
-    FUNCTION_TEST_RESULT(BOOL, valid);
+    FUNCTION_TEST_RETURN(BOOL, valid);
 }
 
 /***********************************************************************************************************************************
@@ -140,5 +140,5 @@ decodeToBinValidate(EncodeType encodeType, const char *source)
     else
         ENCODE_TYPE_INVALID_ERROR(encodeType);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

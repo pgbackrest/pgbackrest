@@ -3,7 +3,6 @@ S3 Storage Driver
 ***********************************************************************************************************************************/
 #include <time.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/http/common.h"
 #include "common/log.h"
@@ -103,7 +102,7 @@ storageDriverS3DateTime(time_t authTime)
             buffer, sizeof(buffer), "%Y%m%dT%H%M%SZ", gmtime(&authTime)) != ISO_8601_DATE_TIME_SIZE)
         THROW_SYS_ERROR(AssertError, "unable to format date");                      // {+uncoverable}
 
-    FUNCTION_TEST_RESULT(STRING, strNew(buffer));
+    FUNCTION_TEST_RETURN(STRING, strNew(buffer));
 }
 
 /***********************************************************************************************************************************
@@ -124,13 +123,13 @@ storageDriverS3Auth(
         FUNCTION_TEST_PARAM(STRING, dateTime);
         FUNCTION_TEST_PARAM(KEY_VALUE, httpHeader);
         FUNCTION_TEST_PARAM(STRING, payloadHash);
-
-        FUNCTION_TEST_ASSERT(verb != NULL);
-        FUNCTION_TEST_ASSERT(uri != NULL);
-        FUNCTION_TEST_ASSERT(dateTime != NULL);
-        FUNCTION_TEST_ASSERT(httpHeader != NULL);
-        FUNCTION_TEST_ASSERT(payloadHash != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(verb != NULL);
+    ASSERT(uri != NULL);
+    ASSERT(dateTime != NULL);
+    ASSERT(httpHeader != NULL);
+    ASSERT(payloadHash != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -205,7 +204,7 @@ storageDriverS3Auth(
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -218,30 +217,30 @@ storageDriverS3New(
     const String *securityToken, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile,
     const String *caPath)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STRING, path);
-        FUNCTION_DEBUG_PARAM(BOOL, write);
-        FUNCTION_DEBUG_PARAM(FUNCTIONP, pathExpressionFunction);
-        FUNCTION_DEBUG_PARAM(STRING, bucket);
-        FUNCTION_DEBUG_PARAM(STRING, endPoint);
-        FUNCTION_DEBUG_PARAM(STRING, region);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
+        FUNCTION_LOG_PARAM(STRING, bucket);
+        FUNCTION_LOG_PARAM(STRING, endPoint);
+        FUNCTION_LOG_PARAM(STRING, region);
         FUNCTION_TEST_PARAM(STRING, accessKey);
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);
-        FUNCTION_DEBUG_PARAM(STRING, host);
-        FUNCTION_DEBUG_PARAM(UINT, port);
-        FUNCTION_DEBUG_PARAM(TIME_MSEC, timeout);
-        FUNCTION_DEBUG_PARAM(BOOL, verifyPeer);
-        FUNCTION_DEBUG_PARAM(STRING, caFile);
-        FUNCTION_DEBUG_PARAM(STRING, caPath);
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(UINT, port);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+        FUNCTION_LOG_PARAM(BOOL, verifyPeer);
+        FUNCTION_LOG_PARAM(STRING, caFile);
+        FUNCTION_LOG_PARAM(STRING, caPath);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(path != NULL);
-        FUNCTION_TEST_ASSERT(bucket != NULL);
-        FUNCTION_TEST_ASSERT(endPoint != NULL);
-        FUNCTION_TEST_ASSERT(region != NULL);
-        FUNCTION_TEST_ASSERT(accessKey != NULL);
-        FUNCTION_TEST_ASSERT(secretAccessKey != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(path != NULL);
+    ASSERT(bucket != NULL);
+    ASSERT(endPoint != NULL);
+    ASSERT(region != NULL);
+    ASSERT(accessKey != NULL);
+    ASSERT(secretAccessKey != NULL);
 
     // Create the object
     StorageDriverS3 *this = NULL;
@@ -277,7 +276,7 @@ storageDriverS3New(
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(STORAGE_DRIVER_S3, this);
+    FUNCTION_LOG_RETURN(STORAGE_DRIVER_S3, this);
 }
 
 /***********************************************************************************************************************************
@@ -288,19 +287,19 @@ storageDriverS3Request(
     StorageDriverS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool returnContent,
     bool allowMissing)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, this);
-        FUNCTION_DEBUG_PARAM(STRING, verb);
-        FUNCTION_DEBUG_PARAM(STRING, uri);
-        FUNCTION_DEBUG_PARAM(HTTP_QUERY, query);
-        FUNCTION_DEBUG_PARAM(BUFFER, body);
-        FUNCTION_DEBUG_PARAM(BOOL, returnContent);
-        FUNCTION_DEBUG_PARAM(BOOL, allowMissing);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
+        FUNCTION_LOG_PARAM(STRING, verb);
+        FUNCTION_LOG_PARAM(STRING, uri);
+        FUNCTION_LOG_PARAM(HTTP_QUERY, query);
+        FUNCTION_LOG_PARAM(BUFFER, body);
+        FUNCTION_LOG_PARAM(BOOL, returnContent);
+        FUNCTION_LOG_PARAM(BOOL, allowMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(verb != NULL);
-        FUNCTION_TEST_ASSERT(uri != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(verb != NULL);
+    ASSERT(uri != NULL);
 
     Buffer *result = NULL;
 
@@ -377,7 +376,7 @@ storageDriverS3Request(
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(BUFFER, result);
+    FUNCTION_LOG_RETURN(BUFFER, result);
 }
 
 /***********************************************************************************************************************************
@@ -386,19 +385,19 @@ Does a file/path exist?
 bool
 storageDriverS3Exists(StorageDriverS3 *this, const String *path)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, this);
-        FUNCTION_DEBUG_PARAM(STRING, path);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(path != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
 
     bool result = false;
 
     THROW(AssertError, "NOT YET IMPLEMENTED");
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -407,18 +406,18 @@ File/path info
 StorageInfo
 storageDriverS3Info(StorageDriverS3 *this, const String *file, bool ignoreMissing)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, this);
-        FUNCTION_DEBUG_PARAM(STRING, file);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
+        FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(file != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(file != NULL);
 
     THROW(AssertError, "NOT YET IMPLEMENTED");
 
-    FUNCTION_DEBUG_RESULT(STORAGE_INFO, (StorageInfo){0});
+    FUNCTION_LOG_RETURN(STORAGE_INFO, (StorageInfo){0});
 }
 
 /***********************************************************************************************************************************
@@ -427,16 +426,16 @@ Get a list of files from a directory
 StringList *
 storageDriverS3List(StorageDriverS3 *this, const String *path, bool errorOnMissing, const String *expression)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, this);
-        FUNCTION_DEBUG_PARAM(STRING, path);
-        FUNCTION_DEBUG_PARAM(BOOL, errorOnMissing);
-        FUNCTION_DEBUG_PARAM(STRING, expression);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
+        FUNCTION_LOG_PARAM(STRING, expression);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(path != NULL);
-        FUNCTION_TEST_ASSERT(!errorOnMissing);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
+    ASSERT(!errorOnMissing);
 
     StringList *result = NULL;
 
@@ -544,7 +543,7 @@ storageDriverS3List(StorageDriverS3 *this, const String *path, bool errorOnMissi
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING_LIST, result);
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -553,16 +552,16 @@ New file read object
 StorageFileRead *
 storageDriverS3NewRead(StorageDriverS3 *this, const String *file, bool ignoreMissing)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, this);
-        FUNCTION_DEBUG_PARAM(STRING, file);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
+        FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(file != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(file != NULL);
 
-    FUNCTION_DEBUG_RESULT(
+    FUNCTION_LOG_RETURN(
         STORAGE_FILE_READ, storageDriverS3FileReadInterface(storageDriverS3FileReadNew(this, file, ignoreMissing)));
 }
 
@@ -574,25 +573,25 @@ storageDriverS3NewWrite(
     StorageDriverS3 *this, const String *file, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile,
     bool syncPath, bool atomic)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, this);
-        FUNCTION_DEBUG_PARAM(STRING, file);
-        FUNCTION_DEBUG_PARAM(MODE, modeFile);
-        FUNCTION_DEBUG_PARAM(MODE, modePath);
-        FUNCTION_DEBUG_PARAM(BOOL, createPath);
-        FUNCTION_DEBUG_PARAM(BOOL, syncFile);
-        FUNCTION_DEBUG_PARAM(BOOL, syncPath);
-        FUNCTION_DEBUG_PARAM(BOOL, atomic);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
+        FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(MODE, modeFile);
+        FUNCTION_LOG_PARAM(MODE, modePath);
+        FUNCTION_LOG_PARAM(BOOL, createPath);
+        FUNCTION_LOG_PARAM(BOOL, syncFile);
+        FUNCTION_LOG_PARAM(BOOL, syncPath);
+        FUNCTION_LOG_PARAM(BOOL, atomic);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(file != NULL);
-        FUNCTION_TEST_ASSERT(modeFile == 0);
-        FUNCTION_TEST_ASSERT(modePath == 0);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(file != NULL);
+    ASSERT(modeFile == 0);
+    ASSERT(modePath == 0);
 
     THROW(AssertError, "NOT YET IMPLEMENTED");
 
-    FUNCTION_DEBUG_RESULT(STORAGE_FILE_WRITE, NULL);
+    FUNCTION_LOG_RETURN(STORAGE_FILE_WRITE, NULL);
 }
 
 /***********************************************************************************************************************************
@@ -601,19 +600,19 @@ Create a path.  There are no physical paths on S3 so just return success.
 void
 storageDriverS3PathCreate(StorageDriverS3 *this, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, this);
-        FUNCTION_DEBUG_PARAM(STRING, path);
-        FUNCTION_DEBUG_PARAM(BOOL, errorOnExists);
-        FUNCTION_DEBUG_PARAM(BOOL, noParentCreate);
-        FUNCTION_DEBUG_PARAM(MODE, mode);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(BOOL, errorOnExists);
+        FUNCTION_LOG_PARAM(BOOL, noParentCreate);
+        FUNCTION_LOG_PARAM(MODE, mode);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(path != NULL);
-        FUNCTION_TEST_ASSERT(mode == 0);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
+    ASSERT(mode == 0);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -622,19 +621,19 @@ Remove a path
 void
 storageDriverS3PathRemove(StorageDriverS3 *this, const String *path, bool errorOnMissing, bool recurse)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, this);
-        FUNCTION_DEBUG_PARAM(STRING, path);
-        FUNCTION_DEBUG_PARAM(BOOL, errorOnMissing);
-        FUNCTION_DEBUG_PARAM(BOOL, recurse);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
+        FUNCTION_LOG_PARAM(BOOL, recurse);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(path != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
 
     THROW(AssertError, "NOT YET IMPLEMENTED");
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -643,16 +642,16 @@ Sync a path.  There's no need for this on S3 so just return success.
 void
 storageDriverS3PathSync(StorageDriverS3 *this, const String *path, bool ignoreMissing)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, this);
-        FUNCTION_DEBUG_PARAM(STRING, path);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(path != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -661,18 +660,18 @@ Remove a file
 void
 storageDriverS3Remove(StorageDriverS3 *this, const String *file, bool errorOnMissing)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, this);
-        FUNCTION_DEBUG_PARAM(STRING, file);
-        FUNCTION_DEBUG_PARAM(BOOL, errorOnMissing);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
+        FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(file != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(file != NULL);
 
     THROW(AssertError, "NOT YET IMPLEMENTED");
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -682,12 +681,12 @@ HttpClient *
 storageDriverS3HttpClient(const StorageDriverS3 *this)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(HTTP_CLIENT, this->httpClient);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(HTTP_CLIENT, this->httpClient);
 }
 
 /***********************************************************************************************************************************
@@ -697,10 +696,10 @@ Storage *
 storageDriverS3Interface(const StorageDriverS3 *this)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_DEBUG_PARAM(STORAGE_DRIVER_S3, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STORAGE, this->interface);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STORAGE, this->interface);
 }

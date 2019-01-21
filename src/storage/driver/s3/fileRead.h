@@ -42,9 +42,9 @@ void storageDriverS3FileReadFree(StorageDriverS3FileRead *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_DRIVER_S3_FILE_READ_TYPE                                                                            \
+#define FUNCTION_LOG_STORAGE_DRIVER_S3_FILE_READ_TYPE                                                                              \
     StorageDriverS3FileRead *
-#define FUNCTION_DEBUG_STORAGE_DRIVER_S3_FILE_READ_FORMAT(value, buffer, bufferSize)                                               \
+#define FUNCTION_LOG_STORAGE_DRIVER_S3_FILE_READ_FORMAT(value, buffer, bufferSize)                                                 \
     objToLog(value, "StorageDriverS3FileRead", buffer, bufferSize)
 
 #endif

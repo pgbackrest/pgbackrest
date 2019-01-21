@@ -32,15 +32,15 @@ Create a new InfoArchive object
 InfoArchive *
 infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, storage);
-        FUNCTION_DEBUG_PARAM(STRING, fileName);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
-        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
         // cipherPass omitted for security
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(fileName != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(fileName != NULL);
 
     InfoArchive *this = NULL;
 
@@ -74,7 +74,7 @@ infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissin
     MEM_CONTEXT_NEW_END();
 
     // Return buffer
-    FUNCTION_DEBUG_RESULT(INFO_ARCHIVE, this);
+    FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
 
 /***********************************************************************************************************************************
@@ -84,13 +84,13 @@ Checks the archive info file's DB section against the PG version and system id p
 void
 infoArchiveCheckPg(const InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_ARCHIVE, this);
-        FUNCTION_DEBUG_PARAM(UINT, pgVersion);
-        FUNCTION_DEBUG_PARAM(UINT64, pgSystemId);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     String *errorMsg = NULL;
 
@@ -117,7 +117,7 @@ infoArchiveCheckPg(const InfoArchive *this, unsigned int pgVersion, uint64_t pgS
         THROW(ArchiveMismatchError, strPtr(errorMsg));
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -127,14 +127,14 @@ const String *
 infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_ARCHIVE, this);
-        FUNCTION_DEBUG_PARAM(UINT, historyId);
-        FUNCTION_DEBUG_PARAM(UINT, pgVersion);
-        FUNCTION_DEBUG_PARAM(UINT64, pgSystemId);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_LOG_PARAM(UINT, historyId);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     String *archiveId = NULL;
     InfoPg *infoPg = infoArchivePg(this);
@@ -176,7 +176,7 @@ infoArchiveIdHistoryMatch(
             strPtr(pgVersionToStr(pgVersion)), pgSystemId);
     }
 
-    FUNCTION_TEST_RESULT(STRING, archiveId);
+    FUNCTION_TEST_RETURN(STRING, archiveId);
 }
 
 /***********************************************************************************************************************************
@@ -187,11 +187,11 @@ infoArchiveId(const InfoArchive *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING, this->archiveId);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STRING, this->archiveId);
 }
 
 /***********************************************************************************************************************************
@@ -202,11 +202,11 @@ infoArchiveCipherPass(const InfoArchive *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, infoPgCipherPass(this->infoPg));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(CONST_STRING, infoPgCipherPass(this->infoPg));
 }
 
 /***********************************************************************************************************************************
@@ -217,11 +217,11 @@ infoArchivePg(const InfoArchive *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(INFO_PG, this->infoPg);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(INFO_PG, this->infoPg);
 }
 
 /***********************************************************************************************************************************
@@ -230,12 +230,12 @@ Free the info
 void
 infoArchiveFree(InfoArchive *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_ARCHIVE, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

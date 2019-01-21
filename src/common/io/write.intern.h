@@ -28,9 +28,9 @@ IoWrite *ioWriteNew(void *driver, IoWriteInterface interface);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_IO_WRITE_INTERFACE_TYPE                                                                                     \
+#define FUNCTION_LOG_IO_WRITE_INTERFACE_TYPE                                                                                       \
     IoWriteInterface
-#define FUNCTION_DEBUG_IO_WRITE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                        \
+#define FUNCTION_LOG_IO_WRITE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                          \
     objToLog(&value, "IoWriteInterface", buffer, bufferSize)
 
 #endif

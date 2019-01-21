@@ -44,9 +44,9 @@ StorageFileWrite *storageFileWriteNew(const String *type, void *driver, StorageF
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_FILE_WRITE_INTERFACE_TYPE                                                                           \
+#define FUNCTION_LOG_STORAGE_FILE_WRITE_INTERFACE_TYPE                                                                             \
     StorageFileWriteInterface
-#define FUNCTION_DEBUG_STORAGE_FILE_WRITE_INTERFACE_FORMAT(value, buffer, bufferSize)                                              \
+#define FUNCTION_LOG_STORAGE_FILE_WRITE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                \
     objToLog(&value, "StorageFileWriteInterface", buffer, bufferSize)
 
 #endif

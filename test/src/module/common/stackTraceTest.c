@@ -64,7 +64,7 @@ testRun(void)
         stackTraceInit(testExe());
 #endif
 
-        TEST_ERROR(stackTracePop("file1", "function1"), AssertError, "debug assertion 'stackSize > 0' failed");
+        TEST_ERROR(stackTracePop("file1", "function1"), AssertError, "assertion 'stackSize > 0' failed");
 
         assert(stackTracePush("file1", "function1", logLevelDebug) == logLevelDebug);
         assert(stackSize == 1);

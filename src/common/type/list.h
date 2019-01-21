@@ -35,9 +35,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *lstToLog(const List *this);
 
-#define FUNCTION_DEBUG_LIST_TYPE                                                                                                   \
+#define FUNCTION_LOG_LIST_TYPE                                                                                                     \
     List *
-#define FUNCTION_DEBUG_LIST_FORMAT(value, buffer, bufferSize)                                                                      \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, lstToLog, buffer, bufferSize)
+#define FUNCTION_LOG_LIST_FORMAT(value, buffer, bufferSize)                                                                        \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, lstToLog, buffer, bufferSize)
 
 #endif

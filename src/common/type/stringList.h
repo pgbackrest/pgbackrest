@@ -54,9 +54,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *strLstToLog(const StringList *this);
 
-#define FUNCTION_DEBUG_STRING_LIST_TYPE                                                                                            \
+#define FUNCTION_LOG_STRING_LIST_TYPE                                                                                              \
     StringList *
-#define FUNCTION_DEBUG_STRING_LIST_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, strLstToLog, buffer, bufferSize)
+#define FUNCTION_LOG_STRING_LIST_FORMAT(value, buffer, bufferSize)                                                                 \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, strLstToLog, buffer, bufferSize)
 
 #endif

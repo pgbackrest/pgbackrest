@@ -69,7 +69,7 @@ perlMain(void)
     String *mainCall = strNewFmt(
         "($iResult, $bErrorC, $strMessage) = " PGBACKREST_MAIN "('%s'%s)", cfgCommandName(cfgCommand()), strPtr(commandParam));
 
-    FUNCTION_TEST_RESULT(STRING, mainCall);
+    FUNCTION_TEST_RETURN(STRING, mainCall);
 }
 
 /***********************************************************************************************************************************
@@ -160,7 +160,7 @@ perlEval(const String *statement)
 
     eval_pv(strPtr(statement), TRUE);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -202,7 +202,7 @@ perlInit(void)
         perlEval(strNewFmt(PGBACKREST_MAIN "ConfigSet('%s', '%s')", strPtr(cfgExe()), strPtr(perlOptionJson())));
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -211,7 +211,7 @@ Execute main function in Perl
 int
 perlExec(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelDebug);
+    FUNCTION_LOG_VOID(logLevelDebug);
 
     // Initialize Perl
     perlInit();
@@ -232,7 +232,7 @@ perlExec(void)
             THROW_CODE(code, strlen(message) == 0 ? PERL_EMBED_ERROR : message);    // {+uncovered}
     }
 
-    FUNCTION_DEBUG_RESULT(INT, code);                                               // {+uncovered}
+    FUNCTION_LOG_RETURN(INT, code);                                               // {+uncovered}
 }
 
 /***********************************************************************************************************************************
@@ -250,5 +250,5 @@ perlFree(int result)
     if (my_perl != NULL)
         perlEval(strNewFmt(PGBACKREST_MAIN "Cleanup(%d)", result));
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

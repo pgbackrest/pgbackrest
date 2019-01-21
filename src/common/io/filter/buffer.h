@@ -41,9 +41,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *ioBufferToLog(const IoBuffer *this);
 
-#define FUNCTION_DEBUG_IO_BUFFER_TYPE                                                                                              \
+#define FUNCTION_LOG_IO_BUFFER_TYPE                                                                                                \
     IoBuffer *
-#define FUNCTION_DEBUG_IO_BUFFER_FORMAT(value, buffer, bufferSize)                                                                 \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, ioBufferToLog, buffer, bufferSize)
+#define FUNCTION_LOG_IO_BUFFER_FORMAT(value, buffer, bufferSize)                                                                   \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioBufferToLog, buffer, bufferSize)
 
 #endif

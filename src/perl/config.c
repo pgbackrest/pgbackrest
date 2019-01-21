@@ -131,5 +131,5 @@ perlOptionJson(void)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }

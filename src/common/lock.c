@@ -7,7 +7,6 @@ Lock Handler
 #include <sys/file.h>
 #include <unistd.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/handleWrite.h"
 #include "common/lock.h"
@@ -41,11 +40,11 @@ Acquire a lock using a file on the local filesystem
 static int
 lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, lockFile);
-        FUNCTION_DEBUG_PARAM(TIMEMSEC, lockTimeout);
-        FUNCTION_DEBUG_PARAM(BOOL, failOnNoLock);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, lockFile);
+        FUNCTION_LOG_PARAM(TIMEMSEC, lockTimeout);
+        FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
+    FUNCTION_LOG_END();
 
     int result = -1;
 
@@ -118,7 +117,7 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(INT, result);
+    FUNCTION_LOG_RETURN(INT, result);
 }
 
 /***********************************************************************************************************************************
@@ -127,20 +126,20 @@ Release the current lock
 static void
 lockReleaseFile(int lockHandle, const String *lockFile)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INT, lockHandle);
-        FUNCTION_DEBUG_PARAM(STRING, lockFile);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, lockHandle);
+        FUNCTION_LOG_PARAM(STRING, lockFile);
+    FUNCTION_LOG_END();
 
     // Can't release lock if there isn't one
-    ASSERT_DEBUG(lockHandle != -1);
+    ASSERT(lockHandle != -1);
 
     // Remove file first and then close it to release the lock.  If we close it first then another process might grab the lock
     // right before the delete which means the file locked by the other process will get deleted.
     storageRemoveNP(storageLocalWrite(), lockFile);
     close(lockHandle);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -152,18 +151,18 @@ backup), but the stanza commands all need to lock both.
 bool
 lockAcquire(const String *lockPath, const String *stanza, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STRING, lockPath);
-        FUNCTION_DEBUG_PARAM(STRING, stanza);
-        FUNCTION_DEBUG_PARAM(ENUM, lockType);
-        FUNCTION_DEBUG_PARAM(TIMEMSEC, lockTimeout);
-        FUNCTION_DEBUG_PARAM(BOOL, failOnNoLock);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, lockPath);
+        FUNCTION_LOG_PARAM(STRING, stanza);
+        FUNCTION_LOG_PARAM(ENUM, lockType);
+        FUNCTION_LOG_PARAM(TIMEMSEC, lockTimeout);
+        FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
+    FUNCTION_LOG_END();
 
     bool result = false;
 
     // Don't allow failures when locking more than one file.  This makes cleanup difficult and there are no known use cases.
-    ASSERT_DEBUG(failOnNoLock || lockType != lockTypeAll);
+    ASSERT(failOnNoLock || lockType != lockTypeAll);
 
     // Don't allow another lock if one is already held
     if (lockTypeHeld != lockTypeNone)
@@ -207,7 +206,7 @@ lockAcquire(const String *lockPath, const String *stanza, LockType lockType, Tim
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -217,9 +216,9 @@ and the master process won't try to free it.
 bool
 lockClear(bool failOnNoLock)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(BOOL, failOnNoLock);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
+    FUNCTION_LOG_END();
 
     bool result = false;
 
@@ -241,7 +240,7 @@ lockClear(bool failOnNoLock)
         result = true;
     }
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -250,9 +249,9 @@ Release a lock type
 bool
 lockRelease(bool failOnNoLock)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(BOOL, failOnNoLock);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
+    FUNCTION_LOG_END();
 
     bool result = false;
 
@@ -277,5 +276,5 @@ lockRelease(bool failOnNoLock)
         result = true;
     }
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }

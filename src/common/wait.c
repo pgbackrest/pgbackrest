@@ -24,11 +24,11 @@ New wait handler
 Wait *
 waitNew(TimeMSec waitTime)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(TIMEMSEC, waitTime);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TIMEMSEC, waitTime);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(waitTime >= 100 && waitTime <= 999999000);
-    FUNCTION_DEBUG_END();
+    ASSERT(waitTime >= 100 && waitTime <= 999999000);
 
     // Allocate wait object
     Wait *this = NULL;
@@ -54,7 +54,7 @@ waitNew(TimeMSec waitTime)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(WAIT, this);
+    FUNCTION_LOG_RETURN(WAIT, this);
 }
 
 /***********************************************************************************************************************************
@@ -63,11 +63,11 @@ Wait and return whether the caller has more time left
 bool
 waitMore(Wait *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(WAIT, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(WAIT, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     bool result = false;
 
@@ -102,7 +102,7 @@ waitMore(Wait *this)
         result = true;
     }
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -111,12 +111,12 @@ Free the wait
 void
 waitFree(Wait *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(WAIT, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(WAIT, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

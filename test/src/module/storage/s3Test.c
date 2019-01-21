@@ -383,7 +383,7 @@ testRun(void)
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
-            storageListP(s3, strNew("/"), .errorOnMissing = true), AssertError, "function test assertion '!errorOnMissing' failed");
+            storageListP(s3, strNew("/"), .errorOnMissing = true), AssertError, "assertion '!errorOnMissing' failed");
         TEST_ERROR(storageListNP(s3, strNew("/")), ProtocolError,
             "S3 request failed with 344: Another bad status\n"
             "*** URI/Query ***:\n"

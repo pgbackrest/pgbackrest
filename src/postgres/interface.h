@@ -53,9 +53,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *pgControlToLog(const PgControl *pgControl);
 
-#define FUNCTION_DEBUG_PG_CONTROL_TYPE                                                                                             \
+#define FUNCTION_LOG_PG_CONTROL_TYPE                                                                                               \
     PgControl
-#define FUNCTION_DEBUG_PG_CONTROL_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(&value, pgControlToLog, buffer, bufferSize)
+#define FUNCTION_LOG_PG_CONTROL_FORMAT(value, buffer, bufferSize)                                                                  \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(&value, pgControlToLog, buffer, bufferSize)
 
 #endif

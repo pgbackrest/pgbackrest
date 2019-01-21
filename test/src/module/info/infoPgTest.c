@@ -150,12 +150,12 @@ testRun(void)
         TEST_ERROR(infoPgNew(storageLocal(), fileName, 10, cipherTypeNone, NULL), AssertError, "invalid InfoPg type 10");
         TEST_ERROR(
             infoPgNew(storageLocal(), NULL, infoPgManifest, cipherTypeNone, NULL), AssertError,
-            "function debug assertion 'fileName != NULL' failed");
+            "assertion 'fileName != NULL' failed");
 
-        TEST_ERROR(infoPgDataCurrent(NULL), AssertError, "function debug assertion 'this != NULL' failed");
+        TEST_ERROR(infoPgDataCurrent(NULL), AssertError, "assertion 'this != NULL' failed");
 
-        TEST_ERROR(infoPgAdd(NULL, &infoPgData), AssertError, "function debug assertion 'this != NULL' failed");
-        TEST_ERROR(infoPgAdd(infoPg, NULL), AssertError, "function debug assertion 'infoPgData != NULL' failed");
+        TEST_ERROR(infoPgAdd(NULL, &infoPgData), AssertError, "assertion 'this != NULL' failed");
+        TEST_ERROR(infoPgAdd(infoPg, NULL), AssertError, "assertion 'infoPgData != NULL' failed");
 
         // infoPgFree
         //--------------------------------------------------------------------------------------------------------------------------

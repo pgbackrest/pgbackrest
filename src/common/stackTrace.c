@@ -161,8 +161,8 @@ Get parameters for the top function on the stack
 static const char *
 stackTraceParamIdx(int stackIdx)
 {
-    ASSERT_DEBUG(stackSize > 0);
-    ASSERT_DEBUG(stackIdx < stackSize);
+    ASSERT(stackSize > 0);
+    ASSERT(stackIdx < stackSize);
 
     StackTraceData *data = &stackTrace[stackIdx];
 
@@ -194,7 +194,7 @@ Get the next location where a parameter can be added in the param buffer
 char *
 stackTraceParamBuffer(const char *paramName)
 {
-    ASSERT_DEBUG(stackSize > 0);
+    ASSERT(stackSize > 0);
 
     StackTraceData *data = &stackTrace[stackSize - 1];
     size_t paramNameSize = strlen(paramName);
@@ -236,7 +236,7 @@ Add a parameter to the function on the top of the stack
 void
 stackTraceParamAdd(size_t bufferSize)
 {
-    ASSERT_DEBUG(stackSize > 0);
+    ASSERT(stackSize > 0);
 
     StackTraceData *data = &stackTrace[stackSize - 1];
 
@@ -250,7 +250,7 @@ Mark that parameters are being logged -- it none appear then the function is voi
 void
 stackTraceParamLog(void)
 {
-    ASSERT_DEBUG(stackSize > 0);
+    ASSERT(stackSize > 0);
 
     stackTrace[stackSize - 1].paramLog = true;
 }
@@ -271,7 +271,7 @@ stackTracePop(void)
 void
 stackTracePop(const char *fileName, const char *functionName)
 {
-    ASSERT_DEBUG(stackSize > 0);
+    ASSERT(stackSize > 0);
 
     stackSize--;
 

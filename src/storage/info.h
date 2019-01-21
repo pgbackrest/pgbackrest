@@ -30,9 +30,9 @@ typedef struct StorageInfo
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_INFO_TYPE                                                                                           \
+#define FUNCTION_LOG_STORAGE_INFO_TYPE                                                                                             \
     StorageInfo
-#define FUNCTION_DEBUG_STORAGE_INFO_FORMAT(value, buffer, bufferSize)                                                              \
+#define FUNCTION_LOG_STORAGE_INFO_FORMAT(value, buffer, bufferSize)                                                                \
     objToLog(&value, "StorageInfo", buffer, bufferSize)
 
 #endif

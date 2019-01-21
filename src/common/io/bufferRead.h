@@ -38,9 +38,9 @@ void ioBufferReadFree(IoBufferRead *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_IO_BUFFER_READ_TYPE                                                                                         \
+#define FUNCTION_LOG_IO_BUFFER_READ_TYPE                                                                                           \
     IoBufferRead *
-#define FUNCTION_DEBUG_IO_BUFFER_READ_FORMAT(value, buffer, bufferSize)                                                            \
+#define FUNCTION_LOG_IO_BUFFER_READ_FORMAT(value, buffer, bufferSize)                                                              \
     objToLog(value, "IoBufferRead", buffer, bufferSize)
 
 #endif

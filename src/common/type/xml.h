@@ -64,19 +64,19 @@ void xmlNodeLstFree(XmlNodeList *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_XML_DOCUMENT_TYPE                                                                                           \
+#define FUNCTION_LOG_XML_DOCUMENT_TYPE                                                                                             \
     XmlDocument *
-#define FUNCTION_DEBUG_XML_DOCUMENT_FORMAT(value, buffer, bufferSize)                                                              \
+#define FUNCTION_LOG_XML_DOCUMENT_FORMAT(value, buffer, bufferSize)                                                                \
     objToLog(value, "XmlDocument", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_XML_NODE_TYPE                                                                                               \
+#define FUNCTION_LOG_XML_NODE_TYPE                                                                                                 \
     XmlNode *
-#define FUNCTION_DEBUG_XML_NODE_FORMAT(value, buffer, bufferSize)                                                                  \
+#define FUNCTION_LOG_XML_NODE_FORMAT(value, buffer, bufferSize)                                                                    \
     objToLog(value, "XmlNode", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_XML_NODE_LIST_TYPE                                                                                          \
+#define FUNCTION_LOG_XML_NODE_LIST_TYPE                                                                                            \
     XmlNodeList *
-#define FUNCTION_DEBUG_XML_NODE_LIST_FORMAT(value, buffer, bufferSize)                                                             \
+#define FUNCTION_LOG_XML_NODE_LIST_FORMAT(value, buffer, bufferSize)                                                               \
     objToLog(value, "XmlNodeList", buffer, bufferSize)
 
 #endif

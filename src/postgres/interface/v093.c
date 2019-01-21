@@ -18,13 +18,13 @@ pgInterfaceIs093(const Buffer *controlFile)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, controlFile);
-
-        FUNCTION_TEST_ASSERT(controlFile != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(controlFile != NULL);
 
     ControlFileData *controlData = (ControlFileData *)bufPtr(controlFile);
 
-    FUNCTION_TEST_RESULT(
+    FUNCTION_TEST_RETURN(
         BOOL, controlData->pg_control_version == PG_CONTROL_VERSION && controlData->catalog_version_no == CATALOG_VERSION_NO);
 }
 
@@ -34,12 +34,12 @@ Get information from pg_control in a common format
 PgControl
 pgInterfaceControl093(const Buffer *controlFile)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(BUFFER, controlFile);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BUFFER, controlFile);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(controlFile != NULL);
-        FUNCTION_TEST_ASSERT(pgInterfaceIs093(controlFile));
-    FUNCTION_DEBUG_END();
+    ASSERT(controlFile != NULL);
+    ASSERT(pgInterfaceIs093(controlFile));
 
     PgControl result = {0};
     ControlFileData *controlData = (ControlFileData *)bufPtr(controlFile);
@@ -53,7 +53,7 @@ pgInterfaceControl093(const Buffer *controlFile)
 
     result.pageChecksum = controlData->data_checksum_version != 0;
 
-    FUNCTION_DEBUG_RESULT(PG_CONTROL, result);
+    FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
 
 /***********************************************************************************************************************************
@@ -79,7 +79,7 @@ pgInterfaceControlTest093(PgControl pgControl, Buffer *buffer)
 
     controlData->data_checksum_version = pgControl.pageChecksum;
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 #endif

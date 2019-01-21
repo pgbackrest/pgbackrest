@@ -31,7 +31,7 @@ regExpError(int error)
     regerror(error, NULL, buffer, sizeof(buffer));
     THROW(FormatError, buffer);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -42,9 +42,9 @@ regExpNew(const String *expression)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, expression);
-
-        FUNCTION_TEST_ASSERT(expression != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(expression != NULL);
 
     RegExp *this = NULL;
 
@@ -67,7 +67,7 @@ regExpNew(const String *expression)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_TEST_RESULT(REGEXP, this);
+    FUNCTION_TEST_RETURN(REGEXP, this);
 }
 
 /***********************************************************************************************************************************
@@ -79,10 +79,10 @@ regExpMatch(RegExp *this, const String *string)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(REGEXP, this);
         FUNCTION_TEST_PARAM(STRING, string);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(string != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(string != NULL);
 
     // Test for a match
     int result = regexec(&this->regExp, strPtr(string), 0, NULL, 0);
@@ -91,7 +91,7 @@ regExpMatch(RegExp *this, const String *string)
     if (result != 0 && result != REG_NOMATCH)                                   // {uncoverable - no error condition known}
         regExpError(result);                                                    // {+uncoverable}
 
-    FUNCTION_TEST_RESULT(BOOL, result == 0);
+    FUNCTION_TEST_RETURN(BOOL, result == 0);
 }
 
 /***********************************************************************************************************************************
@@ -112,7 +112,7 @@ regExpFree(RegExp *this)
         memContextFree(this->memContext);
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -124,10 +124,10 @@ regExpMatchOne(const String *expression, const String *string)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, expression);
         FUNCTION_TEST_PARAM(STRING, string);
-
-        FUNCTION_TEST_ASSERT(expression != NULL);
-        FUNCTION_TEST_ASSERT(string != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(expression != NULL);
+    ASSERT(string != NULL);
 
     bool result = false;
     RegExp *regExp = regExpNew(expression);
@@ -142,7 +142,7 @@ regExpMatchOne(const String *expression, const String *string)
     }
     TRY_END();
 
-    FUNCTION_TEST_RESULT(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -183,5 +183,5 @@ regExpPrefix(const String *expression)
             result = strSubN(expression, 1, expressionIdx - 1);
     }
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }

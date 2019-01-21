@@ -28,9 +28,9 @@ const String *ioFilterType(const IoFilter *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_IO_FILTER_TYPE                                                                                              \
+#define FUNCTION_LOG_IO_FILTER_TYPE                                                                                                \
     IoFilter *
-#define FUNCTION_DEBUG_IO_FILTER_FORMAT(value, buffer, bufferSize)                                                                 \
+#define FUNCTION_LOG_IO_FILTER_FORMAT(value, buffer, bufferSize)                                                                   \
     objToLog(value, "IoFilter", buffer, bufferSize)
 
 #endif

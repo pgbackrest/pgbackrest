@@ -47,9 +47,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *bufToLog(const Buffer *this);
 
-#define FUNCTION_DEBUG_BUFFER_TYPE                                                                                                 \
+#define FUNCTION_LOG_BUFFER_TYPE                                                                                                   \
     Buffer *
-#define FUNCTION_DEBUG_BUFFER_FORMAT(value, buffer, bufferSize)                                                                    \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, bufToLog, buffer, bufferSize)
+#define FUNCTION_LOG_BUFFER_FORMAT(value, buffer, bufferSize)                                                                      \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, bufToLog, buffer, bufferSize)
 
 #endif

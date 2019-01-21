@@ -64,9 +64,9 @@ void httpClientFree(HttpClient *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_HTTP_CLIENT_TYPE                                                                                            \
+#define FUNCTION_LOG_HTTP_CLIENT_TYPE                                                                                              \
     HttpClient *
-#define FUNCTION_DEBUG_HTTP_CLIENT_FORMAT(value, buffer, bufferSize)                                                               \
+#define FUNCTION_LOG_HTTP_CLIENT_FORMAT(value, buffer, bufferSize)                                                                 \
     objToLog(value, "HttpClient", buffer, bufferSize)
 
 #endif

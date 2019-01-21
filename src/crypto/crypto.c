@@ -37,7 +37,7 @@ cryptoError(bool error, const char *description)
     if (error)
         cryptoErrorCode(ERR_get_error(), description);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 void
@@ -51,7 +51,7 @@ cryptoErrorCode(unsigned long code, const char *description)
     const char *errorMessage = ERR_reason_error_string(code);
     THROW_FMT(CryptoError, "%s: [%lu] %s", description, code, errorMessage == NULL ? "no details available" : errorMessage);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -62,9 +62,9 @@ cipherType(const String *name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, name);
-
-        FUNCTION_TEST_ASSERT(name != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(name != NULL);
 
     CipherType result = cipherTypeNone;
 
@@ -73,7 +73,7 @@ cipherType(const String *name)
     else if (!strEq(name, CIPHER_TYPE_NONE_STR))
         THROW_FMT(AssertError, "invalid cipher name '%s'", strPtr(name));
 
-    FUNCTION_TEST_RESULT(ENUM, result);
+    FUNCTION_TEST_RETURN(ENUM, result);
 }
 
 const String *
@@ -90,7 +90,7 @@ cipherTypeName(CipherType type)
     else if (type != cipherTypeNone)
         THROW_FMT(AssertError, "invalid cipher type %u", type);
 
-    FUNCTION_TEST_RESULT(CONST_STRING, result);
+    FUNCTION_TEST_RETURN(CONST_STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -99,7 +99,7 @@ Initialize crypto
 void
 cryptoInit(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelTrace);
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     if (!cryptoInitDone)
     {
@@ -120,7 +120,7 @@ cryptoInit(void)
         cryptoInitDone = true;
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -130,7 +130,7 @@ bool
 cryptoIsInit(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RESULT(BOOL, cryptoInitDone);
+    FUNCTION_TEST_RETURN(BOOL, cryptoInitDone);
 }
 
 /***********************************************************************************************************************************
@@ -139,15 +139,15 @@ Generate random bytes
 void
 cryptoRandomBytes(unsigned char *buffer, size_t size)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(UCHARP, buffer);
-        FUNCTION_DEBUG_PARAM(SIZE, size);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(UCHARP, buffer);
+        FUNCTION_LOG_PARAM(SIZE, size);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(buffer != NULL);
-        FUNCTION_DEBUG_ASSERT(size > 0);
-    FUNCTION_DEBUG_END();
+    ASSERT(buffer != NULL);
+    ASSERT(size > 0);
 
     RAND_bytes(buffer, (int)size);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

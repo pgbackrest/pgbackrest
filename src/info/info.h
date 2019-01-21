@@ -42,9 +42,9 @@ void infoFree(Info *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_INFO_TYPE                                                                                                   \
+#define FUNCTION_LOG_INFO_TYPE                                                                                                     \
     Info *
-#define FUNCTION_DEBUG_INFO_FORMAT(value, buffer, bufferSize)                                                                      \
+#define FUNCTION_LOG_INFO_FORMAT(value, buffer, bufferSize)                                                                        \
     objToLog(value, "Info", buffer, bufferSize)
 
 #endif

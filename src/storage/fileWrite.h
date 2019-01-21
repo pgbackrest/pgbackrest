@@ -44,9 +44,9 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *storageFileWriteToLog(const StorageFileWrite *this);
 
-#define FUNCTION_DEBUG_STORAGE_FILE_WRITE_TYPE                                                                                     \
+#define FUNCTION_LOG_STORAGE_FILE_WRITE_TYPE                                                                                       \
     StorageFileWrite *
-#define FUNCTION_DEBUG_STORAGE_FILE_WRITE_FORMAT(value, buffer, bufferSize)                                                        \
-    FUNCTION_DEBUG_STRING_OBJECT_FORMAT(value, storageFileWriteToLog, buffer, bufferSize)
+#define FUNCTION_LOG_STORAGE_FILE_WRITE_FORMAT(value, buffer, bufferSize)                                                          \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageFileWriteToLog, buffer, bufferSize)
 
 #endif

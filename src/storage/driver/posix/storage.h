@@ -60,14 +60,14 @@ void storageDriverPosixFree(StorageDriverPosix *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_DRIVER_POSIX_TYPE                                                                                   \
+#define FUNCTION_LOG_STORAGE_DRIVER_POSIX_TYPE                                                                                     \
     StorageDriverPosix *
-#define FUNCTION_DEBUG_STORAGE_DRIVER_POSIX_FORMAT(value, buffer, bufferSize)                                                      \
+#define FUNCTION_LOG_STORAGE_DRIVER_POSIX_FORMAT(value, buffer, bufferSize)                                                        \
     objToLog(value, "StorageDriverPosix", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_CONST_STORAGE_DRIVER_POSIX_TYPE                                                                             \
+#define FUNCTION_LOG_CONST_STORAGE_DRIVER_POSIX_TYPE                                                                               \
     const StorageDriverPosix *
-#define FUNCTION_DEBUG_CONST_STORAGE_DRIVER_POSIX_FORMAT(value, buffer, bufferSize)                                                \
+#define FUNCTION_LOG_CONST_STORAGE_DRIVER_POSIX_FORMAT(value, buffer, bufferSize)                                                  \
     objToLog(value, "StorageDriverPosix", buffer, bufferSize)
 
 #endif

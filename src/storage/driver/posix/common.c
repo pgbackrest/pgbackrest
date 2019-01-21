@@ -4,7 +4,6 @@ Posix Common File Routines
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "storage/driver/posix/common.h"
 
@@ -24,10 +23,10 @@ storageDriverPosixFileOpen(
         FUNCTION_TEST_PARAM(BOOL, ignoreMissing);
         FUNCTION_TEST_PARAM(BOOL, file);                            //  Is this a file or a path?
         FUNCTION_TEST_PARAM(STRINGZ, purpose);
-
-        FUNCTION_TEST_ASSERT(name != NULL);
-        FUNCTION_TEST_ASSERT(purpose != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(name != NULL);
+    ASSERT(purpose != NULL);
 
     int result = -1;
 
@@ -43,7 +42,7 @@ storageDriverPosixFileOpen(
         }
     }
 
-    FUNCTION_TEST_RESULT(INT, result);
+    FUNCTION_TEST_RETURN(INT, result);
 }
 
 /***********************************************************************************************************************************
@@ -57,10 +56,10 @@ storageDriverPosixFileSync(int handle, const String *name, bool file, bool close
         FUNCTION_TEST_PARAM(STRING, name);
         FUNCTION_TEST_PARAM(BOOL, file);                            //  Is this a file or a path?
         FUNCTION_TEST_PARAM(BOOL, closeOnError);
-
-        FUNCTION_TEST_ASSERT(handle != -1);
-        FUNCTION_TEST_ASSERT(name != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(handle != -1);
+    ASSERT(name != NULL);
 
     if (fsync(handle) == -1)
     {
@@ -73,7 +72,7 @@ storageDriverPosixFileSync(int handle, const String *name, bool file, bool close
         THROWP_SYS_ERROR_CODE_FMT(errNo, file ? &FileSyncError : &PathSyncError, "unable to sync '%s'", strPtr(name));
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -86,13 +85,13 @@ storageDriverPosixFileClose(int handle, const String *name, bool file)
         FUNCTION_TEST_PARAM(INT, handle);
         FUNCTION_TEST_PARAM(STRING, name);
         FUNCTION_TEST_PARAM(BOOL, file);                            //  Is this a file or a path?
-
-        FUNCTION_TEST_ASSERT(handle != -1);
-        FUNCTION_TEST_ASSERT(name != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(handle != -1);
+    ASSERT(name != NULL);
 
     if (close(handle) == -1)
         THROWP_SYS_ERROR_FMT(file ? &FileCloseError : &PathCloseError, "unable to close '%s'", strPtr(name));
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

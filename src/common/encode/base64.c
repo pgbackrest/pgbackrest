@@ -19,10 +19,10 @@ encodeToStrBase64(const unsigned char *source, size_t sourceSize, char *destinat
         FUNCTION_TEST_PARAM(UCHARP, source);
         FUNCTION_TEST_PARAM(SIZE, sourceSize);
         FUNCTION_TEST_PARAM(CHARP, destination);
-
-        FUNCTION_TEST_ASSERT(source != NULL);
-        FUNCTION_TEST_ASSERT(destination != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(source != NULL);
+    ASSERT(destination != NULL);
 
     unsigned int destinationIdx = 0;
 
@@ -67,7 +67,7 @@ encodeToStrBase64(const unsigned char *source, size_t sourceSize, char *destinat
     // Zero-terminate the string
     destination[destinationIdx] = 0;
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -88,7 +88,7 @@ encodeToStrSizeBase64(size_t sourceSize)
         encodeGroupTotal++;
 
     // Four characters are needed to encode each group
-    FUNCTION_TEST_RESULT(SIZE, encodeGroupTotal * 4);
+    FUNCTION_TEST_RETURN(SIZE, encodeGroupTotal * 4);
 }
 
 /***********************************************************************************************************************************
@@ -149,7 +149,7 @@ decodeToBinBase64(const char *source, unsigned char *destination)
         }
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -179,7 +179,7 @@ decodeToBinSizeBase64(const char *source)
             destinationSize--;
     }
 
-    FUNCTION_TEST_RESULT(SIZE, destinationSize);
+    FUNCTION_TEST_RETURN(SIZE, destinationSize);
 }
 
 /***********************************************************************************************************************************
@@ -220,5 +220,5 @@ decodeToBinValidateBase64(const char *source)
         }
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

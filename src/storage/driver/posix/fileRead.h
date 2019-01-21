@@ -43,9 +43,9 @@ void storageDriverPosixFileReadFree(StorageDriverPosixFileRead *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_DRIVER_POSIX_FILE_READ_TYPE                                                                         \
+#define FUNCTION_LOG_STORAGE_DRIVER_POSIX_FILE_READ_TYPE                                                                           \
     StorageDriverPosixFileRead *
-#define FUNCTION_DEBUG_STORAGE_DRIVER_POSIX_FILE_READ_FORMAT(value, buffer, bufferSize)                                            \
+#define FUNCTION_LOG_STORAGE_DRIVER_POSIX_FILE_READ_FORMAT(value, buffer, bufferSize)                                              \
     objToLog(value, "StorageDriverPosixFileRead", buffer, bufferSize)
 
 #endif

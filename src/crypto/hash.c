@@ -7,7 +7,6 @@ Cryptographic Hash
 #include <openssl/err.h>
 #include <openssl/hmac.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
@@ -46,11 +45,11 @@ New object
 CryptoHash *
 cryptoHashNew(const String *type)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, type);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, type);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(type != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(type != NULL);
 
     // Only need to init once
     if (!cryptoIsInit())
@@ -85,7 +84,7 @@ cryptoHashNew(const String *type)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(CRYPTO_HASH, this);
+    FUNCTION_LOG_RETURN(CRYPTO_HASH, this);
 }
 
 /***********************************************************************************************************************************
@@ -94,19 +93,19 @@ Add message data to the hash
 void
 cryptoHashProcessC(CryptoHash *this, const unsigned char *message, size_t messageSize)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(CRYPTO_HASH, this);
-        FUNCTION_DEBUG_PARAM(UCHARP, message);
-        FUNCTION_DEBUG_PARAM(SIZE, messageSize);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
+        FUNCTION_LOG_PARAM(UCHARP, message);
+        FUNCTION_LOG_PARAM(SIZE, messageSize);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(this->hashContext != NULL);
-        FUNCTION_DEBUG_ASSERT(message != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->hashContext != NULL);
+    ASSERT(message != NULL);
 
     cryptoError(!EVP_DigestUpdate(this->hashContext, message, messageSize), "unable to process message hash");
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -118,14 +117,14 @@ cryptoHashProcess(CryptoHash *this, const Buffer *message)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CRYPTO_HASH, this);
         FUNCTION_TEST_PARAM(BUFFER, message);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(message != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(message != NULL);
 
     cryptoHashProcessC(this, bufPtr(message), bufUsed(message));
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -137,14 +136,14 @@ cryptoHashProcessStr(CryptoHash *this, const String *message)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CRYPTO_HASH, this);
         FUNCTION_TEST_PARAM(STRING, message);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(message != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(message != NULL);
 
     cryptoHashProcessC(this, (const unsigned char *)strPtr(message), strSize(message));
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -153,11 +152,11 @@ Get binary representation of the hash
 const Buffer *
 cryptoHash(CryptoHash *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(CRYPTO_HASH, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     if (this->hash == NULL)
     {
@@ -174,7 +173,7 @@ cryptoHash(CryptoHash *this)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_DEBUG_RESULT(BUFFER, this->hash);
+    FUNCTION_LOG_RETURN(BUFFER, this->hash);
 }
 
 /***********************************************************************************************************************************
@@ -183,13 +182,13 @@ Get filter interface
 IoFilter *
 cryptoHashFilter(CryptoHash *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(CRYPTO_HASH, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
-    FUNCTION_DEBUG_RESULT(IO_FILTER, this->filter);
+    FUNCTION_LOG_RETURN(IO_FILTER, this->filter);
 }
 
 /***********************************************************************************************************************************
@@ -198,11 +197,11 @@ Get string representation of the hash as a filter result
 const Variant *
 cryptoHashResult(CryptoHash *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(CRYPTO_HASH, this);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     Variant *result = NULL;
 
@@ -212,7 +211,7 @@ cryptoHashResult(CryptoHash *this)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_DEBUG_RESULT(VARIANT, result);
+    FUNCTION_LOG_RETURN(VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -221,9 +220,9 @@ Free memory
 void
 cryptoHashFree(CryptoHash *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(CRYPTO_HASH, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
     {
@@ -233,7 +232,7 @@ cryptoHashFree(CryptoHash *this)
         memContextFree(this->memContext);
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -242,13 +241,13 @@ Get hash for one C buffer
 Buffer *
 cryptoHashOneC(const String *type, const unsigned char *message, size_t messageSize)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, type);
-        FUNCTION_DEBUG_PARAM(UCHARP, message);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(UCHARP, message);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(type != NULL);
-        FUNCTION_DEBUG_ASSERT(message != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(type != NULL);
+    ASSERT(message != NULL);
 
     Buffer *result = NULL;
 
@@ -263,7 +262,7 @@ cryptoHashOneC(const String *type, const unsigned char *message, size_t messageS
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(BUFFER, result);
+    FUNCTION_LOG_RETURN(BUFFER, result);
 }
 
 /***********************************************************************************************************************************
@@ -275,12 +274,12 @@ cryptoHashOne(const String *type, Buffer *message)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, type);
         FUNCTION_TEST_PARAM(BUFFER, message);
-
-        FUNCTION_TEST_ASSERT(type != NULL);
-        FUNCTION_TEST_ASSERT(message != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BUFFER, cryptoHashOneC(type, bufPtr(message), bufSize(message)));
+    ASSERT(type != NULL);
+    ASSERT(message != NULL);
+
+    FUNCTION_TEST_RETURN(BUFFER, cryptoHashOneC(type, bufPtr(message), bufSize(message)));
 }
 
 /***********************************************************************************************************************************
@@ -292,12 +291,12 @@ cryptoHashOneStr(const String *type, String *message)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, type);
         FUNCTION_TEST_PARAM(STRING, message);
-
-        FUNCTION_TEST_ASSERT(type != NULL);
-        FUNCTION_TEST_ASSERT(message != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BUFFER, cryptoHashOneC(type, (const unsigned char *)strPtr(message), strSize(message)));
+    ASSERT(type != NULL);
+    ASSERT(message != NULL);
+
+    FUNCTION_TEST_RETURN(BUFFER, cryptoHashOneC(type, (const unsigned char *)strPtr(message), strSize(message)));
 }
 
 /***********************************************************************************************************************************
@@ -306,15 +305,15 @@ Get hmac for one message/key
 Buffer *
 cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, type);
-        FUNCTION_DEBUG_PARAM(BUFFER, key);
-        FUNCTION_DEBUG_PARAM(BUFFER, message);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(BUFFER, key);
+        FUNCTION_LOG_PARAM(BUFFER, message);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(type != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
-        FUNCTION_TEST_ASSERT(message != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(type != NULL);
+    ASSERT(key != NULL);
+    ASSERT(message != NULL);
 
     const EVP_MD *hashType = EVP_get_digestbyname(strPtr(type));
     ASSERT(hashType != NULL);
@@ -325,5 +324,5 @@ cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
     // Calculate the HMAC
     HMAC(hashType, bufPtr(key), (int)bufSize(key), bufPtr(message), bufSize(message), bufPtr(result), NULL);
 
-    FUNCTION_TEST_RESULT(BUFFER, result);
+    FUNCTION_TEST_RETURN(BUFFER, result);
 }

@@ -906,7 +906,7 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(storagePathNP(storage, NULL)), "/", "check base path");
 
-        TEST_ERROR(storageNewWriteNP(storage, writeFile), AssertError, "function debug assertion 'this->write' failed");
+        TEST_ERROR(storageNewWriteNP(storage, writeFile), AssertError, "assertion 'this->write' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(storageHelper.storageLocalWrite, NULL, "local storage not cached");
@@ -943,7 +943,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(storagePathNP(storage, strNew("<BOGUS>/path")), AssertError, "invalid expression '<BOGUS>'");
-        TEST_ERROR(storageNewWriteNP(storage, writeFile), AssertError, "function debug assertion 'this->write' failed");
+        TEST_ERROR(storageNewWriteNP(storage, writeFile), AssertError, "assertion 'this->write' failed");
 
         TEST_RESULT_STR(strPtr(storagePathNP(storage, NULL)), testPath(), "check base path");
         TEST_RESULT_STR(
@@ -1063,7 +1063,7 @@ testRun(void)
 
         TEST_ERROR(storagePathNP(storage, strNew("<" BOGUS_STR ">")), AssertError, "invalid expression '<BOGUS>'");
 
-        TEST_ERROR(storageNewWriteNP(storage, writeFile), AssertError, "function debug assertion 'this->write' failed");
+        TEST_ERROR(storageNewWriteNP(storage, writeFile), AssertError, "assertion 'this->write' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(storageHelper.storageSpoolWrite, NULL, "storage not cached");

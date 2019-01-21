@@ -50,14 +50,14 @@ Create a new InfoBackup object
 InfoBackup *
 infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STRING, fileName);
-        FUNCTION_DEBUG_PARAM(BOOL, ignoreMissing);
-        FUNCTION_DEBUG_PARAM(ENUM, cipherType);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
         // cipherPass omitted for security
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(fileName != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(fileName != NULL);
 
     InfoBackup *this = NULL;
 
@@ -140,7 +140,7 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
     MEM_CONTEXT_NEW_END();
 
     // Return buffer
-    FUNCTION_DEBUG_RESULT(INFO_BACKUP, this);
+    FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
 
 /***********************************************************************************************************************************
@@ -156,15 +156,15 @@ infoBackupCheckPg(
     uint32_t pgCatalogVersion,
     uint32_t pgControlVersion)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_BACKUP, this);
-        FUNCTION_DEBUG_PARAM(UINT, pgVersion);
-        FUNCTION_DEBUG_PARAM(UINT64, pgSystemId);
-        FUNCTION_DEBUG_PARAM(UINT32, pgCatalogVersion);
-        FUNCTION_DEBUG_PARAM(UINT32, pgControlVersion);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(UINT32, pgCatalogVersion);
+        FUNCTION_LOG_PARAM(UINT32, pgControlVersion);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     InfoPgData backupPg = infoPgDataCurrent(this->infoPg);
 
@@ -183,7 +183,7 @@ infoBackupCheckPg(
             pgControlVersion, pgCatalogVersion, backupPg.controlVersion, backupPg.catalogVersion)));
     }
 
-    FUNCTION_DEBUG_RESULT(UINT, backupPg.id);
+    FUNCTION_LOG_RETURN(UINT, backupPg.id);
 }
 
 /***********************************************************************************************************************************
@@ -194,11 +194,11 @@ infoBackupPg(const InfoBackup *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_BACKUP, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(INFO_PG, this->infoPg);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(INFO_PG, this->infoPg);
 }
 
 /***********************************************************************************************************************************
@@ -209,11 +209,11 @@ infoBackupDataTotal(const InfoBackup *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_BACKUP, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(UINT, (this->backup == NULL ? 0 : lstSize(this->backup)));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(UINT, (this->backup == NULL ? 0 : lstSize(this->backup)));
 }
 
 /***********************************************************************************************************************************
@@ -222,14 +222,14 @@ Return a structure of the backup data from a specific index
 InfoBackupData
 infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_BACKUP, this);
-        FUNCTION_DEBUG_PARAM(UINT, backupDataIdx);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(UINT, backupDataIdx);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
-    FUNCTION_DEBUG_RESULT(INFO_BACKUP_DATA, *((InfoBackupData *)lstGet(this->backup, backupDataIdx)));
+    FUNCTION_LOG_RETURN(INFO_BACKUP_DATA, *((InfoBackupData *)lstGet(this->backup, backupDataIdx)));
 }
 
 /***********************************************************************************************************************************
@@ -247,12 +247,12 @@ Free the info
 void
 infoBackupFree(InfoBackup *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(INFO_BACKUP, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

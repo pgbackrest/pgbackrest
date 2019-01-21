@@ -4,6 +4,7 @@ Debug Routines
 #ifndef COMMON_DEBUG_H
 #define COMMON_DEBUG_H
 
+#include "common/assert.h"
 #include "common/stackTrace.h"
 #include "common/type/convert.h"
 
@@ -30,65 +31,65 @@ Base function debugging macros
 In debug mode parameters will always be recorded in the stack trace while in production mode they will only be recorded when the log
 level is set to debug or trace.
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_LEVEL()                                                                                                     \
-    FUNCTION_DEBUG_logLevel
+#define FUNCTION_LOG_LEVEL()                                                                                                       \
+    FUNCTION_LOG_logLevel
 
 #ifdef DEBUG
-    #define FUNCTION_DEBUG_BEGIN_BASE(logLevel)                                                                                    \
-        LogLevel FUNCTION_DEBUG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                              \
+    #define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                      \
+        LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                \
                                                                                                                                    \
         {                                                                                                                          \
             stackTraceParamLog();
 
-    #define FUNCTION_DEBUG_END_BASE()                                                                                              \
-            LOG_WILL(FUNCTION_DEBUG_LEVEL(), 0, "(%s)", stackTraceParam());                                                        \
+    #define FUNCTION_LOG_END_BASE()                                                                                                \
+            LOG_WILL(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                          \
         }
 
-    #define FUNCTION_DEBUG_PARAM_BASE_BEGIN()                                                                                      \
+    #define FUNCTION_LOG_PARAM_BASE_BEGIN()                                                                                        \
         stackTraceTestStop()                                                                                                       \
 
-    #define FUNCTION_DEBUG_PARAM_BASE_END()                                                                                        \
+    #define FUNCTION_LOG_PARAM_BASE_END()                                                                                          \
         stackTraceTestStart()
 #else
-    #define FUNCTION_DEBUG_BEGIN_BASE(logLevel)                                                                                    \
-        LogLevel FUNCTION_DEBUG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                              \
+    #define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                      \
+        LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                \
                                                                                                                                    \
-        if (logWill(FUNCTION_DEBUG_LEVEL()))                                                                                       \
+        if (logWill(FUNCTION_LOG_LEVEL()))                                                                                         \
         {                                                                                                                          \
             stackTraceParamLog()
 
-    #define FUNCTION_DEBUG_END_BASE()                                                                                              \
-            LOG(FUNCTION_DEBUG_LEVEL(), 0, "(%s)", stackTraceParam());                                                             \
+    #define FUNCTION_LOG_END_BASE()                                                                                                \
+            LOG(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                               \
         }
 
-    #define FUNCTION_DEBUG_PARAM_BASE_BEGIN()
-    #define FUNCTION_DEBUG_PARAM_BASE_END()
+    #define FUNCTION_LOG_PARAM_BASE_BEGIN()
+    #define FUNCTION_LOG_PARAM_BASE_END()
 #endif
 
 /***********************************************************************************************************************************
 General purpose function debugging macros
 
-FUNCTION_DEBUG_VOID() is provided as a shortcut for functions that have no parameters.
+FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no parameters.
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_BEGIN(logLevel)                                                                                             \
-    FUNCTION_DEBUG_BEGIN_BASE(logLevel)
+#define FUNCTION_LOG_BEGIN(logLevel)                                                                                               \
+    FUNCTION_LOG_BEGIN_BASE(logLevel)
 
-#define FUNCTION_DEBUG_END()                                                                                                       \
-    FUNCTION_DEBUG_END_BASE()
+#define FUNCTION_LOG_END()                                                                                                         \
+    FUNCTION_LOG_END_BASE()
 
-#define FUNCTION_DEBUG_VOID(logLevel)                                                                                              \
-    FUNCTION_DEBUG_BEGIN_BASE(logLevel);                                                                                           \
-    FUNCTION_DEBUG_END_BASE()
+#define FUNCTION_LOG_VOID(logLevel)                                                                                                \
+    FUNCTION_LOG_BEGIN_BASE(logLevel);                                                                                             \
+    FUNCTION_LOG_END_BASE()
 
-#define FUNCTION_DEBUG_PARAM(typeMacroPrefix, param)                                                                               \
-    FUNCTION_DEBUG_PARAM_BASE_BEGIN();                                                                                             \
-    stackTraceParamAdd(FUNCTION_DEBUG_##typeMacroPrefix##_FORMAT(param, stackTraceParamBuffer(#param), STACK_TRACE_PARAM_MAX));    \
-    FUNCTION_DEBUG_PARAM_BASE_END()
+#define FUNCTION_LOG_PARAM(typeMacroPrefix, param)                                                                                 \
+    FUNCTION_LOG_PARAM_BASE_BEGIN();                                                                                               \
+    stackTraceParamAdd(FUNCTION_LOG_##typeMacroPrefix##_FORMAT(param, stackTraceParamBuffer(#param), STACK_TRACE_PARAM_MAX));      \
+    FUNCTION_LOG_PARAM_BASE_END()
 
-#define FUNCTION_DEBUG_PARAM_PTR(typeName, param)                                                                                  \
-    FUNCTION_DEBUG_PARAM_BASE_BEGIN();                                                                                             \
+#define FUNCTION_LOG_PARAM_PTR(typeName, param)                                                                                    \
+    FUNCTION_LOG_PARAM_BASE_BEGIN();                                                                                               \
     stackTraceParamAdd(ptrToLog(param, typeName, stackTraceParamBuffer(#param), STACK_TRACE_PARAM_MAX   ));                        \
-    FUNCTION_DEBUG_PARAM_BASE_END()
+    FUNCTION_LOG_PARAM_BASE_END()
 
 /***********************************************************************************************************************************
 Functions and macros to render various data types
@@ -97,175 +98,162 @@ size_t objToLog(const void *object, const char *objectName, char *buffer, size_t
 size_t ptrToLog(const void *pointer, const char *pointerName, char *buffer, size_t bufferSize);
 size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
 
-#define FUNCTION_DEBUG_BOOL_TYPE                                                                                                   \
+#define FUNCTION_LOG_BOOL_TYPE                                                                                                     \
     bool
-#define FUNCTION_DEBUG_BOOL_FORMAT(value, buffer, bufferSize)                                                                      \
+#define FUNCTION_LOG_BOOL_FORMAT(value, buffer, bufferSize)                                                                        \
     cvtBoolToZ(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_BOOLP_TYPE                                                                                                  \
+#define FUNCTION_LOG_BOOLP_TYPE                                                                                                    \
     bool *
-#define FUNCTION_DEBUG_BOOLP_FORMAT(value, buffer, bufferSize)                                                                     \
+#define FUNCTION_LOG_BOOLP_FORMAT(value, buffer, bufferSize)                                                                       \
     ptrToLog(value, "bool *", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_CHAR_TYPE                                                                                                   \
+#define FUNCTION_LOG_CHAR_TYPE                                                                                                     \
     char
-#define FUNCTION_DEBUG_CHAR_FORMAT(value, buffer, bufferSize)                                                                      \
+#define FUNCTION_LOG_CHAR_FORMAT(value, buffer, bufferSize)                                                                        \
     cvtCharToZ(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_CHARP_TYPE                                                                                                  \
+#define FUNCTION_LOG_CHARP_TYPE                                                                                                    \
     char *
-#define FUNCTION_DEBUG_CHARP_FORMAT(value, buffer, bufferSize)                                                                     \
+#define FUNCTION_LOG_CHARP_FORMAT(value, buffer, bufferSize)                                                                       \
     ptrToLog(value, "char *", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_CONST_CHARPP_TYPE                                                                                           \
+#define FUNCTION_LOG_CONST_CHARPP_TYPE                                                                                             \
     const char **
-#define FUNCTION_DEBUG_CONST_CHARPP_FORMAT(value, buffer, bufferSize)                                                              \
+#define FUNCTION_LOG_CONST_CHARPP_FORMAT(value, buffer, bufferSize)                                                                \
     ptrToLog(value, "char **", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_CHARPY_TYPE                                                                                                 \
+#define FUNCTION_LOG_CHARPY_TYPE                                                                                                   \
     char *[]
-#define FUNCTION_DEBUG_CHARPY_FORMAT(value, buffer, bufferSize)                                                                    \
+#define FUNCTION_LOG_CHARPY_FORMAT(value, buffer, bufferSize)                                                                      \
     ptrToLog(value, "char *[]", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_DOUBLE_TYPE                                                                                                 \
+#define FUNCTION_LOG_DOUBLE_TYPE                                                                                                   \
     double
-#define FUNCTION_DEBUG_DOUBLE_FORMAT(value, buffer, bufferSize)                                                                    \
+#define FUNCTION_LOG_DOUBLE_FORMAT(value, buffer, bufferSize)                                                                      \
     cvtDoubleToZ(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_DOUBLEP_TYPE                                                                                                \
+#define FUNCTION_LOG_DOUBLEP_TYPE                                                                                                  \
     double *
-#define FUNCTION_DEBUG_DOUBLEP_FORMAT(value, buffer, bufferSize)                                                                   \
+#define FUNCTION_LOG_DOUBLEP_FORMAT(value, buffer, bufferSize)                                                                     \
     ptrToLog(value, "double *", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_INT_TYPE                                                                                                    \
+#define FUNCTION_LOG_INT_TYPE                                                                                                      \
     int
-#define FUNCTION_DEBUG_INT_FORMAT(value, buffer, bufferSize)                                                                       \
+#define FUNCTION_LOG_INT_FORMAT(value, buffer, bufferSize)                                                                         \
     cvtIntToZ(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_INTP_TYPE                                                                                                   \
+#define FUNCTION_LOG_INTP_TYPE                                                                                                     \
     int *
-#define FUNCTION_DEBUG_INTP_FORMAT(value, buffer, bufferSize)                                                                      \
+#define FUNCTION_LOG_INTP_FORMAT(value, buffer, bufferSize)                                                                        \
     ptrToLog(value, "int *", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_INT64_TYPE                                                                                                  \
+#define FUNCTION_LOG_INT64_TYPE                                                                                                    \
     int64_t
-#define FUNCTION_DEBUG_INT64_FORMAT(value, buffer, bufferSize)                                                                     \
+#define FUNCTION_LOG_INT64_FORMAT(value, buffer, bufferSize)                                                                       \
     cvtInt64ToZ(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_ENUM_TYPE                                                                                                   \
+#define FUNCTION_LOG_ENUM_TYPE                                                                                                     \
     unsigned int
-#define FUNCTION_DEBUG_ENUM_FORMAT(value, buffer, bufferSize)                                                                      \
-    FUNCTION_DEBUG_UINT_FORMAT(value, buffer, bufferSize)
+#define FUNCTION_LOG_ENUM_FORMAT(value, buffer, bufferSize)                                                                        \
+    FUNCTION_LOG_UINT_FORMAT(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_FUNCTIONP_FORMAT(value, buffer, bufferSize)                                                                 \
+#define FUNCTION_LOG_FUNCTIONP_FORMAT(value, buffer, bufferSize)                                                                   \
     ptrToLog(value == NULL ? NULL : (void *)1, "function *", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_MODE_TYPE                                                                                                   \
+#define FUNCTION_LOG_MODE_TYPE                                                                                                     \
     mode_t
-#define FUNCTION_DEBUG_MODE_FORMAT(value, buffer, bufferSize)                                                                      \
+#define FUNCTION_LOG_MODE_FORMAT(value, buffer, bufferSize)                                                                        \
     cvtModeToZ(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_TIMEMSEC_TYPE                                                                                               \
+#define FUNCTION_LOG_TIMEMSEC_TYPE                                                                                                 \
     TimeMSec
-#define FUNCTION_DEBUG_TIMEMSEC_FORMAT(value, buffer, bufferSize)                                                                  \
+#define FUNCTION_LOG_TIMEMSEC_FORMAT(value, buffer, bufferSize)                                                                    \
     cvtUInt64ToZ(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_UCHARP_TYPE                                                                                                 \
+#define FUNCTION_LOG_UCHARP_TYPE                                                                                                   \
     unsigned char *
-#define FUNCTION_DEBUG_UCHARP_FORMAT(value, buffer, bufferSize)                                                                    \
+#define FUNCTION_LOG_UCHARP_FORMAT(value, buffer, bufferSize)                                                                      \
     ptrToLog(value, "unsigned char *", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_SIZE_TYPE                                                                                                   \
+#define FUNCTION_LOG_SIZE_TYPE                                                                                                     \
     size_t
-#define FUNCTION_DEBUG_SIZE_FORMAT(value, buffer, bufferSize)                                                                      \
+#define FUNCTION_LOG_SIZE_FORMAT(value, buffer, bufferSize)                                                                        \
     cvtSizeToZ(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_UINT_TYPE                                                                                                   \
+#define FUNCTION_LOG_UINT_TYPE                                                                                                     \
     unsigned int
-#define FUNCTION_DEBUG_UINT_FORMAT(value, buffer, bufferSize)                                                                      \
+#define FUNCTION_LOG_UINT_FORMAT(value, buffer, bufferSize)                                                                        \
     cvtUIntToZ(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_UINTP_TYPE                                                                                                  \
+#define FUNCTION_LOG_UINTP_TYPE                                                                                                    \
     unsigned int *
-#define FUNCTION_DEBUG_UINTP_FORMAT(value, buffer, bufferSize)                                                                     \
+#define FUNCTION_LOG_UINTP_FORMAT(value, buffer, bufferSize)                                                                       \
     ptrToLog(value, "unsigned int *", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_UINT16_TYPE                                                                                                 \
+#define FUNCTION_LOG_UINT16_TYPE                                                                                                   \
     uint16_t
-#define FUNCTION_DEBUG_UINT16_FORMAT(value, buffer, bufferSize)                                                                    \
-    FUNCTION_DEBUG_UINT_FORMAT(value, buffer, bufferSize)
+#define FUNCTION_LOG_UINT16_FORMAT(value, buffer, bufferSize)                                                                      \
+    FUNCTION_LOG_UINT_FORMAT(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_UINT32_TYPE                                                                                                 \
+#define FUNCTION_LOG_UINT32_TYPE                                                                                                   \
     uint32_t
-#define FUNCTION_DEBUG_UINT32_FORMAT(value, buffer, bufferSize)                                                                    \
-    FUNCTION_DEBUG_UINT_FORMAT(value, buffer, bufferSize)
+#define FUNCTION_LOG_UINT32_FORMAT(value, buffer, bufferSize)                                                                      \
+    FUNCTION_LOG_UINT_FORMAT(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_UINT64_TYPE                                                                                                 \
+#define FUNCTION_LOG_UINT64_TYPE                                                                                                   \
     uint64_t
-#define FUNCTION_DEBUG_UINT64_FORMAT(value, buffer, bufferSize)                                                                    \
+#define FUNCTION_LOG_UINT64_FORMAT(value, buffer, bufferSize)                                                                      \
     cvtUInt64ToZ(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_VOIDP_TYPE                                                                                                  \
+#define FUNCTION_LOG_VOIDP_TYPE                                                                                                    \
     void *
-#define FUNCTION_DEBUG_VOIDP_FORMAT(value, buffer, bufferSize)                                                                     \
+#define FUNCTION_LOG_VOIDP_FORMAT(value, buffer, bufferSize)                                                                       \
     ptrToLog(value, "void *", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_CONST_VOIDP_TYPE                                                                                            \
+#define FUNCTION_LOG_CONST_VOIDP_TYPE                                                                                              \
     const void *
-#define FUNCTION_DEBUG_CONST_VOIDP_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_DEBUG_VOIDP_FORMAT(value, buffer, bufferSize)
+#define FUNCTION_LOG_CONST_VOIDP_FORMAT(value, buffer, bufferSize)                                                                 \
+    FUNCTION_LOG_VOIDP_FORMAT(value, buffer, bufferSize)
 
-#define FUNCTION_DEBUG_VOIDPP_TYPE                                                                                                 \
+#define FUNCTION_LOG_VOIDPP_TYPE                                                                                                   \
     void **
-#define FUNCTION_DEBUG_VOIDPP_FORMAT(value, buffer, bufferSize)                                                                    \
+#define FUNCTION_LOG_VOIDPP_FORMAT(value, buffer, bufferSize)                                                                      \
     ptrToLog(value, "void **", buffer, bufferSize)
 
-#define FUNCTION_DEBUG_STRINGZ_TYPE                                                                                                \
+#define FUNCTION_LOG_STRINGZ_TYPE                                                                                                  \
     const char *
-#define FUNCTION_DEBUG_STRINGZ_FORMAT(value, buffer, bufferSize)                                                                   \
+#define FUNCTION_LOG_STRINGZ_FORMAT(value, buffer, bufferSize)                                                                     \
     strzToLog(value, buffer, bufferSize)
-
-/***********************************************************************************************************************************
-Assert function to be used with function debugging
-
-The assert statement is compiled into production code but only runs when the log level >= debug
-***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_ASSERT(condition)                                                                                           \
-    do                                                                                                                             \
-    {                                                                                                                              \
-        if (!(condition))                                                                                                          \
-            THROW_FMT(AssertError, "function debug assertion '%s' failed", #condition);                                            \
-    }                                                                                                                              \
-    while (0)
 
 /***********************************************************************************************************************************
 Macros to return function results (or void)
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_RESULT(typeMacroPrefix, result)                                                                             \
+#define FUNCTION_LOG_RETURN(typeMacroPrefix, result)                                                                               \
     do                                                                                                                             \
     {                                                                                                                              \
-        FUNCTION_DEBUG_##typeMacroPrefix##_TYPE FUNCTION_DEBUG_RESULT_result = result;                                             \
+        FUNCTION_LOG_##typeMacroPrefix##_TYPE FUNCTION_LOG_RETURN_result = result;                                                 \
                                                                                                                                    \
         STACK_TRACE_POP();                                                                                                         \
                                                                                                                                    \
-        if (logWill(FUNCTION_DEBUG_LEVEL()))                                                                                       \
+        if (logWill(FUNCTION_LOG_LEVEL()))                                                                                         \
         {                                                                                                                          \
             char buffer[STACK_TRACE_PARAM_MAX];                                                                                    \
                                                                                                                                    \
-            FUNCTION_DEBUG_##typeMacroPrefix##_FORMAT(FUNCTION_DEBUG_RESULT_result, buffer, sizeof(buffer));                       \
-            LOG(FUNCTION_DEBUG_LEVEL(), 0, "=> %s", buffer);                                                                       \
+            FUNCTION_LOG_##typeMacroPrefix##_FORMAT(FUNCTION_LOG_RETURN_result, buffer, sizeof(buffer));                           \
+            LOG(FUNCTION_LOG_LEVEL(), 0, "=> %s", buffer);                                                                         \
         }                                                                                                                          \
                                                                                                                                    \
-        return FUNCTION_DEBUG_RESULT_result;                                                                                       \
+        return FUNCTION_LOG_RETURN_result;                                                                                         \
     }                                                                                                                              \
     while(0)
 
-#define FUNCTION_DEBUG_RESULT_VOID()                                                                                               \
+#define FUNCTION_LOG_RETURN_VOID()                                                                                                 \
     do                                                                                                                             \
     {                                                                                                                              \
         STACK_TRACE_POP();                                                                                                         \
                                                                                                                                    \
-        LOG_WILL(FUNCTION_DEBUG_LEVEL(), 0, "=> void");                                                                            \
+        LOG_WILL(FUNCTION_LOG_LEVEL(), 0, "=> void");                                                                              \
     }                                                                                                                              \
     while(0)
 
@@ -283,10 +271,10 @@ test macros are compiled out.
             stackTraceParamLog()
 
     #define FUNCTION_TEST_PARAM(typeMacroPrefix, param)                                                                            \
-        FUNCTION_DEBUG_PARAM(typeMacroPrefix, param)
+        FUNCTION_LOG_PARAM(typeMacroPrefix, param)
 
     #define FUNCTION_TEST_PARAM_PTR(typeName, param)                                                                               \
-        FUNCTION_DEBUG_PARAM_PTR(typeName, param)
+        FUNCTION_LOG_PARAM_PTR(typeName, param)
 
     #define FUNCTION_TEST_END()                                                                                                    \
         }
@@ -295,27 +283,19 @@ test macros are compiled out.
         FUNCTION_TEST_BEGIN();                                                                                                     \
         FUNCTION_TEST_END();
 
-    #define FUNCTION_TEST_ASSERT(condition)                                                                                        \
+    #define FUNCTION_TEST_RETURN(typeMacroPrefix, result)                                                                          \
         do                                                                                                                         \
         {                                                                                                                          \
-            if (!(condition))                                                                                                      \
-                THROW_FMT(AssertError, "function test assertion '%s' failed", #condition);                                         \
-        }                                                                                                                          \
-        while (0)
-
-    #define FUNCTION_TEST_RESULT(typeMacroPrefix, result)                                                                          \
-        do                                                                                                                         \
-        {                                                                                                                          \
-            FUNCTION_DEBUG_##typeMacroPrefix##_TYPE FUNCTION_DEBUG_RESULT_result = result;                                         \
+            FUNCTION_LOG_##typeMacroPrefix##_TYPE FUNCTION_LOG_RETURN_result = result;                                             \
                                                                                                                                    \
             if (stackTraceTest())                                                                                                  \
                 STACK_TRACE_POP();                                                                                                 \
                                                                                                                                    \
-            return FUNCTION_DEBUG_RESULT_result;                                                                                   \
+            return FUNCTION_LOG_RETURN_result;                                                                                     \
         }                                                                                                                          \
         while(0);
 
-    #define FUNCTION_TEST_RESULT_VOID()                                                                                            \
+    #define FUNCTION_TEST_RETURN_VOID()                                                                                            \
         do                                                                                                                         \
         {                                                                                                                          \
             if (stackTraceTest())                                                                                                  \
@@ -328,10 +308,9 @@ test macros are compiled out.
     #define FUNCTION_TEST_PARAM_PTR(typeName, param)
     #define FUNCTION_TEST_END()
     #define FUNCTION_TEST_VOID()
-    #define FUNCTION_TEST_ASSERT(condition)
-    #define FUNCTION_TEST_RESULT(typeMacroPrefix, result)                                                                          \
+    #define FUNCTION_TEST_RETURN(typeMacroPrefix, result)                                                                          \
         return result
-    #define FUNCTION_TEST_RESULT_VOID()
+    #define FUNCTION_TEST_RETURN_VOID()
 #endif
 
 #endif

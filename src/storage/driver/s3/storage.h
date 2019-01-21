@@ -67,9 +67,9 @@ void storageDriverS3Free(StorageDriverS3 *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_DRIVER_S3_TYPE                                                                                      \
+#define FUNCTION_LOG_STORAGE_DRIVER_S3_TYPE                                                                                        \
     StorageDriverS3 *
-#define FUNCTION_DEBUG_STORAGE_DRIVER_S3_FORMAT(value, buffer, bufferSize)                                                         \
+#define FUNCTION_LOG_STORAGE_DRIVER_S3_FORMAT(value, buffer, bufferSize)                                                           \
     objToLog(value, "StorageDriverS3", buffer, bufferSize)
 
 #endif

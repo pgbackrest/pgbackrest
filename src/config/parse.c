@@ -6,7 +6,6 @@ Command and Option Parse
 #include <strings.h>
 #include <unistd.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/ini.h"
@@ -98,12 +97,12 @@ Convert the value passed into bytes and update valueDbl for range checking
 void
 convertToByte(String **value, double *valueDbl)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRINGP, value);
-        FUNCTION_DEBUG_PARAM(DOUBLEP, valueDbl);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRINGP, value);
+        FUNCTION_LOG_PARAM(DOUBLEP, valueDbl);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(valueDbl != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(valueDbl != NULL);
 
     // Make a copy of the value so it is not updated until we know the conversion will succeed
     String *result = strLower(strDup(*value));
@@ -181,7 +180,7 @@ convertToByte(String **value, double *valueDbl)
     else
         THROW_FMT(FormatError, "value '%s' is not valid", strPtr(*value));
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -219,17 +218,17 @@ cfgFileLoad(                                                        // NOTE: Pas
     const String *optConfigIncludePathDefault,                      // Current default for --config-include-path option
     const String *origConfigDefault)                                // Original --config option default (/etc/pgbackrest.conf)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM_PTR("ParseOption *", optionList);
-        FUNCTION_DEBUG_PARAM(STRING, optConfigDefault);
-        FUNCTION_DEBUG_PARAM(STRING, optConfigIncludePathDefault);
-        FUNCTION_DEBUG_PARAM(STRING, origConfigDefault);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_PTR("ParseOption *", optionList);
+        FUNCTION_LOG_PARAM(STRING, optConfigDefault);
+        FUNCTION_LOG_PARAM(STRING, optConfigIncludePathDefault);
+        FUNCTION_LOG_PARAM(STRING, origConfigDefault);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(optionList != NULL);
-        FUNCTION_TEST_ASSERT(optConfigDefault != NULL);
-        FUNCTION_TEST_ASSERT(optConfigIncludePathDefault != NULL);
-        FUNCTION_TEST_ASSERT(origConfigDefault != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(optionList != NULL);
+    ASSERT(optConfigDefault != NULL);
+    ASSERT(optConfigIncludePathDefault != NULL);
+    ASSERT(origConfigDefault != NULL);
 
     bool loadConfig = true;
     bool loadConfigInclude = true;
@@ -357,7 +356,7 @@ cfgFileLoad(                                                        // NOTE: Pas
         }
     }
 
-    FUNCTION_DEBUG_RESULT(STRING, result);
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -369,10 +368,10 @@ logic to this critical path code.
 void
 configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(UINT, argListSize);
-        FUNCTION_DEBUG_PARAM(CHARPY, argList);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(UINT, argListSize);
+        FUNCTION_LOG_PARAM(CHARPY, argList);
+    FUNCTION_LOG_END();
 
     // Initialize configuration
     cfgInit();
@@ -459,7 +458,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     bool reset = option & PARSE_RESET_FLAG;
 
                     // Make sure the option id is valid
-                    ASSERT_DEBUG(optionId < CFG_OPTION_TOTAL);
+                    ASSERT(optionId < CFG_OPTION_TOTAL);
 
                     // Error if this option is secure and cannot be passed on the command line
                     if (cfgDefOptionSecure(cfgOptionDefIdFromId(optionId)))
@@ -567,7 +566,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 {
                     // Find the first = char
                     const char *equalPtr = strchr(keyValue, '=');
-                    ASSERT_DEBUG(equalPtr != NULL);
+                    ASSERT(equalPtr != NULL);
 
                     // Get key and value
                     String *key = strReplaceChr(
@@ -1065,5 +1064,5 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

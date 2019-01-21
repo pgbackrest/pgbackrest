@@ -60,9 +60,9 @@ Buffer *cryptoHmacOne(const String *type, const Buffer *key, const Buffer *messa
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_CRYPTO_HASH_TYPE                                                                                           \
+#define FUNCTION_LOG_CRYPTO_HASH_TYPE                                                                                              \
     CryptoHash *
-#define FUNCTION_DEBUG_CRYPTO_HASH_FORMAT(value, buffer, bufferSize)                                                              \
+#define FUNCTION_LOG_CRYPTO_HASH_FORMAT(value, buffer, bufferSize)                                                                 \
     objToLog(value, "CryptoHash", buffer, bufferSize)
 
 #endif

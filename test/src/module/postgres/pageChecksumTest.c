@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 Test Page Checksums
 ***********************************************************************************************************************************/
-#include "common/assert.h"
 
 /***********************************************************************************************************************************
 Page data for testing -- use 8192 for page size since this is the most common value
@@ -76,7 +75,7 @@ testRun(void)
         // Check that assertion fails if page buffer and page size are not divisible
         TEST_ERROR(
             pageChecksumBufferTest(testPage(0), TEST_PAGE_TOTAL * TEST_PAGE_SIZE - 1, 0, TEST_PAGE_SIZE, 0, 0),
-            AssertError, "function debug assertion 'pageBufferSize % pageSize == 0' failed");
+            AssertError, "assertion 'pageBufferSize % pageSize == 0' failed");
 
         // Create pages that will pass the test (starting with block 0)
         for (unsigned int pageIdx = 0; pageIdx < TEST_PAGE_TOTAL; pageIdx++)
@@ -107,7 +106,7 @@ testRun(void)
 
         // Break the checksum for a page and make sure it is found
         unsigned int pageInvalid = 7;
-        ASSERT_DEBUG(pageInvalid < TEST_PAGE_TOTAL);
+        ASSERT(pageInvalid < TEST_PAGE_TOTAL);
         ((PageHeader)testPage(pageInvalid))->pd_checksum = 0xEEEE;
 
         TEST_RESULT_BOOL(

@@ -44,9 +44,9 @@ void storageDriverRemoteFileReadFree(StorageDriverRemoteFileRead *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_STORAGE_DRIVER_REMOTE_FILE_READ_TYPE                                                                        \
+#define FUNCTION_LOG_STORAGE_DRIVER_REMOTE_FILE_READ_TYPE                                                                          \
     StorageDriverRemoteFileRead *
-#define FUNCTION_DEBUG_STORAGE_DRIVER_REMOTE_FILE_READ_FORMAT(value, buffer, bufferSize)                                           \
+#define FUNCTION_LOG_STORAGE_DRIVER_REMOTE_FILE_READ_FORMAT(value, buffer, bufferSize)                                             \
     objToLog(value, "StorageDriverRemoteFileRead", buffer, bufferSize)
 
 #endif

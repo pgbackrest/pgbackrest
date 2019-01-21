@@ -35,7 +35,7 @@ httpQueryNew(void)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_TEST_RESULT(HTTP_QUERY, this);
+    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
 }
 
 /***********************************************************************************************************************************
@@ -48,11 +48,11 @@ httpQueryAdd(HttpQuery *this, const String *key, const String *value)
         FUNCTION_TEST_PARAM(HTTP_QUERY, this);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_TEST_PARAM(STRING, value);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+    ASSERT(value != NULL);
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -67,7 +67,7 @@ httpQueryAdd(HttpQuery *this, const String *key, const String *value)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(HTTP_QUERY, this);
+    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
 }
 
 /***********************************************************************************************************************************
@@ -79,10 +79,10 @@ httpQueryGet(const HttpQuery *this, const String *key)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_QUERY, this);
         FUNCTION_TEST_PARAM(STRING, key);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
 
     String *result = NULL;
 
@@ -92,7 +92,7 @@ httpQueryGet(const HttpQuery *this, const String *key)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -103,11 +103,11 @@ httpQueryList(const HttpQuery *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_QUERY, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(STRING_LIST, strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STRING_LIST, strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
 }
 
 /***********************************************************************************************************************************
@@ -119,14 +119,14 @@ httpQueryMove(HttpQuery *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_QUERY, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RESULT(HTTP_QUERY, this);
+    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
 }
 
 /***********************************************************************************************************************************
@@ -139,11 +139,11 @@ httpQueryPut(HttpQuery *this, const String *key, const String *value)
         FUNCTION_TEST_PARAM(HTTP_QUERY, this);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_TEST_PARAM(STRING, value);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
-        FUNCTION_TEST_ASSERT(value != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+    ASSERT(value != NULL);
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -152,7 +152,7 @@ httpQueryPut(HttpQuery *this, const String *key, const String *value)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(HTTP_QUERY, this);
+    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
 }
 
 /***********************************************************************************************************************************
@@ -191,7 +191,7 @@ httpQueryRender(const HttpQuery *this)
         }
     }
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -231,5 +231,5 @@ httpQueryFree(HttpQuery *this)
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

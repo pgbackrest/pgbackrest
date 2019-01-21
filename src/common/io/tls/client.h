@@ -55,9 +55,9 @@ void tlsClientFree(TlsClient *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_TLS_CLIENT_TYPE                                                                                             \
+#define FUNCTION_LOG_TLS_CLIENT_TYPE                                                                                               \
     TlsClient *
-#define FUNCTION_DEBUG_TLS_CLIENT_FORMAT(value, buffer, bufferSize)                                                                \
+#define FUNCTION_LOG_TLS_CLIENT_FORMAT(value, buffer, bufferSize)                                                                  \
     objToLog(value, "TlsClient", buffer, bufferSize)
 
 #endif

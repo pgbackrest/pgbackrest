@@ -30,9 +30,9 @@ IoRead *ioReadNew(void *driver, IoReadInterface interface);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_IO_READ_INTERFACE_TYPE                                                                                      \
+#define FUNCTION_LOG_IO_READ_INTERFACE_TYPE                                                                                        \
     IoReadInterface
-#define FUNCTION_DEBUG_IO_READ_INTERFACE_FORMAT(value, buffer, bufferSize)                                                         \
+#define FUNCTION_LOG_IO_READ_INTERFACE_FORMAT(value, buffer, bufferSize)                                                           \
     objToLog(&value, "IoReadInterface", buffer, bufferSize)
 
 #endif

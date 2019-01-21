@@ -3,8 +3,6 @@ Test IO
 ***********************************************************************************************************************************/
 #include <fcntl.h>
 
-#include "common/assert.h"
-
 #include "common/harnessFork.h"
 
 /***********************************************************************************************************************************
@@ -77,19 +75,19 @@ typedef struct IoTestFilterSize
 static void
 ioTestFilterSizeProcess(IoTestFilterSize *this, const Buffer *buffer)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(VOIDP, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
-        FUNCTION_DEBUG_PARAM(STRING, ioFilterType(this->filter));
-        FUNCTION_DEBUG_PARAM(SIZE, this->size);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(VOIDP, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+        FUNCTION_LOG_PARAM(STRING, ioFilterType(this->filter));
+        FUNCTION_LOG_PARAM(SIZE, this->size);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(buffer != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
 
     this->size += bufUsed(buffer);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 static const Variant *
@@ -134,14 +132,14 @@ typedef struct IoTestFilterMultiply
 static void
 ioTestFilterMultiplyProcess(IoTestFilterMultiply *this, const Buffer *input, Buffer *output)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(VOIDP, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, input);
-        FUNCTION_DEBUG_PARAM(BUFFER, output);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(VOIDP, this);
+        FUNCTION_LOG_PARAM(BUFFER, input);
+        FUNCTION_LOG_PARAM(BUFFER, output);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(output != NULL && bufRemains(output) > 0);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(output != NULL && bufRemains(output) > 0);
 
     if (input == NULL)
     {
@@ -172,7 +170,7 @@ ioTestFilterMultiplyProcess(IoTestFilterMultiply *this, const Buffer *input, Buf
             this->multiplyBuffer = NULL;
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 static bool

@@ -4,7 +4,6 @@ Storage Interface
 #include <stdio.h>
 #include <string.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -38,30 +37,30 @@ storageNew(
     const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write, bool pathResolve,
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, type);
-        FUNCTION_DEBUG_PARAM(STRING, path);
-        FUNCTION_DEBUG_PARAM(MODE, modeFile);
-        FUNCTION_DEBUG_PARAM(MODE, modePath);
-        FUNCTION_DEBUG_PARAM(BOOL, write);
-        FUNCTION_DEBUG_PARAM(BOOL, pathResolve);
-        FUNCTION_DEBUG_PARAM(FUNCTIONP, pathExpressionFunction);
-        FUNCTION_DEBUG_PARAM(VOIDP, driver);
-        FUNCTION_DEBUG_PARAM(STORAGE_INTERFACE, interface);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(MODE, modeFile);
+        FUNCTION_LOG_PARAM(MODE, modePath);
+        FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(BOOL, pathResolve);
+        FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
+        FUNCTION_LOG_PARAM(VOIDP, driver);
+        FUNCTION_LOG_PARAM(STORAGE_INTERFACE, interface);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(type != NULL);
-        FUNCTION_TEST_ASSERT(path != NULL && strSize(path) >= 1 && strPtr(path)[0] == '/');
-        FUNCTION_TEST_ASSERT(driver != NULL);
-        FUNCTION_TEST_ASSERT(interface.exists != NULL);
-        FUNCTION_TEST_ASSERT(interface.info != NULL);
-        FUNCTION_TEST_ASSERT(interface.list != NULL);
-        FUNCTION_TEST_ASSERT(interface.newRead != NULL);
-        FUNCTION_TEST_ASSERT(interface.newWrite != NULL);
-        FUNCTION_TEST_ASSERT(interface.pathCreate != NULL);
-        FUNCTION_TEST_ASSERT(interface.pathRemove != NULL);
-        FUNCTION_TEST_ASSERT(interface.pathSync != NULL);
-        FUNCTION_TEST_ASSERT(interface.remove != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(type != NULL);
+    ASSERT(path != NULL && strSize(path) >= 1 && strPtr(path)[0] == '/');
+    ASSERT(driver != NULL);
+    ASSERT(interface.exists != NULL);
+    ASSERT(interface.info != NULL);
+    ASSERT(interface.list != NULL);
+    ASSERT(interface.newRead != NULL);
+    ASSERT(interface.newWrite != NULL);
+    ASSERT(interface.pathCreate != NULL);
+    ASSERT(interface.pathRemove != NULL);
+    ASSERT(interface.pathSync != NULL);
+    ASSERT(interface.remove != NULL);
 
     Storage *this = NULL;
     this = (Storage *)memNew(sizeof(Storage));
@@ -77,7 +76,7 @@ storageNew(
     this->pathResolve = pathResolve;
     this->pathExpressionFunction = pathExpressionFunction;
 
-    FUNCTION_DEBUG_RESULT(STORAGE, this);
+    FUNCTION_LOG_RETURN(STORAGE, this);
 }
 
 /***********************************************************************************************************************************
@@ -86,13 +85,13 @@ Copy a file
 bool
 storageCopy(StorageFileRead *source, StorageFileWrite *destination)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ, source);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE, destination);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_READ, source);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE, destination);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(source != NULL);
-        FUNCTION_TEST_ASSERT(destination != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(source != NULL);
+    ASSERT(destination != NULL);
 
     bool result = false;
 
@@ -125,7 +124,7 @@ storageCopy(StorageFileRead *source, StorageFileWrite *destination)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -134,13 +133,13 @@ Does a file exist? This function is only for files, not directories.
 bool
 storageExists(const Storage *this, const String *pathExp, StorageExistsParam param)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, this);
-        FUNCTION_DEBUG_PARAM(STRING, pathExp);
-        FUNCTION_DEBUG_PARAM(TIMEMSEC, param.timeout);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, pathExp);
+        FUNCTION_LOG_PARAM(TIMEMSEC, param.timeout);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     bool result = false;
 
@@ -162,7 +161,7 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -171,12 +170,12 @@ Read from storage into a buffer
 Buffer *
 storageGet(StorageFileRead *file, StorageGetParam param)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ, file);
-        FUNCTION_DEBUG_PARAM(SIZE, param.exactSize);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_READ, file);
+        FUNCTION_LOG_PARAM(SIZE, param.exactSize);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(file != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(file != NULL);
 
     Buffer *result = NULL;
 
@@ -224,7 +223,7 @@ storageGet(StorageFileRead *file, StorageGetParam param)
         ioReadClose(storageFileReadIo(file));
     }
 
-    FUNCTION_DEBUG_RESULT(BUFFER, result);
+    FUNCTION_LOG_RETURN(BUFFER, result);
 }
 
 /***********************************************************************************************************************************
@@ -233,13 +232,13 @@ File/path info
 StorageInfo
 storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, this);
-        FUNCTION_DEBUG_PARAM(STRING, fileExp);
-        FUNCTION_DEBUG_PARAM(BOOL, param.ignoreMissing);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, fileExp);
+        FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     StorageInfo result = {0};
 
@@ -253,7 +252,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STORAGE_INFO, result);
+    FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
 
 /***********************************************************************************************************************************
@@ -262,14 +261,14 @@ Get a list of files from a directory
 StringList *
 storageList(const Storage *this, const String *pathExp, StorageListParam param)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, this);
-        FUNCTION_DEBUG_PARAM(STRING, pathExp);
-        FUNCTION_DEBUG_PARAM(BOOL, param.errorOnMissing);
-        FUNCTION_DEBUG_PARAM(STRING, param.expression);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, pathExp);
+        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+        FUNCTION_LOG_PARAM(STRING, param.expression);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     StringList *result = NULL;
 
@@ -283,7 +282,7 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING_LIST, result);
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -292,17 +291,17 @@ Move a file
 void
 storageMove(const Storage *this, StorageFileRead *source, StorageFileWrite *destination)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_READ, source);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE, destination);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_READ, source);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE, destination);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this->interface.move != NULL);
-        FUNCTION_TEST_ASSERT(source != NULL);
-        FUNCTION_TEST_ASSERT(destination != NULL);
-        FUNCTION_DEBUG_ASSERT(!storageFileReadIgnoreMissing(source));
-        FUNCTION_DEBUG_ASSERT(strEq(this->type, storageFileReadType(source)));
-        FUNCTION_DEBUG_ASSERT(strEq(storageFileReadType(source), storageFileWriteType(destination)));
-    FUNCTION_DEBUG_END();
+    ASSERT(this->interface.move != NULL);
+    ASSERT(source != NULL);
+    ASSERT(destination != NULL);
+    ASSERT(!storageFileReadIgnoreMissing(source));
+    ASSERT(strEq(this->type, storageFileReadType(source)));
+    ASSERT(strEq(storageFileReadType(source), storageFileWriteType(destination)));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -324,7 +323,7 @@ storageMove(const Storage *this, StorageFileRead *source, StorageFileWrite *dest
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -333,14 +332,14 @@ Open a file for reading
 StorageFileRead *
 storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, this);
-        FUNCTION_DEBUG_PARAM(STRING, fileExp);
-        FUNCTION_DEBUG_PARAM(BOOL, param.ignoreMissing);
-        FUNCTION_DEBUG_PARAM(IO_FILTER_GROUP, param.filterGroup);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, fileExp);
+        FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, param.filterGroup);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
 
     StorageFileRead *result = NULL;
 
@@ -355,7 +354,7 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STORAGE_FILE_READ, result);
+    FUNCTION_LOG_RETURN(STORAGE_FILE_READ, result);
 }
 
 /***********************************************************************************************************************************
@@ -364,20 +363,20 @@ Open a file for writing
 StorageFileWrite *
 storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, this);
-        FUNCTION_DEBUG_PARAM(STRING, fileExp);
-        FUNCTION_DEBUG_PARAM(MODE, param.modeFile);
-        FUNCTION_DEBUG_PARAM(MODE, param.modePath);
-        FUNCTION_DEBUG_PARAM(BOOL, param.noCreatePath);
-        FUNCTION_DEBUG_PARAM(BOOL, param.noSyncFile);
-        FUNCTION_DEBUG_PARAM(BOOL, param.noSyncPath);
-        FUNCTION_DEBUG_PARAM(BOOL, param.noAtomic);
-        FUNCTION_DEBUG_PARAM(IO_FILTER_GROUP, param.filterGroup);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, fileExp);
+        FUNCTION_LOG_PARAM(MODE, param.modeFile);
+        FUNCTION_LOG_PARAM(MODE, param.modePath);
+        FUNCTION_LOG_PARAM(BOOL, param.noCreatePath);
+        FUNCTION_LOG_PARAM(BOOL, param.noSyncFile);
+        FUNCTION_LOG_PARAM(BOOL, param.noSyncPath);
+        FUNCTION_LOG_PARAM(BOOL, param.noAtomic);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, param.filterGroup);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(this->write);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->write);
 
     StorageFileWrite *result = NULL;
 
@@ -395,7 +394,7 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STORAGE_FILE_WRITE, result);
+    FUNCTION_LOG_RETURN(STORAGE_FILE_WRITE, result);
 }
 
 /***********************************************************************************************************************************
@@ -407,9 +406,9 @@ storagePath(const Storage *this, const String *pathExp)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE, this);
         FUNCTION_TEST_PARAM(STRING, pathExp);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     String *result = NULL;
 
@@ -502,7 +501,7 @@ storagePath(const Storage *this, const String *pathExp)
         }
     }
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -511,21 +510,20 @@ Create a path
 void
 storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, this);
-        FUNCTION_DEBUG_PARAM(STRING, pathExp);
-        FUNCTION_DEBUG_PARAM(BOOL, param.errorOnExists);
-        FUNCTION_DEBUG_PARAM(BOOL, param.noParentCreate);
-        FUNCTION_DEBUG_PARAM(MODE, param.mode);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, pathExp);
+        FUNCTION_LOG_PARAM(BOOL, param.errorOnExists);
+        FUNCTION_LOG_PARAM(BOOL, param.noParentCreate);
+        FUNCTION_LOG_PARAM(MODE, param.mode);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(this->write);
+    ASSERT(this != NULL);
+    ASSERT(this->write);
 
-        // It doesn't make sense to combine these parameters because if we are creating missing parent paths why error when they
-        // exist? If this somehow wasn't caught in testing, the worst case is that the path would not be created and an error would
-        // be thrown.
-        FUNCTION_TEST_ASSERT(!(param.noParentCreate && param.errorOnExists));
-    FUNCTION_DEBUG_END();
+    // It doesn't make sense to combine these parameters because if we are creating missing parent paths why error when they exist?
+    // If this somehow wasn't caught in testing, the worst case is that the path would not be created and an error would be thrown.
+    ASSERT(!(param.noParentCreate && param.errorOnExists));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -538,7 +536,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -547,15 +545,15 @@ Remove a path
 void
 storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveParam param)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, this);
-        FUNCTION_DEBUG_PARAM(STRING, pathExp);
-        FUNCTION_DEBUG_PARAM(BOOL, param.errorOnMissing);
-        FUNCTION_DEBUG_PARAM(BOOL, param.recurse);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, pathExp);
+        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.recurse);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(this->write);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->write);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -567,7 +565,7 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -575,14 +573,14 @@ Sync a path
 ***********************************************************************************************************************************/
 void storagePathSync(const Storage *this, const String *pathExp, StoragePathSyncParam param)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, this);
-        FUNCTION_DEBUG_PARAM(STRING, pathExp);
-        FUNCTION_DEBUG_PARAM(BOOL, param.ignoreMissing);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, pathExp);
+        FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(this->write);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->write);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -594,7 +592,7 @@ void storagePathSync(const Storage *this, const String *pathExp, StoragePathSync
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -603,18 +601,18 @@ Write a buffer to storage
 void
 storagePut(StorageFileWrite *file, const Buffer *buffer)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE, file);
-        FUNCTION_DEBUG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE, file);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(file != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(file != NULL);
 
     ioWriteOpen(storageFileWriteIo(file));
     ioWrite(storageFileWriteIo(file), buffer);
     ioWriteClose(storageFileWriteIo(file));
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -623,14 +621,14 @@ Remove a file
 void
 storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, this);
-        FUNCTION_DEBUG_PARAM(STRING, fileExp);
-        FUNCTION_DEBUG_PARAM(BOOL, param.errorOnMissing);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, fileExp);
+        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(this->write);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(this->write);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -642,7 +640,7 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -661,12 +659,12 @@ Free storage
 void
 storageFree(const Storage *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

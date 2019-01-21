@@ -4,7 +4,6 @@ Buffer Handler
 #include <stdio.h>
 #include <string.h>
 
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/type/buffer.h"
 
@@ -47,7 +46,7 @@ bufNew(size_t size)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_TEST_RESULT(BUFFER, this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /***********************************************************************************************************************************
@@ -59,16 +58,16 @@ bufNewC(size_t size, const void *buffer)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, size);
         FUNCTION_TEST_PARAM(VOIDP, buffer);
-
-        FUNCTION_TEST_ASSERT(buffer != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
 
     // Create object and copy data
     Buffer *this = bufNew(size);
     memcpy(this->buffer, buffer, this->size);
     this->used = this->size;
 
-    FUNCTION_TEST_RESULT(BUFFER, this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /***********************************************************************************************************************************
@@ -79,16 +78,16 @@ bufNewStr(const String *string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, string);
-
-        FUNCTION_TEST_ASSERT(string != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(string != NULL);
 
     // Create object and copy string
     Buffer *this = bufNew(strSize(string));
     memcpy(this->buffer, strPtr(string), bufSize(this));
     this->used = bufSize(this);
 
-    FUNCTION_TEST_RESULT(BUFFER, this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /***********************************************************************************************************************************
@@ -99,16 +98,16 @@ bufNewZ(const char *string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, string);
-
-        FUNCTION_TEST_ASSERT(string != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(string != NULL);
 
     // Create a new buffer and then copy the string into it.
     Buffer *this = bufNew(strlen(string));
     memcpy(this->buffer, string, bufSize(this));
     this->used = bufSize(this);
 
-    FUNCTION_TEST_RESULT(BUFFER, this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /***********************************************************************************************************************************
@@ -120,14 +119,14 @@ bufCat(Buffer *this, const Buffer *cat)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
         FUNCTION_TEST_PARAM(BUFFER, cat);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     if (cat != NULL)
         bufCatC(this, cat->buffer, 0, cat->used);
 
-    FUNCTION_TEST_RESULT(BUFFER, this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /***********************************************************************************************************************************
@@ -141,10 +140,10 @@ bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize
         FUNCTION_TEST_PARAM(UCHARP, cat);
         FUNCTION_TEST_PARAM(SIZE, catOffset);
         FUNCTION_TEST_PARAM(SIZE, catSize);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(catSize == 0 || cat != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(catSize == 0 || cat != NULL);
 
     if (catSize > 0)
     {
@@ -152,13 +151,13 @@ bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize
             bufResize(this, this->used + catSize);
 
         // Just here to silence nonnull warnings from clang static analyzer
-        ASSERT_DEBUG(this->buffer != NULL);
+        ASSERT(this->buffer != NULL);
 
         memcpy(this->buffer + this->used, cat + catOffset, catSize);
         this->used += catSize;
     }
 
-    FUNCTION_TEST_RESULT(BUFFER, this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /***********************************************************************************************************************************
@@ -172,9 +171,9 @@ bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize)
         FUNCTION_TEST_PARAM(BUFFER, cat);
         FUNCTION_TEST_PARAM(SIZE, catOffset);
         FUNCTION_TEST_PARAM(SIZE, catSize);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     if (cat != NULL)
     {
@@ -184,7 +183,7 @@ bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize)
         bufCatC(this, cat->buffer, catOffset, catSize);
     }
 
-    FUNCTION_TEST_RESULT(BUFFER, this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /***********************************************************************************************************************************
@@ -196,17 +195,17 @@ bufEq(const Buffer *this, const Buffer *compare)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
         FUNCTION_TEST_PARAM(BUFFER, compare);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(compare != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(compare != NULL);
 
     bool result = false;
 
     if (this->used == compare->used)
         result = memcmp(this->buffer, compare->buffer, compare->used) == 0;
 
-    FUNCTION_TEST_RESULT(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -217,16 +216,16 @@ bufHex(const Buffer *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     String *result = strNew("");
 
     for (unsigned int bufferIdx = 0; bufferIdx < bufSize(this); bufferIdx++)
         strCatFmt(result, "%02x", this->buffer[bufferIdx]);
 
-    FUNCTION_TEST_RESULT(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -238,14 +237,14 @@ bufMove(Buffer *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RESULT(BUFFER, this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /***********************************************************************************************************************************
@@ -257,9 +256,9 @@ bufResize(Buffer *this, size_t size)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
         FUNCTION_TEST_PARAM(SIZE, size);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     // Only resize if it the new size is different
     if (this->size != size)
@@ -268,7 +267,7 @@ bufResize(Buffer *this, size_t size)
         if (size == 0)
         {
             // When setting size down to 0 the buffer should always be allocated
-            ASSERT_DEBUG(this->buffer != NULL);
+            ASSERT(this->buffer != NULL);
 
             MEM_CONTEXT_BEGIN(this->memContext)
             {
@@ -301,7 +300,7 @@ bufResize(Buffer *this, size_t size)
             this->limit = this->size;
     }
 
-    FUNCTION_TEST_RESULT(BUFFER, this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /***********************************************************************************************************************************
@@ -312,11 +311,11 @@ bufFull(const Buffer *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->used == bufSize(this));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->used == bufSize(this));
 }
 
 /***********************************************************************************************************************************
@@ -327,13 +326,13 @@ bufLimitClear(Buffer *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     this->limitSet = false;
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 void
@@ -342,15 +341,15 @@ bufLimitSet(Buffer *this, size_t limit)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
         FUNCTION_TEST_PARAM(SIZE, limit);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(limit <= this->size);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(limit <= this->size);
 
     this->limit = limit;
     this->limitSet = true;
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -361,11 +360,11 @@ bufPtr(const Buffer *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(UCHARP, this->buffer);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(UCHARP, this->buffer);
 }
 
 /***********************************************************************************************************************************
@@ -376,11 +375,11 @@ bufRemains(const Buffer *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(SIZE, bufSize(this) - this->used);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(SIZE, bufSize(this) - this->used);
 }
 
 /***********************************************************************************************************************************
@@ -391,11 +390,11 @@ bufRemainsPtr(const Buffer *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(UCHARP, this->buffer + this->used);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(UCHARP, this->buffer + this->used);
 }
 
 /***********************************************************************************************************************************
@@ -406,11 +405,11 @@ bufSize(const Buffer *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(SIZE, this->limitSet ? this->limit : this->size);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(SIZE, this->limitSet ? this->limit : this->size);
 }
 
 /***********************************************************************************************************************************
@@ -424,11 +423,11 @@ bufUsed(const Buffer *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(SIZE, this->used);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(SIZE, this->used);
 }
 
 void
@@ -437,14 +436,14 @@ bufUsedInc(Buffer *this, size_t inc)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
         FUNCTION_TEST_PARAM(SIZE, inc);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(this->used + inc <= bufSize(this));
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->used + inc <= bufSize(this));
 
     this->used += inc;
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 void
@@ -453,14 +452,14 @@ bufUsedSet(Buffer *this, size_t used)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
         FUNCTION_TEST_PARAM(SIZE, used);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(used <= bufSize(this));
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(used <= bufSize(this));
 
     this->used = used;
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 void
@@ -468,13 +467,13 @@ bufUsedZero(Buffer *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     this->used = 0;
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -506,5 +505,5 @@ bufFree(Buffer *this)
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }

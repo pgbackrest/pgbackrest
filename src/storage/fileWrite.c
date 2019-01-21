@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 Storage File Write Interface
 ***********************************************************************************************************************************/
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -27,22 +26,22 @@ required multiple functions and contexts to make it safe.
 StorageFileWrite *
 storageFileWriteNew(const String *type, void *driver, StorageFileWriteInterface interface)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, type);
-        FUNCTION_DEBUG_PARAM(VOIDP, driver);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE_INTERFACE, interface);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(VOIDP, driver);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE_INTERFACE, interface);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(type != NULL);
-        FUNCTION_TEST_ASSERT(driver != NULL);
-        FUNCTION_TEST_ASSERT(interface.atomic != NULL);
-        FUNCTION_TEST_ASSERT(interface.createPath != NULL);
-        FUNCTION_TEST_ASSERT(interface.io != NULL);
-        FUNCTION_TEST_ASSERT(interface.modeFile != NULL);
-        FUNCTION_TEST_ASSERT(interface.modePath != NULL);
-        FUNCTION_TEST_ASSERT(interface.name != NULL);
-        FUNCTION_TEST_ASSERT(interface.syncFile != NULL);
-        FUNCTION_TEST_ASSERT(interface.syncPath != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(type != NULL);
+    ASSERT(driver != NULL);
+    ASSERT(interface.atomic != NULL);
+    ASSERT(interface.createPath != NULL);
+    ASSERT(interface.io != NULL);
+    ASSERT(interface.modeFile != NULL);
+    ASSERT(interface.modePath != NULL);
+    ASSERT(interface.name != NULL);
+    ASSERT(interface.syncFile != NULL);
+    ASSERT(interface.syncPath != NULL);
 
     StorageFileWrite *this = memNew(sizeof(StorageFileWrite));
     this->memContext = memContextCurrent();
@@ -51,7 +50,7 @@ storageFileWriteNew(const String *type, void *driver, StorageFileWriteInterface 
     this->driver = driver;
     this->interface = interface;
 
-    FUNCTION_DEBUG_RESULT(STORAGE_FILE_WRITE, this);
+    FUNCTION_LOG_RETURN(STORAGE_FILE_WRITE, this);
 }
 
 /***********************************************************************************************************************************
@@ -63,14 +62,14 @@ storageFileWriteMove(StorageFileWrite *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RESULT(STORAGE_FILE_WRITE, this);
+    FUNCTION_TEST_RETURN(STORAGE_FILE_WRITE, this);
 }
 
 /***********************************************************************************************************************************
@@ -83,11 +82,11 @@ storageFileWriteAtomic(const StorageFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->interface.atomic(this->driver));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->interface.atomic(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -98,11 +97,11 @@ storageFileWriteCreatePath(const StorageFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->interface.createPath(this->driver));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->interface.createPath(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -113,11 +112,11 @@ storageFileWriteFileDriver(const StorageFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VOIDP, this->driver);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(VOIDP, this->driver);
 }
 
 /***********************************************************************************************************************************
@@ -128,11 +127,11 @@ storageFileWriteIo(const StorageFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_WRITE, this->interface.io(this->driver));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_WRITE, this->interface.io(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -143,11 +142,11 @@ storageFileWriteModeFile(const StorageFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(MODE, this->interface.modeFile(this->driver));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(MODE, this->interface.modeFile(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -158,11 +157,11 @@ storageFileWriteModePath(const StorageFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(MODE, this->interface.modePath(this->driver));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(MODE, this->interface.modePath(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -173,11 +172,11 @@ storageFileWriteName(const StorageFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, this->interface.name(this->driver));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(CONST_STRING, this->interface.name(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -188,11 +187,11 @@ storageFileWriteSyncFile(const StorageFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->interface.syncFile(this->driver));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->interface.syncFile(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -203,11 +202,11 @@ storageFileWriteSyncPath(const StorageFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->interface.syncPath(this->driver));
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->interface.syncPath(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -218,11 +217,11 @@ storageFileWriteType(const StorageFileWrite *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_FILE_WRITE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(CONST_STRING, this->type);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(CONST_STRING, this->type);
 }
 
 /***********************************************************************************************************************************
@@ -245,12 +244,12 @@ Free the file
 void
 storageFileWriteFree(const StorageFileWrite *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STORAGE_FILE_WRITE, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

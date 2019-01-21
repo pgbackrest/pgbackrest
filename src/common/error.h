@@ -221,9 +221,9 @@ void errorInternalThrowSysFmt(
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_DEBUG_ERROR_TYPE_TYPE                                                                                             \
+#define FUNCTION_LOG_ERROR_TYPE_TYPE                                                                                               \
     ErrorType *
-#define FUNCTION_DEBUG_ERROR_TYPE_FORMAT(value, buffer, bufferSize)                                                                \
+#define FUNCTION_LOG_ERROR_TYPE_FORMAT(value, buffer, bufferSize)                                                                  \
     objToLog(value, "ErrorType", buffer, bufferSize)
 
 #endif

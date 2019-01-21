@@ -33,7 +33,7 @@ New object
 IoBuffer *
 ioBufferNew(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelTrace);
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     IoBuffer *this = NULL;
 
@@ -49,7 +49,7 @@ ioBufferNew(void)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_DEBUG_RESULT(IO_BUFFER, this);
+    FUNCTION_LOG_RETURN(IO_BUFFER, this);
 }
 
 /***********************************************************************************************************************************
@@ -58,15 +58,15 @@ Move data from the input buffer to the output buffer
 void
 ioBufferProcess(IoBuffer *this, const Buffer *input, Buffer *output)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_BUFFER, this);
-        FUNCTION_DEBUG_PARAM(BUFFER, input);
-        FUNCTION_DEBUG_PARAM(BUFFER, output);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_BUFFER, this);
+        FUNCTION_LOG_PARAM(BUFFER, input);
+        FUNCTION_LOG_PARAM(BUFFER, output);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(this != NULL);
-        FUNCTION_DEBUG_ASSERT(input != NULL);
-        FUNCTION_DEBUG_ASSERT(output != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(this != NULL);
+    ASSERT(input != NULL);
+    ASSERT(output != NULL);
 
     // Determine how much data needs to be copied and reduce if there is not enough space in the output
     size_t copySize = bufUsed(input) - this->inputPos;
@@ -90,7 +90,7 @@ ioBufferProcess(IoBuffer *this, const Buffer *input, Buffer *output)
         this->inputPos += copySize;
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -104,11 +104,11 @@ ioBufferInputSame(const IoBuffer *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_BUFFER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(BOOL, this->inputSame);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /***********************************************************************************************************************************
@@ -119,11 +119,11 @@ ioBufferFilter(const IoBuffer *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_BUFFER, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(IO_FILTER, this->filter);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(IO_FILTER, this->filter);
 }
 
 /***********************************************************************************************************************************
@@ -141,12 +141,12 @@ Free the filter group
 void
 ioBufferFree(IoBuffer *this)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(IO_BUFFER, this);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_BUFFER, this);
+    FUNCTION_LOG_END();
 
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

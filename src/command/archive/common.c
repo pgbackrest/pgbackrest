@@ -6,7 +6,6 @@ Archive Push Command
 #include <string.h>
 
 #include "command/archive/common.h"
-#include "common/assert.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -30,11 +29,11 @@ Check for ok/error status files in the spool in/out directory
 bool
 archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confessOnError)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(ENUM, archiveMode);
-        FUNCTION_DEBUG_PARAM(STRING, walSegment);
-        FUNCTION_DEBUG_PARAM(BOOL, confessOnError);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING, walSegment);
+        FUNCTION_LOG_PARAM(BOOL, confessOnError);
+    FUNCTION_LOG_END();
 
     bool result = false;
 
@@ -118,7 +117,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -127,14 +126,14 @@ Is the segment partial?
 bool
 walIsPartial(const String *walSegment)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, walSegment);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, walSegment);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(walSegment != NULL);
-        FUNCTION_DEBUG_ASSERT(walIsSegment(walSegment));
-    FUNCTION_DEBUG_END();
+    ASSERT(walSegment != NULL);
+    ASSERT(walIsSegment(walSegment));
 
-    FUNCTION_DEBUG_RESULT(BOOL, strEndsWithZ(walSegment, WAL_SEGMENT_PARTIAL_EXT));
+    FUNCTION_LOG_RETURN(BOOL, strEndsWithZ(walSegment, WAL_SEGMENT_PARTIAL_EXT));
 }
 
 /***********************************************************************************************************************************
@@ -143,11 +142,11 @@ Is the file a segment or some other file (e.g. .history, .backup, etc)
 bool
 walIsSegment(const String *walSegment)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, walSegment);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, walSegment);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(walSegment != NULL);
-    FUNCTION_DEBUG_END();
+    ASSERT(walSegment != NULL);
 
     // Create the regular expression to identify WAL segments if it does not already exist
     static RegExp *regExpSegment = NULL;
@@ -161,7 +160,7 @@ walIsSegment(const String *walSegment)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_DEBUG_RESULT(BOOL, regExpMatch(regExpSegment, walSegment));
+    FUNCTION_LOG_RETURN(BOOL, regExpMatch(regExpSegment, walSegment));
 }
 
 /***********************************************************************************************************************************
@@ -173,16 +172,16 @@ have multiple files that match the segment, though more than one match is not a 
 String *
 walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STORAGE, storage);
-        FUNCTION_DEBUG_PARAM(STRING, archiveId);
-        FUNCTION_DEBUG_PARAM(STRING, walSegment);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, archiveId);
+        FUNCTION_LOG_PARAM(STRING, walSegment);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(storage != NULL);
-        FUNCTION_DEBUG_ASSERT(archiveId != NULL);
-        FUNCTION_DEBUG_ASSERT(walSegment != NULL);
-        FUNCTION_DEBUG_ASSERT(walIsSegment(walSegment));
-    FUNCTION_DEBUG_END();
+    ASSERT(storage != NULL);
+    ASSERT(archiveId != NULL);
+    ASSERT(walSegment != NULL);
+    ASSERT(walIsSegment(walSegment));
 
     String *result = NULL;
 
@@ -214,7 +213,7 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING, result);
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -223,16 +222,16 @@ Get the next WAL segment given a WAL segment and WAL segment size
 String *
 walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelTrace);
-        FUNCTION_DEBUG_PARAM(STRING, walSegment);
-        FUNCTION_DEBUG_PARAM(SIZE, walSegmentSize);
-        FUNCTION_DEBUG_PARAM(UINT, pgVersion);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, walSegment);
+        FUNCTION_LOG_PARAM(SIZE, walSegmentSize);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(walSegment != NULL);
-        FUNCTION_DEBUG_ASSERT(strSize(walSegment) == 24);
-        FUNCTION_DEBUG_ASSERT(UINT32_MAX % walSegmentSize == walSegmentSize - 1);
-        FUNCTION_DEBUG_ASSERT(pgVersion >= PG_VERSION_11 || walSegmentSize == 16 * 1024 * 1024);
-    FUNCTION_DEBUG_END();
+    ASSERT(walSegment != NULL);
+    ASSERT(strSize(walSegment) == 24);
+    ASSERT(UINT32_MAX % walSegmentSize == walSegmentSize - 1);
+    ASSERT(pgVersion >= PG_VERSION_11 || walSegmentSize == 16 * 1024 * 1024);
 
     // Extract WAL parts
     uint32_t timeline = 0;
@@ -263,7 +262,7 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgV
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING, strNewFmt("%08X%08X%08X", timeline, major, minor));
+    FUNCTION_LOG_RETURN(STRING, strNewFmt("%08X%08X%08X", timeline, major, minor));
 }
 
 /***********************************************************************************************************************************
@@ -272,13 +271,13 @@ Build a list of WAL segments based on a beginning WAL and number of WAL in the r
 StringList *
 walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(STRING, walSegmentBegin);
-        FUNCTION_DEBUG_PARAM(SIZE, walSegmentSize);
-        FUNCTION_DEBUG_PARAM(UINT, pgVersion);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, walSegmentBegin);
+        FUNCTION_LOG_PARAM(SIZE, walSegmentSize);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+    FUNCTION_LOG_END();
 
-        FUNCTION_DEBUG_ASSERT(range > 0);
-    FUNCTION_DEBUG_END();
+    ASSERT(range > 0);
 
     StringList *result = NULL;
 
@@ -305,5 +304,5 @@ walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned i
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_DEBUG_RESULT(STRING_LIST, result);
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }

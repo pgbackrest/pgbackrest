@@ -110,7 +110,7 @@ testRun(void)
         TEST_RESULT_INT(logLevelEnum("info"), logLevelInfo, "log level 'info' found");
         TEST_RESULT_INT(logLevelEnum("TRACE"), logLevelTrace, "log level 'TRACE' found");
 
-        TEST_ERROR(logLevelStr(999), AssertError, "function test assertion 'logLevel <= LOG_LEVEL_MAX' failed");
+        TEST_ERROR(logLevelStr(999), AssertError, "assertion 'logLevel <= LOG_LEVEL_MAX' failed");
         TEST_RESULT_STR(logLevelStr(logLevelOff), "OFF", "log level 'OFF' found");
         TEST_RESULT_STR(logLevelStr(logLevelInfo), "INFO", "log level 'INFO' found");
         TEST_RESULT_STR(logLevelStr(logLevelTrace), "TRACE", "log level 'TRACE' found");

@@ -161,7 +161,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsNP(storageTest, backupLockFile), true, "backup lock file was created");
         TEST_ERROR(
             lockAcquire(lockPath, stanza, lockTypeAll, 0, false), AssertError,
-            "debug assertion 'failOnNoLock || lockType != lockTypeAll' failed");
+            "assertion 'failOnNoLock || lockType != lockTypeAll' failed");
         TEST_RESULT_VOID(lockRelease(true), "release all lock");
 
         // -------------------------------------------------------------------------------------------------------------------------

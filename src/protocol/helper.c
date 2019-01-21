@@ -31,7 +31,7 @@ bool
 repoIsLocal(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RESULT(BOOL, !cfgOptionTest(cfgOptRepoHost));
+    FUNCTION_TEST_RETURN(BOOL, !cfgOptionTest(cfgOptRepoHost));
 }
 
 /***********************************************************************************************************************************
@@ -40,13 +40,13 @@ Get the command line required for protocol execution
 static StringList *
 protocolParam(RemoteType remoteType, unsigned int remoteId)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(ENUM, remoteType);
-        FUNCTION_DEBUG_PARAM(UINT, remoteId);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(ENUM, remoteType);
+        FUNCTION_LOG_PARAM(UINT, remoteId);
+    FUNCTION_LOG_END();
 
-        FUNCTION_TEST_ASSERT(remoteType == remoteTypeRepo);         // ??? Hard-coded until the function supports db remotes
-        FUNCTION_TEST_ASSERT(remoteId == 1);                        // ??? Hard-coded until the function supports db remotes
-    FUNCTION_DEBUG_END();
+    ASSERT(remoteType == remoteTypeRepo);                           // ??? Hard-coded until the function supports db remotes
+    ASSERT(remoteId == 1);                                          // ??? Hard-coded until the function supports db remotes
 
     // Fixed parameters for ssh command
     StringList *result = strLstNew();
@@ -93,7 +93,7 @@ protocolParam(RemoteType remoteType, unsigned int remoteId)
     strLstInsert(commandExec, 0, cfgOptionStr(cfgOptRepoHostCmd));
     strLstAdd(result, strLstJoin(commandExec, " "));
 
-    FUNCTION_DEBUG_RESULT(STRING_LIST, result);
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -102,10 +102,10 @@ Get the protocol client
 ProtocolClient *
 protocolGet(RemoteType remoteType, unsigned int remoteId)
 {
-    FUNCTION_DEBUG_BEGIN(logLevelDebug);
-        FUNCTION_DEBUG_PARAM(ENUM, remoteType);
-        FUNCTION_DEBUG_PARAM(UINT, remoteId);
-    FUNCTION_DEBUG_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(ENUM, remoteType);
+        FUNCTION_LOG_PARAM(UINT, remoteId);
+    FUNCTION_LOG_END();
 
     // Create a mem context to store protocol objects
     if (protocolHelper.memContext == NULL)
@@ -139,7 +139,7 @@ protocolGet(RemoteType remoteType, unsigned int remoteId)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_DEBUG_RESULT(PROTOCOL_CLIENT, protocolHelper.remote);
+    FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, protocolHelper.remote);
 }
 
 /***********************************************************************************************************************************
@@ -148,7 +148,7 @@ Free the protocol objects and shutdown processes
 void
 protocolFree(void)
 {
-    FUNCTION_DEBUG_VOID(logLevelTrace);
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     if (protocolHelper.remote != NULL)
     {
@@ -158,5 +158,5 @@ protocolFree(void)
         protocolHelper.remote = NULL;
     }
 
-    FUNCTION_DEBUG_RESULT_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }

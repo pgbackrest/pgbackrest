@@ -55,7 +55,7 @@ kvNew(void)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_TEST_RESULT(KEY_VALUE, this);
+    FUNCTION_TEST_RETURN(KEY_VALUE, this);
 }
 
 /***********************************************************************************************************************************
@@ -66,9 +66,9 @@ kvDup(const KeyValue *source)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, source);
-
-        FUNCTION_TEST_ASSERT(source != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(source != NULL);
 
     KeyValue *this = kvNew();
 
@@ -88,7 +88,7 @@ kvDup(const KeyValue *source)
 
     this->keyList = varLstDup(source->keyList);
 
-    FUNCTION_TEST_RESULT(KEY_VALUE, this);
+    FUNCTION_TEST_RETURN(KEY_VALUE, this);
 }
 
 /***********************************************************************************************************************************
@@ -100,10 +100,10 @@ kvGetIdx(const KeyValue *this, const Variant *key)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
         FUNCTION_TEST_PARAM(VARIANT, key);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
 
     // Search for the key
     unsigned int result = KEY_NOT_FOUND;
@@ -120,7 +120,7 @@ kvGetIdx(const KeyValue *this, const Variant *key)
         }
     }
 
-    FUNCTION_TEST_RESULT(UINT, result);
+    FUNCTION_TEST_RETURN(UINT, result);
 }
 
 /***********************************************************************************************************************************
@@ -131,11 +131,11 @@ kvKeyList(const KeyValue *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RESULT(VARIANT_LIST, this->keyList);
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(VARIANT_LIST, this->keyList);
 }
 
 /***********************************************************************************************************************************
@@ -150,10 +150,10 @@ kvPutInternal(KeyValue *this, const Variant *key, Variant *value)
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
         FUNCTION_TEST_PARAM(VARIANT, key);
         FUNCTION_TEST_PARAM(VARIANT, value);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
 
     // Find the key
     unsigned int listIdx = kvGetIdx(this, key);
@@ -183,7 +183,7 @@ kvPutInternal(KeyValue *this, const Variant *key, Variant *value)
         pair->value = value;
     }
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -196,10 +196,10 @@ kvPut(KeyValue *this, const Variant *key, const Variant *value)
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
         FUNCTION_TEST_PARAM(VARIANT, key);
         FUNCTION_TEST_PARAM(VARIANT, value);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -207,7 +207,7 @@ kvPut(KeyValue *this, const Variant *key, const Variant *value)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(KEY_VALUE, this);
+    FUNCTION_TEST_RETURN(KEY_VALUE, this);
 }
 
 /***********************************************************************************************************************************
@@ -220,10 +220,10 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
         FUNCTION_TEST_PARAM(VARIANT, key);
         FUNCTION_TEST_PARAM(VARIANT, value);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
@@ -255,7 +255,7 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(KEY_VALUE, this);
+    FUNCTION_TEST_RETURN(KEY_VALUE, this);
 }
 
 /***********************************************************************************************************************************
@@ -270,10 +270,10 @@ kvPutKv(KeyValue *this, const Variant *key)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
         FUNCTION_TEST_PARAM(VARIANT, key);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
 
     KeyValue *result = NULL;
 
@@ -286,7 +286,7 @@ kvPutKv(KeyValue *this, const Variant *key)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RESULT(KEY_VALUE, result);
+    FUNCTION_TEST_RETURN(KEY_VALUE, result);
 }
 
 /***********************************************************************************************************************************
@@ -298,10 +298,10 @@ kvGet(const KeyValue *this, const Variant *key)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
         FUNCTION_TEST_PARAM(VARIANT, key);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
 
     Variant *result = NULL;
 
@@ -311,7 +311,7 @@ kvGet(const KeyValue *this, const Variant *key)
     if (listIdx != KEY_NOT_FOUND)
         result = ((KeyValuePair *)lstGet(this->list, listIdx))->value;
 
-    FUNCTION_TEST_RESULT(VARIANT, result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -323,10 +323,10 @@ kvGetList(const KeyValue *this, const Variant *key)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
         FUNCTION_TEST_PARAM(VARIANT, key);
-
-        FUNCTION_TEST_ASSERT(this != NULL);
-        FUNCTION_TEST_ASSERT(key != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
 
     VariantList *result = NULL;
 
@@ -339,7 +339,7 @@ kvGetList(const KeyValue *this, const Variant *key)
     else
         result = varLstAdd(varLstNew(), varDup(value));
 
-    FUNCTION_TEST_RESULT(VARIANT_LIST, result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -351,14 +351,14 @@ kvMove(KeyValue *this, MemContext *parentNew)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
         FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-
-        FUNCTION_TEST_ASSERT(parentNew != NULL);
     FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
 
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RESULT(KEY_VALUE, this);
+    FUNCTION_TEST_RETURN(KEY_VALUE, this);
 }
 
 /***********************************************************************************************************************************
@@ -374,5 +374,5 @@ kvFree(KeyValue *this)
     if (this != NULL)
         memContextFree(this->memContext);
 
-    FUNCTION_TEST_RESULT_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
