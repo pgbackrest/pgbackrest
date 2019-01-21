@@ -19,7 +19,6 @@ use pgBackRest::Archive::Push::File;
 use pgBackRest::Check::Check;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
-use pgBackRest::Info;
 use pgBackRest::Protocol::Command::Minion;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
@@ -71,7 +70,6 @@ sub init
     my $oStorage = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_DB) ? storageDb() : storageRepo();
 
     my $oCheck = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) ? new pgBackRest::Check::Check() : undef;
-    my $oInfo = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) ? new pgBackRest::Info() : undef;
     my $oDb = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_DB) ? new pgBackRest::Db() : undef;
 
     # Create anonymous subs for each command
@@ -121,9 +119,6 @@ sub init
         &OP_STORAGE_MOVE => sub {$oStorage->move(@{shift()})},
         &OP_STORAGE_PATH_GET => sub {$oStorage->pathGet(@{shift()})},
         &OP_STORAGE_HASH_SIZE => sub {$oStorage->hashSize(@{shift()})},
-
-        # Info commands
-        &OP_INFO_STANZA_LIST => sub {$oInfo->stanzaList(@{shift()})},
 
         # Wait command
         &OP_WAIT => sub {waitRemainder(@{shift()})},

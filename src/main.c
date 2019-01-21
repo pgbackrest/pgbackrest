@@ -97,6 +97,13 @@ main(int argListSize, const char *argList[])
             perlExec();
         }
 
+        // Info command
+        // -------------------------------------------------------------------------------------------------------------------------
+        else if (cfgCommand() == cfgCmdInfo)
+        {
+            cmdInfo();
+        }
+
         // Execute Perl for commands not implemented in C
         // -------------------------------------------------------------------------------------------------------------------------
         else

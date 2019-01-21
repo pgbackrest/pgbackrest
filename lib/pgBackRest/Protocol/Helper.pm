@@ -66,10 +66,6 @@ use constant OP_STORAGE_MOVE                                        => 'storageM
 use constant OP_STORAGE_PATH_GET                                    => 'storagePathGet';
     push @EXPORT, qw(OP_STORAGE_PATH_GET);
 
-# Info module
-use constant OP_INFO_STANZA_LIST                                    => 'infoStanzList';
-    push @EXPORT, qw(OP_INFO_STANZA_LIST);
-
 # Restore module
 use constant OP_RESTORE_FILE                                         => 'restoreFile';
     push @EXPORT, qw(OP_RESTORE_FILE);

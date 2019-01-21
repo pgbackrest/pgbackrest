@@ -4951,7 +4951,7 @@ stanza: db
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 176KB, backup size: 176KB
-            repository size: 2.3KB, repository backup size: 2.3KB
+            repository size: 2.4KB, repository backup size: 2.4KB
 
 info db stanza - normal output (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db --output=json info
@@ -5599,7 +5599,7 @@ stanza: db
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 176KB, backup size: 176KB
-            repository size: 2.3KB, repository backup size: 2.3KB
+            repository size: 2.4KB, repository backup size: 2.4KB
 
         diff backup: [BACKUP-DIFF-5]
             timestamp start/stop: [TIMESTAMP-STR]

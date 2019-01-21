@@ -636,13 +636,7 @@ cmdInfo(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (!cfgOptionTest(cfgOptRepoHost))                             // {uncovered - Perl code is covered in integration tests}
-        {
-            ioHandleWriteOneStr(STDOUT_FILENO, infoRender());
-        }
-        // Else do it in Perl
-        else
-            perlExec();                                                 // {+uncovered}
+        ioHandleWriteOneStr(STDOUT_FILENO, infoRender());
     }
     MEM_CONTEXT_TEMP_END();
 

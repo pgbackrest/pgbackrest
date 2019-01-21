@@ -2589,7 +2589,7 @@ stanza: db
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 160KB, backup size: 41B
-            repository size: 160.6KB, repository backup size: 192B
+            repository size: 160.7KB, repository backup size: 192B
             backup reference list: [BACKUP-FULL-2]
 
         incr backup: [BACKUP-INCR-3]
@@ -3179,7 +3179,7 @@ stanza: db
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 144.1KB, backup size: 9B
-            repository size: 2.5KB, repository backup size: 48B
+            repository size: 2.6KB, repository backup size: 48B
             backup reference list: [BACKUP-FULL-3]
 
 info all stanzas - normal output (db-master host)
