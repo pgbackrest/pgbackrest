@@ -236,7 +236,9 @@
 <!ELEMENT ol (li+)>
 <!ELEMENT li ANY>
 <!ELEMENT list (list-item+)>
+    <!ATTLIST list if CDATA "">
 <!ELEMENT list-item ANY>
+    <!ATTLIST list-item if CDATA "">
 <!ELEMENT id (#PCDATA)>
 <!ELEMENT code (#PCDATA)>
 <!ELEMENT code-block (#PCDATA|exe)*>

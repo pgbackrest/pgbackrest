@@ -122,7 +122,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Allow <code>if</code> in manifest variables.</p>
+                        <p>Allow <code>if</code> in manifest variables, lists, and list items.</p>
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
