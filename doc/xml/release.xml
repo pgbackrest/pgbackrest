@@ -120,6 +120,10 @@
 
                         <p>Clarify that encryption is always performed client-side.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Allow <code>if</code> in manifest variables.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-doc-list>
 
