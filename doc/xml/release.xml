@@ -20,7 +20,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Simplify <cmd>info</cmd> command text message when no stanza are present by replacing the repository path with <quote>the repository</quote>.</p>
+                        <p>Simplify <cmd>info</cmd> command text message when no stanzas are present by replacing the repository path with <quote>the repository</quote>.</p>
                     </release-item>
 
                     <release-item>
