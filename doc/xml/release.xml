@@ -38,6 +38,14 @@
 
                         <p>Update address lookup in C TLS client to use modern methods.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="ucando"/>
+                        </release-item-contributor-list>
+
+                        <p>Include Posix-compliant header for <code>strcasecmp()</code>.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -6392,6 +6400,11 @@
         <contributor id="thomas.flatley">
             <contributor-name-display>Thomas Flatley</contributor-name-display>
             <contributor-id type="github">seadba</contributor-id>
+        </contributor>
+
+        <contributor id="ucando">
+            <contributor-name-display>ucando</contributor-name-display>
+            <contributor-id type="github">ucando</contributor-id>
         </contributor>
 
         <contributor id="uspen">
