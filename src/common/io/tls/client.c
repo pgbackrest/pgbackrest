@@ -287,24 +287,43 @@ tlsClientOpen(TlsClient *this)
 
                 TRY_BEGIN()
                 {
-                    // Resolve the ip address.  We'll just blindly take the first address that comes up.
-                    struct hostent *host_entry = NULL;
+                    // Set hits that narrow the type of address we are looking for -- we'll take ipv4 or ipv6
+                    struct addrinfo hints;
 
-                    if ((host_entry = gethostbyname(strPtr(this->host))) == NULL)
-                        THROW_FMT(HostConnectError, "unable to resolve host '%s'", strPtr(this->host));
+                    memset(&hints, 0, sizeof hints);
+                    hints.ai_family = AF_UNSPEC;
+                    hints.ai_socktype = SOCK_STREAM;
+                    hints.ai_protocol = IPPROTO_TCP;
 
-                    // Connect to the server
-                    this->socket = socket(AF_INET, SOCK_STREAM, 0);
-                    THROW_ON_SYS_ERROR(this->socket == -1, HostConnectError, "unable to create socket");
+                    // Convert the port to a zero-terminated string for use with getaddrinfo()
+                    char port[32];
+                    cvtUIntToZ(this->port, port, sizeof(port));
 
-                    struct sockaddr_in socketAddr;
-                    memset(&socketAddr, 0, sizeof(socketAddr));
-                    socketAddr.sin_family = AF_INET;
-                    socketAddr.sin_addr.s_addr = inet_addr(inet_ntoa(*((struct in_addr*)host_entry->h_addr_list[0])));
-                    socketAddr.sin_port = htons((uint16_t)this->port);
+                    // Get an address for the host.  We are only going to try the first address returned.
+                    struct addrinfo *hostAddress;
+                    int result;
 
-                    if (connect(this->socket, (struct sockaddr *)&socketAddr, sizeof(socketAddr)) == -1)
-                        THROW_SYS_ERROR_FMT(HostConnectError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
+                    if ((result = getaddrinfo(strPtr(this->host), port, &hints, &hostAddress)) != 0)
+                    {
+                        THROW_FMT(
+                            HostConnectError, "unable to get address for '%s': [%d] %s", strPtr(this->host), result,
+                            gai_strerror(result));
+                    }
+
+                    // Connect to the host
+                    TRY_BEGIN()
+                    {
+                        this->socket = socket(hostAddress->ai_family, hostAddress->ai_socktype, hostAddress->ai_protocol);
+                        THROW_ON_SYS_ERROR(this->socket == -1, HostConnectError, "unable to create socket");
+
+                        if (connect(this->socket, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1)
+                            THROW_SYS_ERROR_FMT(HostConnectError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
+                    }
+                    FINALLY()
+                    {
+                        freeaddrinfo(hostAddress);
+                    }
+                    TRY_END();
 
                     // Enable TCP keepalives
                     int socketValue = 1;
