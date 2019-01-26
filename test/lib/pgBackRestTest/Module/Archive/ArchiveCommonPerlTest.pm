@@ -199,6 +199,15 @@ sub run
         # Generate a valid warning ok
         archiveAsyncStatusWrite(WAL_STATUS_OK, $strSpoolPath, $strSegment, 0, 'Test Warning');
 
+        # Skip error when an ok file already exists
+        #---------------------------------------------------------------------------------------------------------------------------
+        archiveAsyncStatusWrite(
+            WAL_STATUS_ERROR, $strSpoolPath, $strSegment, ERROR_ARCHIVE_DUPLICATE,
+            "WAL segment ${strSegment} already exists in the archive", true);
+
+        $self->testResult(
+            $self->storageTest()->exists("${strSpoolPath}/${strSegment}.error"), false, "error file should not exist");
+
         #---------------------------------------------------------------------------------------------------------------------------
         # Generate an invalid error
         $self->testException(

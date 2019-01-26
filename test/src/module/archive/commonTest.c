@@ -84,13 +84,23 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))), bufNew(0));
-        TEST_ERROR(
-            archiveAsyncStatus(archiveModePush, segment, false), AssertError,
+        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "multiple status files returns false");
+
+        TEST_RESULT_BOOL(
+            storageExistsNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))), false,
+            ".error file was deleted");
+        TEST_RESULT_BOOL(
+            storageExistsNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))), false,
+            ".ok file was deleted");
+
+        harnessLogResult(
             strPtr(
                 strNewFmt(
-                    "multiple status files found in '%s/archive/db/out' for WAL segment '000000010000000100000001'", testPath())));
+                    "P00   WARN: multiple status files found in '%s/archive/db/out' for WAL segment '000000010000000100000001'"
+                    " will be removed and the command retried", testPath())));
 
-        unlink(strPtr(storagePathNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment)))));
+        storagePutNP(
+            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))), bufNew(0));
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, true), AssertError,
             "status file '000000010000000100000001.error' has no content");

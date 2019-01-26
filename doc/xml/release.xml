@@ -14,6 +14,18 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.09dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="fpa-postgres"/>
+                            <release-item-ideator id="joe.ayers"/>
+                            <release-item-ideator id="douglas.j.hunley"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue with multiple async status files causing a hard error.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p>The <cmd>info</cmd> command is implemented entirely in C.</p>
@@ -6233,6 +6245,11 @@
             <contributor-id type="github">evanbenoit</contributor-id>
         </contributor>
 
+        <contributor id="fpa-postgres">
+            <contributor-name-display>fpa-postgres</contributor-name-display>
+            <contributor-id type="github">fpa-postgres</contributor-id>
+        </contributor>
+
         <contributor id="greg.smith">
             <contributor-name-display>Greg Smith</contributor-name-display>
             <contributor-id type="github">gregscds</contributor-id>
@@ -6275,6 +6292,10 @@
         <contributor id="jesper.st.john">
             <contributor-name-display>Jesper St John</contributor-name-display>
             <contributor-id type="github">Underhunden</contributor-id>
+        </contributor>
+
+        <contributor id="joe.ayers">
+            <contributor-name-display>Joe Ayers</contributor-name-display>
         </contributor>
 
         <contributor id="john.harvey">

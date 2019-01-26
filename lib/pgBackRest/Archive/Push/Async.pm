@@ -216,11 +216,11 @@ sub processQueue
             my $iCode = exceptionCode($EVAL_ERROR);
             my $strMessage = exceptionMessage($EVAL_ERROR);
 
-            # Error all queued jobs
+            # Error all queued jobs except for the ones that have already succeeded
             foreach my $strWalFile (@{$stryWalFile})
             {
                 archiveAsyncStatusWrite(
-                    WAL_STATUS_ERROR, $self->{strSpoolPath}, $strWalFile, $iCode, $strMessage);
+                    WAL_STATUS_ERROR, $self->{strSpoolPath}, $strWalFile, $iCode, $strMessage, true);
             }
         }
     }

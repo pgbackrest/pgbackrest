@@ -452,6 +452,7 @@ sub archiveAsyncStatusWrite
         $strWalFile,
         $iCode,
         $strMessage,
+        $bIgnoreErrorOnOk,
     ) =
         logDebugParam
         (
@@ -461,6 +462,7 @@ sub archiveAsyncStatusWrite
             {name => 'strWalFile'},
             {name => 'iCode', required => false},
             {name => 'strMessage', required => false},
+            {name => 'bIgnoreErrorOnOk', required => false, default => false},
         );
 
     # Remove any error file exists unless a new one will be written
@@ -470,25 +472,33 @@ sub archiveAsyncStatusWrite
         storageLocal()->remove("${strSpoolPath}/${strWalFile}.error", {bIgnoreMissing => true});
     }
 
-    # Write the status file
-    my $strStatus;
-
-    if (defined($iCode))
+    # If an error will be written but an ok file already exists this may be expected and will be indicated by bIgnoreErrorOnOk set
+    # to true.  In this case just return without writing the error file.
+    if (!($strType eq WAL_STATUS_ERROR && $bIgnoreErrorOnOk && storageLocal()->exists("${strSpoolPath}/${strWalFile}.ok")))
     {
-        if (!defined($strMessage))
+        # Write the status file
+        my $strStatus;
+
+        if (defined($iCode))
         {
-            confess &log(ASSERT, 'strMessage must be set when iCode is set');
+            if (!defined($strMessage))
+            {
+                confess &log(ASSERT, 'strMessage must be set when iCode is set');
+            }
+
+            $strStatus = "${iCode}\n${strMessage}";
+        }
+        elsif ($strType eq WAL_STATUS_ERROR)
+        {
+            confess &log(ASSERT, 'error status must have iCode and strMessage set');
         }
 
-        $strStatus = "${iCode}\n${strMessage}";
-    }
-    elsif ($strType eq WAL_STATUS_ERROR)
-    {
-        confess &log(ASSERT, 'error status must have iCode and strMessage set');
+        storageLocal()->put(
+            storageLocal()->openWrite("${strSpoolPath}/${strWalFile}.${strType}", {bAtomic => true}), $strStatus);
     }
 
-    storageLocal()->put(
-        storageLocal()->openWrite("${strSpoolPath}/${strWalFile}.${strType}", {bAtomic => true}), $strStatus);
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 push @EXPORT, qw(archiveAsyncStatusWrite);

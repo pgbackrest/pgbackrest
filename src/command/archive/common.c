@@ -46,12 +46,20 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
         bool okFileExists = storageExistsNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(okFile)));
         bool errorFileExists = storageExistsNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
 
-        // If both status files are found then assert - this could be a bug in the async process
+        // If both status files are found then warn, remove the files, and return false so the segment will be retried.  This may be
+        // a bug in the async process but it may also be a failed fsync or other filesystem issue.  In any case, a hard failure here
+        // would mean that archiving is completely stuck so it is better to attempt a retry.
         if (okFileExists && errorFileExists)
         {
-            THROW_FMT(
-                AssertError, "multiple status files found in '%s' for WAL segment '%s'",
+            LOG_WARN(
+                "multiple status files found in '%s' for WAL segment '%s' will be removed and the command retried",
                 strPtr(storagePath(storageSpool(), spoolQueue)), strPtr(walSegment));
+
+            storageRemoveNP(storageSpoolWrite(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(okFile)));
+            okFileExists = false;
+
+            storageRemoveNP(storageSpoolWrite(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
+            errorFileExists = false;
         }
 
         // If either of them exists then check what happened and report back
