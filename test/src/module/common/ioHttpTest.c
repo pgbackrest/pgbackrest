@@ -373,7 +373,7 @@ testRun(void)
         TEST_ASSIGN(client, httpClientNew(strNew("localhost"), TLS_TEST_PORT, 500, true, NULL, NULL), "new client");
 
         TEST_ERROR(
-            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), FileOpenError,
+            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), HostConnectError,
             "unable to connect to 'localhost:9443': [111] Connection refused");
 
         // Start http test server

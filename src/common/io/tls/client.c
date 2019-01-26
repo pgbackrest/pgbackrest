@@ -291,11 +291,11 @@ tlsClientOpen(TlsClient *this)
                     struct hostent *host_entry = NULL;
 
                     if ((host_entry = gethostbyname(strPtr(this->host))) == NULL)
-                        THROW_FMT(FileOpenError, "unable to resolve host '%s'", strPtr(this->host));
+                        THROW_FMT(HostConnectError, "unable to resolve host '%s'", strPtr(this->host));
 
                     // Connect to the server
                     this->socket = socket(AF_INET, SOCK_STREAM, 0);
-                    THROW_ON_SYS_ERROR(this->socket == -1, FileOpenError, "unable to create socket");
+                    THROW_ON_SYS_ERROR(this->socket == -1, HostConnectError, "unable to create socket");
 
                     struct sockaddr_in socketAddr;
                     memset(&socketAddr, 0, sizeof(socketAddr));
@@ -304,7 +304,7 @@ tlsClientOpen(TlsClient *this)
                     socketAddr.sin_port = htons((uint16_t)this->port);
 
                     if (connect(this->socket, (struct sockaddr *)&socketAddr, sizeof(socketAddr)) == -1)
-                        THROW_SYS_ERROR_FMT(FileOpenError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
+                        THROW_SYS_ERROR_FMT(HostConnectError, "unable to connect to '%s:%u'", strPtr(this->host), this->port);
 
                     // Enable TCP keepalives
                     int socketValue = 1;

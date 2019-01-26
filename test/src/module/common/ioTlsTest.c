@@ -121,10 +121,10 @@ testRun(void)
         // Connection errors
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(client, tlsClientNew(strNew("99.99.99.99.99"), 9443, 0, true, NULL, NULL), "new client");
-        TEST_ERROR(tlsClientOpen(client), FileOpenError, "unable to resolve host '99.99.99.99.99'");
+        TEST_ERROR(tlsClientOpen(client), HostConnectError, "unable to resolve host '99.99.99.99.99'");
 
         TEST_ASSIGN(client, tlsClientNew(strNew("localhost"), 9443, 100, true, NULL, NULL), "new client");
-        TEST_ERROR(tlsClientOpen(client), FileOpenError, "unable to connect to 'localhost:9443': [111] Connection refused");
+        TEST_ERROR(tlsClientOpen(client), HostConnectError, "unable to connect to 'localhost:9443': [111] Connection refused");
 
         // Certificate location and validation errors
         // -------------------------------------------------------------------------------------------------------------------------

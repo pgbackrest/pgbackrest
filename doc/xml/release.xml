@@ -98,6 +98,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Replace <code>FileOpenError</code> with <code>HostConnectError</code> in <code>TlsClient</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow string <code>Variant</code> objects to contain <code>null</code>.</p>
                     </release-item>
 
