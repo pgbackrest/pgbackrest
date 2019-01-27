@@ -17,7 +17,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="fpa-postgres"/>
+                            <release-item-ideator id="vidhya.gurumoorthi"/>
                             <release-item-ideator id="joe.ayers"/>
                             <release-item-ideator id="douglas.j.hunley"/>
                         </release-item-contributor-list>
@@ -6245,8 +6245,8 @@
             <contributor-id type="github">evanbenoit</contributor-id>
         </contributor>
 
-        <contributor id="fpa-postgres">
-            <contributor-name-display>fpa-postgres</contributor-name-display>
+        <contributor id="vidhya.gurumoorthi">
+            <contributor-name-display>Vidhya Gurumoorthi</contributor-name-display>
             <contributor-id type="github">fpa-postgres</contributor-id>
         </contributor>
 
