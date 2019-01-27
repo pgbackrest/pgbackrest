@@ -138,6 +138,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Move <code>MACRO_TO_STR()</code> to <file>common/debug.h</file>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>const VariantList *</code> debug type.</p>
                     </release-item>
                 </release-development-list>

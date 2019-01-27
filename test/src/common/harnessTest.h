@@ -6,6 +6,7 @@ C Test Harness
 
 #include <inttypes.h>
 
+#include "common/debug.h"
 #include "common/error.h"
 
 /***********************************************************************************************************************************
@@ -32,14 +33,6 @@ const char *testExpectPath(void);
 void testExpectPathSet(const char *testExpectPath);
 const char *testRepoPath(void);
 void testRepoPathSet(const char *testRepoPath);
-
-/***********************************************************************************************************************************
-Convert a macro to a string -- handy for testing debug macros
-***********************************************************************************************************************************/
-#define MACRO_TO_STR_INNER(macro)                                                                                                  \
-    #macro
-#define MACRO_TO_STR(macro)                                                                                                        \
-    MACRO_TO_STR_INNER(macro)
 
 /***********************************************************************************************************************************
 Maximum size of a formatted result in the TEST_RESULT macro.  Strings don't count as they are output directly, so this only applies
