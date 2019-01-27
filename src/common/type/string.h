@@ -76,7 +76,8 @@ functions that process dynamically allocated strings.
 ***********************************************************************************************************************************/
 struct StringCommon
 {
-    size_t size;
+    uint64_t size:32;
+    uint64_t extra:32;
     char *buffer;
 };
 

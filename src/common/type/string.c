@@ -24,6 +24,20 @@ STRING_EXTERN(Y_STR,                                                "y");
 STRING_EXTERN(ZERO_STR,                                             "0");
 
 /***********************************************************************************************************************************
+Maximum size of a string
+***********************************************************************************************************************************/
+#define STRING_SIZE_MAX                                            1073741824
+
+#define CHECK_SIZE(size)                                                                                                           \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        if ((size) > STRING_SIZE_MAX)                                                                                              \
+            THROW(AssertError, "string size must be <= " MACRO_TO_STR(STRING_SIZE_MAX) " bytes");                                  \
+    }                                                                                                                              \
+    while(0)
+
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct String
@@ -46,10 +60,14 @@ strNew(const char *string)
 
     ASSERT(string != NULL);
 
+    // Check size
+    size_t stringSize = strlen(string);
+    CHECK_SIZE(stringSize);
+
     // Create object
     String *this = memNew(sizeof(String));
     this->memContext = memContextCurrent();
-    this->common.size = strlen(string);
+    this->common.size = (unsigned int)stringSize;
 
     // Allocate and assign string
     this->common.buffer = memNewRaw(this->common.size + 1);
@@ -73,10 +91,13 @@ strNewBuf(const Buffer *buffer)
 
     ASSERT(buffer != NULL);
 
+    // Check size
+    CHECK_SIZE(bufUsed(buffer));
+
     // Create object
     String *this = memNew(sizeof(String));
     this->memContext = memContextCurrent();
-    this->common.size = bufUsed(buffer);
+    this->common.size = (unsigned int)bufUsed(buffer);
 
     // Allocate and assign string
     this->common.buffer = memNewRaw(this->common.size + 1);
@@ -105,10 +126,14 @@ strNewFmt(const char *format, ...)
     // Determine how long the allocated string needs to be
     va_list argumentList;
     va_start(argumentList, format);
-    this->common.size = (size_t)vsnprintf(NULL, 0, format, argumentList);
+    size_t formatSize = (size_t)vsnprintf(NULL, 0, format, argumentList);
     va_end(argumentList);
 
+    // Check size
+    CHECK_SIZE(formatSize);
+
     // Allocate and assign string
+    this->common.size = (unsigned int)formatSize;
     this->common.buffer = memNewRaw(this->common.size + 1);
     va_start(argumentList, format);
     vsnprintf(this->common.buffer, this->common.size + 1, format, argumentList);
@@ -132,10 +157,13 @@ strNewN(const char *string, size_t size)
 
     ASSERT(string != NULL);
 
+    // Check size
+    CHECK_SIZE(size);
+
     // Create object
     String *this = memNew(sizeof(String));
     this->memContext = memContextCurrent();
-    this->common.size = size;
+    this->common.size = (unsigned int)size;
 
     // Allocate and assign string
     this->common.buffer = memNewRaw(this->common.size + 1);
@@ -204,6 +232,35 @@ strBeginsWithZ(const String *this, const char *beginsWith)
 }
 
 /***********************************************************************************************************************************
+Resize the string to allow the requested number of characters to be appended
+***********************************************************************************************************************************/
+static void
+strResize(String *this, size_t requested)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(SIZE, requested);
+    FUNCTION_TEST_END();
+
+    if (requested > this->common.extra)
+    {
+        // Check size
+        CHECK_SIZE((size_t)this->common.size + requested);
+
+        // Calculate new extra needs to satisfy request and leave extra space for new growth
+        this->common.extra = (unsigned int)requested + ((this->common.size + (unsigned int)requested) / 2);
+
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->common.buffer = memGrowRaw(this->common.buffer, this->common.size + this->common.extra + 1);
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Append a string
 ***********************************************************************************************************************************/
 String *
@@ -220,15 +277,13 @@ strCat(String *this, const char *cat)
     // Determine length of string to append
     size_t sizeGrow = strlen(cat);
 
-    // Allocate and append string
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        this->common.buffer = memGrowRaw(this->common.buffer, this->common.size + sizeGrow + 1);
-    }
-    MEM_CONTEXT_END();
+    // Ensure there is enough space to grow the string
+    strResize(this, sizeGrow);
 
+    // Append the string
     strcpy(this->common.buffer + this->common.size, cat);
-    this->common.size += sizeGrow;
+    this->common.size += (unsigned int)sizeGrow;
+    this->common.extra -= (unsigned int)sizeGrow;
 
     FUNCTION_TEST_RETURN(STRING, this);
 }
@@ -247,15 +302,13 @@ strCatChr(String *this, char cat)
     ASSERT(this != NULL);
     ASSERT(cat != 0);
 
-    // Allocate and append character
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        this->common.buffer = memGrowRaw(this->common.buffer, this->common.size + 2);
-    }
-    MEM_CONTEXT_END();
+    // Ensure there is enough space to grow the string
+    strResize(this, 1);
 
+    // Append the character
     this->common.buffer[this->common.size++] = cat;
     this->common.buffer[this->common.size] = 0;
+    this->common.extra--;
 
     FUNCTION_TEST_RETURN(STRING, this);
 }
@@ -280,18 +333,16 @@ strCatFmt(String *this, const char *format, ...)
     size_t sizeGrow = (size_t)vsnprintf(NULL, 0, format, argumentList);
     va_end(argumentList);
 
-    // Allocate and append string
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        this->common.buffer = memGrowRaw(this->common.buffer, this->common.size + sizeGrow + 1);
-    }
-    MEM_CONTEXT_END();
+    // Ensure there is enough space to grow the string
+    strResize(this, sizeGrow);
 
+    // Append the formatted string
     va_start(argumentList, format);
     vsnprintf(this->common.buffer + this->common.size, sizeGrow + 1, format, argumentList);
     va_end(argumentList);
 
-    this->common.size += sizeGrow;
+    this->common.size += (unsigned int)sizeGrow;
+    this->common.extra -= (unsigned int)sizeGrow;
 
     FUNCTION_TEST_RETURN(STRING, this);
 }
@@ -688,11 +739,12 @@ strTrim(String *this)
         if (begin != this->common.buffer || newSize < strSize(this))
         {
             // Calculate new size
-            this->common.size = newSize;
+            this->common.size = (unsigned int)newSize;
 
             // Move the substr to the beginning of the buffer
             memmove(this->common.buffer, begin, this->common.size);
             this->common.buffer[this->common.size] = 0;
+            this->common.extra = 0;
 
             MEM_CONTEXT_BEGIN(this->memContext)
             {
@@ -748,8 +800,9 @@ strTrunc(String *this, int idx)
     if (this->common.size > 0)
     {
         // Reset the size to end at the index
-        this->common.size = (size_t)(idx);
+        this->common.size = (unsigned int)(idx);
         this->common.buffer[this->common.size] = 0;
+        this->common.extra = 0;
 
         MEM_CONTEXT_BEGIN(this->memContext)
         {

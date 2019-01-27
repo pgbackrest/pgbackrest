@@ -106,6 +106,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allocate extra space for concatenations in the <code>String</code> object.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Return <code>UnknownError</code> from <code>errorTypeFromCode()</code> for invalid error codes.</p>
                     </release-item>
 

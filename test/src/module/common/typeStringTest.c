@@ -17,6 +17,14 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strNew(), strNewBuf(), strNewN(), strEmpty(), strPtr(), strSize(), and strFree()"))
     {
+        // We don't want this struct to grow since there are generally a lot of strings, so make sure it doesn't grow without us
+        // knowing about it
+        TEST_RESULT_UINT(sizeof(struct StringCommon), sizeof(size_t) == 8 ? 16 : 12, "check StringCommon struct size");
+
+        // Test the size macro
+        TEST_RESULT_VOID(CHECK_SIZE(555), "valid size");
+        TEST_ERROR(CHECK_SIZE(STRING_SIZE_MAX + 1), AssertError, "string size must be <= 1073741824 bytes");
+
         String *string = strNew("static string");
         TEST_RESULT_STR(strPtr(string), "static string", "new with static string");
         TEST_RESULT_INT(strSize(string), 13, "check size");
