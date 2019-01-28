@@ -763,7 +763,7 @@ cfgOptionStr(ConfigOption optionId)
     if (configOptionValue[optionId].value != NULL)
         result = varStr(configOptionValue[optionId].value);
 
-    FUNCTION_LOG_RETURN(CONST_STRING, result);
+    FUNCTION_LOG_RETURN_CONST(STRING, result);
 }
 
 void

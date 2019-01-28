@@ -142,6 +142,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve  <code>CONST</code> type macro handling.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Move <code>MACRO_TO_STR()</code> to <file>common/debug.h</file>.</p>
                     </release-item>
 

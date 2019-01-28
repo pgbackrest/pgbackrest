@@ -71,7 +71,7 @@ iniGetInternal(const Ini *this, const String *section, const String *key)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(CONST_VARIANT, result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -97,7 +97,7 @@ iniGet(const Ini *this, const String *section, const String *key)
     if (result == NULL)
         THROW_FMT(FormatError, "section '%s', key '%s' does not exist", strPtr(section), strPtr(key));
 
-    FUNCTION_TEST_RETURN(CONST_VARIANT, result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -124,7 +124,7 @@ iniGetDefault(const Ini *this, const String *section, const String *key, Variant
     if (result == NULL)
         result = defaultValue;
 
-    FUNCTION_TEST_RETURN(CONST_VARIANT, result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 /***********************************************************************************************************************************

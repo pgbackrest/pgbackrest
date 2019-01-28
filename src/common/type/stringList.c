@@ -509,7 +509,7 @@ strLstPtr(const StringList *this)
 
     list[strLstSize(this)] = NULL;
 
-    FUNCTION_TEST_RETURN(CONST_CHARPP, list);
+    FUNCTION_TEST_RETURN(CHARPP, list);
 }
 
 /***********************************************************************************************************************************

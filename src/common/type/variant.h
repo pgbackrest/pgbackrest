@@ -89,11 +89,6 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *varToLog(const Variant *this);
 
-#define FUNCTION_LOG_CONST_VARIANT_TYPE                                                                                            \
-    const FUNCTION_LOG_VARIANT_TYPE
-#define FUNCTION_LOG_CONST_VARIANT_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_VARIANT_FORMAT(value, buffer, bufferSize)
-
 #define FUNCTION_LOG_VARIANT_TYPE                                                                                                  \
     Variant *
 #define FUNCTION_LOG_VARIANT_FORMAT(value, buffer, bufferSize)                                                                     \

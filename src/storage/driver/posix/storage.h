@@ -65,9 +65,4 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_DRIVER_POSIX_FORMAT(value, buffer, bufferSize)                                                        \
     objToLog(value, "StorageDriverPosix", buffer, bufferSize)
 
-#define FUNCTION_LOG_CONST_STORAGE_DRIVER_POSIX_TYPE                                                                               \
-    const StorageDriverPosix *
-#define FUNCTION_LOG_CONST_STORAGE_DRIVER_POSIX_FORMAT(value, buffer, bufferSize)                                                  \
-    objToLog(value, "StorageDriverPosix", buffer, bufferSize)
-
 #endif

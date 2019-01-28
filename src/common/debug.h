@@ -126,9 +126,9 @@ size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
 #define FUNCTION_LOG_CHARP_FORMAT(value, buffer, bufferSize)                                                                       \
     ptrToLog(value, "char *", buffer, bufferSize)
 
-#define FUNCTION_LOG_CONST_CHARPP_TYPE                                                                                             \
-    const char **
-#define FUNCTION_LOG_CONST_CHARPP_FORMAT(value, buffer, bufferSize)                                                                \
+#define FUNCTION_LOG_CHARPP_TYPE                                                                                                   \
+    char **
+#define FUNCTION_LOG_CHARPP_FORMAT(value, buffer, bufferSize)                                                                      \
     ptrToLog(value, "char **", buffer, bufferSize)
 
 #define FUNCTION_LOG_CHARPY_TYPE                                                                                                   \
@@ -219,11 +219,6 @@ size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
 #define FUNCTION_LOG_VOIDP_FORMAT(value, buffer, bufferSize)                                                                       \
     ptrToLog(value, "void *", buffer, bufferSize)
 
-#define FUNCTION_LOG_CONST_VOIDP_TYPE                                                                                              \
-    const void *
-#define FUNCTION_LOG_CONST_VOIDP_FORMAT(value, buffer, bufferSize)                                                                 \
-    FUNCTION_LOG_VOIDP_FORMAT(value, buffer, bufferSize)
-
 #define FUNCTION_LOG_VOIDPP_TYPE                                                                                                   \
     void **
 #define FUNCTION_LOG_VOIDPP_FORMAT(value, buffer, bufferSize)                                                                      \
@@ -237,10 +232,10 @@ size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
 /***********************************************************************************************************************************
 Macros to return function results (or void)
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_RETURN(typeMacroPrefix, result)                                                                               \
+#define FUNCTION_LOG_RETURN_BASE(typePre, typeMacroPrefix, result)                                                                 \
     do                                                                                                                             \
     {                                                                                                                              \
-        FUNCTION_LOG_##typeMacroPrefix##_TYPE FUNCTION_LOG_RETURN_result = result;                                                 \
+        typePre FUNCTION_LOG_##typeMacroPrefix##_TYPE FUNCTION_LOG_RETURN_result = result;                                         \
                                                                                                                                    \
         STACK_TRACE_POP();                                                                                                         \
                                                                                                                                    \
@@ -255,6 +250,12 @@ Macros to return function results (or void)
         return FUNCTION_LOG_RETURN_result;                                                                                         \
     }                                                                                                                              \
     while(0)
+
+#define FUNCTION_LOG_RETURN(typeMacroPrefix, result)                                                                               \
+    FUNCTION_LOG_RETURN_BASE(, typeMacroPrefix, result)
+
+#define FUNCTION_LOG_RETURN_CONST(typeMacroPrefix, result)                                                                         \
+    FUNCTION_LOG_RETURN_BASE(const, typeMacroPrefix, result)
 
 #define FUNCTION_LOG_RETURN_VOID()                                                                                                 \
     do                                                                                                                             \
@@ -294,12 +295,10 @@ test macros are compiled out.
     #define FUNCTION_TEST_RETURN(typeMacroPrefix, result)                                                                          \
         do                                                                                                                         \
         {                                                                                                                          \
-            FUNCTION_LOG_##typeMacroPrefix##_TYPE FUNCTION_LOG_RETURN_result = result;                                             \
-                                                                                                                                   \
             if (stackTraceTest())                                                                                                  \
                 STACK_TRACE_POP();                                                                                                 \
                                                                                                                                    \
-            return FUNCTION_LOG_RETURN_result;                                                                                     \
+            return result;                                                                                                         \
         }                                                                                                                          \
         while(0);
 

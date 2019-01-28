@@ -206,7 +206,7 @@ infoArchiveCipherPass(const InfoArchive *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(CONST_STRING, infoPgCipherPass(this->infoPg));
+    FUNCTION_TEST_RETURN(STRING, infoPgCipherPass(this->infoPg));
 }
 
 /***********************************************************************************************************************************

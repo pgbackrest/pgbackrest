@@ -279,7 +279,7 @@ infoCipherPass(const Info *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(CONST_STRING, this->cipherPass);
+    FUNCTION_TEST_RETURN(STRING, this->cipherPass);
 }
 
 Ini *

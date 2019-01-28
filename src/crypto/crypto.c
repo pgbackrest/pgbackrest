@@ -90,7 +90,7 @@ cipherTypeName(CipherType type)
     else if (type != cipherTypeNone)
         THROW_FMT(AssertError, "invalid cipher type %u", type);
 
-    FUNCTION_TEST_RETURN(CONST_STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************

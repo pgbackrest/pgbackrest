@@ -412,7 +412,7 @@ ioFilterGroupResult(const IoFilterGroup *this, const String *filterType)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(CONST_VARIANT, result);
+    FUNCTION_LOG_RETURN_CONST(VARIANT, result);
 }
 
 /***********************************************************************************************************************************

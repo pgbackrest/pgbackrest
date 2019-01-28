@@ -128,7 +128,7 @@ helpRenderValue(const Variant *value)
             result = varStrForce(value);
     }
 
-    FUNCTION_LOG_RETURN(CONST_STRING, result);
+    FUNCTION_LOG_RETURN_CONST(STRING, result);
 }
 
 /***********************************************************************************************************************************

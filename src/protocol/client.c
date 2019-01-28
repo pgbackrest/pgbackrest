@@ -170,7 +170,7 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(CONST_VARIANT_LIST, result);
+    FUNCTION_LOG_RETURN_CONST(VARIANT_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -214,7 +214,7 @@ protocolClientExecute(ProtocolClient *this, const KeyValue *command, bool output
 
     protocolClientWriteCommand(this, command);
 
-    FUNCTION_LOG_RETURN(CONST_VARIANT_LIST, protocolClientReadOutput(this, outputRequired));
+    FUNCTION_LOG_RETURN_CONST(VARIANT_LIST, protocolClientReadOutput(this, outputRequired));
 }
 
 /***********************************************************************************************************************************

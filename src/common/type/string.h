@@ -134,11 +134,6 @@ Macros for function logging
 ***********************************************************************************************************************************/
 String *strToLog(const String *this);
 
-#define FUNCTION_LOG_CONST_STRING_TYPE                                                                                             \
-    const String *
-#define FUNCTION_LOG_CONST_STRING_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_LOG_STRING_FORMAT(value, buffer, bufferSize)
-
 #define FUNCTION_LOG_STRING_TYPE                                                                                                   \
     String *
 #define FUNCTION_LOG_STRING_FORMAT(value, buffer, bufferSize)                                                                      \

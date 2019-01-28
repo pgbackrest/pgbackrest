@@ -122,7 +122,7 @@ storageFileReadName(const StorageFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(CONST_STRING, this->interface.name(this->driver));
+    FUNCTION_TEST_RETURN(STRING, this->interface.name(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -137,7 +137,7 @@ storageFileReadType(const StorageFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(CONST_STRING, this->type);
+    FUNCTION_TEST_RETURN(STRING, this->type);
 }
 
 /***********************************************************************************************************************************

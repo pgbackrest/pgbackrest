@@ -234,7 +234,7 @@ storageDriverPosixFileReadName(const StorageDriverPosixFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(CONST_STRING, this->name);
+    FUNCTION_TEST_RETURN(STRING, this->name);
 }
 
 /***********************************************************************************************************************************
