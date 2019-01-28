@@ -45,3 +45,12 @@ strzToLog(const char *string, char *buffer, size_t bufferSize)
 {
     return (size_t)snprintf(buffer, bufferSize, string == NULL ? "%s" : "\"%s\"", string == NULL ? "null" : string);
 }
+
+/***********************************************************************************************************************************
+Convert a type name to a zero-terminated string for logging
+***********************************************************************************************************************************/
+size_t
+typeToLog(const char *typeName, char *buffer, size_t bufferSize)
+{
+    return (size_t)snprintf(buffer, bufferSize, "%s", typeName);
+}

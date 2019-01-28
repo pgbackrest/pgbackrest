@@ -27,7 +27,7 @@ ioFilterNew(const String *type, void *driver, IoFilterInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, type);
-        FUNCTION_LOG_PARAM(VOIDP, driver);
+        FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM(IO_FILTER_INTERFACE, interface);
     FUNCTION_LOG_END();
 

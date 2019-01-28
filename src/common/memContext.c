@@ -91,7 +91,7 @@ static void *
 memReAllocInternal(void *bufferOld, size_t sizeOld, size_t sizeNew, bool zeroNew)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VOIDP, bufferOld);
+        FUNCTION_TEST_PARAM_P(VOID, bufferOld);
         FUNCTION_TEST_PARAM(SIZE, sizeOld);
         FUNCTION_TEST_PARAM(SIZE, sizeNew);
         FUNCTION_TEST_PARAM(BOOL, zeroNew);
@@ -121,7 +121,7 @@ static void
 memFreeInternal(void *buffer)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VOIDP, buffer);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
     FUNCTION_TEST_END();
 
     ASSERT(buffer != NULL);
@@ -239,7 +239,7 @@ memContextCallback(MemContext *this, void (*callbackFunction)(void *), void *cal
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
         FUNCTION_TEST_PARAM(FUNCTIONP, callbackFunction);
-        FUNCTION_TEST_PARAM(VOIDP, callbackArgument);
+        FUNCTION_TEST_PARAM_P(VOID, callbackArgument);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -352,7 +352,7 @@ static unsigned int
 memFind(const void *buffer)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VOIDP, buffer);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
     FUNCTION_TEST_END();
 
     ASSERT(buffer != NULL);
@@ -391,7 +391,7 @@ void *
 memGrowRaw(const void *buffer, size_t size)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VOIDP, buffer);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
@@ -427,7 +427,7 @@ void
 memFree(void *buffer)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VOIDP, buffer);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
     FUNCTION_TEST_END();
 
     ASSERT(buffer != NULL);

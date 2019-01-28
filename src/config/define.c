@@ -188,11 +188,11 @@ cfgDefDataFind(
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, typeFind);
         FUNCTION_TEST_PARAM(ENUM, commandDefId);
-        FUNCTION_TEST_PARAM(VOIDPP, dataList);
-        FUNCTION_TEST_PARAM(BOOLP, dataDefFound);
-        FUNCTION_TEST_PARAM(INTP, dataDef);
-        FUNCTION_TEST_PARAM(VOIDPP, dataDefList);
-        FUNCTION_TEST_PARAM(UINTP, dataDefListSize);
+        FUNCTION_TEST_PARAM_PP(VOID, dataList);
+        FUNCTION_TEST_PARAM_P(BOOL, dataDefFound);
+        FUNCTION_TEST_PARAM_P(INT, dataDef);
+        FUNCTION_TEST_PARAM_PP(VOID, dataDefList);
+        FUNCTION_TEST_PARAM_P(UINT, dataDefListSize);
     FUNCTION_TEST_END();
 
     ASSERT(dataDefFound != NULL);

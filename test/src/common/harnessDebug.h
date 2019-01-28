@@ -8,6 +8,8 @@ C Debug Harness
     #define FUNCTION_HARNESS_INIT(exe)
     #define FUNCTION_HARNESS_BEGIN()
     #define FUNCTION_HARNESS_PARAM(typeMacroPrefix, param)
+    #define FUNCTION_HARNESS_PARAM_P(typeMacroPrefix, param)
+    #define FUNCTION_HARNESS_PARAM_PP(typeMacroPrefix, param)
     #define FUNCTION_HARNESS_END()
     #define FUNCTION_HARNESS_VOID()
     #define FUNCTION_HARNESS_ASSERT(condition)
@@ -32,6 +34,12 @@ C Debug Harness
 
     #define FUNCTION_HARNESS_PARAM(typeMacroPrefix, param)                                                                         \
         FUNCTION_LOG_PARAM(typeMacroPrefix, param)
+
+    #define FUNCTION_HARNESS_PARAM_P(typeMacroPrefix, param)                                                                       \
+        FUNCTION_LOG_PARAM_P(typeMacroPrefix, param)
+
+    #define FUNCTION_HARNESS_PARAM_PP(typeMacroPrefix, param)                                                                      \
+        FUNCTION_LOG_PARAM_PP(typeMacroPrefix, param)
 
     #define FUNCTION_HARNESS_END()
 

@@ -23,9 +23,9 @@ cvtZToIntValid(int errNo, int base, const char *value, const char *endPtr, const
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, errNo);
-        FUNCTION_TEST_PARAM(CHARP, value);
-        FUNCTION_TEST_PARAM(CHARP, endPtr);
-        FUNCTION_TEST_PARAM(CHARP, type);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
+        FUNCTION_TEST_PARAM(STRINGZ, endPtr);
+        FUNCTION_TEST_PARAM(STRINGZ, type);
     FUNCTION_TEST_END();
 
     ASSERT(value != NULL);
@@ -44,8 +44,8 @@ static int64_t
 cvtZToInt64Internal(const char *value, const char *type, int base)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, value);
-        FUNCTION_TEST_PARAM(CHARP, type);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
+        FUNCTION_TEST_PARAM(STRINGZ, type);
     FUNCTION_TEST_END();
 
     ASSERT(value != NULL);
@@ -69,8 +69,8 @@ static uint64_t
 cvtZToUInt64Internal(const char *value, const char *type, int base)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, value);
-        FUNCTION_TEST_PARAM(CHARP, type);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
+        FUNCTION_TEST_PARAM(STRINGZ, type);
     FUNCTION_TEST_END();
 
     ASSERT(value != NULL);
@@ -95,7 +95,7 @@ cvtBoolToZ(bool value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BOOL, value);
-        FUNCTION_TEST_PARAM(CHARP, buffer);
+        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
     FUNCTION_TEST_END();
 
@@ -125,7 +125,7 @@ cvtCharToZ(char value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BOOL, value);
-        FUNCTION_TEST_PARAM(CHARP, buffer);
+        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
     FUNCTION_TEST_END();
 
@@ -147,7 +147,7 @@ cvtDoubleToZ(double value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(DOUBLE, value);
-        FUNCTION_TEST_PARAM(CHARP, buffer);
+        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
     FUNCTION_TEST_END();
 
@@ -189,7 +189,7 @@ double
 cvtZToDouble(const char *value)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, value);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
     FUNCTION_TEST_END();
 
     ASSERT(value != NULL);
@@ -211,7 +211,7 @@ cvtIntToZ(int value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, value);
-        FUNCTION_TEST_PARAM(CHARP, buffer);
+        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
     FUNCTION_TEST_END();
 
@@ -229,7 +229,7 @@ int
 cvtZToIntBase(const char *value, int base)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, value);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
     FUNCTION_TEST_END();
 
     ASSERT(value != NULL);
@@ -246,7 +246,7 @@ int
 cvtZToInt(const char *value)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, value);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
     FUNCTION_TEST_END();
 
     ASSERT(value != NULL);
@@ -262,7 +262,7 @@ cvtInt64ToZ(int64_t value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT64, value);
-        FUNCTION_TEST_PARAM(CHARP, buffer);
+        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
     FUNCTION_TEST_END();
 
@@ -280,7 +280,7 @@ int64_t
 cvtZToInt64Base(const char *value, int base)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, value);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
     FUNCTION_TEST_END();
 
     ASSERT(value != NULL);
@@ -292,7 +292,7 @@ int64_t
 cvtZToInt64(const char *value)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, value);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
     FUNCTION_TEST_END();
 
     ASSERT(value != NULL);
@@ -308,7 +308,7 @@ cvtModeToZ(mode_t value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MODE, value);
-        FUNCTION_TEST_PARAM(CHARP, buffer);
+        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
     FUNCTION_TEST_END();
 
@@ -330,7 +330,7 @@ cvtSizeToZ(size_t value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, value);
-        FUNCTION_TEST_PARAM(CHARP, buffer);
+        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
     FUNCTION_TEST_END();
 
@@ -352,7 +352,7 @@ cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, value);
-        FUNCTION_TEST_PARAM(CHARP, buffer);
+        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
     FUNCTION_TEST_END();
 
@@ -370,7 +370,7 @@ unsigned int
 cvtZToUIntBase(const char *value, int base)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, value);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
     FUNCTION_TEST_END();
 
     ASSERT(value != NULL);
@@ -388,7 +388,7 @@ unsigned int
 cvtZToUInt(const char *value)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, value);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
     FUNCTION_TEST_END();
 
     ASSERT(value != NULL);
@@ -404,7 +404,7 @@ cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT64, value);
-        FUNCTION_TEST_PARAM(CHARP, buffer);
+        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
     FUNCTION_TEST_END();
 
@@ -422,7 +422,7 @@ uint64_t
 cvtZToUInt64Base(const char *value, int base)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, value);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
     FUNCTION_TEST_END();
 
     ASSERT(value != NULL);
@@ -440,7 +440,7 @@ uint64_t
 cvtZToUInt64(const char *value)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, value);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
     FUNCTION_TEST_END();
 
     ASSERT(value != NULL);

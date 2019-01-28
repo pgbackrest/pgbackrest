@@ -23,9 +23,9 @@ encodeToStr(EncodeType encodeType, const unsigned char *source, size_t sourceSiz
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, encodeType);
-        FUNCTION_TEST_PARAM(UCHARP, source);
+        FUNCTION_TEST_PARAM_P(UCHARDATA, source);
         FUNCTION_TEST_PARAM(SIZE, sourceSize);
-        FUNCTION_TEST_PARAM(CHARP, destination);
+        FUNCTION_TEST_PARAM_P(CHARDATA, destination);
     FUNCTION_TEST_END();
 
     if (encodeType == encodeBase64)
@@ -65,8 +65,8 @@ decodeToBin(EncodeType encodeType, const char *source, unsigned char *destinatio
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, encodeType);
-        FUNCTION_TEST_PARAM(CHARP, source);
-        FUNCTION_TEST_PARAM(UCHARP, destination);
+        FUNCTION_TEST_PARAM(STRINGZ, source);
+        FUNCTION_TEST_PARAM_P(UCHARDATA, destination);
     FUNCTION_TEST_END();
 
     if (encodeType == encodeBase64)
@@ -85,7 +85,7 @@ decodeToBinSize(EncodeType encodeType, const char *source)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, encodeType);
-        FUNCTION_TEST_PARAM(CHARP, source);
+        FUNCTION_TEST_PARAM(STRINGZ, source);
     FUNCTION_TEST_END();
 
     size_t destinationSize = 0;
@@ -106,7 +106,7 @@ decodeToBinValid(EncodeType encodeType, const char *source)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, encodeType);
-        FUNCTION_TEST_PARAM(CHARP, source);
+        FUNCTION_TEST_PARAM(STRINGZ, source);
     FUNCTION_TEST_END();
 
     bool valid = true;
@@ -132,7 +132,7 @@ decodeToBinValidate(EncodeType encodeType, const char *source)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, encodeType);
-        FUNCTION_TEST_PARAM(CHARP, source);
+        FUNCTION_TEST_PARAM(STRINGZ, source);
     FUNCTION_TEST_END();
 
     if (encodeType == encodeBase64)

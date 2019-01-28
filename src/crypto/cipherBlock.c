@@ -80,7 +80,7 @@ cipherBlockNewC(CipherMode mode, const char *cipherName, const unsigned char *pa
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, mode);
         FUNCTION_LOG_PARAM(STRINGZ, cipherName);
-        FUNCTION_LOG_PARAM(UCHARP, pass);
+        FUNCTION_LOG_PARAM_P(UCHARDATA, pass);
         FUNCTION_LOG_PARAM(SIZE, passSize);
         FUNCTION_LOG_PARAM(STRINGZ, digestName);
     FUNCTION_LOG_END();
@@ -174,9 +174,9 @@ cipherBlockProcessC(CipherBlock *this, const unsigned char *source, size_t sourc
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(CIPHER_BLOCK, this);
-        FUNCTION_LOG_PARAM(UCHARP, source);
+        FUNCTION_LOG_PARAM_P(UCHARDATA, source);
         FUNCTION_LOG_PARAM(SIZE, sourceSize);
-        FUNCTION_LOG_PARAM(UCHARP, destination);
+        FUNCTION_LOG_PARAM_P(UCHARDATA, destination);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -289,7 +289,7 @@ cipherBlockFlushC(CipherBlock *this, unsigned char *destination)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(CIPHER_BLOCK, this);
-        FUNCTION_LOG_PARAM(UCHARP, destination);
+        FUNCTION_LOG_PARAM_P(UCHARDATA, destination);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);

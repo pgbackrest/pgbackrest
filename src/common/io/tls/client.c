@@ -123,7 +123,7 @@ static String *
 asn1ToStr(ASN1_STRING *nameAsn1)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VOIDP, nameAsn1);
+        FUNCTION_TEST_PARAM_P(VOID, nameAsn1);
     FUNCTION_TEST_END();
 
     // The name should not be null
@@ -197,7 +197,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(VOIDP, certificate);
+        FUNCTION_LOG_PARAM_P(VOID, certificate);
     FUNCTION_LOG_END();
 
     ASSERT(host != NULL);

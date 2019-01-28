@@ -16,9 +16,9 @@ void
 encodeToStrBase64(const unsigned char *source, size_t sourceSize, char *destination)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UCHARP, source);
+        FUNCTION_TEST_PARAM_P(UCHARDATA, source);
         FUNCTION_TEST_PARAM(SIZE, sourceSize);
-        FUNCTION_TEST_PARAM(CHARP, destination);
+        FUNCTION_TEST_PARAM_P(CHARDATA, destination);
     FUNCTION_TEST_END();
 
     ASSERT(source != NULL);
@@ -118,8 +118,8 @@ void
 decodeToBinBase64(const char *source, unsigned char *destination)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, source);
-        FUNCTION_TEST_PARAM(UCHARP, destination);
+        FUNCTION_TEST_PARAM(STRINGZ, source);
+        FUNCTION_TEST_PARAM_P(UCHARDATA, destination);
     FUNCTION_TEST_END();
 
     // Validate encoded string
@@ -159,7 +159,7 @@ size_t
 decodeToBinSizeBase64(const char *source)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, source);
+        FUNCTION_TEST_PARAM(STRINGZ, source);
     FUNCTION_TEST_END();
 
     // Validate encoded string
@@ -189,7 +189,7 @@ void
 decodeToBinValidateBase64(const char *source)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, source);
+        FUNCTION_TEST_PARAM(STRINGZ, source);
     FUNCTION_TEST_END();
 
     // Check for the correct length

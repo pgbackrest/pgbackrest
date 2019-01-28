@@ -33,7 +33,7 @@ IoWrite *
 ioWriteNew(void *driver, IoWriteInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(VOIDP, driver);
+        FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM(IO_WRITE_INTERFACE, interface);
     FUNCTION_LOG_END();
 

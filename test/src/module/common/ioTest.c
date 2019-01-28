@@ -76,7 +76,7 @@ static void
 ioTestFilterSizeProcess(IoTestFilterSize *this, const Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(VOIDP, this);
+        FUNCTION_LOG_PARAM_P(VOID, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
         FUNCTION_LOG_PARAM(STRING, ioFilterType(this->filter));
         FUNCTION_LOG_PARAM(SIZE, this->size);
@@ -133,7 +133,7 @@ static void
 ioTestFilterMultiplyProcess(IoTestFilterMultiply *this, const Buffer *input, Buffer *output)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(VOIDP, this);
+        FUNCTION_LOG_PARAM_P(VOID, this);
         FUNCTION_LOG_PARAM(BUFFER, input);
         FUNCTION_LOG_PARAM(BUFFER, output);
     FUNCTION_LOG_END();

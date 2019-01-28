@@ -51,7 +51,7 @@ lstAdd(List *this, const void *item)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, this);
-        FUNCTION_TEST_PARAM(VOIDP, item);
+        FUNCTION_TEST_PARAM_P(VOID, item);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -91,7 +91,7 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, this);
-        FUNCTION_TEST_PARAM(VOIDP, item);
+        FUNCTION_TEST_PARAM_P(VOID, item);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);

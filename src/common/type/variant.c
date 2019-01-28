@@ -46,7 +46,7 @@ varNewInternal(VariantType type, void *data, size_t dataSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM(VOIDP, data);
+        FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(SIZE, dataSize);
     FUNCTION_TEST_END();
 

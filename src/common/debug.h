@@ -94,10 +94,46 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
     stackTraceParamAdd(FUNCTION_LOG_##typeMacroPrefix##_FORMAT(param, stackTraceParamBuffer(#param), STACK_TRACE_PARAM_MAX));      \
     FUNCTION_LOG_PARAM_BASE_END()
 
-#define FUNCTION_LOG_PARAM_PTR(typeName, param)                                                                                    \
-    FUNCTION_LOG_PARAM_BASE_BEGIN();                                                                                               \
-    stackTraceParamAdd(ptrToLog(param, typeName, stackTraceParamBuffer(#param), STACK_TRACE_PARAM_MAX   ));                        \
-    FUNCTION_LOG_PARAM_BASE_END()
+#define FUNCTION_LOG_PARAM_P(typeMacroPrefix, param)                                                                               \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        FUNCTION_LOG_PARAM_BASE_BEGIN();                                                                                           \
+                                                                                                                                   \
+        char *buffer = stackTraceParamBuffer(#param);                                                                              \
+                                                                                                                                   \
+        if (param == NULL)                                                                                                         \
+            stackTraceParamAdd(typeToLog("null", buffer, STACK_TRACE_PARAM_MAX));                                                  \
+        else                                                                                                                       \
+        {                                                                                                                          \
+            buffer[0] = '*';                                                                                                       \
+            stackTraceParamAdd(FUNCTION_LOG_##typeMacroPrefix##_FORMAT(*param, buffer + 1, STACK_TRACE_PARAM_MAX - 1) + 1);        \
+        }                                                                                                                          \
+                                                                                                                                   \
+        FUNCTION_LOG_PARAM_BASE_END();                                                                                             \
+    }                                                                                                                              \
+    while(0)
+
+#define FUNCTION_LOG_PARAM_PP(typeMacroPrefix, param)                                                                              \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        FUNCTION_LOG_PARAM_BASE_BEGIN();                                                                                           \
+                                                                                                                                   \
+        char *buffer = stackTraceParamBuffer(#param);                                                                              \
+                                                                                                                                   \
+        if (param == NULL)                                                                                                         \
+            stackTraceParamAdd(typeToLog("null", buffer, STACK_TRACE_PARAM_MAX));                                                  \
+        else if (*param == NULL)                                                                                                   \
+            stackTraceParamAdd(typeToLog("*null", buffer, STACK_TRACE_PARAM_MAX));                                                 \
+        else                                                                                                                       \
+        {                                                                                                                          \
+            buffer[0] = '*';                                                                                                       \
+            buffer[1] = '*';                                                                                                       \
+            stackTraceParamAdd(FUNCTION_LOG_##typeMacroPrefix##_FORMAT(**param, buffer + 2, STACK_TRACE_PARAM_MAX - 2) + 2);       \
+        }                                                                                                                          \
+                                                                                                                                   \
+        FUNCTION_LOG_PARAM_BASE_END();                                                                                             \
+    }                                                                                                                              \
+    while(0)
 
 /***********************************************************************************************************************************
 Functions and macros to render various data types
@@ -105,31 +141,22 @@ Functions and macros to render various data types
 size_t objToLog(const void *object, const char *objectName, char *buffer, size_t bufferSize);
 size_t ptrToLog(const void *pointer, const char *pointerName, char *buffer, size_t bufferSize);
 size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
+size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize);
 
 #define FUNCTION_LOG_BOOL_TYPE                                                                                                     \
     bool
 #define FUNCTION_LOG_BOOL_FORMAT(value, buffer, bufferSize)                                                                        \
     cvtBoolToZ(value, buffer, bufferSize)
 
-#define FUNCTION_LOG_BOOLP_TYPE                                                                                                    \
-    bool *
-#define FUNCTION_LOG_BOOLP_FORMAT(value, buffer, bufferSize)                                                                       \
-    ptrToLog(value, "bool *", buffer, bufferSize)
-
 #define FUNCTION_LOG_CHAR_TYPE                                                                                                     \
     char
 #define FUNCTION_LOG_CHAR_FORMAT(value, buffer, bufferSize)                                                                        \
     cvtCharToZ(value, buffer, bufferSize)
 
-#define FUNCTION_LOG_CHARP_TYPE                                                                                                    \
-    char *
-#define FUNCTION_LOG_CHARP_FORMAT(value, buffer, bufferSize)                                                                       \
-    ptrToLog(value, "char *", buffer, bufferSize)
-
-#define FUNCTION_LOG_CHARPP_TYPE                                                                                                   \
-    char **
-#define FUNCTION_LOG_CHARPP_FORMAT(value, buffer, bufferSize)                                                                      \
-    ptrToLog(value, "char **", buffer, bufferSize)
+#define FUNCTION_LOG_CHARDATA_TYPE                                                                                                 \
+    char
+#define FUNCTION_LOG_CHARDATA_FORMAT(value, buffer, bufferSize)                                                                    \
+    typeToLog("(char)", buffer, bufferSize)
 
 #define FUNCTION_LOG_CHARPY_TYPE                                                                                                   \
     char *[]
@@ -141,20 +168,10 @@ size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
 #define FUNCTION_LOG_DOUBLE_FORMAT(value, buffer, bufferSize)                                                                      \
     cvtDoubleToZ(value, buffer, bufferSize)
 
-#define FUNCTION_LOG_DOUBLEP_TYPE                                                                                                  \
-    double *
-#define FUNCTION_LOG_DOUBLEP_FORMAT(value, buffer, bufferSize)                                                                     \
-    ptrToLog(value, "double *", buffer, bufferSize)
-
 #define FUNCTION_LOG_INT_TYPE                                                                                                      \
     int
 #define FUNCTION_LOG_INT_FORMAT(value, buffer, bufferSize)                                                                         \
     cvtIntToZ(value, buffer, bufferSize)
-
-#define FUNCTION_LOG_INTP_TYPE                                                                                                     \
-    int *
-#define FUNCTION_LOG_INTP_FORMAT(value, buffer, bufferSize)                                                                        \
-    ptrToLog(value, "int *", buffer, bufferSize)
 
 #define FUNCTION_LOG_INT64_TYPE                                                                                                    \
     int64_t
@@ -179,10 +196,10 @@ size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
 #define FUNCTION_LOG_TIMEMSEC_FORMAT(value, buffer, bufferSize)                                                                    \
     cvtUInt64ToZ(value, buffer, bufferSize)
 
-#define FUNCTION_LOG_UCHARP_TYPE                                                                                                   \
-    unsigned char *
-#define FUNCTION_LOG_UCHARP_FORMAT(value, buffer, bufferSize)                                                                      \
-    ptrToLog(value, "unsigned char *", buffer, bufferSize)
+#define FUNCTION_LOG_UCHARDATA_TYPE                                                                                                \
+    unsigned char
+#define FUNCTION_LOG_UCHARDATA_FORMAT(value, buffer, bufferSize)                                                                   \
+    typeToLog("(unsigned char)", buffer, bufferSize)
 
 #define FUNCTION_LOG_SIZE_TYPE                                                                                                     \
     size_t
@@ -193,11 +210,6 @@ size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
     unsigned int
 #define FUNCTION_LOG_UINT_FORMAT(value, buffer, bufferSize)                                                                        \
     cvtUIntToZ(value, buffer, bufferSize)
-
-#define FUNCTION_LOG_UINTP_TYPE                                                                                                    \
-    unsigned int *
-#define FUNCTION_LOG_UINTP_FORMAT(value, buffer, bufferSize)                                                                       \
-    ptrToLog(value, "unsigned int *", buffer, bufferSize)
 
 #define FUNCTION_LOG_UINT16_TYPE                                                                                                   \
     uint16_t
@@ -214,28 +226,23 @@ size_t strzToLog(const char *string, char *buffer, size_t bufferSize);
 #define FUNCTION_LOG_UINT64_FORMAT(value, buffer, bufferSize)                                                                      \
     cvtUInt64ToZ(value, buffer, bufferSize)
 
-#define FUNCTION_LOG_VOIDP_TYPE                                                                                                    \
-    void *
-#define FUNCTION_LOG_VOIDP_FORMAT(value, buffer, bufferSize)                                                                       \
-    ptrToLog(value, "void *", buffer, bufferSize)
-
-#define FUNCTION_LOG_VOIDPP_TYPE                                                                                                   \
-    void **
-#define FUNCTION_LOG_VOIDPP_FORMAT(value, buffer, bufferSize)                                                                      \
-    ptrToLog(value, "void **", buffer, bufferSize)
+#define FUNCTION_LOG_VOID_TYPE                                                                                                     \
+    void
+#define FUNCTION_LOG_VOID_FORMAT(value, buffer, bufferSize)                                                                        \
+    typeToLog("void", buffer, bufferSize)
 
 #define FUNCTION_LOG_STRINGZ_TYPE                                                                                                  \
-    const char *
+    char *
 #define FUNCTION_LOG_STRINGZ_FORMAT(value, buffer, bufferSize)                                                                     \
     strzToLog(value, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Macros to return function results (or void)
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_RETURN_BASE(typePre, typeMacroPrefix, result)                                                                 \
+#define FUNCTION_LOG_RETURN_BASE(typePre, typeMacroPrefix, typePost, result)                                                       \
     do                                                                                                                             \
     {                                                                                                                              \
-        typePre FUNCTION_LOG_##typeMacroPrefix##_TYPE FUNCTION_LOG_RETURN_result = result;                                         \
+        typePre FUNCTION_LOG_##typeMacroPrefix##_TYPE typePost FUNCTION_LOG_RETURN_result = result;                                \
                                                                                                                                    \
         STACK_TRACE_POP();                                                                                                         \
                                                                                                                                    \
@@ -252,10 +259,22 @@ Macros to return function results (or void)
     while(0)
 
 #define FUNCTION_LOG_RETURN(typeMacroPrefix, result)                                                                               \
-    FUNCTION_LOG_RETURN_BASE(, typeMacroPrefix, result)
+    FUNCTION_LOG_RETURN_BASE(, typeMacroPrefix, , result)
+
+#define FUNCTION_LOG_RETURN_P(typeMacroPrefix, result)                                                                             \
+    FUNCTION_LOG_RETURN_BASE(, typeMacroPrefix, *, result)
+
+#define FUNCTION_LOG_RETURN_PP(typeMacroPrefix, result)                                                                            \
+    FUNCTION_LOG_RETURN_BASE(, typeMacroPrefix, **, result)
 
 #define FUNCTION_LOG_RETURN_CONST(typeMacroPrefix, result)                                                                         \
-    FUNCTION_LOG_RETURN_BASE(const, typeMacroPrefix, result)
+    FUNCTION_LOG_RETURN_BASE(const, typeMacroPrefix, , result)
+
+#define FUNCTION_LOG_RETURN_CONST_P(typeMacroPrefix, result)                                                                       \
+    FUNCTION_LOG_RETURN_BASE(const, typeMacroPrefix, *, result)
+
+#define FUNCTION_LOG_RETURN_CONST_PP(typeMacroPrefix, result)                                                                      \
+    FUNCTION_LOG_RETURN_BASE(const, typeMacroPrefix, **, result)
 
 #define FUNCTION_LOG_RETURN_VOID()                                                                                                 \
     do                                                                                                                             \
@@ -282,8 +301,11 @@ test macros are compiled out.
     #define FUNCTION_TEST_PARAM(typeMacroPrefix, param)                                                                            \
         FUNCTION_LOG_PARAM(typeMacroPrefix, param)
 
-    #define FUNCTION_TEST_PARAM_PTR(typeName, param)                                                                               \
-        FUNCTION_LOG_PARAM_PTR(typeName, param)
+    #define FUNCTION_TEST_PARAM_P(typeName, param)                                                                                 \
+        FUNCTION_LOG_PARAM_P(typeName, param)
+
+    #define FUNCTION_TEST_PARAM_PP(typeName, param)                                                                                \
+        FUNCTION_LOG_PARAM_PP(typeName, param)
 
     #define FUNCTION_TEST_END()                                                                                                    \
         }
@@ -312,7 +334,8 @@ test macros are compiled out.
 #else
     #define FUNCTION_TEST_BEGIN()
     #define FUNCTION_TEST_PARAM(typeMacroPrefix, param)
-    #define FUNCTION_TEST_PARAM_PTR(typeName, param)
+    #define FUNCTION_TEST_PARAM_P(typeMacroPrefix, param)
+    #define FUNCTION_TEST_PARAM_PP(typeMacroPrefix, param)
     #define FUNCTION_TEST_END()
     #define FUNCTION_TEST_VOID()
     #define FUNCTION_TEST_RETURN(result)                                                                                           \

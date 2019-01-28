@@ -57,7 +57,7 @@ bufNewC(size_t size, const void *buffer)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, size);
-        FUNCTION_TEST_PARAM(VOIDP, buffer);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
     FUNCTION_TEST_END();
 
     ASSERT(buffer != NULL);
@@ -137,7 +137,7 @@ bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
-        FUNCTION_TEST_PARAM(UCHARP, cat);
+        FUNCTION_TEST_PARAM_P(UCHARDATA, cat);
         FUNCTION_TEST_PARAM(SIZE, catOffset);
         FUNCTION_TEST_PARAM(SIZE, catSize);
     FUNCTION_TEST_END();

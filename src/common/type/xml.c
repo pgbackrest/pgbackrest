@@ -107,7 +107,7 @@ static XmlNode *
 xmlNodeNew(xmlNodePtr node)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VOIDP, node);
+        FUNCTION_TEST_PARAM_P(VOID, node);
     FUNCTION_TEST_END();
 
     ASSERT(node != NULL);
@@ -126,7 +126,7 @@ xmlNodeLstAdd(XmlNodeList *this, xmlNodePtr node)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(XML_NODE_LIST, this);
-        FUNCTION_TEST_PARAM(VOIDP, node);
+        FUNCTION_TEST_PARAM_P(VOID, node);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -313,7 +313,7 @@ XmlDocument *
 xmlDocumentNewC(const unsigned char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UCHARP, buffer);
+        FUNCTION_TEST_PARAM_P(UCHARDATA, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
     FUNCTION_TEST_END();
 
@@ -379,7 +379,7 @@ XmlDocument *
 xmlDocumentNewZ(const char *string)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, string);
+        FUNCTION_TEST_PARAM(STRINGZ, string);
     FUNCTION_TEST_END();
 
     ASSERT(string != NULL);

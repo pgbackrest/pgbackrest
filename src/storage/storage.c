@@ -45,7 +45,7 @@ storageNew(
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM(BOOL, pathResolve);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
-        FUNCTION_LOG_PARAM(VOIDP, driver);
+        FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM(STORAGE_INTERFACE, interface);
     FUNCTION_LOG_END();
 

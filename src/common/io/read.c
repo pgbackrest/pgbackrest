@@ -36,7 +36,7 @@ IoRead *
 ioReadNew(void *driver, IoReadInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(VOIDP, driver);
+        FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM(IO_READ_INTERFACE, interface);
     FUNCTION_LOG_END();
 

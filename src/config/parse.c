@@ -72,6 +72,9 @@ typedef struct ParseOption
     StringList *valueList;                                          // List of values found
 } ParseOption;
 
+#define FUNCTION_LOG_PARSE_OPTION_FORMAT(value, buffer, bufferSize)                                                                \
+    typeToLog("ParseOption", buffer, bufferSize)
+
 /***********************************************************************************************************************************
 Find an option by name in the option list
 ***********************************************************************************************************************************/
@@ -98,8 +101,8 @@ void
 convertToByte(String **value, double *valueDbl)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRINGP, value);
-        FUNCTION_LOG_PARAM(DOUBLEP, valueDbl);
+        FUNCTION_LOG_PARAM_P(STRING, value);
+        FUNCTION_LOG_PARAM_P(DOUBLE, valueDbl);
     FUNCTION_LOG_END();
 
     ASSERT(valueDbl != NULL);
@@ -219,7 +222,7 @@ cfgFileLoad(                                                        // NOTE: Pas
     const String *origConfigDefault)                                // Original --config option default (/etc/pgbackrest.conf)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM_PTR("ParseOption *", optionList);
+        FUNCTION_LOG_PARAM_P(PARSE_OPTION, optionList);
         FUNCTION_LOG_PARAM(STRING, optConfigDefault);
         FUNCTION_LOG_PARAM(STRING, optConfigIncludePathDefault);
         FUNCTION_LOG_PARAM(STRING, origConfigDefault);

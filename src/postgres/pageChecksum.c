@@ -137,7 +137,7 @@ static uint32_t
 pageChecksumBlock(const unsigned char *page, unsigned int pageSize)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UCHARP, page);
+        FUNCTION_TEST_PARAM_P(UCHARDATA, page);
         FUNCTION_TEST_PARAM(UINT, pageSize);
     FUNCTION_TEST_END();
 
@@ -178,7 +178,7 @@ uint16_t
 pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageSize)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UCHARP, page);
+        FUNCTION_TEST_PARAM_P(UCHARDATA, page);
         FUNCTION_TEST_PARAM(UINT, blockNo);
         FUNCTION_TEST_PARAM(UINT, pageSize);
     FUNCTION_TEST_END();
@@ -209,7 +209,7 @@ pageChecksumTest(
     const unsigned char *page, unsigned int blockNo, unsigned int pageSize, uint32_t ignoreWalId, uint32_t ignoreWalOffset)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UCHARP, page);
+        FUNCTION_TEST_PARAM_P(UCHARDATA, page);
         FUNCTION_TEST_PARAM(UINT, blockNo);
         FUNCTION_TEST_PARAM(UINT, pageSize);
         FUNCTION_TEST_PARAM(UINT32, ignoreWalId);
@@ -236,7 +236,7 @@ pageChecksumBufferTest(
     uint32_t ignoreWalId, uint32_t ignoreWalOffset)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(UCHARP, pageBuffer);
+        FUNCTION_LOG_PARAM_P(UCHARDATA, pageBuffer);
         FUNCTION_LOG_PARAM(UINT, pageBufferSize);
         FUNCTION_LOG_PARAM(UINT, blockNoBegin);
         FUNCTION_LOG_PARAM(UINT, pageSize);

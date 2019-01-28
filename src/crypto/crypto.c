@@ -140,7 +140,7 @@ void
 cryptoRandomBytes(unsigned char *buffer, size_t size)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(UCHARP, buffer);
+        FUNCTION_LOG_PARAM_P(UCHARDATA, buffer);
         FUNCTION_LOG_PARAM(SIZE, size);
     FUNCTION_LOG_END();
 

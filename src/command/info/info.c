@@ -103,7 +103,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
-        FUNCTION_TEST_PARAM(INFO_PG_DATAP, pgData);
+        FUNCTION_TEST_PARAM_P(INFO_PG_DATA, pgData);
         FUNCTION_TEST_PARAM(VARIANT, archiveSection);
         FUNCTION_TEST_PARAM(BOOL, currentDb);
     FUNCTION_TEST_END();

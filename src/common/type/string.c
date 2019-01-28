@@ -151,7 +151,7 @@ String *
 strNewN(const char *string, size_t size)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARP, string);
+        FUNCTION_TEST_PARAM_P(CHARDATA, string);
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 

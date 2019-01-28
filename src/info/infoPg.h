@@ -77,14 +77,11 @@ String *infoPgDataToLog(const InfoPgData *this);
     InfoPg *
 #define FUNCTION_LOG_INFO_PG_FORMAT(value, buffer, bufferSize)                                                                     \
     objToLog(value, "InfoPg", buffer, bufferSize)
+
 #define FUNCTION_LOG_INFO_PG_DATA_TYPE                                                                                             \
     InfoPgData
 #define FUNCTION_LOG_INFO_PG_DATA_FORMAT(value, buffer, bufferSize)                                                                \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(&value, infoPgDataToLog, buffer, bufferSize)
-#define FUNCTION_LOG_INFO_PG_DATAP_TYPE                                                                                            \
-    InfoPgData *
-#define FUNCTION_LOG_INFO_PG_DATAP_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, infoPgDataToLog, buffer, bufferSize)
 
 
 #endif

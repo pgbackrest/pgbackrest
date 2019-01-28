@@ -534,8 +534,8 @@ static int
 sortAscComparator(const void *item1, const void *item2)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VOIDP, item1);
-        FUNCTION_TEST_PARAM(VOIDP, item2);
+        FUNCTION_TEST_PARAM_P(VOID, item1);
+        FUNCTION_TEST_PARAM_P(VOID, item2);
     FUNCTION_TEST_END();
 
     ASSERT(item1 != NULL);
@@ -548,8 +548,8 @@ static int
 sortDescComparator(const void *item1, const void *item2)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VOIDP, item1);
-        FUNCTION_TEST_PARAM(VOIDP, item2);
+        FUNCTION_TEST_PARAM_P(VOID, item1);
+        FUNCTION_TEST_PARAM_P(VOID, item2);
     FUNCTION_TEST_END();
 
     ASSERT(item1 != NULL);

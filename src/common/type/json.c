@@ -14,8 +14,8 @@ static Variant *
 jsonString(const char *jsonC, unsigned int *jsonPos)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARPY, jsonC);
-        FUNCTION_TEST_PARAM(UINTP, jsonPos);
+        FUNCTION_TEST_PARAM(STRINGZ, jsonC);
+        FUNCTION_TEST_PARAM_P(UINT, jsonPos);
     FUNCTION_TEST_END();
 
     Variant *result = NULL;
@@ -101,10 +101,10 @@ static Variant *
 jsonNumeric(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned int *valueBeginPos)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHARPY, jsonC);
+        FUNCTION_TEST_PARAM(STRINGZ, jsonC);
         FUNCTION_TEST_PARAM(SIZE, strSize);
-        FUNCTION_TEST_PARAM(UINTP, jsonPos);
-        FUNCTION_TEST_PARAM(UINTP, valueBeginPos);
+        FUNCTION_TEST_PARAM_P(UINT, jsonPos);
+        FUNCTION_TEST_PARAM_P(UINT, valueBeginPos);
     FUNCTION_TEST_END();
 
     Variant *result = NULL;

@@ -139,9 +139,4 @@ String *strToLog(const String *this);
 #define FUNCTION_LOG_STRING_FORMAT(value, buffer, bufferSize)                                                                      \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, strToLog, buffer, bufferSize)
 
-#define FUNCTION_LOG_STRINGP_TYPE                                                                                                  \
-    const String **
-#define FUNCTION_LOG_STRINGP_FORMAT(value, buffer, bufferSize)                                                                     \
-    ptrToLog(value, "String **", buffer, bufferSize)
-
 #endif

@@ -95,7 +95,7 @@ cryptoHashProcessC(CryptoHash *this, const unsigned char *message, size_t messag
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
-        FUNCTION_LOG_PARAM(UCHARP, message);
+        FUNCTION_LOG_PARAM_P(UCHARDATA, message);
         FUNCTION_LOG_PARAM(SIZE, messageSize);
     FUNCTION_LOG_END();
 
@@ -243,7 +243,7 @@ cryptoHashOneC(const String *type, const unsigned char *message, size_t messageS
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, type);
-        FUNCTION_LOG_PARAM(UCHARP, message);
+        FUNCTION_LOG_PARAM_P(UCHARDATA, message);
     FUNCTION_LOG_END();
 
     ASSERT(type != NULL);

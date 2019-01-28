@@ -138,7 +138,7 @@ infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_PG, this);
-        FUNCTION_LOG_PARAM(INFO_PG_DATAP, infoPgData);
+        FUNCTION_LOG_PARAM_P(INFO_PG_DATA, infoPgData);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
