@@ -131,7 +131,7 @@ asn1ToStr(ASN1_STRING *nameAsn1)
         THROW(CryptoError, "TLS certificate name entry is missing");
 
     FUNCTION_TEST_RETURN(
-        STRING, strNewN(
+        strNewN(
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
             (const char *)ASN1_STRING_data(nameAsn1),
 #else
@@ -565,7 +565,7 @@ tlsClientIoRead(const TlsClient *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_READ, this->read);
+    FUNCTION_TEST_RETURN(this->read);
 }
 
 /***********************************************************************************************************************************
@@ -580,7 +580,7 @@ tlsClientIoWrite(const TlsClient *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_WRITE, this->write);
+    FUNCTION_TEST_RETURN(this->write);
 }
 
 /***********************************************************************************************************************************

@@ -69,7 +69,7 @@ storageFileWriteMove(StorageFileWrite *this, MemContext *parentNew)
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RETURN(STORAGE_FILE_WRITE, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -86,7 +86,7 @@ storageFileWriteAtomic(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->interface.atomic(this->driver));
+    FUNCTION_TEST_RETURN(this->interface.atomic(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -101,7 +101,7 @@ storageFileWriteCreatePath(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->interface.createPath(this->driver));
+    FUNCTION_TEST_RETURN(this->interface.createPath(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -116,7 +116,7 @@ storageFileWriteFileDriver(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(VOIDP, this->driver);
+    FUNCTION_TEST_RETURN(this->driver);
 }
 
 /***********************************************************************************************************************************
@@ -131,7 +131,7 @@ storageFileWriteIo(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_WRITE, this->interface.io(this->driver));
+    FUNCTION_TEST_RETURN(this->interface.io(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -146,7 +146,7 @@ storageFileWriteModeFile(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(MODE, this->interface.modeFile(this->driver));
+    FUNCTION_TEST_RETURN(this->interface.modeFile(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -161,7 +161,7 @@ storageFileWriteModePath(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(MODE, this->interface.modePath(this->driver));
+    FUNCTION_TEST_RETURN(this->interface.modePath(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -176,7 +176,7 @@ storageFileWriteName(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, this->interface.name(this->driver));
+    FUNCTION_TEST_RETURN(this->interface.name(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -191,7 +191,7 @@ storageFileWriteSyncFile(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->interface.syncFile(this->driver));
+    FUNCTION_TEST_RETURN(this->interface.syncFile(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -206,7 +206,7 @@ storageFileWriteSyncPath(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->interface.syncPath(this->driver));
+    FUNCTION_TEST_RETURN(this->interface.syncPath(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -221,7 +221,7 @@ storageFileWriteType(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, this->type);
+    FUNCTION_TEST_RETURN(this->type);
 }
 
 /***********************************************************************************************************************************

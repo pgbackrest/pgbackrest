@@ -62,7 +62,7 @@ storageFileReadMove(StorageFileRead *this, MemContext *parentNew)
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RETURN(STORAGE_FILE_READ, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -77,7 +77,7 @@ storageFileReadDriver(const StorageFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(VOIDP, this->driver);
+    FUNCTION_TEST_RETURN(this->driver);
 }
 
 /***********************************************************************************************************************************
@@ -92,7 +92,7 @@ storageFileReadIgnoreMissing(const StorageFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->interface.ignoreMissing(this->driver));
+    FUNCTION_TEST_RETURN(this->interface.ignoreMissing(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -107,7 +107,7 @@ storageFileReadIo(const StorageFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_READ, this->interface.io(this->driver));
+    FUNCTION_TEST_RETURN(this->interface.io(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -122,7 +122,7 @@ storageFileReadName(const StorageFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, this->interface.name(this->driver));
+    FUNCTION_TEST_RETURN(this->interface.name(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -137,7 +137,7 @@ storageFileReadType(const StorageFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, this->type);
+    FUNCTION_TEST_RETURN(this->type);
 }
 
 /***********************************************************************************************************************************

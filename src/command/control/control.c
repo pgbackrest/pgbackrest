@@ -18,7 +18,7 @@ lockStopFileName(const String *stanza)
 
     String *result = strNewFmt("%s/%s.stop", strPtr(cfgOptionStr(cfgOptLockPath)), stanza != NULL ? strPtr(stanza) : "all");
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************

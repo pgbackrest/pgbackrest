@@ -432,7 +432,7 @@ httpClientIoRead(const HttpClient *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_READ, this->ioRead);
+    FUNCTION_TEST_RETURN(this->ioRead);
 }
 
 /***********************************************************************************************************************************
@@ -447,7 +447,7 @@ httpClientResponseCode(const HttpClient *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(UINT, this->responseCode);
+    FUNCTION_TEST_RETURN(this->responseCode);
 }
 
 /***********************************************************************************************************************************
@@ -462,7 +462,7 @@ httpClientReponseHeader(const HttpClient *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(HTTP_HEADER, this->responseHeader);
+    FUNCTION_TEST_RETURN(this->responseHeader);
 }
 
 /***********************************************************************************************************************************
@@ -477,7 +477,7 @@ httpClientResponseMessage(const HttpClient *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, this->responseMessage);
+    FUNCTION_TEST_RETURN(this->responseMessage);
 }
 
 /***********************************************************************************************************************************

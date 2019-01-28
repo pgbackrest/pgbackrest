@@ -86,7 +86,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Rename FUNCTION_DEBUG_* and consolidate ASSERT_* macros for consistency.</p>
+                        <p>Function log macro improvements.  Rename FUNCTION_DEBUG_* and consolidate ASSERT_* macros for consistency. Improve  <code>CONST</code> type macro handling. Move <code>MACRO_TO_STR()</code> to <file>common/debug.h</file>. Remove unused type parameter from <code>FUNCTION_TEST_RETURN()</code>.</p>
                     </release-item>
 
                     <release-item>
@@ -139,14 +139,6 @@
 
                     <release-item>
                         <p>Rename <code>common/io/handle</code> module to <code>common/io/handleWrite</code>.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Improve  <code>CONST</code> type macro handling.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Move <code>MACRO_TO_STR()</code> to <file>common/debug.h</file>.</p>
                     </release-item>
 
                     <release-item>

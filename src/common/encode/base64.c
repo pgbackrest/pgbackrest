@@ -88,7 +88,7 @@ encodeToStrSizeBase64(size_t sourceSize)
         encodeGroupTotal++;
 
     // Four characters are needed to encode each group
-    FUNCTION_TEST_RETURN(SIZE, encodeGroupTotal * 4);
+    FUNCTION_TEST_RETURN(encodeGroupTotal * 4);
 }
 
 /***********************************************************************************************************************************
@@ -179,7 +179,7 @@ decodeToBinSizeBase64(const char *source)
             destinationSize--;
     }
 
-    FUNCTION_TEST_RETURN(SIZE, destinationSize);
+    FUNCTION_TEST_RETURN(destinationSize);
 }
 
 /***********************************************************************************************************************************

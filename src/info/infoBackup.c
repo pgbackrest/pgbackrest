@@ -198,7 +198,7 @@ infoBackupPg(const InfoBackup *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(INFO_PG, this->infoPg);
+    FUNCTION_TEST_RETURN(this->infoPg);
 }
 
 /***********************************************************************************************************************************
@@ -213,7 +213,7 @@ infoBackupDataTotal(const InfoBackup *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(UINT, (this->backup == NULL ? 0 : lstSize(this->backup)));
+    FUNCTION_TEST_RETURN((this->backup == NULL ? 0 : lstSize(this->backup)));
 }
 
 /***********************************************************************************************************************************

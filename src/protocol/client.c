@@ -233,7 +233,7 @@ protocolClientMove(ProtocolClient *this, MemContext *parentNew)
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RETURN(PROTOCOL_CLIENT, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -269,7 +269,7 @@ protocolClientIoRead(const ProtocolClient *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_READ, this->read);
+    FUNCTION_TEST_RETURN(this->read);
 }
 
 /***********************************************************************************************************************************
@@ -284,7 +284,7 @@ protocolClientIoWrite(const ProtocolClient *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_WRITE, this->write);
+    FUNCTION_TEST_RETURN(this->write);
 }
 
 /***********************************************************************************************************************************

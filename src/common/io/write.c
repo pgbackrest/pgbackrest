@@ -229,7 +229,7 @@ ioWriteFilterGroup(const IoWrite *this)
     ASSERT(this != NULL);
     ASSERT(this->opened && this->closed);
 
-    FUNCTION_TEST_RETURN(IO_FILTER_GROUP, this->filterGroup);
+    FUNCTION_TEST_RETURN(this->filterGroup);
 }
 
 void

@@ -300,7 +300,7 @@ execIoRead(const Exec *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_READ, this->ioReadExec);
+    FUNCTION_TEST_RETURN(this->ioReadExec);
 }
 
 /***********************************************************************************************************************************
@@ -315,7 +315,7 @@ execIoWrite(const Exec *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_WRITE, this->ioWriteExec);
+    FUNCTION_TEST_RETURN(this->ioWriteExec);
 }
 
 /***********************************************************************************************************************************
@@ -330,7 +330,7 @@ execMemContext(const Exec *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(MEM_CONTEXT, this->memContext);
+    FUNCTION_TEST_RETURN(this->memContext);
 }
 
 /***********************************************************************************************************************************

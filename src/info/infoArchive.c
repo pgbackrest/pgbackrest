@@ -176,7 +176,7 @@ infoArchiveIdHistoryMatch(
             strPtr(pgVersionToStr(pgVersion)), pgSystemId);
     }
 
-    FUNCTION_TEST_RETURN(STRING, archiveId);
+    FUNCTION_TEST_RETURN(archiveId);
 }
 
 /***********************************************************************************************************************************
@@ -191,7 +191,7 @@ infoArchiveId(const InfoArchive *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, this->archiveId);
+    FUNCTION_TEST_RETURN(this->archiveId);
 }
 
 /***********************************************************************************************************************************
@@ -206,7 +206,7 @@ infoArchiveCipherPass(const InfoArchive *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, infoPgCipherPass(this->infoPg));
+    FUNCTION_TEST_RETURN(infoPgCipherPass(this->infoPg));
 }
 
 /***********************************************************************************************************************************
@@ -221,7 +221,7 @@ infoArchivePg(const InfoArchive *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(INFO_PG, this->infoPg);
+    FUNCTION_TEST_RETURN(this->infoPg);
 }
 
 /***********************************************************************************************************************************

@@ -174,7 +174,7 @@ storageDriverPosixFileReadEof(const StorageDriverPosixFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->eof);
+    FUNCTION_TEST_RETURN(this->eof);
 }
 
 /***********************************************************************************************************************************
@@ -189,7 +189,7 @@ storageDriverPosixFileReadIgnoreMissing(const StorageDriverPosixFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->ignoreMissing);
+    FUNCTION_TEST_RETURN(this->ignoreMissing);
 }
 
 /***********************************************************************************************************************************
@@ -204,7 +204,7 @@ storageDriverPosixFileReadInterface(const StorageDriverPosixFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STORAGE_FILE_READ, this->interface);
+    FUNCTION_TEST_RETURN(this->interface);
 }
 
 /***********************************************************************************************************************************
@@ -219,7 +219,7 @@ storageDriverPosixFileReadIo(const StorageDriverPosixFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_READ, this->io);
+    FUNCTION_TEST_RETURN(this->io);
 }
 
 /***********************************************************************************************************************************
@@ -234,7 +234,7 @@ storageDriverPosixFileReadName(const StorageDriverPosixFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, this->name);
+    FUNCTION_TEST_RETURN(this->name);
 }
 
 /***********************************************************************************************************************************

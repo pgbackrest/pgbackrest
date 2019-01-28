@@ -179,7 +179,7 @@ infoPgCipherPass(const InfoPg *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, infoCipherPass(this->info));
+    FUNCTION_TEST_RETURN(infoCipherPass(this->info));
 }
 
 /***********************************************************************************************************************************

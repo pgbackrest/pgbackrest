@@ -143,7 +143,7 @@ gzipCompressDone(const GzipCompress *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->done);
+    FUNCTION_TEST_RETURN(this->done);
 }
 
 /***********************************************************************************************************************************
@@ -158,7 +158,7 @@ gzipCompressFilter(const GzipCompress *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_FILTER, this->filter);
+    FUNCTION_TEST_RETURN(this->filter);
 }
 
 /***********************************************************************************************************************************
@@ -173,7 +173,7 @@ gzipCompressInputSame(const GzipCompress *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
+    FUNCTION_TEST_RETURN(this->inputSame);
 }
 
 /***********************************************************************************************************************************

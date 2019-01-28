@@ -46,7 +46,7 @@ bufNew(size_t size)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_TEST_RETURN(BUFFER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -67,7 +67,7 @@ bufNewC(size_t size, const void *buffer)
     memcpy(this->buffer, buffer, this->size);
     this->used = this->size;
 
-    FUNCTION_TEST_RETURN(BUFFER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -87,7 +87,7 @@ bufNewStr(const String *string)
     memcpy(this->buffer, strPtr(string), bufSize(this));
     this->used = bufSize(this);
 
-    FUNCTION_TEST_RETURN(BUFFER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -107,7 +107,7 @@ bufNewZ(const char *string)
     memcpy(this->buffer, string, bufSize(this));
     this->used = bufSize(this);
 
-    FUNCTION_TEST_RETURN(BUFFER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -126,7 +126,7 @@ bufCat(Buffer *this, const Buffer *cat)
     if (cat != NULL)
         bufCatC(this, cat->buffer, 0, cat->used);
 
-    FUNCTION_TEST_RETURN(BUFFER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -157,7 +157,7 @@ bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize
         this->used += catSize;
     }
 
-    FUNCTION_TEST_RETURN(BUFFER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -183,7 +183,7 @@ bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize)
         bufCatC(this, cat->buffer, catOffset, catSize);
     }
 
-    FUNCTION_TEST_RETURN(BUFFER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -205,7 +205,7 @@ bufEq(const Buffer *this, const Buffer *compare)
     if (this->used == compare->used)
         result = memcmp(this->buffer, compare->buffer, compare->used) == 0;
 
-    FUNCTION_TEST_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -225,7 +225,7 @@ bufHex(const Buffer *this)
     for (unsigned int bufferIdx = 0; bufferIdx < bufSize(this); bufferIdx++)
         strCatFmt(result, "%02x", this->buffer[bufferIdx]);
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -244,7 +244,7 @@ bufMove(Buffer *this, MemContext *parentNew)
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RETURN(BUFFER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -300,7 +300,7 @@ bufResize(Buffer *this, size_t size)
             this->limit = this->size;
     }
 
-    FUNCTION_TEST_RETURN(BUFFER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -315,7 +315,7 @@ bufFull(const Buffer *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->used == bufSize(this));
+    FUNCTION_TEST_RETURN(this->used == bufSize(this));
 }
 
 /***********************************************************************************************************************************
@@ -364,7 +364,7 @@ bufPtr(const Buffer *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(UCHARP, this->buffer);
+    FUNCTION_TEST_RETURN(this->buffer);
 }
 
 /***********************************************************************************************************************************
@@ -379,7 +379,7 @@ bufRemains(const Buffer *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(SIZE, bufSize(this) - this->used);
+    FUNCTION_TEST_RETURN(bufSize(this) - this->used);
 }
 
 /***********************************************************************************************************************************
@@ -394,7 +394,7 @@ bufRemainsPtr(const Buffer *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(UCHARP, this->buffer + this->used);
+    FUNCTION_TEST_RETURN(this->buffer + this->used);
 }
 
 /***********************************************************************************************************************************
@@ -409,7 +409,7 @@ bufSize(const Buffer *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(SIZE, this->limitSet ? this->limit : this->size);
+    FUNCTION_TEST_RETURN(this->limitSet ? this->limit : this->size);
 }
 
 /***********************************************************************************************************************************
@@ -427,7 +427,7 @@ bufUsed(const Buffer *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(SIZE, this->used);
+    FUNCTION_TEST_RETURN(this->used);
 }
 
 void

@@ -23,7 +23,7 @@ timeMSec(void)
     struct timeval currentTime;
     gettimeofday(&currentTime, NULL);
 
-    FUNCTION_TEST_RETURN(UINT64, ((TimeMSec)currentTime.tv_sec * MSEC_PER_SEC) + (TimeMSec)currentTime.tv_usec / MSEC_PER_USEC);
+    FUNCTION_TEST_RETURN(((TimeMSec)currentTime.tv_sec * MSEC_PER_SEC) + (TimeMSec)currentTime.tv_usec / MSEC_PER_USEC);
 }
 
 /***********************************************************************************************************************************

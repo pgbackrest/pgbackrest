@@ -55,7 +55,7 @@ kvNew(void)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_TEST_RETURN(KEY_VALUE, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -88,7 +88,7 @@ kvDup(const KeyValue *source)
 
     this->keyList = varLstDup(source->keyList);
 
-    FUNCTION_TEST_RETURN(KEY_VALUE, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -120,7 +120,7 @@ kvGetIdx(const KeyValue *this, const Variant *key)
         }
     }
 
-    FUNCTION_TEST_RETURN(UINT, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -135,7 +135,7 @@ kvKeyList(const KeyValue *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(VARIANT_LIST, this->keyList);
+    FUNCTION_TEST_RETURN(this->keyList);
 }
 
 /***********************************************************************************************************************************
@@ -207,7 +207,7 @@ kvPut(KeyValue *this, const Variant *key, const Variant *value)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(KEY_VALUE, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -255,7 +255,7 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(KEY_VALUE, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -286,7 +286,7 @@ kvPutKv(KeyValue *this, const Variant *key)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(KEY_VALUE, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -311,7 +311,7 @@ kvGet(const KeyValue *this, const Variant *key)
     if (listIdx != KEY_NOT_FOUND)
         result = ((KeyValuePair *)lstGet(this->list, listIdx))->value;
 
-    FUNCTION_TEST_RETURN(VARIANT, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -339,7 +339,7 @@ kvGetList(const KeyValue *this, const Variant *key)
     else
         result = varLstAdd(varLstNew(), varDup(value));
 
-    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -358,7 +358,7 @@ kvMove(KeyValue *this, MemContext *parentNew)
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RETURN(KEY_VALUE, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

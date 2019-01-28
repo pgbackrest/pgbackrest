@@ -59,7 +59,7 @@ cvtZToInt64Internal(const char *value, const char *type, int base)
     // Validate the result
     cvtZToIntValid(errno, base, value, endPtr, type);
 
-    FUNCTION_TEST_RETURN(INT64, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -84,7 +84,7 @@ cvtZToUInt64Internal(const char *value, const char *type, int base)
     // Validate the result
     cvtZToIntValid(errno, base, value, endPtr, type);
 
-    FUNCTION_TEST_RETURN(UINT64, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -106,7 +106,7 @@ cvtBoolToZ(bool value, char *buffer, size_t bufferSize)
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RETURN(SIZE, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 // Since booleans only have two possible values we can return a const with the value.  This is useful when a boolean needs to be
@@ -136,7 +136,7 @@ cvtCharToZ(char value, char *buffer, size_t bufferSize)
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RETURN(SIZE, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -182,7 +182,7 @@ cvtDoubleToZ(double value, char *buffer, size_t bufferSize)
     end[1] = 0;
 
     // Return string length
-    FUNCTION_TEST_RETURN(SIZE, (size_t)(end - buffer + 1));
+    FUNCTION_TEST_RETURN((size_t)(end - buffer + 1));
 }
 
 double
@@ -200,7 +200,7 @@ cvtZToDouble(const char *value)
     if (result == 0 && strcmp(value, "0") != 0)
         THROW_FMT(FormatError, "unable to convert string '%s' to double", value);
 
-    FUNCTION_TEST_RETURN(DOUBLE, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -222,7 +222,7 @@ cvtIntToZ(int value, char *buffer, size_t bufferSize)
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RETURN(SIZE, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 int
@@ -239,7 +239,7 @@ cvtZToIntBase(const char *value, int base)
     if (result > INT_MAX || result < INT_MIN)
         THROW_FMT(FormatError, "unable to convert base %d string '%s' to int", base, value);
 
-    FUNCTION_TEST_RETURN(INT, (int)result);
+    FUNCTION_TEST_RETURN((int)result);
 }
 
 int
@@ -251,7 +251,7 @@ cvtZToInt(const char *value)
 
     ASSERT(value != NULL);
 
-    FUNCTION_TEST_RETURN(INT, cvtZToIntBase(value, 10));
+    FUNCTION_TEST_RETURN(cvtZToIntBase(value, 10));
 }
 
 /***********************************************************************************************************************************
@@ -273,7 +273,7 @@ cvtInt64ToZ(int64_t value, char *buffer, size_t bufferSize)
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RETURN(SIZE, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 int64_t
@@ -285,7 +285,7 @@ cvtZToInt64Base(const char *value, int base)
 
     ASSERT(value != NULL);
 
-    FUNCTION_TEST_RETURN(INT64, cvtZToInt64Internal(value, "int64", base));
+    FUNCTION_TEST_RETURN(cvtZToInt64Internal(value, "int64", base));
 }
 
 int64_t
@@ -297,7 +297,7 @@ cvtZToInt64(const char *value)
 
     ASSERT(value != NULL);
 
-    FUNCTION_TEST_RETURN(INT64, cvtZToInt64Base(value, 10));
+    FUNCTION_TEST_RETURN(cvtZToInt64Base(value, 10));
 }
 
 /***********************************************************************************************************************************
@@ -319,7 +319,7 @@ cvtModeToZ(mode_t value, char *buffer, size_t bufferSize)
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RETURN(SIZE, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -341,7 +341,7 @@ cvtSizeToZ(size_t value, char *buffer, size_t bufferSize)
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RETURN(SIZE, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -363,7 +363,7 @@ cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize)
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RETURN(SIZE, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 unsigned int
@@ -381,7 +381,7 @@ cvtZToUIntBase(const char *value, int base)
     if (*value == '-' || result > UINT_MAX)
         THROW_FMT(FormatError, "unable to convert base %d string '%s' to unsigned int", base, value);
 
-    FUNCTION_TEST_RETURN(UINT, (unsigned int)result);
+    FUNCTION_TEST_RETURN((unsigned int)result);
 }
 
 unsigned int
@@ -393,7 +393,7 @@ cvtZToUInt(const char *value)
 
     ASSERT(value != NULL);
 
-    FUNCTION_TEST_RETURN(UINT, cvtZToUIntBase(value, 10));
+    FUNCTION_TEST_RETURN(cvtZToUIntBase(value, 10));
 }
 
 /***********************************************************************************************************************************
@@ -415,7 +415,7 @@ cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize)
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    FUNCTION_TEST_RETURN(SIZE, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 uint64_t
@@ -433,7 +433,7 @@ cvtZToUInt64Base(const char *value, int base)
     if (*value == '-')
         THROW_FMT(FormatError, "unable to convert base %d string '%s' to uint64", base, value);
 
-    FUNCTION_TEST_RETURN(UINT64, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 uint64_t
@@ -445,5 +445,5 @@ cvtZToUInt64(const char *value)
 
     ASSERT(value != NULL);
 
-    FUNCTION_TEST_RETURN(UINT64, cvtZToUInt64Base(value, 10));
+    FUNCTION_TEST_RETURN(cvtZToUInt64Base(value, 10));
 }

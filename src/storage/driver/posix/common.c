@@ -42,7 +42,7 @@ storageDriverPosixFileOpen(
         }
     }
 
-    FUNCTION_TEST_RETURN(INT, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************

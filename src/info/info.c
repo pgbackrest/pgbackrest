@@ -104,7 +104,7 @@ infoHash(const Ini *ini)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(CRYPTO_HASH, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -279,7 +279,7 @@ infoCipherPass(const Info *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, this->cipherPass);
+    FUNCTION_TEST_RETURN(this->cipherPass);
 }
 
 Ini *
@@ -291,7 +291,7 @@ infoIni(const Info *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(INI, this->ini);
+    FUNCTION_TEST_RETURN(this->ini);
 }
 
 String *
@@ -303,7 +303,7 @@ infoFileName(const Info *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, this->fileName);
+    FUNCTION_TEST_RETURN(this->fileName);
 }
 
 /***********************************************************************************************************************************

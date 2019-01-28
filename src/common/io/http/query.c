@@ -35,7 +35,7 @@ httpQueryNew(void)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -67,7 +67,7 @@ httpQueryAdd(HttpQuery *this, const String *key, const String *value)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -92,7 +92,7 @@ httpQueryGet(const HttpQuery *this, const String *key)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -107,7 +107,7 @@ httpQueryList(const HttpQuery *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING_LIST, strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
+    FUNCTION_TEST_RETURN(strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
 }
 
 /***********************************************************************************************************************************
@@ -126,7 +126,7 @@ httpQueryMove(HttpQuery *this, MemContext *parentNew)
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -152,7 +152,7 @@ httpQueryPut(HttpQuery *this, const String *key, const String *value)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -191,7 +191,7 @@ httpQueryRender(const HttpQuery *this)
         }
     }
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************

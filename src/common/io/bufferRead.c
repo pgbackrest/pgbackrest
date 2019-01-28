@@ -97,7 +97,7 @@ ioBufferReadMove(IoBufferRead *this, MemContext *parentNew)
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RETURN(IO_BUFFER_READ, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -127,7 +127,7 @@ ioBufferReadIo(const IoBufferRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_READ, this->io);
+    FUNCTION_TEST_RETURN(this->io);
 }
 
 /***********************************************************************************************************************************

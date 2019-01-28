@@ -41,5 +41,5 @@ httpUriEncode(const String *uri, bool path)
         }
     }
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }

@@ -67,7 +67,7 @@ regExpNew(const String *expression)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_TEST_RETURN(REGEXP, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -91,7 +91,7 @@ regExpMatch(RegExp *this, const String *string)
     if (result != 0 && result != REG_NOMATCH)                                   // {uncoverable - no error condition known}
         regExpError(result);                                                    // {+uncoverable}
 
-    FUNCTION_TEST_RETURN(BOOL, result == 0);
+    FUNCTION_TEST_RETURN(result == 0);
 }
 
 /***********************************************************************************************************************************
@@ -142,7 +142,7 @@ regExpMatchOne(const String *expression, const String *string)
     }
     TRY_END();
 
-    FUNCTION_TEST_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -183,5 +183,5 @@ regExpPrefix(const String *expression)
             result = strSubN(expression, 1, expressionIdx - 1);
     }
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }

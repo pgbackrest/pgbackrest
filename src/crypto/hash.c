@@ -279,7 +279,7 @@ cryptoHashOne(const String *type, Buffer *message)
     ASSERT(type != NULL);
     ASSERT(message != NULL);
 
-    FUNCTION_TEST_RETURN(BUFFER, cryptoHashOneC(type, bufPtr(message), bufSize(message)));
+    FUNCTION_TEST_RETURN(cryptoHashOneC(type, bufPtr(message), bufSize(message)));
 }
 
 /***********************************************************************************************************************************
@@ -296,7 +296,7 @@ cryptoHashOneStr(const String *type, String *message)
     ASSERT(type != NULL);
     ASSERT(message != NULL);
 
-    FUNCTION_TEST_RETURN(BUFFER, cryptoHashOneC(type, (const unsigned char *)strPtr(message), strSize(message)));
+    FUNCTION_TEST_RETURN(cryptoHashOneC(type, (const unsigned char *)strPtr(message), strSize(message)));
 }
 
 /***********************************************************************************************************************************
@@ -324,5 +324,5 @@ cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
     // Calculate the HMAC
     HMAC(hashType, bufPtr(key), (int)bufSize(key), bufPtr(message), bufSize(message), bufPtr(result), NULL);
 
-    FUNCTION_TEST_RETURN(BUFFER, result);
+    FUNCTION_TEST_RETURN(result);
 }

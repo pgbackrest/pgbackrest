@@ -25,7 +25,7 @@ pgInterfaceIs110(const Buffer *controlFile)
     ControlFileData *controlData = (ControlFileData *)bufPtr(controlFile);
 
     FUNCTION_TEST_RETURN(
-        BOOL, controlData->pg_control_version == PG_CONTROL_VERSION && controlData->catalog_version_no == CATALOG_VERSION_NO);
+        controlData->pg_control_version == PG_CONTROL_VERSION && controlData->catalog_version_no == CATALOG_VERSION_NO);
 }
 
 /***********************************************************************************************************************************

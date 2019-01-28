@@ -83,7 +83,7 @@ logLevelEnum(const char *logLevel)
     if (result == LOG_LEVEL_TOTAL)
         THROW_FMT(AssertError, "log level '%s' not found", logLevel);
 
-    FUNCTION_TEST_RETURN(ENUM, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 const char *
@@ -95,7 +95,7 @@ logLevelStr(LogLevel logLevel)
 
     ASSERT(logLevel <= LOG_LEVEL_MAX);
 
-    FUNCTION_TEST_RETURN(STRINGZ, logLevelList[logLevel]);
+    FUNCTION_TEST_RETURN(logLevelList[logLevel]);
 }
 
 /***********************************************************************************************************************************
@@ -163,7 +163,7 @@ logFileSet(const char *logFile)
         logFileBanner = false;
     }
 
-    FUNCTION_TEST_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -180,7 +180,7 @@ logWillFile(LogLevel logLevel)
 
     ASSERT_LOG_LEVEL(logLevel);
 
-    FUNCTION_TEST_RETURN(ENUM, logLevel <= logLevelFile && logHandleFile != -1);
+    FUNCTION_TEST_RETURN(logLevel <= logLevelFile && logHandleFile != -1);
 }
 
 static bool
@@ -192,7 +192,7 @@ logWillStdErr(LogLevel logLevel)
 
     ASSERT_LOG_LEVEL(logLevel);
 
-    FUNCTION_TEST_RETURN(ENUM, logLevel <= logLevelStdErr);
+    FUNCTION_TEST_RETURN(logLevel <= logLevelStdErr);
 }
 
 static bool
@@ -204,7 +204,7 @@ logWillStdOut(LogLevel logLevel)
 
     ASSERT_LOG_LEVEL(logLevel);
 
-    FUNCTION_TEST_RETURN(ENUM, logLevel <= logLevelStdOut);
+    FUNCTION_TEST_RETURN(logLevel <= logLevelStdOut);
 }
 
 bool
@@ -216,7 +216,7 @@ logWill(LogLevel logLevel)
 
     ASSERT_LOG_LEVEL(logLevel);
 
-    FUNCTION_TEST_RETURN(BOOL, logWillStdOut(logLevel) || logWillStdErr(logLevel) || logWillFile(logLevel));
+    FUNCTION_TEST_RETURN(logWillStdOut(logLevel) || logWillStdErr(logLevel) || logWillFile(logLevel));
 }
 
 /***********************************************************************************************************************************
@@ -236,7 +236,7 @@ logRange(LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax)
     ASSERT_LOG_LEVEL(logRangeMax);
     ASSERT(logRangeMin <= logRangeMax);
 
-    FUNCTION_TEST_RETURN(BOOL, logLevel >= logRangeMin && logLevel <= logRangeMax);
+    FUNCTION_TEST_RETURN(logLevel >= logRangeMin && logLevel <= logRangeMax);
 }
 
 /***********************************************************************************************************************************

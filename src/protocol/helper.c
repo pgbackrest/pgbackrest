@@ -31,7 +31,7 @@ bool
 repoIsLocal(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(BOOL, !cfgOptionTest(cfgOptRepoHost));
+    FUNCTION_TEST_RETURN(!cfgOptionTest(cfgOptRepoHost));
 }
 
 /***********************************************************************************************************************************

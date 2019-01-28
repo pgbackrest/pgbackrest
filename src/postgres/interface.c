@@ -291,7 +291,7 @@ pgControlTestToBuffer(PgControl pgControl)
     // Generate pg_control
     interface->controlTest(pgControl, result);
 
-    FUNCTION_TEST_RETURN(BUFFER, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 #endif

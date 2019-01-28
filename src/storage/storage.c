@@ -501,7 +501,7 @@ storagePath(const Storage *this, const String *pathExp)
         }
     }
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************

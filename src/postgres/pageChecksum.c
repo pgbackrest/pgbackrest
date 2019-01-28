@@ -165,7 +165,7 @@ pageChecksumBlock(const unsigned char *page, unsigned int pageSize)
     for (i = 0; i < N_SUMS; i++)
         result ^= sums[i];
 
-    FUNCTION_TEST_RETURN(UINT32, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -198,7 +198,7 @@ pageChecksum(const unsigned char *page, unsigned int blockNo, unsigned int pageS
     checksum ^= blockNo;
 
     // Reduce to a uint16 with an offset of one. That avoids checksums of zero, which seems like a good idea.
-    FUNCTION_TEST_RETURN(UINT16, (uint16_t)(checksum % 65535 + 1));
+    FUNCTION_TEST_RETURN((uint16_t)(checksum % 65535 + 1));
 }
 
 /***********************************************************************************************************************************
@@ -219,7 +219,6 @@ pageChecksumTest(
     ASSERT(page != NULL);
 
     FUNCTION_TEST_RETURN(
-        BOOL,
         // This is a new page so don't test checksum
         ((PageHeader)page)->pd_upper == 0 ||
         // LSN is after the backup started so checksum is not tested because pages may be torn

@@ -415,7 +415,7 @@ cipherBlockDone(const CipherBlock *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->done && !this->inputSame);
+    FUNCTION_TEST_RETURN(this->done && !this->inputSame);
 }
 
 /***********************************************************************************************************************************
@@ -430,7 +430,7 @@ cipherBlockFilter(const CipherBlock *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_FILTER, this->filter);
+    FUNCTION_TEST_RETURN(this->filter);
 }
 
 /***********************************************************************************************************************************
@@ -445,7 +445,7 @@ cipherBlockInputSame(const CipherBlock *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
+    FUNCTION_TEST_RETURN(this->inputSame);
 }
 
 /***********************************************************************************************************************************

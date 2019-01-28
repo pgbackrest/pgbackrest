@@ -91,7 +91,7 @@ jsonString(const char *jsonC, unsigned int *jsonPos)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(VARIANT, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -125,7 +125,7 @@ jsonNumeric(const char *jsonC, size_t strSize, unsigned int *jsonPos, unsigned i
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(VARIANT, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -498,7 +498,7 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************

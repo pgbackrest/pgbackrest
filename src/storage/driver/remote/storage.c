@@ -300,5 +300,5 @@ storageDriverRemoteInterface(const StorageDriverRemote *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STORAGE, this->interface);
+    FUNCTION_TEST_RETURN(this->interface);
 }

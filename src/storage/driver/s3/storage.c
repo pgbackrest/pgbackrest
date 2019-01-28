@@ -102,7 +102,7 @@ storageDriverS3DateTime(time_t authTime)
             buffer, sizeof(buffer), "%Y%m%dT%H%M%SZ", gmtime(&authTime)) != ISO_8601_DATE_TIME_SIZE)
         THROW_SYS_ERROR(AssertError, "unable to format date");                      // {+uncoverable}
 
-    FUNCTION_TEST_RETURN(STRING, strNew(buffer));
+    FUNCTION_TEST_RETURN(strNew(buffer));
 }
 
 /***********************************************************************************************************************************
@@ -686,7 +686,7 @@ storageDriverS3HttpClient(const StorageDriverS3 *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(HTTP_CLIENT, this->httpClient);
+    FUNCTION_TEST_RETURN(this->httpClient);
 }
 
 /***********************************************************************************************************************************
@@ -701,5 +701,5 @@ storageDriverS3Interface(const StorageDriverS3 *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STORAGE, this->interface);
+    FUNCTION_TEST_RETURN(this->interface);
 }

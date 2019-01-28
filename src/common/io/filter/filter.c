@@ -107,7 +107,7 @@ ioFilterMove(IoFilter *this, MemContext *parentNew)
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RETURN(IO_FILTER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -124,7 +124,7 @@ ioFilterDone(const IoFilter *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->interface.done != NULL ? this->interface.done(this->driver) : !ioFilterInputSame(this));
+    FUNCTION_TEST_RETURN(this->interface.done != NULL ? this->interface.done(this->driver) : !ioFilterInputSame(this));
 }
 
 /***********************************************************************************************************************************
@@ -141,7 +141,7 @@ ioFilterInputSame(const IoFilter *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->interface.inputSame != NULL ? this->interface.inputSame(this->driver) : false);
+    FUNCTION_TEST_RETURN(this->interface.inputSame != NULL ? this->interface.inputSame(this->driver) : false);
 }
 
 /***********************************************************************************************************************************
@@ -158,7 +158,7 @@ ioFilterOutput(const IoFilter *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->interface.inOut != NULL);
+    FUNCTION_TEST_RETURN(this->interface.inOut != NULL);
 }
 
 /***********************************************************************************************************************************
@@ -173,7 +173,7 @@ ioFilterResult(const IoFilter *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(VARIANT, this->interface.result ? this->interface.result(this->driver) : NULL);
+    FUNCTION_TEST_RETURN(this->interface.result ? this->interface.result(this->driver) : NULL);
 }
 
 /***********************************************************************************************************************************
@@ -190,5 +190,5 @@ ioFilterType(const IoFilter *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, this->type);
+    FUNCTION_TEST_RETURN(this->type);
 }

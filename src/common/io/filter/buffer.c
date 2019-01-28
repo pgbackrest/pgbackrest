@@ -108,7 +108,7 @@ ioBufferInputSame(const IoBuffer *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
+    FUNCTION_TEST_RETURN(this->inputSame);
 }
 
 /***********************************************************************************************************************************
@@ -123,7 +123,7 @@ ioBufferFilter(const IoBuffer *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_FILTER, this->filter);
+    FUNCTION_TEST_RETURN(this->filter);
 }
 
 /***********************************************************************************************************************************

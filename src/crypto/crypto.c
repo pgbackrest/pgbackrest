@@ -73,7 +73,7 @@ cipherType(const String *name)
     else if (!strEq(name, CIPHER_TYPE_NONE_STR))
         THROW_FMT(AssertError, "invalid cipher name '%s'", strPtr(name));
 
-    FUNCTION_TEST_RETURN(ENUM, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 const String *
@@ -90,7 +90,7 @@ cipherTypeName(CipherType type)
     else if (type != cipherTypeNone)
         THROW_FMT(AssertError, "invalid cipher type %u", type);
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -130,7 +130,7 @@ bool
 cryptoIsInit(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(BOOL, cryptoInitDone);
+    FUNCTION_TEST_RETURN(cryptoInitDone);
 }
 
 /***********************************************************************************************************************************

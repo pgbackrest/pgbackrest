@@ -17,7 +17,7 @@ VariantList *
 varLstNew(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(VARIANT_LIST, (VariantList *)lstNew(sizeof(Variant *)));
+    FUNCTION_TEST_RETURN((VariantList *)lstNew(sizeof(Variant *)));
 }
 
 /***********************************************************************************************************************************
@@ -40,7 +40,7 @@ varLstNewStrLst(const StringList *stringList)
             varLstAdd(result, varNewStr(strLstGet(stringList, listIdx)));
     }
 
-    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -63,7 +63,7 @@ varLstDup(const VariantList *source)
             varLstAdd(result, varDup(varLstGet(source, listIdx)));
     }
 
-    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -79,7 +79,7 @@ varLstAdd(VariantList *this, Variant *data)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(VARIANT_LIST, (VariantList *)lstAdd((List *)this, &data));
+    FUNCTION_TEST_RETURN((VariantList *)lstAdd((List *)this, &data));
 }
 
 /***********************************************************************************************************************************
@@ -95,7 +95,7 @@ varLstGet(const VariantList *this, unsigned int listIdx)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(VARIANT, *(Variant **)lstGet((List *)this, listIdx));
+    FUNCTION_TEST_RETURN(*(Variant **)lstGet((List *)this, listIdx));
 }
 
 /***********************************************************************************************************************************
@@ -110,7 +110,7 @@ varLstSize(const VariantList *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(UINT, lstSize((List *)this));
+    FUNCTION_TEST_RETURN(lstSize((List *)this));
 }
 
 /***********************************************************************************************************************************
@@ -128,7 +128,7 @@ varLstMove(VariantList *this, MemContext *parentNew)
 
     lstMove((List *)this, parentNew);
 
-    FUNCTION_TEST_RETURN(VARIANT_LIST, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

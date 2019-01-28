@@ -157,7 +157,7 @@ ConfigCommand
 cfgCommand(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(ENUM, command);
+    FUNCTION_TEST_RETURN(command);
 }
 
 void
@@ -181,7 +181,7 @@ bool
 cfgCommandHelp(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(BOOL, help);
+    FUNCTION_TEST_RETURN(help);
 }
 
 void
@@ -211,7 +211,7 @@ cfgCommandDefIdFromId(ConfigCommand commandId)
 
     ASSERT(commandId < cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(ENUM, (ConfigDefineCommand)commandId);
+    FUNCTION_TEST_RETURN((ConfigDefineCommand)commandId);
 }
 
 /***********************************************************************************************************************************
@@ -235,7 +235,7 @@ cfgCommandId(const char *commandName)
     if (commandId == cfgCmdNone)
         THROW_FMT(AssertError, "invalid command '%s'", commandName);
 
-    FUNCTION_TEST_RETURN(ENUM, commandId);
+    FUNCTION_TEST_RETURN(commandId);
 }
 
 /***********************************************************************************************************************************
@@ -250,7 +250,7 @@ cfgCommandName(ConfigCommand commandId)
 
     ASSERT(commandId < cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(STRINGZ, configCommandData[commandId].name);
+    FUNCTION_TEST_RETURN(configCommandData[commandId].name);
 }
 
 /***********************************************************************************************************************************
@@ -270,7 +270,7 @@ cfgCommandParam(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(STRING_LIST, paramList);
+    FUNCTION_TEST_RETURN(paramList);
 }
 
 void
@@ -298,7 +298,7 @@ const String *
 cfgExe(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(STRING, exe);
+    FUNCTION_TEST_RETURN(exe);
 }
 
 void
@@ -329,7 +329,7 @@ cfgLockRequired(void)
 
     ASSERT(command != cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(BOOL, configCommandData[cfgCommand()].lockRequired);
+    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].lockRequired);
 }
 
 /***********************************************************************************************************************************
@@ -342,7 +342,7 @@ cfgLockType(void)
 
     ASSERT(command != cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(ENUM, (LockType)configCommandData[cfgCommand()].lockType);
+    FUNCTION_TEST_RETURN((LockType)configCommandData[cfgCommand()].lockType);
 }
 
 /***********************************************************************************************************************************
@@ -355,7 +355,7 @@ cfgLogFile(void)
 
     ASSERT(command != cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(BOOL, configCommandData[cfgCommand()].logFile);
+    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].logFile);
 }
 
 /***********************************************************************************************************************************
@@ -368,7 +368,7 @@ cfgLogLevelDefault(void)
 
     ASSERT(command != cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(ENUM, (LogLevel)configCommandData[cfgCommand()].logLevelDefault);
+    FUNCTION_TEST_RETURN((LogLevel)configCommandData[cfgCommand()].logLevelDefault);
 }
 
 /***********************************************************************************************************************************
@@ -381,7 +381,7 @@ cfgLogLevelStdErrMax(void)
 
     ASSERT(command != cfgCmdNone);
 
-    FUNCTION_TEST_RETURN(ENUM, (LogLevel)configCommandData[cfgCommand()].logLevelStdErrMax);
+    FUNCTION_TEST_RETURN((LogLevel)configCommandData[cfgCommand()].logLevelStdErrMax);
 }
 
 /***********************************************************************************************************************************
@@ -396,7 +396,7 @@ cfgOptionDefIdFromId(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(ENUM, configOptionData[optionId].defineId);
+    FUNCTION_TEST_RETURN(configOptionData[optionId].defineId);
 }
 
 /***********************************************************************************************************************************
@@ -459,7 +459,7 @@ cfgOptionDefault(ConfigOption optionId)
         }
     }
 
-    FUNCTION_TEST_RETURN(VARIANT, configOptionValue[optionId].defaultValue);
+    FUNCTION_TEST_RETURN(configOptionValue[optionId].defaultValue);
 }
 
 void
@@ -504,7 +504,7 @@ cfgOptionIndex(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(UINT, configOptionData[optionId].index);
+    FUNCTION_TEST_RETURN(configOptionData[optionId].index);
 }
 
 /***********************************************************************************************************************************
@@ -525,7 +525,7 @@ cfgOptionId(const char *optionName)
         if (strcmp(optionName, configOptionData[optionId].name) == 0)
             result = optionId;
 
-    FUNCTION_TEST_RETURN(INT, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -540,7 +540,7 @@ cfgOptionIndexTotal(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(UINT, cfgDefOptionIndexTotal(configOptionData[optionId].defineId));
+    FUNCTION_TEST_RETURN(cfgDefOptionIndexTotal(configOptionData[optionId].defineId));
 }
 
 /***********************************************************************************************************************************
@@ -568,7 +568,7 @@ cfgOptionIdFromDefId(ConfigDefineOption optionDefId, unsigned int index)
     ASSERT(optionId != CFG_OPTION_TOTAL);
 
     // Return with original index
-    FUNCTION_TEST_RETURN(ENUM, optionId + index);
+    FUNCTION_TEST_RETURN(optionId + index);
 }
 
 /***********************************************************************************************************************************
@@ -583,7 +583,7 @@ cfgOptionName(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(STRINGZ, configOptionData[optionId].name);
+    FUNCTION_TEST_RETURN(configOptionData[optionId].name);
 }
 
 /***********************************************************************************************************************************
@@ -598,7 +598,7 @@ cfgOptionNegate(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(BOOL, configOptionValue[optionId].negate);
+    FUNCTION_TEST_RETURN(configOptionValue[optionId].negate);
 }
 
 void
@@ -628,7 +628,7 @@ cfgOptionReset(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(BOOL, configOptionValue[optionId].reset);
+    FUNCTION_TEST_RETURN(configOptionValue[optionId].reset);
 }
 
 void
@@ -658,7 +658,7 @@ cfgOption(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(VARIANT, configOptionValue[optionId].value);
+    FUNCTION_TEST_RETURN(configOptionValue[optionId].value);
 }
 
 bool
@@ -874,7 +874,7 @@ cfgOptionSource(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(ENUM, configOptionValue[optionId].source);
+    FUNCTION_TEST_RETURN(configOptionValue[optionId].source);
 }
 
 /***********************************************************************************************************************************
@@ -889,7 +889,7 @@ cfgOptionTest(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(BOOL, cfgOptionValid(optionId) && configOptionValue[optionId].value != NULL);
+    FUNCTION_TEST_RETURN(cfgOptionValid(optionId) && configOptionValue[optionId].value != NULL);
 }
 
 /***********************************************************************************************************************************
@@ -904,7 +904,7 @@ cfgOptionValid(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(BOOL, configOptionValue[optionId].valid);
+    FUNCTION_TEST_RETURN(configOptionValue[optionId].valid);
 }
 
 void

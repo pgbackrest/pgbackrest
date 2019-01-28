@@ -37,7 +37,7 @@ httpHeaderNew(const StringList *redactList)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -69,7 +69,7 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -94,7 +94,7 @@ httpHeaderGet(const HttpHeader *this, const String *key)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -109,7 +109,7 @@ httpHeaderList(const HttpHeader *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING_LIST, strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
+    FUNCTION_TEST_RETURN(strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
 }
 
 /***********************************************************************************************************************************
@@ -128,7 +128,7 @@ httpHeaderMove(HttpHeader *this, MemContext *parentNew)
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -154,7 +154,7 @@ httpHeaderPut(HttpHeader *this, const String *key, const String *value)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -171,7 +171,7 @@ httpHeaderRedact(const HttpHeader *this, const String *key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->redactList != NULL && strLstExists(this->redactList, key));
+    FUNCTION_TEST_RETURN(this->redactList != NULL && strLstExists(this->redactList, key));
 }
 
 /***********************************************************************************************************************************

@@ -53,7 +53,7 @@ exitSignalName(int signalType)
             THROW(AssertError, "no name for signal none");
     }
 
-    FUNCTION_TEST_RETURN(STRINGZ, name);
+    FUNCTION_TEST_RETURN(name);
 }
 
 /***********************************************************************************************************************************

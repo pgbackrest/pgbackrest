@@ -82,7 +82,7 @@ ioSizeFilter(const IoSize *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_FILTER, this->filter);
+    FUNCTION_TEST_RETURN(this->filter);
 }
 
 /***********************************************************************************************************************************

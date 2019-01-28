@@ -110,7 +110,7 @@ ioFilterGroupGet(IoFilterGroup *this, unsigned int filterIdx)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_FILTER_DATA, (IoFilterData *)lstGet(this->filterList, filterIdx));
+    FUNCTION_TEST_RETURN((IoFilterData *)lstGet(this->filterList, filterIdx));
 }
 
 /***********************************************************************************************************************************
@@ -368,7 +368,7 @@ ioFilterGroupDone(const IoFilterGroup *this)
     ASSERT(this != NULL);
     ASSERT(this->opened && !this->closed);
 
-    FUNCTION_TEST_RETURN(BOOL, this->done);
+    FUNCTION_TEST_RETURN(this->done);
 }
 
 /***********************************************************************************************************************************
@@ -386,7 +386,7 @@ ioFilterGroupInputSame(const IoFilterGroup *this)
     ASSERT(this != NULL);
     ASSERT(this->opened && !this->closed);
 
-    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
+    FUNCTION_TEST_RETURN(this->inputSame);
 }
 
 /***********************************************************************************************************************************

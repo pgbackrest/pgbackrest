@@ -78,7 +78,7 @@ ioBufferWriteMove(IoBufferWrite *this, MemContext *parentNew)
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RETURN(IO_BUFFER_WRITE, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -93,7 +93,7 @@ ioBufferWriteIo(const IoBufferWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_WRITE, this->io);
+    FUNCTION_TEST_RETURN(this->io);
 }
 
 /***********************************************************************************************************************************

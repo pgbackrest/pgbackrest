@@ -23,7 +23,7 @@ size_t
 ioBufferSize(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(SIZE, bufferSize);
+    FUNCTION_TEST_RETURN(bufferSize);
 }
 
 void
@@ -70,5 +70,5 @@ ioReadBuf(IoRead *read)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(BUFFER, result);
+    FUNCTION_TEST_RETURN(result);
 }

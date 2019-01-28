@@ -243,7 +243,7 @@ storageDriverRemoteFileReadEof(const StorageDriverRemoteFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->eof);
+    FUNCTION_TEST_RETURN(this->eof);
 }
 
 /***********************************************************************************************************************************
@@ -258,7 +258,7 @@ storageDriverRemoteFileReadIgnoreMissing(const StorageDriverRemoteFileRead *this
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->ignoreMissing);
+    FUNCTION_TEST_RETURN(this->ignoreMissing);
 }
 
 /***********************************************************************************************************************************
@@ -273,7 +273,7 @@ storageDriverRemoteFileReadInterface(const StorageDriverRemoteFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STORAGE_FILE_READ, this->interface);
+    FUNCTION_TEST_RETURN(this->interface);
 }
 
 /***********************************************************************************************************************************
@@ -288,7 +288,7 @@ storageDriverRemoteFileReadIo(const StorageDriverRemoteFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_READ, this->io);
+    FUNCTION_TEST_RETURN(this->io);
 }
 
 /***********************************************************************************************************************************
@@ -303,5 +303,5 @@ storageDriverRemoteFileReadName(const StorageDriverRemoteFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, this->name);
+    FUNCTION_TEST_RETURN(this->name);
 }

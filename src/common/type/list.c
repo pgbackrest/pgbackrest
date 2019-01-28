@@ -40,7 +40,7 @@ lstNew(size_t itemSize)
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_TEST_RETURN(LIST, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -59,7 +59,7 @@ lstAdd(List *this, const void *item)
 
     lstInsert(this, lstSize(this), item);
 
-    FUNCTION_TEST_RETURN(LIST, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -80,7 +80,7 @@ lstGet(const List *this, unsigned int listIdx)
         THROW_FMT(AssertError, "cannot get index %u from list with %u value(s)", listIdx, this->listSize);
 
     // Return pointer to list item
-    FUNCTION_TEST_RETURN(VOIDP, this->list + (listIdx * this->itemSize));
+    FUNCTION_TEST_RETURN(this->list + (listIdx * this->itemSize));
 }
 
 /***********************************************************************************************************************************
@@ -131,7 +131,7 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
     memcpy(this->list + (listIdx * this->itemSize), item, this->itemSize);
     this->listSize++;
 
-    FUNCTION_TEST_RETURN(LIST, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -146,7 +146,7 @@ lstMemContext(const List *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(MEM_CONTEXT, this->memContext);
+    FUNCTION_TEST_RETURN(this->memContext);
 }
 
 /***********************************************************************************************************************************
@@ -165,7 +165,7 @@ lstMove(List *this, MemContext *parentNew)
     if (this != NULL)
         memContextMove(this->memContext, parentNew);
 
-    FUNCTION_TEST_RETURN(LIST, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -180,7 +180,7 @@ lstSize(const List *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(UINT, this->listSize);
+    FUNCTION_TEST_RETURN(this->listSize);
 }
 
 /***********************************************************************************************************************************
@@ -199,7 +199,7 @@ lstSort(List *this, int (*comparator)(const void *, const void*))
 
     qsort(this->list, this->listSize, this->itemSize, comparator);
 
-    FUNCTION_TEST_RETURN(LIST, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************

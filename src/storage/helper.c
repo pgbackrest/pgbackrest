@@ -112,7 +112,7 @@ storageLocal(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(STORAGE, storageHelper.storageLocal);
+    FUNCTION_TEST_RETURN(storageHelper.storageLocal);
 }
 
 /***********************************************************************************************************************************
@@ -138,7 +138,7 @@ storageLocalWrite(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(STORAGE, storageHelper.storageLocalWrite);
+    FUNCTION_TEST_RETURN(storageHelper.storageLocalWrite);
 }
 
 /***********************************************************************************************************************************
@@ -191,7 +191,7 @@ storageRepoPathExpression(const String *expression, const String *path)
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -242,7 +242,7 @@ storageRepoGet(const String *type, bool write)
     else
         THROW_FMT(AssertError, "invalid storage type '%s'", strPtr(type));
 
-    FUNCTION_TEST_RETURN(STORAGE, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -266,7 +266,7 @@ storageRepo(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(STORAGE, storageHelper.storageRepo);
+    FUNCTION_TEST_RETURN(storageHelper.storageRepo);
 }
 
 /***********************************************************************************************************************************
@@ -302,7 +302,7 @@ storageSpoolPathExpression(const String *expression, const String *path)
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strPtr(expression));
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -328,7 +328,7 @@ storageSpool(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(STORAGE, storageHelper.storageSpool);
+    FUNCTION_TEST_RETURN(storageHelper.storageSpool);
 }
 
 /***********************************************************************************************************************************
@@ -354,5 +354,5 @@ storageSpoolWrite(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(STORAGE, storageHelper.storageSpoolWrite);
+    FUNCTION_TEST_RETURN(storageHelper.storageSpoolWrite);
 }

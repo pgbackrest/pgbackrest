@@ -129,7 +129,7 @@ storageDriverS3FileReadEof(const StorageDriverS3FileRead *this)
 
     ASSERT(this != NULL && this->httpClient != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpClientIoRead(this->httpClient)));
+    FUNCTION_TEST_RETURN(ioReadEof(httpClientIoRead(this->httpClient)));
 }
 
 /***********************************************************************************************************************************
@@ -144,7 +144,7 @@ storageDriverS3FileReadIgnoreMissing(const StorageDriverS3FileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->ignoreMissing);
+    FUNCTION_TEST_RETURN(this->ignoreMissing);
 }
 
 /***********************************************************************************************************************************
@@ -159,7 +159,7 @@ storageDriverS3FileReadInterface(const StorageDriverS3FileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STORAGE_FILE_READ, this->interface);
+    FUNCTION_TEST_RETURN(this->interface);
 }
 
 /***********************************************************************************************************************************
@@ -174,7 +174,7 @@ storageDriverS3FileReadIo(const StorageDriverS3FileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_READ, this->io);
+    FUNCTION_TEST_RETURN(this->io);
 }
 
 /***********************************************************************************************************************************
@@ -189,5 +189,5 @@ storageDriverS3FileReadName(const StorageDriverS3FileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, this->name);
+    FUNCTION_TEST_RETURN(this->name);
 }

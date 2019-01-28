@@ -73,7 +73,7 @@ strNew(const char *string)
     this->common.buffer = memNewRaw(this->common.size + 1);
     strcpy(this->common.buffer, string);
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -104,7 +104,7 @@ strNewBuf(const Buffer *buffer)
     memcpy(this->common.buffer, (char *)bufPtr(buffer), this->common.size);
     this->common.buffer[this->common.size] = 0;
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -139,7 +139,7 @@ strNewFmt(const char *format, ...)
     vsnprintf(this->common.buffer, this->common.size + 1, format, argumentList);
     va_end(argumentList);
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -171,7 +171,7 @@ strNewN(const char *string, size_t size)
     this->common.buffer[this->common.size] = 0;
 
     // Return buffer
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -191,7 +191,7 @@ strBase(const String *this)
     while (end > this->common.buffer && *(end - 1) != '/')
         end--;
 
-    FUNCTION_TEST_RETURN(STRING, strNew(end));
+    FUNCTION_TEST_RETURN(strNew(end));
 }
 
 /***********************************************************************************************************************************
@@ -208,7 +208,7 @@ strBeginsWith(const String *this, const String *beginsWith)
     ASSERT(this != NULL);
     ASSERT(beginsWith != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, strBeginsWithZ(this, strPtr(beginsWith)));
+    FUNCTION_TEST_RETURN(strBeginsWithZ(this, strPtr(beginsWith)));
 }
 
 bool
@@ -228,7 +228,7 @@ strBeginsWithZ(const String *this, const char *beginsWith)
     if (this->common.size >= beginsWithSize)
         result = strncmp(strPtr(this), beginsWith, beginsWithSize) == 0;
 
-    FUNCTION_TEST_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -285,7 +285,7 @@ strCat(String *this, const char *cat)
     this->common.size += (unsigned int)sizeGrow;
     this->common.extra -= (unsigned int)sizeGrow;
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -310,7 +310,7 @@ strCatChr(String *this, char cat)
     this->common.buffer[this->common.size] = 0;
     this->common.extra--;
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -344,7 +344,7 @@ strCatFmt(String *this, const char *format, ...)
     this->common.size += (unsigned int)sizeGrow;
     this->common.extra -= (unsigned int)sizeGrow;
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -361,7 +361,7 @@ strCmp(const String *this, const String *compare)
     ASSERT(this != NULL);
     ASSERT(compare != NULL);
 
-    FUNCTION_TEST_RETURN(INT, strcmp(strPtr(this), strPtr(compare)));
+    FUNCTION_TEST_RETURN(strcmp(strPtr(this), strPtr(compare)));
 }
 
 int
@@ -375,7 +375,7 @@ strCmpZ(const String *this, const char *compare)
     ASSERT(this != NULL);
     ASSERT(compare != NULL);
 
-    FUNCTION_TEST_RETURN(INT, strcmp(strPtr(this), compare));
+    FUNCTION_TEST_RETURN(strcmp(strPtr(this), compare));
 }
 
 /***********************************************************************************************************************************
@@ -393,7 +393,7 @@ strDup(const String *this)
     if (this != NULL)
         result = strNew(strPtr(this));
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -406,7 +406,7 @@ strEmpty(const String *this)
         FUNCTION_TEST_PARAM(STRING, this);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(BOOL, strSize(this) == 0);
+    FUNCTION_TEST_RETURN(strSize(this) == 0);
 }
 
 /***********************************************************************************************************************************
@@ -423,7 +423,7 @@ strEndsWith(const String *this, const String *endsWith)
     ASSERT(this != NULL);
     ASSERT(endsWith != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, strEndsWithZ(this, strPtr(endsWith)));
+    FUNCTION_TEST_RETURN(strEndsWithZ(this, strPtr(endsWith)));
 }
 
 bool
@@ -443,7 +443,7 @@ strEndsWithZ(const String *this, const char *endsWith)
     if (this->common.size >= endsWithSize)
         result = strcmp(strPtr(this) + (this->common.size - endsWithSize), endsWith) == 0;
 
-    FUNCTION_TEST_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -468,7 +468,7 @@ strEq(const String *this, const String *compare)
     if (this->common.size == compare->common.size)
         result = strcmp(strPtr(this), strPtr(compare)) == 0;
 
-    FUNCTION_TEST_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 bool
@@ -482,7 +482,7 @@ strEqZ(const String *this, const char *compare)
     ASSERT(this != NULL);
     ASSERT(compare != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, strcmp(strPtr(this), compare) == 0);
+    FUNCTION_TEST_RETURN(strcmp(strPtr(this), compare) == 0);
 }
 
 /***********************************************************************************************************************************
@@ -500,7 +500,7 @@ strFirstUpper(String *this)
     if (this->common.size > 0)
         this->common.buffer[0] = (char)toupper(this->common.buffer[0]);
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -518,7 +518,7 @@ strFirstLower(String *this)
     if (this->common.size > 0)
         this->common.buffer[0] = (char)tolower(this->common.buffer[0]);
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -537,7 +537,7 @@ strUpper(String *this)
         for (unsigned int idx = 0; idx <= this->common.size; idx++)
             this->common.buffer[idx] = (char)toupper(this->common.buffer[idx]);
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -556,7 +556,7 @@ strLower(String *this)
         for (unsigned int idx = 0; idx <= this->common.size; idx++)
             this->common.buffer[idx] = (char)tolower(this->common.buffer[idx]);
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -577,7 +577,6 @@ strPath(const String *this)
         end--;
 
     FUNCTION_TEST_RETURN(
-        STRING,
         strNewN(
             this->common.buffer,
             end - this->common.buffer <= 1 ? (size_t)(end - this->common.buffer) : (size_t)(end - this->common.buffer - 1)));
@@ -598,7 +597,7 @@ strPtr(const String *this)
     if (this != NULL)
         result = this->common.buffer;
 
-    FUNCTION_TEST_RETURN(CHARP, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -615,7 +614,7 @@ strQuote(const String *this, const String *quote)
     ASSERT(this != NULL);
     ASSERT(quote != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, strQuoteZ(this, strPtr(quote)));
+    FUNCTION_TEST_RETURN(strQuoteZ(this, strPtr(quote)));
 }
 
 String *
@@ -629,7 +628,7 @@ strQuoteZ(const String *this, const char *quote)
     ASSERT(this != NULL);
     ASSERT(quote != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, strNewFmt("%s%s%s", quote, strPtr(this), quote));
+    FUNCTION_TEST_RETURN(strNewFmt("%s%s%s", quote, strPtr(this), quote));
 }
 
 /***********************************************************************************************************************************
@@ -652,7 +651,7 @@ strReplaceChr(String *this, char find, char replace)
             this->common.buffer[stringIdx] = replace;
     }
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -669,7 +668,7 @@ strSub(const String *this, size_t start)
     ASSERT(this != NULL);
     ASSERT(start < this->common.size);
 
-    FUNCTION_TEST_RETURN(STRING, strSubN(this, start, this->common.size - start));
+    FUNCTION_TEST_RETURN(strSubN(this, start, this->common.size - start));
 }
 
 /***********************************************************************************************************************************
@@ -688,7 +687,7 @@ strSubN(const String *this, size_t start, size_t size)
     ASSERT(start < this->common.size);
     ASSERT(start + size <= this->common.size);
 
-    FUNCTION_TEST_RETURN(STRING, strNewN(this->common.buffer + start, size));
+    FUNCTION_TEST_RETURN(strNewN(this->common.buffer + start, size));
 }
 
 /***********************************************************************************************************************************
@@ -703,7 +702,7 @@ strSize(const String *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(SIZE, this->common.size);
+    FUNCTION_TEST_RETURN(this->common.size);
 }
 
 /***********************************************************************************************************************************
@@ -755,7 +754,7 @@ strTrim(String *this)
         }
     }
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -781,7 +780,7 @@ strChr(const String *this, char chr)
             result = (int)(ptr - this->common.buffer);
     }
 
-    FUNCTION_TEST_RETURN(INT, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -812,7 +811,7 @@ strTrunc(String *this, int idx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(this);
 }
 
 /***********************************************************************************************************************************
@@ -884,7 +883,7 @@ strSizeFormat(const uint64_t size)
             result = strNewFmt("%" PRIu64 "GB", size / (1024 * 1024 * 1024));
     }
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************

@@ -292,7 +292,7 @@ test macros are compiled out.
         FUNCTION_TEST_BEGIN();                                                                                                     \
         FUNCTION_TEST_END();
 
-    #define FUNCTION_TEST_RETURN(typeMacroPrefix, result)                                                                          \
+    #define FUNCTION_TEST_RETURN(result)                                                                                           \
         do                                                                                                                         \
         {                                                                                                                          \
             if (stackTraceTest())                                                                                                  \
@@ -315,7 +315,7 @@ test macros are compiled out.
     #define FUNCTION_TEST_PARAM_PTR(typeName, param)
     #define FUNCTION_TEST_END()
     #define FUNCTION_TEST_VOID()
-    #define FUNCTION_TEST_RETURN(typeMacroPrefix, result)                                                                          \
+    #define FUNCTION_TEST_RETURN(result)                                                                                           \
         return result
     #define FUNCTION_TEST_RETURN_VOID()
 #endif

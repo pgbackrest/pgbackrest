@@ -399,7 +399,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
         varLstAdd(result, stanzaInfo);
     }
 
-    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************

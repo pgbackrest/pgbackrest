@@ -69,7 +69,7 @@ perlMain(void)
     String *mainCall = strNewFmt(
         "($iResult, $bErrorC, $strMessage) = " PGBACKREST_MAIN "('%s'%s)", cfgCommandName(cfgCommand()), strPtr(commandParam));
 
-    FUNCTION_TEST_RETURN(STRING, mainCall);
+    FUNCTION_TEST_RETURN(mainCall);
 }
 
 /***********************************************************************************************************************************

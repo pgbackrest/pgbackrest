@@ -336,7 +336,7 @@ ioReadFilterGroup(const IoRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(IO_FILTER_GROUP, this->filterGroup);
+    FUNCTION_TEST_RETURN(this->filterGroup);
 }
 
 void
