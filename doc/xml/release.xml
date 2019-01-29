@@ -56,7 +56,7 @@
                             <release-item-ideator id="ucando"/>
                         </release-item-contributor-list>
 
-                        <p>Include Posix-compliant header for <code>strcasecmp()</code>.</p>
+                        <p>Include Posix-compliant header for <code>strcasecmp()</code> and <code>fd_set</code>.</p>
                     </release-item>
                 </release-improvement-list>
 
