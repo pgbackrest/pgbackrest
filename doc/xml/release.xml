@@ -148,6 +148,16 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="heath.lord"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix hard-coded repository path.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -6257,6 +6267,11 @@
         <contributor id="greg.smith">
             <contributor-name-display>Greg Smith</contributor-name-display>
             <contributor-id type="github">gregscds</contributor-id>
+        </contributor>
+
+        <contributor id="heath.lord">
+            <contributor-name-display>Heath Lord</contributor-name-display>
+            <contributor-id type="github">crunchyheath</contributor-id>
         </contributor>
 
         <contributor id="ibrahim.edib.kokdemir">

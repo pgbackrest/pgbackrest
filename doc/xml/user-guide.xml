@@ -35,12 +35,14 @@
         <variable key="user-guide-os" if="{[os-type-is-centos6]}">RHEL/CentOS 6</variable>
         <variable key="user-guide-os" if="{[os-type-is-centos7]}">RHEL/CentOS 7</variable>
 
-        <variable key="pgbackrest-path" eval="y">
+        <variable key="pgbackrest-host-repo-path" eval="y">
             use File::Basename qw(dirname);
             use Cwd qw(abs_path);
 
             dirname(dirname(abs_path($0)));
         </variable>
+
+        <variable key="pgbackrest-repo-path">/pgbackrest</variable>
 
         <variable key="pg-version" if="{[os-type-is-debian]}">9.4</variable>
         <variable key="pg-version" if="{[os-type-is-centos]}">9.5</variable>
@@ -119,7 +121,7 @@
         <variable key="host-option">-v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /tmp/$(mktemp -d):/run</variable>
 
         <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
-        <variable key="host-mount">{[pgbackrest-path]}:/backrest</variable>
+        <variable key="host-mount">{[pgbackrest-host-repo-path]}:{[pgbackrest-repo-path]}</variable>
         <variable key="image-repo">pgbackrest/test</variable>
 
         <variable key="host-s3-id">s3</variable>
@@ -469,7 +471,7 @@
             <title>Install <backrest/> from package</title>
 
             <execute if="{[os-type-is-debian]}" user="root" err-suppress="y" show="n">
-                <exe-cmd>dpkg -i {[pgbackrest-path]}/{[package]}</exe-cmd>
+                <exe-cmd>dpkg -i {[pgbackrest-repo-path]}/{[package]}</exe-cmd>
                 <exe-cmd-extra> 2>&amp;1</exe-cmd-extra>
             </execute>
 
@@ -483,7 +485,7 @@
             </execute>
 
             <execute if="{[os-type-is-centos]}" user="root" show="n">
-                <exe-cmd>yum -y install {[pgbackrest-path]}/{[package]}</exe-cmd>
+                <exe-cmd>yum -y install {[pgbackrest-repo-path]}/{[package]}</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
@@ -643,10 +645,10 @@
                 <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r /backrest/libc /root/pgbackrest-release-{[version]}</exe-cmd>
+                <exe-cmd>cp -r {[pgbackrest-repo-path]}/libc /root/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r /backrest/src /root/pgbackrest-release-{[version]}</exe-cmd>
+                <exe-cmd>cp -r {[pgbackrest-repo-path]}/src /root/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
         </execute-list>
 
@@ -1301,7 +1303,7 @@
                 </execute>
 
                 <execute user="postgres" show="n">
-                    <exe-cmd>cp -r /backrest/doc/example/*
+                    <exe-cmd>cp -r {[pgbackrest-repo-path]}/doc/example/*
                         {[pg-home-path]}/pgbackrest/doc/example</exe-cmd>
                 </execute>
 
