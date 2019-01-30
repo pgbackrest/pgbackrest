@@ -96,7 +96,7 @@ sudo yum install -y git2u-all
 sudo yum install -y perl-ExtUtils-ParseXS perl-ExtUtils-Embed perl-ExtUtils-MakeMaker perl-YAML-LibYAML
 
 # Install dev libraries
-sudo yum install -y libxml2-devel
+sudo yum install -y libxml2-devel openssl-devel
 
 # Add test user with sudo privileges
 sudo adduser -gtest -n test
