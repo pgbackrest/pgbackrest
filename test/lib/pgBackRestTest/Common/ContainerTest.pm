@@ -34,12 +34,12 @@ use constant POSTGRES_GROUP_ID                                      => 5000;
 use constant POSTGRES_USER                                          => POSTGRES_GROUP;
 use constant POSTGRES_USER_ID                                       => 5000;
 
-use constant TEST_GROUP                                             => getgrgid($UID) . '';
-    push @EXPORT, qw(TEST_GROUP);
-use constant TEST_GROUP_ID                                          => getgrnam(TEST_GROUP) . '';
 use constant TEST_USER                                              => getpwuid($UID) . '';
     push @EXPORT, qw(TEST_USER);
 use constant TEST_USER_ID                                           => $UID;
+use constant TEST_GROUP                                             => getgrgid((getpwnam(TEST_USER))[3]) . '';
+    push @EXPORT, qw(TEST_GROUP);
+use constant TEST_GROUP_ID                                          => getgrnam(TEST_GROUP) . '';
 
 use constant BACKREST_USER                                          => 'pgbackrest';
     push @EXPORT, qw(BACKREST_USER);

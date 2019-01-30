@@ -184,6 +184,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow primary <id>gid</id> for the test user to be different from <id>uid</id>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Increase timeout in <id>storage/s3</id> module to improve reliability.</p>
                     </release-item>
                 </release-development-list>
