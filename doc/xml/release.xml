@@ -168,6 +168,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add examples for building a documentation host.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow <code>if</code> in manifest variables, lists, and list items.</p>
                     </release-item>
                 </release-improvement-list>
