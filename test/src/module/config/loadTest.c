@@ -134,6 +134,18 @@ testRun(void)
             "'50.5' is not valid for 'protocol-timeout' option\n"
                 "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
 
+        cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(45));
+        cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(3600));
+        TEST_RESULT_VOID(cfgLoadUpdateOption(), "set default pg timeout to be less than protocol timeout");
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 45, "    check protocol timeout");
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 15, "    check db timeout");
+
+        cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(11));
+        cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(3600));
+        TEST_RESULT_VOID(cfgLoadUpdateOption(), "set default pg timeout to be less than test protocol timeout");
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 11, "    check protocol timeout");
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 5.5, "    check db timeout");
+
         // -------------------------------------------------------------------------------------------------------------------------
         cfgInit();
         cfgCommandSet(cfgCmdBackup);

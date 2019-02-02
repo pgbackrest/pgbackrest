@@ -80,6 +80,19 @@ cfgLoadUpdateOption(void)
         // If protocol-timeout is default then increase it to be greater than db-timeout
         if (cfgOptionSource(cfgOptProtocolTimeout) == cfgSourceDefault)
             cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, varNewDbl(cfgOptionDbl(cfgOptDbTimeout) + 30));
+        else if (cfgOptionSource(cfgOptDbTimeout) == cfgSourceDefault)
+        {
+            double dbTimeout = cfgOptionDbl(cfgOptProtocolTimeout) - 30;
+
+            // Normally the protocol time will be greater than 45 seconds so db timeout can be at least 15 seconds
+            if (dbTimeout >= 15)
+            {
+                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(dbTimeout));
+            }
+            // But in some test cases the protocol timeout will be very small so make db timeout half of protocol timeout
+            else
+                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(cfgOptionDbl(cfgOptProtocolTimeout) / 2));
+        }
         else
         {
             THROW_FMT(OptionInvalidValueError,
