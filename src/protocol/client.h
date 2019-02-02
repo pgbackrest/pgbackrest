@@ -34,7 +34,7 @@ Constants
 #define PROTOCOL_COMMAND                                            "cmd"
     STRING_DECLARE(PROTOCOL_COMMAND_STR);
 #define PROTOCOL_COMMAND_EXIT                                       "exit"
-    STRING_DECLARE(PROTOCOL_COMMAND_NOOP_STR);
+    STRING_DECLARE(PROTOCOL_COMMAND_EXIT_STR);
 #define PROTOCOL_COMMAND_NOOP                                       "noop"
     STRING_DECLARE(PROTOCOL_COMMAND_NOOP_STR);
 

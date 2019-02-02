@@ -48,6 +48,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(STRING, service);
         FUNCTION_LOG_PARAM(IO_READ, read);
         FUNCTION_LOG_PARAM(IO_WRITE, write);
     FUNCTION_LOG_END();
@@ -108,7 +109,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         // Send one noop to catch any errors that might happen after the greeting
         protocolClientNoOp(this);
 
-        // Set a callback so the handles will get freed
+        // Set a callback to shutdown the protocol
         memContextCallback(this->memContext, (MemContextCallback)protocolClientFree, this);
     }
     MEM_CONTEXT_NEW_END();
