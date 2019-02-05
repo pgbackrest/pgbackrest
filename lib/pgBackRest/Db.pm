@@ -573,7 +573,7 @@ sub versionGet
     }
 
     # Get version and pg-path from
-    (my $strVersionNum, $self->{strDbPath}) =
+    my ($strVersionNum, $strDbPath) =
         $self->executeSqlRow(
             "select (select setting from pg_settings where name = 'server_version_num'), " .
                 " (select setting from pg_settings where name = 'data_directory')");
@@ -600,7 +600,7 @@ sub versionGet
     (
         $strOperation,
         {name => 'strDbVersion', value => $self->{strDbVersion}},
-        {name => 'strDbPath', value => $self->{strDbPath}}
+        {name => 'strDbPath', value => $strDbPath}
     );
 }
 

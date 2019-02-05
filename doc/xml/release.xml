@@ -14,6 +14,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.10dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="james.chanco.jr"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix check for improperly configured <br-option>pg-path</br-option>.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-development-list>
                     <release-item>
                         <p>JSON improvements.  Optimize parser implementation.  Make the renderer more null tolerant.</p>
@@ -6299,6 +6309,11 @@
         <contributor id="ibrahim.edib.kokdemir">
             <contributor-name-display>Ibrahim Edib Kokdemir</contributor-name-display>
             <contributor-id type="github">Edib</contributor-id>
+        </contributor>
+
+        <contributor id="james.chanco.jr">
+            <contributor-name-display>James Chanco Jr</contributor-name-display>
+            <contributor-id type="github">jameschancojr</contributor-id>
         </contributor>
 
         <contributor id="jan.wieck">
