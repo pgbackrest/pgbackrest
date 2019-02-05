@@ -91,8 +91,8 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
             for (unsigned int pgHistoryIdx = strLstSize(pgHistoryKey) - 1; (int)pgHistoryIdx >= 0; pgHistoryIdx--)
             {
                 // Load JSON data into a KeyValue
-                const KeyValue *pgDataKv = jsonToKv(
-                    varStr(iniGet(infoPgIni, pgHistorySection, strLstGet(pgHistoryKey, pgHistoryIdx))));
+                const KeyValue *pgDataKv = varKv(
+                    jsonToVar(varStr(iniGet(infoPgIni, pgHistorySection, strLstGet(pgHistoryKey, pgHistoryIdx)))));
 
                 // Get db values that are common to all info files
                 InfoPgData infoPgData =

@@ -209,18 +209,21 @@ strLstNewVarLst(const VariantList *sourceList)
         FUNCTION_TEST_PARAM(VARIANT_LIST, sourceList);
     FUNCTION_TEST_END();
 
-    ASSERT(sourceList != NULL);
-
     // Create the list
-    StringList *this = strLstNew();
+    StringList *this = NULL;
 
-    // Copy variants
-    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    if  (sourceList != NULL)
     {
-        for (unsigned int listIdx = 0; listIdx < varLstSize(sourceList); listIdx++)
-            strLstAddInternal(this, strDup(varStr(varLstGet(sourceList, listIdx))));
+        this = strLstNew();
+
+        // Copy variants
+        MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+        {
+            for (unsigned int listIdx = 0; listIdx < varLstSize(sourceList); listIdx++)
+                strLstAddInternal(this, strDup(varStr(varLstGet(sourceList, listIdx))));
+        }
+        MEM_CONTEXT_END();
     }
-    MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN(this);
 }

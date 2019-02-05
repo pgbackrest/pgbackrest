@@ -97,11 +97,11 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
             for (unsigned int backupLabelIdx = 0; backupLabelIdx < strLstSize(backupLabelList); backupLabelIdx++)
             {
                 const String *backupLabelKey = strLstGet(backupLabelList, backupLabelIdx);
-                const KeyValue *backupKv = jsonToKv(varStr(iniGet(infoIni, backupCurrentSection, backupLabelKey)));
+                const KeyValue *backupKv = varKv(jsonToVar(varStr(iniGet(infoIni, backupCurrentSection, backupLabelKey))));
 
                 InfoBackupData infoBackupData =
                 {
-                    .backrestFormat = (unsigned int) varUInt64(kvGet(backupKv, varNewStr(INFO_KEY_FORMAT_STR))),
+                    .backrestFormat = (unsigned int)varUInt64(kvGet(backupKv, varNewStr(INFO_KEY_FORMAT_STR))),
                     .backrestVersion = varStrForce(kvGet(backupKv, varNewStr(INFO_KEY_VERSION_STR))),
                     .backupInfoRepoSize = varUInt64(kvGet(backupKv, varNewStr(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_STR))),
                     .backupInfoRepoSizeDelta = varUInt64(

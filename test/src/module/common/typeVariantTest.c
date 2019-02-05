@@ -274,6 +274,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *listVar = NULL;
 
+        TEST_RESULT_PTR(varVarLst(varNewVarLst(NULL)), NULL, "new null");
         TEST_ASSIGN(listVar, varNewVarLst(varLstNew()), "new empty");
 
         TEST_RESULT_INT(varLstSize(varVarLst(listVar)), 0, "    empty size");

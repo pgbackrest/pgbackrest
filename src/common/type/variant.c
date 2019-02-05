@@ -892,10 +892,11 @@ varNewVarLst(const VariantList *data)
         FUNCTION_TEST_PARAM(VARIANT_LIST, data);
     FUNCTION_TEST_END();
 
-    ASSERT(data != NULL);
+    VariantList *dataCopy = NULL;
 
-    // Copy variant list for the variant
-    VariantList *dataCopy = varLstDup(data);
+    // Create a copy of the variant list if it is not null
+    if (data != NULL)
+        dataCopy = varLstDup(data);
 
     FUNCTION_TEST_RETURN(varNewInternal(varTypeVariantList, (void *)&dataCopy, sizeof(dataCopy)));
 }

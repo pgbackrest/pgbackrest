@@ -41,7 +41,7 @@ struct ProtocolClient
 };
 
 /***********************************************************************************************************************************
-Create a new storage file
+Create object
 ***********************************************************************************************************************************/
 ProtocolClient *
 protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write)
@@ -74,7 +74,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         MEM_CONTEXT_TEMP_BEGIN()
         {
             String *greeting = ioReadLine(this->read);
-            KeyValue *greetingKv = jsonToKv(greeting);
+            KeyValue *greetingKv = varKv(jsonToVar(greeting));
 
             const String *expected[] =
             {
@@ -136,7 +136,7 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
     {
         // Read the response
         String *response = ioReadLine(this->read);
-        KeyValue *responseKv = jsonToKv(response);
+        KeyValue *responseKv = varKv(jsonToVar(response));
 
         // Process error if any
         const Variant *error = kvGet(responseKv, varNewStr(PROTOCOL_ERROR_STR));

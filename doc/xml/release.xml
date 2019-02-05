@@ -16,6 +16,10 @@
             <release-core-list>
                 <release-development-list>
                     <release-item>
+                        <p>JSON improvements.  Optimize parser implementation.  Make the renderer more null tolerant.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Automatically adjust <br-option>db-timeout</br-option> when <br-option>protocol-timeout</br-option> is smaller.</p>
                     </release-item>
                 </release-development-list>

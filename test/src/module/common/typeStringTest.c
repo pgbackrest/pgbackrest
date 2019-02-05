@@ -311,6 +311,7 @@ testRun(void)
         varLstAdd(varList, varNewStr(strNew("string2")));
 
         TEST_RESULT_STR(strPtr(strLstJoin(strLstNewVarLst(varList), ", ")), "string1, string2", "string list from variant list");
+        TEST_RESULT_PTR(strLstNewVarLst(NULL), NULL, "null list from null var list");
 
         varLstFree(varList);
     }
