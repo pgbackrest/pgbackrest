@@ -69,6 +69,8 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR,   "missing sta
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR,             "no valid backups");
 #define INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA                 3
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing stanza data");
+#define INFO_STANZA_STATUS_CODE_MISSING_WAL_SEG                     4
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_WAL_SEG_STR,       "missing wal segment(s)");
 
 /***********************************************************************************************************************************
 Set error status code and message for the stanza to the code and message passed.
@@ -82,7 +84,7 @@ stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
         FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
     FUNCTION_TEST_END();
 
-    ASSERT(code >= 0 && code <= 3);
+    ASSERT(code >= 0 && code <= 4);
     ASSERT(message != NULL);
     ASSERT(stanzaInfo != NULL);
 
@@ -98,7 +100,7 @@ stanzaStatus(const int code, const String *message, Variant *stanzaInfo)
 /***********************************************************************************************************************************
 Set the data for the archive section of the stanza for the database info from the backup.info file.
 ***********************************************************************************************************************************/
-static void
+static StringList *
 archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archiveSection, const InfoArchive *info, bool currentDb)
 {
     FUNCTION_TEST_BEGIN();
@@ -185,13 +187,16 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
         varLstAdd(archiveSection, archiveInfo);
     }
 
-    FUNCTION_TEST_RETURN_VOID();
+    StringList *returnList = strLstNew();
+    strLstAdd(returnList, archiveId);
+    strLstAdd(returnList, archiveStop);
+    FUNCTION_TEST_RETURN(returnList);
 }
 
 /***********************************************************************************************************************************
 For each current backup in the backup.info file of the stanza, set the data for the backup section.
 ***********************************************************************************************************************************/
-static void
+static StringList *
 backupList(VariantList *backupSection, InfoBackup *info)
 {
     FUNCTION_TEST_BEGIN();
@@ -201,6 +206,10 @@ backupList(VariantList *backupSection, InfoBackup *info)
 
     ASSERT(backupSection != NULL);
     ASSERT(info != NULL);
+
+    // Keep the first and the last wal segments needed for all the backups
+    const String *minNeededWalSeg = NULL;
+    const String *maxNeededWalSeg = NULL;
 
     // For each current backup, get the label and corresponding data and build the backup section
     for (unsigned int keyIdx = 0; keyIdx < infoBackupDataTotal(info); keyIdx++)
@@ -226,9 +235,12 @@ backupList(VariantList *backupSection, InfoBackup *info)
         kvAdd(
             archiveInfo, varNewStr(KEY_START_STR),
             (backupData.backupArchiveStart != NULL ? varNewStr(backupData.backupArchiveStart) : NULL));
+        minNeededWalSeg = (minNeededWalSeg == NULL ? backupData.backupArchiveStart : minNeededWalSeg);
+
         kvAdd(
             archiveInfo, varNewStr(KEY_STOP_STR),
             (backupData.backupArchiveStop != NULL ? varNewStr(backupData.backupArchiveStop) : NULL));
+        maxNeededWalSeg = backupData.backupArchiveStop;
 
         // backrest section
         KeyValue *backrestInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_BACKREST_STR));
@@ -262,8 +274,10 @@ backupList(VariantList *backupSection, InfoBackup *info)
         varLstAdd(backupSection, backupInfo);
     }
 
-
-    FUNCTION_TEST_RETURN_VOID();
+    StringList *neededWalSegs = strLstNew();
+    strLstAdd(neededWalSegs, minNeededWalSeg);
+    strLstAdd(neededWalSegs, maxNeededWalSeg);
+    FUNCTION_TEST_RETURN(neededWalSegs);
 }
 
 /***********************************************************************************************************************************
@@ -344,6 +358,11 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
             if (infoPgCipherPass(infoBackupPg(info)) != NULL)
                 kvPut(varKv(stanzaInfo), varNewStr(STANZA_KEY_CIPHER_STR), varNewStr(CIPHER_TYPE_AES_256_CBC_STR));
 
+            // Get data for all existing backups for this stanza
+            StringList *neededWalSegs = backupList(backupSection, info);
+            const String *minNeededWalSeg = strLstGet(neededWalSegs, 0);
+            const String *maxNeededWalSeg = strLstGet(neededWalSegs, 1);
+
             for (unsigned int pgIdx = infoPgDataTotal(infoBackupPg(info)) - 1; (int)pgIdx >= 0; pgIdx--)
             {
                 InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);
@@ -359,11 +378,24 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
                 InfoArchive *info = infoArchiveNew(
                     storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanzaListName), INFO_ARCHIVE_FILE),  false,
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
-                archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
-            }
+                StringList *archiveDbListReturnList = archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
+                String *archiveId = strLstGet(archiveDbListReturnList, 0);
+                String *archiveStop = strLstGet(archiveDbListReturnList, 1);
 
-            // Get data for all existing backups for this stanza
-            backupList(backupSection, info);
+                // Does minNeededWalSeg and maxNeededWalSeg exists on disk?
+                String *foundMinNeededWalSeg = walSegmentFind(storageRepo(), strNewFmt("%s/%s", strPtr(stanzaListName), strPtr(archiveId)), minNeededWalSeg);
+                String *foundMaxNeededWalSeg = walSegmentFind(storageRepo(), strNewFmt("%s/%s", strPtr(stanzaListName), strPtr(archiveId)), maxNeededWalSeg);
+                if (foundMinNeededWalSeg == NULL || foundMaxNeededWalSeg == NULL)
+                    stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_WAL_SEG, INFO_STANZA_STATUS_MESSAGE_MISSING_WAL_SEG_STR, stanzaInfo);
+
+                // Is archiveStop >= maxNeededWalSeg?
+                if (strCmp(archiveStop, maxNeededWalSeg) < 0)
+                    stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_WAL_SEG, INFO_STANZA_STATUS_MESSAGE_MISSING_WAL_SEG_STR, stanzaInfo);
+
+                // Validate the chain of wal segments between minNeededWalSeg and maxNeededWalSeg?
+
+                // Validate the chain of wal segments between maxNeededWalSeg and archiveStop?
+            }
         }
 
         // Add the database history, backup and archive sections to the stanza info
@@ -598,7 +630,8 @@ infoRender(void)
                                 formatTextDb(stanzaInfo, resultStr);
                         }
 
-                        continue;
+                        if (statusCode != INFO_STANZA_STATUS_CODE_MISSING_WAL_SEG)
+                            continue;
                     }
                     else
                         strCatFmt(resultStr, "%s\n", strPtr(INFO_STANZA_STATUS_OK));
