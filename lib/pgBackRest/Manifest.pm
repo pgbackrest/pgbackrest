@@ -111,6 +111,16 @@ use constant MANIFEST_KEY_ONLINE                                    => 'option-'
     push @EXPORT, qw(MANIFEST_KEY_ONLINE);
 use constant MANIFEST_KEY_DELTA                                     => 'option-' . cfgOptionName(CFGOPT_DELTA);
     push @EXPORT, qw(MANIFEST_KEY_DELTA);
+use constant MANIFEST_KEY_PROCESS_MAX                               => 'option-' . cfgOptionName(CFGOPT_PROCESS_MAX);
+    push @EXPORT, qw(MANIFEST_KEY_PROCESS_MAX);
+use constant MANIFEST_KEY_COMPRESS                                  => 'option-' . cfgOptionName(CFGOPT_COMPRESS);
+    push @EXPORT, qw(MANIFEST_KEY_COMPRESS);
+use constant MANIFEST_KEY_COMPRESS_LEVEL                            => 'option-' . cfgOptionName(CFGOPT_COMPRESS_LEVEL);
+    push @EXPORT, qw(MANIFEST_KEY_COMPRESS_LEVEL);
+use constant MANIFEST_KEY_COMPRESS_LEVEL_NETWORK                    => 'option-' . cfgOptionName(CFGOPT_COMPRESS_LEVEL_NETWORK);
+    push @EXPORT, qw(MANIFEST_KEY_COMPRESS_LEVEL_NETWORK);
+use constant MANIFEST_KEY_BUFFER_SIZE                               => 'option-' . cfgOptionName(CFGOPT_BUFFER_SIZE);
+    push @EXPORT, qw(MANIFEST_KEY_BUFFER_SIZE);
 
 # Information about the database that was backed up
 use constant MANIFEST_KEY_DB_ID                                     => 'db-id';
