@@ -77,6 +77,47 @@ testS3Server(void)
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt"));
         harnessTlsServerReply(testS3ServerResponse(303, "Some bad status", "CONTENT"));
 
+        // storageDriverExists()
+        // -------------------------------------------------------------------------------------------------------------------------
+        // File missing
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=BOGUS"));
+        harnessTlsServerReply(
+            testS3ServerResponse(
+                200, "OK",
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                "</ListBucketResult>"));
+
+        // File exists
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=subdir%2Ffile1.txt"));
+        harnessTlsServerReply(
+            testS3ServerResponse(
+                200, "OK",
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                "    <Contents>"
+                "        <Key>subdir/file1.txts</Key>"
+                "    </Contents>"
+                "    <Contents>"
+                "        <Key>subdir/file1.txt</Key>"
+                "    </Contents>"
+                "</ListBucketResult>"));
+
+        // File does not exist but files with same prefix do
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/?list-type=2&prefix=subdir%2Ffile1.txt"));
+        harnessTlsServerReply(
+            testS3ServerResponse(
+                200, "OK",
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                "    <Contents>"
+                "        <Key>subdir/file1.txta</Key>"
+                "    </Contents>"
+                "    <Contents>"
+                "        <Key>subdir/file1.txtb</Key>"
+                "    </Contents>"
+                "</ListBucketResult>"));
+
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
         // Throw error
@@ -380,6 +421,13 @@ testRun(void)
             "*** Response Content ***:\n"
             "CONTENT")
 
+        // storageDriverExists()
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_BOOL(storageExistsNP(s3, strNew("BOGUS")), false, "file does not exist");
+        TEST_RESULT_BOOL(storageExistsNP(s3, strNew("subdir/file1.txt")), true, "file exists");
+        TEST_RESULT_BOOL(
+            storageExistsNP(s3, strNew("subdir/file1.txt")), false, "file does not exist but files with same prefix do");
+
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
@@ -408,7 +456,6 @@ testRun(void)
 
         // Coverage for unimplemented functions
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(storageExistsNP(s3, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
         TEST_ERROR(storageInfoNP(s3, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
         TEST_ERROR(storageNewWriteNP(s3, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
         TEST_ERROR(storagePathRemoveNP(s3, strNew("path")), AssertError, "NOT YET IMPLEMENTED");

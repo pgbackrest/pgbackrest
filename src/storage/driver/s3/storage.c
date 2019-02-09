@@ -395,7 +395,35 @@ storageDriverS3Exists(StorageDriverS3 *this, const String *path)
 
     bool result = false;
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        HttpQuery *query = httpQueryNew();
+
+        // Generate the file name as a prefix.  Muliple files may be returned but this will narrow down the list.
+        String *prefix = strNewFmt("%s", strPtr(strSub(path, 1)));
+        httpQueryAdd(query, S3_QUERY_PREFIX_STR, prefix);
+
+        // Build the query using list type 2
+        httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
+
+        XmlNode *xmlRoot = xmlDocumentRoot(
+            xmlDocumentNewBuf(storageDriverS3Request(this, HTTP_VERB_GET_STR, FSLASH_STR, query, NULL, true, false)));
+
+        // Check if the prefix exists.  If not then the file definitely does not exist, but if it does we'll need to check the
+        // exact name to be sure we are not looking at a different file with the same prefix
+        XmlNodeList *fileList = xmlNodeChildList(xmlRoot, S3_XML_TAG_CONTENTS_STR);
+
+        for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
+        {
+            // If the name matches exactly then the file exists
+            if (strEq(prefix, xmlNodeContent(xmlNodeChild(xmlNodeLstGet(fileList, fileIdx), S3_XML_TAG_KEY_STR, true))))
+            {
+                result = true;
+                break;
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }

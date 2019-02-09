@@ -222,6 +222,12 @@ P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-maste
 P00   INFO: pushed WAL segment 000000010000000100000002 asynchronously
 P00   INFO: archive-push command end: completed successfully
 
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --archive-async [TEST_PATH]/db-master/db/base/pg_xlog/00000002.history
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/00000002.history] --archive-async --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/spool --stanza=db
+P00   INFO: pushed WAL segment 00000002.history asynchronously
+P00   INFO: archive-push command end: completed successfully
+
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
@@ -296,6 +302,18 @@ P00   INFO: archive-push command end: aborted with exception [045]
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000002, [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG] --archive-async --archive-timeout=5 --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-master/repo --repo1-type=cifs --spool-path=[TEST_PATH]/db-master/spool --stanza=db
 P00   INFO: found 000000010000000100000002 in the archive
+P00   INFO: archive-get command end: completed successfully
+
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get --archive-async 00000001.history [TEST_PATH]/db-master/db/base/pg_xlog/00000001.history
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: archive-get command begin [BACKREST-VERSION]: [00000001.history, [TEST_PATH]/db-master/db/base/pg_xlog/00000001.history] --archive-async --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/spool --stanza=db
+P00   INFO: unable to find 00000001.history in the archive
+P00   INFO: archive-get command end: completed successfully
+
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get --archive-async 00000002.history [TEST_PATH]/db-master/db/base/pg_xlog/00000002.history
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: archive-get command begin [BACKREST-VERSION]: [00000002.history, [TEST_PATH]/db-master/db/base/pg_xlog/00000002.history] --archive-async --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/spool --stanza=db
+P00   INFO: found 00000002.history in the archive
 P00   INFO: archive-get command end: completed successfully
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002.partial

@@ -17,6 +17,14 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="mibiio"/>
+                        </release-item-contributor-list>
+
+                        <p>Add unimplemented <proper>S3</proper> driver method required for <cmd>archive-get</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="james.chanco.jr"/>
                         </release-item-contributor-list>
 
@@ -6387,6 +6395,11 @@
         <contributor id="matt.kunkel">
             <contributor-name-display>Matt Kunkel</contributor-name-display>
             <contributor-id type="github">mtkunkel</contributor-id>
+        </contributor>
+
+        <contributor id="mibiio">
+            <contributor-name-display>mibiio</contributor-name-display>
+            <contributor-id type="github">mibiio</contributor-id>
         </contributor>
 
         <contributor id="michael.renner">

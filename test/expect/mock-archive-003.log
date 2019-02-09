@@ -69,6 +69,9 @@ db-version="9.4"
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --compress --archive-async --process-max=2 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
 
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --archive-async [TEST_PATH]/db-master/db/base/pg_xlog/00000002.history
+------------------------------------------------------------------------------------------------------------------------------------
+
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
 P00  ERROR: [044]: WAL segment version 9.4 does not match archive version 8.0
@@ -116,6 +119,12 @@ P00   WARN: WAL segment 000000010000000100000002 already exists in the archive w
 P00  ERROR: [045]: WAL segment 000000010000000100000002 already exists in the archive
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get --archive-async --archive-timeout=5 000000010000000100000002 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
+------------------------------------------------------------------------------------------------------------------------------------
+
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get --archive-async 00000001.history [TEST_PATH]/db-master/db/base/pg_xlog/00000001.history
+------------------------------------------------------------------------------------------------------------------------------------
+
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get --archive-async 00000002.history [TEST_PATH]/db-master/db/base/pg_xlog/00000002.history
 ------------------------------------------------------------------------------------------------------------------------------------
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002.partial

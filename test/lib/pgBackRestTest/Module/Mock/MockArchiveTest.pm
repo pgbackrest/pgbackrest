@@ -159,6 +159,9 @@ sub run
         # Test that the WAL was pushed
         $self->archiveCheck($strSourceFile, $strArchiveChecksum, true);
 
+        # Remove from archive_status
+        storageTest()->remove("${strWalPath}/archive_status/${strSourceFile}.ready");
+
         # Remove WAL
         storageTest()->remove("${strWalPath}/${strSourceFile}", {bIgnoreMissing => false});
 
@@ -247,8 +250,28 @@ sub run
         # Test that the WAL was pushed
         $self->archiveCheck($strSourceFile, $strArchiveChecksum, true, $oHostDbMaster->spoolPath());
 
+        # Remove from archive_status
+        storageTest()->remove("${strWalPath}/archive_status/${strSourceFile}.ready");
+
         # Remove from spool
         storageTest()->remove($oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.ok");
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        &log(INFO, '    push history file');
+
+        storageTest()->put("${strWalPath}/00000002.history", 'HISTORYDATA');
+        storageTest()->put("${strWalPath}/archive_status/00000002.history.ready", undef);
+
+        $oHostDbMaster->executeSimple(
+            "${strCommandPush} --archive-async ${strWalPath}/00000002.history",
+            {oLogTest => $self->expect()});
+
+        if (!storageRepo()->exists(STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/00000002.history'))
+        {
+            confess 'unable to find history file in archive';
+        }
+
+        storageTest()->remove("${strWalPath}/archive_status/00000002.history.ready");
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    db version mismatch in db section only - archive-push errors but archive-get succeeds');
@@ -372,6 +395,22 @@ sub run
         else
         {
             confess "archive file '${strWalPath}/RECOVERYXLOG' is not in destination";
+        }
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        &log(INFO, "    get history file");
+
+        $oHostDbMaster->executeSimple(
+            $strCommandGet . " --archive-async 00000001.history ${strWalPath}/00000001.history",
+            {iExpectedExitStatus => 1, oLogTest => $self->expect()});
+
+        $oHostDbMaster->executeSimple(
+            $strCommandGet . " --archive-async 00000002.history ${strWalPath}/00000002.history",
+            {oLogTest => $self->expect()});
+
+        if (${storageDb()->get("${strWalPath}/00000002.history")} ne 'HISTORYDATA')
+        {
+            confess 'history contents do not match original';
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
