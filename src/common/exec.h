@@ -28,7 +28,7 @@ Exec *execNew(const String *command, const StringList *param, const String *name
 Functions
 ***********************************************************************************************************************************/
 void execOpen(Exec *this);
-void execRead(Exec *this, Buffer *buffer, bool block);
+size_t execRead(Exec *this, Buffer *buffer, bool block);
 void execWrite(Exec *this, Buffer *buffer);
 
 /***********************************************************************************************************************************

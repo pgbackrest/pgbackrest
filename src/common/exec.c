@@ -214,7 +214,7 @@ execCheck(Exec *this)
 /***********************************************************************************************************************************
 Read from the process
 ***********************************************************************************************************************************/
-void
+size_t
 execRead(Exec *this, Buffer *buffer, bool block)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -226,9 +226,11 @@ execRead(Exec *this, Buffer *buffer, bool block)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
+    size_t result = 0;
+
     TRY_BEGIN()
     {
-        ioHandleRead(this->ioReadHandle, buffer, block);
+        result = ioHandleRead(this->ioReadHandle, buffer, block);
     }
     CATCH_ANY()
     {
@@ -237,7 +239,7 @@ execRead(Exec *this, Buffer *buffer, bool block)
     }
     TRY_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(SIZE, result);
 }
 
 /***********************************************************************************************************************************
