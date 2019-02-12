@@ -382,19 +382,15 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
                 String *archiveId = strLstGet(archiveDbListReturnList, 0);
                 String *archiveStop = strLstGet(archiveDbListReturnList, 1);
 
-                // Does minNeededWalSeg and maxNeededWalSeg exists on disk?
+                // Does minNeededWalSeg and maxNeededWalSeg exists on disk? Is archiveStop >= maxNeededWalSeg?
                 String *foundMinNeededWalSeg = walSegmentFind(storageRepo(), strNewFmt("%s/%s", strPtr(stanzaListName), strPtr(archiveId)), minNeededWalSeg);
                 String *foundMaxNeededWalSeg = walSegmentFind(storageRepo(), strNewFmt("%s/%s", strPtr(stanzaListName), strPtr(archiveId)), maxNeededWalSeg);
-                if (foundMinNeededWalSeg == NULL || foundMaxNeededWalSeg == NULL)
+                if (foundMinNeededWalSeg == NULL || foundMaxNeededWalSeg == NULL || strCmp(archiveStop, maxNeededWalSeg) < 0)
                     stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_WAL_SEG, INFO_STANZA_STATUS_MESSAGE_MISSING_WAL_SEG_STR, stanzaInfo);
 
-                // Is archiveStop >= maxNeededWalSeg?
-                if (strCmp(archiveStop, maxNeededWalSeg) < 0)
-                    stanzaStatus(INFO_STANZA_STATUS_CODE_MISSING_WAL_SEG, INFO_STANZA_STATUS_MESSAGE_MISSING_WAL_SEG_STR, stanzaInfo);
+                // TODO: Validate the chain of wal segments between minNeededWalSeg and maxNeededWalSeg?
 
-                // Validate the chain of wal segments between minNeededWalSeg and maxNeededWalSeg?
-
-                // Validate the chain of wal segments between maxNeededWalSeg and archiveStop?
+                // TODO: Validate the chain of wal segments between maxNeededWalSeg and archiveStop?
             }
         }
 
