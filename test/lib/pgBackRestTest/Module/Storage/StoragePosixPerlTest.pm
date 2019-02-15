@@ -304,6 +304,20 @@ sub run
 
         undef($oPosixIo);
 
+        # Test that a premature destroy (from error or otherwise) does not rename the file
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $strFileAbort = $self->testPath() . '/file-abort.txt';
+        my $strFileAbortTmp = "${strFileAbort}.tmp";
+
+        $oPosixIo = $self->testResult(
+            sub {new pgBackRest::Storage::Posix::FileWrite($oPosix, $strFileAbort, {bAtomic => true})}, '[object]', 'open');
+
+        $oPosixIo->write(\$strFileContent);
+        undef($oPosixIo);
+
+        $self->testResult(sub {$oPosix->exists($strFileAbort)}, false, 'destination file does not exist');
+        $self->testResult(sub {$oPosix->exists($strFileAbortTmp)}, true, 'destination file tmp exists');
+
         #---------------------------------------------------------------------------------------------------------------------------
         $oPosixIo = $self->testResult(
             sub {new pgBackRest::Storage::Posix::FileWrite($oPosix, $strFile, {lTimestamp => time()})}, '[object]', 'open');

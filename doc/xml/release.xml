@@ -14,6 +14,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.11dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="benoit.lobréau"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix possible truncated WAL segments when an error occurs mid-write.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>

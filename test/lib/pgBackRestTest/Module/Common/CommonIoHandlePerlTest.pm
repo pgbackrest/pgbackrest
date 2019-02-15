@@ -197,6 +197,7 @@ sub run
         my $oIoHandle = $self->testResult(sub {new pgBackRest::Common::Io::Handle("'$strFile'", $fhRead)}, '[object]', 'open read');
         $self->testResult(sub {$oIoHandle->read(\$tContent, $iFileLengthHalf)}, $iFileLengthHalf, '    read');
         $self->testResult(sub {$oIoHandle->close()}, true, '    close');
+        $self->testResult(sub {$oIoHandle->close()}, true, '    close again');
 
         $self->testResult(sub {$oIoHandle->result(COMMON_IO_HANDLE)}, $iFileLengthHalf, '    check result');
 

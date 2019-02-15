@@ -352,9 +352,14 @@ storageDriverPosixFileWriteFree(StorageDriverPosixFileWrite *this)
 
     if (this != NULL)
     {
-        storageDriverPosixFileWriteClose(this);
-
         memContextCallbackClear(this->memContext);
+
+        // Close the temp file.  *Close() must be called explicitly in order for the file to be sycn'ed, renamed, etc.  If *Free()
+        // is called first the assumption is that some kind of error occurred and we should only close the handle to free
+        // resources.
+        if (this->handle != -1)
+            storageDriverPosixFileClose(this->handle, this->name, true);
+
         memContextFree(this->memContext);
     }
 

@@ -193,6 +193,17 @@ sub run
         $self->testResult(sub {$oFileWrite->write(\$strFileContent)}, $iFileLength, '    write');
         $oFileWrite->close();
 
+        $self->testResult(sub {$oS3->exists("/path/to/${strFile}" . '.@')}, true, 'destination file exists');
+
+        # Test that a premature destroy (from error or otherwise) does not rename the file
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oFileWrite = $self->testResult(sub {$oS3->openWrite("/path/to/abort.file" . '.@')}, '[object]', 'open write');
+        $self->testResult(sub {$oFileWrite->write()}, 0, '    write undef');
+        $self->testResult(sub {$oFileWrite->write(\$strFileContent)}, $iFileLength, '    write');
+
+        undef($oFileWrite);
+        $self->testResult(sub {$oS3->exists("/path/to/abort.file")}, false, 'destination file does not exist');
+
         #---------------------------------------------------------------------------------------------------------------------------
         $oFileWrite = $self->testResult(sub {$oS3->openWrite("/path/to/${strFile}")}, '[object]', 'open write');
 

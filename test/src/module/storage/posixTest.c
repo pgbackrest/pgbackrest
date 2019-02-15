@@ -571,6 +571,21 @@ testRun(void)
         TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
         TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0640, "    check file mode");
 
+        // Test that a premature free (from error or otherwise) does not rename the file
+        // -------------------------------------------------------------------------------------------------------------------------
+        fileName = strNewFmt("%s/sub1/testfile-abort", testPath());
+        String *fileNameTmp = strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(fileName));
+
+        TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file (defaults)");
+        TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
+        TEST_RESULT_VOID(ioWrite(storageFileWriteIo(file), bufNewStr(strNew("TESTDATA"))), "write data");
+        TEST_RESULT_VOID(ioWriteFlush(storageFileWriteIo(file)), "flush data");
+        TEST_RESULT_VOID(ioWriteFree(storageFileWriteIo(file)), "   free file");
+
+        TEST_RESULT_BOOL(storageExistsNP(storageTest, fileName), false, "destination file does not exist");
+        TEST_RESULT_BOOL(storageExistsNP(storageTest, fileNameTmp), true, "destination tmp file exists");
+        TEST_RESULT_INT(storageInfoNP(storageTest, fileNameTmp).size, 8, "    check temp file size");
+
         // -------------------------------------------------------------------------------------------------------------------------
         fileName = strNewFmt("%s/sub2/testfile", testPath());
 
@@ -578,6 +593,9 @@ testRun(void)
             file, storageNewWriteP(storageTest, fileName, .modePath = 0700, .modeFile = 0600), "new write file (set mode)");
         TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
         TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
+        TEST_RESULT_VOID(
+            storageDriverPosixFileWriteClose((StorageDriverPosixFileWrite *)storageFileWriteFileDriver(file)),
+            "   close file again");
         TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0700, "    check path mode");
         TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0600, "    check file mode");
 
