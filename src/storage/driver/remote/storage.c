@@ -7,19 +7,13 @@ Remote Storage Driver
 #include "protocol/client.h"
 #include "protocol/helper.h"
 #include "storage/driver/remote/fileRead.h"
+#include "storage/driver/remote/protocol.h"
 #include "storage/driver/remote/storage.h"
 
 /***********************************************************************************************************************************
 Driver type constant string
 ***********************************************************************************************************************************/
 STRING_EXTERN(STORAGE_DRIVER_REMOTE_TYPE_STR,                           STORAGE_DRIVER_REMOTE_TYPE);
-
-/***********************************************************************************************************************************
-Command constants
-***********************************************************************************************************************************/
-STRING_STATIC(STORAGE_REMOTE_COMMAND_LIST_STR,                          "storageList");
-STRING_STATIC(STORAGE_REMOTE_COMMAND_LIST_EXPRESSION_STR,               "strExpression");
-STRING_STATIC(STORAGE_REMOTE_COMMAND_LIST_IGNORE_MISSING_STR,           "bIgnoreMissing");
 
 /***********************************************************************************************************************************
 Object type
@@ -138,21 +132,17 @@ storageDriverRemoteList(StorageDriverRemote *this, const String *path, bool erro
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Add optional parameters
-        Variant *paramOpt = varNewKv();
-        kvPut(varKv(paramOpt), varNewStr(STORAGE_REMOTE_COMMAND_LIST_IGNORE_MISSING_STR), varNewBool(!errorOnMissing));
-        kvPut(varKv(paramOpt), varNewStr(STORAGE_REMOTE_COMMAND_LIST_EXPRESSION_STR), varNewStr(expression));
-
         // Add parameters
         Variant *param = varNewVarLst(varLstNew());
         varLstAdd(varVarLst(param), varNewStr(path));
-        varLstAdd(varVarLst(param), paramOpt);
+        varLstAdd(varVarLst(param), varNewBool(errorOnMissing));
+        varLstAdd(varVarLst(param), varNewStr(expression));
 
         // Construct command
-        KeyValue *command = kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(STORAGE_REMOTE_COMMAND_LIST_STR));
+        KeyValue *command = kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(PROTOCOL_COMMAND_STORAGE_LIST_STR));
         kvPut(command, varNewStr(PROTOCOL_PARAMETER_STR), param);
 
-        result = strLstMove(strLstNewVarLst(protocolClientExecute(this->client, command, true)), MEM_CONTEXT_OLD());
+        result = strLstMove(strLstNewVarLst(varVarLst(protocolClientExecute(this->client, command, true))), MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 

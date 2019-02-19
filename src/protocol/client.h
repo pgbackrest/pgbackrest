@@ -55,10 +55,10 @@ ProtocolClient *protocolClientNew(const String *name, const String *service, IoR
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-const VariantList *protocolClientExecute(ProtocolClient *this, const KeyValue *command, bool outputRequired);
+const Variant *protocolClientExecute(ProtocolClient *this, const KeyValue *command, bool outputRequired);
 ProtocolClient *protocolClientMove(ProtocolClient *this, MemContext *parentNew);
 void protocolClientNoOp(ProtocolClient *this);
-const VariantList *protocolClientReadOutput(ProtocolClient *this, bool outputRequired);
+const Variant *protocolClientReadOutput(ProtocolClient *this, bool outputRequired);
 void protocolClientWriteCommand(ProtocolClient *this, const KeyValue *command);
 
 /***********************************************************************************************************************************

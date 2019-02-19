@@ -4,8 +4,10 @@ Protocol Helper
 #include "common/debug.h"
 #include "common/exec.h"
 #include "common/memContext.h"
+#include "crypto/crypto.h"
 #include "config/config.h"
 #include "config/exec.h"
+#include "config/protocol.h"
 #include "protocol/helper.h"
 
 /***********************************************************************************************************************************
@@ -133,6 +135,23 @@ protocolGet(RemoteType remoteType, unsigned int remoteId)
             protocolHelper.remote = protocolClientNew(
                 strNewFmt("remote-%u protocol on '%s'", remoteId, strPtr(cfgOptionStr(cfgOptRepoHost))),
                 PROTOCOL_SERVICE_REMOTE_STR, execIoRead(protocolHelper.remoteExec), execIoWrite(protocolHelper.remoteExec));
+
+            // Get cipher options from the remote if none are locally configured
+            if (strEq(cfgOptionStr(cfgOptRepoCipherType), CIPHER_TYPE_NONE_STR))
+            {
+                // Options to query
+                VariantList *param = varLstNew();
+                varLstAdd(param, varNewStr(strNew(cfgOptionName(cfgOptRepoCipherType))));
+                varLstAdd(param, varNewStr(strNew(cfgOptionName(cfgOptRepoCipherPass))));
+
+                VariantList *optionList = configProtocolOption(protocolHelper.remote, param);
+
+                if (!strEq(varStr(varLstGet(optionList, 0)), CIPHER_TYPE_NONE_STR))
+                {
+                    cfgOptionSet(cfgOptRepoCipherType, cfgSourceConfig, varLstGet(optionList, 0));
+                    cfgOptionSet(cfgOptRepoCipherPass, cfgSourceConfig, varLstGet(optionList, 1));
+                }
+            }
 
             protocolClientMove(protocolHelper.remote, execMemContext(protocolHelper.remoteExec));
         }

@@ -3,12 +3,14 @@ Main
 ***********************************************************************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "command/archive/get/get.h"
 #include "command/archive/push/push.h"
 #include "command/help/help.h"
 #include "command/info/info.h"
 #include "command/command.h"
+#include "command/remote/remote.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/exit.h"
@@ -58,6 +60,13 @@ main(int argListSize, const char *argList[])
         {
             printf(PROJECT_NAME " " PROJECT_VERSION "\n");
             fflush(stdout);
+        }
+
+        // Remote command.  Currently only implements a subset.
+        // -------------------------------------------------------------------------------------------------------------------------
+        else if (cfgCommand() == cfgCmdRemote && strEqZ(cfgOptionStr(cfgOptCommand), "info"))
+        {
+            cmdRemote(STDIN_FILENO, STDOUT_FILENO);
         }
 
         // Archive get command

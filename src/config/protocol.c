@@ -1,0 +1,77 @@
+/***********************************************************************************************************************************
+Configuration Protocol Handler
+***********************************************************************************************************************************/
+#include "common/debug.h"
+#include "common/io/io.h"
+#include "common/log.h"
+#include "common/memContext.h"
+#include "config/config.h"
+#include "config/protocol.h"
+
+/***********************************************************************************************************************************
+Constants
+***********************************************************************************************************************************/
+STRING_EXTERN(PROTOCOL_COMMAND_CONFIG_OPTION_STR,                   PROTOCOL_COMMAND_CONFIG_OPTION);
+
+/***********************************************************************************************************************************
+Process config protocol requests
+***********************************************************************************************************************************/
+bool
+configProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, command);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(command != NULL);
+
+    // Attempt to satisfy the request -- we may get requests that are meant for other handlers
+    bool found = true;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        if (strEq(command, PROTOCOL_COMMAND_CONFIG_OPTION_STR))
+        {
+            VariantList *optionList = varLstNew();
+
+            for (unsigned int optionIdx = 0; optionIdx < varLstSize(paramList); optionIdx++)
+                varLstAdd(optionList, varDup(cfgOption(cfgOptionId(strPtr(varStr(varLstGet(paramList, optionIdx)))))));
+
+            protocolServerResponse(server, varNewVarLst(optionList));
+        }
+        else
+            found = false;
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, found);
+}
+
+/***********************************************************************************************************************************
+Get option values from another process
+***********************************************************************************************************************************/
+VariantList *
+configProtocolOption(ProtocolClient *client, const VariantList *paramList)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+    FUNCTION_LOG_END();
+
+    VariantList *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        KeyValue *command = kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(PROTOCOL_COMMAND_CONFIG_OPTION_STR));
+        kvPut(command, varNewStr(PROTOCOL_PARAMETER_STR), varNewVarLst(paramList));
+
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = varVarLst(protocolClientExecute(client, command, true));
+        memContextSwitch(MEM_CONTEXT_TEMP());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(VARIANT_LIST, result);
+}

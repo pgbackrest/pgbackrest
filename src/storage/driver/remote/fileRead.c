@@ -11,19 +11,13 @@ Remote Storage File Read Driver
 #include "common/regExp.h"
 #include "common/type/convert.h"
 #include "storage/driver/remote/fileRead.h"
+#include "storage/driver/remote/protocol.h"
 #include "storage/fileRead.intern.h"
 
 /***********************************************************************************************************************************
 Regular expressions
 ***********************************************************************************************************************************/
-#define BLOCK_HEADER                                                "BRBLOCK"
-STRING_STATIC(BLOCK_REG_EXP_STR,                                    BLOCK_HEADER "[0-9]+");
-
-/***********************************************************************************************************************************
-Command constants
-***********************************************************************************************************************************/
-STRING_STATIC(STORAGE_REMOTE_COMMAND_OPEN_READ_STR,                 "storageOpenRead");
-STRING_STATIC(STORAGE_REMOTE_COMMAND_OPEN_READ_IGNORE_MISSING_STR,  "bIgnoreMissing");
+STRING_STATIC(BLOCK_REG_EXP_STR,                                    PROTOCOL_BLOCK_HEADER "[0-9]+");
 
 /***********************************************************************************************************************************
 Object type
@@ -127,20 +121,16 @@ storageDriverRemoteFileReadOpen(StorageDriverRemoteFileRead *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Add optional parameters
-        Variant *paramOpt = varNewKv();
-        kvPut(varKv(paramOpt), varNewStr(STORAGE_REMOTE_COMMAND_OPEN_READ_IGNORE_MISSING_STR), varNewBool(this->ignoreMissing));
-
         // Add parameters
         Variant *param = varNewVarLst(varLstNew());
         varLstAdd(varVarLst(param), varNewStr(this->name));
-        varLstAdd(varVarLst(param), paramOpt);
+        varLstAdd(varVarLst(param), varNewBool(this->ignoreMissing));
 
         // Construct command
-        KeyValue *command = kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(STORAGE_REMOTE_COMMAND_OPEN_READ_STR));
+        KeyValue *command = kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR));
         kvPut(command, varNewStr(PROTOCOL_PARAMETER_STR), param);
 
-        result = varIntForce(varLstGet(protocolClientExecute(this->client, command, true), 0));
+        result = varBool(protocolClientExecute(this->client, command, true));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -162,7 +152,7 @@ storageDriverRemoteFileReadBlockSize(const String *message)
     if (!regExpMatch(storageDriverRemoteFileReadLocal.blockRegExp, message))
         THROW_FMT(ProtocolError, "'%s' is not a valid block size message", strPtr(message));
 
-    FUNCTION_LOG_RETURN(SIZE, (size_t)cvtZToUInt64(strPtr(message) + sizeof(BLOCK_HEADER) - 1));
+    FUNCTION_LOG_RETURN(SIZE, (size_t)cvtZToUInt64(strPtr(message) + sizeof(PROTOCOL_BLOCK_HEADER) - 1));
 }
 
 /***********************************************************************************************************************************
@@ -195,16 +185,7 @@ storageDriverRemoteFileRead(StorageDriverRemoteFileRead *this, Buffer *buffer, b
                     this->remaining = storageDriverRemoteFileReadBlockSize(ioReadLine(protocolClientIoRead(this->client)));
 
                     if (this->remaining == 0)
-                    {
                         this->eof = true;
-
-                        // ??? Read line with filter data -- ignored for the time-being but will need to be implemented
-                        ioReadLine(protocolClientIoRead(this->client));
-
-                        // The last message sent can be ignored because it is always 1.  This is an aritifact of the protocl layer
-                        // in Perl which should be removed when converted to C.
-                        ioReadLine(protocolClientIoRead(this->client));
-                    }
                 }
                 MEM_CONTEXT_TEMP_END();
             }

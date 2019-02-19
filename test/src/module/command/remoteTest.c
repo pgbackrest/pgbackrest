@@ -1,0 +1,73 @@
+/***********************************************************************************************************************************
+Test Remote Command
+***********************************************************************************************************************************/
+#include "common/io/handleRead.h"
+#include "common/io/handleWrite.h"
+#include "protocol/client.h"
+#include "protocol/server.h"
+
+#include "common/harnessConfig.h"
+#include "common/harnessFork.h"
+
+/***********************************************************************************************************************************
+Test Run
+***********************************************************************************************************************************/
+void
+testRun(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    // *****************************************************************************************************************************
+    if (testBegin("cmdRemote()"))
+    {
+        // Create pipes for testing.  Read/write is from the perspective of the client.
+        int pipeRead[2];
+        int pipeWrite[2];
+        THROW_ON_SYS_ERROR(pipe(pipeRead) == -1, KernelError, "unable to read test pipe");
+        THROW_ON_SYS_ERROR(pipe(pipeWrite) == -1, KernelError, "unable to write test pipe");
+
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD()
+            {
+                close(pipeRead[0]);
+                close(pipeWrite[1]);
+
+                StringList *argList = strLstNew();
+                strLstAddZ(argList, "pgbackrest");
+                strLstAddZ(argList, "--stanza=test1");
+                strLstAddZ(argList, "--command=info");
+                strLstAddZ(argList, "--process=1");
+                strLstAddZ(argList, "--type=backup");
+                strLstAddZ(argList, "remote");
+                harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+                cmdRemote(pipeWrite[0], pipeRead[1]);
+
+                close(pipeRead[1]);
+                close(pipeWrite[0]);
+            }
+
+            HARNESS_FORK_PARENT()
+            {
+                close(pipeRead[1]);
+                close(pipeWrite[0]);
+
+                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), pipeRead[0], 2000));
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), pipeWrite[1]));
+                ioWriteOpen(write);
+
+                ProtocolClient *client = protocolClientNew(strNew("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write);
+                protocolClientNoOp(client);
+                protocolClientFree(client);
+
+                close(pipeRead[0]);
+                close(pipeWrite[1]);
+            }
+        }
+        HARNESS_FORK_END();
+    }
+
+    FUNCTION_HARNESS_RESULT_VOID();
+}

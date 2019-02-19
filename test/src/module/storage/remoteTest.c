@@ -1,6 +1,9 @@
 /***********************************************************************************************************************************
 Test Remote Storage Driver
 ***********************************************************************************************************************************/
+#include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
+
 #include "common/harnessConfig.h"
 
 /***********************************************************************************************************************************
@@ -19,24 +22,32 @@ testRun(void)
     StringList *argList = strLstNew();
     strLstAddZ(argList, "/usr/bin/pgbackrest");
     strLstAddZ(argList, "--stanza=db");
-    strLstAddZ(argList, "--db-timeout=9");
     strLstAddZ(argList, "--protocol-timeout=10");
     strLstAddZ(argList, "--buffer-size=16384");
     strLstAddZ(argList, "--repo1-host=localhost");
     strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-    strLstAddZ(argList, "archive-push");
+    strLstAddZ(argList, "info");
     harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
+    // Start a protocol server to test the remote protocol
+    Buffer *serverWrite = bufNew(8192);
+    IoWrite *serverWriteIo = ioBufferWriteIo(ioBufferWriteNew(serverWrite));
+    ioWriteOpen(serverWriteIo);
+
+    ProtocolServer *server = protocolServerNew(
+        strNew("test"), strNew("test"), ioBufferReadIo(ioBufferReadNew(bufNew(0))), serverWriteIo);
+
+    bufUsedSet(serverWrite, 0);
+
     // *****************************************************************************************************************************
-    if (testBegin("storageList(), storageNewRead()"))
+    if (testBegin("storageList()"))
     {
         Storage *storageRemote = NULL;
-
-        // Create repo path since the remote will not start without it
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
         storagePathCreateNP(storageTest, strNew("repo"));
 
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
         TEST_RESULT_STR(strPtr(strLstJoin(storageListNP(storageRemote, NULL), ",")), "" , "list empty path");
+        TEST_RESULT_PTR(storageListNP(storageRemote, strNew(BOGUS_STR)), NULL , "missing directory ignored");
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateNP(storageTest, strNew("repo/testy"));
@@ -44,10 +55,33 @@ testRun(void)
 
         storagePathCreateNP(storageTest, strNew("repo/testy2\""));
         TEST_RESULT_STR(
-            strPtr(strLstJoin(storageListNP(storageRemote, strNewFmt("%s/repo", testPath())), ",")), "testy,testy2\"" ,
-            "list 2 paths");
+            strPtr(strLstJoin(strLstSort(storageListNP(storageRemote, strNewFmt("%s/repo", testPath())), sortOrderAsc), ",")),
+            "testy,testy2\"" , "list 2 paths");
 
+        // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, NULL);
+        varLstAdd(paramList, varNewBool(false));
+        varLstAdd(paramList, varNewStr(strNew("^testy$")));
+
+        TEST_RESULT_BOOL(storageDriverRemoteProtocol(PROTOCOL_COMMAND_STORAGE_LIST_STR, paramList, server), true, "protocol list");
+        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":[\"testy\"]}\n", "check result");
+
+        bufUsedSet(serverWrite, 0);
+
+        // Check invalid protocol function
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_BOOL(storageDriverRemoteProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageNewRead()"))
+    {
+        Storage *storageRemote = NULL;
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
+        storagePathCreateNP(storageTest, strNew("repo"));
+
         Buffer *contentBuf = bufNew(32768);
 
         for (unsigned int contentIdx = 0; contentIdx < bufSize(contentBuf); contentIdx++)
@@ -59,7 +93,8 @@ testRun(void)
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageRemote, strNew("test.txt"))))), FileMissingError,
             strPtr(
                 strNewFmt(
-                    "raised from remote-1 protocol on 'localhost': unable to open '%s/repo/test.txt': No such file or directory",
+                    "raised from remote-1 protocol on 'localhost': unable to open '%s/repo/test.txt' for read:"
+                        " [2] No such file or directory",
                     testPath())));
 
         storagePutNP(storageNewWriteNP(storageTest, strNew("repo/test.txt")), contentBuf);
@@ -81,7 +116,48 @@ testRun(void)
         TEST_ERROR(
             storageDriverRemoteFileReadBlockSize(strNew("bogus")), ProtocolError, "'bogus' is not a valid block size message");
 
+        // Check protocol function directly (file missing)
         // -------------------------------------------------------------------------------------------------------------------------
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(strNew("missing.txt")));
+        varLstAdd(paramList, varNewBool(true));
+
+        TEST_RESULT_BOOL(
+            storageDriverRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true,
+            "protocol open read (missing)");
+        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":false}\n", "check result");
+
+        bufUsedSet(serverWrite, 0);
+
+        // Check protocol function directly (file exists)
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePutNP(storageNewWriteNP(storageTest, strNew("repo/test.txt")), bufNewStr(strNew("TESTDATA")));
+        ioBufferSizeSet(4);
+
+        paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(strNew("test.txt")));
+        varLstAdd(paramList, varNewBool(false));
+
+        TEST_RESULT_BOOL(
+            storageDriverRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true, "protocol open read");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(serverWrite)),
+            "{\"out\":true}\n"
+                "BRBLOCK4\n"
+                "TESTBRBLOCK4\n"
+                "DATABRBLOCK0\n",
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
+        ioBufferSizeSet(8192);
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("UNIMPLEMENTED"))
+    {
+        Storage *storageRemote = NULL;
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
+
         storageRemote->write = true;
         TEST_ERROR(storageExistsNP(storageRemote, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
         TEST_ERROR(storageInfoNP(storageRemote, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");

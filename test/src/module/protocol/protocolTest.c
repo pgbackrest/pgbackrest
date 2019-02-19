@@ -3,9 +3,53 @@ Test Protocol
 ***********************************************************************************************************************************/
 #include "common/io/handleRead.h"
 #include "common/io/handleWrite.h"
+#include "storage/storage.h"
+#include "storage/driver/posix/storage.h"
+#include "version.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+
+/***********************************************************************************************************************************
+Test protocol request handler
+***********************************************************************************************************************************/
+bool
+testServerProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRING, command);
+        FUNCTION_HARNESS_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(command != NULL);
+
+    // Attempt to satisfy the request -- we may get requests that are meant for other handlers
+    bool found = true;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        if (strEq(command, strNew("assert")))
+        {
+            THROW(AssertError, "test assert");
+        }
+        else if (strEq(command, strNew("request-simple")))
+        {
+            protocolServerResponse(server, varNewBool(true));
+        }
+        else if (strEq(command, strNew("request-complex")))
+        {
+            protocolServerResponse(server, varNewBool(false));
+            ioWriteLine(protocolServerIoWrite(server), strNew("LINEOFTEXT"));
+            ioWriteFlush(protocolServerIoWrite(server));
+        }
+        else
+            found = false;
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_HARNESS_RESULT(BOOL, found);
+}
 
 /***********************************************************************************************************************************
 Test Run
@@ -14,6 +58,9 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    Storage *storageTest = storageDriverPosixInterface(
+        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
 
     // *****************************************************************************************************************************
     if (testBegin("repoIsLocal()"))
@@ -119,7 +166,7 @@ testRun(void)
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop");
-                ioWriteLine(write, strNew("{\"out\":[]}"));
+                ioWriteLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
                 // Throw errors
@@ -204,7 +251,7 @@ testRun(void)
                 const VariantList *output = NULL;
                 KeyValue *command = kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(strNew("test")));
 
-                TEST_ASSIGN(output, protocolClientExecute(client, command, true), "execute command with output");
+                TEST_ASSIGN(output, varVarLst(protocolClientExecute(client, command, true)), "execute command with output");
                 TEST_RESULT_UINT(varLstSize(output), 2, "check output size");
                 TEST_RESULT_STR(strPtr(varStr(varLstGet(output, 0))), "value1", "check value1");
                 TEST_RESULT_STR(strPtr(varStr(varLstGet(output, 1))), "value2", "check value2");
@@ -221,16 +268,118 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("ProtocolServer"))
+    {
+        // Create pipes for testing.  Read/write is from the perspective of the client.
+        int pipeRead[2];
+        int pipeWrite[2];
+        THROW_ON_SYS_ERROR(pipe(pipeRead) == -1, KernelError, "unable to read test pipe");
+        THROW_ON_SYS_ERROR(pipe(pipeWrite) == -1, KernelError, "unable to write test pipe");
+
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD()
+            {
+                close(pipeRead[0]);
+                close(pipeWrite[1]);
+
+                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("client read"), pipeWrite[0], 2000));
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("client write"), pipeRead[1]));
+                ioWriteOpen(write);
+
+                // Check greeting
+                TEST_RESULT_STR(
+                    strPtr(ioReadLine(read)), "{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}",
+                    "check greeting");
+
+                // Noop
+                TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"noop\"}")), "write noop");
+                TEST_RESULT_VOID(ioWriteFlush(write), "flush noop");
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{}", "noop result");
+
+                // Invalid command
+                TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"bogus\"}")), "write bogus");
+                TEST_RESULT_VOID(ioWriteFlush(write), "flush bogus");
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"err\":39,\"out\":\"invalid command 'bogus'\"}", "bogus error");
+
+                // Simple request
+                TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"request-simple\"}")), "write simple request");
+                TEST_RESULT_VOID(ioWriteFlush(write), "flush simple request");
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"out\":true}", "simple request result");
+
+                // Assert -- no response will come backup because the process loop will terminate
+                TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"assert\"}")), "write assert");
+                TEST_RESULT_VOID(ioWriteFlush(write), "flush simple request");
+
+                // Complex request -- after process loop has been restarted
+                TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"request-complex\"}")), "write complex request");
+                TEST_RESULT_VOID(ioWriteFlush(write), "flush complex request");
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"out\":false}", "complex request result");
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "LINEOFTEXT", "complex request result");
+
+                // Exit
+                TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"exit\"}")), "write exit");
+                TEST_RESULT_VOID(ioWriteFlush(write), "flush exit");
+
+                close(pipeRead[1]);
+                close(pipeWrite[0]);
+            }
+
+            HARNESS_FORK_PARENT()
+            {
+                close(pipeRead[1]);
+                close(pipeWrite[0]);
+
+                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), pipeRead[0], 2000));
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), pipeWrite[1]));
+                ioWriteOpen(write);
+
+                // Send greeting
+                ProtocolServer *server = NULL;
+
+                MEM_CONTEXT_TEMP_BEGIN()
+                {
+                    TEST_ASSIGN(
+                        server,
+                        protocolServerMove(
+                            protocolServerNew(strNew("test server"), strNew("test"), read, write), MEM_CONTEXT_OLD()),
+                        "create server");
+                    TEST_RESULT_VOID(protocolServerMove(NULL, MEM_CONTEXT_OLD()), "move null server");
+                }
+                MEM_CONTEXT_TEMP_END();
+
+                TEST_RESULT_PTR(protocolServerIoRead(server), server->read, "get read io");
+                TEST_RESULT_PTR(protocolServerIoWrite(server), server->write, "get write io");
+
+                TEST_RESULT_VOID(protocolServerHandlerAdd(server, testServerProtocol), "add handler");
+
+                TEST_ERROR(protocolServerProcess(server), AssertError, "test assert");
+                TEST_RESULT_VOID(protocolServerProcess(server), "run process loop again");
+
+                TEST_RESULT_VOID(protocolServerFree(server), "free server");
+                TEST_RESULT_VOID(protocolServerFree(NULL), "free null server");
+
+                close(pipeRead[0]);
+                close(pipeWrite[1]);
+            }
+        }
+        HARNESS_FORK_END();
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("protocolGet()"))
     {
+        // Simple protocol start
+        // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
         strLstAddZ(argList, "/usr/bin/pgbackrest");
         strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--db-timeout=9");
         strLstAddZ(argList, "--protocol-timeout=10");
         strLstAddZ(argList, "--repo1-host=localhost");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
-        strLstAddZ(argList, "archive-push");
+        strLstAddZ(argList, "info");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         ProtocolClient *client = NULL;
@@ -239,6 +388,58 @@ testRun(void)
         TEST_RESULT_PTR(protocolGet(remoteTypeRepo, 1), client, "get cached protocol");
         TEST_RESULT_VOID(protocolFree(), "free protocol objects");
         TEST_RESULT_VOID(protocolFree(), "free protocol objects again");
+
+        // Start protocol with local encryption settings
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePut(
+            storageNewWriteNP(storageTest, strNew("pgbackrest.conf")),
+            bufNewStr(
+                strNew(
+                    "[global]\n"
+                    "repo1-cipher-type=aes-256-cbc\n"
+                    "repo1-cipher-pass=acbd\n")));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/usr/bin/pgbackrest");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--protocol-timeout=10");
+        strLstAdd(argList, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
+        strLstAddZ(argList, "--repo1-host=localhost");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
+        strLstAddZ(argList, "info");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass before");
+        TEST_ASSIGN(client, protocolGet(remoteTypeRepo, 1), "get protocol");
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass after");
+
+        TEST_RESULT_VOID(protocolFree(), "free protocol objects");
+
+        // Start protocol with remote encryption settings
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePut(
+            storageNewWriteNP(storageTest, strNew("pgbackrest.conf")),
+            bufNewStr(
+                strNew(
+                    "[global]\n"
+                    "repo1-cipher-type=aes-256-cbc\n"
+                    "repo1-cipher-pass=dcba\n")));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/usr/bin/pgbackrest");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--protocol-timeout=10");
+        strLstAdd(argList, strNewFmt("--repo1-host-config=%s/pgbackrest.conf", testPath()));
+        strLstAddZ(argList, "--repo1-host=localhost");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
+        strLstAddZ(argList, "info");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_PTR(cfgOptionStr(cfgOptRepoCipherPass), NULL, "check cipher pass before");
+        TEST_ASSIGN(client, protocolGet(remoteTypeRepo, 1), "get protocol");
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "dcba", "check cipher pass after");
+
+        TEST_RESULT_VOID(protocolFree(), "free protocol objects");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

@@ -120,7 +120,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 /***********************************************************************************************************************************
 Read the command output
 ***********************************************************************************************************************************/
-const VariantList *
+const Variant *
 protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -130,7 +130,7 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
 
     ASSERT(this != NULL);
 
-    const VariantList *result = NULL;
+    const Variant *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -151,19 +151,15 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
         }
 
         // Get output
-        const Variant *output = kvGet(responseKv, varNewStr(PROTOCOL_OUTPUT_STR));
-
-        ASSERT(output != NULL);
-        ASSERT(varType(output) == varTypeVariantList);
+        result = kvGet(responseKv, varNewStr(PROTOCOL_OUTPUT_STR));
 
         if (outputRequired)
         {
             // Just move the entire response kv since the output is the largest part if it
             kvMove(responseKv, MEM_CONTEXT_OLD());
-            result = varVarLst(output);
         }
         // Else if no output is required then there should not be any
-        else if (varLstSize(varVarLst(output)) != 0)
+        else if (result != NULL)
             THROW(AssertError, "no output required by command");
 
         // Reset the keep alive time
@@ -171,7 +167,7 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_CONST(VARIANT_LIST, result);
+    FUNCTION_LOG_RETURN_CONST(VARIANT, result);
 }
 
 /***********************************************************************************************************************************
@@ -201,7 +197,7 @@ protocolClientWriteCommand(ProtocolClient *this, const KeyValue *command)
 /***********************************************************************************************************************************
 Execute a protocol command and get the output
 ***********************************************************************************************************************************/
-const VariantList *
+const Variant *
 protocolClientExecute(ProtocolClient *this, const KeyValue *command, bool outputRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -215,7 +211,7 @@ protocolClientExecute(ProtocolClient *this, const KeyValue *command, bool output
 
     protocolClientWriteCommand(this, command);
 
-    FUNCTION_LOG_RETURN_CONST(VARIANT_LIST, protocolClientReadOutput(this, outputRequired));
+    FUNCTION_LOG_RETURN_CONST(VARIANT, protocolClientReadOutput(this, outputRequired));
 }
 
 /***********************************************************************************************************************************

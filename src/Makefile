@@ -65,6 +65,7 @@ SRCS = \
 	command/info/info.c \
 	command/command.c \
 	command/control/control.c \
+	command/remote/remote.c \
 	common/debug.c \
 	common/encode.c \
 	common/encode/base64.c \
@@ -114,6 +115,7 @@ SRCS = \
 	config/exec.c \
 	config/load.c \
 	config/parse.c \
+	config/protocol.c \
 	crypto/cipherBlock.c \
 	crypto/hash.c \
 	crypto/crypto.c \
@@ -137,6 +139,7 @@ SRCS = \
 	postgres/interface/v100.c \
 	postgres/interface/v110.c \
 	postgres/pageChecksum.c \
+	protocol/server.c \
 	protocol/client.c \
 	protocol/helper.c \
 	storage/driver/posix/storage.c \
@@ -144,6 +147,7 @@ SRCS = \
 	storage/driver/posix/fileRead.c \
 	storage/driver/posix/fileWrite.c \
 	storage/driver/remote/fileRead.c \
+	storage/driver/remote/protocol.c \
 	storage/driver/remote/storage.c \
 	storage/driver/s3/fileRead.c \
 	storage/driver/s3/storage.c \
@@ -195,6 +199,9 @@ command/help/help.o: command/help/help.c common/assert.h common/debug.h common/e
 
 command/info/info.o: command/info/info.c command/archive/common.h command/info/info.h common/assert.h common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/handleWrite.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h crypto/crypto.h crypto/hash.h info/info.h info/infoArchive.h info/infoBackup.h info/infoPg.h perl/exec.h postgres/interface.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
 	$(CC) $(CFLAGS) -c command/info/info.c -o command/info/info.o
+
+command/remote/remote.o: command/remote/remote.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/handleRead.h common/io/handleWrite.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/protocol.h protocol/client.h protocol/helper.h protocol/server.h storage/driver/remote/protocol.h
+	$(CC) $(CFLAGS) -c command/remote/remote.c -o command/remote/remote.o
 
 common/debug.o: common/debug.c common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/stackTrace.h common/type/convert.h
 	$(CC) $(CFLAGS) -c common/debug.c -o common/debug.o
@@ -343,6 +350,9 @@ config/load.o: config/load.c command/command.h common/assert.h common/debug.h co
 config/parse.o: config/parse.c common/assert.h common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/parse.auto.c config/parse.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h version.h
 	$(CC) $(CFLAGS) -c config/parse.c -o config/parse.o
 
+config/protocol.o: config/protocol.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/io.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/protocol.h protocol/client.h protocol/server.h
+	$(CC) $(CFLAGS) -c config/protocol.c -o config/protocol.o
+
 crypto/cipherBlock.o: crypto/cipherBlock.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h crypto/cipherBlock.h crypto/crypto.h
 	$(CC) $(CFLAGS) -c crypto/cipherBlock.c -o crypto/cipherBlock.o
 
@@ -367,7 +377,7 @@ info/infoManifest.o: info/infoManifest.c common/error.auto.h common/error.h comm
 info/infoPg.o: info/infoPg.c common/assert.h common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h crypto/crypto.h crypto/hash.h info/info.h info/infoPg.h postgres/interface.h postgres/version.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
 	$(CC) $(CFLAGS) -c info/infoPg.c -o info/infoPg.o
 
-main.o: main.c command/archive/get/get.h command/archive/push/push.h command/command.h command/help/help.h command/info/info.h common/assert.h common/debug.h common/error.auto.h common/error.h common/exit.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h perl/exec.h postgres/interface.h version.h
+main.o: main.c command/archive/get/get.h command/archive/push/push.h command/command.h command/help/help.h command/info/info.h command/remote/remote.h common/assert.h common/debug.h common/error.auto.h common/error.h common/exit.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/load.h perl/exec.h postgres/interface.h version.h
 	$(CC) $(CFLAGS) -c main.c -o main.o
 
 perl/config.o: perl/config.c common/assert.h common/debug.h common/error.auto.h common/error.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h
@@ -418,8 +428,11 @@ postgres/pageChecksum.o: postgres/pageChecksum.c common/assert.h common/debug.h 
 protocol/client.o: protocol/client.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h protocol/client.h version.h
 	$(CC) $(CFLAGS) -c protocol/client.c -o protocol/client.o
 
-protocol/helper.o: protocol/helper.c common/assert.h common/debug.h common/error.auto.h common/error.h common/exec.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/exec.h protocol/client.h protocol/helper.h
+protocol/helper.o: protocol/helper.c common/assert.h common/debug.h common/error.auto.h common/error.h common/exec.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/exec.h config/protocol.h crypto/crypto.h protocol/client.h protocol/helper.h protocol/server.h
 	$(CC) $(CFLAGS) -c protocol/helper.c -o protocol/helper.o
+
+protocol/server.o: protocol/server.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/variant.h common/type/variantList.h protocol/client.h protocol/server.h version.h
+	$(CC) $(CFLAGS) -c protocol/server.c -o protocol/server.o
 
 storage/driver/posix/common.o: storage/driver/posix/common.c common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h storage/driver/posix/common.h
 	$(CC) $(CFLAGS) -c storage/driver/posix/common.c -o storage/driver/posix/common.o
@@ -433,10 +446,13 @@ storage/driver/posix/fileWrite.o: storage/driver/posix/fileWrite.c common/assert
 storage/driver/posix/storage.o: storage/driver/posix/storage.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h storage/driver/posix/common.h storage/driver/posix/fileRead.h storage/driver/posix/fileWrite.h storage/driver/posix/storage.h storage/fileRead.h storage/fileWrite.h storage/info.h storage/storage.h storage/storage.intern.h
 	$(CC) $(CFLAGS) -c storage/driver/posix/storage.c -o storage/driver/posix/storage.o
 
-storage/driver/remote/fileRead.o: storage/driver/remote/fileRead.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/http/client.h common/io/http/header.h common/io/http/query.h common/io/read.h common/io/read.intern.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h protocol/client.h storage/driver/remote/fileRead.h storage/driver/remote/storage.h storage/fileRead.h storage/fileRead.intern.h storage/fileWrite.h storage/info.h storage/storage.h storage/storage.intern.h
+storage/driver/remote/fileRead.o: storage/driver/remote/fileRead.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/http/client.h common/io/http/header.h common/io/http/query.h common/io/read.h common/io/read.intern.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h protocol/client.h protocol/server.h storage/driver/remote/fileRead.h storage/driver/remote/protocol.h storage/driver/remote/storage.h storage/fileRead.h storage/fileRead.intern.h storage/fileWrite.h storage/info.h storage/storage.h storage/storage.intern.h
 	$(CC) $(CFLAGS) -c storage/driver/remote/fileRead.c -o storage/driver/remote/fileRead.o
 
-storage/driver/remote/storage.o: storage/driver/remote/storage.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/http/client.h common/io/http/header.h common/io/http/query.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h protocol/client.h protocol/helper.h storage/driver/remote/fileRead.h storage/driver/remote/storage.h storage/fileRead.h storage/fileWrite.h storage/info.h storage/storage.h storage/storage.intern.h
+storage/driver/remote/protocol.o: storage/driver/remote/protocol.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/io.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h protocol/server.h storage/driver/remote/protocol.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
+	$(CC) $(CFLAGS) -c storage/driver/remote/protocol.c -o storage/driver/remote/protocol.o
+
+storage/driver/remote/storage.o: storage/driver/remote/storage.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/http/client.h common/io/http/header.h common/io/http/query.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h protocol/client.h protocol/helper.h protocol/server.h storage/driver/remote/fileRead.h storage/driver/remote/protocol.h storage/driver/remote/storage.h storage/fileRead.h storage/fileWrite.h storage/info.h storage/storage.h storage/storage.intern.h
 	$(CC) $(CFLAGS) -c storage/driver/remote/storage.c -o storage/driver/remote/storage.o
 
 storage/driver/s3/fileRead.o: storage/driver/s3/fileRead.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/http/client.h common/io/http/header.h common/io/http/query.h common/io/read.h common/io/read.intern.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h storage/driver/s3/fileRead.h storage/driver/s3/storage.h storage/fileRead.h storage/fileRead.intern.h storage/fileWrite.h storage/info.h storage/storage.h storage/storage.intern.h
