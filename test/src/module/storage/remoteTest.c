@@ -40,6 +40,30 @@ testRun(void)
     bufUsedSet(serverWrite, 0);
 
     // *****************************************************************************************************************************
+    if (testBegin("storageExists()"))
+    {
+        Storage *storageRemote = NULL;
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
+        storagePathCreateNP(storageTest, strNew("repo"));
+
+        TEST_RESULT_BOOL(storageExistsNP(storageRemote, strNew("test.txt")), false, "file does not exist");
+
+        storagePutNP(storageNewWriteNP(storageTest, strNew("repo/test.txt")), bufNewStr(strNew("TEST")));
+        TEST_RESULT_BOOL(storageExistsNP(storageRemote, strNew("test.txt")), true, "file exists");
+
+        // Check protocol function directly
+        // -------------------------------------------------------------------------------------------------------------------------
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(strNew("test.txt")));
+
+        TEST_RESULT_BOOL(
+            storageDriverRemoteProtocol(PROTOCOL_COMMAND_STORAGE_EXISTS_STR, paramList, server), true, "protocol exists");
+        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":true}\n", "check result");
+
+        bufUsedSet(serverWrite, 0);
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("storageList()"))
     {
         Storage *storageRemote = NULL;
@@ -159,7 +183,6 @@ testRun(void)
         TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
 
         storageRemote->write = true;
-        TEST_ERROR(storageExistsNP(storageRemote, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
         TEST_ERROR(storageInfoNP(storageRemote, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
         TEST_ERROR(storageNewWriteNP(storageRemote, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
         TEST_ERROR(storagePathCreateNP(storageRemote, strNew("path")), AssertError, "NOT YET IMPLEMENTED");

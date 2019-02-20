@@ -87,7 +87,19 @@ storageDriverRemoteExists(StorageDriverRemote *this, const String *path)
 
     bool result = false;
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Add parameters
+        Variant *param = varNewVarLst(varLstNew());
+        varLstAdd(varVarLst(param), varNewStr(path));
+
+        // Construct command
+        KeyValue *command = kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(PROTOCOL_COMMAND_STORAGE_EXISTS_STR));
+        kvPut(command, varNewStr(PROTOCOL_PARAMETER_STR), param);
+
+        result = varBool(protocolClientExecute(this->client, command, true));
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }

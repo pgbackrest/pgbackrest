@@ -11,6 +11,7 @@ Remote Storage Protocol Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
+STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_EXISTS_STR,                  PROTOCOL_COMMAND_STORAGE_EXISTS);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_LIST_STR,                    PROTOCOL_COMMAND_STORAGE_LIST);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR,               PROTOCOL_COMMAND_STORAGE_OPEN_READ);
 
@@ -36,7 +37,11 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strEq(command, PROTOCOL_COMMAND_STORAGE_LIST_STR))
+        if (strEq(command, PROTOCOL_COMMAND_STORAGE_EXISTS_STR))
+        {
+            protocolServerResponse(server, varNewBool(storageExistsNP(storage, varStr(varLstGet(paramList, 0)))));
+        }
+        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_LIST_STR))
         {
             protocolServerResponse(
                 server,
