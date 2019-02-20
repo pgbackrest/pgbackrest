@@ -40,6 +40,10 @@
 
                         <p>Change <code>execRead()</code> to return a <code>size_t</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Increase per-call stack trace size to <id>4096</id>.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
