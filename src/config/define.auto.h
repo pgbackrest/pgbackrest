@@ -12,6 +12,7 @@ Command define enum
 typedef enum
 {
     cfgDefCmdArchiveGet,
+    cfgDefCmdArchiveGetAsync,
     cfgDefCmdArchivePush,
     cfgDefCmdBackup,
     cfgDefCmdCheck,

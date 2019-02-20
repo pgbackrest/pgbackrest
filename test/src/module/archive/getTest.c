@@ -294,7 +294,7 @@ testRun(void)
     if (testBegin("cmdArchiveGet()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "pgbackrest-bogus");                    // Break this until async tests are setup correctly
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAdd(argList, strNewFmt("--log-level-file=debug"));
@@ -397,6 +397,7 @@ testRun(void)
         strLstAddZ(argList, "--archive-async");
         strLstAdd(argList, walSegment);
         strLstAddZ(argList, "pg_wal/RECOVERYXLOG");
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         HARNESS_FORK_BEGIN()
@@ -412,9 +413,6 @@ testRun(void)
 
         // Check for missing WAL
         // -------------------------------------------------------------------------------------------------------------------------
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
-
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment))), NULL);
 

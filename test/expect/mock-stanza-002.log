@@ -401,7 +401,7 @@ P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000
 P00  DEBUG:     config/load::cfgLoad: => void
 P00  DEBUG:     command/archive/get/get::cmdArchiveGet: (void)
 P00  DEBUG:     perl/exec::perlExec: (void)
-P00  DEBUG:     Archive::Get::Get->process(): rstryCommandArg = (000000010000000100000002, [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG)
+P00  DEBUG:     Archive::Get::Get->process(): bAsync = false, rstryCommandArg = (000000010000000100000002, [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG)
 P00  DEBUG:     Archive::Get::File::archiveGetFile(): bAtomic = false, strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000010000000100000002
 P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
 P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false

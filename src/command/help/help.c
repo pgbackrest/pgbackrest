@@ -166,8 +166,12 @@ helpRender(void)
                 if (commandId == cfgCmdNone)
                     continue;
 
-                if (strlen(cfgCommandName(commandId)) > commandSizeMax)
+                // Only check size if the command has a help summary so we know it is a documented command
+                if (cfgDefCommandHelpSummary(cfgCommandDefIdFromId(commandId)) != NULL &&
+                    strlen(cfgCommandName(commandId)) > commandSizeMax)
+                {
                     commandSizeMax = strlen(cfgCommandName(commandId));
+                }
             }
 
             // Output help for each command

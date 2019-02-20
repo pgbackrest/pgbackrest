@@ -104,6 +104,7 @@ sub libcAutoExportTag
             'CFGOPTVAL_RESTORE_TYPE_IMMEDIATE',
             'CFGOPTVAL_RESTORE_TYPE_DEFAULT',
             'CFGCMD_ARCHIVE_GET',
+            'CFGCMD_ARCHIVE_GET_ASYNC',
             'CFGCMD_ARCHIVE_PUSH',
             'CFGCMD_BACKUP',
             'CFGCMD_CHECK',

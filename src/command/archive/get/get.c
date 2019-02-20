@@ -1,6 +1,9 @@
 /***********************************************************************************************************************************
 Archive Get Command
 ***********************************************************************************************************************************/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -14,7 +17,7 @@ Archive Get Command
 #include "common/regExp.h"
 #include "common/wait.h"
 #include "config/config.h"
-#include "config/load.h"
+#include "config/exec.h"
 #include "perl/exec.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
@@ -130,8 +133,6 @@ cmdArchiveGet(void)
             walDestination = strNewFmt("%s/%s", strPtr(cfgOptionStr(cfgOptPgPath)), strPtr(walDestination));
 
         // Async get can only be performed on WAL segments, history or other files must use synchronous mode
-        bool asyncServer = false;
-
         if (cfgOptionBool(cfgOptArchiveAsync) && walIsSegment(walSegment))
         {
             bool found = false;                                         // Has the WAL segment been found yet?
@@ -202,6 +203,31 @@ cmdArchiveGet(void)
                 if (!forked && (!found || !queueFull)  &&
                     lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
                 {
+                    // Get control info
+                    PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
+
+                    // Create the queue
+                    storagePathCreateNP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN_STR);
+
+                    // The async process should not output on the console at all
+                    KeyValue *optionReplace = kvNew();
+
+                    kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptLogLevelConsole))), varNewStrZ("off"));
+                    kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptLogLevelStderr))), varNewStrZ("off"));
+
+                    // Generate command options
+                    StringList *commandExec = cfgExecParam(cfgCmdArchiveGetAsync, optionReplace);
+                    strLstInsert(commandExec, 0, cfgExe());
+
+                    // Clean the current queue using the list of WAL that we ideally want in the queue.  queueNeed()
+                    // will return the list of WAL needed to fill the queue and this will be passed to the async process.
+                    const StringList *queue = queueNeed(
+                        walSegment, found, (size_t)cfgOptionInt64(cfgOptArchiveGetQueueMax), pgControl.walSegmentSize,
+                        pgControl.version);
+
+                    for (unsigned int queueIdx = 0; queueIdx < strLstSize(queue); queueIdx++)
+                        strLstAdd(commandExec, strLstGet(queue, queueIdx));
+
                     // Release the lock and mark the async process as forked
                     lockRelease(true);
                     forked = true;
@@ -209,49 +235,13 @@ cmdArchiveGet(void)
                     // Fork off the async process
                     if (fork() == 0)
                     {
-                        // In the async server
-                        asyncServer = true;
-                        result = 0;
+                        // Detach from parent process
+                        forkDetach();
 
-                        // Only run async if the lock can be reacquired.  We just held it so this should not be an issue unless
-                        // another process sneaks in.  In general there should be only one archive-get process running but in
-                        // theory there could be more than one.
-                        if (lockAcquire(                                // {uncoverable - almost impossible to make this lock fail}
-                                cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
-                        {
-                            // Get control info
-                            PgControl pgControl = pgControlFromFile(cfgOptionStr(cfgOptPgPath));
-
-                            // Create the queue
-                            storagePathCreateNP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN_STR);
-
-                            // Clean the current queue using the list of WAL that we ideally want in the queue.  queueNeed()
-                            // will return the list of WAL needed to fill the queue and this will be passed to the async process.
-                            cfgCommandParamSet(
-                                queueNeed(
-                                    walSegment, found, (size_t)cfgOptionInt64(cfgOptArchiveGetQueueMax), pgControl.walSegmentSize,
-                                    pgControl.version));
-
-                            // The async process should not output on the console at all
-                            cfgOptionSet(cfgOptLogLevelConsole, cfgSourceParam, varNewStrZ("off"));
-                            cfgOptionSet(cfgOptLogLevelStderr, cfgSourceParam, varNewStrZ("off"));
-                            cfgLoadLogSetting();
-
-                            // Open the log file
-                            cfgLoadLogFile(
-                                strNewFmt("%s/%s-%s-async.log", strPtr(cfgOptionStr(cfgOptLogPath)),
-                                strPtr(cfgOptionStr(cfgOptStanza)), cfgCommandName(cfgCommand())));
-
-                            // Log command info since we are starting a new log
-                            cmdBegin(true);
-
-                            // Detach from parent process
-                            forkDetach();
-
-                            perlExec();
-                        }
-
-                        break;                                          // {uncovered - async calls always return errors for now}
+                        // Execute the binary.  This statement will not return if it is successful.
+                        THROW_ON_SYS_ERROR_FMT(
+                            execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1,
+                            ExecuteError, "unable to execute '%s'", cfgCommandName(cfgCmdArchiveGetAsync));
                     }
                 }
 
@@ -282,13 +272,10 @@ cmdArchiveGet(void)
         }
 
         // Log whether or not the file was found
-        if (!asyncServer)                                               // {uncovered - async calls always return errors for now}
-        {
-            if (result == 0)
-                LOG_INFO("found %s in the archive", strPtr(walSegment));
-            else
-                LOG_INFO("unable to find %s in the archive", strPtr(walSegment));
-        }
+        if (result == 0)
+            LOG_INFO("found %s in the archive", strPtr(walSegment));
+        else
+            LOG_INFO("unable to find %s in the archive", strPtr(walSegment));
     }
     MEM_CONTEXT_TEMP_END();
 

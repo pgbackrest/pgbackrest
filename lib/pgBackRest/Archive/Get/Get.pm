@@ -44,11 +44,13 @@ sub process
     (
         $strOperation,
         $rstryCommandArg,
+        $bAsync,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->process', \@_,
             {name => 'rstryCommandArg'},
+            {name => 'bAsync'},
         );
 
     my $iResult = 0;
@@ -60,7 +62,7 @@ sub process
     }
 
     # Start the async process and wait for WAL to complete
-    if (cfgOption(CFGOPT_ARCHIVE_ASYNC))
+    if ($bAsync)
     {
         # Load module dynamically
         require pgBackRest::Archive::Get::Async;
