@@ -99,9 +99,11 @@ sub new
 
             eval
             {
-                $oSocket = IO::Socket::SSL->new(
+                $oSocket = IO::Socket::IP->new(PeerHost => $strHost, PeerPort => $iPort);
+                setsockopt($oSocket,SOL_SOCKET,SO_KEEPALIVE,1);
+                IO::Socket::SSL->start_SSL($oSocket,
                     PeerHost => $strHost, PeerPort => $iPort, SSL_verify_mode => $bVerifySsl ? SSL_VERIFY_PEER : SSL_VERIFY_NONE,
-                    SSL_ca_path => $strCaPath, SSL_ca_file => $strCaFile, Sockopts => [[SOL_SOCKET, SO_KEEPALIVE]]);
+                    SSL_ca_path => $strCaPath, SSL_ca_file => $strCaFile);
 
                 return 1;
             }
