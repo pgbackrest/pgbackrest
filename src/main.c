@@ -64,7 +64,9 @@ main(int argListSize, const char *argList[])
 
         // Remote command.  Currently only implements a subset.
         // -------------------------------------------------------------------------------------------------------------------------
-        else if (cfgCommand() == cfgCmdRemote && strEqZ(cfgOptionStr(cfgOptCommand), "info"))
+        else if (cfgCommand() == cfgCmdRemote &&
+                 (strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdInfo)) ||
+                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGet))))
         {
             cmdRemote(STDIN_FILENO, STDOUT_FILENO);
         }

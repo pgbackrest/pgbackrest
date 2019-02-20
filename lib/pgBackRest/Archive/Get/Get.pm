@@ -44,13 +44,11 @@ sub process
     (
         $strOperation,
         $rstryCommandArg,
-        $bAsync,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->process', \@_,
             {name => 'rstryCommandArg'},
-            {name => 'bAsync'},
         );
 
     my $iResult = 0;
@@ -61,35 +59,11 @@ sub process
         confess &log(ERROR, cfgCommandName(CFGCMD_ARCHIVE_GET) . ' operation must run on db host', ERROR_HOST_INVALID);
     }
 
-    # Start the async process and wait for WAL to complete
-    if ($bAsync)
-    {
-        # Load module dynamically
-        require pgBackRest::Archive::Get::Async;
-        (new pgBackRest::Archive::Get::Async(
-            storageSpool()->pathGet(STORAGE_SPOOL_ARCHIVE_IN), $self->{strBackRestBin}, $rstryCommandArg))->process();
-    }
-    # Else get synchronously
-    else
-    {
-        # Make sure the archive file is defined
-        my $strSourceArchive = ${$rstryCommandArg}[0];
 
-        if (!defined($strSourceArchive))
-        {
-            confess &log(ERROR, 'WAL segment not provided', ERROR_ASSERT);
-        }
-
-        # Make sure the destination file is defined
-        my $strDestinationFile = ${$rstryCommandArg}[1];
-
-        if (!defined($strDestinationFile))
-        {
-            confess &log(ERROR, 'WAL segment destination not provided', ERROR_ASSERT);
-        }
-
-        $iResult = archiveGetFile($strSourceArchive, $strDestinationFile, false);
-    }
+    # Load module dynamically
+    require pgBackRest::Archive::Get::Async;
+    (new pgBackRest::Archive::Get::Async(
+        storageSpool()->pathGet(STORAGE_SPOOL_ARCHIVE_IN), $self->{strBackRestBin}, $rstryCommandArg))->process();
 
     # Return from function and log return values if any
     return logDebugReturn

@@ -30,6 +30,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Migrate remote <cmd>archive-get</cmd> command to C.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add separate <cmd>archive-get-async</cmd> command.</p>
                     </release-item>
 

@@ -80,17 +80,6 @@ sub main
             new pgBackRest::Archive::Push::Push()->process($stryCommandArg[0]);
         }
 
-        # Process archive-get command
-        # --------------------------------------------------------------------------------------------------------------------------
-        elsif (cfgCommandTest(CFGCMD_ARCHIVE_GET))
-        {
-            # Load module dynamically
-            require pgBackRest::Archive::Get::Get;
-            pgBackRest::Archive::Get::Get->import();
-
-            $iResult = new pgBackRest::Archive::Get::Get()->process(\@stryCommandArg, false);
-        }
-
         # Process archive-get-async command
         # --------------------------------------------------------------------------------------------------------------------------
         elsif (cfgCommandTest(CFGCMD_ARCHIVE_GET_ASYNC))
@@ -99,7 +88,7 @@ sub main
             require pgBackRest::Archive::Get::Get;
             pgBackRest::Archive::Get::Get->import();
 
-            $iResult = new pgBackRest::Archive::Get::Get()->process(\@stryCommandArg, true);
+            $iResult = new pgBackRest::Archive::Get::Get()->process(\@stryCommandArg);
         }
 
         # Process remote command

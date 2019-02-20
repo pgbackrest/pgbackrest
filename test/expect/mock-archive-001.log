@@ -125,6 +125,8 @@ P00  DEBUG:     main::main: => 0
 P00   INFO: archive-get command begin [BACKREST-VERSION]: [700000007000000070000000, [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     config/load::cfgLoad: => void
 P00  DEBUG:     command/archive/get/get::cmdArchiveGet: (void)
+P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: (path: {"[TEST_PATH]/db-master/repo"}, modeFile: 0640, modePath: 0750, write: false, pathExpressionFunction: (function *))
+P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: => {StorageDriverPosix}
 P00  DEBUG:     command/archive/get/file::archiveGetFile: (archiveFile: {"700000007000000070000000"}, walDestination: {"[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG"}, cipherType: 1)
 P00  DEBUG:     command/control/control::lockStopTest: (void)
 P00  DEBUG:     storage/storage::storageExists: (this: {type: posix, path: {"/"}, write: false}, pathExp: {"[TEST_PATH]/db-master/lock/db.stop"}, param.timeout: 0)
@@ -139,8 +141,6 @@ P00  DEBUG:     storage/storage::storageNewRead: => {type: posix, name: {"[TEST_
 P00  DEBUG:     storage/storage::storageGet: (file: {type: posix, name: {"[TEST_PATH]/db-master/db/base/global/pg_control"}, ignoreMissing: false}, param.exactSize: 512)
 P00  DEBUG:     storage/storage::storageGet: => {used: 512, size: 512, limit: <off>}
 P00  DEBUG:     postgres/interface::pgControlFromFile: => {version: 90400, systemId: 1000000000000000094, walSegmentSize: 16777216, pageChecksum: true}
-P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: (path: {"[TEST_PATH]/db-master/repo"}, modeFile: 0640, modePath: 0750, write: false, pathExpressionFunction: (function *))
-P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: => {StorageDriverPosix}
 P00  DEBUG:     info/infoArchive::infoArchiveNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, ignoreMissing: false, cipherType: 1)
 P00  DEBUG:     info/infoPg::infoPgNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, type: 0, cipherType: 1)
 P00  DEBUG:     info/info::infoNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, cipherType: 1)
@@ -167,6 +167,8 @@ P00  DEBUG:     main::main: => 1
 P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000001, [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     config/load::cfgLoad: => void
 P00  DEBUG:     command/archive/get/get::cmdArchiveGet: (void)
+P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: (path: {"[TEST_PATH]/db-master/repo"}, modeFile: 0640, modePath: 0750, write: false, pathExpressionFunction: (function *))
+P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: => {StorageDriverPosix}
 P00  DEBUG:     command/archive/get/file::archiveGetFile: (archiveFile: {"000000010000000100000001"}, walDestination: {"[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG"}, cipherType: 1)
 P00  DEBUG:     command/control/control::lockStopTest: (void)
 P00  DEBUG:     storage/storage::storageExists: (this: {type: posix, path: {"/"}, write: false}, pathExp: {"[TEST_PATH]/db-master/lock/db.stop"}, param.timeout: 0)
@@ -181,8 +183,6 @@ P00  DEBUG:     storage/storage::storageNewRead: => {type: posix, name: {"[TEST_
 P00  DEBUG:     storage/storage::storageGet: (file: {type: posix, name: {"[TEST_PATH]/db-master/db/base/global/pg_control"}, ignoreMissing: false}, param.exactSize: 512)
 P00  DEBUG:     storage/storage::storageGet: => {used: 512, size: 512, limit: <off>}
 P00  DEBUG:     postgres/interface::pgControlFromFile: => {version: 90400, systemId: 1000000000000000094, walSegmentSize: 16777216, pageChecksum: true}
-P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: (path: {"[TEST_PATH]/db-master/repo"}, modeFile: 0640, modePath: 0750, write: false, pathExpressionFunction: (function *))
-P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: => {StorageDriverPosix}
 P00  DEBUG:     info/infoArchive::infoArchiveNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, ignoreMissing: false, cipherType: 1)
 P00  DEBUG:     info/infoPg::infoPgNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, type: 0, cipherType: 1)
 P00  DEBUG:     info/info::infoNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, cipherType: 1)
