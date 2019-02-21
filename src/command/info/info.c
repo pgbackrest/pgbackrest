@@ -117,7 +117,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     // If there is no match, an error will be thrown.
     const String *archiveId = infoArchiveIdHistoryMatch(info, pgData->id, pgData->version, pgData->systemId);
 
-    String *archivePath = strNewFmt("%s/%s/%s", STORAGE_REPO_ARCHIVE, strPtr(stanza), strPtr(archiveId));
+    String *archivePath = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanza), strPtr(archiveId));
     String *archiveStart = NULL;
     String *archiveStop = NULL;
     Variant *archiveInfo = varNewKv();

@@ -179,6 +179,30 @@ testRun(void)
             "        wal archive min/max (9.4-3): none present\n",
             "text - single stanza, no valid backups");
 
+        // Add WAL segments
+        //--------------------------------------------------------------------------------------------------------------------------
+        String *archiveDb3 = strNewFmt("%s/9.4-3/0000000100000000", strPtr(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb3), "create db3 archive WAL1 directory");
+
+        String *archiveDb3Wal = strNewFmt(
+            "%s/000000010000000000000004-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strPtr(archiveDb3));
+        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), archiveDb3Wal), bufNew(0)), "touch WAL3 file");
+
+        StringList *argList2 = strLstDup(argListText);
+        strLstAddZ(argList2, "--stanza=stanza1");
+        harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
+
+        TEST_RESULT_STR(strPtr(infoRender()),
+            "stanza: stanza1\n"
+            "    status: error (no valid backups)\n"
+            "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.4-3): 000000010000000000000004/000000010000000000000004\n",
+            "text - single stanza, one wal segment");
+
+        TEST_RESULT_VOID(storageRemoveP(storageLocalWrite(), archiveDb3Wal, .errorOnMissing = true), "remove WAL file");
+
         // Coverage for stanzaStatus branches
         //--------------------------------------------------------------------------------------------------------------------------
         String *archiveDb1_1 = strNewFmt("%s/9.4-1/0000000100000000", strPtr(archiveStanza1Path));
@@ -198,9 +222,6 @@ testRun(void)
 
         String *archiveDb1_3 = strNewFmt("%s/9.4-1/0000000300000000", strPtr(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb1_3), "create db1 archive WAL3 directory");
-
-        String *archiveDb3 = strNewFmt("%s/9.4-3/0000000100000000", strPtr(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateNP(storageLocalWrite(), archiveDb3), "create db3 archive WAL1 directory");
 
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         content = strNew
@@ -664,7 +685,7 @@ testRun(void)
 
         // Stanza not found
         //--------------------------------------------------------------------------------------------------------------------------
-        StringList *argList2 = strLstDup(argList);
+        argList2 = strLstDup(argList);
         strLstAddZ(argList2, "--stanza=silly");
         harnessCfgLoad(strLstSize(argList2), strLstPtr(argList2));
         TEST_RESULT_STR(strPtr(infoRender()),

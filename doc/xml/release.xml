@@ -22,6 +22,14 @@
 
                         <p>Fix possible truncated WAL segments when an error occurs mid-write.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix info command missing WAL min/max when stanza specified.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-development-list>
@@ -6526,6 +6534,11 @@
         <contributor id="sebastien.lardiere">
             <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
             <contributor-id type="github">slardiere</contributor-id>
+        </contributor>
+
+        <contributor id="stefan.fercot">
+            <contributor-name-display>Stefan Fercot</contributor-name-display>
+            <contributor-id type="github">pgstef</contributor-id>
         </contributor>
 
         <contributor id="stephane.schildknecht">
