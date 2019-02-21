@@ -88,6 +88,11 @@ protocolParam(RemoteType remoteType, unsigned int remoteId)
     // Add the process id -- used when more than one process will be called
     kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptProcess))), varNewInt(0));
 
+    // Don't pass the stanza if it is set.  It is better if the remote is stanza-agnostic so the client can operate on multiple
+    // stanzas without starting a new remote.  Once the Perl code is removed the stanza option can be removed from the remote
+    // command.
+    kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptStanza))), NULL);
+
     // Add the type
     kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptType))), varNewStr(strNew("backup")));
 

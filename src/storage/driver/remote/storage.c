@@ -30,18 +30,16 @@ New object
 ***********************************************************************************************************************************/
 StorageDriverRemote *
 storageDriverRemoteNew(
-    const String *path, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction,
-    RemoteType remoteType, unsigned int remoteId)
+    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, RemoteType remoteType,
+    unsigned int remoteId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
     FUNCTION_LOG_END();
 
-    ASSERT(path != NULL);
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
 
@@ -57,7 +55,7 @@ storageDriverRemoteNew(
 
         // Create the storage interface
         this->interface = storageNewP(
-            STORAGE_DRIVER_REMOTE_TYPE_STR, path, modeFile, modePath, write, false, pathExpressionFunction, this,
+            STORAGE_DRIVER_REMOTE_TYPE_STR, NULL, modeFile, modePath, write, pathExpressionFunction, this,
             .exists = (StorageInterfaceExists)storageDriverRemoteExists, .info = (StorageInterfaceInfo)storageDriverRemoteInfo,
             .list = (StorageInterfaceList)storageDriverRemoteList, .newRead = (StorageInterfaceNewRead)storageDriverRemoteNewRead,
             .newWrite = (StorageInterfaceNewWrite)storageDriverRemoteNewWrite,

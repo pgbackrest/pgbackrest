@@ -100,7 +100,7 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|repo-host-user@repo-host"
-                        "|pgbackrest --command=archive-get --process=0 --stanza=test1 --type=backup remote")),
+                        "|pgbackrest --command=archive-get --process=0 --type=backup remote")),
             "remote protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -122,7 +122,7 @@ testRun(void)
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|-p|444|repo-host-user@repo-host"
                         "|pgbackrest --command=archive-get --config=/path/pgbackrest.conf --config-include-path=/path/include"
-                        " --config-path=/path/config --process=0 --stanza=test1 --type=backup remote")),
+                        " --config-path=/path/config --process=0 --type=backup remote")),
             "remote protocol params with replacements");
     }
 

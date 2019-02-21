@@ -23,8 +23,8 @@ Driver type constant
 Constructor
 ***********************************************************************************************************************************/
 StorageDriverRemote *storageDriverRemoteNew(
-    const String *path, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction,
-    RemoteType remoteType, unsigned int remoteId);
+    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, RemoteType remoteType,
+    unsigned int remoteId);
 
 /***********************************************************************************************************************************
 Functions

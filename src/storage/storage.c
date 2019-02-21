@@ -34,7 +34,7 @@ New storage object
 ***********************************************************************************************************************************/
 Storage *
 storageNew(
-    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write, bool pathResolve,
+    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -43,14 +43,13 @@ storageNew(
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(BOOL, write);
-        FUNCTION_LOG_PARAM(BOOL, pathResolve);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM(STORAGE_INTERFACE, interface);
     FUNCTION_LOG_END();
 
     ASSERT(type != NULL);
-    ASSERT(path != NULL && strSize(path) >= 1 && strPtr(path)[0] == '/');
+    ASSERT(path == NULL || (strSize(path) >= 1 && strPtr(path)[0] == '/'));
     ASSERT(driver != NULL);
     ASSERT(interface.exists != NULL);
     ASSERT(interface.info != NULL);
@@ -73,7 +72,6 @@ storageNew(
     this->modeFile = modeFile;
     this->modePath = modePath;
     this->write = write;
-    this->pathResolve = pathResolve;
     this->pathExpressionFunction = pathExpressionFunction;
 
     FUNCTION_LOG_RETURN(STORAGE, this);
@@ -412,13 +410,8 @@ storagePath(const Storage *this, const String *pathExp)
 
     String *result = NULL;
 
-    // If the path will not be resolved here then just make a copy
-    if (!this->pathResolve)
-    {
-        result = strDup(pathExp);
-    }
     // If there is no path expression then return the base storage path
-    else if (pathExp == NULL)
+    if (pathExp == NULL)
     {
         result = strDup(this->path);
     }
@@ -428,7 +421,7 @@ storagePath(const Storage *this, const String *pathExp)
         if ((strPtr(pathExp))[0] == '/')
         {
             // Make sure the base storage path is contained within the path expression
-            if (!strEqZ(this->path, "/"))
+            if (this->path != NULL && !strEqZ(this->path, "/"))
             {
                 if (!strBeginsWith(pathExp, this->path) ||
                     !(strSize(pathExp) == strSize(this->path) || *(strPtr(pathExp) + strSize(this->path)) == '/'))
@@ -492,7 +485,9 @@ storagePath(const Storage *this, const String *pathExp)
                 strFree(path);
             }
 
-            if (strEqZ(this->path, "/"))
+            if (this->path == NULL)
+                result = strDup(pathExp);
+            else if (strEqZ(this->path, "/"))
                 result = strNewFmt("/%s", strPtr(pathExp));
             else
                 result = strNewFmt("%s/%s", strPtr(this->path), strPtr(pathExp));

@@ -262,7 +262,7 @@ storageDriverS3New(
 
         // Create the storage interface
         this->interface = storageNewP(
-            STORAGE_DRIVER_S3_TYPE_STR, path, 0, 0, write, true, pathExpressionFunction, this,
+            STORAGE_DRIVER_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, this,
             .exists = (StorageInterfaceExists)storageDriverS3Exists, .info = (StorageInterfaceInfo)storageDriverS3Info,
             .list = (StorageInterfaceList)storageDriverS3List, .newRead = (StorageInterfaceNewRead)storageDriverS3NewRead,
             .newWrite = (StorageInterfaceNewWrite)storageDriverS3NewWrite,

@@ -57,7 +57,7 @@ storageDriverPosixNew(
         this->memContext = MEM_CONTEXT_NEW();
 
         this->interface = storageNewP(
-            STORAGE_DRIVER_POSIX_TYPE_STR, path, modeFile, modePath, write, true, pathExpressionFunction, this,
+            STORAGE_DRIVER_POSIX_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, this,
             .exists = (StorageInterfaceExists)storageDriverPosixExists, .info = (StorageInterfaceInfo)storageDriverPosixInfo,
             .list = (StorageInterfaceList)storageDriverPosixList, .move = (StorageInterfaceMove)storageDriverPosixMove,
             .newRead = (StorageInterfaceNewRead)storageDriverPosixNewRead,

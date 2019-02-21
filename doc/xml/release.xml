@@ -50,6 +50,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Resolve storage path expressions before passing to remote.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <id>storageHelperFree()</id> to storage helper.</p>
                     </release-item>
 
