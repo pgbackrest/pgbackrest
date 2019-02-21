@@ -35,10 +35,21 @@ cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace)
                 continue;
 
             // First check for a replacement
+            const Variant *key = varNewStr(strNew(cfgOptionName(optionId)));
             const Variant *value = NULL;
+            bool exists = false;
 
             if (optionReplace != NULL)
-                value = kvGet(optionReplace, varNewStr(strNew(cfgOptionName(optionId))));
+            {
+                exists = kvKeyExists(optionReplace, key);
+
+                if (exists)
+                    value = kvGet(optionReplace, key);
+            }
+
+            // If the key exists but is NULL then skip this option
+            if (exists && value == NULL)
+                continue;
 
             // If no replacement then see if this option is valid for the current command and is not default
             if (value == NULL && cfgOptionValid(optionId))

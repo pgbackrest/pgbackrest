@@ -58,6 +58,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow <code>cfgExecParam()</code> to exclude options.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="stephen.frost"/>
                         </release-item-contributor-list>

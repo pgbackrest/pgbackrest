@@ -54,13 +54,14 @@ testRun(void)
 
         KeyValue *optionReplace = kvNew();
         kvPut(optionReplace, varNewStr(strNew("repo1-path")), varNewStr(strNew("/replace/path")));
+        kvPut(optionReplace, varNewStr(strNew("stanza")), NULL);
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(cfgExecParam(cfgCmdRestore, optionReplace), "|")),
             strPtr(
                 strNewFmt(
                     "--db-include=1|--db-include=2|--pg1-path=%s/db|--recovery-option=a=b|--recovery-option=c=d"
-                        "|--repo1-path=/replace/path|--stanza=test1|restore",
+                        "|--repo1-path=/replace/path|restore",
                     testPath())),
             "exec restore -> restore");
     }
