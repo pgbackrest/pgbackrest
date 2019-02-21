@@ -984,40 +984,8 @@ testRun(void)
             strPtr(storagePathNP(storage, strNew(STORAGE_REPO_BACKUP))), strPtr(strNewFmt("%s/backup/db", testPath())),
             "check backup path");
 
-        // Change the stanza name and make sure helper fails
-        // -------------------------------------------------------------------------------------------------------------------------
-        storageHelper.storageRepo = NULL;
-
-        argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--stanza=other");
-        strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
-
-        TEST_ERROR(storageRepo(), AssertError, "stanza has changed from 'db' to 'other'");
-
-        // Change the stanza to NULL with the stanzaInit flag still true and make sure helper fails
-        // -------------------------------------------------------------------------------------------------------------------------
-        storageHelper.storageRepo = NULL;
-        storageHelper.stanza = NULL;
-        TEST_RESULT_BOOL(storageHelper.stanzaInit, true, "stanza initialized");
-
-        argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--stanza=other");
-        strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
-        strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
-
-        TEST_ERROR(storageRepo(), AssertError, "stanza has changed from '(null)' to 'other'");
-
         // Change the stanza to NULL with the stanzaInit flag still true, make sure helper does not fail when stanza option not set
         // -------------------------------------------------------------------------------------------------------------------------
-        storageHelper.storageRepo = NULL;
-        storageHelper.stanza = NULL;
-        TEST_RESULT_BOOL(storageHelper.stanzaInit, true, "stanza initialized");
-
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
@@ -1039,9 +1007,6 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(storagePathNP(storage, strNew(STORAGE_REPO_BACKUP "/simple"))),
             strPtr(strNewFmt("%s/backup/simple", testPath())), "check simple backup path - NULL stanza");
-
-        // Reset init flag
-        storageHelper.stanzaInit = false;
     }
 
     // *****************************************************************************************************************************

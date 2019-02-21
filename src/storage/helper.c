@@ -69,7 +69,7 @@ storageHelperStanzaInit(const bool stanzaRequired)
     FUNCTION_TEST_VOID();
 
     // If the stanza is NULL and the storage has not already been initialized then initialize the stanza
-    if (storageHelper.stanza == NULL && !storageHelper.stanzaInit)
+    if (!storageHelper.stanzaInit)
     {
         if (stanzaRequired && cfgOptionStr(cfgOptStanza) == NULL)
             THROW(AssertError, "stanza cannot be NULL for this storage object");
@@ -80,12 +80,6 @@ storageHelperStanzaInit(const bool stanzaRequired)
             storageHelper.stanzaInit = true;
         }
         MEM_CONTEXT_END();
-    }
-    else if ((storageHelper.stanza == NULL && cfgOptionStr(cfgOptStanza) != NULL) ||
-        (cfgOptionStr(cfgOptStanza) != NULL && !strEq(storageHelper.stanza, cfgOptionStr(cfgOptStanza))))
-    {
-        THROW_FMT(
-            AssertError, "stanza has changed from '%s' to '%s'", strPtr(storageHelper.stanza), strPtr(cfgOptionStr(cfgOptStanza)));
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -355,4 +349,23 @@ storageSpoolWrite(void)
     }
 
     FUNCTION_TEST_RETURN(storageHelper.storageSpoolWrite);
+}
+
+/***********************************************************************************************************************************
+Free all storage helper objects.
+
+This should be done on any config load to ensure that stanza changes are honored.  Currently this is only done in testing, but in
+the future it will likely be done in production as well.
+***********************************************************************************************************************************/
+void
+storageHelperFree(void)
+{
+    FUNCTION_TEST_VOID();
+
+    if (storageHelper.memContext != NULL)
+        memContextFree(storageHelper.memContext);
+
+    memset(&storageHelper, 0, sizeof(storageHelper));
+
+    FUNCTION_TEST_RETURN_VOID();
 }

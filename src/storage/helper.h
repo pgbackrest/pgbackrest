@@ -38,4 +38,6 @@ const Storage *storageRepo(void);
 const Storage *storageSpool(void);
 const Storage *storageSpoolWrite(void);
 
+void storageHelperFree(void);
+
 #endif

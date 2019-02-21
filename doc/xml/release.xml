@@ -42,6 +42,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <id>storageHelperFree()</id> to storage helper.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="stephen.frost"/>
                         </release-item-contributor-list>
