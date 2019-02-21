@@ -216,6 +216,7 @@ testRun(void)
     if (testBegin("strToLog()"))
     {
         TEST_RESULT_STR(strPtr(strToLog(strNew("test"))), "{\"test\"}", "format string");
+        TEST_RESULT_STR(strPtr(strToLog(NULL)), "null", "format null string");
     }
 
     // *****************************************************************************************************************************

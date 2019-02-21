@@ -66,6 +66,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve null-handling of <code>strToLog()</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Increase per-call stack trace size to <id>4096</id>.</p>
                     </release-item>
                 </release-development-list>

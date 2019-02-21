@@ -843,7 +843,7 @@ Render as string for logging
 String *
 strToLog(const String *this)
 {
-    return strNewFmt("{\"%s\"}", strPtr(this));
+    return this == NULL ? strNew("null") : strNewFmt("{\"%s\"}", strPtr(this));
 }
 
 /***********************************************************************************************************************************
