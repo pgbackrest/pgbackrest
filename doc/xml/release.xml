@@ -54,6 +54,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>kvKeyExists()</code> to <code>KeyValue</code> object.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="stephen.frost"/>
                         </release-item-contributor-list>

@@ -124,6 +124,20 @@ kvGetIdx(const KeyValue *this, const Variant *key)
 }
 
 /***********************************************************************************************************************************
+Does the key exist (even if the value is NULL)
+***********************************************************************************************************************************/
+bool
+kvKeyExists(const KeyValue *this, const Variant *key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+        FUNCTION_TEST_PARAM(VARIANT, key);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(kvGetIdx(this, key) != KEY_NOT_FOUND);
+}
+
+/***********************************************************************************************************************************
 Get list of keys
 ***********************************************************************************************************************************/
 const VariantList *

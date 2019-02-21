@@ -25,7 +25,7 @@ testRun(void)
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("kvPut(), kvAdd(), kvKeyList(), kvGet(), kvGetList(), and kvDup()"))
+    if (testBegin("kvPut(), kvAdd(), kvKeyExists(), kvKeyList(), kvGet(), kvGetList(), and kvDup()"))
     {
         KeyValue *store = NULL;
 
@@ -52,6 +52,11 @@ testRun(void)
         TEST_RESULT_INT(varInt(kvGet(store, varNewStr(strNew("str-key-int")))), 99, "get string/int");
         TEST_RESULT_PTR(kvGet(store, varNewInt(78)), NULL, "get int/null");
         TEST_RESULT_PTR(kvGet(store, varNewInt(777)), NULL, "get missing key");
+
+        // Check key exists
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_BOOL(kvKeyExists(store, varNewStr(strNew("str-key"))), true, "key exists");
+        TEST_RESULT_BOOL(kvKeyExists(store, varNewStr(strNew(BOGUS_STR))), false, "key does not exist");
 
         // Check that a null value can be changed to non-null
         // -------------------------------------------------------------------------------------------------------------------------
