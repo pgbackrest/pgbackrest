@@ -55,6 +55,12 @@ Storage *storageNew(
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface);
 
 /***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+void *storageDriver(const Storage *this);
+StorageInterface storageInterface(const Storage *this);
+
+/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 #define FUNCTION_LOG_STORAGE_INTERFACE_TYPE                                                                                        \

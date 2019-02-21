@@ -639,6 +639,36 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
 }
 
 /***********************************************************************************************************************************
+Get the storage driver
+***********************************************************************************************************************************/
+void *
+storageDriver(const Storage *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM(STORAGE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->driver);
+}
+
+/***********************************************************************************************************************************
+Get the storage interface
+***********************************************************************************************************************************/
+StorageInterface
+storageInterface(const Storage *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM(STORAGE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->interface);
+}
+
+/***********************************************************************************************************************************
 Render as string for logging
 ***********************************************************************************************************************************/
 String *

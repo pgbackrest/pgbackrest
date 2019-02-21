@@ -7,6 +7,7 @@ Remote Storage Protocol Handler
 #include "common/memContext.h"
 #include "storage/driver/remote/protocol.h"
 #include "storage/helper.h"
+#include "storage/storage.intern.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -31,6 +32,8 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
 
     // Determine which storage should be used (??? for now this is only repo)
     const Storage *storage = storageRepo();
+    StorageInterface interface = storageInterface(storage);
+    void *driver = storageDriver(storage);
 
     // Attempt to satisfy the request -- we may get requests that are meant for other handlers
     bool found = true;
@@ -39,7 +42,8 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
     {
         if (strEq(command, PROTOCOL_COMMAND_STORAGE_EXISTS_STR))
         {
-            protocolServerResponse(server, varNewBool(storageExistsNP(storage, varStr(varLstGet(paramList, 0)))));
+            protocolServerResponse(
+                server, varNewBool(interface.exists(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_LIST_STR))
         {
@@ -47,15 +51,16 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
                 server,
                 varNewVarLst(
                     varLstNewStrLst(
-                        storageListP(
-                            storage, varStr(varLstGet(paramList, 0)), .errorOnMissing = varBool(varLstGet(paramList, 1)),
+                        interface.list(
+                            driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)),
                             varStr(varLstGet(paramList, 2))))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR))
         {
             // Create the read object
             IoRead *fileRead = storageFileReadIo(
-                storageNewReadP(storage, varStr(varLstGet(paramList, 0)), .ignoreMissing = varBool(varLstGet(paramList, 1))));
+                interface.newRead(
+                    driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1))));
 
             // Check if the file exists
             bool exists = ioReadOpen(fileRead);

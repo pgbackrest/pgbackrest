@@ -122,6 +122,9 @@ testRun(void)
         TEST_RESULT_BOOL(storageTest->write, true, "    check write");
         TEST_RESULT_BOOL(storageTest->pathExpressionFunction != NULL, true, "    check expression function is set");
 
+        TEST_RESULT_PTR(storageInterface(storageTest).exists, storageTest->interface.exists, "    check interface");
+        TEST_RESULT_PTR(storageDriver(storageTest), storageTest->driver, "    check driver");
+
         TEST_RESULT_VOID(storageFree(storageTest), "free storage");
         TEST_RESULT_VOID(storageFree(NULL), "free null storage");
 
