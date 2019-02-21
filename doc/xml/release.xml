@@ -46,7 +46,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <id>exists()</id> to remote storage.</p>
+                        <p>Add <code>exists()</code> to remote storage.</p>
                     </release-item>
 
                     <release-item>
@@ -54,7 +54,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <id>storageHelperFree()</id> to storage helper.</p>
+                        <p>Add <code>storageHelperFree()</code> to storage helper.</p>
                     </release-item>
 
                     <release-item>
