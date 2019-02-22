@@ -291,7 +291,7 @@ Function Test Macros
 In debug builds these macros will update the stack trace with function names and parameters but not log.  In production builds all
 test macros are compiled out.
 ***********************************************************************************************************************************/
-#ifdef DEBUG
+#ifdef DEBUG_TRACE
     #define FUNCTION_TEST_BEGIN()                                                                                                  \
         if (stackTraceTest())                                                                                                      \
         {                                                                                                                          \

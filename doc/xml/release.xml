@@ -94,6 +94,10 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>Disable test-level stack trace by default.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add missing ToLog() coverage to <code>String</code>, <code>List</code>, and <code>PgControl</code>.</p>
                     </release-item>
                 </release-development-list>
