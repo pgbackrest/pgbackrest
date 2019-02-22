@@ -29,7 +29,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("lstNew(), lstMemContext(), and lstFree()"))
+    if (testBegin("lstNew(), lstMemContext(), lstToLog(), and lstFree()"))
     {
         List *list = lstNew(sizeof(void *));
 
@@ -40,6 +40,8 @@ testRun(void)
 
         void *ptr = NULL;
         TEST_RESULT_PTR(lstAdd(list, &ptr), list, "add item");
+
+        TEST_RESULT_STR(strPtr(lstToLog(list)), "{size: 1}", "check log");
 
         TEST_RESULT_VOID(lstFree(list), "free list");
         TEST_RESULT_VOID(lstFree(lstNew(1)), "free empty list");

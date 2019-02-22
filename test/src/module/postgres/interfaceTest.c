@@ -89,5 +89,21 @@ testRun(void)
         TEST_RESULT_INT(info.version, PG_VERSION_83, "   check version");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("pgControlToLog()"))
+    {
+        PgControl pgControl =
+        {
+            .version = PG_VERSION_11,
+            .systemId = 0xEFEFEFEFEF,
+            .walSegmentSize= 16 * 1024 * 1024,
+            .pageChecksum = true
+        };
+
+        TEST_RESULT_STR(
+            strPtr(pgControlToLog(&pgControl)),
+            "{version: 110000, systemId: 1030522662895, walSegmentSize: 16777216, pageChecksum: true}", "check log");
+    }
+
     FUNCTION_HARNESS_RESULT_VOID();
 }

@@ -81,8 +81,11 @@ testRun(void)
         String *string2 = strNew("ZZZZ");
 
         TEST_RESULT_STR(strPtr(strCat(string, "YYYY")), "XXXXYYYY", "cat string");
+        TEST_RESULT_SIZE(string->common.extra, 4, "check extra");
         TEST_RESULT_STR(strPtr(strCatFmt(string, "%05d", 777)), "XXXXYYYY00777", "cat formatted string");
+        TEST_RESULT_SIZE(string->common.extra, 6, "check extra");
         TEST_RESULT_STR(strPtr(strCatChr(string, '!')), "XXXXYYYY00777!", "cat chr");
+        TEST_RESULT_SIZE(string->common.extra, 5, "check extra");
 
         TEST_RESULT_STR(strPtr(string2), "ZZZZ", "check unaltered string");
     }
@@ -213,10 +216,17 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strToLog()"))
+    if (testBegin("strToLog() and strObjToLog()"))
     {
         TEST_RESULT_STR(strPtr(strToLog(strNew("test"))), "{\"test\"}", "format string");
         TEST_RESULT_STR(strPtr(strToLog(NULL)), "null", "format null string");
+
+        char buffer[256];
+        TEST_RESULT_UINT(strObjToLog(NULL, (StrObjToLogFormat)strToLog, buffer, sizeof(buffer)), 4, "format null string");
+        TEST_RESULT_STR(buffer, "null", "check null string");
+
+        TEST_RESULT_UINT(strObjToLog(strNew("teststr"), (StrObjToLogFormat)strToLog, buffer, sizeof(buffer)), 11, "format string");
+        TEST_RESULT_STR(buffer, "{\"teststr\"}", "check string");
     }
 
     // *****************************************************************************************************************************
