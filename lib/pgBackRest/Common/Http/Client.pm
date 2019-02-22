@@ -96,10 +96,18 @@ sub new
         {
             # Connect to the server
             my $oSocket;
-
+            # find out what's available as a lib
             eval
             {
-                $oSocket = IO::Socket::IP->new(PeerHost => $strHost, PeerPort => $iPort);
+                if(eval{require IO::Socket::IP})
+                {
+                    $oSocket = IO::Socket::IP->new(PeerHost => $strHost, PeerPort => $iPort);
+                }
+                else
+                {
+                    require IO::Socket::INET;
+                    $oSocket = IO::Socket::INET->new(PeerHost => $strHost, PeerPort => $iPort);
+                }
                 setsockopt($oSocket,SOL_SOCKET,SO_KEEPALIVE,1);
                 IO::Socket::SSL->start_SSL($oSocket,
                     PeerHost => $strHost, PeerPort => $iPort, SSL_verify_mode => $bVerifySsl ? SSL_VERIFY_PEER : SSL_VERIFY_NONE,
