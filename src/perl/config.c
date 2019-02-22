@@ -3,6 +3,7 @@ Perl Configuration
 ***********************************************************************************************************************************/
 #include "common/debug.h"
 #include "common/memContext.h"
+#include "common/type/json.h"
 #include "config/config.h"
 
 /***********************************************************************************************************************************
@@ -13,56 +14,57 @@ perlOptionJson(void)
 {
     FUNCTION_TEST_VOID();
 
-    String *result = strNew("{");
+    String *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        KeyValue *configKv = kvNew();
+
         for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
         {
             // Skip if not valid
             if (!cfgOptionValid(optionId))
                 continue;
 
-            // Add comma if not first valid option
-            if (strSize(result) != 1)
-                strCat(result, ",");
+            Variant *optionVar = varNewKv();
 
-            // Add valid and source
-            strCatFmt(result, "\"%s\":{\"valid\":true,\"source\":\"", cfgOptionName(optionId));
+            // Add valid
+            kvPut(varKv(optionVar), varNewStr(strNew("valid")), varNewBool(true));
+
+            // Add source
+            const char *source = NULL;
 
             switch (cfgOptionSource(optionId))
             {
                 case cfgSourceParam:
                 {
-                    strCat(result, "param");
+                    source = "param";
                     break;
                 }
 
                 case cfgSourceConfig:
                 {
-                    strCat(result, "config");
+                    source = "config";
                     break;
                 }
 
                 case cfgSourceDefault:
                 {
-                    strCat(result, "default");
+                    source = "default";
                     break;
                 }
             }
 
-            strCat(result, "\"");
+            kvPut(varKv(optionVar), varNewStr(strNew("source")), varNewStr(strNew(source)));
 
-            // Add negate
-            strCatFmt(result, ",\"negate\":%s", strPtr(varStrForce(varNewBool(cfgOptionNegate(optionId)))));
-
-            // Add reset
-            strCatFmt(result, ",\"reset\":%s", strPtr(varStrForce(varNewBool(cfgOptionReset(optionId)))));
+            // Add negate and reset
+            kvPut(varKv(optionVar), varNewStr(strNew("negate")), varNewBool(cfgOptionNegate(optionId)));
+            kvPut(varKv(optionVar), varNewStr(strNew("reset")), varNewBool(cfgOptionReset(optionId)));
 
             // Add value if it is set
             if (cfgOptionTest(optionId))
             {
-                strCat(result, ",\"value\":");
+                const Variant *valueVar = NULL;
 
                 switch (cfgDefOptionType(cfgOptionDefIdFromId(optionId)))
                 {
@@ -70,64 +72,47 @@ perlOptionJson(void)
                     case cfgDefOptTypeFloat:
                     case cfgDefOptTypeInteger:
                     case cfgDefOptTypeSize:
-                    {
-                        strCat(result, strPtr(varStrForce(cfgOption(optionId))));
-                        break;
-                    }
-
                     case cfgDefOptTypeString:
                     {
-                        strCatFmt(result, "\"%s\"", strPtr(cfgOptionStr(optionId)));
+                        valueVar = cfgOption(optionId);
                         break;
                     }
 
                     case cfgDefOptTypeHash:
                     {
+                        valueVar = varNewKv();
+
                         const KeyValue *valueKv = cfgOptionKv(optionId);
                         const VariantList *keyList = kvKeyList(valueKv);
 
-                        strCat(result, "{");
-
                         for (unsigned int listIdx = 0; listIdx < varLstSize(keyList); listIdx++)
-                        {
-                            if (listIdx != 0)
-                                strCat(result, ",");
-
-                            strCatFmt(
-                                result, "\"%s\":\"%s\"", strPtr(varStr(varLstGet(keyList, listIdx))),
-                                strPtr(varStr(kvGet(valueKv, varLstGet(keyList, listIdx)))));
-                        }
-
-                        strCat(result, "}");
+                            kvPut(varKv(valueVar), varLstGet(keyList, listIdx), kvGet(valueKv, varLstGet(keyList, listIdx)));
 
                         break;
                     }
 
                     case cfgDefOptTypeList:
                     {
-                        StringList *valueList = strLstNewVarLst(cfgOptionLst(optionId));
+                        valueVar = varNewKv();
 
-                        strCat(result, "{");
+                        const VariantList *valueList = cfgOptionLst(optionId);
 
-                        for (unsigned int listIdx = 0; listIdx < strLstSize(valueList); listIdx++)
-                        {
-                            if (listIdx != 0)
-                                strCat(result, ",");
-
-                            strCatFmt(result, "\"%s\":true", strPtr(strLstGet(valueList, listIdx)));
-                        }
-
-                        strCat(result, "}");
+                        for (unsigned int listIdx = 0; listIdx < varLstSize(valueList); listIdx++)
+                            kvPut(varKv(valueVar), varLstGet(valueList, listIdx), varNewBool(true));
 
                         break;
                     }
                 }
+
+                kvPut(varKv(optionVar), varNewStr(strNew("value")), valueVar);
             }
 
-            strCat(result, "}");
+            kvPut(configKv, varNewStr(strNew(cfgOptionName(optionId))), optionVar);
         }
 
-        strCat(result, "}");
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = kvToJson(configKv, 0);
+        memContextSwitch(MEM_CONTEXT_TEMP());
     }
     MEM_CONTEXT_TEMP_END();
 

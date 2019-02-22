@@ -93,9 +93,6 @@ sub configLoad
 
     eval
     {
-        # Hacky fix for backslashes that need to be escaped
-        $$rstrConfigJson =~ s/\\/\\\\/g;
-
         %oOption = %{(JSON::PP->new()->allow_nonref())->decode($$rstrConfigJson)};
         return true;
     }

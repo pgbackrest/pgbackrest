@@ -34,6 +34,9 @@ testRun(void)
         cfgOptionValidSet(cfgOptPgHost, true);
         cfgOptionResetSet(cfgOptPgHost, true);
 
+        cfgOptionValidSet(cfgOptPgPath, true);
+        cfgOptionSet(cfgOptPgPath, cfgSourceConfig, varNewStr(strNew("/path/db/pg")));
+
         cfgOptionValidSet(cfgOptBackupStandby, true);
         cfgOptionResetSet(cfgOptBackupStandby, true);
         cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, varNewBool(false));
@@ -43,6 +46,9 @@ testRun(void)
 
         cfgOptionValidSet(cfgOptArchivePushQueueMax, true);
         cfgOptionSet(cfgOptArchivePushQueueMax, cfgSourceParam, varNewInt64(999999999999));
+
+        cfgOptionValidSet(cfgOptRepoCipherPass, true);
+        cfgOptionSet(cfgOptRepoCipherPass, cfgSourceConfig, varNewStr(strNew("part1\npart2")));
 
         cfgOptionValidSet(cfgOptCompressLevel, true);
         cfgOptionSet(cfgOptCompressLevel, cfgSourceConfig, varNewInt(3));
@@ -54,15 +60,18 @@ testRun(void)
             strPtr(perlOptionJson()),
             "{"
             "\"archive-push-queue-max\":"
-                "{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,\"value\":999999999999},"
-            "\"backup-standby\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":true,\"value\":false},"
-            "\"compress\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,\"value\":true},"
-            "\"compress-level\":{\"valid\":true,\"source\":\"config\",\"negate\":false,\"reset\":false,\"value\":3},"
-            "\"config\":{\"valid\":true,\"source\":\"param\",\"negate\":true,\"reset\":false},"
-            "\"online\":{\"valid\":true,\"source\":\"param\",\"negate\":true,\"reset\":false,\"value\":false},"
-            "\"pg1-host\":{\"valid\":true,\"source\":\"default\",\"negate\":false,\"reset\":true},"
-            "\"protocol-timeout\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,\"value\":1.1},"
-            "\"stanza\":{\"valid\":true,\"source\":\"default\",\"negate\":false,\"reset\":false,\"value\":\"db\"}"
+                "{\"negate\":false,\"reset\":false,\"source\":\"param\",\"valid\":true,\"value\":999999999999},"
+            "\"backup-standby\":{\"negate\":false,\"reset\":true,\"source\":\"param\",\"valid\":true,\"value\":false},"
+            "\"compress\":{\"negate\":false,\"reset\":false,\"source\":\"param\",\"valid\":true,\"value\":true},"
+            "\"compress-level\":{\"negate\":false,\"reset\":false,\"source\":\"config\",\"valid\":true,\"value\":3},"
+            "\"config\":{\"negate\":true,\"reset\":false,\"source\":\"param\",\"valid\":true},"
+            "\"online\":{\"negate\":true,\"reset\":false,\"source\":\"param\",\"valid\":true,\"value\":false},"
+            "\"pg1-host\":{\"negate\":false,\"reset\":true,\"source\":\"default\",\"valid\":true},"
+            "\"pg1-path\":{\"negate\":false,\"reset\":false,\"source\":\"config\",\"valid\":true,\"value\":\"\\/path\\/db\\/pg\"},"
+            "\"protocol-timeout\":{\"negate\":false,\"reset\":false,\"source\":\"param\",\"valid\":true,\"value\":1.1},"
+            "\"repo1-cipher-pass\":{\"negate\":false,\"reset\":false,\"source\":\"config\",\"valid\":true,"
+                "\"value\":\"part1\\npart2\"},"
+            "\"stanza\":{\"negate\":false,\"reset\":false,\"source\":\"default\",\"valid\":true,\"value\":\"db\"}"
             "}",
             "simple options");
 
@@ -97,12 +106,12 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(perlOptionJson()),
             "{"
-            "\"db-include\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,"
+            "\"db-include\":{\"negate\":false,\"reset\":false,\"source\":\"param\",\"valid\":true,"
                 "\"value\":{\"db1\":true,\"db2\":true}},"
-            "\"perl-option\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,"
+            "\"perl-option\":{\"negate\":false,\"reset\":false,\"source\":\"param\",\"valid\":true,"
                 "\"value\":{\"-I.\":true,\"-MDevel::Cover=-silent,1\":true}},"
-            "\"recovery-option\":{\"valid\":true,\"source\":\"param\",\"negate\":false,\"reset\":false,"
-                "\"value\":{\"standby_mode\":\"on\",\"primary_conn_info\":\"blah\"}}"
+            "\"recovery-option\":{\"negate\":false,\"reset\":false,\"source\":\"param\",\"valid\":true,"
+                "\"value\":{\"primary_conn_info\":\"blah\",\"standby_mode\":\"on\"}}"
             "}",
             "complex options");
     }

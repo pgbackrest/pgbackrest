@@ -66,6 +66,7 @@ my @stryCFile =
     'common/time.c',
     'common/type/convert.c',
     'common/type/buffer.c',
+    'common/type/json.c',
     'common/type/keyValue.c',
     'common/type/list.c',
     'common/type/string.c',

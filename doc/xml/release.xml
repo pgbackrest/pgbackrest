@@ -30,6 +30,14 @@
 
                         <p>Fix info command missing WAL min/max when stanza specified.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="leo.khomenko"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix non-compliant JSON for options passed from C to Perl.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-development-list>
@@ -6467,6 +6475,11 @@
         <contributor id="laetitia">
             <contributor-name-display>L&amp;aelig;titia</contributor-name-display>
             <contributor-id type="github">LaetitiaLoxo</contributor-id>
+        </contributor>
+
+        <contributor id="leo.khomenko">
+            <contributor-name-display>Leo Khomenko</contributor-name-display>
+            <contributor-id type="github">lkhomenk</contributor-id>
         </contributor>
 
         <contributor id="leonardo.gg.avellar">
