@@ -120,6 +120,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Rename test modules for consistency.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Disable test-level stack trace by default.</p>
                     </release-item>
 

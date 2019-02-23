@@ -613,16 +613,93 @@ unit:
           info/infoArchive: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: info-archive-perl
+        total: 4
+
+        coverage:
+          Archive/Info: partial
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: info-backup
         total: 2
 
         coverage:
           info/infoBackup: full
 
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: info-backup-perl
+        total: 3
+
+        coverage:
+          Backup/Info: partial
+
   # ********************************************************************************************************************************
   - name: command
 
     test:
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: archive-common
+        total: 6
+
+        coverage:
+          command/archive/common: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: archive-common-perl
+        total: 6
+
+        coverage:
+          Archive/Common: partial
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: archive-get
+        total: 4
+        perlReq: true
+
+        coverage:
+          command/archive/get/file: full
+          command/archive/get/get: full
+
+        # This test is flapping on co6 which seems to be due to some race condition.  The tests are under active development, so for
+        # now we are disabling the co6 tests in the hopes that the cause will be caught later.  It seems fairly certain that this is
+        # some sort of issue with the test and not the underlying code.  No flakiness has been seen in the integration tests and
+        # this issue has never happened on another vm.
+        vm:
+          - co7
+          - u12
+          - u14
+          - u16
+          - u18
+          - d8
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: archive-get-perl
+        total: 3
+
+        coverage:
+          Archive/Base: full
+          Archive/Get/Async: full
+          Archive/Get/File: partial
+          Archive/Get/Get: partial
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: archive-push
+        total: 1
+        perlReq: true
+
+        coverage:
+          command/archive/push/push: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: archive-push-perl
+        total: 7
+
+        coverage:
+          Archive/Push/Async: full
+          Archive/Push/File: partial
+          Archive/Push/Push: full
+          Protocol/Local/Master: full
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: command
         total: 1
@@ -652,80 +729,6 @@ unit:
           command/remote/remote: full
 
   # ********************************************************************************************************************************
-  - name: archive
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common
-        total: 6
-
-        coverage:
-          command/archive/common: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common-perl
-        total: 6
-
-        coverage:
-          Archive/Common: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: push-perl
-        total: 7
-
-        coverage:
-          Archive/Push/Async: full
-          Archive/Push/File: partial
-          Archive/Push/Push: full
-          Protocol/Local/Master: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: push
-        total: 1
-        perlReq: true
-
-        coverage:
-          command/archive/push/push: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: info-unit-perl
-        total: 4
-
-        coverage:
-          Archive/Info: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: get
-        total: 4
-        perlReq: true
-
-        coverage:
-          command/archive/get/file: full
-          command/archive/get/get: full
-
-        # This test is flapping on co6 which seems to be due to some race condition.  The tests are under active development, so for
-        # now we are disabling the co6 tests in the hopes that the cause will be caught later.  It seems fairly certain that this is
-        # some sort of issue with the test and not the underlying code.  No flakiness has been seen in the integration tests and
-        # this issue has never happened on another vm.
-        vm:
-          - co7
-          - u12
-          - u14
-          - u16
-          - u18
-          - d8
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: get-perl
-        total: 3
-
-        coverage:
-          Archive/Base: full
-          Archive/Get/Async: full
-          Archive/Get/File: partial
-          Archive/Get/Get: partial
-
-  # ********************************************************************************************************************************
   - name: backup
 
     test:
@@ -736,13 +739,6 @@ unit:
         coverage:
           Backup/Common: full
           Backup/Backup: partial
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: info-unit-perl
-        total: 3
-
-        coverage:
-          Backup/Info: partial
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: file-unit-perl
