@@ -402,7 +402,11 @@ tlsClientOpen(TlsClient *this)
             X509_free(certificate);
 
             if (!nameResult)
-                THROW(CryptoError, "unable to find matching hostname in certificate");
+            {
+                THROW_FMT(
+                    CryptoError,
+                    "unable to find hostname '%s' in certificate common name or subject alternative names", strPtr(this->host));
+            }
         }
 
         MEM_CONTEXT_BEGIN(this->memContext)

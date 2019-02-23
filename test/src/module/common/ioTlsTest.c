@@ -161,7 +161,7 @@ testRun(void)
             tlsClientOpen(
                 tlsClientNew(strNew("test3.pgbackrest.org"), 9443, 500, true,
                 strNewFmt("%s/" TEST_CERTIFICATE_PREFIX "-ca.crt", testRepoPath()), NULL)),
-            CryptoError, "unable to find matching hostname in certificate");
+            CryptoError, "unable to find hostname 'test3.pgbackrest.org' in certificate common name or subject alternative names");
 
         TEST_ERROR(
             tlsClientOpen(
