@@ -28,6 +28,7 @@ use pgBackRest::Storage::Helper;
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
 # archiveCheck
@@ -79,34 +80,34 @@ sub run
 
     my $strArchiveChecksum = $self->walGenerateContentChecksum(PG_VERSION_94, {iSourceNo => 2});
 
-    foreach my $bS3 (false, true)
+    foreach my $rhRun
+    (
+        {vm => VM1, remote => false, s3 => false, encrypt => false},
+        {vm => VM1, remote =>  true, s3 =>  true, encrypt =>  true},
+        {vm => VM2, remote => false, s3 =>  true, encrypt => false},
+        {vm => VM2, remote =>  true, s3 => false, encrypt =>  true},
+        {vm => VM3, remote => false, s3 => false, encrypt =>  true},
+        {vm => VM3, remote =>  true, s3 =>  true, encrypt => false},
+        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true},
+        {vm => VM4, remote =>  true, s3 => false, encrypt => false},
+    )
     {
-    foreach my $bRemote ($bS3 ? (false) : (false, true))
-    {
-        my $bRepoEncrypt = !$bRemote && !$bS3 ? true : false;
+        # Only run tests for this vm
+        next if ($rhRun->{vm} ne $self->vm());
 
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bRepoEncrypt}")) {next}
+        my $bRemote = $rhRun->{remote};
+        my $bS3 = $rhRun->{s3};
+        my $bEncrypt = $rhRun->{encrypt};
+
+        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bEncrypt}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
+            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
 
         # Reduce console logging to detail
         $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(DETAIL)}});
-        my $strLogOverride = '';
-
-        # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
-        # without slowing down the other tests too much.
-        if ($bS3)
-        {
-            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
-            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
-
-            # Reduce console logging to warn (even for debug exceptions)
-            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(WARN)}});
-            $strLogOverride = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . qw{=} . lc(WARN);
-        }
 
         # Create the wal path
         my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
@@ -152,8 +153,7 @@ sub run
         my $strArchiveFile = $self->walGenerate($strWalPath, PG_VERSION_94, 2, $strSourceFile);
 
         $oHostDbMaster->executeSimple(
-            $strCommandPush . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
-                " --compress ${strLogOverride} ${strWalPath}/${strSourceFile}",
+            $strCommandPush . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " --compress ${strWalPath}/${strSourceFile}",
             {oLogTest => $self->expect()});
         push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}.gz");
 
@@ -170,15 +170,14 @@ sub run
         &log(INFO, '    get missing WAL');
 
         $oHostDbMaster->executeSimple(
-            $strCommandGet . " ${strLogOverride} 700000007000000070000000 ${strWalPath}/RECOVERYXLOG",
+            $strCommandGet . " 700000007000000070000000 ${strWalPath}/RECOVERYXLOG",
             {iExpectedExitStatus => 1, oLogTest => $self->expect()});
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    get first WAL');
 
         $oHostDbMaster->executeSimple(
-            $strCommandGet . " ${strLogOverride} ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
-            {oLogTest => $self->expect()});
+            $strCommandGet . " ${strSourceFile} ${strWalPath}/RECOVERYXLOG", {oLogTest => $self->expect()});
 
         # Check that the destination file exists
         if (storageDb()->exists("${strWalPath}/RECOVERYXLOG"))
@@ -446,7 +445,6 @@ sub run
             sub {storageRepo()->list(STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001')},
             '(' . join(', ', @stryExpectedWAL) . ')',
             'all WAL in archive', {iWaitSeconds => 5});
-    }
     }
 }
 

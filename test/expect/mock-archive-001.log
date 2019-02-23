@@ -67,19 +67,19 @@ db-version="9.4"
 [db:history]
 1={"db-id":1000000000000000094,"db-version":"9.4"}
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --compress  [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --compress [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001] --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: pushed WAL segment 000000010000000100000001
 P00   INFO: archive-push command end: completed successfully
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get  700000007000000070000000 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 700000007000000070000000 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: [700000007000000070000000, [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: unable to find 700000007000000070000000 in the archive
 P00   INFO: archive-get command end: completed successfully
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get  000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000001, [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG] --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: found 000000010000000100000001 in the archive

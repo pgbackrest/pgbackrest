@@ -112,6 +112,10 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>Create test matrix for <id>mock/archive</id> to increase coverage and reduce tests.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Reduce expect log level in <id>mock/archive</id> tests.</p>
                     </release-item>
 
