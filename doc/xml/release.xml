@@ -122,6 +122,10 @@
                     <release-item>
                         <p>Add missing ToLog() coverage to <code>String</code>, <code>List</code>, and <code>PgControl</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Create aliases for test VMs ordered by age.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>

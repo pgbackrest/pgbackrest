@@ -109,8 +109,18 @@ use constant VM_EXPECT                                              => VM_CO7;
 use constant VM_HOST_DEFAULT                                        => VM_U18;
     push @EXPORT, qw(VM_HOST_DEFAULT);
 
-# Lists valid VMs
-use constant VM_LIST                                                => (VM_U18, VM_CO6, VM_CO7, VM_U12);
+# VM aliases for run matrices (numbered oldest to newest)
+use constant VM1                                                    => VM_CO6;
+    push @EXPORT, qw(VM1);
+use constant VM2                                                    => VM_U12;
+    push @EXPORT, qw(VM2);
+use constant VM3                                                    => VM_CO7;
+    push @EXPORT, qw(VM3);
+use constant VM4                                                    => VM_U18;
+    push @EXPORT, qw(VM4);
+
+# List of default test VMs (in this order: newest, oldest, next newest, next oldest)
+use constant VM_LIST                                                => (VM4, VM1, VM3, VM2);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
