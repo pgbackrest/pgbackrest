@@ -112,6 +112,10 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>Reduce expect log level in <id>mock/archive</id> tests.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Disable test-level stack trace by default.</p>
                     </release-item>
 

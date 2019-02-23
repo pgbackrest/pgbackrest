@@ -94,7 +94,7 @@ sub run
 
         # Reduce console logging to detail
         $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(DETAIL)}});
-        my $strLogDebug = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . qw{=} . lc(DEBUG);
+        my $strLogOverride = '';
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
@@ -105,7 +105,7 @@ sub run
 
             # Reduce console logging to warn (even for debug exceptions)
             $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(WARN)}});
-            $strLogDebug = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . qw{=} . lc(WARN);
+            $strLogOverride = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . qw{=} . lc(WARN);
         }
 
         # Create the wal path
@@ -152,7 +152,8 @@ sub run
         my $strArchiveFile = $self->walGenerate($strWalPath, PG_VERSION_94, 2, $strSourceFile);
 
         $oHostDbMaster->executeSimple(
-            $strCommandPush . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " --compress ${strLogDebug} ${strWalPath}/${strSourceFile}",
+            $strCommandPush . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
+                " --compress ${strLogOverride} ${strWalPath}/${strSourceFile}",
             {oLogTest => $self->expect()});
         push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}.gz");
 
@@ -169,14 +170,14 @@ sub run
         &log(INFO, '    get missing WAL');
 
         $oHostDbMaster->executeSimple(
-            $strCommandGet . " ${strLogDebug} 700000007000000070000000 ${strWalPath}/RECOVERYXLOG",
+            $strCommandGet . " ${strLogOverride} 700000007000000070000000 ${strWalPath}/RECOVERYXLOG",
             {iExpectedExitStatus => 1, oLogTest => $self->expect()});
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    get first WAL');
 
         $oHostDbMaster->executeSimple(
-            $strCommandGet . " ${strLogDebug} ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
+            $strCommandGet . " ${strLogOverride} ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
             {oLogTest => $self->expect()});
 
         # Check that the destination file exists
