@@ -177,56 +177,9 @@ db-version="9.3"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001] --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  DEBUG:     config/load::cfgLoad: => void
-P00  DEBUG:     perl/exec::perlExec: (void)
-P00  DEBUG:     Archive::Push::Push->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
-P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
-P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = true, iCompressLevel = 3, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
-P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
-P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 1000000000000000093
-P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 1000000000000000093
-P00  DEBUG:     Archive::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db, strCipherPassSub = [undef]
-P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
-P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/archive/db/archive.info
-P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
-P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
-P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
-P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
-P00  DEBUG:     Archive::Info->check(): bRequired = <true>, strDbVersion = 9.3, ullDbSysId = 1000000000000000093
-P00  DEBUG:     Archive::Info->archiveId(): strDbVersion = [undef], ullDbSysId = [undef]
-P00  DEBUG:     Archive::Info->archiveId=>: strArchiveId = 9.3-1
-P00  DEBUG:     Archive::Info->check=>: strArchiveId = 9.3-1
-P00  DEBUG:     Archive::Common::walSegmentFind(): iWaitSeconds = [undef], oStorageRepo = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000001
-P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000001-[0-f]{40}(\.gz){0,1}$, strPathExp = <REPO:ARCHIVE>/9.3-1/0000000100000001, strSortOrder = <forward>
-P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
-P00  DEBUG:     Archive::Common::walSegmentFind=>: strWalFileName = [undef]
-P00  DEBUG:     Archive::Push::File::archivePushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef], strCipherPass = [undef], strWarning = [undef]
-P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
-P00  DEBUG:     Storage::Local->hashSize(): bIgnoreMissing = <false>, xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = false, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({rxyParam => ({iLevel => 3}), strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000001-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz
-P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Archive::Push::File::archivePushFile=>: strWarning = [undef]
+P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001] --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: pushed WAL segment 000000010000000100000001
-P00  DEBUG:     perl/exec::perlExec: => 0
-P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => false
-P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
-P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
-P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: archive-push command end: completed successfully
-P00  DEBUG:     common/exit::exitSafe: => 0
-P00  DEBUG:     main::main: => 0
 
 stanza-create db - fail on archive info file missing from non-empty dir (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
@@ -432,56 +385,9 @@ db-version="9.3"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002] --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  DEBUG:     config/load::cfgLoad: => void
-P00  DEBUG:     perl/exec::perlExec: (void)
-P00  DEBUG:     Archive::Push::Push->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
-P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
-P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = true, iCompressLevel = 3, strWalFile = 000000010000000100000002, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
-P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
-P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 1000000000000000093
-P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000002, strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, ullDbSysId = 1000000000000000093
-P00  DEBUG:     Archive::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db, strCipherPassSub = [undef]
-P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
-P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/archive/db/archive.info
-P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
-P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
-P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
-P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
-P00  DEBUG:     Archive::Info->check(): bRequired = <true>, strDbVersion = 9.3, ullDbSysId = 1000000000000000093
-P00  DEBUG:     Archive::Info->archiveId(): strDbVersion = [undef], ullDbSysId = [undef]
-P00  DEBUG:     Archive::Info->archiveId=>: strArchiveId = 9.3-1
-P00  DEBUG:     Archive::Info->check=>: strArchiveId = 9.3-1
-P00  DEBUG:     Archive::Common::walSegmentFind(): iWaitSeconds = [undef], oStorageRepo = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000002
-P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000002-[0-f]{40}(\.gz){0,1}$, strPathExp = <REPO:ARCHIVE>/9.3-1/0000000100000001, strSortOrder = <forward>
-P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
-P00  DEBUG:     Archive::Common::walSegmentFind=>: strWalFileName = [undef]
-P00  DEBUG:     Archive::Push::File::archivePushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef], strCipherPass = [undef], strWarning = [undef]
-P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
-P00  DEBUG:     Storage::Local->hashSize(): bIgnoreMissing = <false>, xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = false, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({rxyParam => ({iLevel => 3}), strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz
-P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Archive::Push::File::archivePushFile=>: strWarning = [undef]
+P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002] --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: pushed WAL segment 000000010000000100000002
-P00  DEBUG:     perl/exec::perlExec: => 0
-P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => false
-P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
-P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
-P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: archive-push command end: completed successfully
-P00  DEBUG:     common/exit::exitSafe: => 0
-P00  DEBUG:     main::main: => 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -531,55 +437,9 @@ db-version="9.4"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000002, [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG] --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  DEBUG:     config/load::cfgLoad: => void
-P00  DEBUG:     command/archive/get/get::cmdArchiveGet: (void)
-P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: (path: {"[TEST_PATH]/db-master/repo"}, modeFile: 0640, modePath: 0750, write: false, pathExpressionFunction: (function *))
-P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: => {StorageDriverPosix}
-P00  DEBUG:     command/archive/get/file::archiveGetFile: (archiveFile: {"000000010000000100000002"}, walDestination: {"[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG"}, cipherType: 0)
-P00  DEBUG:     command/control/control::lockStopTest: (void)
-P00  DEBUG:     storage/storage::storageExists: (this: {type: posix, path: {"/"}, write: false}, pathExp: {"[TEST_PATH]/db-master/lock/db.stop"}, param.timeout: 0)
-P00  DEBUG:     storage/storage::storageExists: => false
-P00  DEBUG:     storage/storage::storageExists: (this: {type: posix, path: {"/"}, write: false}, pathExp: {"[TEST_PATH]/db-master/lock/all.stop"}, param.timeout: 0)
-P00  DEBUG:     storage/storage::storageExists: => false
-P00  DEBUG:     command/control/control::lockStopTest: => void
-P00  DEBUG:     command/archive/get/file::archiveGetCheck: (archiveFile: {"000000010000000100000002"}, cipherType: 0)
-P00  DEBUG:     postgres/interface::pgControlFromFile: (pgPath: {"[TEST_PATH]/db-master/db/base"})
-P00  DEBUG:     storage/storage::storageNewRead: (this: {type: posix, path: {"/"}, write: false}, fileExp: {"[TEST_PATH]/db-master/db/base/global/pg_control"}, param.ignoreMissing: false, param.filterGroup: null)
-P00  DEBUG:     storage/storage::storageNewRead: => {type: posix, name: {"[TEST_PATH]/db-master/db/base/global/pg_control"}, ignoreMissing: false}
-P00  DEBUG:     storage/storage::storageGet: (file: {type: posix, name: {"[TEST_PATH]/db-master/db/base/global/pg_control"}, ignoreMissing: false}, param.exactSize: 512)
-P00  DEBUG:     storage/storage::storageGet: => {used: 512, size: 512, limit: <off>}
-P00  DEBUG:     postgres/interface::pgControlFromFile: => {version: 90300, systemId: 1000000000000000093, walSegmentSize: 16777216, pageChecksum: true}
-P00  DEBUG:     info/infoArchive::infoArchiveNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, ignoreMissing: false, cipherType: 0)
-P00  DEBUG:     info/infoPg::infoPgNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, type: 0, cipherType: 0)
-P00  DEBUG:     info/info::infoNew: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileName: {"<REPO:ARCHIVE>/archive.info"}, cipherType: 0)
-P00  DEBUG:     info/info::infoNew: => {Info}
-P00  DEBUG:     info/infoPg::infoPgNew: => {InfoPg}
-P00  DEBUG:     info/infoArchive::infoArchiveNew: => {InfoArchive}
-P00  DEBUG:     command/archive/common::walSegmentFind: (storage: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, archiveId: {"9.3-1"}, walSegment: {"000000010000000100000002"})
-P00  DEBUG:     storage/storage::storageList: (this: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, pathExp: {"<REPO:ARCHIVE>/9.3-1/0000000100000001"}, param.errorOnMissing: false, param.expression: {"^000000010000000100000002-[0-f]{40}(\.gz){0,1}$"})
-P00  DEBUG:     storage/storage::storageList: => {["000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz"]}
-P00  DEBUG:     command/archive/common::walSegmentFind: => {"000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz"}
-P00  DEBUG:     command/archive/get/file::archiveGetCheck: => {ArchiveGetCheckResult}
-P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: (path: {"/"}, modeFile: 0640, modePath: 0750, write: true, pathExpressionFunction: null)
-P00  DEBUG:     storage/driver/posix/storage::storageDriverPosixNew: => {StorageDriverPosix}
-P00  DEBUG:     storage/storage::storageNewWrite: (this: {type: posix, path: {"/"}, write: true}, fileExp: {"[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG"}, param.modeFile: 0000, param.modePath: 0000, param.noCreatePath: true, param.noSyncFile: true, param.noSyncPath: true, param.noAtomic: true, param.filterGroup: null)
-P00  DEBUG:     storage/storage::storageNewWrite: => {type: posix, name: {"[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG"}, modeFile: 0640, modePath: 0750, createPath: false, syncFile: false, syncPath: false, atomic: false}
-P00  DEBUG:     common/io/filter/group::ioFilterGroupAdd: (this: {inputSame: false, done: true}, filter: {IoFilter})
-P00  DEBUG:     common/io/filter/group::ioFilterGroupAdd: => {inputSame: false, done: true}
-P00  DEBUG:     storage/storage::storageNewRead: (this: {type: posix, path: {"[TEST_PATH]/db-master/repo"}, write: false}, fileExp: {"<REPO:ARCHIVE>/9.3-1/0000000100000001/000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz"}, param.ignoreMissing: false, param.filterGroup: null)
-P00  DEBUG:     storage/storage::storageNewRead: => {type: posix, name: {"[TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000100000001/000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz"}, ignoreMissing: false}
-P00  DEBUG:     storage/storage::storageCopy: (source: {type: posix, name: {"[TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000100000001/000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz"}, ignoreMissing: false}, destination: {type: posix, name: {"[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG"}, modeFile: 0640, modePath: 0750, createPath: false, syncFile: false, syncPath: false, atomic: false})
-P00  DEBUG:     storage/storage::storageCopy: => true
-P00  DEBUG:     command/archive/get/file::archiveGetFile: => 0
+P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000002, [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG] --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: found 000000010000000100000002 in the archive
-P00  DEBUG:     command/archive/get/get::cmdArchiveGet: => 0
-P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => false
 P00   INFO: archive-get command end: completed successfully
-P00  DEBUG:     common/exit::exitSafe: => 0
-P00  DEBUG:     main::main: => 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -664,7 +524,7 @@ db-version="9.4"
 2={"db-id":1000000000000000094,"db-version":"9.4"}
 
 full backup - create first full backup  (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-retention-full=2 --no-online --log-level-console=detail --type=full --stanza=db backup
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-retention-full=2 --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-full=2 --stanza=db --start-fast --type=full
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
@@ -690,7 +550,7 @@ pg1-path=[TEST_PATH]/db-master/db/base
 compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
@@ -819,7 +679,7 @@ db-version="9.5"
 ------------------------------------------------------------------------------------------------------------------------------------
 
 diff backup - diff changed to full backup (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-retention-full=2 --no-online --log-level-console=detail --type=diff --stanza=db backup
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-retention-full=2 --no-online --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --repo1-retention-full=2 --stanza=db --start-fast --type=diff
 P00   WARN: no prior backup exists, diff backup has been changed to full
@@ -845,7 +705,7 @@ pg1-path=[TEST_PATH]/db-master/db/base
 compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
@@ -984,22 +844,8 @@ db
 stop db stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db stop
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  DEBUG:     config/load::cfgLoad: => void
-P00  DEBUG:     perl/exec::perlExec: (void)
-P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = [undef], oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
-P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/lock
-P00  DEBUG:     perl/exec::perlExec: => 0
-P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => false
-P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
-P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
-P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
+P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stop command end: completed successfully
-P00  DEBUG:     common/exit::exitSafe: => 0
-P00  DEBUG:     main::main: => 0
 
 stanza-delete db - successfully delete the stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail stanza-delete

@@ -116,7 +116,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Reduce expect log level in <id>mock/archive</id> tests.</p>
+                        <p>Reduce expect log level in <id>mock/archive</id> and <id>mock/stanza</id> tests.</p>
                     </release-item>
 
                     <release-item>

@@ -64,6 +64,14 @@ sub run
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
 
+        # Reduce console logging to detail
+        $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(DETAIL)}});
+
+        if ($bRemote)
+        {
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(DETAIL)}});
+        }
+
         # Create the stanza
         $oHostBackup->stanzaCreate('fail on missing control file', {iExpectedExitStatus => ERROR_FILE_OPEN,
             strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
@@ -301,8 +309,7 @@ sub run
         storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
         $oHostBackup->backup(
             'full', 'create first full backup ',
-            {strOptionalParam => '--repo1-retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE) . ' --log-level-console=detail'},
-            false);
+            {strOptionalParam => '--repo1-retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE)}, false);
 
         # Stanza Create fails when not using force - no backup.info but backup exists
         #--------------------------------------------------------------------------------------------------------------------------
@@ -359,7 +366,7 @@ sub run
 
         # Test backup is changed from type=DIFF to FULL (WARN message displayed)
         my $oExecuteBackup = $oHostBackup->backupBegin('diff', 'diff changed to full backup',
-            {strOptionalParam => '--repo1-retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE) . ' --log-level-console=detail'});
+            {strOptionalParam => '--repo1-retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE)});
         $oHostBackup->backupEnd('full', $oExecuteBackup, undef, false);
 
         # Confirm info command displays the JSON correctly
