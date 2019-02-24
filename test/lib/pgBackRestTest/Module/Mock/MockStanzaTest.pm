@@ -32,6 +32,7 @@ use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
 # run
@@ -51,18 +52,32 @@ sub run
     my $strBackupInfoOldFile = "${strBackupInfoFile}.old";
     my $strBackupInfoCopyOldFile = "${strBackupInfoCopyFile}.old";
 
-    foreach my $bS3 (false, true)
+    foreach my $rhRun
+    (
+        {vm => VM1, remote => false, s3 => false, encrypt =>  true},
+        {vm => VM1, remote =>  true, s3 =>  true, encrypt => false},
+        {vm => VM2, remote => false, s3 =>  true, encrypt =>  true},
+        {vm => VM2, remote =>  true, s3 => false, encrypt => false},
+        {vm => VM3, remote => false, s3 => false, encrypt => false},
+        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true},
+        {vm => VM4, remote => false, s3 =>  true, encrypt => false},
+        {vm => VM4, remote =>  true, s3 => false, encrypt =>  true},
+    )
     {
-    foreach my $bRemote ($bS3 ? (true) : (false, true))
-    {
-        my $bRepoEncrypt = $bRemote && !$bS3 ? true : false;
+        # Only run tests for this vm
+        next if ($rhRun->{vm} ne $self->vm());
 
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("remote $bRemote, s3 $bS3, enc ${bRepoEncrypt}")) {next}
+        my $bRemote = $rhRun->{remote};
+        my $bS3 = $rhRun->{s3};
+        my $bEncrypt = $rhRun->{encrypt};
+
+        # Increment the run, log, and decide whether this unit test should be run
+        if (!$self->begin("remote ${bRemote}, s3 ${bS3}, enc ${bEncrypt}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
+            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
 
         # Reduce console logging to detail
         $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(DETAIL)}});
@@ -125,7 +140,7 @@ sub run
         $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $self->expect()});
 
         # With data existing in the archive dir, remove the info files and confirm failure
-        if ($bRepoEncrypt)
+        if ($bEncrypt)
         {
             forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
             forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
@@ -136,7 +151,7 @@ sub run
             forceStorageRemove(storageRepo(), $strArchiveInfoCopyFile);
         }
 
-        if (!$bRepoEncrypt)
+        if (!$bEncrypt)
         {
             $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
                 {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
@@ -170,9 +185,9 @@ sub run
         # Force creation of archive info from the gz file
         $oHostBackup->stanzaCreate('force create archive.info from gz file',
             {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE),
-                iExpectedExitStatus => $bRepoEncrypt ? ERROR_FILE_MISSING : undef});
+                iExpectedExitStatus => $bEncrypt ? ERROR_FILE_MISSING : undef});
 
-        if (!$bRepoEncrypt)
+        if (!$bEncrypt)
         {
             $self->testResult(sub {storageRepo()->exists($strArchiveInfoFile)}, true, "    archive.info file was created");
         }
@@ -182,7 +197,7 @@ sub run
         # Unzip the archive file and recreate the archive.info file from it
         my $strArchiveTest = PG_VERSION_93 . "-1/${strArchiveFile}-" . $self->walGenerateContentChecksum(PG_VERSION_93);
 
-        if (!$bRepoEncrypt)
+        if (!$bEncrypt)
         {
             forceStorageMode(
                 storageRepo(), dirname(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/${strArchiveTest}.gz")), 'g+w',
@@ -201,7 +216,7 @@ sub run
         # Stanza Create succeeds when using force - missing archive file
         #--------------------------------------------------------------------------------------------------------------------------
         # Remove the uncompressed WAL archive file and archive.info
-        if (!$bRepoEncrypt)
+        if (!$bEncrypt)
         {
             forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
             forceStorageRemove(storageRepo(), $strArchiveInfoFile);
@@ -214,7 +229,7 @@ sub run
         # Stanza Create succeeds when using force - missing archive directory
         #--------------------------------------------------------------------------------------------------------------------------
         # Remove the WAL archive directory
-        if (!$bRepoEncrypt)
+        if (!$bEncrypt)
         {
             forceStorageRemove(
                 storageRepo(),
@@ -227,7 +242,7 @@ sub run
         }
 
         # Encrypted info files could not be reconstructed above so just copy them back
-        if ($bRepoEncrypt)
+        if ($bEncrypt)
         {
             forceStorageMove(storageRepo(), $strArchiveInfoOldFile, $strArchiveInfoFile, {bRecurse => false});
             forceStorageMove(storageRepo(), $strArchiveInfoCopyOldFile, $strArchiveInfoCopyFile, {bRecurse => false});
@@ -283,7 +298,7 @@ sub run
         # Create a DB history mismatch between the info files
         #--------------------------------------------------------------------------------------------------------------------------
         # Remove the archive info file and force reconstruction
-        if (!$bRepoEncrypt)
+        if (!$bEncrypt)
         {
             forceStorageRemove(storageRepo(), $strArchiveInfoFile);
             forceStorageRemove(storageRepo(), $strArchiveInfoCopyFile);
@@ -294,7 +309,7 @@ sub run
 
         # Create a DB-ID mismatch between the info files
         #--------------------------------------------------------------------------------------------------------------------------
-        if (!$bRepoEncrypt)
+        if (!$bEncrypt)
         {
             forceStorageRemove(storageRepo(), $strBackupInfoFile);
             forceStorageRemove(storageRepo(), $strBackupInfoCopyFile);
@@ -313,7 +328,7 @@ sub run
 
         # Stanza Create fails when not using force - no backup.info but backup exists
         #--------------------------------------------------------------------------------------------------------------------------
-        if ($bRepoEncrypt)
+        if ($bEncrypt)
         {
             forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
             forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
@@ -331,10 +346,10 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate('use force to recreate the stanza from backups',
             {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE),
-                iExpectedExitStatus => $bRepoEncrypt ? ERROR_FILE_MISSING : undef});
+                iExpectedExitStatus => $bEncrypt ? ERROR_FILE_MISSING : undef});
 
         # Encrypted info files could not be reconstructed above so just copy them back
-        if ($bRepoEncrypt)
+        if ($bEncrypt)
         {
             forceStorageMove(storageRepo(), $strBackupInfoOldFile, $strBackupInfoFile, {bRecurse => false});
             forceStorageMove(storageRepo(), $strBackupInfoCopyOldFile, $strBackupInfoCopyFile, {bRecurse => false});
@@ -378,7 +393,6 @@ sub run
 
         $oHostBackup->stop({strStanza => $self->stanza()});
         $oHostBackup->stanzaDelete('successfully delete the stanza');
-    }
     }
 }
 
