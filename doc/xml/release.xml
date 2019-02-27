@@ -72,6 +72,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Expose handle (file descriptor) from <code>IoRead</code> when applicable.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>storageHelperFree()</code> to storage helper.</p>
                     </release-item>
 

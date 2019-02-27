@@ -41,7 +41,9 @@ ioHandleReadNew(const String *name, int handle, TimeMSec timeout)
     {
         this = memNew(sizeof(IoHandleRead));
         this->memContext = memContextCurrent();
-        this->io = ioReadNewP(this, .eof = (IoReadInterfaceEof)ioHandleReadEof, .read = (IoReadInterfaceRead)ioHandleRead);
+        this->io = ioReadNewP(
+            this, .eof = (IoReadInterfaceEof)ioHandleReadEof, .handle = (IoReadInterfaceHandle)ioHandleReadHandle,
+            .read = (IoReadInterfaceRead)ioHandleRead);
         this->name = strDup(name);
         this->handle = handle;
         this->timeout = timeout;
@@ -144,6 +146,21 @@ ioHandleReadEof(const IoHandleRead *this)
     ASSERT(this != NULL);
 
     FUNCTION_LOG_RETURN(BOOL, this->eof);
+}
+
+/***********************************************************************************************************************************
+Get handle (file descriptor)
+***********************************************************************************************************************************/
+int
+ioHandleReadHandle(const IoHandleRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_HANDLE_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->handle);
 }
 
 /***********************************************************************************************************************************

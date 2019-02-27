@@ -519,6 +519,7 @@ testRun(void)
                 MEM_CONTEXT_TEMP_END();
 
                 ioReadOpen(ioHandleReadIo(read));
+                TEST_RESULT_INT(ioReadHandle(ioHandleReadIo(read)), read->handle, "check handle");
 
                 // Read a string
                 TEST_RESULT_STR(strPtr(ioReadLine(ioHandleReadIo(read))), "test string 1", "read test string");

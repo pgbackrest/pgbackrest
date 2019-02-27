@@ -358,6 +358,23 @@ ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup)
 }
 
 /***********************************************************************************************************************************
+Handle (file descriptor) for the read object
+
+No all read objects have a handle and -1 will be returned in that case.
+***********************************************************************************************************************************/
+int
+ioReadHandle(const IoRead *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_LOG_RETURN(INT, this->interface.handle == NULL ? -1 : this->interface.handle(this->driver));
+}
+
+/***********************************************************************************************************************************
 Free the object
 ***********************************************************************************************************************************/
 void

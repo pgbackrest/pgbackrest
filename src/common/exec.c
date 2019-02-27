@@ -153,7 +153,9 @@ execOpen(Exec *this)
     ioWriteOpen(this->ioWriteHandle);
 
     // Create wrapper interfaces that check process state
-    this->ioReadExec = ioReadNewP(this, .read = (IoReadInterfaceRead)execRead, .eof = (IoReadInterfaceEof)execEof);
+    this->ioReadExec = ioReadNewP(
+        this, .read = (IoReadInterfaceRead)execRead, .eof = (IoReadInterfaceEof)execEof,
+        .handle = (IoReadInterfaceHandle)execHandleRead);
     ioReadOpen(this->ioReadExec);
     this->ioWriteExec = ioWriteNewP(this, .write = (IoWriteInterfaceWrite)execWrite);
     ioWriteOpen(this->ioWriteExec);
@@ -333,6 +335,21 @@ execMemContext(const Exec *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->memContext);
+}
+
+/***********************************************************************************************************************************
+Get the read handle
+***********************************************************************************************************************************/
+int
+execHandleRead(Exec *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(EXEC, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->handleRead);
 }
 
 /***********************************************************************************************************************************

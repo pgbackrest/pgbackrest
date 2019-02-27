@@ -29,6 +29,7 @@ IoHandleRead *ioHandleReadMove(IoHandleRead *this, MemContext *parentNew);
 Getters
 ***********************************************************************************************************************************/
 bool ioHandleReadEof(const IoHandleRead *this);
+int ioHandleReadHandle(const IoHandleRead *this);
 IoRead *ioHandleReadIo(const IoHandleRead *this);
 
 /***********************************************************************************************************************************

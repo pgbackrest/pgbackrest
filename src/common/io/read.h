@@ -31,6 +31,7 @@ Getters/Setters
 bool ioReadEof(const IoRead *this);
 const IoFilterGroup *ioReadFilterGroup(const IoRead *this);
 void ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup);
+int ioReadHandle(const IoRead *this);
 
 /***********************************************************************************************************************************
 Destructor
