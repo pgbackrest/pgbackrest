@@ -52,7 +52,7 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Migrate <cmd>remote</cmd> command to C.</p>
+                        <p>Migrate <cmd>local</cmd> and <cmd>remote</cmd> commands to C.</p>
                     </release-item>
 
                     <release-item>

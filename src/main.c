@@ -7,9 +7,10 @@ Main
 
 #include "command/archive/get/get.h"
 #include "command/archive/push/push.h"
+#include "command/command.h"
 #include "command/help/help.h"
 #include "command/info/info.h"
-#include "command/command.h"
+#include "command/local/local.h"
 #include "command/remote/remote.h"
 #include "common/debug.h"
 #include "common/error.h"
@@ -62,11 +63,18 @@ main(int argListSize, const char *argList[])
             fflush(stdout);
         }
 
+        // Local command.  Currently only implements a subset.
+        // -------------------------------------------------------------------------------------------------------------------------
+        else if (cfgCommand() == cfgCmdLocal && strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGet)))
+        {
+            cmdLocal(STDIN_FILENO, STDOUT_FILENO);
+        }
+
         // Remote command.  Currently only implements a subset.
         // -------------------------------------------------------------------------------------------------------------------------
         else if (cfgCommand() == cfgCmdRemote &&
-                 (strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdInfo)) ||
-                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGet))))
+                 (strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGet)) ||
+                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdInfo))))
         {
             cmdRemote(STDIN_FILENO, STDOUT_FILENO);
         }

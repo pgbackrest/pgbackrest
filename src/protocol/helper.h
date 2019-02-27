@@ -4,19 +4,39 @@ Protocol Helper
 #ifndef PROTOCOL_HELPER_H
 #define PROTOCOL_HELPER_H
 
+/***********************************************************************************************************************************
+Protocol storage type enum
+***********************************************************************************************************************************/
+typedef enum
+{
+    protocolStorageTypeRepo,
+    protocolStorageTypePg,
+} ProtocolStorageType;
+
 #include "protocol/client.h"
 
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
+#define PROTOCOL_SERVICE_LOCAL                                      "local"
+    STRING_DECLARE(PROTOCOL_SERVICE_LOCAL_STR);
 #define PROTOCOL_SERVICE_REMOTE                                     "remote"
     STRING_DECLARE(PROTOCOL_SERVICE_REMOTE_STR);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+ProtocolClient *protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int protocolId);
+ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int protocolId);
+
+/***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
 bool repoIsLocal(void);
-ProtocolClient *protocolGet(RemoteType remoteType, unsigned int remoteId);
+
+/***********************************************************************************************************************************
+Destructor
+***********************************************************************************************************************************/
 void protocolFree(void);
 
 #endif

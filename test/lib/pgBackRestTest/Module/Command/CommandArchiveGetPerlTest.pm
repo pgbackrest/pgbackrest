@@ -298,9 +298,8 @@ sub run
         my $oGetAsync = new pgBackRest::Archive::Get::Async(
             $self->{strSpoolPath}, $self->backrestExe(), \@stryWal);
 
-        $self->optionTestSetBool(CFGOPT_ARCHIVE_ASYNC, true);
         $self->optionTestSet(CFGOPT_SPOOL_PATH, $self->{strRepoPath});
-        $self->configTestLoad(CFGCMD_ARCHIVE_GET);
+        $self->configTestLoad(CFGCMD_ARCHIVE_GET_ASYNC);
 
         $oGetAsync->process();
 
@@ -372,7 +371,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 30);
         $self->optionTestSet(CFGOPT_DB_TIMEOUT, 29);
-        $self->configTestLoad(CFGCMD_ARCHIVE_GET);
+        $self->configTestLoad(CFGCMD_ARCHIVE_GET_ASYNC);
 
         $oGetAsync->process();
     }

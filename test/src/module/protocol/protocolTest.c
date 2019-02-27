@@ -98,7 +98,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolParam(remoteTypeRepo, 1), "|")),
+            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 1), "|")),
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|repo-host-user@repo-host"
@@ -119,7 +119,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolParam(remoteTypeRepo, 1), "|")),
+            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 1), "|")),
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|-p|444|repo-host-user@repo-host"
@@ -161,12 +161,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("ProtocolClient"))
     {
-        // Create pipes for testing.  Read/write is from the perspective of the client.
-        int pipeRead[2];
-        int pipeWrite[2];
-        THROW_ON_SYS_ERROR(pipe(pipeRead) == -1, KernelError, "unable to read test pipe");
-        THROW_ON_SYS_ERROR(pipe(pipeWrite) == -1, KernelError, "unable to write test pipe");
-
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
@@ -590,10 +584,12 @@ testRun(void)
 
         ProtocolClient *client = NULL;
 
-        TEST_ASSIGN(client, protocolGet(remoteTypeRepo, 1), "get protocol");
-        TEST_RESULT_PTR(protocolGet(remoteTypeRepo, 1), client, "get cached protocol");
-        TEST_RESULT_VOID(protocolFree(), "free protocol objects");
-        TEST_RESULT_VOID(protocolFree(), "free protocol objects again");
+        TEST_RESULT_VOID(protocolFree(), "free protocol objects before anything has been created");
+
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
+        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 1), client, "get remote cached protocol");
+        TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
+        TEST_RESULT_VOID(protocolFree(), "free remote protocol objects again");
 
         // Start protocol with local encryption settings
         // -------------------------------------------------------------------------------------------------------------------------
@@ -616,10 +612,10 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass before");
-        TEST_ASSIGN(client, protocolGet(remoteTypeRepo, 1), "get protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass after");
 
-        TEST_RESULT_VOID(protocolFree(), "free protocol objects");
+        TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
 
         // Start protocol with remote encryption settings
         // -------------------------------------------------------------------------------------------------------------------------
@@ -642,10 +638,24 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_PTR(cfgOptionStr(cfgOptRepoCipherPass), NULL, "check cipher pass before");
-        TEST_ASSIGN(client, protocolGet(remoteTypeRepo, 1), "get protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "dcba", "check cipher pass after");
 
-        TEST_RESULT_VOID(protocolFree(), "free protocol objects");
+        // Start local protocol
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "/usr/bin/pgbackrest");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--protocol-timeout=10");
+        strLstAddZ(argList, "archive-get");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ASSIGN(client, protocolLocalGet(protocolStorageTypeRepo, 1), "get local protocol");
+        TEST_RESULT_PTR(protocolLocalGet(protocolStorageTypeRepo, 1), client, "get local cached protocol");
+        TEST_RESULT_PTR(protocolHelper.clientLocal[0].client, client, "check location in cache");
+
+        TEST_RESULT_VOID(protocolFree(), "free local and remote protocol objects");
+        TEST_RESULT_VOID(protocolFree(), "free local and remote protocol objects again");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

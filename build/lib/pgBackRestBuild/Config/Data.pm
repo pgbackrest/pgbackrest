@@ -1825,6 +1825,7 @@ my %hConfigDefine =
                 },
             },
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
+            &CFGCMD_LOCAL => {},
             &CFGCMD_ARCHIVE_PUSH =>
             {
                 &CFGDEF_DEPEND =>

@@ -30,14 +30,14 @@ New object
 ***********************************************************************************************************************************/
 StorageDriverRemote *
 storageDriverRemoteNew(
-    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, RemoteType remoteType,
-    unsigned int remoteId)
+    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
     FUNCTION_LOG_END();
 
     ASSERT(modeFile != 0);
@@ -51,7 +51,7 @@ storageDriverRemoteNew(
         this = memNew(sizeof(StorageDriverRemote));
         this->memContext = MEM_CONTEXT_NEW();
 
-        this->client = protocolGet(remoteType, remoteId);
+        this->client = client;
 
         // Create the storage interface
         this->interface = storageNewP(
