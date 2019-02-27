@@ -139,10 +139,12 @@ SRCS = \
 	postgres/interface/v100.c \
 	postgres/interface/v110.c \
 	postgres/pageChecksum.c \
-	protocol/server.c \
 	protocol/client.c \
 	protocol/command.c \
 	protocol/helper.c \
+	protocol/parallel.c \
+	protocol/parallelJob.c \
+	protocol/server.c \
 	storage/driver/posix/storage.c \
 	storage/driver/posix/common.c \
 	storage/driver/posix/fileRead.c \
@@ -434,6 +436,12 @@ protocol/command.o: protocol/command.c common/assert.h common/debug.h common/err
 
 protocol/helper.o: protocol/helper.c common/assert.h common/debug.h common/error.auto.h common/error.h common/exec.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/exec.h config/protocol.h crypto/crypto.h protocol/client.h protocol/command.h protocol/helper.h protocol/server.h
 	$(CC) $(CFLAGS) -c protocol/helper.c -o protocol/helper.o
+
+protocol/parallel.o: protocol/parallel.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/variant.h common/type/variantList.h protocol/client.h protocol/command.h protocol/parallel.h protocol/parallelJob.h
+	$(CC) $(CFLAGS) -c protocol/parallel.c -o protocol/parallel.o
+
+protocol/parallelJob.o: protocol/parallelJob.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h protocol/client.h protocol/command.h protocol/parallelJob.h
+	$(CC) $(CFLAGS) -c protocol/parallelJob.c -o protocol/parallelJob.o
 
 protocol/server.o: protocol/server.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/json.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/variant.h common/type/variantList.h protocol/client.h protocol/command.h protocol/server.h version.h
 	$(CC) $(CFLAGS) -c protocol/server.c -o protocol/server.o

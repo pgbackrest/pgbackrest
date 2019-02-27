@@ -3,6 +3,8 @@ Test Protocol
 ***********************************************************************************************************************************/
 #include "common/io/handleRead.h"
 #include "common/io/handleWrite.h"
+#include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
 #include "storage/storage.h"
 #include "storage/driver/posix/storage.h"
 #include "version.h"
@@ -368,6 +370,204 @@ testRun(void)
 
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
                 TEST_RESULT_VOID(protocolServerFree(NULL), "free null server");
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("ProtocolParallel and ProtocolParallelJob"))
+    {
+        ProtocolParallelJob *job = NULL;
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(job, protocolParallelJobNew(varNewStr(strNew("test")), protocolCommandNew(strNew("command"))), "new job");
+            TEST_RESULT_PTR(protocolParallelJobMove(job, MEM_CONTEXT_OLD()), job, "move job");
+            TEST_RESULT_PTR(protocolParallelJobMove(NULL, MEM_CONTEXT_OLD()), NULL, "move null job");
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        TEST_ERROR(
+            protocolParallelJobStateSet(job, protocolParallelJobStateDone), AssertError,
+            "invalid state transition from 'pending' to 'done'");
+        TEST_RESULT_VOID(protocolParallelJobStateSet(job, protocolParallelJobStateRunning), "transition to running");
+        TEST_ERROR(
+            protocolParallelJobStateSet(job, protocolParallelJobStatePending), AssertError,
+            "invalid state transition from 'running' to 'pending'");
+
+        // Free job
+        TEST_RESULT_VOID(protocolParallelJobFree(job), "free job");
+        TEST_RESULT_VOID(protocolParallelJobFree(NULL), "free null job");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        HARNESS_FORK_BEGIN()
+        {
+            // Local 1
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000));
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE()));
+                ioWriteOpen(write);
+
+                // Greeting with noop
+                ioWriteLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
+                ioWriteFlush(write);
+
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop");
+                ioWriteLine(write, strNew("{}"));
+                ioWriteFlush(write);
+
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"command1\",\"param\":[\"param1\",\"param2\"]}", "command1");
+                sleepMSec(4000);
+                ioWriteLine(write, strNew("{\"out\":1}"));
+                ioWriteFlush(write);
+
+                // Wait for exit
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"exit\"}", "exit command");
+            }
+            HARNESS_FORK_CHILD_END();
+
+            // Local 2
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000));
+                ioReadOpen(read);
+                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE()));
+                ioWriteOpen(write);
+
+                // Greeting with noop
+                ioWriteLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
+                ioWriteFlush(write);
+
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop");
+                ioWriteLine(write, strNew("{}"));
+                ioWriteFlush(write);
+
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"command2\",\"param\":[\"param1\"]}", "command2");
+                sleepMSec(1000);
+                ioWriteLine(write, strNew("{\"out\":2}"));
+                ioWriteFlush(write);
+
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"command3\",\"param\":[\"param1\"]}", "command3");
+
+                ioWriteLine(write, strNew("{\"err\":39,\"out\":\"very serious error\"}"));
+                ioWriteFlush(write);
+
+                // Wait for exit
+                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"exit\"}", "exit command");
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                // -----------------------------------------------------------------------------------------------------------------
+                ProtocolParallel *parallel = NULL;
+                TEST_ASSIGN(parallel, protocolParallelNew(2000), "create parallel");
+                TEST_RESULT_STR(
+                    strPtr(protocolParallelToLog(parallel)), "{state: pending, clientTotal: 0, jobTotal: 0}", "check log");
+
+                // Add client
+                unsigned int clientTotal = 2;
+                ProtocolClient *client[HARNESS_FORK_CHILD_MAX];
+
+                for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
+                {
+                    IoRead *read = ioHandleReadIo(
+                        ioHandleReadNew(strNewFmt("client %u read", clientIdx), HARNESS_FORK_PARENT_READ_PROCESS(clientIdx), 2000));
+                    ioReadOpen(read);
+                    IoWrite *write = ioHandleWriteIo(
+                        ioHandleWriteNew(strNewFmt("client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx)));
+                    ioWriteOpen(write);
+
+                    TEST_ASSIGN(
+                        client[clientIdx],
+                        protocolClientNew(strNewFmt("test client %u", clientIdx), strNew("test"), read, write),
+                        "create client %u", clientIdx);
+                    TEST_RESULT_VOID(protocolParallelClientAdd(parallel, client[clientIdx]), "add client %u", clientIdx);
+                }
+
+                // Attempt to add client without handle io
+                String *protocolString = strNew(
+                    "{\"name\":\"pgBackRest\",\"service\":\"error\",\"version\":\"" PROJECT_VERSION "\"}\n"
+                    "{}\n");
+
+                IoRead *read = ioBufferReadIo(ioBufferReadNew(bufNewStr(protocolString)));
+                ioReadOpen(read);
+                IoWrite *write = ioBufferWriteIo(ioBufferWriteNew(bufNew(1024)));
+                ioWriteOpen(write);
+
+                ProtocolClient *clientError = protocolClientNew(strNew("error"), strNew("error"), read, write);
+                TEST_ERROR(protocolParallelClientAdd(parallel, clientError), AssertError, "client with read handle is required");
+                protocolClientFree(clientError);
+
+                // Add jobs
+                ProtocolCommand *command = protocolCommandNew(strNew("command1"));
+                protocolCommandParamAdd(command, varNewStr(strNew("param1")));
+                protocolCommandParamAdd(command, varNewStr(strNew("param2")));
+                TEST_RESULT_VOID(
+                    protocolParallelJobAdd(parallel, protocolParallelJobNew(varNewStr(strNew("job1")), command)), "add job");
+
+                command = protocolCommandNew(strNew("command2"));
+                protocolCommandParamAdd(command, varNewStr(strNew("param1")));
+                TEST_RESULT_VOID(
+                    protocolParallelJobAdd(parallel, protocolParallelJobNew(varNewStr(strNew("job2")), command)), "add job");
+
+                command = protocolCommandNew(strNew("command3"));
+                protocolCommandParamAdd(command, varNewStr(strNew("param1")));
+                TEST_RESULT_VOID(
+                    protocolParallelJobAdd(parallel, protocolParallelJobNew(varNewStr(strNew("job3")), command)), "add job");
+
+                // Process jobs
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process jobs");
+
+                TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no result");
+
+                // Process jobs
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
+
+                TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
+                TEST_RESULT_STR(strPtr(varStr(protocolParallelJobKey(job))), "job2", "check key is job2");
+                TEST_RESULT_INT(varIntForce(protocolParallelJobResult(job)), 2, "check result is 2");
+
+                TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no more results");
+
+                // Process jobs
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
+
+                TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
+                TEST_RESULT_STR(strPtr(varStr(protocolParallelJobKey(job))), "job3", "check key is job3");
+                TEST_RESULT_INT(protocolParallelJobErrorCode(job), 39, "check error code");
+                TEST_RESULT_STR(
+                    strPtr(protocolParallelJobErrorMessage(job)), "raised from test client 1: very serious error",
+                    "check error message");
+                TEST_RESULT_PTR(protocolParallelJobResult(job), NULL, "check result is null");
+
+                TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no more results");
+
+                // Process jobs
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process jobs");
+
+                TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no result");
+
+                // Process jobs
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
+
+                TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
+                TEST_RESULT_STR(strPtr(varStr(protocolParallelJobKey(job))), "job1", "check key is job1");
+                TEST_RESULT_INT(varIntForce(protocolParallelJobResult(job)), 1, "check result is 1");
+
+                TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check done");
+
+                // Free client
+                for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
+                    TEST_RESULT_VOID(protocolClientFree(client[clientIdx]), "free client %u", clientIdx);
+
+                // Free parallel
+                TEST_RESULT_VOID(protocolParallelFree(parallel), "free parallel");
+                TEST_RESULT_VOID(protocolParallelFree(NULL), "free null parallel");
             }
             HARNESS_FORK_PARENT_END();
         }

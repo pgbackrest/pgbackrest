@@ -64,6 +64,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>ProtocolParallel*</code> objects for parallelizing commands.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>ProtocolCommand</code> object.</p>
                     </release-item>
 
