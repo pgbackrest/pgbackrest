@@ -124,7 +124,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Disable test-level stack trace by default.</p>
+                        <p>Only run test-level stack trace by default for unit-tested modules.</p>
                     </release-item>
 
                     <release-item>

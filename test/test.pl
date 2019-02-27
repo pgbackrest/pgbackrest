@@ -96,7 +96,7 @@ test.pl [options]
    --backtrace          enable backtrace when available (adds stack trace line numbers -- very slow)
    --profile            generate profile info
    --no-debug           don't generate a debug build
-   --debug-trace        stack trace for low-level functions (slow, esp w/valgrind, may cause timeouts)
+   --debug-test-trace   test stack trace for low-level functions (slow, esp w/valgrind, may cause timeouts)
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -160,7 +160,7 @@ my $bExpect = false;
 my $bNoValgrind = false;
 my $bNoOptimize = false;
 my $bNoDebug = false;
-my $bDebugTrace = false;
+my $bDebugTestTrace = false;
 my $iRetry = 0;
 
 GetOptions ('q|quiet' => \$bQuiet,
@@ -203,7 +203,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-valgrind' => \$bNoValgrind,
             'no-optimize' => \$bNoOptimize,
             'no-debug', => \$bNoDebug,
-            'debug-trace', => \$bDebugTrace,
+            'debug-test-trace', => \$bDebugTestTrace,
             'retry=s' => \$iRetry)
     or pod2usage(2);
 
@@ -816,7 +816,7 @@ eval
                             (vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace ? ' -DWITH_BACKTRACE' : '');
                         my $strLdExtra = vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace  ? '-lbacktrace' : '';
                         my $strCDebug =
-                            (vmDebugIntegration($strBuildVM) ? '' : '-DNDEBUG') . ($bDebugTrace ? ' -DDEBUG_TRACE' : '');
+                            (vmDebugIntegration($strBuildVM) ? '' : '-DNDEBUG') . ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
 
                         executeTest(
                             'docker exec -i test-build' .
@@ -1231,7 +1231,7 @@ eval
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut,
                         $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry,
-                        !$bNoValgrind, !$bNoCoverage, !$bNoOptimize, $bBackTrace, $bProfile, !$bNoDebug, $bDebugTrace);
+                        !$bNoValgrind, !$bNoCoverage, !$bNoOptimize, $bBackTrace, $bProfile, !$bNoDebug, $bDebugTestTrace);
                     $iTestIdx++;
 
                     if ($oJob->run())

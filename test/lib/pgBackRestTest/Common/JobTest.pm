@@ -74,7 +74,7 @@ sub new
         $self->{bBackTrace},
         $self->{bProfile},
         $self->{bDebug},
-        $self->{bDebugTrace},
+        $self->{bDebugTestTrace},
     ) =
         logDebugParam
         (
@@ -102,7 +102,7 @@ sub new
             {name => 'bBackTrace'},
             {name => 'bProfile'},
             {name => 'bDebug'},
-            {name => 'bDebugTrace'},
+            {name => 'bDebugTestTrace'},
         );
 
     # Set try to 0
@@ -391,7 +391,7 @@ sub run
                     ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : " -DDEBUG_UNIT") .
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
                     ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
-                    ($self->{bDebug} ? '' : ' -DNDEBUG') . ($self->{bDebugTrace} ? ' -DDEBUG_TRACE' : '');
+                    ($self->{bDebug} ? '' : ' -DNDEBUG') . ($self->{bDebugTestTrace} ? ' -DDEBUG_TEST_TRACE' : '');
 
                 # Flags used to buid harness files
                 my $strHarnessFlags =
@@ -404,6 +404,7 @@ sub run
                 my $strTestFlags =
                     '-Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2' .
                     ' -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla' .
+                    ' -DDEBUG_TEST_TRACE' .
                     ($self->{oTest}->{&TEST_VM} eq VM_U16 || $self->{oTest}->{&TEST_VM} eq VM_U18 ?
                         ' -Wformat-signedness' : '') .
                     ($self->{oTest}->{&TEST_VM} eq VM_U18 ?

@@ -176,7 +176,7 @@ infoArchiveIdHistoryMatch(
             strPtr(pgVersionToStr(pgVersion)), pgSystemId);
     }
 
-    FUNCTION_TEST_RETURN(archiveId);
+    FUNCTION_LOG_RETURN(STRING, archiveId);
 }
 
 /***********************************************************************************************************************************
