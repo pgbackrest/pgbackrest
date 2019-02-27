@@ -312,6 +312,7 @@ testRun(void)
         TEST_RESULT_STR(strPtr(varToLog(varNewBool(false))), "{false}", "format bool");
         TEST_RESULT_STR(strPtr(varToLog(varNewKv())), "{KeyValue}", "format KeyValue");
         TEST_RESULT_STR(strPtr(varToLog(varNewVarLst(varLstNew()))), "{VariantList}", "format VariantList");
+        TEST_RESULT_STR(strPtr(varToLog(NULL)), "null", "format null");
     }
 
     // *****************************************************************************************************************************

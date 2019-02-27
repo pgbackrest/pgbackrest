@@ -96,7 +96,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve null-handling of <code>strToLog()</code>.</p>
+                        <p>Improve null-handling of <code>strToLog()</code> and <code>varToLog()</code>.</p>
                     </release-item>
 
                     <release-item>

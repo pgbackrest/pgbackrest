@@ -928,40 +928,45 @@ Convert variant to a zero-terminated string for logging
 String *
 varToLog(const Variant *this)
 {
-    const String *string = NULL;
+    String *result = NULL;
 
-    switch (varType(this))
+    if (this == NULL)
+        result = strNew("null");
+    else
     {
-        case varTypeString:
+        switch (varType(this))
         {
-            string = strNewFmt("\"%s\"", strPtr(varStrForce(this)));
-            break;
-        }
+            case varTypeString:
+            {
+                result = strToLog(varStr(this));
+                break;
+            }
 
-        case varTypeKeyValue:
-        {
-            string = STRING_CONST("KeyValue");
-            break;
-        }
+            case varTypeKeyValue:
+            {
+                result = strNew("{KeyValue}");
+                break;
+            }
 
-        case varTypeVariantList:
-        {
-            string = STRING_CONST("VariantList");
-            break;
-        }
+            case varTypeVariantList:
+            {
+                result = strNew("{VariantList}");
+                break;
+            }
 
-        case varTypeBool:
-        case varTypeDouble:
-        case varTypeInt:
-        case varTypeInt64:
-        case varTypeUInt64:
-        {
-            string = varStrForce(this);
-            break;
+            case varTypeBool:
+            case varTypeDouble:
+            case varTypeInt:
+            case varTypeInt64:
+            case varTypeUInt64:
+            {
+                result = strNewFmt("{%s}", strPtr(varStrForce(this)));
+                break;
+            }
         }
     }
 
-    return strNewFmt("{%s}", strPtr(string));
+    return result;
 }
 
 /***********************************************************************************************************************************
