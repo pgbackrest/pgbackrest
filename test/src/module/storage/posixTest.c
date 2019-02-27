@@ -156,16 +156,18 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 sleepMSec(250);
                 TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileExists)))), 0, "create exists file");
             }
+            HARNESS_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT()
+            HARNESS_FORK_PARENT_BEGIN()
             {
                 TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 1000), true, "file exists after wait");
             }
+            HARNESS_FORK_PARENT_END();
         }
         HARNESS_FORK_END();
 

@@ -29,13 +29,12 @@ testRun(void)
     {
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(errorTypeCode(&TermError), false)
             {
                 exitInit();
                 raise(SIGTERM);
             }
-
-            HARNESS_FORK_CHILD_EXPECTED_EXIT_STATUS_SET(errorTypeCode(&TermError));
+            HARNESS_FORK_CHILD_END();
         }
         HARNESS_FORK_END();
     }

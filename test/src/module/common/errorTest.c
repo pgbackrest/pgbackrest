@@ -290,12 +290,11 @@ testRun(void)
         // Test in a fork so the process does not actually exit
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(UnhandledError.code, false)
             {
                 THROW(TestChildError, "does not get caught!");
             }
-
-            HARNESS_FORK_CHILD_EXPECTED_EXIT_STATUS_SET(UnhandledError.code);
+            HARNESS_FORK_CHILD_END();
         }
         HARNESS_FORK_END();
     }

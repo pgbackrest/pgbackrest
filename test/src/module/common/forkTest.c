@@ -18,7 +18,7 @@ testRun(void)
 
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 char buffer[1024];
 
@@ -30,6 +30,7 @@ testRun(void)
                 TEST_RESULT_INT(write(STDOUT_FILENO, buffer, strlen(buffer)), -1, "write to stdout fails");
                 TEST_RESULT_INT(write(STDERR_FILENO, buffer, strlen(buffer)), -1, "write to stderr fails");
             }
+            HARNESS_FORK_CHILD_END();
         }
         HARNESS_FORK_END();
     }

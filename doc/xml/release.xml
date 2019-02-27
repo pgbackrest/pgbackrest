@@ -116,6 +116,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve fork harness to allow multiple children and setup pipes automatically.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Reduce expect log level in <id>mock/archive</id> and <id>mock/stanza</id> tests.</p>
                     </release-item>
 

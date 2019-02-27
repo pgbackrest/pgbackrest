@@ -20,22 +20,13 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("configProtocol() and configProtocolOption()"))
     {
-        // Create pipes for testing.  Read/write is from the perspective of the client.
-        int pipeRead[2];
-        int pipeWrite[2];
-        THROW_ON_SYS_ERROR(pipe(pipeRead) == -1, KernelError, "unable to read test pipe");
-        THROW_ON_SYS_ERROR(pipe(pipeWrite) == -1, KernelError, "unable to write test pipe");
-
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                close(pipeRead[0]);
-                close(pipeWrite[1]);
-
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("client read"), pipeWrite[0], 2000));
+                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("client read"), HARNESS_FORK_CHILD_READ(), 2000));
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("client write"), pipeRead[1]));
+                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("client write"), HARNESS_FORK_CHILD_WRITE()));
                 ioWriteOpen(write);
 
                 StringList *argList = strLstNew();
@@ -49,19 +40,14 @@ testRun(void)
                 ProtocolServer *server = protocolServerNew(strNew("test"), strNew("config"), read, write);
                 protocolServerHandlerAdd(server, configProtocol);
                 protocolServerProcess(server);
-
-                close(pipeRead[1]);
-                close(pipeWrite[0]);
             }
+            HARNESS_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT()
+            HARNESS_FORK_PARENT_BEGIN()
             {
-                close(pipeRead[1]);
-                close(pipeWrite[0]);
-
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), pipeRead[0], 2000));
+                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000));
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), pipeWrite[1]));
+                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
                 ioWriteOpen(write);
 
                 ProtocolClient *client = protocolClientNew(strNew("test"), strNew("config"), read, write);
@@ -75,10 +61,8 @@ testRun(void)
                     "get options");
 
                 protocolClientFree(client);
-
-                close(pipeRead[0]);
-                close(pipeWrite[1]);
             }
+            HARNESS_FORK_PARENT_END();
         }
         HARNESS_FORK_END();
     }

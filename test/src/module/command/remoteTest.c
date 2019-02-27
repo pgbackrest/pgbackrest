@@ -28,11 +28,8 @@ testRun(void)
 
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                close(pipeRead[0]);
-                close(pipeWrite[1]);
-
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "pgbackrest");
                 strLstAddZ(argList, "--stanza=test1");
@@ -42,29 +39,22 @@ testRun(void)
                 strLstAddZ(argList, "remote");
                 harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-                cmdRemote(pipeWrite[0], pipeRead[1]);
-
-                close(pipeRead[1]);
-                close(pipeWrite[0]);
+                cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
+            HARNESS_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT()
+            HARNESS_FORK_PARENT_BEGIN()
             {
-                close(pipeRead[1]);
-                close(pipeWrite[0]);
-
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), pipeRead[0], 2000));
+                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000));
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), pipeWrite[1]));
+                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
                 ioWriteOpen(write);
 
                 ProtocolClient *client = protocolClientNew(strNew("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write);
                 protocolClientNoOp(client);
                 protocolClientFree(client);
-
-                close(pipeRead[0]);
-                close(pipeWrite[1]);
             }
+            HARNESS_FORK_PARENT_END();
         }
         HARNESS_FORK_END();
     }

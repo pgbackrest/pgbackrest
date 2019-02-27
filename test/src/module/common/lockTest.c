@@ -82,13 +82,14 @@ testRun(void)
 
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_BOOL(lockAcquireFile(backupLock, 0, true), true, "lock on fork");
                 sleepMSec(500);
             }
+            HARNESS_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT()
+            HARNESS_FORK_PARENT_BEGIN()
             {
                 sleepMSec(250);
                 TEST_ERROR(
@@ -99,6 +100,7 @@ testRun(void)
                             "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                             "HINT: is another pgBackRest process running?", strPtr(backupLock))));
             }
+            HARNESS_FORK_PARENT_END();
         }
         HARNESS_FORK_END();
     }

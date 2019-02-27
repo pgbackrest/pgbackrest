@@ -137,14 +137,11 @@ testRun(void)
 
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                close(pipeRead[0]);
-                close(pipeWrite[1]);
-
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), pipeWrite[0], 2000));
+                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 2000));
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), pipeRead[1]));
+                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE()));
                 ioWriteOpen(write);
 
                 // Various bogus greetings
@@ -190,19 +187,14 @@ testRun(void)
 
                 // Wait for exit
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"exit\"}", "exit command");
-
-                close(pipeRead[1]);
-                close(pipeWrite[0]);
             }
+            HARNESS_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT()
+            HARNESS_FORK_PARENT_BEGIN()
             {
-                close(pipeRead[1]);
-                close(pipeWrite[0]);
-
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("client read"), pipeRead[0], 2000));
+                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000));
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("client write"), pipeWrite[1]));
+                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
                 ioWriteOpen(write);
 
                 // Various bogus greetings
@@ -259,10 +251,8 @@ testRun(void)
                 // Free client
                 TEST_RESULT_VOID(protocolClientFree(client), "free client");
                 TEST_RESULT_VOID(protocolClientFree(NULL), "free null client");
-
-                close(pipeRead[0]);
-                close(pipeWrite[1]);
             }
+            HARNESS_FORK_PARENT_END();
         }
         HARNESS_FORK_END();
     }
@@ -270,22 +260,13 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("ProtocolServer"))
     {
-        // Create pipes for testing.  Read/write is from the perspective of the client.
-        int pipeRead[2];
-        int pipeWrite[2];
-        THROW_ON_SYS_ERROR(pipe(pipeRead) == -1, KernelError, "unable to read test pipe");
-        THROW_ON_SYS_ERROR(pipe(pipeWrite) == -1, KernelError, "unable to write test pipe");
-
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                close(pipeRead[0]);
-                close(pipeWrite[1]);
-
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("client read"), pipeWrite[0], 2000));
+                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("client read"), HARNESS_FORK_CHILD_READ(), 2000));
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("client write"), pipeRead[1]));
+                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("client write"), HARNESS_FORK_CHILD_WRITE()));
                 ioWriteOpen(write);
 
                 // Check greeting
@@ -321,19 +302,14 @@ testRun(void)
                 // Exit
                 TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"exit\"}")), "write exit");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush exit");
-
-                close(pipeRead[1]);
-                close(pipeWrite[0]);
             }
+            HARNESS_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT()
+            HARNESS_FORK_PARENT_BEGIN()
             {
-                close(pipeRead[1]);
-                close(pipeWrite[0]);
-
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), pipeRead[0], 2000));
+                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000));
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), pipeWrite[1]));
+                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
                 ioWriteOpen(write);
 
                 // Send greeting
@@ -360,10 +336,8 @@ testRun(void)
 
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
                 TEST_RESULT_VOID(protocolServerFree(NULL), "free null server");
-
-                close(pipeRead[0]);
-                close(pipeWrite[1]);
             }
+            HARNESS_FORK_PARENT_END();
         }
         HARNESS_FORK_END();
     }

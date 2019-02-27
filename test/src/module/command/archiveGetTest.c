@@ -305,10 +305,11 @@ testRun(void)
 
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "WAL segment to get required");
             }
+            HARNESS_FORK_CHILD_END();
         }
         HARNESS_FORK_END();
 
@@ -320,10 +321,11 @@ testRun(void)
 
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "path to copy WAL segment required");
             }
+            HARNESS_FORK_CHILD_END();
         }
         HARNESS_FORK_END();
 
@@ -342,7 +344,7 @@ testRun(void)
         // Test this in a fork so we can use different Perl options in later tests
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_ERROR_FMT(
                     cmdArchiveGet(), FileMissingError,
@@ -358,6 +360,7 @@ testRun(void)
                     strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)),
                     strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)));
             }
+            HARNESS_FORK_CHILD_END();
         }
         HARNESS_FORK_END();
 
@@ -372,7 +375,7 @@ testRun(void)
         // Test this in a fork so we can use different Perl options in later tests
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_ERROR_FMT(
                     cmdArchiveGet(), FileMissingError,
@@ -388,6 +391,7 @@ testRun(void)
                     strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)),
                     strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)));
             }
+            HARNESS_FORK_CHILD_END();
         }
         HARNESS_FORK_END();
 
@@ -402,10 +406,11 @@ testRun(void)
 
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout getting WAL segment");
             }
+            HARNESS_FORK_CHILD_END();
         }
         HARNESS_FORK_END();
 
@@ -418,10 +423,11 @@ testRun(void)
 
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT(cmdArchiveGet(), 1, "successful get of missing WAL");
             }
+            HARNESS_FORK_CHILD_END();
         }
         HARNESS_FORK_END();
 
@@ -439,10 +445,11 @@ testRun(void)
 
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
             }
+            HARNESS_FORK_CHILD_END();
         }
         HARNESS_FORK_END();
 
@@ -470,10 +477,11 @@ testRun(void)
 
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
             }
+            HARNESS_FORK_CHILD_END();
         }
         HARNESS_FORK_END();
 
@@ -489,10 +497,11 @@ testRun(void)
 
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout waiting for lock");
             }
+            HARNESS_FORK_CHILD_END();
         }
         HARNESS_FORK_END();
 

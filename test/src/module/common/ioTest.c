@@ -464,22 +464,18 @@ testRun(void)
     {
         ioBufferSizeSet(16);
 
-        // Create pipe for testing
-        int pipeTest[2];
-        THROW_ON_SYS_ERROR(pipe(pipeTest) == -1, KernelError, "unable to create test pipe");
-
         HARNESS_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD()
+            HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                close(pipeTest[0]);
                 IoHandleWrite *write = NULL;
 
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
                     TEST_RESULT_VOID(ioHandleWriteMove(NULL, MEM_CONTEXT_OLD()), "move null write");
                     TEST_ASSIGN(
-                        write, ioHandleWriteMove(ioHandleWriteNew(strNew("write test"), pipeTest[1]), MEM_CONTEXT_OLD()),
+                        write,
+                        ioHandleWriteMove(ioHandleWriteNew(strNew("write test"), HARNESS_FORK_CHILD_WRITE()), MEM_CONTEXT_OLD()),
                         "move write");
                 }
                 MEM_CONTEXT_TEMP_END();
@@ -504,20 +500,20 @@ testRun(void)
                 // Free object
                 TEST_RESULT_VOID(ioHandleWriteFree(NULL), "free null write");
                 TEST_RESULT_VOID(ioHandleWriteFree(write), "free write");
-
-                close(pipeTest[1]);
             }
+            HARNESS_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT()
+            HARNESS_FORK_PARENT_BEGIN()
             {
-                close(pipeTest[1]);
                 IoHandleRead *read = NULL;
 
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
                     TEST_RESULT_VOID(ioHandleReadMove(NULL, MEM_CONTEXT_OLD()), "move null read");
                     TEST_ASSIGN(
-                        read, ioHandleReadMove(ioHandleReadNew(strNew("read test"), pipeTest[0], 1000), MEM_CONTEXT_OLD()),
+                        read,
+                        ioHandleReadMove(
+                            ioHandleReadNew(strNew("read test"), HARNESS_FORK_PARENT_READ_PROCESS(0), 1000), MEM_CONTEXT_OLD()),
                         "move read");
                 }
                 MEM_CONTEXT_TEMP_END();
@@ -548,9 +544,8 @@ testRun(void)
                 // Free object
                 TEST_RESULT_VOID(ioHandleReadFree(NULL), "free null read");
                 TEST_RESULT_VOID(ioHandleReadFree(read), "free read");
-
-                close(pipeTest[0]);
             }
+            HARNESS_FORK_PARENT_END();
         }
         HARNESS_FORK_END();
 
