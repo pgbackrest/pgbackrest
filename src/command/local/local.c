@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Local Command
 ***********************************************************************************************************************************/
+#include "command/archive/get/protocol.h"
 #include "common/debug.h"
 #include "common/io/handleRead.h"
 #include "common/io/handleWrite.h"
@@ -27,6 +28,7 @@ cmdLocal(int handleRead, int handleWrite)
         ioWriteOpen(write);
 
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_LOCAL_STR, read, write);
+        protocolServerHandlerAdd(server, archiveGetProtocol);
         protocolServerProcess(server);
     }
     MEM_CONTEXT_TEMP_END();

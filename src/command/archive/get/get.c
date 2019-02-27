@@ -9,6 +9,7 @@ Archive Get Command
 
 #include "command/archive/common.h"
 #include "command/archive/get/file.h"
+#include "command/archive/get/protocol.h"
 #include "command/command.h"
 #include "common/debug.h"
 #include "common/fork.h"
@@ -20,7 +21,8 @@ Archive Get Command
 #include "config/exec.h"
 #include "perl/exec.h"
 #include "postgres/interface.h"
-#include "storage/helper.h"
+#include "protocol/helper.h"
+#include "protocol/parallel.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -96,7 +98,7 @@ queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegm
 }
 
 /***********************************************************************************************************************************
-Push a WAL segment to the repository
+Get an archive file from the repository (WAL segment, history file, etc.)
 ***********************************************************************************************************************************/
 int
 cmdArchiveGet(void)
@@ -262,7 +264,8 @@ cmdArchiveGet(void)
 
             // Get the archive file
             result = archiveGetFile(
-                walSegment, walDestination, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                storageLocalWrite(), walSegment, walDestination, false, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                cfgOptionStr(cfgOptRepoCipherPass));
         }
 
         // Log whether or not the file was found
@@ -274,4 +277,103 @@ cmdArchiveGet(void)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(INT, result);
+}
+
+/***********************************************************************************************************************************
+Async version of archive get that runs in parallel for performance
+***********************************************************************************************************************************/
+void
+cmdArchiveGetAsync(void)
+{
+    FUNCTION_LOG_VOID(logLevelDebug);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Check the parameters
+        const StringList *walSegmentList = cfgCommandParam();
+
+        if (strLstSize(walSegmentList) < 1)
+            THROW(ParamInvalidError, "at least one wal segment is required");
+
+        TRY_BEGIN()
+        {
+            LOG_INFO(
+                "get %u WAL file(s) from archive: %s%s", strLstSize(walSegmentList), strPtr(strLstGet(walSegmentList, 0)),
+                strLstSize(walSegmentList) == 1 ?
+                    "" : strPtr(strNewFmt("...%s", strPtr(strLstGet(walSegmentList, strLstSize(walSegmentList) - 1)))));
+
+            // Create the parallel executor
+            ProtocolParallel *parallelExec = protocolParallelNew((TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2);
+
+            for (unsigned int processIdx = 1; processIdx <= (unsigned int)cfgOptionInt(cfgOptProcessMax); processIdx++)
+                protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, processIdx));
+
+            // Queue jobs in executor
+            for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
+            {
+                const String *walSegment = strLstGet(walSegmentList, walSegmentIdx);
+
+                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_STR);
+                protocolCommandParamAdd(command, varNewStr(walSegment));
+
+                protocolParallelJobAdd(parallelExec, protocolParallelJobNew(varNewStr(walSegment), command));
+            }
+
+            // Process jobs
+            do
+            {
+                unsigned int completed = protocolParallelProcess(parallelExec);
+
+                for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+                {
+                    // Get the job and job key
+                    ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+                    const String *walSegment = varStr(protocolParallelJobKey(job));
+
+                    // The job was successful
+                    if (protocolParallelJobErrorCode(job) == 0)
+                    {
+                        // Get the archive file
+                        if (varIntForce(protocolParallelJobResult(job)) == 0)
+                        {
+                            LOG_DETAIL("found %s in the archive", strPtr(walSegment));
+                        }
+                        // If it does not exist write an ok file to indicate that it was checked
+                        else
+                        {
+                            LOG_DETAIL("unable to find %s in the archive", strPtr(walSegment));
+                            archiveAsyncStatusOkWrite(archiveModeGet, walSegment);
+                        }
+                    }
+                    // Else the job errored
+                    else
+                    {
+                        LOG_WARN(
+                            "could not get %s from the archive (will be retried): [%d] %s", strPtr(walSegment),
+                            protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
+
+                        archiveAsyncStatusErrorWrite(
+                            archiveModeGet, walSegment, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job),
+                            false);
+                    }
+                }
+            }
+            while (!protocolParallelDone(parallelExec));
+        }
+        CATCH_ANY()
+        {
+            // On any global error write the same error into every .error file unless the get was already successful
+            for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
+            {
+                archiveAsyncStatusErrorWrite(
+                    archiveModeGet, strLstGet(walSegmentList, walSegmentIdx), errorCode(), strNew(errorMessage()), true);
+            }
+
+            RETHROW();
+        }
+        TRY_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }

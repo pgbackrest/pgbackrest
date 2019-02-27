@@ -42,6 +42,10 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <p>The <cmd>archive-get</cmd> command is implemented entirely in C.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="james.badger"/>
                         </release-item-contributor-list>
@@ -53,10 +57,6 @@
                 <release-development-list>
                     <release-item>
                         <p>Migrate <cmd>local</cmd> and <cmd>remote</cmd> commands to C.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Migrate remote <cmd>archive-get</cmd> command to C.</p>
                     </release-item>
 
                     <release-item>

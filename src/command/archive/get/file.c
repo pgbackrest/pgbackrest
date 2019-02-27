@@ -112,11 +112,15 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
 Copy a file from the archive to the specified destination
 ***********************************************************************************************************************************/
 int
-archiveGetFile(const String *archiveFile, const String *walDestination, CipherType cipherType, const String *cipherPass)
+archiveGetFile(
+    const Storage *storage, const String *archiveFile, const String *walDestination, bool durable, CipherType cipherType,
+    const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, archiveFile);
         FUNCTION_LOG_PARAM(STRING, walDestination);
+        FUNCTION_LOG_PARAM(BOOL, durable);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
         // cipherPass omitted for security
     FUNCTION_LOG_END();
@@ -138,8 +142,8 @@ archiveGetFile(const String *archiveFile, const String *walDestination, CipherTy
         if (archiveGetCheckResult.archiveFileActual != NULL)
         {
             StorageFileWrite *destination = storageNewWriteP(
-                storageLocalWrite(), walDestination, .noCreatePath = true,  .noSyncFile = true, .noSyncPath = true,
-                .noAtomic = true);
+                storage, walDestination, .noCreatePath = true, .noSyncFile = !durable, .noSyncPath = !durable,
+                .noAtomic = !durable);
 
             // Add filters
             IoFilterGroup *filterGroup = ioFilterGroupNew();
@@ -165,7 +169,7 @@ archiveGetFile(const String *archiveFile, const String *walDestination, CipherTy
             storageCopyNP(
                 storageNewReadNP(
                     storageRepo(), strNewFmt("%s/%s", STORAGE_REPO_ARCHIVE, strPtr(archiveGetCheckResult.archiveFileActual))),
-                    destination);
+                destination);
 
             // The WAL file was found
             result = 0;

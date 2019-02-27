@@ -12,7 +12,6 @@ use File::Basename qw(dirname);
 use Scalar::Util qw(looks_like_number);
 
 use pgBackRest::Archive::Common;
-use pgBackRest::Archive::Get::Get;
 use pgBackRest::Archive::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;

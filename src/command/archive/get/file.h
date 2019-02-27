@@ -6,10 +6,13 @@ Archive Get File
 
 #include "common/type/string.h"
 #include "crypto/crypto.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-int archiveGetFile(const String *archiveFile, const String *walDestination, CipherType cipherType, const String *cipherPass);
+int archiveGetFile(
+    const Storage *storage, const String *archiveFile, const String *walDestination, bool durable, CipherType cipherType,
+    const String *cipherPass);
 
 #endif

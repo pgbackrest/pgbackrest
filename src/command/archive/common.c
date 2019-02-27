@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Archive Push Command
+Archive Common
 ***********************************************************************************************************************************/
 #include <stdint.h>
 #include <stdlib.h>
@@ -24,6 +24,19 @@ STRING_EXTERN(WAL_SEGMENT_DIR_REGEXP_STR,                           WAL_SEGMENT_
 STRING_EXTERN(WAL_SEGMENT_FILE_REGEXP_STR,                          WAL_SEGMENT_FILE_REGEXP);
 
 /***********************************************************************************************************************************
+Get the correct spool queue based on the archive mode
+***********************************************************************************************************************************/
+static const String *
+archiveAsyncSpoolQueue(ArchiveMode archiveMode)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, archiveMode);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN((archiveMode == archiveModeGet ? STORAGE_SPOOL_ARCHIVE_IN_STR : STORAGE_SPOOL_ARCHIVE_OUT_STR));
+}
+
+/***********************************************************************************************************************************
 Check for ok/error status files in the spool in/out directory
 ***********************************************************************************************************************************/
 bool
@@ -39,7 +52,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *spoolQueue = (archiveMode == archiveModeGet ? STORAGE_SPOOL_ARCHIVE_IN_STR : STORAGE_SPOOL_ARCHIVE_OUT_STR);
+        const String *spoolQueue = archiveAsyncSpoolQueue(archiveMode);
         String *okFile = strNewFmt("%s.ok", strPtr(walSegment));
         String *errorFile = strNewFmt("%s.error", strPtr(walSegment));
 
@@ -126,6 +139,70 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
+Write an error status file
+***********************************************************************************************************************************/
+void
+archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message, bool skipIfOk)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING, walSegment);
+        FUNCTION_LOG_PARAM(INT, code);
+        FUNCTION_LOG_PARAM(STRING, message);
+        FUNCTION_LOG_PARAM(BOOL, skipIfOk);
+    FUNCTION_LOG_END();
+
+    ASSERT(walSegment != NULL);
+    ASSERT(code != 0);
+    ASSERT(message != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Only write the file if we are not worried about ok files or if the ok files does not exist
+        if (!skipIfOk ||
+            !(storageExistsNP(
+                storageSpool(), strNewFmt("%s/%s.ok", strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(walSegment))) ||
+              (archiveMode == archiveModeGet && storageExistsNP(
+                  storageSpool(), strNewFmt("%s/%s", strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(walSegment))))))
+        {
+            storagePutNP(
+                storageNewWriteNP(
+                    storageSpoolWrite(), strNewFmt("%s/%s.error", strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(walSegment))),
+                bufNewStr(strNewFmt("%d\n%s", code, strPtr(message))));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Write an ok status file
+***********************************************************************************************************************************/
+void
+archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING, walSegment);
+    FUNCTION_LOG_END();
+
+    ASSERT(walSegment != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Write file
+        storagePutNP(
+            storageNewWriteNP(
+                storageSpoolWrite(), strNewFmt("%s/%s.ok", strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(walSegment))),
+            NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

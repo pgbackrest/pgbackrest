@@ -12,7 +12,6 @@ use Exporter qw(import);
 use File::Basename;
 
 use pgBackRest::Archive::Common;
-use pgBackRest::Archive::Get::Get;
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::File;
 use pgBackRest::Backup::Info;

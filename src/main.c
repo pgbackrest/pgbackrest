@@ -65,7 +65,7 @@ main(int argListSize, const char *argList[])
 
         // Local command.  Currently only implements a subset.
         // -------------------------------------------------------------------------------------------------------------------------
-        else if (cfgCommand() == cfgCmdLocal && strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGet)))
+        else if (cfgCommand() == cfgCmdLocal && strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGetAsync)))
         {
             cmdLocal(STDIN_FILENO, STDOUT_FILENO);
         }
@@ -74,7 +74,9 @@ main(int argListSize, const char *argList[])
         // -------------------------------------------------------------------------------------------------------------------------
         else if (cfgCommand() == cfgCmdRemote &&
                  (strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGet)) ||
-                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdInfo))))
+                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGetAsync)) ||
+                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdInfo)) ||
+                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdLocal))))
         {
             cmdRemote(STDIN_FILENO, STDOUT_FILENO);
         }
@@ -84,6 +86,13 @@ main(int argListSize, const char *argList[])
         else if (cfgCommand() == cfgCmdArchiveGet)
         {
             result = cmdArchiveGet();
+        }
+
+        // Archive get async command
+        // -------------------------------------------------------------------------------------------------------------------------
+        else if (cfgCommand() == cfgCmdArchiveGetAsync)
+        {
+            cmdArchiveGetAsync();
         }
 
         // Archive push command.  Currently only implements local operations of async archive push.

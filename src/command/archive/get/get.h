@@ -8,5 +8,6 @@ Archive Get Command
 Functions
 ***********************************************************************************************************************************/
 int cmdArchiveGet(void);
+void cmdArchiveGetAsync(void);
 
 #endif

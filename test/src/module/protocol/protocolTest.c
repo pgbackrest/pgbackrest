@@ -647,7 +647,8 @@ testRun(void)
         strLstAddZ(argList, "/usr/bin/pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--protocol-timeout=10");
-        strLstAddZ(argList, "archive-get");
+        strLstAddZ(argList, "--process-max=2");
+        strLstAddZ(argList, "archive-get-async");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_ASSIGN(client, protocolLocalGet(protocolStorageTypeRepo, 1), "get local protocol");
@@ -655,7 +656,6 @@ testRun(void)
         TEST_RESULT_PTR(protocolHelper.clientLocal[0].client, client, "check location in cache");
 
         TEST_RESULT_VOID(protocolFree(), "free local and remote protocol objects");
-        TEST_RESULT_VOID(protocolFree(), "free local and remote protocol objects again");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

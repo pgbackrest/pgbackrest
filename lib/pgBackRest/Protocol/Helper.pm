@@ -29,8 +29,6 @@ use constant OP_ARCHIVE_PUSH_CHECK                                  => 'archiveP
     push @EXPORT, qw(OP_ARCHIVE_PUSH_CHECK);
 
 # Archive File Module
-use constant OP_ARCHIVE_GET_FILE                                    => 'archiveGetFile';
-    push @EXPORT, qw(OP_ARCHIVE_GET_FILE);
 use constant OP_ARCHIVE_PUSH_FILE                                   => 'archivePushFile';
     push @EXPORT, qw(OP_ARCHIVE_PUSH_FILE);
 

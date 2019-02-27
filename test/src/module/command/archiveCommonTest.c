@@ -114,6 +114,46 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("archiveAsyncStatusErrorWrite() and archiveAsyncStatusOkWrite()"))
+    {
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "archive-get-async");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        String *walSegment = strNew("000000010000000100000001");
+
+        TEST_RESULT_VOID(
+            archiveAsyncStatusErrorWrite(archiveModeGet, walSegment, 25, strNew("error message"), false), "write error");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("archive/db/in/000000010000000100000001.error"))))),
+            "25\nerror message", "check error");
+        TEST_RESULT_VOID(
+            storageRemoveP(storageTest, strNew("archive/db/in/000000010000000100000001.error"), .errorOnMissing = true),
+            "remove error");
+
+        TEST_RESULT_VOID(
+            archiveAsyncStatusErrorWrite(archiveModeGet, walSegment, 66, strNew("multi-line\nerror message"), true),
+            "write error skip if ok (ok missing)");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("archive/db/in/000000010000000100000001.error"))))),
+            "66\nmulti-line\nerror message", "check error");
+        TEST_RESULT_VOID(
+            storageRemoveP(storageTest, strNew("archive/db/in/000000010000000100000001.error"), .errorOnMissing = true),
+            "remove error");
+
+        TEST_RESULT_VOID(
+            archiveAsyncStatusOkWrite(archiveModeGet, walSegment), "write ok file");
+        TEST_RESULT_VOID(
+            archiveAsyncStatusErrorWrite(archiveModeGet, walSegment, 101, strNew("more error message"), true),
+            "write error skip if ok (ok present)");
+        TEST_RESULT_BOOL(
+            storageExistsNP(storageTest, strNew("archive/db/in/000000010000000100000001.error")), false, "error does not exist");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("walIsPartial()"))
     {
         TEST_RESULT_BOOL(walIsPartial(strNew("000000010000000100000001")), false, "not partial");
