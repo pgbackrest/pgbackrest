@@ -79,7 +79,27 @@ testRun(void)
             TEST_RESULT_INT(*item, listIdx, "check item %u", listIdx);
         }
 
-        TEST_ERROR(lstGet(list, lstSize(list)), AssertError, "cannot get index 9 from list with 9 value(s)");
+        // Remove first item
+        TEST_RESULT_VOID(lstRemove(list, 0), "remove first item");
+
+        // Read them back and check values
+        for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
+        {
+            int *item = lstGet(list, listIdx);
+            TEST_RESULT_INT(*item, listIdx + 1, "check item %u", listIdx);
+        }
+
+        // Remove last item
+        TEST_RESULT_VOID(lstRemove(list, lstSize(list) - 1), "remove last item");
+
+        // Read them back and check values
+        for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
+        {
+            int *item = lstGet(list, listIdx);
+            TEST_RESULT_INT(*item, listIdx + 1, "check item %u", listIdx);
+        }
+
+        TEST_ERROR(lstGet(list, lstSize(list)), AssertError, "cannot get index 7 from list with 7 value(s)");
         TEST_RESULT_VOID(lstMove(NULL, memContextTop()), "move null list");
     }
 

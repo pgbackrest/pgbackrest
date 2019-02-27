@@ -135,6 +135,29 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
 }
 
 /***********************************************************************************************************************************
+Remove an item from the list
+***********************************************************************************************************************************/
+List *
+lstRemove(List *this, unsigned int listIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(listIdx <= lstSize(this));
+
+    // Remove the item by moving the items after it down
+    this->listSize--;
+
+    memmove(
+        this->list + (listIdx * this->itemSize), this->list + ((listIdx + 1) * this->itemSize),
+        (lstSize(this) - listIdx) * this->itemSize);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
 Return the memory context for this list
 ***********************************************************************************************************************************/
 MemContext *

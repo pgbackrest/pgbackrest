@@ -24,6 +24,7 @@ List *lstNew(size_t itemSize);
 List *lstAdd(List *this, const void *item);
 void *lstGet(const List *this, unsigned int listIdx);
 List *lstInsert(List *this, unsigned int listIdx, const void *item);
+List *lstRemove(List *this, unsigned int listIdx);
 MemContext *lstMemContext(const List *this);
 List *lstMove(List *this, MemContext *parentNew);
 unsigned int lstSize(const List *this);

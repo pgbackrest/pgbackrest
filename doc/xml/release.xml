@@ -80,6 +80,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>lstRemove()</code> to <code>List</code> object.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow <code>cfgExecParam()</code> to exclude options.</p>
                     </release-item>
 
