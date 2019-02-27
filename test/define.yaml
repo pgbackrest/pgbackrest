@@ -579,11 +579,12 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: protocol
-        total: 5
+        total: 6
         perlReq: true
 
         coverage:
           protocol/client: full
+          protocol/command: full
           protocol/helper: full
           protocol/server: full
 

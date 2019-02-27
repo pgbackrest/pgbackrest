@@ -20,6 +20,7 @@ typedef enum
 
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "protocol/command.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -31,8 +32,6 @@ Constants
 #define PROTOCOL_GREETING_VERSION                                   "version"
     STRING_DECLARE(PROTOCOL_GREETING_VERSION_STR);
 
-#define PROTOCOL_COMMAND                                            "cmd"
-    STRING_DECLARE(PROTOCOL_COMMAND_STR);
 #define PROTOCOL_COMMAND_EXIT                                       "exit"
     STRING_DECLARE(PROTOCOL_COMMAND_EXIT_STR);
 #define PROTOCOL_COMMAND_NOOP                                       "noop"
@@ -44,9 +43,6 @@ Constants
 #define PROTOCOL_OUTPUT                                             "out"
     STRING_DECLARE(PROTOCOL_OUTPUT_STR);
 
-#define PROTOCOL_PARAMETER                                          "param"
-    STRING_DECLARE(PROTOCOL_PARAMETER_STR);
-
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
@@ -55,11 +51,11 @@ ProtocolClient *protocolClientNew(const String *name, const String *service, IoR
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-const Variant *protocolClientExecute(ProtocolClient *this, const KeyValue *command, bool outputRequired);
+const Variant *protocolClientExecute(ProtocolClient *this, const ProtocolCommand *command, bool outputRequired);
 ProtocolClient *protocolClientMove(ProtocolClient *this, MemContext *parentNew);
 void protocolClientNoOp(ProtocolClient *this);
 const Variant *protocolClientReadOutput(ProtocolClient *this, bool outputRequired);
-void protocolClientWriteCommand(ProtocolClient *this, const KeyValue *command);
+void protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command);
 
 /***********************************************************************************************************************************
 Getters

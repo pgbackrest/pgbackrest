@@ -127,6 +127,36 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("ProtocolCommand"))
+    {
+        ProtocolCommand *command = NULL;
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(command, protocolCommandNew(strNew("command1")), "create command");
+            TEST_RESULT_PTR(protocolCommandParamAdd(command, varNewStr(strNew("param1"))), command, "add param");
+            TEST_RESULT_PTR(protocolCommandParamAdd(command, varNewStr(strNew("param2"))), command, "add param");
+
+            TEST_RESULT_PTR(protocolCommandMove(command, MEM_CONTEXT_OLD()), command, "move protocol command");
+            TEST_RESULT_PTR(protocolCommandMove(NULL, MEM_CONTEXT_OLD()), NULL, "move null protocol command");
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        TEST_RESULT_STR(strPtr(protocolCommandToLog(command)), "{command: command1}", "check log");
+        TEST_RESULT_STR(
+            strPtr(protocolCommandJson(command)), "{\"cmd\":\"command1\",\"param\":[\"param1\",\"param2\"]}", "check json");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(command, protocolCommandNew(strNew("command2")), "create command");
+        TEST_RESULT_STR(strPtr(protocolCommandToLog(command)), "{command: command2}", "check log");
+        TEST_RESULT_STR(strPtr(protocolCommandJson(command)), "{\"cmd\":\"command2\"}", "check json");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(protocolCommandFree(command), "free command");
+        TEST_RESULT_VOID(protocolCommandFree(NULL), "free null command");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("ProtocolClient"))
     {
         // Create pipes for testing.  Read/write is from the perspective of the client.
@@ -241,9 +271,11 @@ testRun(void)
 
                 // Get command output
                 const VariantList *output = NULL;
-                KeyValue *command = kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(strNew("test")));
 
-                TEST_ASSIGN(output, varVarLst(protocolClientExecute(client, command, true)), "execute command with output");
+                TEST_ASSIGN(
+                    output,
+                    varVarLst(protocolClientExecute(client, protocolCommandNew(strNew("test")), true)),
+                    "execute command with output");
                 TEST_RESULT_UINT(varLstSize(output), 2, "check output size");
                 TEST_RESULT_STR(strPtr(varStr(varLstGet(output, 0))), "value1", "check value1");
                 TEST_RESULT_STR(strPtr(varStr(varLstGet(output, 1))), "value2", "check value2");

@@ -110,8 +110,8 @@ protocolServerProcess(ProtocolServer *this)
             {
                 // Read command
                 KeyValue *commandKv = varKv(jsonToVar(ioReadLine(this->read)));
-                String *command = varStr(kvGet(commandKv, varNewStr(PROTOCOL_COMMAND_STR)));
-                VariantList *paramList = varVarLst(kvGet(commandKv, varNewStr(PROTOCOL_PARAMETER_STR)));
+                String *command = varStr(kvGet(commandKv, varNewStr(PROTOCOL_KEY_COMMAND_STR)));
+                VariantList *paramList = varVarLst(kvGet(commandKv, varNewStr(PROTOCOL_KEY_PARAMETER_STR)));
 
                 // Process command
                 bool found = false;
@@ -243,7 +243,7 @@ protocolServerToLog(const ProtocolServer *this)
 }
 
 /***********************************************************************************************************************************
-Free the file
+Free object
 ***********************************************************************************************************************************/
 void
 protocolServerFree(ProtocolServer *this)

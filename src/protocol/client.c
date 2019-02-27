@@ -17,15 +17,12 @@ STRING_EXTERN(PROTOCOL_GREETING_NAME_STR,                           PROTOCOL_GRE
 STRING_EXTERN(PROTOCOL_GREETING_SERVICE_STR,                        PROTOCOL_GREETING_SERVICE);
 STRING_EXTERN(PROTOCOL_GREETING_VERSION_STR,                        PROTOCOL_GREETING_VERSION);
 
-STRING_EXTERN(PROTOCOL_COMMAND_STR,                                 PROTOCOL_COMMAND);
 STRING_EXTERN(PROTOCOL_COMMAND_NOOP_STR,                            PROTOCOL_COMMAND_NOOP);
 STRING_EXTERN(PROTOCOL_COMMAND_EXIT_STR,                            PROTOCOL_COMMAND_EXIT);
 
 STRING_EXTERN(PROTOCOL_ERROR_STR,                                   PROTOCOL_ERROR);
 
 STRING_EXTERN(PROTOCOL_OUTPUT_STR,                                  PROTOCOL_OUTPUT);
-
-STRING_EXTERN(PROTOCOL_PARAMETER_STR,                               PROTOCOL_PARAMETER);
 
 /***********************************************************************************************************************************
 Object type
@@ -174,18 +171,18 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
 Write the protocol command
 ***********************************************************************************************************************************/
 void
-protocolClientWriteCommand(ProtocolClient *this, const KeyValue *command)
+protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(KEY_VALUE, command);
+        FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(command != NULL);
 
     // Write out the command
-    ioWriteLine(this->write, kvToJson(command, 0));
+    ioWriteLine(this->write, protocolCommandJson(command));
     ioWriteFlush(this->write);
 
     // Reset the keep alive time
@@ -198,11 +195,11 @@ protocolClientWriteCommand(ProtocolClient *this, const KeyValue *command)
 Execute a protocol command and get the output
 ***********************************************************************************************************************************/
 const Variant *
-protocolClientExecute(ProtocolClient *this, const KeyValue *command, bool outputRequired)
+protocolClientExecute(ProtocolClient *this, const ProtocolCommand *command, bool outputRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(KEY_VALUE, command);
+        FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
         FUNCTION_LOG_PARAM(BOOL, outputRequired);
     FUNCTION_LOG_END();
 
@@ -247,7 +244,7 @@ protocolClientNoOp(ProtocolClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientExecute(this, kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(PROTOCOL_COMMAND_NOOP_STR)), false);
+        protocolClientExecute(this, protocolCommandNew(PROTOCOL_COMMAND_NOOP_STR), false);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -294,7 +291,7 @@ protocolClientToLog(const ProtocolClient *this)
 }
 
 /***********************************************************************************************************************************
-Free the file
+Free object
 ***********************************************************************************************************************************/
 void
 protocolClientFree(ProtocolClient *this)
@@ -310,7 +307,7 @@ protocolClientFree(ProtocolClient *this)
         // Send an exit command but don't wait to see if it succeeds
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            protocolClientWriteCommand(this, kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(PROTOCOL_COMMAND_EXIT_STR)));
+            protocolClientWriteCommand(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT_STR));
         }
         MEM_CONTEXT_TEMP_END();
 

@@ -64,8 +64,10 @@ configProtocolOption(ProtocolClient *client, const VariantList *paramList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        KeyValue *command = kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(PROTOCOL_COMMAND_CONFIG_OPTION_STR));
-        kvPut(command, varNewStr(PROTOCOL_PARAMETER_STR), varNewVarLst(paramList));
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG_OPTION_STR);
+
+        for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)
+            protocolCommandParamAdd(command, varLstGet(paramList, paramIdx));
 
         memContextSwitch(MEM_CONTEXT_OLD());
         result = varVarLst(protocolClientExecute(client, command, true));

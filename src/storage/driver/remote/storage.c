@@ -87,13 +87,8 @@ storageDriverRemoteExists(StorageDriverRemote *this, const String *path)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Add parameters
-        Variant *param = varNewVarLst(varLstNew());
-        varLstAdd(varVarLst(param), varNewStr(path));
-
-        // Construct command
-        KeyValue *command = kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(PROTOCOL_COMMAND_STORAGE_EXISTS_STR));
-        kvPut(command, varNewStr(PROTOCOL_PARAMETER_STR), param);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_EXISTS_STR);
+        protocolCommandParamAdd(command, varNewStr(path));
 
         result = varBool(protocolClientExecute(this->client, command, true));
     }
@@ -142,15 +137,10 @@ storageDriverRemoteList(StorageDriverRemote *this, const String *path, bool erro
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Add parameters
-        Variant *param = varNewVarLst(varLstNew());
-        varLstAdd(varVarLst(param), varNewStr(path));
-        varLstAdd(varVarLst(param), varNewBool(errorOnMissing));
-        varLstAdd(varVarLst(param), varNewStr(expression));
-
-        // Construct command
-        KeyValue *command = kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(PROTOCOL_COMMAND_STORAGE_LIST_STR));
-        kvPut(command, varNewStr(PROTOCOL_PARAMETER_STR), param);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_LIST_STR);
+        protocolCommandParamAdd(command, varNewStr(path));
+        protocolCommandParamAdd(command, varNewBool(errorOnMissing));
+        protocolCommandParamAdd(command, varNewStr(expression));
 
         result = strLstMove(strLstNewVarLst(varVarLst(protocolClientExecute(this->client, command, true))), MEM_CONTEXT_OLD());
     }

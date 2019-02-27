@@ -121,14 +121,9 @@ storageDriverRemoteFileReadOpen(StorageDriverRemoteFileRead *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Add parameters
-        Variant *param = varNewVarLst(varLstNew());
-        varLstAdd(varVarLst(param), varNewStr(this->name));
-        varLstAdd(varVarLst(param), varNewBool(this->ignoreMissing));
-
-        // Construct command
-        KeyValue *command = kvPut(kvNew(), varNewStr(PROTOCOL_COMMAND_STR), varNewStr(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR));
-        kvPut(command, varNewStr(PROTOCOL_PARAMETER_STR), param);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
+        protocolCommandParamAdd(command, varNewStr(this->name));
+        protocolCommandParamAdd(command, varNewBool(this->ignoreMissing));
 
         result = varBool(protocolClientExecute(this->client, command, true));
     }

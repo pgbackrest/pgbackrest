@@ -64,6 +64,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>ProtocolCommand</code> object.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>exists()</code> to remote storage.</p>
                     </release-item>
 
