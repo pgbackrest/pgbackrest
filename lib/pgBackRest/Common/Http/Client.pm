@@ -97,25 +97,33 @@ sub new
             # Connect to the server
             my $oSocket;
 
+            if (eval{require IO::Socket::IP})
+            {
+                $oSocket = IO::Socket::IP->new(PeerHost => $strHost, PeerPort => $iPort)
+                    or confess &log(ERROR, "unable to create socket: $@", ERROR_HOST_CONNECT);
+            }
+            else
+            {
+                require IO::Socket::INET;
+
+                $oSocket = IO::Socket::INET->new(PeerHost => $strHost, PeerPort => $iPort)
+                    or confess &log(ERROR, "unable to create socket: $@", ERROR_HOST_CONNECT);
+            }
+
+            setsockopt($oSocket, SOL_SOCKET,SO_KEEPALIVE, 1)
+                or confess &log(ERROR, "unable to set socket keepalive: $@", ERROR_HOST_CONNECT);
+
             eval
             {
-                $oSocket = IO::Socket::SSL->new(
-                    PeerHost => $strHost, PeerPort => $iPort, SSL_verify_mode => $bVerifySsl ? SSL_VERIFY_PEER : SSL_VERIFY_NONE,
-                    SSL_ca_path => $strCaPath, SSL_ca_file => $strCaFile, Sockopts => [[SOL_SOCKET, SO_KEEPALIVE]]);
-
-                return 1;
+                IO::Socket::SSL->start_SSL(
+                    $oSocket, SSL_verify_mode => $bVerifySsl ? SSL_VERIFY_PEER : SSL_VERIFY_NONE, SSL_ca_path => $strCaPath,
+                    SSL_ca_file => $strCaFile);
             }
             or do
             {
-                logErrorResult(ERROR_HOST_CONNECT, $EVAL_ERROR);
-            };
-
-            # Check for errors
-            if (!defined($oSocket))
-            {
                 logErrorResult(
                     ERROR_HOST_CONNECT, coalesce(length($!) == 0 ? undef : $!, $SSL_ERROR), length($!) > 0 ? $SSL_ERROR : undef);
-            }
+            };
 
             # Bless with new class
             $self = $class->SUPER::new(

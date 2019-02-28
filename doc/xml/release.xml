@@ -47,6 +47,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="marc.cousin"/>
+                        </release-item-contributor-list>
+
+                        <p>Enable socket keep-alive on older <proper>Perl</proper> versions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="james.badger"/>
                         </release-item-contributor-list>
 
@@ -6541,6 +6549,11 @@
         <contributor id="magnus.hagander">
             <contributor-name-display>Magnus Hagander</contributor-name-display>
             <contributor-id type="github">mhagander</contributor-id>
+        </contributor>
+
+        <contributor id="marc.cousin">
+            <contributor-name-display>Marc Cousin</contributor-name-display>
+            <contributor-id type="github">marco44</contributor-id>
         </contributor>
 
         <contributor id="markus.nullmeier">

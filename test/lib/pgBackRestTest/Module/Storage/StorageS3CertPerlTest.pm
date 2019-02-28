@@ -65,7 +65,7 @@ sub run
                 # this bug gets fixed by Red Hat.  UPDATE: The behavior changed here but it does not seems to be fixed.
                 $self->testException(
                     sub {storageRepo({strStanza => 'test1'})->list('/')}, ERROR_HOST_CONNECT,
-                    'IO::Socket::IP configuration failed error.*shutdown while in init',
+                    'SSL connect attempt failed with unknown error error.*certificate verify failed',
                     'cert verify fails on ' . VM_CO7);
 
                 # It should work when verification is disabled
@@ -104,7 +104,7 @@ sub run
 
             $self->testException(
                 sub {storageRepo({strStanza => 'test4'})->list('/')}, ERROR_HOST_CONNECT,
-                $self->vm() eq VM_CO6 ? 'IO::Socket::INET configuration failed' : 'SSL_ca_path /bogus does not exist',
+                $self->vm() eq VM_CO6 ? 'SSL connect attempt failed with unknown error.*certificate verify failed' : 'No such file or directory',
                 'invalid ca path');
         }
     }
