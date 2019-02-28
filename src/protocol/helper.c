@@ -88,7 +88,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int protoco
         kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptCommand))), varNewStr(strNew(cfgCommandName(cfgCommand()))));
 
         // Add the process id -- used when more than one process will be called
-        kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptProcess))), varNewInt(0));
+        kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptProcess))), varNewInt((int)protocolId));
 
         // Add the host id -- for now this is hard-coded to 1
         kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptHostId))), varNewInt(1));
@@ -202,11 +202,13 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     if (cfgOptionSource(cfgOptRepoHostConfigPath) != cfgSourceDefault)
         kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptConfigPath))), cfgOption(cfgOptRepoHostConfigPath));
 
-    // Add the command option
-    kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptCommand))), varNewStr(strNew(cfgCommandName(cfgCommand()))));
+    // Add the command option (or use the current command option if it is valid)
+    if (!cfgOptionTest(cfgOptCommand))
+        kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptCommand))), varNewStr(strNew(cfgCommandName(cfgCommand()))));
 
-    // Add the process id -- used when more than one process will be called
-    kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptProcess))), varNewInt(0));
+    // Add the process id (or use the current process id if it is valid)
+    if (!cfgOptionTest(cfgOptProcess))
+        kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptProcess))), varNewInt((int)protocolId));
 
     // Don't pass the stanza if it is set.  It is better if the remote is stanza-agnostic so the client can operate on multiple
     // stanzas without starting a new remote.  Once the Perl code is removed the stanza option can be removed from the remote
@@ -227,11 +229,10 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 Get the remote protocol client
 ***********************************************************************************************************************************/
 ProtocolClient *
-protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int protocolId)
+protocolRemoteGet(ProtocolStorageType protocolStorageType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
-        FUNCTION_LOG_PARAM(UINT, protocolId);
     FUNCTION_LOG_END();
 
     protocolHelperInit();
@@ -252,6 +253,13 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int protocol
         }
         MEM_CONTEXT_END();
     }
+
+    // Determine protocol id for the remote.  If the process option is set then use that since we want to remote protocol id to
+    // match the local protocol id.  Otherwise set to 0 since the remote is being started from a main process.
+    unsigned int protocolId = 0;
+
+    if (cfgOptionTest(cfgOptProcess))
+        protocolId = (unsigned int)cfgOptionInt(cfgOptProcess);
 
     ASSERT(protocolId < protocolHelper.clientRemoteSize);
 

@@ -75,8 +75,7 @@ main(int argListSize, const char *argList[])
         else if (cfgCommand() == cfgCmdRemote &&
                  (strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGet)) ||
                   strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGetAsync)) ||
-                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdInfo)) ||
-                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdLocal))))
+                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdInfo))))
         {
             cmdRemote(STDIN_FILENO, STDOUT_FILENO);
         }

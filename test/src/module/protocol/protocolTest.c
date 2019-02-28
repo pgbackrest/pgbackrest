@@ -87,7 +87,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("protocolParam()"))
+    if (testBegin("protocolRemoteParam()"))
     {
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
@@ -98,7 +98,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 1), "|")),
+            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 0), "|")),
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|repo-host-user@repo-host"
@@ -124,8 +124,28 @@ testRun(void)
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|-p|444|repo-host-user@repo-host"
                         "|pgbackrest --command=archive-get --config=/path/pgbackrest.conf --config-include-path=/path/include"
-                        " --config-path=/path/config --process=0 --type=backup remote")),
+                        " --config-path=/path/config --process=1 --type=backup remote")),
             "remote protocol params with replacements");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAddZ(argList, "--command=archive-get");
+        strLstAddZ(argList, "--process=3");
+        strLstAddZ(argList, "--host-id=1");
+        strLstAddZ(argList, "--type=db");
+        strLstAddZ(argList, "--repo1-host=repo-host");
+        strLstAddZ(argList, "local");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(protocolRemoteParam(protocolStorageTypeRepo, 66), "|")),
+            strPtr(
+                strNew(
+                    "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|pgbackrest@repo-host"
+                        "|pgbackrest --command=archive-get --process=3 --type=backup remote")),
+            "remote protocol params for local");
     }
 
     // *****************************************************************************************************************************
@@ -586,8 +606,9 @@ testRun(void)
 
         TEST_RESULT_VOID(protocolFree(), "free protocol objects before anything has been created");
 
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
-        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 1), client, "get remote cached protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo), "get remote protocol");
+        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo), client, "get remote cached protocol");
+        TEST_RESULT_PTR(protocolHelper.clientRemote[0].client, client, "check position in cache");
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects again");
 
@@ -608,11 +629,16 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
         strLstAddZ(argList, "--repo1-host=localhost");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
-        strLstAddZ(argList, "info");
+        strLstAddZ(argList, "--process=4");
+        strLstAddZ(argList, "--command=archive-get");
+        strLstAddZ(argList, "--host-id=1");
+        strLstAddZ(argList, "--type=db");
+        strLstAddZ(argList, "local");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass before");
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo), "get remote protocol");
+        TEST_RESULT_PTR(protocolHelper.clientRemote[4].client, client, "check position in cache");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass after");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
@@ -638,7 +664,7 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_PTR(cfgOptionStr(cfgOptRepoCipherPass), NULL, "check cipher pass before");
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 1), "get remote protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo), "get remote protocol");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "dcba", "check cipher pass after");
 
         // Start local protocol

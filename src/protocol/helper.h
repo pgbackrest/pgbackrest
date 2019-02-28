@@ -27,7 +27,7 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 ProtocolClient *protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int protocolId);
-ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int protocolId);
+ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType);
 
 /***********************************************************************************************************************************
 Getters

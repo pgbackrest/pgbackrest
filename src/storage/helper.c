@@ -210,7 +210,7 @@ storageRepoGet(const String *type, bool write)
         result = storageDriverRemoteInterface(
             storageDriverRemoteNew(
                 STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
-                protocolRemoteGet(protocolStorageTypeRepo, 1)));
+                protocolRemoteGet(protocolStorageTypeRepo)));
     }
     // For now treat posix and cifs drivers as if they are the same.  This won't be true once the repository storage becomes
     // writable but for now it's OK.  The assertion above should pop if we try to create writable repo storage.

@@ -117,7 +117,7 @@ testRun(void)
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageRemote, strNew("test.txt"))))), FileMissingError,
             strPtr(
                 strNewFmt(
-                    "raised from remote-1 protocol on 'localhost': unable to open '%s/repo/test.txt' for read:"
+                    "raised from remote-0 protocol on 'localhost': unable to open '%s/repo/test.txt' for read:"
                         " [2] No such file or directory",
                     testPath())));
 
