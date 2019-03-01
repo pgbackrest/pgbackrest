@@ -204,14 +204,14 @@ memContextNew(const char *name)
         THROW_FMT(AssertError, "context name length must be > 0 and <= %d", MEM_CONTEXT_NAME_SIZE);
 
     // Find space for the new context
-    unsigned int contextIdx = memContextNewIndex(memContextCurrent(), true);
+    unsigned int contextIdx = memContextNewIndex(contextCurrent, true);
 
     // If the context has not been allocated yet
-    if (!memContextCurrent()->contextChildList[contextIdx])
-        memContextCurrent()->contextChildList[contextIdx] = memAllocInternal(sizeof(MemContext), true);
+    if (!contextCurrent->contextChildList[contextIdx])
+        contextCurrent->contextChildList[contextIdx] = memAllocInternal(sizeof(MemContext), true);
 
     // Get the context
-    MemContext *this = memContextCurrent()->contextChildList[contextIdx];
+    MemContext *this = contextCurrent->contextChildList[contextIdx];
 
     // Create initial space for allocations
     this->allocList = memAllocInternal(sizeof(MemContextAlloc) * MEM_CONTEXT_ALLOC_INITIAL_SIZE, true);
@@ -224,7 +224,7 @@ memContextNew(const char *name)
     this->state = memContextStateActive;
 
     // Set current context as the parent
-    this->contextParent = memContextCurrent();
+    this->contextParent = contextCurrent;
 
     // Return context
     FUNCTION_TEST_RETURN(this);
@@ -250,7 +250,7 @@ memContextCallback(MemContext *this, void (*callbackFunction)(void *), void *cal
         THROW(AssertError, "cannot assign callback to inactive context");
 
     // Top context cannot have a callback
-    if (this == memContextTop())
+    if (this == &contextTop)
         THROW(AssertError, "top context may not have a callback");
 
     // Error if callback has already been set - there may be valid use cases for this but error until one is found
@@ -281,7 +281,7 @@ memContextCallbackClear(MemContext *this)
     ASSERT(this->state == memContextStateActive || this->state == memContextStateFreeing);
 
     // Top context cannot have a callback
-    ASSERT(this != memContextTop());
+    ASSERT(this != &contextTop);
 
     // Clear callback function and argument
     this->callbackFunction = NULL;
@@ -304,45 +304,45 @@ memContextAlloc(size_t size, bool zero)
     // Find space for the new allocation
     unsigned int allocIdx;
 
-    for (allocIdx = 0; allocIdx < memContextCurrent()->allocListSize; allocIdx++)
-        if (!memContextCurrent()->allocList[allocIdx].active)
+    for (allocIdx = 0; allocIdx < contextCurrent->allocListSize; allocIdx++)
+        if (!contextCurrent->allocList[allocIdx].active)
             break;
 
     // If no space was found then allocate more
-    if (allocIdx == memContextCurrent()->allocListSize)
+    if (allocIdx == contextCurrent->allocListSize)
     {
         // Only the top context will not have initial space for allocations
-        if (memContextCurrent()->allocListSize == 0)
+        if (contextCurrent->allocListSize == 0)
         {
             // Allocate memory before modifying anything else in case there is an error
-            memContextCurrent()->allocList = memAllocInternal(sizeof(MemContextAlloc) * MEM_CONTEXT_ALLOC_INITIAL_SIZE, true);
+            contextCurrent->allocList = memAllocInternal(sizeof(MemContextAlloc) * MEM_CONTEXT_ALLOC_INITIAL_SIZE, true);
 
             // Set new size
-            memContextCurrent()->allocListSize = MEM_CONTEXT_ALLOC_INITIAL_SIZE;
+            contextCurrent->allocListSize = MEM_CONTEXT_ALLOC_INITIAL_SIZE;
         }
         // Else grow the list
         else
         {
             // Calculate new list size
-            unsigned int allocListSizeNew = memContextCurrent()->allocListSize * 2;
+            unsigned int allocListSizeNew = contextCurrent->allocListSize * 2;
 
             // ReAllocate memory before modifying anything else in case there is an error
-            memContextCurrent()->allocList = memReAllocInternal(
-                memContextCurrent()->allocList, sizeof(MemContextAlloc) * memContextCurrent()->allocListSize,
+            contextCurrent->allocList = memReAllocInternal(
+                contextCurrent->allocList, sizeof(MemContextAlloc) * contextCurrent->allocListSize,
                 sizeof(MemContextAlloc) * allocListSizeNew, true);
 
             // Set new size
-            memContextCurrent()->allocListSize = allocListSizeNew;
+            contextCurrent->allocListSize = allocListSizeNew;
         }
     }
 
     // Allocate the memory
-    memContextCurrent()->allocList[allocIdx].active = true;
-    memContextCurrent()->allocList[allocIdx].size = (unsigned int)size;
-    memContextCurrent()->allocList[allocIdx].buffer = memAllocInternal(size, zero);
+    contextCurrent->allocList[allocIdx].active = true;
+    contextCurrent->allocList[allocIdx].size = (unsigned int)size;
+    contextCurrent->allocList[allocIdx].buffer = memAllocInternal(size, zero);
 
     // Return buffer
-    FUNCTION_TEST_RETURN(memContextCurrent()->allocList[allocIdx].buffer);
+    FUNCTION_TEST_RETURN(contextCurrent->allocList[allocIdx].buffer);
 }
 
 /***********************************************************************************************************************************
@@ -360,12 +360,12 @@ memFind(const void *buffer)
     // Find memory allocation
     unsigned int allocIdx;
 
-    for (allocIdx = 0; allocIdx < memContextCurrent()->allocListSize; allocIdx++)
-        if (memContextCurrent()->allocList[allocIdx].buffer == buffer && memContextCurrent()->allocList[allocIdx].active)
+    for (allocIdx = 0; allocIdx < contextCurrent->allocListSize; allocIdx++)
+        if (contextCurrent->allocList[allocIdx].buffer == buffer && contextCurrent->allocList[allocIdx].active)
             break;
 
     // Error if the buffer was not found
-    if (allocIdx == memContextCurrent()->allocListSize)
+    if (allocIdx == contextCurrent->allocListSize)
         THROW(AssertError, "unable to find allocation");
 
     FUNCTION_TEST_RETURN(allocIdx);
@@ -398,7 +398,7 @@ memGrowRaw(const void *buffer, size_t size)
     ASSERT(buffer != NULL);
 
     // Find the allocation
-    MemContextAlloc *alloc = &(memContextCurrent()->allocList[memFind(buffer)]);
+    MemContextAlloc *alloc = &(contextCurrent->allocList[memFind(buffer)]);
 
     // Grow the buffer
     alloc->buffer = memReAllocInternal(alloc->buffer, alloc->size, size, false);
@@ -433,7 +433,7 @@ memFree(void *buffer)
     ASSERT(buffer != NULL);
 
     // Find the allocation
-    MemContextAlloc *alloc = &(memContextCurrent()->allocList[memFind(buffer)]);
+    MemContextAlloc *alloc = &(contextCurrent->allocList[memFind(buffer)]);
 
     // Free the buffer
     memFreeInternal(alloc->buffer);
@@ -506,7 +506,7 @@ memContextSwitch(MemContext *this)
     if (this->state != memContextStateActive)
         THROW(AssertError, "cannot switch to inactive context");
 
-    MemContext *memContextOld = memContextCurrent();
+    MemContext *memContextOld = contextCurrent;
     contextCurrent = this;
 
     FUNCTION_TEST_RETURN(memContextOld);
@@ -567,7 +567,7 @@ memContextFree(MemContext *this)
     if (this->state != memContextStateFreeing)
     {
         // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
-        if (this == memContextCurrent() && this != memContextTop())
+        if (this == contextCurrent && this != &contextTop)
             THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
 
         // Error if context is not active
@@ -615,7 +615,7 @@ memContextFree(MemContext *this)
         }
 
         // Make top context active again
-        if (this == memContextTop())
+        if (this == &contextTop)
             this->state = memContextStateActive;
         // Else reset the memory context so it can be reused
         else
