@@ -46,10 +46,11 @@
 
         <variable key="pg-version" if="{[os-type-is-debian]}">9.4</variable>
         <variable key="pg-version" if="{[os-type-is-centos]}">9.5</variable>
-        <variable key="pg-version-nodot">95</variable>
+        <variable key="pg-version-nodot" eval="y">my $version = '{[pg-version]}'; $version =~ s/\.//g; return $version;</variable>
+
         <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">9.5</variable>
         <variable key="pg-version-upgrade" if="{[os-type-is-centos]}">9.6</variable>
-        <variable key="pg-version-upgrade-nodot" if="{[os-type-is-centos]}">96</variable>
+        <variable key="pg-version-upgrade-nodot" eval="y">my $version = '{[pg-version-upgrade]}'; $version =~ s/\.//g; return $version;</variable>
 
         <variable key="pg-bin-path" if="{[os-type-is-debian]}">/usr/lib/postgresql/{[pg-version]}/bin</variable>
         <variable key="pg-bin-path" if="{[os-type-is-centos]}">/usr/pgsql-{[pg-version]}/bin</variable>
@@ -1204,7 +1205,7 @@
         </section>
 
         <!-- SECTION => BACKUP - STOP-AUTO -->
-        <section id="option-stop-auto">
+        <section if="{[pg-version]} &lt; 9.6" id="option-stop-auto">
             <title>Automatic Stop Option</title>
 
             <p>Sometimes <backrest/> will exit unexpectedly and the backup in progress on the <postgres/> cluster will not be properly stopped.  <backrest/> exits as quickly as possible when an error occurs so that the cause can be reported accurately and is not masked by another problem that might happen during a more extensive cleanup.</p>
@@ -1784,7 +1785,8 @@
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
-                    {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" restore</exe-cmd>
+                    {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}"
+                    --target-action=promote restore</exe-cmd>
             </execute>
 
             <execute user="root" show="n">
@@ -1860,7 +1862,7 @@
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
-                     {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" restore</exe-cmd>
+                     {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" --target-action=promote restore</exe-cmd>
             </execute>
 
             <execute user="root" show="n">
@@ -1916,7 +1918,7 @@
                 <exe-cmd>
                     {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
                         {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}"
-                        {[dash]}-set={[backup-last]} restore
+                        {[dash]}-set={[backup-last]} --target-action=promote restore
                 </exe-cmd>
             </execute>
 

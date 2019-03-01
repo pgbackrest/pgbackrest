@@ -130,6 +130,10 @@
                     <release-item>
                         <p>Add instructions for building the coverage report.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Documentation builds on <postgres/> 9.4-10.</p>
+                    </release-item>
                 </release-development-list>
             </release-doc-list>
 
