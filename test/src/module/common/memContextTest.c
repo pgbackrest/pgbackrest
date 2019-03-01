@@ -97,10 +97,7 @@ testRun(void)
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "top context == current context");
 
         // Context name length errors
-        TEST_ERROR(memContextNew(""), AssertError, "context name length must be > 0 and <= 64");
-        TEST_ERROR(
-            memContextNew("12345678901234567890123456789012345678901234567890123456789012345"),
-            AssertError, "context name length must be > 0 and <= 64");
+        TEST_ERROR(memContextNew(""), AssertError, "assertion 'name[0] != '\\0'' failed");
 
         MemContext *memContext = memContextNew("test1");
         TEST_RESULT_STR(memContextName(memContext), "test1", "test1 context name");

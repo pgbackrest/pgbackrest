@@ -29,7 +29,7 @@ Contains information about the memory context
 struct MemContext
 {
     MemContextState state;                                          // Current state of the context
-    const char name[MEM_CONTEXT_NAME_SIZE + 1];                     // Indicates what the context is being used for
+    const char *name;                                               // Indicates what the context is being used for
 
     MemContext *contextParent;                                      // All contexts have a parent except top
     unsigned int contextParentIdx;                                  // Index in the parent context list
@@ -201,8 +201,7 @@ memContextNew(const char *name)
     ASSERT(name != NULL);
 
     // Check context name length
-    if (strlen(name) == 0 || strlen(name) > MEM_CONTEXT_NAME_SIZE)
-        THROW_FMT(AssertError, "context name length must be > 0 and <= %d", MEM_CONTEXT_NAME_SIZE);
+    ASSERT(name[0] != '\0');
 
     // Find space for the new context
     unsigned int contextIdx = memContextNewIndex(contextCurrent, true);
@@ -219,7 +218,7 @@ memContextNew(const char *name)
     this->allocListSize = MEM_CONTEXT_ALLOC_INITIAL_SIZE;
 
     // Set the context name
-    strcpy((char *)this->name, name);
+    this->name = name;
 
     // Set new context active
     this->state = memContextStateActive;

@@ -108,7 +108,7 @@
                     </release-item>
 
                     <release-item>
-                        <p><code>MemContext</code> improvements.  Improve performance of context and memory allocations. Use <code>contextTop</code>/<code>contextCurrent</code> instead of <code>memContextTop()</code>/<code>memContextCurrent()</code>.</p>
+                        <p><code>MemContext</code> improvements.  Improve performance of context and memory allocations. Use <code>contextTop</code>/<code>contextCurrent</code> instead of <code>memContextTop()</code>/<code>memContextCurrent()</code>.  Don't make a copy of the context name.</p>
                     </release-item>
 
                     <release-item>

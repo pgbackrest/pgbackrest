@@ -14,11 +14,6 @@ typedef struct MemContext MemContext;
 #include "common/error.h"
 
 /***********************************************************************************************************************************
-Memory context names cannot be larger than this size (excluding terminator) or an error will be thrown
-***********************************************************************************************************************************/
-#define MEM_CONTEXT_NAME_SIZE                                       64
-
-/***********************************************************************************************************************************
 Define initial number of memory contexts
 
 No space is reserved for child contexts when a new context is created because most contexts will be leaves.  When a child context is
@@ -135,6 +130,8 @@ MEM_CONTEXT_NEW_BEGIN(memContextName)
 MEM_CONTEXT_NEW_END();
 
 <Old memory context is restored>
+
+Note that memory context names are expected to live for the lifetime of the context -- no copy is made.
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_NEW()                                                                                                          \
     MEM_CONTEXT_NEW_memContext
