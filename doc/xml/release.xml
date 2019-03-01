@@ -126,6 +126,12 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <p>Update default documentation version to <postgres/> 10.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Add instructions for building the coverage report.</p>

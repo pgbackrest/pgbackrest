@@ -44,12 +44,14 @@
 
         <variable key="pgbackrest-repo-path">/pgbackrest</variable>
 
-        <variable key="pg-version" if="{[os-type-is-debian]}">9.4</variable>
-        <variable key="pg-version" if="{[os-type-is-centos]}">9.5</variable>
+        <variable key="pg-version" if="{[os-type-is-debian]}">10</variable>
+        <variable key="pg-version" if="{[os-type-is-centos6]}">9.5</variable>
+        <variable key="pg-version" if="{[os-type-is-centos7]}">9.6</variable>
         <variable key="pg-version-nodot" eval="y">my $version = '{[pg-version]}'; $version =~ s/\.//g; return $version;</variable>
 
-        <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">9.5</variable>
-        <variable key="pg-version-upgrade" if="{[os-type-is-centos]}">9.6</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">11</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-centos6]}">9.6</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-centos7]}">10</variable>
         <variable key="pg-version-upgrade-nodot" eval="y">my $version = '{[pg-version-upgrade]}'; $version =~ s/\.//g; return $version;</variable>
 
         <variable key="pg-bin-path" if="{[os-type-is-debian]}">/usr/lib/postgresql/{[pg-version]}/bin</variable>
