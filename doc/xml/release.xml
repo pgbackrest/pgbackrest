@@ -108,7 +108,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Use <code>contextTop</code>/<code>contextCurrent</code> instead of <code>memContextTop()</code>/<code>memContextCurrent()</code> in <code>MemContext</code> module.</p>
+                        <p><code>MemContext</code> improvements.  Improve performance of context and memory allocations. Use <code>contextTop</code>/<code>contextCurrent</code> instead of <code>memContextTop()</code>/<code>memContextCurrent()</code>.</p>
                     </release-item>
 
                     <release-item>
