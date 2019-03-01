@@ -28,6 +28,7 @@ use pgBackRest::Protocol::Storage::Helper;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::VmTest;
 use pgBackRestTest::Env::ExpireEnvTest;
 use pgBackRestTest::Env::Host::HostS3Test;
 use pgBackRestTest::Env::HostEnvTest;
@@ -76,17 +77,28 @@ sub run
     my $lBaseTime = time() - (SECONDS_PER_DAY * 56);
     my $strDescription;
 
-    my $bS3 = false;
-
-    foreach my $bRepoEncrypt (false, true)
+    foreach my $rhRun
+    (
+        {vm => VM1, s3 => false, encrypt => false},
+        {vm => VM2, s3 =>  true, encrypt => false},
+        {vm => VM3, s3 =>  true, encrypt =>  true},
+        {vm => VM4, s3 => false, encrypt =>  true},
+    )
     {
+        # Only run tests for this vm
+        next if ($rhRun->{vm} ne $self->vm());
+
+        # Increment the run, log, and decide whether this unit test should be run
+        my $bS3 = $rhRun->{s3};
+        my $bEncrypt = $rhRun->{encrypt};
+
         ############################################################################################################################
-        # Pass !$bRepoEncrypt so expect logs are not generated for encryption tests
-        if ($self->begin("local, enc ${bRepoEncrypt}", !$bRepoEncrypt))
+        # Pass !$bEncrypt so expect logs are not generated for encryption tests
+        if ($self->begin("local, enc ${bEncrypt}, s3 ${bS3}", !$bEncrypt))
         {
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-                true, $self->expect(), {bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
+                true, $self->expect(), {bS3 => $bS3, bRepoEncrypt => $bEncrypt});
 
             $self->initStanzaOption($oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath}, $oHostS3);
             $self->configTestLoad(CFGCMD_STANZA_CREATE);
@@ -181,12 +193,12 @@ sub run
         }
 
         ############################################################################################################################
-        # Pass !$bRepoEncrypt so expect logs are not generated for encryption tests
-        if ($self->begin("Expire::stanzaUpgrade, enc ${bRepoEncrypt}", !$bRepoEncrypt))
+        # Pass !$bEncrypt so expect logs are not generated for encryption tests
+        if ($self->begin("Expire::stanzaUpgrade, enc ${bEncrypt}, s3 ${bS3}", !$bEncrypt))
         {
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-                true, $self->expect(), {bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
+                true, $self->expect(), {bS3 => $bS3, bRepoEncrypt => $bEncrypt});
 
             $self->initStanzaOption($oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath}, $oHostS3);
             $self->configTestLoad(CFGCMD_STANZA_CREATE);
