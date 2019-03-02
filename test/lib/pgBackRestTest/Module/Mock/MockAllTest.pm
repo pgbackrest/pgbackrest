@@ -32,6 +32,7 @@ use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::VmTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostS3Test;
 use pgBackRestTest::Env::HostEnvTest;
@@ -59,19 +60,33 @@ sub run
 {
     my $self = shift;
 
-    foreach my $bS3 (false, true)
+    foreach my $rhRun
+    (
+        {vm => VM1, remote => false, s3 =>  true, encrypt => false, delta =>  true},
+        {vm => VM1, remote =>  true, s3 => false, encrypt =>  true, delta => false},
+        {vm => VM2, remote => false, s3 => false, encrypt =>  true, delta =>  true},
+        {vm => VM2, remote =>  true, s3 =>  true, encrypt => false, delta => false},
+        {vm => VM3, remote => false, s3 => false, encrypt => false, delta =>  true},
+        {vm => VM3, remote =>  true, s3 =>  true, encrypt =>  true, delta => false},
+        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true, delta => false},
+        {vm => VM4, remote =>  true, s3 => false, encrypt => false, delta =>  true},
+    )
     {
-    foreach my $bRemote ($bS3 ? (true) : (false, true))
-    {
-        my $bRepoEncrypt = $bS3 ? true : false;
-        my $bDeltaBackup = !$bRemote || ($bRepoEncrypt && $bRemote) ? true : false;
+        # Only run tests for this vm
+        next if ($rhRun->{vm} ne $self->vm());
 
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bRepoEncrypt}")) {next}
+        my $bRemote = $rhRun->{remote};
+        my $bS3 = $rhRun->{s3};
+        my $bEncrypt = $rhRun->{encrypt};
+        my $bDeltaBackup = $rhRun->{delta};
+
+        # Increment the run, log, and decide whether this unit test should be run
+        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bEncrypt}, delta ${bDeltaBackup}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
+            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
 
         # Reduce log level for many tests
         my $strLogReduced = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . '=' . lc(DETAIL);
@@ -106,7 +121,7 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA} = JSON::PP::false;
 
-        if ($bRepoEncrypt)
+        if ($bEncrypt)
         {
             $oManifest{&INI_SECTION_CIPHER}{&INI_KEY_CIPHER_PASS} = 'REPLACEME';
         }
@@ -927,7 +942,7 @@ sub run
         forceStorageMove(storageRepo(), 'backup/' . $self->stanza() . "/${strBackup}", $strResumePath);
 
         # Munge manifest so the resumed file in the repo appears to be bad
-        if ($bRemote)
+        if ($bEncrypt || $bRemote)
         {
             $oHostBackup->manifestMunge(
                 basename($strResumePath),
@@ -1105,7 +1120,7 @@ sub run
         my $strBackupInfoOldFile = "${strBackupInfoFile}.old";
         my $strBackupInfoCopyOldFile = "${strBackupInfoCopyFile}.old";
 
-        if ($bRepoEncrypt)
+        if ($bEncrypt)
         {
             forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
             forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
@@ -1135,10 +1150,10 @@ sub run
         # Use force to create the stanza (this is expected to fail for encrypted repos)
         $oHostBackup->stanzaCreate('create required data for stanza',
             {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE),
-                iExpectedExitStatus => $bRepoEncrypt ? ERROR_FILE_MISSING : undef});
+                iExpectedExitStatus => $bEncrypt ? ERROR_FILE_MISSING : undef});
 
         # Copy encrypted backup info files back so testing can proceed
-        if ($bRepoEncrypt)
+        if ($bEncrypt)
         {
             forceStorageMove(storageRepo(), $strBackupInfoOldFile, $strBackupInfoFile, {bRecurse => false});
             forceStorageMove(storageRepo(), $strBackupInfoCopyOldFile, $strBackupInfoCopyFile, {bRecurse => false});
@@ -1399,7 +1414,6 @@ sub run
                 $strType, 'option backup-standby reset - backup performed from master', {oExpectedManifest => \%oManifest,
                     strOptionalParam => '--log-level-console=info --' . cfgOptionName(CFGOPT_BACKUP_STANDBY)});
         }
-    }
     }
 }
 
