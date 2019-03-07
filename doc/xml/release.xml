@@ -128,6 +128,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Prevent option warning from being output when running help command.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improve null-handling of <code>strToLog()</code> and <code>varToLog()</code>.</p>
                     </release-item>
 

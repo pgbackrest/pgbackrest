@@ -163,6 +163,16 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("help"));
+        strLstAdd(argList, strNew("backup"));
+        strLstAdd(argList, strNew("process-max"));
+
+        harnessLogLevelSet(logLevelWarn);
+        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load help config -- no retention warning");
+        TEST_RESULT_BOOL(cfgCommandHelp(), true, "    command is help");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--no-log-timestamp"));
         strLstAdd(argList, strNew("expire"));
