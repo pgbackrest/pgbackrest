@@ -113,6 +113,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="luca.ferrari"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <id>clean</id> and <id>uninstall</id> targets to <file>Makefile</file>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-contributor id="stephen.frost"/>
                         </release-item-contributor-list>
 
@@ -6558,6 +6566,11 @@
         <contributor id="leonardo.gg.avellar">
             <contributor-name-display>Leonardo GG Avellar</contributor-name-display>
             <contributor-id type="github">L30Bola</contributor-id>
+        </contributor>
+
+        <contributor id="luca.ferrari">
+            <contributor-name-display>Luca Ferrari</contributor-name-display>
+            <contributor-id type="github">fluca1978</contributor-id>
         </contributor>
 
         <contributor id="magnus.hagander">

@@ -179,6 +179,21 @@ install: pgbackrest
 	install -m 755 pgbackrest $(DESTDIR)/usr/bin
 
 ####################################################################################################################################
+# Uninstallation.  DESTDIR should be set to the same value as when installed.
+####################################################################################################################################
+uninstall:
+	rm -f $(DESTDIR)/usr/bin/pgbackrest
+
+####################################################################################################################################
+# Clean object files and executable created by make
+####################################################################################################################################
+.PHONY = clean
+
+clean:
+	rm -f $(OBJS)
+	rm -f pgbackrest
+
+####################################################################################################################################
 # Compile rules
 ####################################################################################################################################
 command/archive/common.o: command/archive/common.c command/archive/common.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/wait.h postgres/version.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
