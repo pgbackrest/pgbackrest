@@ -51,7 +51,7 @@ LDFLAGS = -lcrypto -lssl -lxml2 -lz $(LDPERL) $(LDEXTRA)
 # Install options
 ####################################################################################################################################
 # Modify destination install directory
-DESTDIR =
+DESTDIR = /usr
 
 ####################################################################################################################################
 # List of required source files.  main.c should always be listed last and the rest in alpha order.
@@ -175,8 +175,8 @@ pgbackrest: $(OBJS)
 # Installation.  DESTDIR can be used to modify the install location.
 ####################################################################################################################################
 install: pgbackrest
-	install -d $(DESTDIR)/usr/bin
-	install -m 755 pgbackrest $(DESTDIR)/usr/bin
+	install -d $(DESTDIR)/bin
+	install -m 755 pgbackrest $(DESTDIR)/bin
 
 ####################################################################################################################################
 # Compile rules
