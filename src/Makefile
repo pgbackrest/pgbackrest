@@ -2,13 +2,21 @@
 # pgBackRest Makefile
 ####################################################################################################################################
 
+# Determine the OS. Borrowed from pgTAP Makefile
+OSNAME := $(shell $(SHELL) ./getos.sh)
+
 ####################################################################################################################################
 # Compile options
 ####################################################################################################################################
 CC=gcc
 
-# Compile using C99 and Posix 2001 standards (also _DARWIN_C_SOURCE for MacOS)
-CSTD = -std=c99 -D_POSIX_C_SOURCE=200112L -D_DARWIN_C_SOURCE
+ifeq ( $(OSNAME), linux)
+	# Compile using C99 and Posix 2001 standards (also _DARWIN_C_SOURCE for MacOS)
+	CSTD = -std=c99 -D_POSIX_C_SOURCE=200112L -D_DARWIN_C_SOURCE
+else
+	# BSD systems require less flags
+	CSTD = -std=c99
+endif
 
 # Compile optimizations
 COPT = -O2
