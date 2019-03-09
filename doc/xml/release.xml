@@ -121,6 +121,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="douglas.j.hunley"/>
+                        </release-item-contributor-list>
+
+                        <p>Make <id>DESTDIR</id> fully-configurable in the <file>Makefile</file>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-contributor id="luca.ferrari"/>
                         </release-item-contributor-list>
 

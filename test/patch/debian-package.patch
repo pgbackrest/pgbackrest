@@ -1,0 +1,11 @@
+--- rules
++++ rules
+@@ -34,7 +34,7 @@
+ 	dh_auto_clean
+ 
+ override_dh_auto_install:
+-	make -C src install DESTDIR=$(CURDIR)/debian/pgbackrest
++	make -C src install DESTDIR=$(CURDIR)/debian/pgbackrest/usr/bin
+ 	dh_auto_install
+ 
+ .PHONY: build
