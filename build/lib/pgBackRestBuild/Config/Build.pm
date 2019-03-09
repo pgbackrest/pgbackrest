@@ -148,6 +148,7 @@ sub buildConfig
                 ucfirst(lc($rhCommand->{&CFGDEF_LOG_LEVEL_STDERR_MAX})) . ")\n" .
             "        CONFIG_COMMAND_LOCK_REQUIRED(" . ($rhCommand->{&CFGDEF_LOCK_REQUIRED} ? 'true' : 'false') . ")\n" .
             "        CONFIG_COMMAND_LOCK_TYPE(lockType" . ucfirst(lc($rhCommand->{&CFGDEF_LOCK_TYPE})) . ")\n" .
+            "        CONFIG_COMMAND_PARAMETER_ALLOWED(" . ($rhCommand->{&CFGDEF_PARAMETER_ALLOWED} ? 'true' : 'false') . ")\n" .
             "    )\n";
 
         $iCommandTotal++;

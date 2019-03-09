@@ -578,6 +578,22 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("backup"));
+        strLstAdd(argList, strNew("param1"));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList), false), ParamInvalidError, "command does not allow parameters");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("help"));
+        strLstAdd(argList, strNew("backup"));
+        strLstAdd(argList, strNew("param1"));
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "ignore params when help command");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--no-online"));
         strLstAdd(argList, strNew("--no-online"));
         TEST_ERROR(

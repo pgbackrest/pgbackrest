@@ -493,6 +493,11 @@ use constant CFGDEF_LOCK_TYPE_ALL                                   => 'all';
 use constant CFGDEF_LOCK_TYPE_NONE                                  => 'none';
     push @EXPORT, qw(CFGDEF_LOCK_TYPE_NONE);
 
+# Does the command allow parameters?  If not then the config parser will automatically error out if parameters are detected.  If so,
+# then the command is responsible for ensuring that the parameters are valid.
+use constant CFGDEF_PARAMETER_ALLOWED                               => 'parameter-allowed';
+    push @EXPORT, qw(CFGDEF_PARAMETER_ALLOWED);
+
 # Option defines
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGDEF_ALLOW_LIST                                      => 'allow-list';
@@ -567,6 +572,7 @@ my $rhCommandDefine =
     {
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
+        &CFGDEF_PARAMETER_ALLOWED => true,
     },
 
     &CFGCMD_ARCHIVE_GET_ASYNC =>
@@ -574,12 +580,14 @@ my $rhCommandDefine =
         &CFGDEF_LOG_FILE => true,
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
+        &CFGDEF_PARAMETER_ALLOWED => true,
     },
 
     &CFGCMD_ARCHIVE_PUSH =>
     {
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
+        &CFGDEF_PARAMETER_ALLOWED => true,
     },
 
     &CFGCMD_BACKUP =>
@@ -603,6 +611,7 @@ my $rhCommandDefine =
     {
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
+        &CFGDEF_PARAMETER_ALLOWED => true,
     },
 
     &CFGCMD_INFO =>
@@ -2478,6 +2487,12 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
         {
             confess &log(ERROR, "lock type is required for command '${strCommand}' and cannot be 'none'");
         }
+    }
+
+    # Default parameter allowed is false
+    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_PARAMETER_ALLOWED}))
+    {
+        $rhCommandDefine->{$strCommand}{&CFGDEF_PARAMETER_ALLOWED} = false;
     }
 }
 

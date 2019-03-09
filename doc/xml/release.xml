@@ -55,6 +55,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="jason.odonnell"/>
+                        </release-item-contributor-list>
+
+                        <p>Error when parameters are passed to a command that does not accept parameters.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="james.badger"/>
                         </release-item-contributor-list>
 

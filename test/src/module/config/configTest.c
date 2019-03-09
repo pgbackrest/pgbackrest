@@ -64,6 +64,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
         TEST_RESULT_INT(cfgLockType(), lockTypeBackup, "lock is type backup");
+        TEST_RESULT_BOOL(cfgParameterAllowed(), false, "parameters not allowed");
 
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdInfo), "command set to info");
         TEST_RESULT_INT(cfgLogLevelDefault(), logLevelDebug, "default log level is debug");

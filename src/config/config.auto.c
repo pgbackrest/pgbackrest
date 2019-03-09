@@ -18,6 +18,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeArchive)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
     )
 
     CONFIG_COMMAND
@@ -29,6 +30,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(true)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeArchive)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
     )
 
     CONFIG_COMMAND
@@ -40,6 +42,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeArchive)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
     )
 
     CONFIG_COMMAND
@@ -51,6 +54,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(true)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeBackup)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
@@ -62,6 +66,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
@@ -73,6 +78,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(true)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeBackup)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
@@ -84,6 +90,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
     )
 
     CONFIG_COMMAND
@@ -95,6 +102,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
@@ -106,6 +114,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelError)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
@@ -117,6 +126,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelError)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
@@ -128,6 +138,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
@@ -139,6 +150,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(true)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeAll)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
@@ -150,6 +162,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(true)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeAll)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
@@ -161,6 +174,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(true)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeAll)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
@@ -172,6 +186,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
@@ -183,6 +198,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
@@ -194,6 +210,7 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 )
 

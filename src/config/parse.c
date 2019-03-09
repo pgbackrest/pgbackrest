@@ -541,7 +541,12 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
         // Set command params
         if (commandParamList != NULL)
+        {
+            if (!cfgCommandHelp() && !cfgParameterAllowed())
+                THROW(ParamInvalidError, "command does not allow parameters");
+
             cfgCommandParamSet(commandParamList);
+        }
 
         // Enable logging (except for local and remote commands) so config file warnings will be output
         if (cfgCommand() != cfgCmdLocal && cfgCommand() != cfgCmdRemote && resetLogLevel)

@@ -21,6 +21,8 @@ typedef struct ConfigCommandData
     bool logFile:1;
     unsigned int logLevelDefault:4;
     unsigned int logLevelStdErrMax:4;
+
+    bool parameterAllowed:1;
 } ConfigCommandData;
 
 #define CONFIG_COMMAND_LIST(...)                                                                                                   \
@@ -41,6 +43,8 @@ typedef struct ConfigCommandData
     .logLevelStdErrMax = logLevelStdErrMaxParam,
 #define CONFIG_COMMAND_NAME(nameParam)                                                                                             \
     .name = nameParam,
+#define CONFIG_COMMAND_PARAMETER_ALLOWED(parameterAllowedParam)                                                                    \
+    .parameterAllowed = parameterAllowedParam,
 
 /***********************************************************************************************************************************
 Map options names and indexes to option definitions.
@@ -382,6 +386,19 @@ cfgLogLevelStdErrMax(void)
     ASSERT(command != cfgCmdNone);
 
     FUNCTION_TEST_RETURN((LogLevel)configCommandData[cfgCommand()].logLevelStdErrMax);
+}
+
+/***********************************************************************************************************************************
+Does this command allow parameters?
+***********************************************************************************************************************************/
+bool
+cfgParameterAllowed(void)
+{
+    FUNCTION_TEST_VOID();
+
+    ASSERT(command != cfgCmdNone);
+
+    FUNCTION_TEST_RETURN(configCommandData[cfgCommand()].parameterAllowed);
 }
 
 /***********************************************************************************************************************************
