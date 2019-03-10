@@ -327,7 +327,12 @@ sub walSegmentFind
     # If waiting and no WAL segment was found then throw an error
     if (@stryWalFileName == 0 && defined($iWaitSeconds))
     {
-        confess &log(ERROR, "could not find WAL segment ${strWalSegment} after ${iWaitSeconds} second(s)", ERROR_ARCHIVE_TIMEOUT);
+        confess &log(
+            ERROR,
+            "could not find WAL segment ${strWalSegment} after ${iWaitSeconds} second(s)" .
+                "\nHINT: is archive_command configured correctly?" .
+                "\nHINT: use the check command to verify that PostgreSQL is archiving.",
+            ERROR_ARCHIVE_TIMEOUT);
     }
 
     # Return from function and log return values if any

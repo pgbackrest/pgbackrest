@@ -63,6 +63,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="hans.jurgen.schonig"/>
+                        </release-item-contributor-list>
+
+                        <p>Add hints when unable to find a WAL segment in the archive.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="james.badger"/>
                         </release-item-contributor-list>
 
@@ -6513,6 +6521,10 @@
         <contributor id="greg.smith">
             <contributor-name-display>Greg Smith</contributor-name-display>
             <contributor-id type="github">gregscds</contributor-id>
+        </contributor>
+
+        <contributor id="hans.jurgen.schonig">
+            <contributor-name-display>Hans-J&amp;uuml;rgen Sch&amp;ouml;nig</contributor-name-display>
         </contributor>
 
         <contributor id="heath.lord">

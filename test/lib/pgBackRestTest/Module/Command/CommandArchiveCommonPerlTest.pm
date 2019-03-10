@@ -139,7 +139,9 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(
             sub {walSegmentFind(storageRepo(), $strArchiveId, $strWalSegment, .1)}, ERROR_ARCHIVE_TIMEOUT,
-            "could not find WAL segment ${strWalSegment} after 0.1 second(s)");
+            "could not find WAL segment ${strWalSegment} after 0.1 second(s)" .
+                "\nHINT: is archive_command configured correctly?" .
+                "\nHINT: use the check command to verify that PostgreSQL is archiving.");
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $strWalMajorPath = "${strArchivePath}/" . substr($strWalSegment, 0, 16);
