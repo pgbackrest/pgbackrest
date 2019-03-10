@@ -165,11 +165,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=16384
 option-checksum-page=true
 option-compress=false
+option-compress-level=3
+option-compress-level-network=1
 option-delta=false
 option-hardlink=false
 option-online=false
+option-process-max=1
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
@@ -348,11 +352,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=true
 option-compress=false
+option-compress-level=3
+option-compress-level-network=1
 option-delta=false
 option-hardlink=false
 option-online=false
+option-process-max=2
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
@@ -636,11 +644,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=true
 option-compress=false
+option-compress-level=3
+option-compress-level-network=1
 option-delta=false
 option-hardlink=false
 option-online=false
+option-process-max=2
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
@@ -830,11 +842,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=true
 option-compress=false
+option-compress-level=3
+option-compress-level-network=1
 option-delta=true
 option-hardlink=false
 option-online=false
+option-process-max=1
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
@@ -1034,11 +1050,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=true
 option-compress=false
+option-compress-level=3
+option-compress-level-network=1
 option-delta=true
 option-hardlink=false
 option-online=false
+option-process-max=1
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
@@ -1234,11 +1254,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=true
 option-compress=false
+option-compress-level=3
+option-compress-level-network=1
 option-delta=true
 option-hardlink=false
 option-online=false
+option-process-max=1
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
@@ -1455,11 +1479,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=true
 option-compress=false
+option-compress-level=3
+option-compress-level-network=1
 option-delta=false
 option-hardlink=false
 option-online=false
+option-process-max=1
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
@@ -1677,11 +1705,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=true
 option-compress=false
+option-compress-level=3
+option-compress-level-network=1
 option-delta=true
 option-hardlink=false
 option-online=false
+option-process-max=2
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
@@ -1878,11 +1910,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=true
 option-compress=false
+option-compress-level=3
+option-compress-level-network=1
 option-delta=true
 option-hardlink=false
 option-online=false
+option-process-max=1
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
@@ -2077,11 +2113,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=true
 option-compress=false
+option-compress-level=3
+option-compress-level-network=1
 option-delta=false
 option-hardlink=false
 option-online=false
+option-process-max=2
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
@@ -2280,11 +2320,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=true
 option-compress=false
+option-compress-level=3
+option-compress-level-network=1
 option-delta=true
 option-hardlink=false
 option-online=false
+option-process-max=1
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
@@ -2475,11 +2519,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=false
 option-compress=true
+option-compress-level=3
+option-compress-level-network=1
 option-delta=false
 option-hardlink=false
 option-online=false
+option-process-max=2
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
@@ -3031,11 +3079,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=false
 option-compress=true
+option-compress-level=3
+option-compress-level-network=1
 option-delta=false
 option-hardlink=false
 option-online=false
+option-process-max=2
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
@@ -3408,11 +3460,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=false
 option-compress=true
+option-compress-level=3
+option-compress-level-network=1
 option-delta=false
 option-hardlink=false
 option-online=false
+option-process-max=2
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base-2/base","type":"path"}
@@ -3610,11 +3666,15 @@ db-version="9.4"
 option-archive-check=true
 option-archive-copy=true
 option-backup-standby=false
+option-buffer-size=4194304
 option-checksum-page=false
 option-compress=true
+option-compress-level=3
+option-compress-level-network=1
 option-delta=false
 option-hardlink=false
 option-online=false
+option-process-max=2
 
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base-2/base","type":"path"}

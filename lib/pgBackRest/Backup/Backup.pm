@@ -778,7 +778,12 @@ sub process
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, $strType);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START, undef, $lTimestampStart);
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY, undef, cfgOption(CFGOPT_BACKUP_STANDBY));
+    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BUFFER_SIZE, undef, cfgOption(CFGOPT_BUFFER_SIZE));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, $bCompress);
+    $oBackupManifest->numericSet(
+        MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS_LEVEL, undef, cfgOption(CFGOPT_COMPRESS_LEVEL));
+    $oBackupManifest->numericSet(
+        MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS_LEVEL_NETWORK, undef, cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, $bHardLink);
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, cfgOption(CFGOPT_ONLINE));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_COPY, undef,
@@ -786,6 +791,7 @@ sub process
                               (cfgOption(CFGOPT_ARCHIVE_CHECK) && cfgOption(CFGOPT_ARCHIVE_COPY)));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
                               !cfgOption(CFGOPT_ONLINE) || cfgOption(CFGOPT_ARCHIVE_CHECK));
+    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_PROCESS_MAX, undef, cfgOption(CFGOPT_PROCESS_MAX));
 
     # Database settings
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $iDbHistoryId);

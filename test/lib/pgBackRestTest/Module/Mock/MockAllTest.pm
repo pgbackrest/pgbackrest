@@ -115,10 +115,14 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_CHECK} = JSON::PP::true;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY} = JSON::PP::true;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BACKUP_STANDBY} = JSON::PP::false;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 16384;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_CHECKSUM_PAGE} = JSON::PP::true;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::false;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_LEVEL} = 3;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_LEVEL_NETWORK} = $bRemote ? 1 : 3;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} = JSON::PP::false;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_DELTA} = JSON::PP::false;
 
         if ($bEncrypt)
@@ -385,6 +389,8 @@ sub run
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'special-@!#$^&*()-_+~`{}[]\|:;"<>\',.?%', undef, undef, $lTime, undef, true);
 
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
+
         $strFullBackup = $oHostBackup->backup(
             $strType, 'create pg_stat link, pg_clog dir',
             {oExpectedManifest => \%oManifest,
@@ -398,6 +404,9 @@ sub run
                     ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384 --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE) .
                     ' --' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1',
                 strRepoType => $bS3 ? undef : CFGOPTVAL_REPO_TYPE_CIFS, strTest => $strTestPoint, fTestDelay => 0});
+
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 4194304;
 
         # Error on backup option to check logging
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1000,10 +1009,14 @@ sub run
         delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changecontent.txt'}{&MANIFEST_SUBKEY_REFERENCE});
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/changetime.txt'}{&MANIFEST_SUBKEY_TIMESTAMP} = $lTime - 100;
 
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
+
         $strBackup = $oHostBackup->backup(
             $strType, 'resume and add tablespace 2',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
                 strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
+
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
         if (!$bRemote)
         {
@@ -1025,11 +1038,15 @@ sub run
         forceStorageRemove(storageRepo(), "${strResumePath}/" . FILE_MANIFEST);
 
         # The aborted backup is of a different type so is not resumable and is removed. A differential is created.
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
+
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - new diff',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
                 strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
                 ($bDeltaBackup ? ' --delta' : '')});
+
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
         # Resume Diff Backup
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1043,11 +1060,15 @@ sub run
 
         # The aborted backup is of the same type so it is resumable but passing --no-resume. Pass --delta same as before to avoid
         # expect log churn and to test restore with a --delta manifest.
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
+
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - disabled / no repo link',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
                 strOptionalParam => "--no-resume ${strLogReduced} --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
                 ($bDeltaBackup ? ' --delta' : '')});
+
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
         # Restore
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1104,9 +1125,13 @@ sub run
         # Munge the version to make sure it gets corrected on the next run
         $oHostBackup->manifestMunge($strBackup, {&INI_SECTION_BACKREST => {&INI_KEY_VERSION => '0.00'}}, false);
 
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
+
         $strBackup = $oHostBackup->backup(
             $strType, 'add files and remove tablespace 2',
             {oExpectedManifest => \%oManifest, strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
+
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
         # Incr Backup
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1168,10 +1193,14 @@ sub run
         $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
         $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup, true);
 
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
+
         $strBackup = $oHostBackup->backup(
             $strType, 'updates since last full', {oExpectedManifest => \%oManifest,
                 strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
                 ($bDeltaBackup ? ' --delta' : '')});
+
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
         # Incr Backup
         #
@@ -1216,6 +1245,8 @@ sub run
             $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_REPO_HARDLINK) => 'y'}});
         }
 
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
+
         $oBackupExecute = $oHostBackup->backupBegin(
             $strType, 'remove files during backup',
             {oExpectedManifest => \%oManifest, strTest => TEST_MANIFEST_BUILD, fTestDelay => 1,
@@ -1229,6 +1260,8 @@ sub run
         $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', true);
 
         $strBackup = $oHostBackup->backupEnd($strType, $oBackupExecute, {oExpectedManifest => \%oManifest});
+
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
         # Full Backup
         #---------------------------------------------------------------------------------------------------------------------------

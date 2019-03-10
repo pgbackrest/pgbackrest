@@ -76,6 +76,14 @@
 
                         <p>Improve error when hostname cannot be found in a certificate.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="benoit.lobréau"/>
+                        </release-item-contributor-list>
+
+                        <p>Add additional options to <file>backup.manifest</file> for debugging purposes.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
