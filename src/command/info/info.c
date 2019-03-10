@@ -14,7 +14,7 @@ Info Command
 #include "common/memContext.h"
 #include "common/type/json.h"
 #include "config/config.h"
-#include "crypto/crypto.h"
+#include "common/crypto/common.h"
 #include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"

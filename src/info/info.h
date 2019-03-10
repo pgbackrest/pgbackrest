@@ -9,9 +9,8 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct Info Info;
 
+#include "common/crypto/common.h"
 #include "common/ini.h"
-#include "crypto/crypto.h"
-#include "crypto/hash.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************

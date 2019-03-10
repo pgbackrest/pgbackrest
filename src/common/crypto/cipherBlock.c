@@ -6,12 +6,12 @@ Block Cipher
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
+#include "common/crypto/cipherBlock.h"
+#include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "crypto/cipherBlock.h"
-#include "crypto/crypto.h"
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -89,9 +89,8 @@ cipherBlockNewC(CipherMode mode, const char *cipherName, const unsigned char *pa
     ASSERT(pass != NULL);
     ASSERT(passSize > 0);
 
-    // Only need to init once.
-    if (!cryptoIsInit())
-        cryptoInit();
+    // Init crypto subsystem
+    cryptoInit();
 
     // Lookup cipher by name.  This means the ciphers passed in must exactly match a name expected by OpenSSL.  This is a good
     // thing since the name required by the openssl command-line tool will match what is used by pgBackRest.

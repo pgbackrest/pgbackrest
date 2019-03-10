@@ -9,8 +9,8 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct InfoArchive InfoArchive;
 
+#include "common/crypto/common.h"
 #include "common/type/string.h"
-#include "crypto/crypto.h"
 #include "info/infoPg.h"
 #include "storage/storage.h"
 

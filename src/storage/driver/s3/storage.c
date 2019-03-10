@@ -3,13 +3,13 @@ S3 Storage Driver
 ***********************************************************************************************************************************/
 #include <time.h>
 
+#include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/http/common.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "common/type/xml.h"
-#include "crypto/hash.h"
 #include "storage/driver/s3/fileRead.h"
 #include "storage/driver/s3/storage.h"
 

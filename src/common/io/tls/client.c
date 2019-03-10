@@ -14,6 +14,7 @@ TLS Client
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
 
+#include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/io/tls/client.h"
@@ -24,7 +25,6 @@ TLS Client
 #include "common/time.h"
 #include "common/type/keyValue.h"
 #include "common/wait.h"
-#include "crypto/crypto.h"
 
 /***********************************************************************************************************************************
 Object type

@@ -1,10 +1,10 @@
 /***********************************************************************************************************************************
 Protocol Helper
 ***********************************************************************************************************************************/
+#include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/exec.h"
 #include "common/memContext.h"
-#include "crypto/crypto.h"
 #include "config/config.h"
 #include "config/exec.h"
 #include "config/protocol.h"

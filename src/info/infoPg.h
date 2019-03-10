@@ -11,9 +11,9 @@ typedef struct InfoPg InfoPg;
 
 #include <stdint.h>
 
-#include "crypto/crypto.h"
-#include "storage/storage.h"
+#include "common/crypto/common.h"
 #include "common/ini.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Constants

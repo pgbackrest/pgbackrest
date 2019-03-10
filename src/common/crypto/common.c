@@ -10,7 +10,7 @@ Crypto Common
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/log.h"
-#include "crypto/crypto.h"
+#include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
 Cipher types

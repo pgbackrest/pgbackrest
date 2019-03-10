@@ -3,8 +3,8 @@ Cryptographic Hash
 
 Generate a hash (sha1, md5, etc.) from a string, Buffer, or using an IoFilter.
 ***********************************************************************************************************************************/
-#ifndef CRYPTO_HASH_H
-#define CRYPTO_HASH_H
+#ifndef COMMON_CRYPTO_HASH_H
+#define COMMON_CRYPTO_HASH_H
 
 /***********************************************************************************************************************************
 Hash object

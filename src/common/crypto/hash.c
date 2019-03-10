@@ -7,12 +7,12 @@ Cryptographic Hash
 #include <openssl/err.h>
 #include <openssl/hmac.h>
 
+#include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "crypto/crypto.h"
-#include "crypto/hash.h"
+#include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -51,9 +51,8 @@ cryptoHashNew(const String *type)
 
     ASSERT(type != NULL);
 
-    // Only need to init once
-    if (!cryptoIsInit())
-        cryptoInit();
+    // Init crypto subsystem
+    cryptoInit();
 
     // Allocate memory to hold process state
     CryptoHash *this = NULL;

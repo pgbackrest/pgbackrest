@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
 Block Cipher Header
 ***********************************************************************************************************************************/
-#ifndef CRYPTO_CIPHERBLOCK_H
-#define CRYPTO_CIPHERBLOCK_H
+#ifndef COMMON_CRYPTO_CIPHERBLOCK_H
+#define COMMON_CRYPTO_CIPHERBLOCK_H
 
 /***********************************************************************************************************************************
 CipherBlock object
@@ -11,7 +11,7 @@ typedef struct CipherBlock CipherBlock;
 
 #include "common/io/filter/filter.h"
 #include "common/type/buffer.h"
-#include "crypto/crypto.h"
+#include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
 Constructor

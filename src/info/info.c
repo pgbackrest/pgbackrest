@@ -5,12 +5,12 @@ Info Handler
 #include <stdlib.h>
 #include <string.h>
 
+#include "common/crypto/cipherBlock.h"
+#include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "crypto/cipherBlock.h"
-#include "crypto/hash.h"
 #include "info/info.h"
 #include "storage/helper.h"
 #include "version.h"

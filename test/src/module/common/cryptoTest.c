@@ -24,7 +24,56 @@ testRun(void)
     const Buffer *testPlainText = bufNewStr(strNew(TEST_PLAINTEXT));
 
     // *****************************************************************************************************************************
-    if (testBegin("blockCipherNew() and blockCipherFree()"))
+    if (testBegin("Common"))
+    {
+        TEST_RESULT_BOOL(cryptoIsInit(), false, "crypto is not initialized");
+        TEST_RESULT_VOID(cryptoInit(), "initialize crypto");
+        TEST_RESULT_BOOL(cryptoIsInit(), true, "crypto is initialized");
+        TEST_RESULT_VOID(cryptoInit(), "initialize crypto again");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        cryptoInit();
+
+        TEST_RESULT_VOID(cryptoError(false, "no error here"), "no error");
+
+        EVP_MD_CTX *context = EVP_MD_CTX_create();
+        TEST_ERROR(
+            cryptoError(EVP_DigestInit_ex(context, NULL, NULL) != 1, "unable to initialize hash context"), CryptoError,
+            "unable to initialize hash context: [101187723] no digest set");
+        EVP_MD_CTX_destroy(context);
+
+        TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ERROR(cipherType(strNew(BOGUS_STR)), AssertError, "invalid cipher name 'BOGUS'");
+        TEST_RESULT_UINT(cipherType(strNew("none")), cipherTypeNone, "none type");
+        TEST_RESULT_UINT(cipherType(strNew("aes-256-cbc")), cipherTypeAes256Cbc, "aes-256-cbc type");
+
+        TEST_ERROR(cipherTypeName((CipherType)2), AssertError, "invalid cipher type 2");
+        TEST_RESULT_STR(strPtr(cipherTypeName(cipherTypeNone)), "none", "none name");
+        TEST_RESULT_STR(strPtr(cipherTypeName(cipherTypeAes256Cbc)), "aes-256-cbc", "aes-256-cbc name");
+
+        // Test if the buffer was overrun
+        // -------------------------------------------------------------------------------------------------------------------------
+        size_t bufferSize = 256;
+        unsigned char *buffer = memNew(bufferSize + 1);
+
+        cryptoRandomBytes(buffer, bufferSize);
+        TEST_RESULT_BOOL(buffer[bufferSize] == 0, true, "check that buffer did not overrun (though random byte could be 0)");
+
+        // Count bytes that are not zero (there shouldn't be all zeroes)
+        // -------------------------------------------------------------------------------------------------------------------------
+        int nonZeroTotal = 0;
+
+        for (unsigned int charIdx = 0; charIdx < bufferSize; charIdx++)
+            if (buffer[charIdx] != 0)                               // {uncovered - ok if there are no zeros}
+                nonZeroTotal++;
+
+        TEST_RESULT_INT_NE(nonZeroTotal, 0, "check that there are non-zero values in the buffer");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("CipherBlock"))
     {
         // Cipher and digest errors
         // -------------------------------------------------------------------------------------------------------------------------
@@ -53,11 +102,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cipherBlockFree(cipherBlock), "free cipher block");
         TEST_RESULT_VOID(cipherBlockFree(NULL), "free null cipher block");
-    }
 
-    // *****************************************************************************************************************************
-    if (testBegin("Encrypt and Decrypt"))
-    {
         // Encrypt
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *encryptBuffer = bufNew(TEST_BUFFER_SIZE);
@@ -241,6 +286,68 @@ testRun(void)
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer), CryptoError, "unable to flush");
 
         cipherBlockFree(blockDecrypt);
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("CryptoHash"))
+    {
+        CryptoHash *hash = NULL;
+        IoFilter *hashFilter = NULL;
+
+        TEST_ERROR(cryptoHashNew(strNew(BOGUS_STR)), AssertError, "unable to load hash 'BOGUS'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA1)), "create sha1 hash");
+        TEST_RESULT_VOID(cryptoHashFree(hash), "    free hash");
+        TEST_RESULT_VOID(cryptoHashFree(NULL), "    free null hash");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA1)), "create sha1 hash");
+        TEST_RESULT_STR(strPtr(bufHex(cryptoHash(hash))), "da39a3ee5e6b4b0d3255bfef95601890afd80709", "    check empty hash");
+        TEST_RESULT_STR(strPtr(bufHex(cryptoHash(hash))), "da39a3ee5e6b4b0d3255bfef95601890afd80709", "    check empty hash again");
+        TEST_RESULT_VOID(cryptoHashFree(hash), "    free hash");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA1)), "create sha1 hash");
+        TEST_ASSIGN(hashFilter, cryptoHashFilter(hash), "create sha1 hash");
+        TEST_RESULT_VOID(cryptoHashProcessC(hash, (const unsigned char *)"1", 1), "    add 1");
+        TEST_RESULT_VOID(cryptoHashProcessStr(hash, strNew("2")), "    add 2");
+        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewZ("3")), "    add 3");
+        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewZ("4")), "    add 4");
+        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewZ("5")), "    add 5");
+
+        TEST_RESULT_STR(
+            strPtr(varStr(ioFilterResult(hashFilter))), "8cb2237d0679ca88db6464eac60da96345513964", "    check small hash");
+        TEST_RESULT_VOID(cryptoHashFree(hash), "    free hash");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
+        TEST_RESULT_STR(strPtr(bufHex(cryptoHash(hash))), "d41d8cd98f00b204e9800998ecf8427e", "    check empty hash");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA256)), "create sha256 hash");
+        TEST_RESULT_STR(
+            strPtr(bufHex(cryptoHash(hash))), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "    check empty hash");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_STR(
+            strPtr(bufHex(cryptoHashOne(strNew(HASH_TYPE_SHA1), bufNewZ("12345")))), "8cb2237d0679ca88db6464eac60da96345513964",
+            "    check small hash");
+        TEST_RESULT_STR(
+            strPtr(bufHex(cryptoHashOneStr(strNew(HASH_TYPE_SHA1), strNew("12345")))), "8cb2237d0679ca88db6464eac60da96345513964",
+            "    check small hash");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_STR(
+            strPtr(
+                bufHex(
+                    cryptoHmacOne(
+                        strNew(HASH_TYPE_SHA256),
+                        bufNewZ("AWS4wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"),
+                        bufNewZ("20170412")))),
+            "8b05c497afe9e1f42c8ada4cb88392e118649db1e5c98f0f0fb0a158bdd2dd76",
+            "    check hmac");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

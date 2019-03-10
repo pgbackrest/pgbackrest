@@ -9,10 +9,10 @@ Tls Test Harness
 #include <openssl/conf.h>
 #include <openssl/ssl.h>
 
+#include "common/crypto/common.h"
 #include "common/error.h"
 #include "common/type/buffer.h"
 #include "common/wait.h"
-#include "crypto/crypto.h"
 
 #include "common/harnessTls.h"
 
