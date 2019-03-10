@@ -30,7 +30,8 @@ if (!$bTest)
 
 - Copy coverage report:
 ```
-cd doc/site
+cd <pgbackrest-base>/doc/site
+rm -rf coverage
 cp -r ../../test/coverage/c coverage
 ```
 
@@ -63,7 +64,7 @@ with:
 
 - In `doc/site/coverage` replace:
 ```
-            <td class="headerValue">all C unit</td>
+            <td class="headerValue">all.lcov</td>
 ```
 with:
 ```
@@ -72,6 +73,6 @@ with:
 
 - Switch to prior dir and copy coverage:
 ```
-doc/site/prior/X.XX
+cd ../prior/X.XX
 cp -r ../../coverage .
 ```

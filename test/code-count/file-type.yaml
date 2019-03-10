@@ -159,15 +159,7 @@ lib/pgBackRest/Archive/Common.pm:
   class: core
   type: perl
 
-lib/pgBackRest/Archive/Get/Async.pm:
-  class: core
-  type: perl
-
 lib/pgBackRest/Archive/Get/File.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Archive/Get/Get.pm:
   class: core
   type: perl
 
@@ -288,10 +280,6 @@ lib/pgBackRest/DbVersion.pm:
   type: perl
 
 lib/pgBackRest/Expire.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Info.pm:
   class: core
   type: perl
 
@@ -543,6 +531,14 @@ src/command/archive/get/get.h:
   class: core
   type: c/h
 
+src/command/archive/get/protocol.c:
+  class: core
+  type: c
+
+src/command/archive/get/protocol.h:
+  class: core
+  type: c/h
+
 src/command/archive/push/push.c:
   class: core
   type: c
@@ -583,7 +579,71 @@ src/command/info/info.h:
   class: core
   type: c/h
 
+src/command/local/local.c:
+  class: core
+  type: c
+
+src/command/local/local.h:
+  class: core
+  type: c/h
+
+src/command/remote/remote.c:
+  class: core
+  type: c
+
+src/command/remote/remote.h:
+  class: core
+  type: c/h
+
 src/common/assert.h:
+  class: core
+  type: c/h
+
+src/common/compress/gzip/common.c:
+  class: core
+  type: c
+
+src/common/compress/gzip/common.h:
+  class: core
+  type: c/h
+
+src/common/compress/gzip/compress.c:
+  class: core
+  type: c
+
+src/common/compress/gzip/compress.h:
+  class: core
+  type: c/h
+
+src/common/compress/gzip/decompress.c:
+  class: core
+  type: c
+
+src/common/compress/gzip/decompress.h:
+  class: core
+  type: c/h
+
+src/common/crypto/cipherBlock.c:
+  class: core
+  type: c
+
+src/common/crypto/cipherBlock.h:
+  class: core
+  type: c/h
+
+src/common/crypto/common.c:
+  class: core
+  type: c
+
+src/common/crypto/common.h:
+  class: core
+  type: c/h
+
+src/common/crypto/hash.c:
+  class: core
+  type: c
+
+src/common/crypto/hash.h:
   class: core
   type: c/h
 
@@ -624,6 +684,14 @@ src/common/error.c:
   type: c
 
 src/common/error.h:
+  class: core
+  type: c/h
+
+src/common/exec.c:
+  class: core
+  type: c
+
+src/common/exec.h:
   class: core
   type: c/h
 
@@ -700,6 +768,14 @@ src/common/io/filter/size.c:
   type: c
 
 src/common/io/filter/size.h:
+  class: core
+  type: c/h
+
+src/common/io/handleRead.c:
+  class: core
+  type: c
+
+src/common/io/handleRead.h:
   class: core
   type: c/h
 
@@ -923,30 +999,6 @@ src/common/wait.h:
   class: core
   type: c/h
 
-src/compress/gzip.c:
-  class: core
-  type: c
-
-src/compress/gzip.h:
-  class: core
-  type: c/h
-
-src/compress/gzipCompress.c:
-  class: core
-  type: c
-
-src/compress/gzipCompress.h:
-  class: core
-  type: c/h
-
-src/compress/gzipDecompress.c:
-  class: core
-  type: c
-
-src/compress/gzipDecompress.h:
-  class: core
-  type: c/h
-
 src/config/config.auto.c:
   class: core/auto
   type: c
@@ -979,6 +1031,14 @@ src/config/define.h:
   class: core
   type: c/h
 
+src/config/exec.c:
+  class: core
+  type: c
+
+src/config/exec.h:
+  class: core
+  type: c/h
+
 src/config/load.c:
   class: core
   type: c
@@ -999,27 +1059,11 @@ src/config/parse.h:
   class: core
   type: c/h
 
-src/crypto/cipherBlock.c:
+src/config/protocol.c:
   class: core
   type: c
 
-src/crypto/cipherBlock.h:
-  class: core
-  type: c/h
-
-src/crypto/crypto.c:
-  class: core
-  type: c
-
-src/crypto/crypto.h:
-  class: core
-  type: c/h
-
-src/crypto/hash.c:
-  class: core
-  type: c
-
-src/crypto/hash.h:
+src/config/protocol.h:
   class: core
   type: c/h
 
@@ -1243,6 +1287,54 @@ src/postgres/version.h:
   class: core
   type: c/h
 
+src/protocol/client.c:
+  class: core
+  type: c
+
+src/protocol/client.h:
+  class: core
+  type: c/h
+
+src/protocol/command.c:
+  class: core
+  type: c
+
+src/protocol/command.h:
+  class: core
+  type: c/h
+
+src/protocol/helper.c:
+  class: core
+  type: c
+
+src/protocol/helper.h:
+  class: core
+  type: c/h
+
+src/protocol/parallel.c:
+  class: core
+  type: c
+
+src/protocol/parallel.h:
+  class: core
+  type: c/h
+
+src/protocol/parallelJob.c:
+  class: core
+  type: c
+
+src/protocol/parallelJob.h:
+  class: core
+  type: c/h
+
+src/protocol/server.c:
+  class: core
+  type: c
+
+src/protocol/server.h:
+  class: core
+  type: c/h
+
 src/storage/driver/posix/common.c:
   class: core
   type: c
@@ -1272,6 +1364,30 @@ src/storage/driver/posix/storage.c:
   type: c
 
 src/storage/driver/posix/storage.h:
+  class: core
+  type: c/h
+
+src/storage/driver/remote/fileRead.c:
+  class: core
+  type: c
+
+src/storage/driver/remote/fileRead.h:
+  class: core
+  type: c/h
+
+src/storage/driver/remote/protocol.c:
+  class: core
+  type: c
+
+src/storage/driver/remote/protocol.h:
+  class: core
+  type: c/h
+
+src/storage/driver/remote/storage.c:
+  class: core
+  type: c
+
+src/storage/driver/remote/storage.h:
   class: core
   type: c/h
 
@@ -1451,31 +1567,23 @@ test/lib/pgBackRestTest/Env/S3EnvTest.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Module/Archive/ArchiveCommonPerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Archive/ArchiveGetPerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Archive/ArchiveInfoUnitPerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Archive/ArchivePushPerlTest.pm:
-  class: test/module
-  type: perl
-
 test/lib/pgBackRestTest/Module/Backup/BackupFileUnitPerlTest.pm:
   class: test/module
   type: perl
 
-test/lib/pgBackRestTest/Module/Backup/BackupInfoUnitPerlTest.pm:
+test/lib/pgBackRestTest/Module/Backup/BackupUnitPerlTest.pm:
   class: test/module
   type: perl
 
-test/lib/pgBackRestTest/Module/Backup/BackupUnitPerlTest.pm:
+test/lib/pgBackRestTest/Module/Command/CommandArchiveCommonPerlTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Command/CommandArchiveGetPerlTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Command/CommandArchivePushPerlTest.pm:
   class: test/module
   type: perl
 
@@ -1507,7 +1615,11 @@ test/lib/pgBackRestTest/Module/Common/CommonLogPerlTest.pm:
   class: test/module
   type: perl
 
-test/lib/pgBackRestTest/Module/Info/InfoUnitPerlTest.pm:
+test/lib/pgBackRestTest/Module/Info/InfoInfoArchivePerlTest.pm:
+  class: test/module
+  type: perl
+
+test/lib/pgBackRestTest/Module/Info/InfoInfoBackupPerlTest.pm:
   class: test/module
   type: perl
 
@@ -1639,15 +1751,15 @@ test/src/common/harnessTls.h:
   class: test/harness
   type: c/h
 
-test/src/module/archive/commonTest.c:
+test/src/module/command/archiveCommonTest.c:
   class: test/module
   type: c
 
-test/src/module/archive/getTest.c:
+test/src/module/command/archiveGetTest.c:
   class: test/module
   type: c
 
-test/src/module/archive/pushTest.c:
+test/src/module/command/archivePushTest.c:
   class: test/module
   type: c
 
@@ -1659,7 +1771,19 @@ test/src/module/command/controlTest.c:
   class: test/module
   type: c
 
+test/src/module/command/helpTest.c:
+  class: test/module
+  type: c
+
 test/src/module/command/infoTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/localTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/remoteTest.c:
   class: test/module
   type: c
 
@@ -1668,6 +1792,14 @@ test/src/module/common/assertOffTest.c:
   type: c
 
 test/src/module/common/assertOnTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/compressGzipTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/cryptoTest.c:
   class: test/module
   type: c
 
@@ -1684,6 +1816,10 @@ test/src/module/common/encodeTest.c:
   type: c
 
 test/src/module/common/errorTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/execTest.c:
   class: test/module
   type: c
 
@@ -1775,15 +1911,15 @@ test/src/module/common/waitTest.c:
   class: test/module
   type: c
 
-test/src/module/compress/gzipTest.c:
-  class: test/module
-  type: c
-
 test/src/module/config/configTest.c:
   class: test/module
   type: c
 
 test/src/module/config/defineTest.c:
+  class: test/module
+  type: c
+
+test/src/module/config/execTest.c:
   class: test/module
   type: c
 
@@ -1795,19 +1931,7 @@ test/src/module/config/parseTest.c:
   class: test/module
   type: c
 
-test/src/module/crypto/cipherBlockTest.c:
-  class: test/module
-  type: c
-
-test/src/module/crypto/cryptoTest.c:
-  class: test/module
-  type: c
-
-test/src/module/crypto/hashTest.c:
-  class: test/module
-  type: c
-
-test/src/module/help/helpTest.c:
+test/src/module/config/protocolTest.c:
   class: test/module
   type: c
 
@@ -1843,7 +1967,15 @@ test/src/module/postgres/pageChecksumTest.c:
   class: test/module
   type: c
 
+test/src/module/protocol/protocolTest.c:
+  class: test/module
+  type: c
+
 test/src/module/storage/posixTest.c:
+  class: test/module
+  type: c
+
+test/src/module/storage/remoteTest.c:
   class: test/module
   type: c
 
