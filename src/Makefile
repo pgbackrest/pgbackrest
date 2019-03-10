@@ -8,6 +8,8 @@
 CC=gcc
 
 # Compile using C99 and Posix 2001 standards (also _DARWIN_C_SOURCE for MacOS)
+#
+# For BSD variants use: CSTD = -std=c99
 CSTD = -std=c99 -D_POSIX_C_SOURCE=200112L -D_DARWIN_C_SOURCE
 
 # Compile optimizations
