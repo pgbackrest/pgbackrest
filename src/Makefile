@@ -70,6 +70,9 @@ SRCS = \
 	command/control/control.c \
 	command/local/local.c \
 	command/remote/remote.c \
+	common/compress/gzip/common.c \
+	common/compress/gzip/compress.c \
+	common/compress/gzip/decompress.c \
 	common/debug.c \
 	common/encode.c \
 	common/encode/base64.c \
@@ -111,9 +114,6 @@ SRCS = \
 	common/type/variantList.c \
 	common/type/xml.c \
 	common/wait.c \
-	compress/gzip.c \
-	compress/gzipCompress.c \
-	compress/gzipDecompress.c \
 	config/config.c \
 	config/define.c \
 	config/exec.c \
@@ -201,7 +201,7 @@ clean:
 command/archive/common.o: command/archive/common.c command/archive/common.h common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/wait.h postgres/version.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
 	$(CC) $(CFLAGS) -c command/archive/common.c -o command/archive/common.o
 
-command/archive/get/file.o: command/archive/get/file.c command/archive/common.h command/archive/get/file.h command/control/control.h common/assert.h common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h compress/gzip.h compress/gzipDecompress.h config/config.auto.h config/config.h config/define.auto.h config/define.h crypto/cipherBlock.h crypto/crypto.h info/infoArchive.h info/infoPg.h postgres/interface.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
+command/archive/get/file.o: command/archive/get/file.c command/archive/common.h command/archive/get/file.h command/control/control.h common/assert.h common/compress/gzip/common.h common/compress/gzip/decompress.h common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h crypto/cipherBlock.h crypto/crypto.h info/infoArchive.h info/infoPg.h postgres/interface.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
 	$(CC) $(CFLAGS) -c command/archive/get/file.c -o command/archive/get/file.o
 
 command/archive/get/get.o: command/archive/get/get.c command/archive/common.h command/archive/get/file.h command/archive/get/protocol.h command/command.h common/assert.h common/debug.h common/error.auto.h common/error.h common/fork.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/regExp.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h common/wait.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/exec.h crypto/crypto.h perl/exec.h postgres/interface.h protocol/client.h protocol/command.h protocol/helper.h protocol/parallel.h protocol/parallelJob.h protocol/server.h storage/fileRead.h storage/fileWrite.h storage/helper.h storage/info.h storage/storage.h
@@ -230,6 +230,15 @@ command/local/local.o: command/local/local.c command/archive/get/protocol.h comm
 
 command/remote/remote.o: command/remote/remote.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/group.h common/io/handleRead.h common/io/handleWrite.h common/io/read.h common/io/write.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.h config/config.h config/define.auto.h config/define.h config/protocol.h protocol/client.h protocol/command.h protocol/helper.h protocol/server.h storage/driver/remote/protocol.h
 	$(CC) $(CFLAGS) -c command/remote/remote.c -o command/remote/remote.o
+
+common/compress/gzip/common.o: common/compress/gzip/common.c common/assert.h common/compress/gzip/common.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/convert.h
+	$(CC) $(CFLAGS) -c common/compress/gzip/common.c -o common/compress/gzip/common.o
+
+common/compress/gzip/compress.o: common/compress/gzip/compress.c common/assert.h common/compress/gzip/common.h common/compress/gzip/compress.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
+	$(CC) $(CFLAGS) -c common/compress/gzip/compress.c -o common/compress/gzip/compress.o
+
+common/compress/gzip/decompress.o: common/compress/gzip/decompress.c common/assert.h common/compress/gzip/common.h common/compress/gzip/decompress.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
+	$(CC) $(CFLAGS) -c common/compress/gzip/decompress.c -o common/compress/gzip/decompress.o
 
 common/debug.o: common/debug.c common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/stackTrace.h common/type/convert.h
 	$(CC) $(CFLAGS) -c common/debug.c -o common/debug.o
@@ -353,15 +362,6 @@ common/type/xml.o: common/type/xml.c common/assert.h common/debug.h common/error
 
 common/wait.o: common/wait.c common/assert.h common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/convert.h common/wait.h
 	$(CC) $(CFLAGS) -c common/wait.c -o common/wait.o
-
-compress/gzip.o: compress/gzip.c common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/convert.h compress/gzip.h
-	$(CC) $(CFLAGS) -c compress/gzip.c -o compress/gzip.o
-
-compress/gzipCompress.o: compress/gzipCompress.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h compress/gzip.h compress/gzipCompress.h
-	$(CC) $(CFLAGS) -c compress/gzipCompress.c -o compress/gzipCompress.o
-
-compress/gzipDecompress.o: compress/gzipDecompress.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h compress/gzip.h compress/gzipDecompress.h
-	$(CC) $(CFLAGS) -c compress/gzipDecompress.c -o compress/gzipDecompress.o
 
 config/config.o: config/config.c common/assert.h common/debug.h common/error.auto.h common/error.h common/lock.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/time.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h config/config.auto.c config/config.auto.h config/config.h config/define.auto.h config/define.h
 	$(CC) $(CFLAGS) -c config/config.c -o config/config.o

@@ -4,12 +4,12 @@ Gzip Decompress
 #include <stdio.h>
 #include <zlib.h>
 
+#include "common/compress/gzip/common.h"
+#include "common/compress/gzip/decompress.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "compress/gzip.h"
-#include "compress/gzipDecompress.h"
 
 /***********************************************************************************************************************************
 Filter type constant

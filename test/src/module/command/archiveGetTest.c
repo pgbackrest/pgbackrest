@@ -4,11 +4,11 @@ Test Archive Get Command
 #include "postgres/interface.h"
 #include "postgres/version.h"
 
+#include "common/compress/gzip/compress.h"
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
-#include "compress/gzipCompress.h"
 #include "storage/driver/posix/storage.h"
 
 /***********************************************************************************************************************************

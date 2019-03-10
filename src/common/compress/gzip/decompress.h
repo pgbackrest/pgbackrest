@@ -3,8 +3,8 @@ Gzip Decompress
 
 Decompress IO from the gzip format.
 ***********************************************************************************************************************************/
-#ifndef COMPRESS_GZIPDECOMPRESS_H
-#define COMPRESS_GZIPDECOMPRESS_H
+#ifndef COMMON_COMPRESS_GZIP_DECOMPRESS_H
+#define COMMON_COMPRESS_GZIP_DECOMPRESS_H
 
 /***********************************************************************************************************************************
 Object type

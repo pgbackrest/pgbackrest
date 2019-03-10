@@ -3,8 +3,8 @@ Gzip Compress
 
 Compress IO using the gzip format.
 ***********************************************************************************************************************************/
-#ifndef COMPRESS_GZIPCOMPRESS_H
-#define COMPRESS_GZIPCOMPRESS_H
+#ifndef COMMON_COMPRESS_GZIP_COMPRESS_H
+#define COMMON_COMPRESS_GZIP_COMPRESS_H
 
 /***********************************************************************************************************************************
 Object type
