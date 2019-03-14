@@ -25,7 +25,7 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAdd(argList, strNewFmt("--repo-path=%s", strPtr(repoPath)));
+        strLstAdd(argList, strNewFmt("--repo-path=%s/", strPtr(repoPath)));
         strLstAddZ(argList, "info");
         StringList *argListText = strLstDup(argList);
 

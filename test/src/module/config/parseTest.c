@@ -689,6 +689,42 @@ testRun(void)
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'225179981368524800000000000000000000' is out of range for 'manifest-save-threshold' option");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--pg1-path="));
+        TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
+            "'' must be >= 1 character for 'pg1-path' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--pg1-path=bogus"));
+        TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
+            "'bogus' must begin with / for 'pg1-path' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--pg1-path=/path1//path2"));
+        TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
+            "'/path1//path2' cannot contain // for 'pg1-path' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--pg1-path=/path1/path2//"));
+        TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
+            "'/path1/path2//' cannot contain // for 'pg1-path' option");
+
         // Local and remove commands should not modify log levels during parsing
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1059,7 +1095,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db/"));
         strLstAdd(argList, strNew("--no-online"));
         strLstAdd(argList, strNew("--no-config"));
         strLstAdd(argList, strNew("--repo1-type=s3"));

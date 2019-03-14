@@ -553,6 +553,8 @@ use constant CFGDEF_TYPE_INTEGER                                    => 'integer'
     push @EXPORT, qw(CFGDEF_TYPE_INTEGER);
 use constant CFGDEF_TYPE_LIST                                       => 'list';
     push @EXPORT, qw(CFGDEF_TYPE_LIST);
+use constant CFGDEF_TYPE_PATH                                       => 'path';
+    push @EXPORT, qw(CFGDEF_TYPE_PATH);
 use constant CFGDEF_TYPE_STRING                                     => 'string';
     push @EXPORT, qw(CFGDEF_TYPE_STRING);
 use constant CFGDEF_TYPE_SIZE                                       => 'size';
@@ -712,6 +714,7 @@ my %hConfigDefine =
 
     &CFGOPT_CONFIG_INCLUDE_PATH =>
     {
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_INHERIT => CFGOPT_CONFIG,
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH,
         &CFGDEF_NEGATE => false,
@@ -719,6 +722,7 @@ my %hConfigDefine =
 
     &CFGOPT_CONFIG_PATH =>
     {
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_INHERIT => CFGOPT_CONFIG,
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_PATH,
         &CFGDEF_NEGATE => false,
@@ -1268,7 +1272,7 @@ my %hConfigDefine =
     &CFGOPT_LOCK_PATH =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_DEFAULT => '/tmp/' . PROJECT_EXE,
         &CFGDEF_COMMAND =>
         {
@@ -1293,7 +1297,7 @@ my %hConfigDefine =
     &CFGOPT_LOG_PATH =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_DEFAULT => '/var/log/' . PROJECT_EXE,
         &CFGDEF_COMMAND =>
         {
@@ -1520,12 +1524,14 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_HOST_CONFIG_PATH =>
     {
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_INHERIT => CFGOPT_REPO_HOST_CONFIG,
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_PATH,
     },
 
     &CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH =>
     {
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_INHERIT => CFGOPT_REPO_HOST_CONFIG,
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH,
     },
@@ -1571,7 +1577,7 @@ my %hConfigDefine =
     &CFGOPT_REPO_PATH =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => '/var/lib/' . PROJECT_EXE,
@@ -1692,6 +1698,7 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_S3_CA_PATH =>
     {
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_INHERIT => CFGOPT_REPO_S3_HOST,
         &CFGDEF_NAME_ALT =>
         {
@@ -1848,7 +1855,7 @@ my %hConfigDefine =
     &CFGOPT_SPOOL_PATH =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_DEFAULT => '/var/spool/' . PROJECT_EXE,
         &CFGDEF_COMMAND =>
         {
@@ -2357,12 +2364,14 @@ my %hConfigDefine =
 
     &CFGOPT_PG_HOST_CONFIG_PATH =>
     {
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_INHERIT => CFGOPT_PG_HOST_CMD,
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_PATH,
     },
 
     &CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH =>
     {
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_INHERIT => CFGOPT_PG_HOST_CMD,
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH,
     },
@@ -2395,7 +2404,7 @@ my %hConfigDefine =
     &CFGOPT_PG_PATH =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_REQUIRED => true,
@@ -2471,7 +2480,7 @@ my %hConfigDefine =
     &CFGOPT_PG_SOCKET_PATH =>
     {
         &CFGDEF_INHERIT => CFGOPT_PG_PORT,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_DEFAULT => undef,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>

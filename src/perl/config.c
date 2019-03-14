@@ -71,6 +71,7 @@ perlOptionJson(void)
                     case cfgDefOptTypeBoolean:
                     case cfgDefOptTypeFloat:
                     case cfgDefOptTypeInteger:
+                    case cfgDefOptTypePath:
                     case cfgDefOptTypeSize:
                     case cfgDefOptTypeString:
                     {

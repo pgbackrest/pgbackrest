@@ -52,8 +52,9 @@ sub libcAutoConstant
         CFGDEF_TYPE_HASH                                                 => 2,
         CFGDEF_TYPE_INTEGER                                              => 3,
         CFGDEF_TYPE_LIST                                                 => 4,
-        CFGDEF_TYPE_SIZE                                                 => 5,
-        CFGDEF_TYPE_STRING                                               => 6,
+        CFGDEF_TYPE_PATH                                                 => 5,
+        CFGDEF_TYPE_SIZE                                                 => 6,
+        CFGDEF_TYPE_STRING                                               => 7,
 
         ENCODE_TYPE_BASE64                                               => 0,
 
@@ -297,6 +298,7 @@ sub libcAutoExportTag
             'CFGDEF_TYPE_HASH',
             'CFGDEF_TYPE_INTEGER',
             'CFGDEF_TYPE_LIST',
+            'CFGDEF_TYPE_PATH',
             'CFGDEF_TYPE_SIZE',
             'CFGDEF_TYPE_STRING',
             'cfgCommandId',

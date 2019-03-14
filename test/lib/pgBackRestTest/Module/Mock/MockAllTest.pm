@@ -400,7 +400,7 @@ sub run
                     # Pass bogus ssh port to make sure it is passed through the protocol layer (it won't be used)
                     ($bRemote ? ' --' . cfgOptionName(CFGOPT_PG_PORT) . '=9999' : '') .
                     # Pass bogus socket path to make sure it is passed through the protocol layer (it won't be used)
-                    ($bRemote ? ' --' . cfgOptionName(CFGOPT_PG_SOCKET_PATH) . ' =/test_socket_path' : '') .
+                    ($bRemote ? ' --' . cfgOptionName(CFGOPT_PG_SOCKET_PATH) . '=/test_socket_path' : '') .
                     ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384 --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE) .
                     ' --' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1',
                 strRepoType => $bS3 ? undef : CFGOPTVAL_REPO_TYPE_CIFS, strTest => $strTestPoint, fTestDelay => 0});

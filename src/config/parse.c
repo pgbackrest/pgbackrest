@@ -909,6 +909,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     }
 
                                     // String is output with quotes
+                                    case cfgDefOptTypePath:
                                     case cfgDefOptTypeString:
                                     {
                                         strLstAdd(dependValueList, strNewFmt("'%s'", dependValue));
@@ -1029,6 +1030,37 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         OptionInvalidValueError, "'%s' is out of range for '%s' option", strPtr(value),
                                         cfgOptionName(optionId));
                                 }
+                            }
+                            // Else if path make sure it is valid
+                            else if (optionDefType == cfgDefOptTypePath)
+                            {
+                                // Make sure it is long enough to be a path
+                                if (strSize(value) == 0)
+                                {
+                                    THROW_FMT(
+                                        OptionInvalidValueError, "'%s' must be >= 1 character for '%s' option", strPtr(value),
+                                        cfgOptionName(optionId));
+                                }
+
+                                // Make sure it starts with /
+                                if (!strBeginsWithZ(value, "/"))
+                                {
+                                    THROW_FMT(
+                                        OptionInvalidValueError, "'%s' must begin with / for '%s' option", strPtr(value),
+                                        cfgOptionName(optionId));
+                                }
+
+                                // Make sure there are no occurences of //
+                                if (strstr(strPtr(value), "//") != NULL)
+                                {
+                                    THROW_FMT(
+                                        OptionInvalidValueError, "'%s' cannot contain // for '%s' option", strPtr(value),
+                                        cfgOptionName(optionId));
+                                }
+
+                                // If the path ends with a / we'll strip it off (unless the value is just /)
+                                if (strEndsWithZ(value, "/") && strSize(value) != 1)
+                                    strTrunc(value, (int)strSize(value) - 1);
                             }
 
                             // If the option has an allow list then check it

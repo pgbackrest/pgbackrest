@@ -41,6 +41,7 @@ typedef enum
     cfgDefOptTypeHash,
     cfgDefOptTypeInteger,
     cfgDefOptTypeList,
+    cfgDefOptTypePath,
     cfgDefOptTypeSize,
     cfgDefOptTypeString,
 } ConfigDefineOptionType;

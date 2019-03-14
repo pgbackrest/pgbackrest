@@ -461,6 +461,7 @@ cfgOptionDefault(ConfigOption optionId)
                             break;
                         }
 
+                        case cfgDefOptTypePath:
                         case cfgDefOptTypeString:
                             configOptionValue[optionId].defaultValue = varDup(defaultValue);
                             break;
@@ -858,13 +859,16 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                     break;
                 }
 
+                case cfgDefOptTypePath:
                 case cfgDefOptTypeString:
+                {
                     if (varType(value) == varTypeString)
                         configOptionValue[optionId].value = varDup(value);
                     else
                         THROW_FMT(AssertError, "option '%s' must be set with String variant", cfgOptionName(optionId));
 
                     break;
+                }
             }
         }
         else
