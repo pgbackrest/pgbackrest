@@ -38,11 +38,13 @@ sub process
     (
         $strOperation,
         $strWalPathFile,
+        $bAsync,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->process', \@_,
             {name => 'strWalPathFile', required => false},
+            {name => 'bAsync', required => true},
         );
 
     # Make sure the command happens on the db side
@@ -61,7 +63,7 @@ sub process
     my $strWalFile = basename($strWalPathFile);
 
     # Start the async process and wait for WAL to complete
-    if (cfgOption(CFGOPT_ARCHIVE_ASYNC))
+    if ($bAsync)
     {
         # Load module dynamically
         require pgBackRest::Archive::Push::Async;

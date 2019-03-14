@@ -16,6 +16,10 @@
             <release-core-list>
                 <release-development-list>
                     <release-item>
+                        <p>Add separate <cmd>archive-push-async</cmd> command.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <id>CIFS</id> storage driver.</p>
                     </release-item>
                 </release-development-list>

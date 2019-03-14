@@ -548,20 +548,21 @@ sub run
         $self->optionTestSet(CFGOPT_PG_HOST, BOGUS);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        $self->testException(sub {$oPush->process(undef)}, ERROR_HOST_INVALID, 'archive-push operation must run on db host');
+        $self->testException(sub {$oPush->process(undef, false)}, ERROR_HOST_INVALID, 'archive-push operation must run on db host');
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Reset pg-host
         $self->optionTestClear(CFGOPT_PG_HOST);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        $self->testException(sub {$oPush->process(undef)}, ERROR_PARAM_REQUIRED, 'WAL file to push required');
+        $self->testException(sub {$oPush->process(undef, false)}, ERROR_PARAM_REQUIRED, 'WAL file to push required');
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
-        $self->testResult(sub {$oPush->process("pg_xlog/${strSegment}")}, undef, "${strSegment} WAL pushed (with relative path)");
+        $self->testResult(
+            sub {$oPush->process("pg_xlog/${strSegment}", false)}, undef, "${strSegment} WAL pushed (with relative path)");
 
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment)}, "${strSegment}-$self->{strWalHash}",
@@ -577,7 +578,7 @@ sub run
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
-        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, undef, "${strSegment} WAL dropped");
+        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}", false)}, undef, "${strSegment} WAL dropped");
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment)}, '[undef]',
             "${strSegment} WAL in archive");
@@ -586,7 +587,7 @@ sub run
         $self->optionTestSet(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX, PG_WAL_SIZE_TEST * 4);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, undef, "${strSegment} WAL pushed");
+        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}", false)}, undef, "${strSegment} WAL pushed");
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment)}, "${strSegment}-$self->{strWalHash}",
             "${strSegment} WAL in archive");
@@ -605,7 +606,8 @@ sub run
 
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
-        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, undef, "${strSegment} WAL pushed async");
+        $self->testResult(
+            sub {$oPush->process("$self->{strWalPath}/${strSegment}", true)}, undef, "${strSegment} WAL pushed async");
 
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment, 5)}, "${strSegment}-$self->{strWalHash}",
@@ -622,7 +624,7 @@ sub run
         $self->optionTestSet(CFGOPT_ARCHIVE_TIMEOUT, 5);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, undef, 'process connect error');
+        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}", true)}, undef, 'process connect error');
 
         # Check contents of error file
         my $strErrorFile = STORAGE_SPOOL_ARCHIVE_OUT . "/${strSegment}.error";

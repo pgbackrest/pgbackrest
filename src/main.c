@@ -94,9 +94,9 @@ main(int argListSize, const char *argList[])
             cmdArchiveGetAsync();
         }
 
-        // Archive push command.  Currently only implements local operations of async archive push.
+        // Archive push command.
         // -------------------------------------------------------------------------------------------------------------------------
-        else if (cfgCommand() == cfgCmdArchivePush && cfgOptionBool(cfgOptArchiveAsync))
+        else if (cfgCommand() == cfgCmdArchivePush)
         {
             cmdArchivePush();
         }

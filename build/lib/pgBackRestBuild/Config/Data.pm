@@ -80,6 +80,8 @@ use constant CFGCMD_ARCHIVE_GET_ASYNC                               => 'archive-
     push @EXPORT, qw(CFGCMD_ARCHIVE_GET_ASYNC);
 use constant CFGCMD_ARCHIVE_PUSH                                    => 'archive-push';
     push @EXPORT, qw(CFGCMD_ARCHIVE_PUSH);
+use constant CFGCMD_ARCHIVE_PUSH_ASYNC                              => 'archive-push-async';
+    push @EXPORT, qw(CFGCMD_ARCHIVE_PUSH_ASYNC);
 use constant CFGCMD_BACKUP                                          => 'backup';
     push @EXPORT, qw(CFGCMD_BACKUP);
 use constant CFGCMD_CHECK                                           => 'check';
@@ -590,6 +592,14 @@ my $rhCommandDefine =
         &CFGDEF_PARAMETER_ALLOWED => true,
     },
 
+    &CFGCMD_ARCHIVE_PUSH_ASYNC =>
+    {
+        &CFGDEF_LOG_FILE => true,
+        &CFGDEF_LOCK_REQUIRED => true,
+        &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
+        &CFGDEF_PARAMETER_ALLOWED => true,
+    },
+
     &CFGCMD_BACKUP =>
     {
         &CFGDEF_LOCK_REQUIRED => true,
@@ -684,6 +694,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -783,6 +794,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -1091,6 +1103,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -1115,6 +1128,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_LOCAL => {},
@@ -1147,6 +1161,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_RESTORE => {},
         }
@@ -1163,6 +1178,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
@@ -1186,6 +1202,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
@@ -1208,6 +1225,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -1232,6 +1250,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -1256,6 +1275,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
@@ -1280,6 +1300,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -1306,6 +1327,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -1331,6 +1353,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
@@ -1417,6 +1440,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP =>
             {
                 &CFGDEF_INTERNAL => true,
@@ -1462,6 +1486,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
             &CFGCMD_LOCAL => {},
@@ -1696,6 +1721,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -1803,6 +1829,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -1843,6 +1870,7 @@ my %hConfigDefine =
                     &CFGDEF_DEPEND_LIST => [true],
                 },
             },
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
         },
     },
 
@@ -1857,6 +1885,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_RESTORE => {},
         }
@@ -1884,6 +1913,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -1908,6 +1938,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -1940,6 +1971,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -1965,6 +1997,7 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_GET_ASYNC => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -2015,6 +2048,7 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_ARCHIVE_PUSH_ASYNC => {},
         },
     },
 
@@ -2259,6 +2293,10 @@ my %hConfigDefine =
             {
                 &CFGDEF_INTERNAL => true,
             },
+            &CFGCMD_ARCHIVE_PUSH_ASYNC =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
@@ -2377,6 +2415,10 @@ my %hConfigDefine =
                 &CFGDEF_REQUIRED => false
             },
             &CFGCMD_ARCHIVE_PUSH =>
+            {
+                &CFGDEF_REQUIRED => false
+            },
+            &CFGCMD_ARCHIVE_PUSH_ASYNC =>
             {
                 &CFGDEF_REQUIRED => false
             },

@@ -21,7 +21,7 @@ testRun(void)
     if (testBegin("cmdArchivePush()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "pgbackrest-bogus");
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "archive-push");
@@ -33,7 +33,7 @@ testRun(void)
         strLstAddZ(argList, "000000010000000100000001");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_ERROR(cmdArchivePush(), AssertError, "archive-push in C does not support synchronous mode");
+        TEST_ERROR(cmdArchivePush(), OptionRequiredError , "===PERL-EMBED-ERROR===");
 
         // Make sure the process times out when there is nothing to archive
         // -------------------------------------------------------------------------------------------------------------------------

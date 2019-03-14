@@ -77,7 +77,18 @@ sub main
             require pgBackRest::Archive::Push::Push;
             pgBackRest::Archive::Push::Push->import();
 
-            new pgBackRest::Archive::Push::Push()->process($stryCommandArg[0]);
+            new pgBackRest::Archive::Push::Push()->process($stryCommandArg[0], false);
+        }
+
+        # Process archive-push-async command
+        # --------------------------------------------------------------------------------------------------------------------------
+        elsif (cfgCommandTest(CFGCMD_ARCHIVE_PUSH_ASYNC))
+        {
+            # Load module dynamically
+            require pgBackRest::Archive::Push::Push;
+            pgBackRest::Archive::Push::Push->import();
+
+            new pgBackRest::Archive::Push::Push()->process($stryCommandArg[0], true);
         }
 
         # Process remote command

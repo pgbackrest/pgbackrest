@@ -47,6 +47,18 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
     CONFIG_COMMAND
     (
+        CONFIG_COMMAND_NAME("archive-push-async")
+
+        CONFIG_COMMAND_LOG_FILE(true)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
+        CONFIG_COMMAND_LOCK_REQUIRED(true)
+        CONFIG_COMMAND_LOCK_TYPE(lockTypeArchive)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
+    )
+
+    CONFIG_COMMAND
+    (
         CONFIG_COMMAND_NAME("backup")
 
         CONFIG_COMMAND_LOG_FILE(true)

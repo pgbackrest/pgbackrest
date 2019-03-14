@@ -14,6 +14,7 @@ typedef enum
     cfgDefCmdArchiveGet,
     cfgDefCmdArchiveGetAsync,
     cfgDefCmdArchivePush,
+    cfgDefCmdArchivePushAsync,
     cfgDefCmdBackup,
     cfgDefCmdCheck,
     cfgDefCmdExpire,

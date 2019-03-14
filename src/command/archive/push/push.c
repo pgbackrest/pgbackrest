@@ -11,7 +11,7 @@ Archive Push Command
 #include "common/memContext.h"
 #include "common/wait.h"
 #include "config/config.h"
-#include "config/load.h"
+#include "config/exec.h"
 #include "perl/exec.h"
 #include "storage/helper.h"
 
@@ -39,7 +39,6 @@ cmdArchivePush(void)
             bool pushed = false;                                        // Has the WAL segment been pushed yet?
             bool forked = false;                                        // Has the async process been forked yet?
             bool confessOnError = false;                                // Should we confess errors?
-            bool server = false;                                        // Is this the async server process?
 
             // Loop and wait for the WAL segment to be pushed
             Wait *wait = waitNew((TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
@@ -56,74 +55,52 @@ cmdArchivePush(void)
                 if (!pushed && !forked &&
                     lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
                 {
+                    // The async process should not output on the console at all
+                    KeyValue *optionReplace = kvNew();
+
+                    kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptLogLevelConsole))), varNewStrZ("off"));
+                    kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptLogLevelStderr))), varNewStrZ("off"));
+
+                    // Generate command options
+                    StringList *commandExec = cfgExecParam(cfgCmdArchivePushAsync, optionReplace);
+                    strLstInsert(commandExec, 0, cfgExe());
+                    strLstAdd(commandExec, strLstGet(commandParam, 0));
+
+                    // Release the lock and mark the async process as forked
+                    lockRelease(true);
+                    forked = true;
+
                     // Fork off the async process
                     if (fork() == 0)
                     {
-                        // This is the server process
-                        server = true;
-
-                        // The async process should not output on the console at all
-                        cfgOptionSet(cfgOptLogLevelConsole, cfgSourceParam, varNewStrZ("off"));
-                        cfgOptionSet(cfgOptLogLevelStderr, cfgSourceParam, varNewStrZ("off"));
-                        cfgLoadLogSetting();
-
-                        // Open the log file
-                        cfgLoadLogFile(
-                            strNewFmt("%s/%s-%s-async.log", strPtr(cfgOptionStr(cfgOptLogPath)),
-                            strPtr(cfgOptionStr(cfgOptStanza)), cfgCommandName(cfgCommand())));
-
-                        // Log command info since we are starting a new log
-                        cmdBegin(true);
-
                         // Detach from parent process
                         forkDetach();
 
-                        // Execute async process and catch exceptions
-                        TRY_BEGIN()
-                        {
-                            perlExec();
-                        }
-                        CATCH_ANY()
-                        {
-                            RETHROW();
-                        }
-                        FINALLY()
-                        {
-                            // Release the lock (mostly here for testing since it would be freed in exitSafe() anyway)
-                            lockRelease(true);
-                        }
-                        TRY_END();
-                    }
-                    // Else mark async process as forked
-                    else
-                    {
-                        lockClear(true);
-                        forked = true;
+                        // Execute the binary.  This statement will not return if it is successful.
+                        THROW_ON_SYS_ERROR_FMT(
+                            execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1,
+                            ExecuteError, "unable to execute '%s'", cfgCommandName(cfgCmdArchiveGetAsync));
                     }
                 }
 
                 // Now that the async process has been launched, confess any errors that are found
                 confessOnError = true;
             }
-            while (!server && !pushed && waitMore(wait));
+            while (!pushed && waitMore(wait));
 
-            // The aysnc server does not give notifications
-            if (!server)
+            // If the WAL segment was not pushed then error
+            if (!pushed)
             {
-                // If the WAL segment was not pushed then error
-                if (!pushed)
-                {
-                    THROW_FMT(
-                        ArchiveTimeoutError, "unable to push WAL segment '%s' asynchronously after %lg second(s)",
-                        strPtr(walSegment), cfgOptionDbl(cfgOptArchiveTimeout));
-                }
-
-                // Log success
-                LOG_INFO("pushed WAL segment %s asynchronously", strPtr(walSegment));
+                THROW_FMT(
+                    ArchiveTimeoutError, "unable to push WAL segment '%s' asynchronously after %lg second(s)",
+                    strPtr(walSegment), cfgOptionDbl(cfgOptArchiveTimeout));
             }
+
+            // Log success
+            LOG_INFO("pushed WAL segment %s asynchronously", strPtr(walSegment));
         }
         else
-            THROW(AssertError, "archive-push in C does not support synchronous mode");
+            perlExec();
     }
     MEM_CONTEXT_TEMP_END();
 

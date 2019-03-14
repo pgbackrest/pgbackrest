@@ -106,6 +106,7 @@ sub libcAutoExportTag
             'CFGCMD_ARCHIVE_GET',
             'CFGCMD_ARCHIVE_GET_ASYNC',
             'CFGCMD_ARCHIVE_PUSH',
+            'CFGCMD_ARCHIVE_PUSH_ASYNC',
             'CFGCMD_BACKUP',
             'CFGCMD_CHECK',
             'CFGCMD_EXPIRE',
