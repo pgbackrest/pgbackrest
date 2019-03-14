@@ -13,6 +13,13 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.12dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Add <id>CIFS</id> storage driver.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
         </release>
 
         <release date="2019-03-11" version="2.11" title="C Implementation of Archive Get">

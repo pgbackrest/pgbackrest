@@ -953,7 +953,6 @@ testRun(void)
         strLstAddZ(argList, "archive-get");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_VOID(storageRepoGet(strNew(STORAGE_TYPE_CIFS), false), "get cifs repo storage");
         TEST_ERROR(storageRepoGet(strNew(BOGUS_STR), false), AssertError, "invalid storage type 'BOGUS'");
 
         // -------------------------------------------------------------------------------------------------------------------------
