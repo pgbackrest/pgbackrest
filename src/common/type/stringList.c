@@ -238,18 +238,21 @@ strLstDup(const StringList *sourceList)
         FUNCTION_TEST_PARAM(STRING_LIST, sourceList);
     FUNCTION_TEST_END();
 
-    ASSERT(sourceList != NULL);
+    StringList *this = NULL;
 
-    // Create the list
-    StringList *this = strLstNew();
-
-    // Copy strings
-    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    if (sourceList != NULL)
     {
-        for (unsigned int listIdx = 0; listIdx < strLstSize(sourceList); listIdx++)
-            strLstAddInternal(this, strDup(strLstGet(sourceList, listIdx)));
+        // Create the list
+        this = strLstNew();
+
+        // Copy strings
+        MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+        {
+            for (unsigned int listIdx = 0; listIdx < strLstSize(sourceList); listIdx++)
+                strLstAddInternal(this, strDup(strLstGet(sourceList, listIdx)));
+        }
+        MEM_CONTEXT_END();
     }
-    MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN(this);
 }

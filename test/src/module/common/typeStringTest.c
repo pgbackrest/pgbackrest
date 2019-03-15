@@ -390,7 +390,8 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(strLstJoin(list, ", ")), "item1, item2, [NULL]", "list with NULL at end");
 
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstDup(list), ", ")), "item1, item2, [NULL]", "dup'd list will NULL at end");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstDup(list), ", ")), "item1, item2, [NULL]", "dup'd list with NULL at end");
+        TEST_RESULT_PTR(strLstDup(NULL), NULL, "dup NULL list");
 
         strLstFree(list);
     }

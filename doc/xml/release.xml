@@ -32,6 +32,10 @@
                     <release-item>
                         <p>Add <id>CIFS</id> storage driver.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Make <code>strLstDup()</code> null-tolerant.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>
