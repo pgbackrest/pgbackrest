@@ -110,6 +110,11 @@ Vagrant.configure(2) do |config|
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Build End' && date
+
+        # Useful commands
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Force remove all containers:
+        # docker rm -f $(docker ps -a -q)
     SHELL
 
   # Don't share the default vagrant folder
