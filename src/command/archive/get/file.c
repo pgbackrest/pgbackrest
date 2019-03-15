@@ -14,14 +14,13 @@ Archive Get File
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
-#include "storage/helper.h"
 
 /***********************************************************************************************************************************
 Check if a WAL file exists in the repository
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_ARCHIVE_GET_CHECK_RESULT_TYPE                                                                               \
+#define FUNCTION_LOG_ARCHIVE_GET_CHECK_RESULT_TYPE                                                                                 \
     ArchiveGetCheckResult
-#define FUNCTION_LOG_ARCHIVE_GET_CHECK_RESULT_FORMAT(value, buffer, bufferSize)                                                  \
+#define FUNCTION_LOG_ARCHIVE_GET_CHECK_RESULT_FORMAT(value, buffer, bufferSize)                                                    \
     objToLog(&value, "ArchiveGetCheckResult", buffer, bufferSize)
 
 typedef struct ArchiveGetCheckResult
@@ -157,11 +156,9 @@ archiveGetFile(
                         cipherBlockNew(cipherModeDecrypt, cipherType, bufNewStr(archiveGetCheckResult.cipherPass), NULL)));
             }
 
-            // If file is gzipped then add the decompression filter
+            // If file is compressed then add the decompression filter
             if (strEndsWithZ(archiveGetCheckResult.archiveFileActual, "." GZIP_EXT))
-            {
                 ioFilterGroupAdd(filterGroup, gzipDecompressFilter(gzipDecompressNew(false)));
-            }
 
             ioWriteFilterGroupSet(storageFileWriteIo(destination), filterGroup);
 
