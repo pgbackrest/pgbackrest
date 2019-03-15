@@ -36,6 +36,10 @@
                     <release-item>
                         <p>Make <code>strLstDup()</code> null-tolerant.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <code>cvtSSizeToZ()</code> and debug macros.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>
