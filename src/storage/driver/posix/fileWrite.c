@@ -53,6 +53,7 @@ storageDriverPosixFileWriteNew(
     bool syncPath, bool atomic)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
@@ -62,6 +63,7 @@ storageDriverPosixFileWriteNew(
         FUNCTION_LOG_PARAM(BOOL, atomic);
     FUNCTION_LOG_END();
 
+    ASSERT(storage != NULL);
     ASSERT(name != NULL);
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
