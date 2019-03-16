@@ -35,6 +35,7 @@ Functions
 const Storage *storageLocal(void);
 const Storage *storageLocalWrite(void);
 const Storage *storageRepo(void);
+const Storage *storageRepoWrite(void);
 const Storage *storageSpool(void);
 const Storage *storageSpoolWrite(void);
 

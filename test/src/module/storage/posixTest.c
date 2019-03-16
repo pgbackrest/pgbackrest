@@ -943,7 +943,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageRepoGet() and storageRepo()"))
+    if (testBegin("storageRepo*()"))
     {
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
@@ -1011,6 +1011,14 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(storagePathNP(storage, strNew(STORAGE_REPO_BACKUP "/simple"))),
             strPtr(strNewFmt("%s/backup/simple", testPath())), "check simple backup path - NULL stanza");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_PTR(storageHelper.storageRepoWrite, NULL, "repo write storage not cached");
+        TEST_ASSIGN(storage, storageRepoWrite(), "new write storage");
+        TEST_RESULT_PTR(storageHelper.storageRepoWrite, storage, "repo write storage cached");
+        TEST_RESULT_PTR(storageRepoWrite(), storage, "get cached storage");
+
+        TEST_RESULT_BOOL(storage->write, true, "get write enabled");
     }
 
     // *****************************************************************************************************************************

@@ -180,9 +180,8 @@ testRun(void)
     if (testBegin("UNIMPLEMENTED"))
     {
         Storage *storageRemote = NULL;
-        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
 
-        storageRemote->write = true;
         TEST_ERROR(storageInfoNP(storageRemote, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
         TEST_ERROR(storageNewWriteNP(storageRemote, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
         TEST_ERROR(storagePathCreateNP(storageRemote, strNew("path")), AssertError, "NOT YET IMPLEMENTED");

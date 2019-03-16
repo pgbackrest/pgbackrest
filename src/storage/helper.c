@@ -33,6 +33,7 @@ static struct
     Storage *storageLocal;                                          // Local read-only storage
     Storage *storageLocalWrite;                                     // Local write storage
     Storage *storageRepo;                                           // Repository read-only storage
+    Storage *storageRepoWrite;                                      // Repository write storage
     Storage *storageSpool;                                          // Spool read-only storage
     Storage *storageSpoolWrite;                                     // Spool write storage
 
@@ -134,6 +135,26 @@ storageLocalWrite(void)
     }
 
     FUNCTION_TEST_RETURN(storageHelper.storageLocalWrite);
+}
+
+/***********************************************************************************************************************************
+Create the WAL regular expression
+***********************************************************************************************************************************/
+static void
+storageHelperRepoInit(void)
+{
+    FUNCTION_TEST_VOID();
+
+    if (storageHelper.walRegExp == NULL)
+    {
+        MEM_CONTEXT_BEGIN(memContextTop())
+        {
+            storageHelper.walRegExp = regExpNew(STRING_CONST("^[0-F]{24}"));
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -259,16 +280,40 @@ storageRepo(void)
     {
         storageHelperInit();
         storageHelperStanzaInit(false);
+        storageHelperRepoInit();
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.walRegExp = regExpNew(STRING_CONST("^[0-F]{24}"));
             storageHelper.storageRepo = storageRepoGet(cfgOptionStr(cfgOptRepoType), false);
         }
         MEM_CONTEXT_END();
     }
 
     FUNCTION_TEST_RETURN(storageHelper.storageRepo);
+}
+
+/***********************************************************************************************************************************
+Get a writable repository storage object
+***********************************************************************************************************************************/
+const Storage *
+storageRepoWrite(void)
+{
+    FUNCTION_TEST_VOID();
+
+    if (storageHelper.storageRepoWrite == NULL)
+    {
+        storageHelperInit();
+        storageHelperStanzaInit(false);
+        storageHelperRepoInit();
+
+        MEM_CONTEXT_BEGIN(storageHelper.memContext)
+        {
+            storageHelper.storageRepoWrite = storageRepoGet(cfgOptionStr(cfgOptRepoType), true);
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN(storageHelper.storageRepoWrite);
 }
 
 /***********************************************************************************************************************************
