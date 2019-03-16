@@ -30,7 +30,7 @@
                     </release-item>
 
                     <release-item>
-                        <p><code>CryptoHash</code> improvements and fixes. Fix incorrect buffer size used in <code>cryptoHashOne()</code>.  Add missing <code>const</code> to <code>cryptoHashOne()</code> and <code>cryptoHashOneStr()</code>.</p>
+                        <p><code>CryptoHash</code> improvements and fixes. Fix incorrect buffer size used in <code>cryptoHashOne()</code>.  Add missing <code>const</code> to <code>cryptoHashOne()</code> and <code>cryptoHashOneStr()</code>.  Add hash size constants.  Extern hash type constant.</p>
                     </release-item>
 
                     <release-item>
