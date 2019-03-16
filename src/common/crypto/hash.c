@@ -278,7 +278,7 @@ cryptoHashOne(const String *type, Buffer *message)
     ASSERT(type != NULL);
     ASSERT(message != NULL);
 
-    FUNCTION_TEST_RETURN(cryptoHashOneC(type, bufPtr(message), bufSize(message)));
+    FUNCTION_TEST_RETURN(cryptoHashOneC(type, bufPtr(message), bufUsed(message)));
 }
 
 /***********************************************************************************************************************************
