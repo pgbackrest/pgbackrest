@@ -8,16 +8,10 @@ Remote Storage File Read Driver
 #include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/regExp.h"
 #include "common/type/convert.h"
 #include "storage/driver/remote/fileRead.h"
 #include "storage/driver/remote/protocol.h"
 #include "storage/fileRead.intern.h"
-
-/***********************************************************************************************************************************
-Regular expressions
-***********************************************************************************************************************************/
-STRING_STATIC(BLOCK_REG_EXP_STR,                                    PROTOCOL_BLOCK_HEADER "[0-9]+");
 
 /***********************************************************************************************************************************
 Object type
@@ -35,15 +29,6 @@ struct StorageDriverRemoteFileRead
     size_t remaining;                                               // Bytes remaining to be read
     bool eof;                                                       // Has the file reached eof?
 };
-
-/***********************************************************************************************************************************
-Local variables
-***********************************************************************************************************************************/
-static struct
-{
-    MemContext *memContext;                                         // Mem context for protocol helper
-    RegExp *blockRegExp;                                            // Regular expression to check block messages
-} storageDriverRemoteFileReadLocal;
 
 /***********************************************************************************************************************************
 Create a new file
@@ -74,21 +59,6 @@ storageDriverRemoteFileReadNew(StorageDriverRemote *storage, ProtocolClient *cli
         this->ignoreMissing = ignoreMissing;
 
         this->client = client;
-
-        // Create block regular expression if it has not been created yet
-        if (storageDriverRemoteFileReadLocal.memContext == NULL)
-        {
-            MEM_CONTEXT_BEGIN(memContextTop())
-            {
-                MEM_CONTEXT_NEW_BEGIN("StorageDriverRemoteFileReadLocal")
-                {
-                    storageDriverRemoteFileReadLocal.memContext = memContextCurrent();
-                    storageDriverRemoteFileReadLocal.blockRegExp = regExpNew(BLOCK_REG_EXP_STR);
-                }
-                MEM_CONTEXT_NEW_END();
-            }
-            MEM_CONTEXT_END();
-        }
 
         this->interface = storageFileReadNewP(
             strNew(STORAGE_DRIVER_REMOTE_TYPE), this,
@@ -133,24 +103,6 @@ storageDriverRemoteFileReadOpen(StorageDriverRemoteFileRead *this)
 }
 
 /***********************************************************************************************************************************
-Get size of the next transfer block
-***********************************************************************************************************************************/
-static size_t
-storageDriverRemoteFileReadBlockSize(const String *message)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, message);
-    FUNCTION_LOG_END();
-
-    ASSERT(message != NULL);
-
-    if (!regExpMatch(storageDriverRemoteFileReadLocal.blockRegExp, message))
-        THROW_FMT(ProtocolError, "'%s' is not a valid block size message", strPtr(message));
-
-    FUNCTION_LOG_RETURN(SIZE, (size_t)cvtZToUInt64(strPtr(message) + sizeof(PROTOCOL_BLOCK_HEADER) - 1));
-}
-
-/***********************************************************************************************************************************
 Read from a file
 ***********************************************************************************************************************************/
 size_t
@@ -177,7 +129,7 @@ storageDriverRemoteFileRead(StorageDriverRemoteFileRead *this, Buffer *buffer, b
             {
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    this->remaining = storageDriverRemoteFileReadBlockSize(ioReadLine(protocolClientIoRead(this->client)));
+                    this->remaining = (size_t)storageDriverRemoteProtocolBlockSize(ioReadLine(protocolClientIoRead(this->client)));
 
                     if (this->remaining == 0)
                         this->eof = true;

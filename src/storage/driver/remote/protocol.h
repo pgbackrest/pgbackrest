@@ -19,10 +19,13 @@ Constants
     STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_LIST_STR);
 #define PROTOCOL_COMMAND_STORAGE_OPEN_READ                          "storageOpenRead"
     STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
+#define PROTOCOL_COMMAND_STORAGE_OPEN_WRITE                         "storageOpenWrite"
+    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+ssize_t storageDriverRemoteProtocolBlockSize(const String *message);
 bool storageDriverRemoteProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
 
 #endif

@@ -7,6 +7,7 @@ Remote Storage Driver
 #include "protocol/client.h"
 #include "protocol/helper.h"
 #include "storage/driver/remote/fileRead.h"
+#include "storage/driver/remote/fileWrite.h"
 #include "storage/driver/remote/protocol.h"
 #include "storage/driver/remote/storage.h"
 
@@ -190,9 +191,10 @@ storageDriverRemoteNewWrite(
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
-
-    FUNCTION_LOG_RETURN(STORAGE_FILE_WRITE, NULL);
+    FUNCTION_LOG_RETURN(
+        STORAGE_FILE_WRITE,
+        storageDriverRemoteFileWriteInterface(
+            storageDriverRemoteFileWriteNew(this, this->client, file, modeFile, modePath, createPath, syncFile, syncPath, atomic)));
 }
 
 /***********************************************************************************************************************************

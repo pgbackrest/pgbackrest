@@ -30,12 +30,14 @@ testRun(void)
     harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
     // Start a protocol server to test the remote protocol
+    Buffer *serverRead = bufNew(8192);
     Buffer *serverWrite = bufNew(8192);
+    IoRead *serverReadIo = ioBufferReadIo(ioBufferReadNew(serverRead));
     IoWrite *serverWriteIo = ioBufferWriteIo(ioBufferWriteNew(serverWrite));
+    ioReadOpen(serverReadIo);
     ioWriteOpen(serverWriteIo);
 
-    ProtocolServer *server = protocolServerNew(
-        strNew("test"), strNew("test"), ioBufferReadIo(ioBufferReadNew(bufNew(0))), serverWriteIo);
+    ProtocolServer *server = protocolServerNew(strNew("test"), strNew("test"), serverReadIo, serverWriteIo);
 
     bufUsedSet(serverWrite, 0);
 
@@ -138,7 +140,7 @@ testRun(void)
             bufEq(storageGetNP(storageNewReadNP(storageRemote, strNew("test.txt"))), contentBuf), true, "get file again");
 
         TEST_ERROR(
-            storageDriverRemoteFileReadBlockSize(strNew("bogus")), ProtocolError, "'bogus' is not a valid block size message");
+            storageDriverRemoteProtocolBlockSize(strNew("bogus")), ProtocolError, "'bogus' is not a valid block size message");
 
         // Check protocol function directly (file missing)
         // -------------------------------------------------------------------------------------------------------------------------
@@ -177,13 +179,138 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("storageNewWrite()"))
+    {
+        storagePathCreateNP(storageTest, strNew("repo"));
+        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chown pgbackrest %s/repo", testPath()))), 0, "update repo owner");
+
+        Storage *storageRemote = NULL;
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
+
+        // Create buffer with plenty of data
+        Buffer *contentBuf = bufNew(32768);
+
+        for (unsigned int contentIdx = 0; contentIdx < bufSize(contentBuf); contentIdx++)
+            bufPtr(contentBuf)[contentIdx] = contentIdx % 2 ? 'A' : 'B';
+
+        bufUsedSet(contentBuf, bufSize(contentBuf));
+
+        // Write the file
+        // -------------------------------------------------------------------------------------------------------------------------
+        ioBufferSizeSet(9999);
+
+        StorageFileWrite *write = NULL;
+        TEST_ASSIGN(write, storageNewWriteNP(storageRemote, strNew("test.txt")), "new write file");
+
+        TEST_RESULT_BOOL(storageFileWriteAtomic(write), true, "write is atomic");
+        TEST_RESULT_BOOL(storageFileWriteCreatePath(write), true, "path will be created");
+        TEST_RESULT_UINT(storageFileWriteModeFile(write), STORAGE_MODE_FILE_DEFAULT, "file mode is default");
+        TEST_RESULT_UINT(storageFileWriteModePath(write), STORAGE_MODE_PATH_DEFAULT, "path mode is default");
+        TEST_RESULT_STR(strPtr(storageFileWriteName(write)), "test.txt", "check file name");
+        TEST_RESULT_BOOL(storageFileWriteSyncFile(write), true, "file is synced");
+        TEST_RESULT_BOOL(storageFileWriteSyncPath(write), true, "path is synced");
+
+        TEST_RESULT_VOID(storagePutNP(write, contentBuf), "write file");
+        TEST_RESULT_VOID(
+            storageDriverRemoteFileWriteClose((StorageDriverRemoteFileWrite *)storageFileWriteFileDriver(write)),
+            "close file again");
+        TEST_RESULT_VOID(
+            storageDriverRemoteFileWriteFree((StorageDriverRemoteFileWrite *)storageFileWriteFileDriver(write)),
+            "free file");
+
+        // Make sure the file was written correctly
+        TEST_RESULT_BOOL(
+            bufEq(storageGetNP(storageNewReadNP(storageRemote, strNew("test.txt"))), contentBuf), true, "check file");
+
+        // Write the file again, but this time free it before close and make sure the .tmp file is left
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(write, storageNewWriteNP(storageRemote, strNew("test2.txt")), "new write file");
+
+        TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(write)), "open file");
+        TEST_RESULT_VOID(ioWrite(storageFileWriteIo(write), contentBuf), "write bytes");
+
+        TEST_RESULT_VOID(
+            storageDriverRemoteFileWriteFree((StorageDriverRemoteFileWrite *)storageFileWriteFileDriver(write)),
+            "free file");
+        TEST_RESULT_VOID(storageDriverRemoteFileWriteFree(NULL), "free null file");
+
+        TEST_RESULT_UINT(
+            storageInfoNP(storageTest, strNew("repo/test2.txt.pgbackrest.tmp")).size, 16384, "file exists and is partial");
+
+        // Check protocol function directly (complete write)
+        // -------------------------------------------------------------------------------------------------------------------------
+        ioBufferSizeSet(10);
+
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(strNew("test3.txt")));
+        varLstAdd(paramList, varNewUInt64(0640));
+        varLstAdd(paramList, varNewUInt64(0750));
+        varLstAdd(paramList, varNewBool(true));
+        varLstAdd(paramList, varNewBool(true));
+        varLstAdd(paramList, varNewBool(true));
+        varLstAdd(paramList, varNewBool(true));
+
+        // Generate input (includes the input for the test below -- need a way to reset this for better testing)
+        bufCat(
+            serverRead,
+            bufNewStr(
+                strNew(
+                    "BRBLOCK3\n"
+                    "ABCBRBLOCK15\n"
+                    "123456789012345BRBLOCK0\n"
+                    "BRBLOCK3\n"
+                    "ABCBRBLOCK-1\n")));
+
+        TEST_RESULT_BOOL(
+            storageDriverRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(serverWrite)),
+            "{}\n"
+                "{}\n",
+            "check result");
+
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("repo/test3.txt"))))), "ABC123456789012345",
+            "check file");
+
+        bufUsedSet(serverWrite, 0);
+
+        // Check protocol function directly (free before write is closed)
+        // -------------------------------------------------------------------------------------------------------------------------
+        ioBufferSizeSet(10);
+
+        paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(strNew("test4.txt")));
+        varLstAdd(paramList, varNewUInt64(0640));
+        varLstAdd(paramList, varNewUInt64(0750));
+        varLstAdd(paramList, varNewBool(true));
+        varLstAdd(paramList, varNewBool(true));
+        varLstAdd(paramList, varNewBool(true));
+        varLstAdd(paramList, varNewBool(true));
+
+        TEST_RESULT_BOOL(
+            storageDriverRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(serverWrite)),
+            "{}\n"
+                "{}\n",
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
+        ioBufferSizeSet(8192);
+
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("repo/test4.txt.pgbackrest.tmp"))))), "",
+            "check file");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("UNIMPLEMENTED"))
     {
         Storage *storageRemote = NULL;
         TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), true), "get remote repo storage");
 
         TEST_ERROR(storageInfoNP(storageRemote, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
-        TEST_ERROR(storageNewWriteNP(storageRemote, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
         TEST_ERROR(storagePathCreateNP(storageRemote, strNew("path")), AssertError, "NOT YET IMPLEMENTED");
         TEST_ERROR(storagePathRemoveNP(storageRemote, strNew("path")), AssertError, "NOT YET IMPLEMENTED");
         TEST_ERROR(storagePathSyncNP(storageRemote, strNew("path")), AssertError, "NOT YET IMPLEMENTED");
