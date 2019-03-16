@@ -69,7 +69,7 @@ infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissin
         TRY_END();
 
         // Store the archiveId for the current PG db-version db-id
-        this->archiveId = infoPgArchiveId(this->infoPg, 0);
+        this->archiveId = infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg));
     }
     MEM_CONTEXT_NEW_END();
 
@@ -94,7 +94,7 @@ infoArchiveCheckPg(const InfoArchive *this, unsigned int pgVersion, uint64_t pgS
 
     String *errorMsg = NULL;
 
-    InfoPgData archivePg = infoPgDataCurrent(this->infoPg);
+    InfoPgData archivePg = infoPgData(this->infoPg, infoPgDataCurrentId(this->infoPg));
 
     if (archivePg.version != pgVersion)
     {

@@ -55,9 +55,12 @@ testRun(void)
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
             bufNewZ(
                 "[backrest]\n"
-                "backrest-checksum=\"0a415a03fa3faccb4ac171759895478469e9e19e\"\n"
+                "backrest-checksum=\"806471e1481804dc3ddf8dc6f1da7c34939420a8\"\n"
                 "backrest-format=5\n"
                 "backrest-version=\"2.06\"\n"
+                "\n"
+                "[db]\n"
+                "db-id=1\n"
                 "\n"
                 "[db:history]\n"
                 "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"));
@@ -72,9 +75,12 @@ testRun(void)
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
             bufNewZ(
                 "[backrest]\n"
-                "backrest-checksum=\"f7617b5c4c9f212f40b9bc3d8ec7f97edbbf96af\"\n"
+                "backrest-checksum=\"4120e2a5c3918a480af951fb99bee7dc091f080a\"\n"
                 "backrest-format=5\n"
                 "backrest-version=\"2.06\"\n"
+                "\n"
+                "[db]\n"
+                "db-id=3\n"
                 "\n"
                 "[db:history]\n"
                 "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"
@@ -147,9 +153,12 @@ testRun(void)
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
             bufNewZ(
                 "[backrest]\n"
-                "backrest-checksum=\"8a041a4128eaa2c08a23dd1f04934627795946ff\"\n"
+                "backrest-checksum=\"bf9d69c6131e906898511432b4445335f377b12b\"\n"
                 "backrest-format=5\n"
                 "backrest-version=\"2.06\"\n"
+                "\n"
+                "[db]\n"
+                "db-id=1\n"
                 "\n"
                 "[db:history]\n"
                 "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
@@ -201,12 +210,15 @@ testRun(void)
             infoWrite,
             bufNewZ(
                 "[backrest]\n"
-                "backrest-checksum=\"60bfcb0a5a2c91d203c11d7f1924e99dcdfa0b80\"\n"
+                "backrest-checksum=\"5e4bf8cafff30b488c01574411e858c7866df4a2\"\n"
                 "backrest-format=5\n"
                 "backrest-version=\"2.06\"\n"
                 "\n"
                 "[cipher]\n"
                 "cipher-pass=\"worstpassphraseever\"\n"
+                "\n"
+                "[db]\n"
+                "db-id=1\n"
                 "\n"
                 "[db:history]\n"
                 "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
@@ -362,9 +374,12 @@ testRun(void)
             storageNewWriteNP(storageTest, strNew("repo/archive/test2/archive.info")),
             bufNewZ(
                 "[backrest]\n"
-                "backrest-checksum=\"d962d8d7311d0ae5dc0b05892c15cfa2009d051e\"\n"
+                "backrest-checksum=\"398aa38312ce69e3625b2ecfb4dfc6387e5ce7d3\"\n"
                 "backrest-format=5\n"
                 "backrest-version=\"2.11\"\n"
+                "\n"
+                "[db]\n"
+                "db-id=1\n"
                 "\n"
                 "[db:history]\n"
                 "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"));

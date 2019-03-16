@@ -42,6 +42,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Make notion of current <postgres/> info ID in C align with Perl.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>httpHeaderDup()</code>.</p>
                     </release-item>
 

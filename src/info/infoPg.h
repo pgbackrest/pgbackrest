@@ -60,6 +60,7 @@ String *infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx);
 const String *infoPgCipherPass(const InfoPg *this);
 InfoPgData infoPgData(const InfoPg *this, unsigned int pgDataIdx);
 InfoPgData infoPgDataCurrent(const InfoPg *this);
+unsigned int infoPgDataCurrentId(const InfoPg *this);
 unsigned int infoPgDataTotal(const InfoPg *this);
 Ini *infoPgIni(const InfoPg *this);
 

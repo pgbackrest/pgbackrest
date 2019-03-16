@@ -22,6 +22,7 @@ PostgreSQL Info Handler
 /***********************************************************************************************************************************
 Internal constants
 ***********************************************************************************************************************************/
+STRING_STATIC(INFO_SECTION_DB_STR,                                  "db");
 STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                          "db:history");
 
 STRING_EXTERN(INFO_KEY_DB_ID_STR,                                   INFO_KEY_DB_ID);
@@ -37,6 +38,7 @@ struct InfoPg
 {
     MemContext *memContext;                                         // Context that contains the infoPg
     List *history;                                                  // A list of InfoPgData
+    unsigned int historyCurrent;                                    // Index of the current history item
     Info *info;                                                     // Info contents
 };
 
@@ -76,11 +78,15 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
         MEM_CONTEXT_TEMP_BEGIN()
         {
             const Ini *infoPgIni = infoIni(this->info);
+            const String *pgSection = INFO_SECTION_DB_STR;
             const String *pgHistorySection = INFO_SECTION_DB_HISTORY_STR;
             const StringList *pgHistoryKey = iniSectionKeyList(infoPgIni, pgHistorySection);
             const Variant *idKey = varNewStr(INFO_KEY_DB_ID_STR);
             const Variant *systemIdKey = varNewStr(INFO_KEY_DB_SYSTEM_ID_STR);
             const Variant *versionKey = varNewStr(INFO_KEY_DB_VERSION_STR);
+
+            // Get the current history id
+            unsigned int pgId = (unsigned int)varUInt64Force(iniGet(infoPgIni, pgSection, varStr(idKey)));
 
             // History must include at least one item or the file is corrupt
             ASSERT(strLstSize(pgHistoryKey) > 0);
@@ -103,6 +109,10 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
                     // This is different in archive.info due to a typo that can't be fixed without a format version bump
                     .systemId = varUInt64Force(kvGet(pgDataKv, type == infoPgArchive ? idKey : systemIdKey)),
                 };
+
+                // Set index if this is the current history item
+                if (infoPgData.id == pgId)
+                    this->historyCurrent = lstSize(this->history);
 
                 // Get values that are only in backup and manifest files.  These are really vestigial since stanza-create verifies
                 // the control and catalog versions so there is no good reason to store them.  However, for backward compatability
@@ -210,7 +220,22 @@ infoPgDataCurrent(const InfoPg *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INFO_PG_DATA, infoPgData(this, 0));
+    FUNCTION_LOG_RETURN(INFO_PG_DATA, infoPgData(this, infoPgDataCurrentId(this)));
+}
+
+/***********************************************************************************************************************************
+Return the current history index
+***********************************************************************************************************************************/
+unsigned int
+infoPgDataCurrentId(const InfoPg *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_PG, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_LOG_RETURN(UINT, this->historyCurrent);
 }
 
 /***********************************************************************************************************************************
