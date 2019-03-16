@@ -268,7 +268,7 @@ cryptoHashOneC(const String *type, const unsigned char *message, size_t messageS
 Get hash for one Buffer
 ***********************************************************************************************************************************/
 Buffer *
-cryptoHashOne(const String *type, Buffer *message)
+cryptoHashOne(const String *type, const Buffer *message)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, type);
@@ -285,7 +285,7 @@ cryptoHashOne(const String *type, Buffer *message)
 Get hash for one String
 ***********************************************************************************************************************************/
 Buffer *
-cryptoHashOneStr(const String *type, String *message)
+cryptoHashOneStr(const String *type, const String *message)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, type);

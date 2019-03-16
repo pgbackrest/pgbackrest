@@ -51,9 +51,9 @@ void cryptoHashFree(CryptoHash *this);
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
-Buffer *cryptoHashOne(const String *type, Buffer *message);
+Buffer *cryptoHashOne(const String *type, const Buffer *message);
 Buffer *cryptoHashOneC(const String *type, const unsigned char *message, size_t messageSize);
-Buffer *cryptoHashOneStr(const String *type, String *message);
+Buffer *cryptoHashOneStr(const String *type, const String *message);
 
 Buffer *cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message);
 
