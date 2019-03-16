@@ -11,6 +11,7 @@ Archive Common
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "common/wait.h"
+#include "config/config.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
 #include "storage/helper.h"
@@ -219,6 +220,43 @@ walIsPartial(const String *walSegment)
     ASSERT(walIsSegment(walSegment));
 
     FUNCTION_LOG_RETURN(BOOL, strEndsWithZ(walSegment, WAL_SEGMENT_PARTIAL_EXT));
+}
+
+/***********************************************************************************************************************************
+Generates the location of the wal directory using a relative wal path and the supplied pg path
+***********************************************************************************************************************************/
+String *
+walPath(const String *walFile, const String *pgPath, const String *command)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, walFile);
+        FUNCTION_LOG_PARAM(STRING, pgPath);
+        FUNCTION_LOG_PARAM(STRING, command);
+    FUNCTION_LOG_END();
+
+    ASSERT(walFile != NULL);
+    ASSERT(command != NULL);
+
+    String *result = NULL;
+
+    if (!strBeginsWithZ(walFile, "/"))
+    {
+        if (pgPath == NULL)
+        {
+            THROW_FMT(
+                OptionRequiredError,
+                "option '%s' must be specified when relative wal paths are used\n"
+                    "HINT: Is %%f passed to %s instead of %%p?\n"
+                    "HINT: PostgreSQL may pass relative paths even with %%p depending on the environment.",
+                cfgOptionName(cfgOptPgPath), strPtr(command));
+        }
+
+        result = strNewFmt("%s/%s", strPtr(pgPath), strPtr(walFile));
+    }
+    else
+        result = strDup(walFile);
+
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************

@@ -127,12 +127,9 @@ cmdArchiveGet(void)
         // Get the segment name
         String *walSegment = strBase(strLstGet(commandParam, 0));
 
-        // Destination is wherever we were told to move the WAL segment.  In some cases the path that PostgreSQL passes will not be
-        // absolute so prefix pg-path.
-        const String *walDestination = strLstGet(commandParam, 1);
-
-        if (!strBeginsWithZ(walDestination, "/"))
-            walDestination = strNewFmt("%s/%s", strPtr(cfgOptionStr(cfgOptPgPath)), strPtr(walDestination));
+        // Destination is wherever we were told to move the WAL segment
+        const String *walDestination =
+            walPath(strLstGet(commandParam, 1), cfgOptionStr(cfgOptPgPath), strNew(cfgCommandName(cfgCommand())));
 
         // Async get can only be performed on WAL segments, history or other files must use synchronous mode
         if (cfgOptionBool(cfgOptArchiveAsync) && walIsSegment(walSegment))

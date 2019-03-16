@@ -169,6 +169,20 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("walPath()"))
+    {
+        TEST_RESULT_STR(
+            strPtr(walPath(strNew("/absolute/path"), strNew("/pg"), strNew("test"))), "/absolute/path", "absolute path");
+        TEST_RESULT_STR(
+            strPtr(walPath(strNew("relative/path"), strNew("/pg"), strNew("test"))), "/pg/relative/path", "relative path");
+        TEST_ERROR(
+            walPath(strNew("relative/path"), NULL, strNew("test")), OptionRequiredError,
+            "option 'pg1-path' must be specified when relative wal paths are used\n"
+                "HINT: Is %f passed to test instead of %p?\n"
+                "HINT: PostgreSQL may pass relative paths even with %p depending on the environment.");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("walSegmentFind()"))
     {
         // Load configuration to set repo-path and stanza
