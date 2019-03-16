@@ -27,9 +27,17 @@ HTTP Constants
 ***********************************************************************************************************************************/
 #define HTTP_VERB_GET                                               "GET"
     STRING_DECLARE(HTTP_VERB_GET_STR);
+#define HTTP_VERB_POST                                              "POST"
+    STRING_DECLARE(HTTP_VERB_POST_STR);
+#define HTTP_VERB_PUT                                               "PUT"
+    STRING_DECLARE(HTTP_VERB_PUT_STR);
 
 #define HTTP_HEADER_CONTENT_LENGTH                                  "content-length"
     STRING_DECLARE(HTTP_HEADER_CONTENT_LENGTH_STR);
+#define HTTP_HEADER_CONTENT_MD5                                     "content-md5"
+    STRING_DECLARE(HTTP_HEADER_CONTENT_MD5_STR);
+#define HTTP_HEADER_ETAG                                            "etag"
+    STRING_DECLARE(HTTP_HEADER_ETAG_STR);
 
 #define HTTP_RESPONSE_CODE_OK                                       200
 #define HTTP_RESPONSE_CODE_FORBIDDEN                                403
@@ -46,7 +54,7 @@ Functions
 ***********************************************************************************************************************************/
 Buffer *httpClientRequest(
     HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
-    bool returnContent);
+    const Buffer *body, bool returnContent);
 
 /***********************************************************************************************************************************
 Getters

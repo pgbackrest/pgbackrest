@@ -42,6 +42,10 @@
                     </release-item>
 
                     <release-item>
+                        <p><code>httpClientRequest()</code> accepts a body parameter.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Make <code>strLstDup()</code> null-tolerant.</p>
                     </release-item>
 

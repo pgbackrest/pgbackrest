@@ -196,7 +196,9 @@ testHttpServer(void)
 
         harnessTlsServerExpect(
             "GET /path/file%201.txt HTTP/1.1\r\n"
-            "\r\n");
+            "content-length:30\r\n"
+            "\r\n"
+            "012345678901234567890123456789");
 
         harnessTlsServerReply(
             "HTTP/1.1 200 OK\r\n"
@@ -383,7 +385,7 @@ testRun(void)
         TEST_ASSIGN(client, httpClientNew(strNew("localhost"), TLS_TEST_PORT, 500, true, NULL, NULL), "new client");
 
         TEST_ERROR(
-            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), HostConnectError,
+            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), HostConnectError,
             "unable to connect to 'localhost:9443': [111] Connection refused");
 
         // Start http test server
@@ -394,41 +396,41 @@ testRun(void)
         client->timeout = 0;
 
         TEST_ERROR(
-            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), FileReadError,
+            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FileReadError,
             "unable to read data from '" TLS_TEST_HOST ":9443' after 500ms");
 
         // Test invalid http version
         TEST_ERROR(
-            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), FormatError,
+            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
             "http version of response 'HTTP/1.0 200 OK' must be HTTP/1.1");
 
         // Test no space in status
         TEST_ERROR(
-            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), FormatError,
+            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
             "response status '200OK' must have a space");
 
         // Test unexpected end of headers
         TEST_ERROR(
-            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), FileReadError,
+            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FileReadError,
             "unexpected eof while reading line");
 
         // Test missing colon in header
         TEST_ERROR(
-            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), FormatError,
+            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
             "header 'header-value' missing colon");
 
         // Test invalid transfer encoding
         TEST_ERROR(
-            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), FormatError,
+            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
             "only 'chunked' is supported for 'transfer-encoding' header");
 
         // Test content length and transfer encoding both set
         TEST_ERROR(
-            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), FormatError,
+            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), FormatError,
             "'transfer-encoding' and 'content-length' headers are both set");
 
         // Test 5xx error with no retry
-        TEST_ERROR(httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), ServiceError, "[503] Slow Down");
+        TEST_ERROR(httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), ServiceError, "[503] Slow Down");
 
         // Request with no content
         client->timeout = 500;
@@ -441,7 +443,7 @@ testRun(void)
         httpQueryAdd(query, strNew("type"), strNew("test"));
 
         TEST_RESULT_VOID(
-            httpClientRequest(client, strNew("GET"), strNew("/"), query, headerRequest, false), "request with no content");
+            httpClientRequest(client, strNew("GET"), strNew("/"), query, headerRequest, NULL, false), "request with no content");
         TEST_RESULT_UINT(httpClientResponseCode(client), 200, "    check response code");
         TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "OK", "    check response message");
         TEST_RESULT_STR(
@@ -449,7 +451,8 @@ testRun(void)
             "    check response headers");
 
         // Error with content length 0
-        TEST_RESULT_VOID(httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), "error with content length 0");
+        TEST_RESULT_VOID(
+            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "error with content length 0");
         TEST_RESULT_UINT(httpClientResponseCode(client), 404, "    check response code");
         TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "Not Found", "    check response message");
         TEST_RESULT_STR(
@@ -458,7 +461,8 @@ testRun(void)
         // Error with content
         Buffer *buffer = NULL;
 
-        TEST_ASSIGN(buffer, httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), "error with content length");
+        TEST_ASSIGN(
+            buffer, httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "error with content length");
         TEST_RESULT_UINT(httpClientResponseCode(client), 403, "    check response code");
         TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "Auth Error", "    check response message");
         TEST_RESULT_STR(
@@ -470,7 +474,11 @@ testRun(void)
 
         TEST_ASSIGN(
             buffer,
-            httpClientRequest(client, strNew("GET"), strNew("/path/file 1.txt"), NULL, NULL, true), "request with content length");
+            httpClientRequest(
+                client, strNew("GET"), strNew("/path/file 1.txt"), NULL,
+                httpHeaderAdd(httpHeaderNew(NULL), strNew("content-length"), strNew("30")),
+                bufNewStr(strNew("012345678901234567890123456789")), true),
+            "request with content length");
         TEST_RESULT_STR(
             strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{connection: 'close', content-length: '32'}",
             "    check response headers");
@@ -479,7 +487,7 @@ testRun(void)
 
         // Request with eof before content complete with retry
         TEST_ASSIGN(
-            buffer, httpClientRequest(client, strNew("GET"), strNew("/path/file 1.txt"), NULL, NULL, true),
+            buffer, httpClientRequest(client, strNew("GET"), strNew("/path/file 1.txt"), NULL, NULL, NULL, true),
             "request with content length retry");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)),  "01234567890123456789012345678901", "    check response");
         TEST_RESULT_UINT(httpClientRead(client, bufNew(1), true), 0, "    call internal read to check eof");
@@ -487,13 +495,14 @@ testRun(void)
         // Request with eof before content and error
         buffer = bufNew(32);
         TEST_RESULT_VOID(
-            httpClientRequest(client, strNew("GET"), strNew("/path/file 1.txt"), NULL, NULL, false),
+            httpClientRequest(client, strNew("GET"), strNew("/path/file 1.txt"), NULL, NULL, NULL, false),
             "request with content length error");
         TEST_ERROR(
             ioRead(httpClientIoRead(client), buffer), FileReadError, "unexpected EOF reading HTTP content");
 
         // Request with content using chunked encoding
-        TEST_RESULT_VOID(httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, false), "request with chunked encoding");
+        TEST_RESULT_VOID(
+            httpClientRequest(client, strNew("GET"), strNew("/"), NULL, NULL, NULL, false), "request with chunked encoding");
         TEST_RESULT_STR(
             strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{transfer-encoding: 'chunked'}",
             "    check response headers");

@@ -17,12 +17,16 @@ Http constants
     STRING_STATIC(HTTP_VERSION_STR,                                 HTTP_VERSION);
 
 STRING_EXTERN(HTTP_VERB_GET_STR,                                    HTTP_VERB_GET);
+STRING_EXTERN(HTTP_VERB_POST_STR,                                   HTTP_VERB_POST);
+STRING_EXTERN(HTTP_VERB_PUT_STR,                                    HTTP_VERB_PUT);
 
 #define HTTP_HEADER_CONNECTION                                      "connection"
     STRING_STATIC(HTTP_HEADER_CONNECTION_STR,                       HTTP_HEADER_CONNECTION);
 STRING_EXTERN(HTTP_HEADER_CONTENT_LENGTH_STR,                       HTTP_HEADER_CONTENT_LENGTH);
+STRING_EXTERN(HTTP_HEADER_CONTENT_MD5_STR,                          HTTP_HEADER_CONTENT_MD5);
 #define HTTP_HEADER_TRANSFER_ENCODING                               "transfer-encoding"
     STRING_STATIC(HTTP_HEADER_TRANSFER_ENCODING_STR,                HTTP_HEADER_TRANSFER_ENCODING);
+STRING_EXTERN(HTTP_HEADER_ETAG_STR,                                 HTTP_HEADER_ETAG);
 
 #define HTTP_VALUE_CONNECTION_CLOSE                                 "close"
     STRING_STATIC(HTTP_VALUE_CONNECTION_CLOSE_STR,                  HTTP_VALUE_CONNECTION_CLOSE);
@@ -190,7 +194,7 @@ Perform a request
 Buffer *
 httpClientRequest(
     HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
-    bool returnContent)
+    const Buffer *body, bool returnContent)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
@@ -198,6 +202,8 @@ httpClientRequest(
         FUNCTION_LOG_PARAM(STRING, uri);
         FUNCTION_LOG_PARAM(HTTP_QUERY, query);
         FUNCTION_LOG_PARAM(HTTP_HEADER, requestHeader);
+        FUNCTION_LOG_PARAM(BUFFER, body);
+        FUNCTION_LOG_PARAM(BOOL, returnContent);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -262,8 +268,14 @@ httpClientRequest(
                     }
                 }
 
-                // Write out blank line and close the write so it flushes
+                // Write out blank line to end the headers
                 ioWriteLine(tlsClientIoWrite(this->tls), CR_STR);
+
+                // Write out body if any
+                if (body != NULL)
+                    ioWrite(tlsClientIoWrite(this->tls), body);
+
+                // Flush all writes
                 ioWriteFlush(tlsClientIoWrite(this->tls));
 
                 // Read status and make sure it starts with the correct http version
