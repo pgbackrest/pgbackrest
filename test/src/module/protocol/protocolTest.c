@@ -87,6 +87,40 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("protocolLocalParam()"))
+    {
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAddZ(argList, "archive-get");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(protocolLocalParam(protocolStorageTypeRepo, 0), "|")),
+            strPtr(
+                strNew(
+                    "--command=archive-get|--host-id=1|--log-level-file=off|--log-level-stderr=error|--process=0|--stanza=test1"
+                        "|--type=backup|local")),
+            "local protocol params");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAddZ(argList, "--log-subprocess");
+        strLstAddZ(argList, "archive-get");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(protocolLocalParam(protocolStorageTypeRepo, 1), "|")),
+            strPtr(
+                strNew(
+                    "--command=archive-get|--host-id=1|--log-level-file=info|--log-level-stderr=error|--log-subprocess|--process=1"
+                        "|--stanza=test1|--type=backup|local")),
+            "local protocol params with replacements");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("protocolRemoteParam()"))
     {
         StringList *argList = strLstNew();
@@ -102,13 +136,15 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|repo-host-user@repo-host"
-                        "|pgbackrest --command=archive-get --process=0 --type=backup remote")),
+                        "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=0 --type=backup"
+                        " remote")),
             "remote protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
+        strLstAddZ(argList, "--log-subprocess");
         strLstAddZ(argList, "--repo1-host=repo-host");
         strLstAddZ(argList, "--repo1-host-port=444");
         strLstAddZ(argList, "--repo1-host-config=/path/pgbackrest.conf");
@@ -124,7 +160,8 @@ testRun(void)
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|-p|444|repo-host-user@repo-host"
                         "|pgbackrest --command=archive-get --config=/path/pgbackrest.conf --config-include-path=/path/include"
-                        " --config-path=/path/config --process=1 --type=backup remote")),
+                        " --config-path=/path/config --log-level-file=info --log-level-stderr=error --log-subprocess --process=1"
+                        " --type=backup remote")),
             "remote protocol params with replacements");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -144,7 +181,8 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|pgbackrest@repo-host"
-                        "|pgbackrest --command=archive-get --process=3 --type=backup remote")),
+                        "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=3 --type=backup"
+                        " remote")),
             "remote protocol params for local");
     }
 

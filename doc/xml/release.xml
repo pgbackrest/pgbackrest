@@ -22,6 +22,10 @@
 
                         <p>Fix issues when a path option is / terminated.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fix issues with <code>remote</code>/<code>local</code> command logging options.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-development-list>

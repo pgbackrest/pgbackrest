@@ -96,6 +96,14 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int protoco
         // Add the type
         kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptType))), varNewStr(strNew("backup")));
 
+        // Only enable file logging on the local when requested
+        kvPut(
+            optionReplace, varNewStr(strNew(cfgOptionName(cfgOptLogLevelFile))),
+            cfgOptionBool(cfgOptLogSubprocess) ? cfgOption(cfgOptLogLevelFile) : varNewStrZ("off"));
+
+        // Always output errors on stderr for debugging purposes
+        kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptLogLevelStderr))), varNewStrZ("error"));
+
         result = strLstMove(cfgExecParam(cfgCmdLocal, optionReplace), MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
@@ -209,6 +217,18 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     // Add the process id (or use the current process id if it is valid)
     if (!cfgOptionTest(cfgOptProcess))
         kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptProcess))), varNewInt((int)protocolId));
+
+    // Don't pass log-path or lock-path since these are host specific
+    kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptLogPath))), NULL);
+    kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptLockPath))), NULL);
+
+    // Only enable file logging on the remote when requested
+    kvPut(
+        optionReplace, varNewStr(strNew(cfgOptionName(cfgOptLogLevelFile))),
+        cfgOptionBool(cfgOptLogSubprocess) ? cfgOption(cfgOptLogLevelFile) : varNewStrZ("off"));
+
+    // Always output errors on stderr for debugging purposes
+    kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptLogLevelStderr))), varNewStrZ("error"));
 
     // Don't pass the stanza if it is set.  It is better if the remote is stanza-agnostic so the client can operate on multiple
     // stanzas without starting a new remote.  Once the Perl code is removed the stanza option can be removed from the remote
