@@ -38,6 +38,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>httpHeaderDup()</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Make <code>strLstDup()</code> null-tolerant.</p>
                     </release-item>
 

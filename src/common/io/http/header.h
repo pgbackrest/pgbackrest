@@ -17,6 +17,7 @@ typedef struct HttpHeader HttpHeader;
 Constructor
 ***********************************************************************************************************************************/
 HttpHeader *httpHeaderNew(const StringList *redactList);
+HttpHeader *httpHeaderDup(const HttpHeader *header, const StringList *redactList);
 
 /***********************************************************************************************************************************
 Functions

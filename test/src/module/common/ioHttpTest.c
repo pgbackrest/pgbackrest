@@ -326,6 +326,16 @@ testRun(void)
         httpHeaderAdd(header, strNew("public"), strNew("public-value"));
 
         TEST_RESULT_STR(strPtr(httpHeaderToLog(header)), "{public: 'public-value', secret: <redacted>}", "log output");
+
+        // Duplicate
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_STR(
+            strPtr(httpHeaderToLog(httpHeaderDup(header, NULL))),
+            "{public: 'public-value', secret: <redacted>}", "dup and keep redactions");
+        TEST_RESULT_STR(
+            strPtr(httpHeaderToLog(httpHeaderDup(header, strLstAddZ(strLstNew(), "public")))),
+            "{public: <redacted>, secret: 'secret-value'}", "dup and change redactions");
+        TEST_RESULT_PTR(httpHeaderDup(NULL, NULL), NULL, "dup null http header");
     }
 
     // *****************************************************************************************************************************

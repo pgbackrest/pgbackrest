@@ -32,10 +32,41 @@ httpHeaderNew(const StringList *redactList)
         this = memNew(sizeof(HttpHeader));
         this->memContext = MEM_CONTEXT_NEW();
 
-        this->redactList = redactList;
+        this->redactList = strLstDup(redactList);
         this->kv = kvNew();
     }
     MEM_CONTEXT_NEW_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
+Duplicate object
+***********************************************************************************************************************************/
+HttpHeader *
+httpHeaderDup(const HttpHeader *header, const StringList *redactList)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_HEADER, header);
+        FUNCTION_TEST_PARAM(STRING_LIST, redactList);
+    FUNCTION_TEST_END();
+
+    HttpHeader *this = NULL;
+
+    if (header != NULL)
+    {
+
+        MEM_CONTEXT_NEW_BEGIN("HttpHeader")
+        {
+            // Allocate state and set context
+            this = memNew(sizeof(HttpHeader));
+            this->memContext = MEM_CONTEXT_NEW();
+
+            this->redactList = redactList == NULL ? strLstDup(header->redactList) : strLstDup(redactList);
+            this->kv = kvDup(header->kv);
+        }
+        MEM_CONTEXT_NEW_END();
+    }
 
     FUNCTION_TEST_RETURN(this);
 }
