@@ -78,6 +78,14 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Use <cmd>restore</cmd> command for remote performances tests.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2019-03-11" version="2.11" title="C Implementation of Archive Get">

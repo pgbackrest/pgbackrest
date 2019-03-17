@@ -67,7 +67,7 @@ sub run
         $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
         $self->optionTestSet(CFGOPT_REPO_HOST, 'localhost');
         $self->optionTestSet(CFGOPT_REPO_HOST_USER, $self->backrestUser());
-        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
+        $self->configTestLoad(CFGCMD_RESTORE);
 
         protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP, undef, {strBackRestBin => $self->backrestExe()});
         storageRepo();
