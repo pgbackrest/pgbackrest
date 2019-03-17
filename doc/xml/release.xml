@@ -42,7 +42,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add file write to the remote storage driver.</p>
+                        <p>Add file write to the remote and S3 storage drivers.</p>
                     </release-item>
 
                     <release-item>

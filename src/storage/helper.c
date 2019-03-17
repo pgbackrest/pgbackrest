@@ -257,7 +257,7 @@ storageRepoGet(const String *type, bool write)
                 cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket),
                 cfgOptionStr(cfgOptRepoS3Endpoint), cfgOptionStr(cfgOptRepoS3Region), cfgOptionStr(cfgOptRepoS3Key),
                 cfgOptionStr(cfgOptRepoS3KeySecret), cfgOptionTest(cfgOptRepoS3Token) ? cfgOptionStr(cfgOptRepoS3Token) : NULL,
-                cfgOptionTest(cfgOptRepoS3Host) ? cfgOptionStr(cfgOptRepoS3Host) : NULL,
+                (size_t)5 * 1024 * 1024, cfgOptionTest(cfgOptRepoS3Host) ? cfgOptionStr(cfgOptRepoS3Host) : NULL,
                 STORAGE_DRIVER_S3_PORT_DEFAULT, STORAGE_DRIVER_S3_TIMEOUT_DEFAULT, cfgOptionBool(cfgOptRepoS3VerifySsl),
                 cfgOptionTest(cfgOptRepoS3CaFile) ? cfgOptionStr(cfgOptRepoS3CaFile) : NULL,
                 cfgOptionTest(cfgOptRepoS3CaPath) ? cfgOptionStr(cfgOptRepoS3CaPath) : NULL));

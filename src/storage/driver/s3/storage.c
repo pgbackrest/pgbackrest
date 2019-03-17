@@ -4,6 +4,7 @@ S3 Storage Driver
 #include <time.h>
 
 #include "common/crypto/hash.h"
+#include "common/encode.h"
 #include "common/debug.h"
 #include "common/io/http/common.h"
 #include "common/log.h"
@@ -11,6 +12,7 @@ S3 Storage Driver
 #include "common/regExp.h"
 #include "common/type/xml.h"
 #include "storage/driver/s3/fileRead.h"
+#include "storage/driver/s3/fileWrite.h"
 #include "storage/driver/s3/storage.h"
 
 /***********************************************************************************************************************************
@@ -22,9 +24,9 @@ STRING_EXTERN(STORAGE_DRIVER_S3_TYPE_STR,                           STORAGE_DRIV
 S3 http headers
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_HEADER_AUTHORIZATION_STR,                          "authorization");
+STRING_STATIC(S3_HEADER_HOST_STR,                                   "host");
 STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         "x-amz-content-sha256");
 STRING_STATIC(S3_HEADER_DATE_STR,                                   "x-amz-date");
-STRING_STATIC(S3_HEADER_HOST_STR,                                   "host");
 STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-security-token");
 
 /***********************************************************************************************************************************
@@ -74,6 +76,7 @@ struct StorageDriverS3
     const String *accessKey;                                        // Access key
     const String *secretAccessKey;                                  // Secret access key
     const String *securityToken;                                    // Security token, if any
+    size_t partSize;                                                // Part size for multi-part upload
     const String *host;                                             // Defaults to {bucket}.{endpoint}
 
     // Current signing key and date it is valid for
@@ -177,7 +180,7 @@ storageDriverS3Auth(
 
         // Generate signing key.  This key only needs to be regenerated every seven days but we'll do it once a day to keep the
         // logic simple.  It's a relatively expensive operation so we'd rather not do it for every request.
-        // If the cached signing key has expired (or has noe been generated) then regenerate it
+        // If the cached signing key has expired (or has none been generated) then regenerate it
         if (!strEq(date, this->signingKeyDate))
         {
             const Buffer *dateKey = cryptoHmacOne(
@@ -214,8 +217,8 @@ StorageDriverS3 *
 storageDriverS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, const String *region, const String *accessKey, const String *secretAccessKey,
-    const String *securityToken, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile,
-    const String *caPath)
+    const String *securityToken, size_t partSize, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer,
+    const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -227,6 +230,7 @@ storageDriverS3New(
         FUNCTION_TEST_PARAM(STRING, accessKey);
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);
+        FUNCTION_TEST_PARAM(SIZE, partSize);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
@@ -255,6 +259,7 @@ storageDriverS3New(
         this->accessKey = strDup(accessKey);
         this->secretAccessKey = strDup(secretAccessKey);
         this->securityToken = strDup(securityToken);
+        this->partSize = partSize;
         this->host = host == NULL ? strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint)) : strDup(host);
 
         // Force the signing key to be generated on the first run
@@ -282,7 +287,7 @@ storageDriverS3New(
 /***********************************************************************************************************************************
 Process S3 request
 ***********************************************************************************************************************************/
-Buffer *
+StorageDriverS3RequestResult
 storageDriverS3Request(
     StorageDriverS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool returnContent,
     bool allowMissing)
@@ -301,21 +306,36 @@ storageDriverS3Request(
     ASSERT(verb != NULL);
     ASSERT(uri != NULL);
 
-    Buffer *result = NULL;
+    StorageDriverS3RequestResult result = {0};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Create header list and add content length
         HttpHeader *requestHeader = httpHeaderNew(this->headerRedactList);
-        httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+
+        // Set content length
+        httpHeaderAdd(
+            requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
+            body == NULL || bufUsed(body) == 0 ? ZERO_STR : strNewFmt("%zu", bufUsed(body)));
+
+        // Calculate content-md5 header if there is content
+        if (body != NULL)
+        {
+
+            char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
+            encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, body)), HASH_TYPE_M5_SIZE, md5Hash);
+            httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, strNew(md5Hash));
+        }
 
         // Generate authorization header
         storageDriverS3Auth(
             this, verb, uri, query, storageDriverS3DateTime(time(NULL)), requestHeader,
-            strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"));
+            body == NULL || bufUsed(body) == 0 ?
+                strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855") :
+                bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, body)));
 
         // Process request
-        result = httpClientRequest(this->httpClient, verb, uri, query, requestHeader, body, returnContent);
+        Buffer *response = httpClientRequest(this->httpClient, verb, uri, query, requestHeader, body, returnContent);
 
         // Error if the request was not successful
         if (httpClientResponseCode(this->httpClient) != HTTP_RESPONSE_CODE_OK &&
@@ -365,18 +385,19 @@ storageDriverS3Request(
             }
 
             // If there was content then output it
-            if (result != NULL)
-                strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(result)));
+            if (response!= NULL)
+                strCatFmt(error, "\n*** Response Content ***:\n%s", strPtr(strNewBuf(response)));
 
             THROW(ProtocolError, strPtr(error));
         }
 
         // On success move the buffer to the calling context
-        bufMove(result, MEM_CONTEXT_OLD());
+        result.responseHeader = httpHeaderMove(httpHeaderDup(httpClientReponseHeader(this->httpClient), NULL), MEM_CONTEXT_OLD());
+        result.response = bufMove(response, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BUFFER, result);
+    FUNCTION_LOG_RETURN(STORAGE_DRIVER_S3_REQUEST_RESULT, result);
 }
 
 /***********************************************************************************************************************************
@@ -407,7 +428,7 @@ storageDriverS3Exists(StorageDriverS3 *this, const String *path)
         httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
 
         XmlNode *xmlRoot = xmlDocumentRoot(
-            xmlDocumentNewBuf(storageDriverS3Request(this, HTTP_VERB_GET_STR, FSLASH_STR, query, NULL, true, false)));
+            xmlDocumentNewBuf(storageDriverS3Request(this, HTTP_VERB_GET_STR, FSLASH_STR, query, NULL, true, false).response));
 
         // Check if the prefix exists.  If not then the file definitely does not exist, but if it does we'll need to check the
         // exact name to be sure we are not looking at a different file with the same prefix
@@ -523,7 +544,8 @@ storageDriverS3List(StorageDriverS3 *this, const String *path, bool errorOnMissi
                     httpQueryAdd(query, S3_QUERY_PREFIX_STR, queryPrefix);
 
                 XmlNode *xmlRoot = xmlDocumentRoot(
-                    xmlDocumentNewBuf(storageDriverS3Request(this, HTTP_VERB_GET_STR, FSLASH_STR, query, NULL, true, false)));
+                    xmlDocumentNewBuf(
+                        storageDriverS3Request(this, HTTP_VERB_GET_STR, FSLASH_STR, query, NULL, true, false).response));
 
                 // Get subpath list
                 XmlNodeList *subPathList = xmlNodeChildList(xmlRoot, S3_XML_TAG_COMMON_PREFIXES_STR);
@@ -614,12 +636,10 @@ storageDriverS3NewWrite(
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
-    ASSERT(modeFile == 0);
-    ASSERT(modePath == 0);
+    ASSERT(createPath);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
-
-    FUNCTION_LOG_RETURN(STORAGE_FILE_WRITE, NULL);
+    FUNCTION_LOG_RETURN(
+        STORAGE_FILE_WRITE, storageDriverS3FileWriteInterface(storageDriverS3FileWriteNew(this, file, this->partSize)));
 }
 
 /***********************************************************************************************************************************

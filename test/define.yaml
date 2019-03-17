@@ -534,6 +534,7 @@ unit:
 
         coverage:
           storage/driver/s3/fileRead: full
+          storage/driver/s3/fileWrite: full
           storage/driver/s3/storage: full
           storage/helper: full
           storage/storage: full

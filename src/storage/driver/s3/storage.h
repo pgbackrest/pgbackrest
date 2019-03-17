@@ -31,8 +31,8 @@ Constructor
 StorageDriverS3 *storageDriverS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, const String *region, const String *accessKey, const String *secretAccessKey,
-    const String *securityToken, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile,
-    const String *caPath);
+    const String *securityToken, size_t partSize, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer,
+    const String *caFile, const String *caPath);
 
 /***********************************************************************************************************************************
 Functions
@@ -49,7 +49,21 @@ void storageDriverS3PathRemove(StorageDriverS3 *this, const String *path, bool e
 void storageDriverS3PathSync(StorageDriverS3 *this, const String *path, bool ignoreMissing);
 void storageDriverS3Remove(StorageDriverS3 *this, const String *file, bool errorOnMissing);
 
-Buffer *storageDriverS3Request(
+/***********************************************************************************************************************************
+Perform an S3 Request
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_STORAGE_DRIVER_S3_REQUEST_RESULT_TYPE                                                                         \
+    StorageDriverS3RequestResult
+#define FUNCTION_LOG_STORAGE_DRIVER_S3_REQUEST_RESULT_FORMAT(value, buffer, bufferSize)                                            \
+    objToLog(&value, "StorageDriverS3RequestResult", buffer, bufferSize)
+
+typedef struct StorageDriverS3RequestResult
+{
+    HttpHeader *responseHeader;
+    Buffer *response;
+} StorageDriverS3RequestResult;
+
+StorageDriverS3RequestResult storageDriverS3Request(
     StorageDriverS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool returnContent,
     bool allowMissing);
 
