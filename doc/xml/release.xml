@@ -50,6 +50,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add document creation to XML objects.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Move WAL path prefix logic into <code>walPath()</code>.</p>
                     </release-item>
 

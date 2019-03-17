@@ -21,6 +21,7 @@ typedef struct XmlNodeList XmlNodeList;
 /***********************************************************************************************************************************
 Document Contructors
 ***********************************************************************************************************************************/
+XmlDocument *xmlDocumentNew(const String *rootNode);
 XmlDocument *xmlDocumentNewBuf(const Buffer *);
 XmlDocument *xmlDocumentNewC(const unsigned char *buffer, size_t bufferSize);
 XmlDocument *xmlDocumentNewZ(const char *string);
@@ -28,6 +29,7 @@ XmlDocument *xmlDocumentNewZ(const char *string);
 /***********************************************************************************************************************************
 Document Getters
 ***********************************************************************************************************************************/
+Buffer *xmlDocumentBuf(const XmlDocument *this);
 XmlNode *xmlDocumentRoot(const XmlDocument *this);
 
 /***********************************************************************************************************************************
@@ -36,7 +38,12 @@ Document Destructor
 void xmlDocumentFree(XmlDocument *this);
 
 /***********************************************************************************************************************************
-Node Getters
+Node Functions
+***********************************************************************************************************************************/
+XmlNode *xmlNodeAdd(XmlNode *this, const String *name);
+
+/***********************************************************************************************************************************
+Node Getters/Setters
 ***********************************************************************************************************************************/
 String *xmlNodeAttribute(XmlNode *this, const String *name);
 XmlNode *xmlNodeChild(XmlNode *this, const String *name, bool errorOnMissing);
@@ -44,6 +51,7 @@ XmlNodeList *xmlNodeChildList(XmlNode *this, const String *name);
 XmlNode *xmlNodeChildN(XmlNode *this, const String *name, unsigned int index, bool errorOnMissing);
 unsigned int xmlNodeChildTotal(XmlNode *this, const String *name);
 String *xmlNodeContent(XmlNode *this);
+void xmlNodeContentSet(XmlNode *this, String *content);
 
 /***********************************************************************************************************************************
 Node Destructor

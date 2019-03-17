@@ -85,6 +85,28 @@ testRun(void)
 
         TEST_RESULT_VOID(xmlDocumentFree(xmlDocument), "free xmldoc");
         TEST_RESULT_VOID(xmlDocumentFree(NULL), "free null xmldoc");
+
+        // Create an empty document, add data to it, and output xml
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(xmlDocument, xmlDocumentNew(strNew("CompleteMultipartUpload")), "new xml with root node");
+
+        XmlNode *partNode = NULL;
+        TEST_ASSIGN(partNode, xmlNodeAdd(xmlDocumentRoot(xmlDocument), strNew("Part")), "create part node 1");
+        TEST_RESULT_VOID(xmlNodeContentSet(xmlNodeAdd(partNode, strNew("PartNumber")), strNew("1")), "set part number 1");
+        TEST_RESULT_VOID(xmlNodeContentSet(xmlNodeAdd(partNode, strNew("ETag")), strNew("E1")), "set etag 1");
+
+        TEST_ASSIGN(partNode, xmlNodeAdd(xmlDocumentRoot(xmlDocument), strNew("Part")), "create part node 2");
+        TEST_RESULT_VOID(xmlNodeContentSet(xmlNodeAdd(partNode, strNew("PartNumber")), strNew("2")), "set part number 2");
+        TEST_RESULT_VOID(xmlNodeContentSet(xmlNodeAdd(partNode, strNew("ETag")), strNew("E2")), "set etag 2");
+
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(xmlDocumentBuf(xmlDocument))),
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<CompleteMultipartUpload>"
+                "<Part><PartNumber>1</PartNumber><ETag>E1</ETag></Part>"
+                "<Part><PartNumber>2</PartNumber><ETag>E2</ETag></Part>"
+                "</CompleteMultipartUpload>\n",
+            "get xml");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

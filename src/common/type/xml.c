@@ -13,6 +13,11 @@ Xml Handler
 #include "common/type/xml.h"
 
 /***********************************************************************************************************************************
+Encoding constants
+***********************************************************************************************************************************/
+#define XML_ENCODING_TYPE_UTF8                                      "UTF-8"
+
+/***********************************************************************************************************************************
 Node type
 ***********************************************************************************************************************************/
 struct XmlNode
@@ -38,10 +43,35 @@ messages need to be accumulated and then returned together.
 
 This empty function is required because without it libxml2 will dump errors to stdout.  Really.
 ***********************************************************************************************************************************/
-void xmlErrorHandler(void *ctx, const char *format, ...)
+static void xmlErrorHandler(void *ctx, const char *format, ...)
 {
     (void)ctx;
     (void)format;
+}
+
+/***********************************************************************************************************************************
+Initialize xml
+***********************************************************************************************************************************/
+static void
+xmlInit(void)
+{
+    FUNCTION_TEST_VOID();
+
+    // Initialize xml if it is not already initialized
+    static bool xmlInit = false;
+
+    if (!xmlInit)
+    {
+        LIBXML_TEST_VERSION;
+
+        // It's a pretty weird that we can't just pass a handler function but instead have to assign it to a var...
+        static xmlGenericErrorFunc xmlErrorHandlerFunc = xmlErrorHandler;
+        initGenericErrorDefaultFunc(&xmlErrorHandlerFunc);
+
+        xmlInit = true;
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -119,6 +149,26 @@ xmlNodeNew(xmlNodePtr node)
 }
 
 /***********************************************************************************************************************************
+Add a node
+***********************************************************************************************************************************/
+XmlNode *
+xmlNodeAdd(XmlNode *this, const String *name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(XML_NODE, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    XmlNode *result = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strPtr(name)));
+    xmlAddChild(this->node, result->node);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
 Add a node to a node list
 ***********************************************************************************************************************************/
 static XmlNodeList *
@@ -188,6 +238,25 @@ xmlNodeContent(XmlNode *this)
     }
 
     FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Set node content
+***********************************************************************************************************************************/
+void
+xmlNodeContentSet(XmlNode *this, String *content)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(XML_NODE, this);
+        FUNCTION_TEST_PARAM(STRING, content);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(content != NULL);
+
+    xmlAddChild(this->node, xmlNewText(BAD_CAST strPtr(content)));
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -307,6 +376,41 @@ xmlNodeFree(XmlNode *this)
 }
 
 /***********************************************************************************************************************************
+Create a new document with the specified root node
+***********************************************************************************************************************************/
+XmlDocument *
+xmlDocumentNew(const String *rootName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, rootName);
+    FUNCTION_TEST_END();
+
+    ASSERT(rootName != NULL);
+
+    xmlInit();
+
+    // Create object
+    XmlDocument *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("XmlDocument")
+    {
+        this = memNew(sizeof(XmlDocument));
+        this->memContext = MEM_CONTEXT_NEW();
+
+        this->xml = xmlNewDoc(BAD_CAST "1.0");
+
+        // Set callback to ensure xml document is freed
+        memContextCallback(this->memContext, (MemContextCallback)xmlDocumentFree, this);
+
+        this->root = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strPtr(rootName)));
+        xmlDocSetRootElement(this->xml, this->root->node);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
 Create document from C buffer
 ***********************************************************************************************************************************/
 XmlDocument *
@@ -320,19 +424,7 @@ xmlDocumentNewC(const unsigned char *buffer, size_t bufferSize)
     ASSERT(buffer != NULL);
     ASSERT(bufferSize > 0);
 
-    // Initialize xml if it is not already initialized
-    static bool xmlInit = false;
-
-    if (!xmlInit)
-    {
-        LIBXML_TEST_VERSION;
-
-        // It's a pretty weird that we can't just pass a handler function but instead have to assign it to a var...
-        static xmlGenericErrorFunc xmlErrorHandlerFunc = xmlErrorHandler;
-        initGenericErrorDefaultFunc(&xmlErrorHandlerFunc);
-
-        xmlInit = true;
-    }
+    xmlInit();
 
     // Create object
     XmlDocument *this = NULL;
@@ -386,6 +478,28 @@ xmlDocumentNewZ(const char *string)
     ASSERT(strlen(string) > 0);
 
     FUNCTION_TEST_RETURN(xmlDocumentNewC((const unsigned char *)string, strlen(string)));
+}
+
+/***********************************************************************************************************************************
+Dump document to a buffer
+***********************************************************************************************************************************/
+Buffer *
+xmlDocumentBuf(const XmlDocument *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(XML_DOCUMENT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    xmlChar *xml;
+    int xmlSize;
+
+    xmlDocDumpMemoryEnc(this->xml, &xml, &xmlSize, XML_ENCODING_TYPE_UTF8);
+    Buffer *result = bufNewC((unsigned int)xmlSize, xml);
+    xmlFree(xml);
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
