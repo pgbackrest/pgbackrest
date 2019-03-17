@@ -999,6 +999,10 @@ sub replayWait
     $self->executeSql('checkpoint', undef, false);
 
     # On PostgreSQL >= 9.6 the checkpoint location can be verified
+    #
+    # ??? We have seen one instance where this check failed.  Is there any chance that the replayed position could be ahead of the
+    # checkpoint recorded in pg_control?  It seems possible, so in the C version of this add a loop to keep checking pg_control
+    # until the checkpoint has been recorded.
     my $strCheckpointLSN = undef;
 
     if ($self->{strDbVersion} >= PG_VERSION_96)
