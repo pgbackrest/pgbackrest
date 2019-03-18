@@ -54,6 +54,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Remove redundant documentation from <postgres/> interface files and clarify ambiguous function names.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Move WAL path prefix logic into <code>walPath()</code>.</p>
                     </release-item>
 

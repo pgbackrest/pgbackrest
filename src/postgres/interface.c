@@ -45,21 +45,35 @@ really old storage with 512-byte sectors.  This is true across all versions of P
 
 /***********************************************************************************************************************************
 PostgreSQL interface definitions
+
+Each supported version of PostgreSQL must have interface files named postgres/interface/vXXX.c/h that implement the functions
+specified in the interface structure below.  The functions are documented here rather than in the interface files so that a change
+in wording does not need to be propagated through N source files.
 ***********************************************************************************************************************************/
 typedef struct PgInterface
 {
+    // Version of PostgreSQL supported by this interface
     unsigned int version;
+
+    // Does pg_control match this version of PostgreSQL?
+    bool (*controlIs)(const Buffer *);
+
+    // Convert pg_control to a common data structure
     PgControl (*control)(const Buffer *);
-    bool (*is)(const Buffer *);
+
+#ifdef DEBUG
+    // Create pg_control for testing
     void (*controlTest)(PgControl, Buffer *);
+#endif
 } PgInterface;
 
 static const PgInterface pgInterface[] =
 {
     {
         .version = PG_VERSION_11,
+
+        .controlIs = pgInterfaceControlIs110,
         .control = pgInterfaceControl110,
-        .is = pgInterfaceIs110,
 
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest110,
@@ -67,8 +81,9 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_10,
+
+        .controlIs = pgInterfaceControlIs100,
         .control = pgInterfaceControl100,
-        .is = pgInterfaceIs100,
 
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest100,
@@ -76,8 +91,9 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_96,
+
+        .controlIs = pgInterfaceControlIs096,
         .control = pgInterfaceControl096,
-        .is = pgInterfaceIs096,
 
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest096,
@@ -85,8 +101,9 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_95,
+
+        .controlIs = pgInterfaceControlIs095,
         .control = pgInterfaceControl095,
-        .is = pgInterfaceIs095,
 
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest095,
@@ -94,8 +111,9 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_94,
+
+        .controlIs = pgInterfaceControlIs094,
         .control = pgInterfaceControl094,
-        .is = pgInterfaceIs094,
 
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest094,
@@ -103,8 +121,9 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_93,
+
+        .controlIs = pgInterfaceControlIs093,
         .control = pgInterfaceControl093,
-        .is = pgInterfaceIs093,
 
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest093,
@@ -112,8 +131,9 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_92,
+
+        .controlIs = pgInterfaceControlIs092,
         .control = pgInterfaceControl092,
-        .is = pgInterfaceIs092,
 
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest092,
@@ -121,8 +141,9 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_91,
+
+        .controlIs = pgInterfaceControlIs091,
         .control = pgInterfaceControl091,
-        .is = pgInterfaceIs091,
 
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest091,
@@ -130,8 +151,9 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_90,
+
+        .controlIs = pgInterfaceControlIs090,
         .control = pgInterfaceControl090,
-        .is = pgInterfaceIs090,
 
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest090,
@@ -139,8 +161,9 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_84,
+
+        .controlIs = pgInterfaceControlIs084,
         .control = pgInterfaceControl084,
-        .is = pgInterfaceIs084,
 
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest084,
@@ -148,8 +171,9 @@ static const PgInterface pgInterface[] =
     },
     {
         .version = PG_VERSION_83,
+
+        .controlIs = pgInterfaceControlIs083,
         .control = pgInterfaceControl083,
-        .is = pgInterfaceIs083,
 
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest083,
@@ -185,7 +209,7 @@ pgControlFromBuffer(const Buffer *controlFile)
 
     for (unsigned int interfaceIdx = 0; interfaceIdx < sizeof(pgInterface) / sizeof(PgInterface); interfaceIdx++)
     {
-        if (pgInterface[interfaceIdx].is(controlFile))
+        if (pgInterface[interfaceIdx].controlIs(controlFile))
         {
             interface = &pgInterface[interfaceIdx];
             break;

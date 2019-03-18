@@ -9385,7 +9385,7 @@ static const EmbeddedModule embeddedModule[] =
             "}\n"
             "\n\n"
             "$self->executeSql('checkpoint', undef, false);\n"
-            "\n\n"
+            "\n\n\n\n\n\n"
             "my $strCheckpointLSN = undef;\n"
             "\n"
             "if ($self->{strDbVersion} >= PG_VERSION_96)\n"

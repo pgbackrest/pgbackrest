@@ -1,20 +1,17 @@
 /***********************************************************************************************************************************
 PostgreSQL 9.4 Interface
+
+See postgres/interface.c for documentation.
 ***********************************************************************************************************************************/
 #include "common/debug.h"
 #include "common/log.h"
 #include "postgres/interface/v094.h"
 
-/***********************************************************************************************************************************
-Include PostgreSQL Types
-***********************************************************************************************************************************/
 #include "postgres/interface/v094.auto.c"
 
-/***********************************************************************************************************************************
-Is the control file for this version of PostgreSQL?
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 bool
-pgInterfaceIs094(const Buffer *controlFile)
+pgInterfaceControlIs094(const Buffer *controlFile)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, controlFile);
@@ -28,9 +25,7 @@ pgInterfaceIs094(const Buffer *controlFile)
         controlData->pg_control_version == PG_CONTROL_VERSION && controlData->catalog_version_no == CATALOG_VERSION_NO);
 }
 
-/***********************************************************************************************************************************
-Get information from pg_control in a common format
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 PgControl
 pgInterfaceControl094(const Buffer *controlFile)
 {
@@ -39,7 +34,7 @@ pgInterfaceControl094(const Buffer *controlFile)
     FUNCTION_LOG_END();
 
     ASSERT(controlFile != NULL);
-    ASSERT(pgInterfaceIs094(controlFile));
+    ASSERT(pgInterfaceControlIs094(controlFile));
 
     PgControl result = {0};
     ControlFileData *controlData = (ControlFileData *)bufPtr(controlFile);
@@ -56,11 +51,9 @@ pgInterfaceControl094(const Buffer *controlFile)
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
 
-/***********************************************************************************************************************************
-Create pg_control for testing
-***********************************************************************************************************************************/
 #ifdef DEBUG
 
+/**********************************************************************************************************************************/
 void
 pgInterfaceControlTest094(PgControl pgControl, Buffer *buffer)
 {
