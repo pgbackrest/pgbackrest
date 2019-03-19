@@ -11,12 +11,15 @@ Functions
 ***********************************************************************************************************************************/
 bool pgInterfaceControlIs096(const Buffer *controlFile);
 PgControl pgInterfaceControl096(const Buffer *controlFile);
+bool pgInterfaceWalIs096(const Buffer *walFile);
+PgWal pgInterfaceWal096(const Buffer *controlFile);
 
 /***********************************************************************************************************************************
 Test Functions
 ***********************************************************************************************************************************/
 #ifdef DEBUG
     void pgInterfaceControlTest096(PgControl pgControl, Buffer *buffer);
+    void pgInterfaceWalTest096(PgWal pgWal, Buffer *buffer);
 #endif
 
 #endif

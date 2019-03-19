@@ -44,6 +44,12 @@ really old storage with 512-byte sectors.  This is true across all versions of P
 #define PG_CONTROL_DATA_SIZE                                        ((unsigned int)(512))
 
 /***********************************************************************************************************************************
+WAL header size.  It doesn't seem worth tracking the exact size of the WAL header across versions of PostgreSQL so just set it to
+something far larger needed but <= the minimum read size on just about any system.
+***********************************************************************************************************************************/
+#define PG_WAL_HEADER_SIZE                                          ((unsigned int)(512))
+
+/***********************************************************************************************************************************
 PostgreSQL interface definitions
 
 Each supported version of PostgreSQL must have interface files named postgres/interface/vXXX.c/h that implement the functions
@@ -61,9 +67,19 @@ typedef struct PgInterface
     // Convert pg_control to a common data structure
     PgControl (*control)(const Buffer *);
 
+    // Does the WAL header match this version of PostgreSQL?
+    bool (*walIs)(const Buffer *);
+
+    // Convert WAL header to a common data structure
+    PgWal (*wal)(const Buffer *);
+
 #ifdef DEBUG
+
     // Create pg_control for testing
     void (*controlTest)(PgControl, Buffer *);
+
+    // Create WAL header for testing
+    void (*walTest)(PgWal, Buffer *);
 #endif
 } PgInterface;
 
@@ -75,8 +91,12 @@ static const PgInterface pgInterface[] =
         .controlIs = pgInterfaceControlIs110,
         .control = pgInterfaceControl110,
 
+        .walIs = pgInterfaceWalIs110,
+        .wal = pgInterfaceWal110,
+
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest110,
+        .walTest = pgInterfaceWalTest110,
 #endif
     },
     {
@@ -85,8 +105,12 @@ static const PgInterface pgInterface[] =
         .controlIs = pgInterfaceControlIs100,
         .control = pgInterfaceControl100,
 
+        .walIs = pgInterfaceWalIs100,
+        .wal = pgInterfaceWal100,
+
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest100,
+        .walTest = pgInterfaceWalTest100,
 #endif
     },
     {
@@ -95,8 +119,12 @@ static const PgInterface pgInterface[] =
         .controlIs = pgInterfaceControlIs096,
         .control = pgInterfaceControl096,
 
+        .walIs = pgInterfaceWalIs096,
+        .wal = pgInterfaceWal096,
+
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest096,
+        .walTest = pgInterfaceWalTest096,
 #endif
     },
     {
@@ -105,8 +133,12 @@ static const PgInterface pgInterface[] =
         .controlIs = pgInterfaceControlIs095,
         .control = pgInterfaceControl095,
 
+        .walIs = pgInterfaceWalIs095,
+        .wal = pgInterfaceWal095,
+
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest095,
+        .walTest = pgInterfaceWalTest095,
 #endif
     },
     {
@@ -115,8 +147,12 @@ static const PgInterface pgInterface[] =
         .controlIs = pgInterfaceControlIs094,
         .control = pgInterfaceControl094,
 
+        .walIs = pgInterfaceWalIs094,
+        .wal = pgInterfaceWal094,
+
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest094,
+        .walTest = pgInterfaceWalTest094,
 #endif
     },
     {
@@ -125,8 +161,12 @@ static const PgInterface pgInterface[] =
         .controlIs = pgInterfaceControlIs093,
         .control = pgInterfaceControl093,
 
+        .walIs = pgInterfaceWalIs093,
+        .wal = pgInterfaceWal093,
+
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest093,
+        .walTest = pgInterfaceWalTest093,
 #endif
     },
     {
@@ -135,8 +175,12 @@ static const PgInterface pgInterface[] =
         .controlIs = pgInterfaceControlIs092,
         .control = pgInterfaceControl092,
 
+        .walIs = pgInterfaceWalIs092,
+        .wal = pgInterfaceWal092,
+
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest092,
+        .walTest = pgInterfaceWalTest092,
 #endif
     },
     {
@@ -145,8 +189,12 @@ static const PgInterface pgInterface[] =
         .controlIs = pgInterfaceControlIs091,
         .control = pgInterfaceControl091,
 
+        .walIs = pgInterfaceWalIs091,
+        .wal = pgInterfaceWal091,
+
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest091,
+        .walTest = pgInterfaceWalTest091,
 #endif
     },
     {
@@ -155,8 +203,12 @@ static const PgInterface pgInterface[] =
         .controlIs = pgInterfaceControlIs090,
         .control = pgInterfaceControl090,
 
+        .walIs = pgInterfaceWalIs090,
+        .wal = pgInterfaceWal090,
+
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest090,
+        .walTest = pgInterfaceWalTest090,
 #endif
     },
     {
@@ -165,8 +217,12 @@ static const PgInterface pgInterface[] =
         .controlIs = pgInterfaceControlIs084,
         .control = pgInterfaceControl084,
 
+        .walIs = pgInterfaceWalIs084,
+        .wal = pgInterfaceWal084,
+
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest084,
+        .walTest = pgInterfaceWalTest084,
 #endif
     },
     {
@@ -175,8 +231,12 @@ static const PgInterface pgInterface[] =
         .controlIs = pgInterfaceControlIs083,
         .control = pgInterfaceControl083,
 
+        .walIs = pgInterfaceWalIs083,
+        .wal = pgInterfaceWal083,
+
 #ifdef DEBUG
         .controlTest = pgInterfaceControlTest083,
+        .walTest = pgInterfaceWalTest083,
 #endif
     },
 };
@@ -276,6 +336,89 @@ pgControlFromFile(const String *pgPath)
 }
 
 /***********************************************************************************************************************************
+These WAL header fields are common to all versions of PostgreSQL, so we can use them to generate error messages when the WAL magic
+cannot be found.
+***********************************************************************************************************************************/
+typedef struct PgWalCommon
+{
+    uint16_t magic;
+    uint16_t flag;
+} PgWalCommon;
+
+#define PG_WAL_LONG_HEADER                                          0x0002
+
+/***********************************************************************************************************************************
+Get info from WAL header
+***********************************************************************************************************************************/
+PgWal
+pgWalFromBuffer(const Buffer *walBuffer)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BUFFER, walBuffer);
+    FUNCTION_LOG_END();
+
+    ASSERT(walBuffer != NULL);
+
+    // Check that this is a long format WAL header
+    if (!(((PgWalCommon *)bufPtr(walBuffer))->flag & PG_WAL_LONG_HEADER))
+        THROW_FMT(FormatError, "first page header in WAL file is expected to be in long format");
+
+    // Search for the version of PostgreSQL that uses this WAL magic
+    const PgInterface *interface = NULL;
+
+    for (unsigned int interfaceIdx = 0; interfaceIdx < sizeof(pgInterface) / sizeof(PgInterface); interfaceIdx++)
+    {
+        if (pgInterface[interfaceIdx].walIs(walBuffer))
+        {
+            interface = &pgInterface[interfaceIdx];
+            break;
+        }
+    }
+
+    // If the version was not found then error with the magic that was found
+    if (interface == NULL)
+    {
+        THROW_FMT(
+            VersionNotSupportedError,
+            "unexpected WAL magic %u\n"
+                "HINT: is this version of PostgreSQL supported?",
+            ((PgWalCommon *)bufPtr(walBuffer))->magic);
+    }
+
+    // Get info from the control file
+    PgWal result = interface->wal(walBuffer);
+    result.version = interface->version;
+
+    FUNCTION_LOG_RETURN(PG_WAL, result);
+}
+
+/***********************************************************************************************************************************
+Get info from a WAL segment
+***********************************************************************************************************************************/
+PgWal
+pgWalFromFile(const String *walFile)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, walFile);
+    FUNCTION_LOG_END();
+
+    ASSERT(walFile != NULL);
+
+    PgWal result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Read WAL segment header
+        Buffer *walBuffer = storageGetP(storageNewReadNP(storageLocal(), walFile), .exactSize = PG_WAL_HEADER_SIZE);
+
+        result = pgWalFromBuffer(walBuffer);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(PG_WAL, result);
+}
+
+/***********************************************************************************************************************************
 Create pg_control for testing
 ***********************************************************************************************************************************/
 #ifdef DEBUG
@@ -316,6 +459,38 @@ pgControlTestToBuffer(PgControl pgControl)
     interface->controlTest(pgControl, result);
 
     FUNCTION_TEST_RETURN(result);
+}
+
+void
+pgWalTestToBuffer(PgWal pgWal, Buffer *walBuffer)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PG_WAL, pgWal);
+        FUNCTION_TEST_PARAM(BUFFER, walBuffer);
+    FUNCTION_TEST_END();
+
+    ASSERT(walBuffer != NULL);
+
+    // Find the interface for the version of PostgreSQL
+    const PgInterface *interface = NULL;
+
+    for (unsigned int interfaceIdx = 0; interfaceIdx < sizeof(pgInterface) / sizeof(PgInterface); interfaceIdx++)
+    {
+        if (pgInterface[interfaceIdx].version == pgWal.version)
+        {
+            interface = &pgInterface[interfaceIdx];
+            break;
+        }
+    }
+
+    // If the version was not found then error
+    if (interface == NULL)
+        THROW_FMT(AssertError, "invalid version %u", pgWal.version);
+
+    // Generate pg_control
+    interface->walTest(pgWal, walBuffer);
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 #endif
@@ -386,4 +561,10 @@ pgControlToLog(const PgControl *pgControl)
     return strNewFmt(
         "{version: %u, systemId: %" PRIu64 ", walSegmentSize: %u, pageChecksum: %s}", pgControl->version, pgControl->systemId,
         pgControl->walSegmentSize, cvtBoolToConstZ(pgControl->pageChecksum));
+}
+
+String *
+pgWalToLog(const PgWal *pgWal)
+{
+    return strNewFmt("{version: %u, systemId: %" PRIu64 "}", pgWal->version, pgWal->systemId);
 }

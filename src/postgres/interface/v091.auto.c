@@ -6,6 +6,7 @@ PostgreSQL 9.1 Types
 Types from src/include/c.h
 ***********************************************************************************************************************************/
 typedef int64_t int64;
+typedef uint16_t uint16;
 typedef uint32_t uint32;
 typedef uint64_t uint64;
 
@@ -250,3 +251,35 @@ typedef struct ControlFileData
 	/* CRC of all above ... MUST BE LAST! */
 	pg_crc32	crc;
 } ControlFileData;
+
+/***********************************************************************************************************************************
+Types from src/include/access/xlog_internal.h
+***********************************************************************************************************************************/
+/*
+ * Each page of XLOG file has a header like this:
+ */
+#define XLOG_PAGE_MAGIC 0xD066	/* can be used as WAL version indicator */
+
+typedef struct XLogPageHeaderData
+{
+	uint16		xlp_magic;		/* magic value for correctness checks */
+	uint16		xlp_info;		/* flag bits, see below */
+	TimeLineID	xlp_tli;		/* TimeLineID of first record on page */
+	XLogRecPtr	xlp_pageaddr;	/* XLOG address of this page */
+} XLogPageHeaderData;
+
+/*
+ * When the XLP_LONG_HEADER flag is set, we store additional fields in the
+ * page header.  (This is ordinarily done just in the first page of an
+ * XLOG file.)	The additional fields serve to identify the file accurately.
+ */
+typedef struct XLogLongPageHeaderData
+{
+	XLogPageHeaderData std;		/* standard header fields */
+	uint64		xlp_sysid;		/* system identifier from pg_control */
+	uint32		xlp_seg_size;	/* just as a cross-check */
+	uint32		xlp_xlog_blcksz;	/* just as a cross-check */
+} XLogLongPageHeaderData;
+
+/* This flag indicates a "long" page header */
+#define XLP_LONG_HEADER				0x0002

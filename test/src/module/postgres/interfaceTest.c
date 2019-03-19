@@ -90,6 +90,50 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("pgWalFromBuffer() and pgWalFromFile()"))
+    {
+        String *walFile = strNewFmt("%s/0000000F0000000F0000000F", testPath());
+
+        // Create a bogus control file, initially not in long format)
+        // --------------------------------------------------------------------------------------------------------------------------
+        Buffer *result = bufNew((size_t)16 * 1024 * 1024);
+        memset(bufPtr(result), 0, bufSize(result));
+        bufUsedSet(result, bufSize(result));
+        ((PgWalCommon *)bufPtr(result))->magic = 777;
+
+        TEST_ERROR(pgWalFromBuffer(result), FormatError, "first page header in WAL file is expected to be in long format");
+
+        // Add the long flag so that the version will now error
+        // --------------------------------------------------------------------------------------------------------------------------
+        ((PgWalCommon *)bufPtr(result))->flag = PG_WAL_LONG_HEADER;
+
+        TEST_ERROR(
+            pgWalFromBuffer(result), VersionNotSupportedError,
+            "unexpected WAL magic 777\n"
+                "HINT: is this version of PostgreSQL supported?");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_ERROR(pgWalTestToBuffer((PgWal){.version = 0}, result), AssertError, "invalid version 0");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAF}, result);
+        storagePutNP(storageNewWriteNP(storageTest, walFile), result);
+
+        PgWal info = {0};
+        TEST_ASSIGN(info, pgWalFromFile(walFile), "get wal info v11");
+        TEST_RESULT_INT(info.systemId, 0xECAFECAF, "   check system id");
+        TEST_RESULT_INT(info.version, PG_VERSION_11, "   check version");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        pgWalTestToBuffer((PgWal){.version = PG_VERSION_83, .systemId = 0xEAEAEAEA}, result);
+        storagePutNP(storageNewWriteNP(storageTest, walFile), result);
+
+        TEST_ASSIGN(info, pgWalFromFile(walFile), "get wal info v8.3");
+        TEST_RESULT_INT(info.systemId, 0xEAEAEAEA, "   check system id");
+        TEST_RESULT_INT(info.version, PG_VERSION_83, "   check version");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("pgControlToLog()"))
     {
         PgControl pgControl =
@@ -103,6 +147,21 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(pgControlToLog(&pgControl)),
             "{version: 110000, systemId: 1030522662895, walSegmentSize: 16777216, pageChecksum: true}", "check log");
+    }
+
+
+    // *****************************************************************************************************************************
+    if (testBegin("pgWalToLog()"))
+    {
+        PgWal pgWal =
+        {
+            .version = PG_VERSION_10,
+            .systemId = 0xFEFEFEFEFE
+        };
+
+        TEST_RESULT_STR(
+            strPtr(pgWalToLog(&pgWal)),
+            "{version: 100000, systemId: 1095199817470}", "check log");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

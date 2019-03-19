@@ -49,6 +49,37 @@ pgInterfaceControl090(const Buffer *controlFile)
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
 
+/**********************************************************************************************************************************/
+bool
+pgInterfaceWalIs090(const Buffer *walFile)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, controlFile);
+    FUNCTION_TEST_END();
+
+    ASSERT(walFile != NULL);
+
+    FUNCTION_TEST_RETURN(((XLogPageHeaderData *)bufPtr(walFile))->xlp_magic == XLOG_PAGE_MAGIC);
+}
+
+/**********************************************************************************************************************************/
+PgWal
+pgInterfaceWal090(const Buffer *walFile)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BUFFER, walFile);
+    FUNCTION_LOG_END();
+
+    ASSERT(walFile != NULL);
+    ASSERT(pgInterfaceWalIs090(walFile));
+
+    PgWal result = {0};
+
+    result.systemId = ((XLogLongPageHeaderData *)bufPtr(walFile))->xlp_sysid;
+
+    FUNCTION_LOG_RETURN(PG_WAL, result);
+}
+
 #ifdef DEBUG
 
 /**********************************************************************************************************************************/
@@ -67,6 +98,22 @@ pgInterfaceControlTest090(PgControl pgControl, Buffer *buffer)
 
     controlData->blcksz = pgControl.pageSize;
     controlData->xlog_seg_size = pgControl.walSegmentSize;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+pgInterfaceWalTest090(PgWal pgWal, Buffer *buffer)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PG_WAL, pgWal);
+    FUNCTION_TEST_END();
+
+    XLogLongPageHeaderData *walData = (XLogLongPageHeaderData *)bufPtr(buffer);
+
+    walData->std.xlp_magic = XLOG_PAGE_MAGIC;
+    walData->xlp_sysid = pgWal.systemId;
 
     FUNCTION_TEST_RETURN_VOID();
 }
