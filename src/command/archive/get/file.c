@@ -29,7 +29,7 @@ typedef struct ArchiveGetCheckResult
     String *cipherPass;
 } ArchiveGetCheckResult;
 
-ArchiveGetCheckResult
+static ArchiveGetCheckResult
 archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
