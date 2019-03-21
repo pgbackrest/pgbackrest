@@ -8,17 +8,7 @@ PostgreSQL Interface
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "postgres/interface.h"
-#include "postgres/interface/v083.h"
-#include "postgres/interface/v084.h"
-#include "postgres/interface/v090.h"
-#include "postgres/interface/v091.h"
-#include "postgres/interface/v092.h"
-#include "postgres/interface/v093.h"
-#include "postgres/interface/v094.h"
-#include "postgres/interface/v095.h"
-#include "postgres/interface/v096.h"
-#include "postgres/interface/v100.h"
-#include "postgres/interface/v110.h"
+#include "postgres/interface/version.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
 
@@ -62,24 +52,24 @@ typedef struct PgInterface
     unsigned int version;
 
     // Does pg_control match this version of PostgreSQL?
-    bool (*controlIs)(const Buffer *);
+    bool (*controlIs)(const unsigned char *);
 
     // Convert pg_control to a common data structure
-    PgControl (*control)(const Buffer *);
+    PgControl (*control)(const unsigned char *);
 
     // Does the WAL header match this version of PostgreSQL?
-    bool (*walIs)(const Buffer *);
+    bool (*walIs)(const unsigned char *);
 
     // Convert WAL header to a common data structure
-    PgWal (*wal)(const Buffer *);
+    PgWal (*wal)(const unsigned char *);
 
 #ifdef DEBUG
 
     // Create pg_control for testing
-    void (*controlTest)(PgControl, Buffer *);
+    void (*controlTest)(PgControl, unsigned char *);
 
     // Create WAL header for testing
-    void (*walTest)(PgWal, Buffer *);
+    void (*walTest)(PgWal, unsigned char *);
 #endif
 } PgInterface;
 
@@ -241,6 +231,9 @@ static const PgInterface pgInterface[] =
     },
 };
 
+// Total PostgreSQL versions in pgInterface
+#define PG_INTERFACE_SIZE                                           (sizeof(pgInterface) / sizeof(PgInterface))
+
 /***********************************************************************************************************************************
 These pg_control fields are common to all versions of PostgreSQL, so we can use them to generate error messages when the pg_control
 version cannot be found.
@@ -267,9 +260,9 @@ pgControlFromBuffer(const Buffer *controlFile)
     // Search for the version of PostgreSQL that uses this control file
     const PgInterface *interface = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < sizeof(pgInterface) / sizeof(PgInterface); interfaceIdx++)
+    for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
     {
-        if (pgInterface[interfaceIdx].controlIs(controlFile))
+        if (pgInterface[interfaceIdx].controlIs(bufPtr(controlFile)))
         {
             interface = &pgInterface[interfaceIdx];
             break;
@@ -289,7 +282,7 @@ pgControlFromBuffer(const Buffer *controlFile)
     }
 
     // Get info from the control file
-    PgControl result = interface->control(controlFile);
+    PgControl result = interface->control(bufPtr(controlFile));
     result.version = interface->version;
 
     // Check the segment size
@@ -366,9 +359,9 @@ pgWalFromBuffer(const Buffer *walBuffer)
     // Search for the version of PostgreSQL that uses this WAL magic
     const PgInterface *interface = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < sizeof(pgInterface) / sizeof(PgInterface); interfaceIdx++)
+    for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
     {
-        if (pgInterface[interfaceIdx].walIs(walBuffer))
+        if (pgInterface[interfaceIdx].walIs(bufPtr(walBuffer)))
         {
             interface = &pgInterface[interfaceIdx];
             break;
@@ -386,7 +379,7 @@ pgWalFromBuffer(const Buffer *walBuffer)
     }
 
     // Get info from the control file
-    PgWal result = interface->wal(walBuffer);
+    PgWal result = interface->wal(bufPtr(walBuffer));
     result.version = interface->version;
 
     FUNCTION_LOG_RETURN(PG_WAL, result);
@@ -442,7 +435,7 @@ pgControlTestToBuffer(PgControl pgControl)
     // Find the interface for the version of PostgreSQL
     const PgInterface *interface = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < sizeof(pgInterface) / sizeof(PgInterface); interfaceIdx++)
+    for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
     {
         if (pgInterface[interfaceIdx].version == pgControl.version)
         {
@@ -456,7 +449,7 @@ pgControlTestToBuffer(PgControl pgControl)
         THROW_FMT(AssertError, "invalid version %u", pgControl.version);
 
     // Generate pg_control
-    interface->controlTest(pgControl, result);
+    interface->controlTest(pgControl, bufPtr(result));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -474,7 +467,7 @@ pgWalTestToBuffer(PgWal pgWal, Buffer *walBuffer)
     // Find the interface for the version of PostgreSQL
     const PgInterface *interface = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < sizeof(pgInterface) / sizeof(PgInterface); interfaceIdx++)
+    for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
     {
         if (pgInterface[interfaceIdx].version == pgWal.version)
         {
@@ -488,7 +481,7 @@ pgWalTestToBuffer(PgWal pgWal, Buffer *walBuffer)
         THROW_FMT(AssertError, "invalid version %u", pgWal.version);
 
     // Generate pg_control
-    interface->walTest(pgWal, walBuffer);
+    interface->walTest(pgWal, bufPtr(walBuffer));
 
     FUNCTION_TEST_RETURN_VOID();
 }

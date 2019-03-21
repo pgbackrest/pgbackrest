@@ -33,6 +33,11 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("pgControlFromBuffer() and pgControlFromFile()"))
     {
+        // Sanity test to ensure PG_VERSION_MAX has been updated
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_UINT(pgInterface[0].version, PG_VERSION_MAX, "check max version");
+
+        //--------------------------------------------------------------------------------------------------------------------------
         String *controlFile = strNew(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
 
         // Create a bogus control file

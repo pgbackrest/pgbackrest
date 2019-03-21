@@ -62,6 +62,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Refactor <postgres/> interface to remove most code duplication.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Move WAL path prefix logic into <code>walPath()</code>.</p>
                     </release-item>
 

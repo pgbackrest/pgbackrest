@@ -1143,135 +1143,59 @@ src/postgres/interface.h:
   class: core
   type: c/h
 
-src/postgres/interface/v083.auto.c:
-  class: core/auto
-  type: c
-
 src/postgres/interface/v083.c:
   class: core
-  type: c
-
-src/postgres/interface/v083.h:
-  class: core
-  type: c/h
-
-src/postgres/interface/v084.auto.c:
-  class: core/auto
   type: c
 
 src/postgres/interface/v084.c:
   class: core
   type: c
 
-src/postgres/interface/v084.h:
-  class: core
-  type: c/h
-
-src/postgres/interface/v090.auto.c:
-  class: core/auto
-  type: c
-
 src/postgres/interface/v090.c:
   class: core
-  type: c
-
-src/postgres/interface/v090.h:
-  class: core
-  type: c/h
-
-src/postgres/interface/v091.auto.c:
-  class: core/auto
   type: c
 
 src/postgres/interface/v091.c:
   class: core
   type: c
 
-src/postgres/interface/v091.h:
-  class: core
-  type: c/h
-
-src/postgres/interface/v092.auto.c:
-  class: core/auto
-  type: c
-
 src/postgres/interface/v092.c:
   class: core
-  type: c
-
-src/postgres/interface/v092.h:
-  class: core
-  type: c/h
-
-src/postgres/interface/v093.auto.c:
-  class: core/auto
   type: c
 
 src/postgres/interface/v093.c:
   class: core
   type: c
 
-src/postgres/interface/v093.h:
-  class: core
-  type: c/h
-
-src/postgres/interface/v094.auto.c:
-  class: core/auto
-  type: c
-
 src/postgres/interface/v094.c:
   class: core
-  type: c
-
-src/postgres/interface/v094.h:
-  class: core
-  type: c/h
-
-src/postgres/interface/v095.auto.c:
-  class: core/auto
   type: c
 
 src/postgres/interface/v095.c:
   class: core
   type: c
 
-src/postgres/interface/v095.h:
-  class: core
-  type: c/h
-
-src/postgres/interface/v096.auto.c:
-  class: core/auto
-  type: c
-
 src/postgres/interface/v096.c:
   class: core
-  type: c
-
-src/postgres/interface/v096.h:
-  class: core
-  type: c/h
-
-src/postgres/interface/v100.auto.c:
-  class: core/auto
   type: c
 
 src/postgres/interface/v100.c:
   class: core
   type: c
 
-src/postgres/interface/v100.h:
-  class: core
-  type: c/h
-
-src/postgres/interface/v110.auto.c:
-  class: core/auto
-  type: c
-
 src/postgres/interface/v110.c:
   class: core
   type: c
 
-src/postgres/interface/v110.h:
+src/postgres/interface/version.auto.h:
+  class: core/auto
+  type: c/h
+
+src/postgres/interface/version.h:
+  class: core
+  type: c/h
+
+src/postgres/interface/version.intern.h:
   class: core
   type: c/h
 
