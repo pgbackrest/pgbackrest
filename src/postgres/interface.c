@@ -22,7 +22,8 @@ Page size can only be changed at compile time and is not known to be well-tested
 /***********************************************************************************************************************************
 Define default wal segment size
 
-Page size can only be changed at compile time and and is not known to be well-tested, so only the default page size is supported.
+Before PostgreSQL 11 WAL segment size could only be changed at compile time and is not known to be well-tested, so only the default
+WAL segment size is supported for versions below 11.
 ***********************************************************************************************************************************/
 #define PG_WAL_SEGMENT_SIZE_DEFAULT                                 ((unsigned int)(16 * 1024 * 1024))
 
