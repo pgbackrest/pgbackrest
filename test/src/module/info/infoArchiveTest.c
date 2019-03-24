@@ -15,10 +15,8 @@ testRun(void)
     InfoArchive *info = NULL;
 
     // *****************************************************************************************************************************
-    if (testBegin("infoArchiveNew(), infoArchiveCheckPg(), infoArchiveFree()"))
+    if (testBegin("infoArchiveNew() and infoArchiveFree()"))
     {
-
-
         TEST_ERROR_FMT(
             infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), FileMissingError,
             "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
@@ -54,20 +52,6 @@ testRun(void)
         TEST_RESULT_STR(strPtr(infoArchiveId(info)), "9.4-1", "    archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->infoPg, "    infoPg set");
         TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "    no cipher passphrase");
-
-        // Check PG version
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(infoArchiveCheckPg(info, 90400, 6569239123849665679), "check PG current");
-        TEST_ERROR(infoArchiveCheckPg(info, 90500, 6569239123849665679), ArchiveMismatchError,
-            "WAL segment version 9.5 does not match archive version 9.4"
-            "\nHINT: are you archiving to the correct stanza?");
-        TEST_ERROR(infoArchiveCheckPg(info, 90400, 1), ArchiveMismatchError,
-            "WAL segment system-id 1 does not match archive system-id 6569239123849665679"
-            "\nHINT: are you archiving to the correct stanza?");
-        TEST_ERROR(infoArchiveCheckPg(info, 100000, 1), ArchiveMismatchError,
-            "WAL segment version 10 does not match archive version 9.4"
-            "\nWAL segment system-id 1 does not match archive system-id 6569239123849665679"
-            "\nHINT: are you archiving to the correct stanza?");
 
         // Free
         //--------------------------------------------------------------------------------------------------------------------------

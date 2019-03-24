@@ -28,7 +28,6 @@ InfoArchive *infoArchiveNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void infoArchiveCheckPg(const InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
 const String *infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);
 

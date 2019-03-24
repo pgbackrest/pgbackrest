@@ -90,6 +90,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Remove unused <code>infoArchiveCheckPg()</code> function.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add constants for <file>.ok</file>/<file>.error</file> status extensions.</p>
                     </release-item>
                 </release-development-list>

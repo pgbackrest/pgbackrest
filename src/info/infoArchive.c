@@ -78,49 +78,6 @@ infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissin
 }
 
 /***********************************************************************************************************************************
-Checks the archive info file's DB section against the PG version and system id passed in
-// ??? Should we still check that the file exists if it is required?
-***********************************************************************************************************************************/
-void
-infoArchiveCheckPg(const InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
-        FUNCTION_LOG_PARAM(UINT, pgVersion);
-        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    String *errorMsg = NULL;
-
-    InfoPgData archivePg = infoPgData(this->infoPg, infoPgDataCurrentId(this->infoPg));
-
-    if (archivePg.version != pgVersion)
-    {
-        errorMsg = strNewFmt(
-            "WAL segment version %s does not match archive version %s", strPtr(pgVersionToStr(pgVersion)),
-            strPtr(pgVersionToStr(archivePg.version)));
-    }
-
-    if (archivePg.systemId != pgSystemId)
-    {
-        errorMsg = errorMsg != NULL ? strCat(errorMsg, "\n") : strNew("");
-        strCatFmt(errorMsg,
-                "WAL segment system-id %" PRIu64 " does not match archive system-id %" PRIu64,
-                pgSystemId, archivePg.systemId);
-    }
-
-    if (errorMsg != NULL)
-    {
-        errorMsg = strCatFmt(errorMsg, "\nHINT: are you archiving to the correct stanza?");
-        THROW(ArchiveMismatchError, strPtr(errorMsg));
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Given a backrest history id and postgres systemId and version, return the archiveId of the best match
 ***********************************************************************************************************************************/
 const String *
