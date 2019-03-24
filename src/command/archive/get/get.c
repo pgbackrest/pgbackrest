@@ -65,7 +65,7 @@ queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegm
         StringList *actualQueue = strLstSort(
             storageListP(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN_STR, .errorOnMissing = true), sortOrderAsc);
 
-        // Only preserve files that match the ideal queue. '.error'/'.ok' files are deleted so the async process can try again.
+        // Only preserve files that match the ideal queue. error/ok files are deleted so the async process can try again.
         RegExp *regExpPreserve = regExpNew(strNewFmt("^(%s)$", strPtr(strLstJoin(idealQueue, "|"))));
 
         // Build a list of WAL segments that are being kept so we can later make a list of what is needed
@@ -144,13 +144,13 @@ cmdArchiveGet(void)
 
             do
             {
-                // Check for errors or missing files.  For archive-get '.ok' indicates that the process succeeded but there is no
-                // WAL file to download.
+                // Check for errors or missing files.  For archive-get ok indicates that the process succeeded but there is no WAL
+                // file to download.
                 if (archiveAsyncStatus(archiveModeGet, walSegment, confessOnError))
                 {
                     storageRemoveP(
                         storageSpoolWrite(),
-                        strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strPtr(walSegment)), .errorOnMissing = true);
+                        strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s" STATUS_EXT_OK, strPtr(walSegment)), .errorOnMissing = true);
                     break;
                 }
 
@@ -300,7 +300,8 @@ cmdArchiveGetAsync(void)
                     "" : strPtr(strNewFmt("...%s", strPtr(strLstGet(walSegmentList, strLstSize(walSegmentList) - 1)))));
 
             // Create the parallel executor
-            ProtocolParallel *parallelExec = protocolParallelNew((TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2);
+            ProtocolParallel *parallelExec = protocolParallelNew(
+                (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2);
 
             for (unsigned int processIdx = 1; processIdx <= (unsigned int)cfgOptionInt(cfgOptProcessMax); processIdx++)
                 protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, processIdx));

@@ -88,6 +88,10 @@
                     <release-item>
                         <p>Add <code>cvtSSizeToZ()</code> and debug macros.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add constants for <file>.ok</file>/<file>.error</file> status extensions.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

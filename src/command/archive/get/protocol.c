@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
 Archive Get Protocol Handler
 ***********************************************************************************************************************************/
-#include "command/archive/get/protocol.h"
 #include "command/archive/get/file.h"
+#include "command/archive/get/protocol.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/log.h"
