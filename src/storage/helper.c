@@ -32,6 +32,8 @@ static struct
 
     Storage *storageLocal;                                          // Local read-only storage
     Storage *storageLocalWrite;                                     // Local write storage
+    Storage *storagePg;                                             // PostgreSQL read-only storage
+    Storage *storagePgWrite;                                        // PostgreSQL write storage
     Storage *storageRepo;                                           // Repository read-only storage
     Storage *storageRepoWrite;                                      // Repository write storage
     Storage *storageSpool;                                          // Spool read-only storage
@@ -135,6 +137,54 @@ storageLocalWrite(void)
     }
 
     FUNCTION_TEST_RETURN(storageHelper.storageLocalWrite);
+}
+
+/***********************************************************************************************************************************
+Get ready-only PostgreSQL storage
+***********************************************************************************************************************************/
+const Storage *
+storagePg(void)
+{
+    FUNCTION_TEST_VOID();
+
+    if (storageHelper.storagePg == NULL)
+    {
+        storageHelperInit();
+
+        MEM_CONTEXT_BEGIN(storageHelper.memContext)
+        {
+            storageHelper.storagePg = storageDriverPosixInterface(
+                storageDriverPosixNew(
+                    cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL));
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN(storageHelper.storagePg);
+}
+
+/***********************************************************************************************************************************
+Get write PostgreSQL storage
+***********************************************************************************************************************************/
+const Storage *
+storagePgWrite(void)
+{
+    FUNCTION_TEST_VOID();
+
+    if (storageHelper.storagePgWrite == NULL)
+    {
+        storageHelperInit();
+
+        MEM_CONTEXT_BEGIN(storageHelper.memContext)
+        {
+            storageHelper.storagePgWrite = storageDriverPosixInterface(
+                storageDriverPosixNew(
+                    cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN(storageHelper.storagePgWrite);
 }
 
 /***********************************************************************************************************************************

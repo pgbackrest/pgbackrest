@@ -1032,6 +1032,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--archive-async");
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         strLstAddZ(argList, "archive-get");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -1067,6 +1068,23 @@ testRun(void)
         TEST_RESULT_PTR(storageSpoolWrite(), storage, "get cached storage");
 
         TEST_RESULT_VOID(storageNewWriteNP(storage, writeFile), "writes are allowed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_PTR(storageHelper.storagePg, NULL, "pg storage not cached");
+        TEST_ASSIGN(storage, storagePg(), "new pg storage");
+        TEST_RESULT_PTR(storageHelper.storagePg, storage, "pg storage cached");
+        TEST_RESULT_PTR(storagePg(), storage, "get cached pg storage");
+
+        TEST_RESULT_STR(strPtr(storage->path), strPtr(strNewFmt("%s/db", testPath())), "check pg storage path");
+        TEST_RESULT_BOOL(storage->write, false, "check pg storage write");
+
+        TEST_RESULT_PTR(storageHelper.storagePgWrite, NULL, "pg write storage not cached");
+        TEST_ASSIGN(storage, storagePgWrite(), "new pg write storage");
+        TEST_RESULT_PTR(storageHelper.storagePgWrite, storage, "pg write storage cached");
+        TEST_RESULT_PTR(storagePgWrite(), storage, "get cached pg write storage");
+
+        TEST_RESULT_STR(strPtr(storage->path), strPtr(strNewFmt("%s/db", testPath())), "check pg write storage path");
+        TEST_RESULT_BOOL(storage->write, true, "check pg write storage write");
 
         // Change the stanza to NULL, stanzaInit flag to false and make sure helper fails because stanza is required
         // -------------------------------------------------------------------------------------------------------------------------

@@ -34,6 +34,8 @@ Functions
 ***********************************************************************************************************************************/
 const Storage *storageLocal(void);
 const Storage *storageLocalWrite(void);
+const Storage *storagePg(void);
+const Storage *storagePgWrite(void);
 const Storage *storageRepo(void);
 const Storage *storageRepoWrite(void);
 const Storage *storageSpool(void);

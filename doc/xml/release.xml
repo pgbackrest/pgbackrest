@@ -46,7 +46,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <id>storageRepoWrite()</id> to storage helper.</p>
+                        <p>Add <code>storageRepoWrite()</code> and <code>storagePg()</code>/<code>storagePgWrite()</code> to storage helper.</p>
                     </release-item>
 
                     <release-item>
