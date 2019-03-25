@@ -60,8 +60,7 @@ Functions
 ***********************************************************************************************************************************/
 bool archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confessOnError);
 void archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment);
-void archiveAsyncStatusErrorWrite(
-    ArchiveMode archiveMode, const String *walSegment, int code, const String *message, bool skipIfOk);
+void archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message);
 
 bool walIsPartial(const String *walSegment);
 bool walIsSegment(const String *walSegment);

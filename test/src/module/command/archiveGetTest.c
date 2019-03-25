@@ -500,16 +500,16 @@ testRun(void)
             storageExistsNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000002.error")), false,
             "check 000000010000000100000002.error not in spool");
         TEST_RESULT_BOOL(
-            storageExistsNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000003.error")), true,
-            "check 000000010000000100000003.error in spool");
+            storageExistsNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000003.error")), false,
+            "check 000000010000000100000003.error not in spool");
         TEST_RESULT_STR(
             strPtr(
                 strNewBuf(
                     storageGetNP(
-                        storageNewReadNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000003.error"))))),
+                        storageNewReadNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/global.error"))))),
             "102\nlocal-1 process terminated unexpectedly [102]: unable to execute 'pgbackrest-bogus': "
                 "[2] No such file or directory",
-            "check error");
+            "check global error");
     }
 
     // *****************************************************************************************************************************

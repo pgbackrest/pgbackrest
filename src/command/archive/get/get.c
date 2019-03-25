@@ -286,14 +286,14 @@ cmdArchiveGetAsync(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Check the parameters
-        const StringList *walSegmentList = cfgCommandParam();
-
-        if (strLstSize(walSegmentList) < 1)
-            THROW(ParamInvalidError, "at least one wal segment is required");
-
         TRY_BEGIN()
         {
+            // Check the parameters
+            const StringList *walSegmentList = cfgCommandParam();
+
+            if (strLstSize(walSegmentList) < 1)
+                THROW(ParamInvalidError, "at least one wal segment is required");
+
             LOG_INFO(
                 "get %u WAL file(s) from archive: %s%s", strLstSize(walSegmentList), strPtr(strLstGet(walSegmentList, 0)),
                 strLstSize(walSegmentList) == 1 ?
@@ -351,22 +351,16 @@ cmdArchiveGetAsync(void)
                             protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
 
                         archiveAsyncStatusErrorWrite(
-                            archiveModeGet, walSegment, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job),
-                            false);
+                            archiveModeGet, walSegment, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job));
                     }
                 }
             }
             while (!protocolParallelDone(parallelExec));
         }
+        // On any global error write a single error file to cover all unprocessed files
         CATCH_ANY()
         {
-            // On any global error write the same error into every .error file unless the get was already successful
-            for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
-            {
-                archiveAsyncStatusErrorWrite(
-                    archiveModeGet, strLstGet(walSegmentList, walSegmentIdx), errorCode(), strNew(errorMessage()), true);
-            }
-
+            archiveAsyncStatusErrorWrite(archiveModeGet, NULL, errorCode(), strNew(errorMessage()));
             RETHROW();
         }
         TRY_END();

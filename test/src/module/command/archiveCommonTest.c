@@ -80,25 +80,12 @@ testRun(void)
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "error status renamed to ok");
         harnessLogResult(
             "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
+        TEST_RESULT_VOID(
+            storageRemoveP(
+                storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment)), .errorOnMissing = true),
+            "remove ok");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutNP(
-            storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))), bufNew(0));
-        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "multiple status files returns false");
-
-        TEST_RESULT_BOOL(
-            storageExistsNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))), false,
-            ".error file was deleted");
-        TEST_RESULT_BOOL(
-            storageExistsNP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strPtr(segment))), false,
-            ".ok file was deleted");
-
-        harnessLogResult(
-            strPtr(
-                strNewFmt(
-                    "P00   WARN: multiple status files found in '%s/archive/db/out' for WAL segment '000000010000000100000001'"
-                    " will be removed and the command retried", testPath())));
-
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strPtr(segment))), bufNew(0));
         TEST_ERROR(
@@ -111,6 +98,13 @@ testRun(void)
         TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, true), AssertError, "message");
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "suppress error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePutNP(
+            storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/global.error")),
+            bufNewZ("102\nexecute error"));
+
+        TEST_ERROR(archiveAsyncStatus(archiveModePush, strNew("anyfile"), true), ExecuteError, "execute error");
     }
 
     // *****************************************************************************************************************************
@@ -126,7 +120,7 @@ testRun(void)
         String *walSegment = strNew("000000010000000100000001");
 
         TEST_RESULT_VOID(
-            archiveAsyncStatusErrorWrite(archiveModeGet, walSegment, 25, strNew("error message"), false), "write error");
+            archiveAsyncStatusErrorWrite(archiveModeGet, walSegment, 25, strNew("error message")), "write error");
         TEST_RESULT_STR(
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("archive/db/in/000000010000000100000001.error"))))),
             "25\nerror message", "check error");
@@ -135,22 +129,22 @@ testRun(void)
             "remove error");
 
         TEST_RESULT_VOID(
-            archiveAsyncStatusErrorWrite(archiveModeGet, walSegment, 66, strNew("multi-line\nerror message"), true),
-            "write error skip if ok (ok missing)");
+            archiveAsyncStatusErrorWrite(archiveModeGet, NULL, 25, strNew("global error message")), "write global error");
         TEST_RESULT_STR(
-            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("archive/db/in/000000010000000100000001.error"))))),
-            "66\nmulti-line\nerror message", "check error");
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("archive/db/in/global.error"))))),
+            "25\nglobal error message", "check global error");
         TEST_RESULT_VOID(
-            storageRemoveP(storageTest, strNew("archive/db/in/000000010000000100000001.error"), .errorOnMissing = true),
-            "remove error");
+            storageRemoveP(storageTest, strNew("archive/db/in/global.error"), .errorOnMissing = true),
+            "remove global error");
 
         TEST_RESULT_VOID(
             archiveAsyncStatusOkWrite(archiveModeGet, walSegment), "write ok file");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("archive/db/in/000000010000000100000001.ok"))))),
+            "", "check ok");
         TEST_RESULT_VOID(
-            archiveAsyncStatusErrorWrite(archiveModeGet, walSegment, 101, strNew("more error message"), true),
-            "write error skip if ok (ok present)");
-        TEST_RESULT_BOOL(
-            storageExistsNP(storageTest, strNew("archive/db/in/000000010000000100000001.error")), false, "error does not exist");
+            storageRemoveP(storageTest, strNew("archive/db/in/000000010000000100000001.ok"), .errorOnMissing = true),
+            "remove ok");
     }
 
     // *****************************************************************************************************************************

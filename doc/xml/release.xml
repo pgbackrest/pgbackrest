@@ -50,6 +50,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Use a single file to handle global errors in async archiving.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add document creation to XML objects.</p>
                     </release-item>
 

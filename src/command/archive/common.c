@@ -25,6 +25,12 @@ STRING_EXTERN(WAL_SEGMENT_DIR_REGEXP_STR,                           WAL_SEGMENT_
 STRING_EXTERN(WAL_SEGMENT_FILE_REGEXP_STR,                          WAL_SEGMENT_FILE_REGEXP);
 
 /***********************************************************************************************************************************
+Global error file constant
+***********************************************************************************************************************************/
+#define STATUS_FILE_GLOBAL                                          "global"
+    STRING_STATIC(STATUS_FILE_GLOBAL_STR,                           STATUS_FILE_GLOBAL);
+
+/***********************************************************************************************************************************
 Get the correct spool queue based on the archive mode
 ***********************************************************************************************************************************/
 static const String *
@@ -53,27 +59,27 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        String *errorFile = NULL;
+        bool errorFileExists = false;
+
         const String *spoolQueue = archiveAsyncSpoolQueue(archiveMode);
+
         String *okFile = strNewFmt("%s" STATUS_EXT_OK, strPtr(walSegment));
-        String *errorFile = strNewFmt("%s" STATUS_EXT_ERROR, strPtr(walSegment));
-
         bool okFileExists = storageExistsNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(okFile)));
-        bool errorFileExists = storageExistsNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
 
-        // If both status files are found then warn, remove the files, and return false so the segment will be retried.  This may be
-        // a bug in the async process but it may also be a failed fsync or other filesystem issue.  In any case, a hard failure here
-        // would mean that archiving is completely stuck so it is better to attempt a retry.
-        if (okFileExists && errorFileExists)
+        // If the ok file does not exist then check to see if a file-specific or global error exists
+        if (!okFileExists)
         {
-            LOG_WARN(
-                "multiple status files found in '%s' for WAL segment '%s' will be removed and the command retried",
-                strPtr(storagePath(storageSpool(), spoolQueue)), strPtr(walSegment));
+            // Check for a file-specific error first
+            errorFile = strNewFmt("%s" STATUS_EXT_ERROR, strPtr(walSegment));
+            errorFileExists = storageExistsNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
 
-            storageRemoveNP(storageSpoolWrite(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(okFile)));
-            okFileExists = false;
-
-            storageRemoveNP(storageSpoolWrite(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
-            errorFileExists = false;
+            // If that doesn't exist then check for a global error
+            if (!errorFileExists)
+            {
+                errorFile = strNew(STATUS_FILE_GLOBAL STATUS_EXT_ERROR);
+                errorFileExists = storageExistsNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
+            }
         }
 
         // If either of them exists then check what happened and report back
@@ -146,37 +152,28 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
 Write an error status file
 ***********************************************************************************************************************************/
 void
-archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message, bool skipIfOk)
+archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, archiveMode);
         FUNCTION_LOG_PARAM(STRING, walSegment);
         FUNCTION_LOG_PARAM(INT, code);
         FUNCTION_LOG_PARAM(STRING, message);
-        FUNCTION_LOG_PARAM(BOOL, skipIfOk);
     FUNCTION_LOG_END();
 
-    ASSERT(walSegment != NULL);
     ASSERT(code != 0);
     ASSERT(message != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Only write the file if we are not worried about ok files or if the ok files does not exist
-        if (!skipIfOk ||
-            !(storageExistsNP(
-                storageSpool(),
-                strNewFmt("%s/%s" STATUS_EXT_OK, strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(walSegment))) ||
-              (archiveMode == archiveModeGet && storageExistsNP(
-                  storageSpool(), strNewFmt("%s/%s", strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(walSegment))))))
-        {
+        const String *errorFile = walSegment == NULL ? STATUS_FILE_GLOBAL_STR : walSegment;
+
             storagePutNP(
                 storageNewWriteNP(
                     storageSpoolWrite(),
-                    strNewFmt("%s/%s" STATUS_EXT_ERROR, strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(walSegment))),
+                strNewFmt("%s/%s" STATUS_EXT_ERROR, strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(errorFile))),
                 bufNewStr(strNewFmt("%d\n%s", code, strPtr(message))));
         }
-    }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
