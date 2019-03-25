@@ -57,7 +57,7 @@ AWS authentication v4 constants
 #define AWS4_HMAC_SHA256                                            "AWS4-HMAC-SHA256"
 
 /***********************************************************************************************************************************
-Starting data for signing string so it will be regenerated on the first request
+Starting date for signing string so it will be regenerated on the first request
 ***********************************************************************************************************************************/
 STRING_STATIC(YYYYMMDD_STR,                                         "YYYYMMDD");
 
@@ -643,7 +643,9 @@ storageDriverS3NewWrite(
 }
 
 /***********************************************************************************************************************************
-Create a path.  There are no physical paths on S3 so just return success.
+Create a path
+
+There are no physical paths on S3 so just return success.
 ***********************************************************************************************************************************/
 void
 storageDriverS3PathCreate(StorageDriverS3 *this, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode)
@@ -685,7 +687,9 @@ storageDriverS3PathRemove(StorageDriverS3 *this, const String *path, bool errorO
 }
 
 /***********************************************************************************************************************************
-Sync a path.  There's no need for this on S3 so just return success.
+Sync a path
+
+There's no need for this on S3 so just return success.
 ***********************************************************************************************************************************/
 void
 storageDriverS3PathSync(StorageDriverS3 *this, const String *path, bool ignoreMissing)
