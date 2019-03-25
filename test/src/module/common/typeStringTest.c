@@ -397,6 +397,49 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("strLstMergeAnti()"))
+    {
+        StringList *list = strLstNew();
+        StringList *anti = strLstNew();
+
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstMergeAnti(list, anti), ", ")), "", "list and anti empty");
+
+        strLstAddZ(anti, "item2");
+        strLstAddZ(anti, "item3");
+
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstMergeAnti(list, anti), ", ")), "", "list empty");
+
+        strLstAddZ(list, "item1");
+        strLstAddZ(list, "item3");
+        strLstAddZ(list, "item4");
+        strLstAddZ(list, "item5");
+
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstMergeAnti(list, anti), ", ")), "item1, item4, item5", "list results");
+
+        list = strLstNew();
+        strLstAddZ(list, "item2");
+        strLstAddZ(list, "item4");
+        strLstAddZ(list, "item6");
+
+        anti = strLstNew();
+        strLstAddZ(anti, "item1");
+        strLstAddZ(anti, "item4");
+        strLstAddZ(anti, "item7");
+
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstMergeAnti(list, anti), ", ")), "item2, item6", "list results");
+
+        list = strLstNew();
+        strLstAddZ(list, "item7");
+
+        anti = strLstNew();
+        strLstAddZ(anti, "item1");
+        strLstAddZ(anti, "item4");
+        strLstAddZ(anti, "item6");
+
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstMergeAnti(list, anti), ", ")), "item7", "list results");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("strLstSort()"))
     {
         StringList *list = strLstNew();

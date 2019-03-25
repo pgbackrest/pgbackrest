@@ -94,6 +94,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>strLstMergeAnti()</code> for merge anti-joins.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>cvtSSizeToZ()</code> and debug macros.</p>
                     </release-item>
 

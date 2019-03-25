@@ -42,6 +42,7 @@ StringList *strLstInsertZ(StringList *this, unsigned int listIdx, const char *st
 String *strLstGet(const StringList *this, unsigned int listIdx);
 String *strLstJoin(const StringList *this, const char *separator);
 String *strLstJoinQuote(const StringList *this, const char *separator, const char *quote);
+StringList *strLstMergeAnti(const StringList *this, const StringList *anti);
 StringList * strLstMove(StringList *this, MemContext *parentNew);
 const char **strLstPtr(const StringList *this);
 unsigned int strLstSize(const StringList *this);

@@ -473,6 +473,69 @@ strLstJoinQuote(const StringList *this, const char *separator, const char *quote
 }
 
 /***********************************************************************************************************************************
+Return all items in this list which are not in the anti list
+
+The input lists must *both* be sorted or the results will be unpredictable.
+***********************************************************************************************************************************/
+StringList *
+strLstMergeAnti(const StringList *this, const StringList *anti)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(STRING_LIST, anti);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(anti != NULL);
+
+    StringList *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = strLstNew();
+        unsigned int antiIdx = 0;
+
+        // Check every item in this
+        for (unsigned int thisIdx = 0; thisIdx < strLstSize(this); thisIdx++)
+        {
+            bool add = true;
+            const String *listItem = strLstGet(this, thisIdx);
+
+            // If anything left in anti look for matches
+            while (antiIdx < strLstSize(anti))
+            {
+                int compare = strCmp(listItem, strLstGet(anti, antiIdx));
+
+                // If the current item in this is less than the current item in anti then it will be added
+                if (compare < 0)
+                {
+                    break;
+                }
+                // If they are equal it will not be added
+                else if (compare == 0)
+                {
+                    add = false;
+                    antiIdx++;
+                    break;
+                }
+                // Otherwise keep searching anti for a match
+                else
+                    antiIdx++;
+            }
+
+            // Add to the result list if no match found
+            if (add)
+                strLstAdd(result, listItem);
+        }
+
+        strLstMove(result, MEM_CONTEXT_OLD());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
 Move the string list
 ***********************************************************************************************************************************/
 StringList *
