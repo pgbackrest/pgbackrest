@@ -70,6 +70,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow warnings to be written by <code>archiveAsyncStatusOkWrite()</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Move WAL path prefix logic into <code>walPath()</code>.</p>
                     </release-item>
 

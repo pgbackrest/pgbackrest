@@ -340,7 +340,7 @@ cmdArchiveGetAsync(void)
                         else
                         {
                             LOG_DETAIL("unable to find %s in the archive", strPtr(walSegment));
-                            archiveAsyncStatusOkWrite(archiveModeGet, walSegment);
+                            archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL);
                         }
                     }
                     // Else the job errored

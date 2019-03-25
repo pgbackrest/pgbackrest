@@ -59,7 +59,7 @@ WAL segment constants
 Functions
 ***********************************************************************************************************************************/
 bool archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confessOnError);
-void archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment);
+void archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, const String *warning);
 void archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message);
 
 bool walIsPartial(const String *walSegment);

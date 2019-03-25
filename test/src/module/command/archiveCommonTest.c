@@ -138,10 +138,19 @@ testRun(void)
             "remove global error");
 
         TEST_RESULT_VOID(
-            archiveAsyncStatusOkWrite(archiveModeGet, walSegment), "write ok file");
+            archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL), "write ok file");
         TEST_RESULT_STR(
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("archive/db/in/000000010000000100000001.ok"))))),
             "", "check ok");
+        TEST_RESULT_VOID(
+            storageRemoveP(storageTest, strNew("archive/db/in/000000010000000100000001.ok"), .errorOnMissing = true),
+            "remove ok");
+
+        TEST_RESULT_VOID(
+            archiveAsyncStatusOkWrite(archiveModeGet, walSegment, strNew("WARNING")), "write ok file with warning");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("archive/db/in/000000010000000100000001.ok"))))),
+            "0\nWARNING", "check ok warning");
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, strNew("archive/db/in/000000010000000100000001.ok"), .errorOnMissing = true),
             "remove ok");
