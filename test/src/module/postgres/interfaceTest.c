@@ -118,9 +118,11 @@ testRun(void)
                 "HINT: is this version of PostgreSQL supported?");
 
         //--------------------------------------------------------------------------------------------------------------------------
+        memset(bufPtr(result), 0, bufSize(result));
         TEST_ERROR(pgWalTestToBuffer((PgWal){.version = 0}, result), AssertError, "invalid version 0");
 
         //--------------------------------------------------------------------------------------------------------------------------
+        memset(bufPtr(result), 0, bufSize(result));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAF}, result);
         storagePutNP(storageNewWriteNP(storageTest, walFile), result);
 
@@ -130,6 +132,7 @@ testRun(void)
         TEST_RESULT_INT(info.version, PG_VERSION_11, "   check version");
 
         //--------------------------------------------------------------------------------------------------------------------------
+        memset(bufPtr(result), 0, bufSize(result));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_83, .systemId = 0xEAEAEAEA}, result);
         storagePutNP(storageNewWriteNP(storageTest, walFile), result);
 

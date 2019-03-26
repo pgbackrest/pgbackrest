@@ -178,6 +178,7 @@ Create a WAL file file for testing
     pgInterfaceWalTest##version(PgWal pgWal, unsigned char *buffer)                                                                \
     {                                                                                                                              \
         ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = XLOG_PAGE_MAGIC;                                                       \
+        ((XLogLongPageHeaderData *)buffer)->std.xlp_info = XLP_LONG_HEADER;                                                        \
         ((XLogLongPageHeaderData *)buffer)->xlp_sysid = pgWal.systemId;                                                            \
     }
 
