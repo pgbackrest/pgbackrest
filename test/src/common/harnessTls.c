@@ -16,7 +16,6 @@ Tls Test Harness
 
 #include "common/harnessTls.h"
 
-static bool hostInit = false;
 static int testServerSocket = 0;
 static SSL_CTX *testServerContext = NULL;
 static int testClientSocket = 0;

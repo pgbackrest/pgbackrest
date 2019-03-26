@@ -383,6 +383,18 @@ sub run
                 $strTestC =~ s/\{\[C\_TEST\_LIST\]\}/$strTestInit/g;
                 buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/test.c", $strTestC);
 
+                # Determine which warnings are available
+                my $strWarningFlags =
+                    '-Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2' .
+                    ' -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla' .
+                    ($self->{oTest}->{&TEST_VM} eq VM_U16 || $self->{oTest}->{&TEST_VM} eq VM_U18 ?
+                        ' -Wformat-signedness' : '') .
+                    ($self->{oTest}->{&TEST_VM} eq VM_U18 ?
+                        ' -Wduplicated-branches -Wduplicated-cond' : '') .
+                    # This warning appears to be broken on U12/CO6 even though the functionality is fine
+                    ($self->{oTest}->{&TEST_VM} eq VM_U12 || $self->{oTest}->{&TEST_VM} eq VM_CO6 ?
+                        ' -Wno-missing-field-initializers' : '');
+
                 # Flags that are common to all builds
                 my $strCommonFlags =
                     '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered -D_POSIX_C_SOURCE=200112L' .
@@ -395,41 +407,37 @@ sub run
 
                 # Flags used to buid harness files
                 my $strHarnessFlags =
-                    '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
+                    '-O2' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
 
-                buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/harnessflags", "${strCommonFlags} ${strHarnessFlags}");
+                buildPutDiffers(
+                    $self->{oStorageTest}, "$self->{strGCovPath}/harnessflags",
+                    "${strCommonFlags} ${strWarningFlags} ${strHarnessFlags}");
 
                 # Flags used to buid test.c
                 my $strTestFlags =
-                    '-Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2' .
-                    ' -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla' .
-                    ' -DDEBUG_TEST_TRACE' .
-                    ($self->{oTest}->{&TEST_VM} eq VM_U16 || $self->{oTest}->{&TEST_VM} eq VM_U18 ?
-                        ' -Wformat-signedness' : '') .
-                    ($self->{oTest}->{&TEST_VM} eq VM_U18 ?
-                        ' -Wduplicated-branches -Wduplicated-cond' : '') .
-                    # This warning appears to be broken on U12/CO6 even though the functionality is fine
-                    ($self->{oTest}->{&TEST_VM} eq VM_U12 || $self->{oTest}->{&TEST_VM} eq VM_CO6 ?
-                        ' -Wno-missing-field-initializers' : '') .
-                    ' -O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
+                    '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
                         ' -fprofile-arcs -ftest-coverage' : '') .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
 
                 buildPutDiffers(
-                    $self->{oStorageTest}, "$self->{strGCovPath}/testflags", "${strCommonFlags} ${strTestFlags}");
+                    $self->{oStorageTest}, "$self->{strGCovPath}/testflags",
+                    "${strCommonFlags} ${strWarningFlags} ${strTestFlags}");
 
                 # Flags used to buid all other files
                 my $strBuildFlags =
                     ($self->{bOptimize} ? '-O2' : '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : ''));
 
-                buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/buildflags", "${strCommonFlags} ${strBuildFlags}");
+                buildPutDiffers(
+                    $self->{oStorageTest}, "$self->{strGCovPath}/buildflags",
+                    "${strCommonFlags} ${strWarningFlags} ${strBuildFlags}");
 
                 # Build the Makefile
                 my $strMakefile =
                     "CC=gcc\n" .
                     "COMMONFLAGS=${strCommonFlags}\n" .
+                    "WARNINGFLAGS=${strWarningFlags}\n" .
                     "BUILDFLAGS=${strBuildFlags}\n" .
                     "HARNESSFLAGS=${strHarnessFlags}\n" .
                     "TESTFLAGS=${strTestFlags}\n" .
@@ -445,7 +453,7 @@ sub run
                     "\t\$(CC) -o test.bin \$(OBJS) test.o"  . ($self->{bProfile} ? " -pg" : '') . " \$(LDFLAGS)\n" .
                     "\n" .
                     "test.o: testflags test.c${strTestDepend}\n" .
-	                "\t\$(CC) \$(COMMONFLAGS) \$(TESTFLAGS) -c test.c\n";
+	                "\t\$(CC) \$(COMMONFLAGS) \$(WARNINGFLAGS) \$(TESTFLAGS) -c test.c\n";
 
                 # Build C file dependencies
                 foreach my $strCFile (@stryCFile)
@@ -466,7 +474,7 @@ sub run
 
                     $strMakefile .=
                         "\n" .
-                        "\t\$(CC) \$(COMMONFLAGS)" .
+                        "\t\$(CC) \$(COMMONFLAGS) \$(WARNINGFLAGS)" .
                             ($strCFile =~ /^test\// ? " \$(HARNESSFLAGS)" : " \$(BUILDFLAGS)") .
                             " -c $strCFile -o " . substr($strCFile, 0, length($strCFile) - 2) . ".o\n";
                 }

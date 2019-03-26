@@ -114,6 +114,10 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
+                        <p>Build test harness with the same warnings as code being tested.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Use <cmd>restore</cmd> command for remote performances tests.</p>
                     </release-item>
                 </release-development-list>
