@@ -28,7 +28,7 @@ HARNESS_FORK_BEGIN()
     }
     HARNESS_FORK_PARENT_END();
 }
-HARNESS_FORK_END()
+HARNESS_FORK_END();
 
 If the child process does not explicitly exit in HARNESS_FORK_CHILD_BEGIN/END() then it will exit with 0 at HARNESS_FORK_END().
 This harness is not intended for long-lived child processes.
