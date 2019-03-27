@@ -16,6 +16,7 @@ typedef struct ConfigCommandData
     const char *name;
 
     bool lockRequired:1;
+    bool lockRemoteRequired:1;
     unsigned int lockType:2;
 
     bool logFile:1;
@@ -33,6 +34,8 @@ typedef struct ConfigCommandData
 
 #define CONFIG_COMMAND_LOCK_REQUIRED(lockRequiredParam)                                                                            \
     .lockRequired = lockRequiredParam,
+#define CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(lockRemoteRequiredParam)                                                               \
+    .lockRemoteRequired = lockRemoteRequiredParam,
 #define CONFIG_COMMAND_LOCK_TYPE(lockTypeParam)                                                                                    \
     .lockType = lockTypeParam,
 #define CONFIG_COMMAND_LOG_FILE(logFileParam)                                                                                      \
@@ -337,6 +340,21 @@ cfgLockRequired(void)
 }
 
 /***********************************************************************************************************************************
+Does the command require an immediate lock?
+***********************************************************************************************************************************/
+bool
+cfgLockRemoteRequired(ConfigCommand commandId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+    FUNCTION_TEST_END();
+
+    ASSERT(commandId < cfgCmdNone);
+
+    FUNCTION_TEST_RETURN(configCommandData[commandId].lockRemoteRequired);
+}
+
+/***********************************************************************************************************************************
 Get the lock type required for this command
 ***********************************************************************************************************************************/
 LockType
@@ -347,6 +365,23 @@ cfgLockType(void)
     ASSERT(command != cfgCmdNone);
 
     FUNCTION_TEST_RETURN((LockType)configCommandData[cfgCommand()].lockType);
+}
+
+/***********************************************************************************************************************************
+Get the remote lock type required for the command
+***********************************************************************************************************************************/
+LockType
+cfgLockRemoteType(ConfigCommand commandId)
+{
+    FUNCTION_TEST_VOID();
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+    FUNCTION_TEST_END();
+
+    ASSERT(commandId < cfgCmdNone);
+
+    FUNCTION_TEST_RETURN((LockType)configCommandData[commandId].lockType);
 }
 
 /***********************************************************************************************************************************

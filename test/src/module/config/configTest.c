@@ -63,7 +63,9 @@ testRun(void)
         TEST_RESULT_INT(cfgLogLevelDefault(), logLevelInfo, "default log level is info");
         TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");
+        TEST_RESULT_BOOL(cfgLockRemoteRequired(cfgCmdBackup), true, "remote lock is required");
         TEST_RESULT_INT(cfgLockType(), lockTypeBackup, "lock is type backup");
+        TEST_RESULT_INT(cfgLockRemoteType(cfgCmdBackup), lockTypeBackup, "remote lock is type backup");
         TEST_RESULT_BOOL(cfgParameterAllowed(), false, "parameters not allowed");
 
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdInfo), "command set to info");
@@ -71,7 +73,9 @@ testRun(void)
         TEST_RESULT_INT(cfgLogLevelStdErrMax(), logLevelTrace, "max stderr log level is trace");
         TEST_RESULT_BOOL(cfgLogFile(), false, "log file is off");
         TEST_RESULT_BOOL(cfgLockRequired(), false, "lock is not required");
+        TEST_RESULT_BOOL(cfgLockRemoteRequired(cfgCmdInfo), false, "remote lock is not required");
         TEST_RESULT_INT(cfgLockType(), lockTypeNone, "lock is type none");
+        TEST_RESULT_INT(cfgLockRemoteType(cfgCmdInfo), lockTypeNone, "remote lock is type none");
 
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdStanzaCreate), "command set to stanza-create");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");

@@ -482,6 +482,10 @@ use constant CFGDEF_LOG_LEVEL_STDERR_MAX                            => 'log-leve
 use constant CFGDEF_LOCK_REQUIRED                                   => 'lock-required';
     push @EXPORT, qw(CFGDEF_LOCK_REQUIRED);
 
+# Does the command require a lock on the remote?  The lock will only be acquired for process id 0.
+use constant CFGDEF_LOCK_REMOTE_REQUIRED                            => 'lock-remote-required';
+    push @EXPORT, qw(CFGDEF_LOCK_REMOTE_REQUIRED);
+
 # What type of lock is required?
 use constant CFGDEF_LOCK_TYPE                                       => 'lock-type';
     push @EXPORT, qw(CFGDEF_LOCK_TYPE);
@@ -590,6 +594,7 @@ my $rhCommandDefine =
     &CFGCMD_ARCHIVE_PUSH =>
     {
         &CFGDEF_LOG_FILE => false,
+        &CFGDEF_LOCK_REMOTE_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
         &CFGDEF_PARAMETER_ALLOWED => true,
     },
@@ -598,6 +603,7 @@ my $rhCommandDefine =
     {
         &CFGDEF_LOG_FILE => true,
         &CFGDEF_LOCK_REQUIRED => true,
+        &CFGDEF_LOCK_REMOTE_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
         &CFGDEF_PARAMETER_ALLOWED => true,
     },
@@ -605,6 +611,7 @@ my $rhCommandDefine =
     &CFGCMD_BACKUP =>
     {
         &CFGDEF_LOCK_REQUIRED => true,
+        &CFGDEF_LOCK_REMOTE_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_BACKUP,
     },
 
@@ -2518,6 +2525,12 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOCK_REQUIRED}))
     {
         $rhCommandDefine->{$strCommand}{&CFGDEF_LOCK_REQUIRED} = false;
+    }
+
+    # Default lock remote required is false
+    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOCK_REMOTE_REQUIRED}))
+    {
+        $rhCommandDefine->{$strCommand}{&CFGDEF_LOCK_REMOTE_REQUIRED} = false;
     }
 
     # Lock type must be set if a lock is required

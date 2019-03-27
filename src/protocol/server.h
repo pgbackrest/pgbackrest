@@ -25,6 +25,7 @@ ProtocolServer *protocolServerNew(const String *name, const String *service, IoR
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+void protocolServerError(ProtocolServer *this, int code, const String *message);
 void protocolServerProcess(ProtocolServer *this);
 void protocolServerResponse(ProtocolServer *this, const Variant *output);
 void protocolServerHandlerAdd(ProtocolServer *this, ProtocolServerProcessHandler handler);

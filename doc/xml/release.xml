@@ -82,6 +82,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add locking capability to the remote command.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>httpHeaderDup()</code>.</p>
                     </release-item>
 

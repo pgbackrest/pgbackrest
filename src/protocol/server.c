@@ -90,6 +90,32 @@ protocolServerHandlerAdd(ProtocolServer *this, ProtocolServerProcessHandler hand
 }
 
 /***********************************************************************************************************************************
+Return an error
+***********************************************************************************************************************************/
+void
+protocolServerError(ProtocolServer *this, int code, const String *message)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
+        FUNCTION_LOG_PARAM(INT, code);
+        FUNCTION_LOG_PARAM(STRING, message);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(code != 0);
+    ASSERT(message != NULL);
+
+    KeyValue *error = kvNew();
+    kvPut(error, varNewStr(PROTOCOL_ERROR_STR), varNewInt(errorCode()));
+    kvPut(error, varNewStr(PROTOCOL_OUTPUT_STR), varNewStr(strNew(errorMessage())));
+
+    ioWriteLine(this->write, kvToJson(error, 0));
+    ioWriteFlush(this->write);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Process requests
 ***********************************************************************************************************************************/
 void
@@ -148,12 +174,7 @@ protocolServerProcess(ProtocolServer *this)
         }
         CATCH_ANY()
         {
-            KeyValue *error = kvNew();
-            kvPut(error, varNewStr(PROTOCOL_ERROR_STR), varNewInt(errorCode()));
-            kvPut(error, varNewStr(PROTOCOL_OUTPUT_STR), varNewStr(strNew(errorMessage())));
-
-            ioWriteLine(this->write, kvToJson(error, 0));
-            ioWriteFlush(this->write);
+            protocolServerError(this, errorCode(), strNew(errorMessage()));
         }
         TRY_END();
     }

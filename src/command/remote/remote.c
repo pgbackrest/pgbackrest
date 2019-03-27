@@ -30,7 +30,38 @@ cmdRemote(int handleRead, int handleWrite)
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_REMOTE_STR, read, write);
         protocolServerHandlerAdd(server, storageDriverRemoteProtocol);
         protocolServerHandlerAdd(server, configProtocol);
-        protocolServerProcess(server);
+
+        // Acquire a lock if this command needs one.  We'll use the noop that is always sent from the client right after the
+        // handshake to return an error.
+        volatile bool success = false;
+
+        TRY_BEGIN()
+        {
+            // Read the command.  No need to parse it since we know this is the first noop.
+            ioReadLine(read);
+
+            // Only try the lock if this is process 0, i.e. the remote started from the main process
+            if (cfgOptionInt(cfgOptProcess) == 0)
+            {
+                ConfigCommand commandId = cfgCommandId(strPtr(cfgOptionStr(cfgOptCommand)));
+
+                // Acquire a lock if this command requires a lock
+                if (cfgLockRemoteRequired(commandId))
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockRemoteType(commandId), 0, true);
+            }
+
+            protocolServerResponse(server, NULL);
+            success = true;
+        }
+        CATCH_ANY()
+        {
+            protocolServerError(server, errorCode(), strNew(errorMessage()));
+        }
+        TRY_END();
+
+        // If not successful we'll just exit
+        if (success)
+            protocolServerProcess(server);
     }
     MEM_CONTEXT_TEMP_END();
 

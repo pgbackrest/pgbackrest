@@ -230,11 +230,6 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     // Always output errors on stderr for debugging purposes
     kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptLogLevelStderr))), varNewStrZ("error"));
 
-    // Don't pass the stanza if it is set.  It is better if the remote is stanza-agnostic so the client can operate on multiple
-    // stanzas without starting a new remote.  Once the Perl code is removed the stanza option can be removed from the remote
-    // command.
-    kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptStanza))), NULL);
-
     // Add the type
     kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptType))), varNewStr(strNew("backup")));
 

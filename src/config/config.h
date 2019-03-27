@@ -32,7 +32,9 @@ ConfigCommand cfgCommand(void);
 const char *cfgCommandName(ConfigCommand commandId);
 
 bool cfgLockRequired(void);
+bool cfgLockRemoteRequired(ConfigCommand commandId);
 LockType cfgLockType(void);
+LockType cfgLockRemoteType(ConfigCommand commandId);
 
 bool cfgLogFile(void);
 LogLevel cfgLogLevelDefault(void);
