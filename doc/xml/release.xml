@@ -118,6 +118,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>TEST_64BIT()</code> macro to detect 64-bit platforms.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Use <cmd>restore</cmd> command for remote performances tests.</p>
                     </release-item>
                 </release-development-list>

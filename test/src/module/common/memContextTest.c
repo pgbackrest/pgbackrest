@@ -37,7 +37,7 @@ testRun(void)
     {
         // Test too large allocation -- only test this on 64-bit systems since 32-bit systems tend to work with any value that
         // valgrind will accept
-        if (sizeof(size_t) == 8)
+        if (TEST_64BIT())
         {
             TEST_ERROR(memAllocInternal((size_t)5629499534213120, false), MemoryError, "unable to allocate 5629499534213120 bytes");
             TEST_ERROR(memFreeInternal(NULL), AssertError, "assertion 'buffer != NULL' failed");

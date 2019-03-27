@@ -19,7 +19,7 @@ testRun(void)
     {
         // We don't want this struct to grow since there are generally a lot of strings, so make sure it doesn't grow without us
         // knowing about it
-        TEST_RESULT_UINT(sizeof(struct StringCommon), sizeof(size_t) == 8 ? 16 : 12, "check StringCommon struct size");
+        TEST_RESULT_UINT(sizeof(struct StringCommon), TEST_64BIT() ? 16 : 12, "check StringCommon struct size");
 
         // Test the size macro
         TEST_RESULT_VOID(CHECK_SIZE(555), "valid size");
