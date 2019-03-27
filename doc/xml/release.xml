@@ -90,6 +90,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>protocolKeepAlive()</code> to send <id>noops</id> to all remotes.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Make <code>strLstDup()</code> null-tolerant.</p>
                     </release-item>
 

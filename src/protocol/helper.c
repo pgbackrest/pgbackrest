@@ -328,6 +328,26 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType)
 }
 
 /***********************************************************************************************************************************
+Send keepalives to all remotes
+***********************************************************************************************************************************/
+void
+protocolKeepAlive(void)
+{
+    FUNCTION_LOG_VOID(logLevelTrace);
+
+    if (protocolHelper.memContext != NULL)
+    {
+        for (unsigned int clientIdx  = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
+        {
+            if (protocolHelper.clientRemote[clientIdx].client != NULL)
+                protocolClientNoOp(protocolHelper.clientRemote[clientIdx].client);
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Free the protocol objects and shutdown processes
 ***********************************************************************************************************************************/
 void

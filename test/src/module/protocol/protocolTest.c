@@ -629,6 +629,10 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("protocolGet()"))
     {
+        // Call keep alive before any remotes exist
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(protocolKeepAlive(), "keep alive");
+
         // Simple protocol start
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
@@ -647,6 +651,7 @@ testRun(void)
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo), "get remote protocol");
         TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo), client, "get remote cached protocol");
         TEST_RESULT_PTR(protocolHelper.clientRemote[0].client, client, "check position in cache");
+        TEST_RESULT_VOID(protocolKeepAlive(), "keep alive");
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects again");
 
