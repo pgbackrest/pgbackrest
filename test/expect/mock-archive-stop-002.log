@@ -44,15 +44,15 @@ db-version="9.4"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db --repo1-host=bogus archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [042]: remote process on 'bogus' terminated unexpectedly: ssh: Could not resolve hostname bogus: Name or service not known
+P00  ERROR: [125]: remote-0 process on 'bogus' terminated unexpectedly [255]: ssh: Could not resolve hostname bogus: Name or service not known
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db --repo1-host=bogus archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [042]: remote process on 'bogus' terminated unexpectedly: ssh: Could not resolve hostname bogus: Name or service not known
+P00  ERROR: [125]: remote-0 process on 'bogus' terminated unexpectedly [255]: ssh: Could not resolve hostname bogus: Name or service not known
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004 --repo1-host=bogus
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: dropped WAL file 000000010000000100000004 because archive queue exceeded 33554432 bytes
+P00   WARN: dropped WAL file '000000010000000100000004' because archive queue exceeded 32MB
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------

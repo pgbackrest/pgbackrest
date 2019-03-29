@@ -69,31 +69,9 @@ sub main
             cfgCommandSet(cfgCommandId($strCommand));
         }
 
-        # Process archive-push command
-        # --------------------------------------------------------------------------------------------------------------------------
-        if (cfgCommandTest(CFGCMD_ARCHIVE_PUSH))
-        {
-            # Load module dynamically
-            require pgBackRest::Archive::Push::Push;
-            pgBackRest::Archive::Push::Push->import();
-
-            new pgBackRest::Archive::Push::Push()->process($stryCommandArg[0], false);
-        }
-
-        # Process archive-push-async command
-        # --------------------------------------------------------------------------------------------------------------------------
-        elsif (cfgCommandTest(CFGCMD_ARCHIVE_PUSH_ASYNC))
-        {
-            # Load module dynamically
-            require pgBackRest::Archive::Push::Push;
-            pgBackRest::Archive::Push::Push->import();
-
-            new pgBackRest::Archive::Push::Push()->process($stryCommandArg[0], true);
-        }
-
         # Process remote command
         # --------------------------------------------------------------------------------------------------------------------------
-        elsif (cfgCommandTest(CFGCMD_REMOTE))
+        if (cfgCommandTest(CFGCMD_REMOTE))
         {
             # Set log levels
             cfgOptionSet(CFGOPT_LOG_LEVEL_STDERR, PROTOCOL, true);

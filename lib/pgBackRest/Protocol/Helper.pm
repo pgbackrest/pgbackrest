@@ -25,12 +25,6 @@ use constant OP_BACKUP_FILE                                          => 'backupF
 # Archive Module
 use constant OP_ARCHIVE_GET_CHECK                                   => 'archiveCheck';
     push @EXPORT, qw(OP_ARCHIVE_GET_CHECK);
-use constant OP_ARCHIVE_PUSH_CHECK                                  => 'archivePushCheck';
-    push @EXPORT, qw(OP_ARCHIVE_PUSH_CHECK);
-
-# Archive File Module
-use constant OP_ARCHIVE_PUSH_FILE                                   => 'archivePushFile';
-    push @EXPORT, qw(OP_ARCHIVE_PUSH_FILE);
 
 # Check Module
 use constant OP_CHECK_BACKUP_INFO_CHECK                             => 'backupInfoCheck';

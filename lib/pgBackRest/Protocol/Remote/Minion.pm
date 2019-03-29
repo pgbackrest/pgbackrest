@@ -15,7 +15,6 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::Io::Buffered;
 use pgBackRest::Common::Wait;
 use pgBackRest::Archive::Get::File;
-use pgBackRest::Archive::Push::File;
 use pgBackRest::Check::Check;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
@@ -77,9 +76,6 @@ sub init
     {
         # ArchiveGet commands
         &OP_ARCHIVE_GET_CHECK => sub {archiveGetCheck(@{shift()})},
-
-        # ArchivePush commands
-        &OP_ARCHIVE_PUSH_CHECK => sub {archivePushCheck(@{shift()})},
 
         # Check commands
         &OP_CHECK_BACKUP_INFO_CHECK => sub {$oCheck->backupInfoCheck(@{shift()})},

@@ -45,32 +45,6 @@ use constant PG_WAL_SEGMENT_SIZE                                    => 16777216;
     push @EXPORT, qw(PG_WAL_SEGMENT_SIZE);
 
 ####################################################################################################################################
-# WAL status constants
-####################################################################################################################################
-use constant WAL_STATUS_ERROR                                       => 'error';
-    push @EXPORT, qw(WAL_STATUS_ERROR);
-use constant WAL_STATUS_OK                                          => 'ok';
-    push @EXPORT, qw(WAL_STATUS_OK);
-
-####################################################################################################################################
-# PostgreSQL WAL magic
-####################################################################################################################################
-my $oWalMagicHash =
-{
-    hex('0xD062') => PG_VERSION_83,
-    hex('0xD063') => PG_VERSION_84,
-    hex('0xD064') => PG_VERSION_90,
-    hex('0xD066') => PG_VERSION_91,
-    hex('0xD071') => PG_VERSION_92,
-    hex('0xD075') => PG_VERSION_93,
-    hex('0xD07E') => PG_VERSION_94,
-    hex('0xD087') => PG_VERSION_95,
-    hex('0xD093') => PG_VERSION_96,
-    hex('0xD097') => PG_VERSION_10,
-    hex('0xD098') => PG_VERSION_11,
-};
-
-####################################################################################################################################
 # lsnNormalize
 #
 # Generates a normalized form from an LSN that can be used for comparison.
@@ -178,95 +152,6 @@ sub lsnFileRange
 push @EXPORT, qw(lsnFileRange);
 
 ####################################################################################################################################
-# walInfo
-#
-# Retrieve information such as db version and system identifier from a WAL segment.
-####################################################################################################################################
-sub walInfo
-{
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strWalFile,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::walInfo', \@_,
-            {name => 'strWalFile'}
-        );
-
-    # Open the WAL segment and read magic number
-    #-------------------------------------------------------------------------------------------------------------------------------
-    my $hFile;
-    my $tBlock;
-
-    sysopen($hFile, $strWalFile, O_RDONLY)
-        or confess &log(ERROR, "unable to open ${strWalFile}", ERROR_FILE_OPEN);
-
-    # Read magic
-    sysread($hFile, $tBlock, 2) == 2
-        or confess &log(ERROR, "unable to read wal magic");
-
-    my $iMagic = unpack('S', $tBlock);
-
-    # Map the WAL magic number to the version of PostgreSQL.
-    #
-    # The magic number can be found in src/include/access/xlog_internal.h The offset can be determined by counting bytes in the
-    # XLogPageHeaderData struct, though this value rarely changes.
-    #-------------------------------------------------------------------------------------------------------------------------------
-    my $strDbVersion = $$oWalMagicHash{$iMagic};
-
-    if (!defined($strDbVersion))
-    {
-        confess &log(ERROR, "unexpected WAL magic 0x" . sprintf("%X", $iMagic) . "\n" .
-                     'HINT: is this version of PostgreSQL supported?',
-                     ERROR_VERSION_NOT_SUPPORTED);
-    }
-
-    # Map the WAL PostgreSQL version to the system identifier offset.  The offset can be determined by counting bytes in the
-    # XLogPageHeaderData struct, though this value rarely changes.
-    #-------------------------------------------------------------------------------------------------------------------------------
-    my $iSysIdOffset = $strDbVersion >= PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
-
-    # Check flags to be sure the long header is present (this is an extra check to be sure the system id exists)
-    #-------------------------------------------------------------------------------------------------------------------------------
-    sysread($hFile, $tBlock, 2) == 2
-        or confess &log(ERROR, "unable to read wal info");
-
-    my $iFlag = unpack('S', $tBlock);
-
-    # Make sure that the long header is present or there won't be a system id
-    $iFlag & 2
-        or confess &log(ERROR, "expected long header in flags " . sprintf("%x", $iFlag));
-
-    # Get the system id
-    #-------------------------------------------------------------------------------------------------------------------------------
-    sysseek($hFile, $iSysIdOffset, SEEK_CUR)
-        or confess &log(ERROR, "unable to read padding");
-
-    sysread($hFile, $tBlock, 8) == 8
-        or confess &log(ERROR, "unable to read database system identifier");
-
-    length($tBlock) == 8
-        or confess &log(ERROR, "block is incorrect length");
-
-    close($hFile);
-
-    my $ullDbSysId = unpack('Q', $tBlock);
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strDbVersion', value => $strDbVersion},
-        {name => 'ullDbSysId', value => $ullDbSysId}
-    );
-}
-
-push @EXPORT, qw(walInfo);
-
-####################################################################################################################################
 # walSegmentFind
 #
 # Returns the filename of a WAL segment in the archive.  Optionally, a wait time can be specified.  In this case an error will be
@@ -346,54 +231,6 @@ sub walSegmentFind
 push @EXPORT, qw(walSegmentFind);
 
 ####################################################################################################################################
-# walPath
-#
-# Generates the location of the wal directory using a relative wal path and the supplied db path.
-####################################################################################################################################
-sub walPath
-{
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strWalFile,
-        $strDbPath,
-        $strCommand,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::walPath', \@_,
-            {name => 'strWalFile', trace => true},
-            {name => 'strDbPath', trace => true, required => false},
-            {name => 'strCommand', trace => true},
-        );
-
-    if (index($strWalFile, '/') != 0)
-    {
-        if (!defined($strDbPath))
-        {
-            confess &log(ERROR,
-                "option '" . cfgOptionName(CFGOPT_PG_PATH) . "' must be specified when relative wal paths are used\n" .
-                "HINT: Is \%f passed to ${strCommand} instead of \%p?\n" .
-                "HINT: PostgreSQL may pass relative paths even with \%p depending on the environment.",
-                ERROR_OPTION_REQUIRED);
-        }
-
-        $strWalFile = "${strDbPath}/${strWalFile}";
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strWalFile', value => $strWalFile, trace => true}
-    );
-
-}
-
-push @EXPORT, qw(walPath);
-
-####################################################################################################################################
 # walIsSegment
 #
 # Is the file a segment or some other file (e.g. .history, .backup, etc).
@@ -440,72 +277,5 @@ sub walIsPartial
 }
 
 push @EXPORT, qw(walIsPartial);
-
-####################################################################################################################################
-# archiveAsyncStatusWrite
-#
-# Write out a status file to the spool path with information about the success or failure of an archive push.
-####################################################################################################################################
-sub archiveAsyncStatusWrite
-{
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strType,
-        $strSpoolPath,
-        $strWalFile,
-        $iCode,
-        $strMessage,
-        $bIgnoreErrorOnOk,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::archiveAsyncStatusWrite', \@_,
-            {name => 'strType'},
-            {name => 'strSpoolPath'},
-            {name => 'strWalFile'},
-            {name => 'iCode', required => false},
-            {name => 'strMessage', required => false},
-            {name => 'bIgnoreErrorOnOk', required => false, default => false},
-        );
-
-    # Remove any error file exists unless a new one will be written
-    if ($strType ne WAL_STATUS_ERROR)
-    {
-        # Remove the error file, if any
-        storageLocal()->remove("${strSpoolPath}/${strWalFile}.error", {bIgnoreMissing => true});
-    }
-
-    # If an error will be written but an ok file already exists this may be expected and will be indicated by bIgnoreErrorOnOk set
-    # to true.  In this case just return without writing the error file.
-    if (!($strType eq WAL_STATUS_ERROR && $bIgnoreErrorOnOk && storageLocal()->exists("${strSpoolPath}/${strWalFile}.ok")))
-    {
-        # Write the status file
-        my $strStatus;
-
-        if (defined($iCode))
-        {
-            if (!defined($strMessage))
-            {
-                confess &log(ASSERT, 'strMessage must be set when iCode is set');
-            }
-
-            $strStatus = "${iCode}\n${strMessage}";
-        }
-        elsif ($strType eq WAL_STATUS_ERROR)
-        {
-            confess &log(ASSERT, 'error status must have iCode and strMessage set');
-        }
-
-        storageLocal()->put(
-            storageLocal()->openWrite("${strSpoolPath}/${strWalFile}.${strType}", {bAtomic => true}), $strStatus);
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-push @EXPORT, qw(archiveAsyncStatusWrite);
 
 1;

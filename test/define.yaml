@@ -629,7 +629,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-common-perl
-        total: 6
+        total: 4
 
         coverage:
           Archive/Common: partial
@@ -653,22 +653,13 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-push
-        total: 1
+        total: 4
         perlReq: true
 
         coverage:
+          command/archive/push/file: full
+          command/archive/push/protocol: full
           command/archive/push/push: full
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: archive-push-perl
-        total: 7
-
-        coverage:
-          Archive/Base: full
-          Archive/Push/Async: full
-          Archive/Push/File: partial
-          Archive/Push/Push: full
-          Protocol/Local/Master: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: command

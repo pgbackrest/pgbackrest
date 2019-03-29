@@ -51,36 +51,6 @@ sub run
     }
 
     ################################################################################################################################
-    if ($self->begin("${strModule}::walPath()"))
-    {
-        my $strPgPath = '/db';
-        my $strWalFileRelative = 'pg_wal/000000010000000100000001';
-        my $strWalFileAbsolute = "${strPgPath}/${strWalFileRelative}";
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(
-            sub {walPath($strWalFileRelative, undef, cfgCommandName(CFGCMD_ARCHIVE_GET))}, ERROR_OPTION_REQUIRED,
-            "option 'pg1-path' must be specified when relative wal paths are used\n" .
-            "HINT: Is \%f passed to " . cfgCommandName(CFGCMD_ARCHIVE_GET) . " instead of \%p?\n" .
-            "HINT: PostgreSQL may pass relative paths even with \%p depending on the environment.");
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(
-            sub {walPath($strWalFileRelative, $strPgPath, cfgCommandName(CFGCMD_ARCHIVE_PUSH))}, $strWalFileAbsolute,
-            'relative path is contructed');
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(
-            sub {walPath($strWalFileAbsolute, $strPgPath, cfgCommandName(CFGCMD_ARCHIVE_PUSH))}, $strWalFileAbsolute,
-            'path is not relative and pg-path is still specified');
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(
-            sub {walPath($strWalFileAbsolute, $strPgPath, cfgCommandName(CFGCMD_ARCHIVE_PUSH))}, $strWalFileAbsolute,
-            'path is not relative and pg-path is undef');
-    }
-
-    ################################################################################################################################
     if ($self->begin("${strModule}::walIsSegment()"))
     {
         #---------------------------------------------------------------------------------------------------------------------------
@@ -178,55 +148,6 @@ sub run
 
         $self->testResult(
             sub {walSegmentFind(storageRepo(), $strArchiveId, $strWalSegment)}, $strWalSegmentHash, "${strWalSegment} WAL found");
-    }
-
-    ################################################################################################################################
-    if ($self->begin("archiveAsyncStatusWrite()"))
-    {
-        my $iWalTimeline = 1;
-        my $iWalMajor = 1;
-        my $iWalMinor = 1;
-
-        # Create the spool path
-        my $strSpoolPath = $self->testPath() . "/spool/out";
-        $self->storageTest()->pathCreate($strSpoolPath, {bIgnoreExists => true, bCreateParent => true});
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-
-        # Generate a normal ok
-        archiveAsyncStatusWrite(WAL_STATUS_OK, $strSpoolPath, $strSegment);
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Generate a valid warning ok
-        archiveAsyncStatusWrite(WAL_STATUS_OK, $strSpoolPath, $strSegment, 0, 'Test Warning');
-
-        # Skip error when an ok file already exists
-        #---------------------------------------------------------------------------------------------------------------------------
-        archiveAsyncStatusWrite(
-            WAL_STATUS_ERROR, $strSpoolPath, $strSegment, ERROR_ARCHIVE_DUPLICATE,
-            "WAL segment ${strSegment} already exists in the archive", true);
-
-        $self->testResult(
-            $self->storageTest()->exists("${strSpoolPath}/${strSegment}.error"), false, "error file should not exist");
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Generate an invalid error
-        $self->testException(
-            sub {archiveAsyncStatusWrite(WAL_STATUS_ERROR, $strSpoolPath, $strSegment)}, ERROR_ASSERT,
-            "error status must have iCode and strMessage set");
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Generate an invalid error
-        $self->testException(
-            sub {archiveAsyncStatusWrite(WAL_STATUS_ERROR, $strSpoolPath, $strSegment, ERROR_ASSERT)},
-            ERROR_ASSERT, "strMessage must be set when iCode is set");
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Generate a valid error
-        archiveAsyncStatusWrite(
-            WAL_STATUS_ERROR, $strSpoolPath, $strSegment, ERROR_ARCHIVE_DUPLICATE,
-            "WAL segment ${strSegment} already exists in the archive");
     }
 }
 

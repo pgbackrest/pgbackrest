@@ -28,6 +28,12 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-improvement-list>
+                    <release-item>
+                        <p>The <cmd>archive-push</cmd> command is implemented entirely in C.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Add separate <cmd>archive-push-async</cmd> command.</p>

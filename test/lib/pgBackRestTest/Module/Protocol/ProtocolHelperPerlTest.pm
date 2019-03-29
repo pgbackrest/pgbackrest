@@ -16,7 +16,6 @@ use File::Basename qw(dirname);
 use Storable qw(dclone);
 
 use pgBackRest::Archive::Common;
-use pgBackRest::Archive::Push::Push;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;

@@ -65,7 +65,9 @@ main(int argListSize, const char *argList[])
 
         // Local command.  Currently only implements a subset.
         // -------------------------------------------------------------------------------------------------------------------------
-        else if (cfgCommand() == cfgCmdLocal && strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGetAsync)))
+        else if (cfgCommand() == cfgCmdLocal &&
+                 (strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGetAsync)) ||
+                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchivePushAsync))))
         {
             cmdLocal(STDIN_FILENO, STDOUT_FILENO);
         }
@@ -75,6 +77,8 @@ main(int argListSize, const char *argList[])
         else if (cfgCommand() == cfgCmdRemote &&
                  (strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGet)) ||
                   strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGetAsync)) ||
+                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchivePush)) ||
+                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchivePushAsync)) ||
                   strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdInfo))))
         {
             cmdRemote(STDIN_FILENO, STDOUT_FILENO);
@@ -99,6 +103,13 @@ main(int argListSize, const char *argList[])
         else if (cfgCommand() == cfgCmdArchivePush)
         {
             cmdArchivePush();
+        }
+
+        // Archive push async command
+        // -------------------------------------------------------------------------------------------------------------------------
+        else if (cfgCommand() == cfgCmdArchivePushAsync)
+        {
+            cmdArchivePushAsync();
         }
 
         // Backup command.  Still executed in Perl but this implements running expire after backup.

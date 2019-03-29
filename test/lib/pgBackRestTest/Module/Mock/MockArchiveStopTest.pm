@@ -90,6 +90,7 @@ sub run
         $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Push a WAL segment
+        &log(INFO, '    push first WAL');
         $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 1);
 
         # Break the database version of the archive info file
@@ -97,17 +98,24 @@ sub run
         {
             $oHostBackup->infoMunge(
                 $oStorage->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
-                {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
+                {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'},
+                 &INFO_ARCHIVE_SECTION_DB_HISTORY => {1 => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}}});
         }
 
         # Push two more segments with errors to exceed archive-push-queue-max
-        $oHostDbMaster->archivePush(
-            $strWalPath, $strWalTestFile, 2, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
+        &log(INFO, '    push second WAL');
 
         $oHostDbMaster->archivePush(
-            $strWalPath, $strWalTestFile, 3, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
+            $strWalPath, $strWalTestFile, 2, $iError ? ERROR_UNKNOWN : ERROR_ARCHIVE_MISMATCH);
+
+        &log(INFO, '    push third WAL');
+
+        $oHostDbMaster->archivePush(
+            $strWalPath, $strWalTestFile, 3, $iError ? ERROR_UNKNOWN : ERROR_ARCHIVE_MISMATCH);
 
         # Now this segment will get dropped
+        &log(INFO, '    push fourth WAL');
+
         $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 4, undef, undef, '--repo1-host=bogus');
 
         # Fix the database version

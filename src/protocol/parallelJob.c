@@ -173,7 +173,6 @@ protocolParallelJobResultSet(ProtocolParallelJob *this, const Variant *result)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(result != NULL);
     ASSERT(this->code == 0);
 
     MEM_CONTEXT_BEGIN(this->memContext)

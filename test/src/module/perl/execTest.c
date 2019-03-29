@@ -52,7 +52,7 @@ testRun(void)
 
         TEST_RESULT_VOID(perlFree(0), "free Perl before it is init'd");
         TEST_RESULT_VOID(perlInit(), "init Perl");
-        TEST_ERROR(perlExec(), ParamRequiredError, PERL_EMBED_ERROR);
+        TEST_ERROR(perlExec(), PathMissingError, PERL_EMBED_ERROR);
         TEST_RESULT_VOID(perlFree(0), "free Perl");
     }
 

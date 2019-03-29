@@ -178,7 +178,7 @@ db-version="9.3"
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001] --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
-P00   INFO: pushed WAL segment 000000010000000100000001
+P00   INFO: pushed WAL file '000000010000000100000001' to the archive
 P00   INFO: archive-push command end: completed successfully
 
 stanza-create db - fail on archive info file missing from non-empty dir (db-master host)
@@ -386,13 +386,12 @@ db-version="9.3"
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002] --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --log-subprocess --no-log-timestamp --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-master/repo --stanza=db
-P00   INFO: pushed WAL segment 000000010000000100000002
+P00   INFO: pushed WAL file '000000010000000100000002' to the archive
 P00   INFO: archive-push command end: completed successfully
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [044]: WAL segment version 9.4 does not match archive version 9.3
-            WAL segment system-id 1000000000000000094 does not match archive system-id 1000000000000000093
+P00  ERROR: [044]: PostgreSQL version 9.4, system-id 1000000000000000094 do not match stanza version 9.3, system-id 1000000000000000093
             HINT: are you archiving to the correct stanza?
 
 stanza-upgrade db - successful upgrade creates additional history (db-master host)

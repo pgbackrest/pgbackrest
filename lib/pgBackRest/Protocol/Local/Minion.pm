@@ -8,7 +8,6 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use pgBackRest::Archive::Push::File;
 use pgBackRest::Backup::File;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
@@ -54,7 +53,6 @@ sub init
     # Create anonymous subs for each command
     my $hCommandMap =
     {
-        &OP_ARCHIVE_PUSH_FILE => sub {archivePushFile(@{shift()})},
         &OP_BACKUP_FILE => sub {backupFile(@{shift()})},
         &OP_RESTORE_FILE => sub {restoreFile(@{shift()})},
 

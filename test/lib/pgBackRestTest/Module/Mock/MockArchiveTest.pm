@@ -274,39 +274,6 @@ sub run
         storageTest()->remove("${strWalPath}/archive_status/00000002.history.ready");
 
         #---------------------------------------------------------------------------------------------------------------------------
-        &log(INFO, '    db version mismatch in db section only - archive-push errors but archive-get succeeds');
-
-        $oHostBackup->infoMunge(
-            storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
-            {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
-
-        $oHostDbMaster->executeSimple(
-            $strCommandPush . " ${strWalPath}/${strSourceFile}",
-            {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
-
-        # Remove RECOVERYXLOG so it can be recovered
-        storageTest()->remove("${strWalPath}/RECOVERYXLOG", {bIgnoreMissing => false});
-
-        $oHostDbMaster->executeSimple(
-            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {oLogTest => $self->expect()});
-
-        # Check that the destination file exists
-        if (storageDb()->exists("${strWalPath}/RECOVERYXLOG"))
-        {
-            my ($strActualChecksum) = storageDb()->hashSize("${strWalPath}/RECOVERYXLOG");
-
-            if ($strActualChecksum ne $strArchiveChecksum)
-            {
-                confess "recovered file hash '${strActualChecksum}' does not match expected '${strArchiveChecksum}'";
-            }
-        }
-        else
-        {
-            confess "archive file '${strWalPath}/RECOVERYXLOG' is not in destination";
-        }
-
-        #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    db version mismatch error - archive-get unable to retrieve archiveId');
 
         # db section and corresponding history munged
