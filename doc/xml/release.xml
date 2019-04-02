@@ -92,6 +92,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>forkSafe()</code> to handle fork errors.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>httpHeaderDup()</code>.</p>
                     </release-item>
 

@@ -12,7 +12,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("forkAndDetach()"))
+    if (testBegin("forkSafe() and forkAndDetach()"))
     {
         int sessionId = getsid(0);
 

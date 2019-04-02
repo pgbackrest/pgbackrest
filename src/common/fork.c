@@ -8,7 +8,22 @@ Fork Handler
 #include "common/log.h"
 
 /***********************************************************************************************************************************
-Fork a new process and detach it so it can continue running after the parent process has exited.  This is not a typical daemon
+Fork a new process and throw an error if it fails
+***********************************************************************************************************************************/
+int
+forkSafe(void)
+{
+    FUNCTION_LOG_VOID(logLevelTrace);
+
+    int result = fork();
+
+    THROW_ON_SYS_ERROR(result == -1, PathMissingError, "unable to fork");
+
+    FUNCTION_LOG_RETURN(INT, result);
+}
+
+/***********************************************************************************************************************************
+Detach a forked process and detach it so it can continue running after the parent process has exited.  This is not a typical daemon
 startup because the parent process may continue to run and perform work for some time.
 ***********************************************************************************************************************************/
 void

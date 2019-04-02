@@ -301,12 +301,11 @@ cmdArchivePush(void)
                     strLstInsert(commandExec, 0, cfgExe());
                     strLstAdd(commandExec, strPath(walFile));
 
-                    // Release the lock and mark the async process as forked
+                    // Release the lock so the child process can acquire it
                     lockRelease(true);
-                    forked = true;
 
                     // Fork off the async process
-                    if (fork() == 0)
+                    if (forkSafe() == 0)
                     {
                         // Detach from parent process
                         forkDetach();
@@ -316,6 +315,10 @@ cmdArchivePush(void)
                             execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1,
                             ExecuteError, "unable to execute '%s'", cfgCommandName(cfgCmdArchiveGetAsync));
                     }
+
+                    // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
+                    // enough to do the job, running it again won't help anything.
+                    forked = true;
                 }
 
                 // Now that the async process has been launched, confess any errors that are found
