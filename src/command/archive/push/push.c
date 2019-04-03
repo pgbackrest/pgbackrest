@@ -128,6 +128,8 @@ archivePushProcessList(const String *walPath)
         FUNCTION_LOG_PARAM(STRING, walPath);
     FUNCTION_LOG_END();
 
+    ASSERT(walPath != NULL);
+
     StringList *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
