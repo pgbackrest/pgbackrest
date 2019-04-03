@@ -333,6 +333,7 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
             // Copy file name of WAL segment found into the calling context
             memContextSwitch(MEM_CONTEXT_OLD());
             result = strDup(strLstGet(list, 0));
+            memContextSwitch(MEM_CONTEXT_TEMP());
         }
     }
     MEM_CONTEXT_TEMP_END();
