@@ -415,6 +415,7 @@ testRun(void)
         strLstAddZ(list, "item5");
 
         TEST_RESULT_STR(strPtr(strLstJoin(strLstMergeAnti(list, anti), ", ")), "item1, item4, item5", "list results");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstMergeAnti(list, strLstNew()), ", ")), "item1, item3, item4, item5", "anti empty");
 
         list = strLstNew();
         strLstAddZ(list, "item2");

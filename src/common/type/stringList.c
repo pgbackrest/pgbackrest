@@ -500,10 +500,12 @@ strLstMergeAnti(const StringList *this, const StringList *anti)
         {
             bool add = true;
             const String *listItem = strLstGet(this, thisIdx);
+            ASSERT(listItem != NULL);
 
             // If anything left in anti look for matches
             while (antiIdx < strLstSize(anti))
             {
+                ASSERT(strLstGet(anti, antiIdx) != NULL);
                 int compare = strCmp(listItem, strLstGet(anti, antiIdx));
 
                 // If the current item in this is less than the current item in anti then it will be added
