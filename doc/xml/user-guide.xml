@@ -946,7 +946,7 @@
         <section id="configure-encryption">
             <title>Configure Repository Encryption</title>
 
-            <p>The repository will be configured with a cipher type and key to demonstrate encryption.  Encryption is always performed client-side even if the repository type (e.g. S3) supports encryption.</p>
+            <p>The repository will be configured with a cipher type and key to demonstrate encryption.  Encryption is always performed client-side even if the repository type (e.g. <proper>S3</proper> or other object store) supports encryption.</p>
 
             <p>It is important to use a long, random passphrase for the cipher key.  A good way to generate one is to run: <code>openssl rand -base64 48</code>.</p>
 
@@ -1956,10 +1956,10 @@
 
     <!-- SECTION => S3-SUPPORT -->
     <section id="s3-support" depend="/quickstart/configure-archiving">
-        <title>S3 Support</title>
+        <title>S3-Compatible Object Store Support</title>
 
         <execute-list host="{[host-pg1]}">
-            <title>Install packages required for S3 support</title>
+            <title>Install packages required for S3-Compatible object store support</title>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>apt-get install libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
@@ -1972,7 +1972,7 @@
              </execute>
         </execute-list>
 
-        <p><backrest/> supports storing repositories in <proper>Amazon S3</proper>.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so S3 logs or other data can also be stored in the bucket without conflicts.</p>
+        <p><backrest/> supports locating repositories in <proper>S3-compatible</proper> object stores.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
 
         <execute-list host="{[host-s3]}" show="n">
             <title>Create the bucket</title>
@@ -2006,9 +2006,9 @@
 
         <admonition type="note">The region and endpoint will need to be configured to where the bucket is located.  The values given here are for the <id>us-east-1</id> region.</admonition>
 
-        <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible.  This sample policy will restrict all reads and writes to the bucket and repository path.</p>
+        <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible.  This sample <proper>Amazon S3</proper> policy will restrict all reads and writes to the bucket and repository path.</p>
 
-        <code-block title="Sample S3 Policy">
+        <code-block title="Sample Amazon S3 Policy">
             {
                 "Version": "2012-10-17",
                 "Statement": [
@@ -2079,7 +2079,7 @@
             </execute>
         </execute-list>
 
-        <p>File creation time in <proper>S3</proper> is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
+        <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Backup the {[postgres-cluster-demo]} cluster</title>
@@ -2967,7 +2967,7 @@
 
             <p>The asynchronous <cmd>archive-get</cmd> command maintains a local queue of WAL to improve throughput.  If a WAL segment is not found in the queue it is fetched from the repository along with enough consecutive WAL to fill the queue.  The maximum size of the queue is defined by <br-option>archive-get-queue-max</br-option>.  Whenever the queue is less than half full more WAL will be fetched to fill it.</p>
 
-            <p>Asynchronous operation is most useful in environments that generate a lot of WAL or have a high latency connection to the repository storage (i.e., <proper>S3</proper>).  In the case of a high latency connection it may be a good idea to increase <br-option>process-max</br-option>.</p>
+            <p>Asynchronous operation is most useful in environments that generate a lot of WAL or have a high latency connection to the repository storage (i.e., <proper>S3</proper> or other object stores).  In the case of a high latency connection it may be a good idea to increase <br-option>process-max</br-option>.</p>
 
             <p>The <file>[stanza]-archive-get-async.log</file> file can be used to monitor the activity of the asynchronous process.</p>
 

@@ -129,6 +129,18 @@
                 </release-development-list>
             </release-core-list>
 
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="magnus.hagander"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify that S3-compatible object stores are supported.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-development-list>
                     <release-item>

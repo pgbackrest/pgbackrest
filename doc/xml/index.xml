@@ -126,9 +126,9 @@
         </section>
 
         <section id="s3-support">
-            <title>Amazon S3 Support</title>
+            <title>S3-Compatible Object Store Support</title>
 
-            <p><backrest/> repositories can be stored on <proper>Amazon S3</proper> to allow for virtually unlimited capacity and retention.</p>
+            <p><backrest/> repositories can be located in <proper>S3-Compatible</proper> object stores to allow for virtually unlimited capacity and retention.</p>
         </section>
 
         <section id="encryption">
