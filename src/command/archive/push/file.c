@@ -37,6 +37,7 @@ archivePushFile(
     FUNCTION_LOG_END();
 
     ASSERT(walSource != NULL);
+    ASSERT(archiveId != NULL);
     ASSERT(archiveFile != NULL);
 
     String *result = NULL;
