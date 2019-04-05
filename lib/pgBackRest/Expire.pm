@@ -24,6 +24,13 @@ use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 
+
+q# CSHANG for c structure #//q#
+   unsigned int archiveExpireTotal;
+   String *archiveExpireStart;
+   String *archiveExpireStop;
+#;
+
 ####################################################################################################################################
 # new
 ####################################################################################################################################
@@ -100,9 +107,9 @@ sub process
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
     my @stryPath;
-
+# CSHANG Although not apparent here, the expire command requires the stanza option cfgOptionStr(cfgOptStanza)
     my $oStorageRepo = storageRepo();
-    my $strBackupClusterPath = $oStorageRepo->pathGet(STORAGE_REPO_BACKUP);
+    my $strBackupClusterPath = $oStorageRepo->pathGet(STORAGE_REPO_BACKUP); # CSHANG this is never used
     my $iFullRetention = cfgOption(CFGOPT_REPO_RETENTION_FULL, false);
     my $iDifferentialRetention = cfgOption(CFGOPT_REPO_RETENTION_DIFF, false);
     my $strArchiveRetentionType = cfgOption(CFGOPT_REPO_RETENTION_ARCHIVE_TYPE, false);
@@ -110,6 +117,11 @@ sub process
 
     # Load the backup.info
     my $oBackupInfo = new pgBackRest::Backup::Info($oStorageRepo->pathGet(STORAGE_REPO_BACKUP));
+# CSHANG
+# String *stanzaBackupPath = strNewFmt(STORAGE_PATH_BACKUP "/%s", strPtr(cfgOptionStr(cfgOptStanza)));
+# info = infoBackupNew(
+#     storageRepo(), strNewFmt("/%s/%s", strPtr(stanzaBackupPath), INFO_BACKUP_FILE), false,
+#     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
 
     # Find all the expired full backups
     if (defined($iFullRetention))
@@ -119,7 +131,8 @@ sub process
         {
             confess &log(ERROR, cfgOptionName(CFGOPT_REPO_RETENTION_FULL) . ' must be a number >= 1');
         }
-
+# CSHANG here we will likely need the storageListP - or can we get way with NP? How would we deal with the regex? Maybe get the full list then split it into the Full, Diff and Incr lists?
+# StringList *backupFullList = storageListP(storageRepo(), stanzaBackupPath, .errorOnMissing = false);
         @stryPath = $oBackupInfo->list(backupRegExpGet(true));
 
         if (@stryPath > $iFullRetention)
@@ -131,6 +144,7 @@ sub process
 
                 foreach my $strPath ($oBackupInfo->list('^' . $stryPath[$iFullIdx] . '.*'))
                 {
+# CSHANG we'll need the storageRemove (I think NP) for removing files
                     $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strPath}/" . FILE_MANIFEST . INI_COPY_EXT);
                     $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strPath}/" . FILE_MANIFEST);
                     $oBackupInfo->delete($strPath);
@@ -390,7 +404,7 @@ sub process
                                     last;
                                 }
                             }
-
+# CSHANG here we'll need storagePathRemove
                             # Remove the entire directory if all archive is expired
                             if ($bRemove)
                             {
