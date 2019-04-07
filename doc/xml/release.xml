@@ -164,6 +164,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Skip coverage for macros with numbers in their name.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Use <cmd>restore</cmd> command for remote performances tests.</p>
                     </release-item>
                 </release-development-list>
