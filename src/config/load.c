@@ -27,6 +27,7 @@ cfgLoadLogSetting(void)
     LogLevel logLevelStdErr = logLevelOff;
     LogLevel logLevelFile = logLevelOff;
     bool logTimestamp = true;
+    unsigned int logProcessMax = 1;
 
     if (cfgOptionValid(cfgOptLogLevelConsole))
         logLevelConsole = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelConsole)));
@@ -46,7 +47,10 @@ cfgLoadLogSetting(void)
     if (cfgOptionValid(cfgOptLogTimestamp))
         logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
 
-    logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp);
+    if (cfgOptionValid(cfgOptProcessMax))
+        logProcessMax = (unsigned int)cfgOptionInt(cfgOptProcessMax);
+
+    logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp, logProcessMax);
 
     FUNCTION_LOG_RETURN_VOID();
 }

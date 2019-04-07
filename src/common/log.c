@@ -34,6 +34,9 @@ DEBUG_UNIT_EXTERN bool logFileBanner = false;
 // Is the timestamp printed in the log?
 DEBUG_UNIT_EXTERN bool logTimestamp = false;
 
+// Size of the process id field
+DEBUG_UNIT_EXTERN int logProcessSize = 2;
+
 /***********************************************************************************************************************************
 Test Asserts
 ***********************************************************************************************************************************/
@@ -102,7 +105,9 @@ logLevelStr(LogLevel logLevel)
 Initialize the log system
 ***********************************************************************************************************************************/
 void
-logInit(LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam)
+logInit(
+    LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
+    unsigned int logProcessMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevelStdOutParam);
@@ -114,11 +119,13 @@ logInit(LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel log
     ASSERT(logLevelStdOutParam <= LOG_LEVEL_MAX);
     ASSERT(logLevelStdErrParam <= LOG_LEVEL_MAX);
     ASSERT(logLevelFileParam <= LOG_LEVEL_MAX);
+    ASSERT(logProcessMax <= 999);
 
     logLevelStdOut = logLevelStdOutParam;
     logLevelStdErr = logLevelStdErrParam;
     logLevelFile = logLevelFileParam;
     logTimestamp = logTimestampParam;
+    logProcessSize = logProcessMax > 99 ? 3 : 2;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -347,7 +354,8 @@ logInternal(
     }
 
     // Add process and aligned log level
-    bufferPos += (size_t)snprintf(logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "P00 %*s: ", 6, logLevelStr(logLevel));
+    bufferPos += (size_t)snprintf(
+        logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "P%0*d %*s: ", logProcessSize, 0, 6, logLevelStr(logLevel));
 
     // When writing to stderr the timestamp, process, and log level alignment will be skipped
     char *logBufferStdErr = logBuffer + bufferPos - strlen(logLevelStr(logLevel)) - 2;

@@ -18,7 +18,9 @@ Max size allowed for a single log message including header
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void logInit(LogLevel logLevelStdOut, LogLevel logLevelStdErr, LogLevel logLevelFile, bool logTimestamp);
+void logInit(
+    LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
+    unsigned int logProcessMax);
 bool logFileSet(const char *logFile);
 
 bool logWill(LogLevel logLevel);
