@@ -105,7 +105,7 @@ execOpen(Exec *this)
 
     THROW_ON_SYS_ERROR(pipe(pipeRead) == -1, KernelError, "unable to create read pipe");
     THROW_ON_SYS_ERROR(pipe(pipeWrite) == -1, KernelError, "unable to create write pipe");
-    THROW_ON_SYS_ERROR(pipe(pipeError) == -1, KernelError, "unable to create write pipe");
+    THROW_ON_SYS_ERROR(pipe(pipeError) == -1, KernelError, "unable to create error pipe");
 
     // Fork the subprocess
     this->processId = fork();
