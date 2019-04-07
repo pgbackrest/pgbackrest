@@ -1893,7 +1893,7 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_DEFAULT => 1,
-        &CFGDEF_ALLOW_RANGE => [1, 96],
+        &CFGDEF_ALLOW_RANGE => [1, 999],
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},

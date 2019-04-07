@@ -32,6 +32,14 @@
                     <release-item>
                         <p>The <cmd>archive-push</cmd> command is implemented entirely in C.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="rakshitha.br"/>
+                        </release-item-contributor-list>
+
+                        <p>Increase <br-option>process-max</br-option> limit to <id>999</id>.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -6849,6 +6857,11 @@
         <contributor id="pritam.barhate">
             <contributor-name-display>Pritam Barhate</contributor-name-display>
             <contributor-id type="github">pritammobisoft</contributor-id>
+        </contributor>
+
+        <contributor id="rakshitha.br">
+            <contributor-name-display>Rakshitha-BR</contributor-name-display>
+            <contributor-id type="github">Rakshitha-BR</contributor-id>
         </contributor>
 
         <contributor id="ronan.dunklau">
