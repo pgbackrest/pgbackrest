@@ -309,6 +309,9 @@ cmdArchivePush(void)
                     // Fork off the async process
                     if (forkSafe() == 0)
                     {
+                        // Disable logging and close log file
+                        logClose();
+
                         // Detach from parent process
                         forkDetach();
 

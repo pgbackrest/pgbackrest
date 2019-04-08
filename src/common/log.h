@@ -21,6 +21,7 @@ Functions
 void logInit(
     LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
     unsigned int logProcessMax);
+void logClose(void);
 bool logFileSet(const char *logFile);
 
 bool logWill(LogLevel logLevel);

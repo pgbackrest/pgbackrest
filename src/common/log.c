@@ -131,6 +131,24 @@ logInit(
 }
 
 /***********************************************************************************************************************************
+Close the log file
+***********************************************************************************************************************************/
+static void
+logFileClose(void)
+{
+    FUNCTION_TEST_VOID();
+
+    // Close the file handle if it is open
+    if (logHandleFile != -1)
+    {
+        close(logHandleFile);
+        logHandleFile = -1;
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Set the log file
 
 Returns true if file logging is off or the log file was successfully opened, false if the log file could not be opened.
@@ -144,12 +162,8 @@ logFileSet(const char *logFile)
 
     ASSERT(logFile != NULL);
 
-    // Close the file handle if it is already open
-    if (logHandleFile != -1)
-    {
-        close(logHandleFile);
-        logHandleFile = -1;
-    }
+    // Close the log file if it is already open
+    logFileClose();
 
     // Only open the file if there is a chance to log something
     bool result = true;
@@ -164,13 +178,30 @@ logFileSet(const char *logFile)
             int errNo = errno;
             LOG_WARN("unable to open log file '%s': %s\nNOTE: process will continue without log file.", logFile, strerror(errNo));
             result = false;
-        };
+        }
 
         // Output the banner on first log message
         logFileBanner = false;
     }
 
     FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Close the log system
+***********************************************************************************************************************************/
+void
+logClose(void)
+{
+    FUNCTION_TEST_VOID();
+
+    // Disable all logging
+    logInit(logLevelOff, logLevelOff, logLevelOff, false, 1);
+
+    // Close the log file if it is open
+    logFileClose();
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

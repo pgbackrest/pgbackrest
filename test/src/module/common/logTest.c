@@ -257,6 +257,18 @@ testRun(void)
 
         // Reopen invalid log file
         TEST_RESULT_BOOL(logFileSet("/" BOGUS_STR), false, "attempt to open bogus file");
+        TEST_RESULT_INT(logHandleFile, -1, "log file is closed");
+
+        // Close logging again
+        TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 99), "reduce log size");
+        TEST_RESULT_BOOL(logFileSet(fileFile), true, "open valid file");
+        TEST_RESULT_BOOL(logHandleFile != -1, true, "log file is open");
+
+        logClose();
+        TEST_RESULT_INT(logLevelStdOut, logLevelOff, "console logging is off");
+        TEST_RESULT_INT(logLevelStdErr, logLevelOff, "stderr logging is off");
+        TEST_RESULT_INT(logLevelFile, logLevelOff, "file logging is off");
+        TEST_RESULT_INT(logHandleFile, -1, "log file is closed");
 
         // Check stdout
         testLogResult(

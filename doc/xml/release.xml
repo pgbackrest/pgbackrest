@@ -88,6 +88,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Close log file before <code>exec()</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow warnings to be written by <code>archiveAsyncStatusOkWrite()</code>.</p>
                     </release-item>
 

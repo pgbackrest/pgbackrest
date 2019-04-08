@@ -113,8 +113,8 @@ execOpen(Exec *this)
     // Exec command in the child process
     if (this->processId == 0)
     {
-        // Disable logging and close log file.  The new process will reinitialize logging if needed.
-        logInit(logLevelOff, logLevelOff, logLevelOff, false, 1);
+        // Disable logging and close log file
+        logClose();
 
         // Assign stdout to the input side of the read pipe and close the unused handle
         dup2(pipeRead[1], STDOUT_FILENO);
