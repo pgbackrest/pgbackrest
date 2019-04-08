@@ -212,6 +212,19 @@ cfgLoadUpdateOption(void)
         }
     }
 
+    // Error if an S3 bucket name contains dots
+    if (cfgOptionTest(cfgOptRepoS3Bucket) && cfgOptionBool(cfgOptRepoS3VerifySsl) &&
+        strChr(cfgOptionStr(cfgOptRepoS3Bucket), '.') != -1)
+    {
+        THROW_FMT(
+            OptionInvalidValueError,
+            "'%s' is not valid for option '%s'"
+                "\nHINT: RFC-2818 forbids dots in wildcard matches"
+                "\nHINT: TLS/SSL verification cannot proceed with this bucket name"
+                "\nHINT: remove dots from the bucket name",
+            strPtr(cfgOptionStr(cfgOptRepoS3Bucket)), cfgOptionName(cfgOptRepoS3Bucket));
+    }
+
     FUNCTION_LOG_RETURN_VOID();
 }
 

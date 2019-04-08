@@ -14,6 +14,8 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.12dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <p><b>IMPORTANT NOTE</b>: The new <proper>TLS</proper>/<proper>SSL</proper> implementation forbids dots in <proper>S3</proper> bucket names per RFC-2818.  This security fix is required for compliant hostname verification.</p>
+
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -47,6 +49,10 @@
                         </release-item-contributor-list>
 
                         <p>Increase <br-option>process-max</br-option> limit to <id>999</id>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improve error message when an <proper>S3</proper> bucket name contains dots.</p>
                     </release-item>
                 </release-improvement-list>
 
