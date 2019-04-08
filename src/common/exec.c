@@ -43,6 +43,29 @@ struct Exec
 };
 
 /***********************************************************************************************************************************
+Macro to close file descriptors after dup2() in the child process
+
+If the parent process is daemomized and has closed stdout, stdin, and stderr or some combination of them, then the newly created
+descriptors might overlap stdout, stdin, or stderr.  In that case we don't want to accidentally close the descriptor that we have
+just copied.
+
+Note that this is pretty specific to the way that file descriptors are handled in this module and may not be generally applicable in
+other code.
+***********************************************************************************************************************************/
+#define PIPE_DUP2(pipe, pipeIdx, fd)                                                                                               \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        dup2(pipe[pipeIdx], fd);                                                                                                   \
+                                                                                                                                   \
+        if (pipe[0] != fd)                                                                                                         \
+            close(pipe[0]);                                                                                                        \
+                                                                                                                                   \
+        if (pipe[1] != fd)                                                                                                         \
+            close(pipe[1]);                                                                                                        \
+    }                                                                                                                              \
+    while (0);
+
+/***********************************************************************************************************************************
 New object
 ***********************************************************************************************************************************/
 Exec *
@@ -116,17 +139,14 @@ execOpen(Exec *this)
         // Disable logging and close log file
         logClose();
 
-        // Assign stdout to the input side of the read pipe and close the unused handle
-        dup2(pipeRead[1], STDOUT_FILENO);
-        close(pipeRead[0]);
+        // Assign stdout to the input side of the read pipe
+        PIPE_DUP2(pipeRead, 1, STDOUT_FILENO);
 
-        // Assign stdin to the output side of the write pipe and close the unused handle
-        dup2(pipeWrite[0], STDIN_FILENO);
-        close(pipeWrite[1]);
+        // Assign stdin to the output side of the write pipe
+        PIPE_DUP2(pipeWrite, 0, STDIN_FILENO);
 
-        // Assign stderr to the input side of the error pipe and close the unused handle
-        dup2(pipeError[1], STDERR_FILENO);
-        close(pipeError[0]);
+        // Assign stderr to the input side of the error pipe
+        PIPE_DUP2(pipeError, 1, STDERR_FILENO);
 
         // Execute the binary.  This statement will not return if it is successful
         execvp(strPtr(this->command), (char ** const)strLstPtr(this->param));
