@@ -24,13 +24,6 @@ use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 
-
-q# CSHANG for c structure #//q#
-   unsigned int archiveExpireTotal;
-   String *archiveExpireStart;
-   String *archiveExpireStop;
-#;
-
 ####################################################################################################################################
 # new
 ####################################################################################################################################
@@ -131,7 +124,7 @@ sub process
         {
             confess &log(ERROR, cfgOptionName(CFGOPT_REPO_RETENTION_FULL) . ' must be a number >= 1');
         }
-# CSHANG here we will likely need the storageListP - or can we get way with NP? How would we deal with the regex? Maybe get the full list then split it into the Full, Diff and Incr lists?
+# CSHANG backupRegExpGet returns a regex and list looks in the CURRENT section for backupinfo and returns a list matching that
 # StringList *backupFullList = storageListP(storageRepo(), stanzaBackupPath, .errorOnMissing = false);
         @stryPath = $oBackupInfo->list(backupRegExpGet(true));
 
@@ -141,12 +134,14 @@ sub process
             for (my $iFullIdx = 0; $iFullIdx < @stryPath - $iFullRetention; $iFullIdx++)
             {
                 my @stryRemoveList;
-
+# CSHANG list here gets all the backups in the CURRENT section that start with the name of the full backup
+# CSHANG fill=20190405-150606F  incr=20190405-150606F_20190408-140449I
                 foreach my $strPath ($oBackupInfo->list('^' . $stryPath[$iFullIdx] . '.*'))
                 {
 # CSHANG we'll need the storageRemove (I think NP) for removing files
                     $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strPath}/" . FILE_MANIFEST . INI_COPY_EXT);
                     $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strPath}/" . FILE_MANIFEST);
+# CSHANG this delete removes the backup from the CURRENT section of the info file, not the path from the disk (that is done later)
                     $oBackupInfo->delete($strPath);
 
                     if ($strPath ne $stryPath[$iFullIdx])
@@ -165,6 +160,7 @@ sub process
     if (defined($iDifferentialRetention))
     {
         # Make sure iDifferentialRetention is valid
+# CSHANG Do we need this check or does the parser enforce this?
         if (!looks_like_number($iDifferentialRetention) || $iDifferentialRetention < 1)
         {
             confess &log(ERROR, cfgOptionName(CFGOPT_REPO_RETENTION_DIFF) . ' must be a number >= 1');
@@ -173,6 +169,11 @@ sub process
         # Get a list of full and differential backups. Full are considered differential for the purpose of retention.
         # Example: F1, D1, D2, F2 and repo-retention-diff=2, then F1,D2,F2 will be retained, not D2 and D1 as might be expected.
         @stryPath = $oBackupInfo->list(backupRegExpGet(true, true));
+# CSHANG so we must know that 20190405-150606F_20190408-140449I does not depend on the DIFF backup because the number is less?
+# drwxr-x--- 3 postgres postgres 4096 Apr  5 15:06 20190405-150606F
+# drwxr-x--- 3 postgres postgres 4096 Apr  8 14:04 20190405-150606F_20190408-140449I
+# drwxr-x--- 3 postgres postgres 4096 Apr  8 14:17 20190405-150606F_20190408-141709D
+# drwxr-x--- 3 postgres postgres 4096 Apr  8 14:17 20190405-150606F_20190408-141716I
 
         if (@stryPath > $iDifferentialRetention)
         {
@@ -221,7 +222,7 @@ sub process
             $oStorageRepo->remove("${strBackupClusterPath}/${strBackup}", {bRecurse => true});
         }
     }
-
+# CSHANG why is the word "still" here?  The real comment should be "keep archive logs for the number of backups defined by repo-retention-archive"
     # If archive retention is still undefined, then ignore archiving
     if  (!defined($iArchiveRetention))
     {
@@ -233,6 +234,7 @@ sub process
 
         # Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
         # remaining non-expired backups based on the type.
+# CSHANG Maybe enhance this comment to "get the list of the remaining backups, from newest to oldest" - the CURRENT section has the backups from oldest to newest so we're asking for them in reverse
         if ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_FULL)
         {
             @stryGlobalBackupRetention = $oBackupInfo->list(backupRegExpGet(true), 'reverse');
@@ -254,7 +256,7 @@ sub process
             my $oArchiveInfo = new pgBackRest::Archive::Info($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), true);
             my @stryListArchiveDisk = sort {((split('-', $a))[1] + 0) cmp ((split('-', $b))[1] + 0)} $oStorageRepo->list(
                 STORAGE_REPO_ARCHIVE, {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});
-
+# CSHANG I think the HINT here doesn't make any sense. If an upgrade was performed, then both the archive and backup info would have been updated and if only one is updated, then there is some corruption so what does the hint really mean here?
             # Make sure the current database versions match between the two files
             if (!($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
                     ($oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION)))) ||
@@ -264,16 +266,17 @@ sub process
                 confess &log(ERROR, "archive and backup database versions do not match\n" .
                     "HINT: has a stanza-upgrade been performed?", ERROR_FILE_INVALID);
             }
-
+# CSHANG Since the list should be ordered from newest to oldest, then get only the backups from the array for the count of the retention. The globalBackupRetention will have, say 4F, 3F, 2F, 1F and if we're retaining 2, then 4F and 3F will be in the globalBackupArchiveRetention
             # Get the list of backups that are part of archive retention
-            my @stryTmp = @stryGlobalBackupRetention;
-            my @stryGlobalBackupArchiveRetention = splice(@stryTmp, 0, $iArchiveRetention);
+            my @stryTmp = @stryGlobalBackupRetention; # CSHANG copied to tmp becase splice removes the elements 0 to whatever from the array
+            my @stryGlobalBackupArchiveRetention = splice(@stryTmp, 0, $iArchiveRetention); # CSHANG splice returns an array
 
             # For each archiveId, remove WAL that are not part of retention
             foreach my $strArchiveId (@stryListArchiveDisk)
             {
                 # From the global list of backups to retain, create a list of backups, oldest to newest, associated with this
                 # archiveId (e.g. 9.4-1)
+# CSHANG If globalBackupRetention has 4F, 3F, 2F, 1F then I'm returning 1F, 2F, 3F, 4F (assuming they all have same history id)
                 my @stryLocalBackupRetention = $oBackupInfo->listByArchiveId($strArchiveId,
                     $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), \@stryGlobalBackupRetention, 'reverse');
 

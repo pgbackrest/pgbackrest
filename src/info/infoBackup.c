@@ -10,6 +10,7 @@ Backup Info Handler
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/ini.h"
+#include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
 #include "info/info.h"
@@ -230,6 +231,46 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
     ASSERT(this != NULL);
 
     FUNCTION_LOG_RETURN(INFO_BACKUP_DATA, *((InfoBackupData *)lstGet(this->backup, backupDataIdx)));
+}
+
+/***********************************************************************************************************************************
+Return a list of current backup labels, applying a regex filter if provided and sorting in reverse if requested
+***********************************************************************************************************************************/
+StringList *
+infoBackupDataLabelList(const InfoBackup *this, const String *filter, bool reverse)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(STRING, filter);
+        FUNCTION_LOG_PARAM(BOOL, reverse);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    StringList *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = strLstNew();
+
+        // For each backup label, compare it to the filter (if any) and sort it for return
+        for (unsigned int backupLabelIdx = 0; backupLabelIdx < infoBackupDataTotal(this); backupLabelIdx++)
+        {
+            InfoBackupData backupData = infoBackupData(this, backupLabelIdx);
+            if (filter == NULL || regExpMatchOne(filter, backupData.backupLabel))
+            {
+                if (!reverse)
+                    strLstAdd(result, backupData.backupLabel);
+                else
+                    strLstInsert(result, 0, backupData.backupLabel);
+            }
+        }
+
+        strLstMove(result, MEM_CONTEXT_OLD());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************

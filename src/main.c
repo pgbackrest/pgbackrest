@@ -132,6 +132,7 @@ main(int argListSize, const char *argList[])
             cmdBegin(false);
 
             // Run expire
+            // CSHANG cmdExpire();
             perlExec();
         }
 

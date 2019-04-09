@@ -10,6 +10,7 @@ Object type
 typedef struct InfoBackup InfoBackup;
 
 #include "common/type/string.h"
+#include "common/type/stringList.h"
 #include "info/infoPg.h"
 #include "storage/storage.h"
 
@@ -58,6 +59,7 @@ Functions
 ***********************************************************************************************************************************/
 unsigned int infoBackupCheckPg(
     const InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgCatalogVersion, uint32_t pgControlVersion);
+StringList *infoBackupDataLabelList(const InfoBackup *this, const String *filter, bool reverse);
 
 /***********************************************************************************************************************************
 Getters
