@@ -332,6 +332,7 @@ cmdArchiveGetAsync(void)
                 {
                     // Get the job and job key
                     ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+                    unsigned int processId = protocolParallelJobProcessId(job);
                     const String *walSegment = varStr(protocolParallelJobKey(job));
 
                     // The job was successful
@@ -340,19 +341,20 @@ cmdArchiveGetAsync(void)
                         // Get the archive file
                         if (varIntForce(protocolParallelJobResult(job)) == 0)
                         {
-                            LOG_DETAIL("found %s in the archive", strPtr(walSegment));
+                            LOG_DETAIL_PID(processId, "found %s in the archive", strPtr(walSegment));
                         }
                         // If it does not exist write an ok file to indicate that it was checked
                         else
                         {
-                            LOG_DETAIL("unable to find %s in the archive", strPtr(walSegment));
+                            LOG_DETAIL_PID(processId, "unable to find %s in the archive", strPtr(walSegment));
                             archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL);
                         }
                     }
                     // Else the job errored
                     else
                     {
-                        LOG_WARN(
+                        LOG_WARN_PID(
+                            processId,
                             "could not get %s from the archive (will be retried): [%d] %s", strPtr(walSegment),
                             protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
 

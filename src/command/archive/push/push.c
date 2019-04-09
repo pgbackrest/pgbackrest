@@ -478,18 +478,20 @@ cmdArchivePushAsync(void)
 
                         // Get the job and job key
                         ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+                        unsigned int processId = protocolParallelJobProcessId(job);
                         const String *walFile = varStr(protocolParallelJobKey(job));
 
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            LOG_DETAIL("pushed WAL file '%s' to the archive", strPtr(walFile));
+                            LOG_DETAIL_PID(processId, "pushed WAL file '%s' to the archive", strPtr(walFile));
                             archiveAsyncStatusOkWrite(archiveModePush, walFile, varStr(protocolParallelJobResult(job)));
                         }
                         // Else the job errored
                         else
                         {
-                            LOG_WARN(
+                            LOG_WARN_PID(
+                                processId,
                                 "could not push WAL file '%s' to the archive (will be retried): [%d] %s", strPtr(walFile),
                                 protocolParallelJobErrorCode(job), strPtr(protocolParallelJobErrorMessage(job)));
 

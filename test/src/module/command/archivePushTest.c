@@ -640,8 +640,8 @@ testRun(void)
             strPtr(
                 strNewFmt(
                     "P00   INFO: push 2 WAL file(s) to archive: 000000010000000100000001...000000010000000100000002\n"
-                    "P00 DETAIL: pushed WAL file '000000010000000100000001' to the archive\n"
-                    "P00   WARN: could not push WAL file '000000010000000100000002' to the archive (will be retried): "
+                    "P01 DETAIL: pushed WAL file '000000010000000100000001' to the archive\n"
+                    "P01   WARN: could not push WAL file '000000010000000100000002' to the archive (will be retried): "
                         "[55] raised from local-1 protocol: unable to open '%s/pg/pg_xlog/000000010000000100000002' for read: "
                         "[2] No such file or directory", testPath())));
 
@@ -672,7 +672,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         harnessLogResult(
             "P00   INFO: push 1 WAL file(s) to archive: 000000010000000100000002\n"
-            "P00 DETAIL: pushed WAL file '000000010000000100000002' to the archive");
+            "P01 DETAIL: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_RESULT_BOOL(
             storageExistsNP(

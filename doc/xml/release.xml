@@ -106,6 +106,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add process id to C <cmd>archive-get</cmd> and <cmd>archive-push</cmd> logging.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Close log file before <code>exec()</code>.</p>
                     </release-item>
 
