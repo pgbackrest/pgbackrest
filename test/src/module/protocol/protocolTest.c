@@ -582,6 +582,9 @@ testRun(void)
 
                 TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
                 TEST_RESULT_STR(strPtr(varStr(protocolParallelJobKey(job))), "job2", "check key is job2");
+                TEST_RESULT_BOOL(
+                    protocolParallelJobProcessId(job) >= 1 && protocolParallelJobProcessId(job) <= 2, true,
+                    "check process id is valid");
                 TEST_RESULT_INT(varIntForce(protocolParallelJobResult(job)), 2, "check result is 2");
 
                 TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no more results");

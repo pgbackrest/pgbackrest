@@ -102,6 +102,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add process id to <code>ProtocolParallelJob</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Close log file before <code>exec()</code>.</p>
                     </release-item>
 
