@@ -32,19 +32,32 @@ const char *logLevelStr(LogLevel logLevel);
 /***********************************************************************************************************************************
 Macros
 
-Only call logInternal() if the message will be logged to one of the available outputs.
-***********************************************************************************************************************************/
-#define LOG_INTERNAL(logLevel, logRangeMin, logRangeMax, code, ...)                                                                \
-    logInternal(logLevel, logRangeMin, logRangeMax, __FILE__, __func__, code, __VA_ARGS__)
+Only call logInternal() if the message will be logged to one of the available outputs.  Also simplify each call site by supplying
+commonly-used values.
 
+Note that it's possible that that not all the macros below will appear in the code.  They are included for completeness and future
+usage.
+***********************************************************************************************************************************/
+#define LOG_INTERNAL(logLevel, logRangeMin, logRangeMax, processId, code, ...)                                                     \
+    logInternal(logLevel, logRangeMin, logRangeMax, processId, __FILE__, __func__, code, __VA_ARGS__)
+
+#define LOG_PID(logLevel, processId, code, ...)                                                                                    \
+    LOG_INTERNAL(logLevel, LOG_LEVEL_MIN, LOG_LEVEL_MAX, processId, code, __VA_ARGS__)
 #define LOG(logLevel, code, ...)                                                                                                   \
-    LOG_INTERNAL(logLevel, LOG_LEVEL_MIN, LOG_LEVEL_MAX, code, __VA_ARGS__)
+    LOG_PID(logLevel, 0, code, __VA_ARGS__)
 
 #define LOG_WILL(logLevel, code, ...)                                                                                              \
 do                                                                                                                                 \
 {                                                                                                                                  \
     if (logWill(logLevel))                                                                                                         \
         LOG(logLevel, code, __VA_ARGS__);                                                                                          \
+} while(0)
+
+#define LOG_WILL_PID(logLevel, processId, code, ...)                                                                               \
+do                                                                                                                                 \
+{                                                                                                                                  \
+    if (logWill(logLevel))                                                                                                         \
+        LOG_PID(logLevel, processId, code, __VA_ARGS__);                                                                           \
 } while(0)
 
 #define LOG_ASSERT(...)                                                                                                            \
@@ -62,11 +75,26 @@ do                                                                              
 #define LOG_TRACE(...)                                                                                                             \
     LOG_WILL(logLevelTrace, 0, __VA_ARGS__)
 
+#define LOG_ASSERT_PID(processId, ...)                                                                                             \
+    LOG_WILL_PID(logLevelAssert, processId, errorTypeCode(&AssertError), __VA_ARGS__)
+#define LOG_ERROR_PID(processId, code, ...)                                                                                        \
+    LOG_WILL_PID(logLevelError, processId, code, __VA_ARGS__)
+#define LOG_WARN_PID(processId, ...)                                                                                               \
+    LOG_WILL_PID(logLevelWarn, processId, 0, __VA_ARGS__)
+#define LOG_INFO_PID(processId, ...)                                                                                               \
+    LOG_WILL_PID(logLevelInfo, processId, 0, __VA_ARGS__)
+#define LOG_DETAIL_PID(processId, ...)                                                                                             \
+    LOG_WILL_PID(logLevelDetail, processId, 0, __VA_ARGS__)
+#define LOG_DEBUG_PID(processId, ...)                                                                                              \
+    LOG_WILL_PID(logLevelDebug, processId, 0, __VA_ARGS__)
+#define LOG_TRACE_PID(processId, ...)                                                                                              \
+    LOG_WILL_PID(logLevelTrace, processId, 0, __VA_ARGS__)
+
 /***********************************************************************************************************************************
 Internal Functions
 ***********************************************************************************************************************************/
 void logInternal(
-    LogLevel logLevel, LogLevel logRangeMin,  LogLevel logRangeMax, const char *fileName, const char *functionName,
-    int code, const char *format, ...);
+    LogLevel logLevel, LogLevel logRangeMin,  LogLevel logRangeMax, unsigned int processId, const char *fileName,
+    const char *functionName, int code, const char *format, ...);
 
 #endif

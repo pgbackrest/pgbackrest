@@ -347,8 +347,8 @@ General log function
 ***********************************************************************************************************************************/
 void
 logInternal(
-    LogLevel logLevel, LogLevel logRangeMin,  LogLevel logRangeMax, const char *fileName, const char *functionName, int code,
-    const char *format, ...)
+    LogLevel logLevel, LogLevel logRangeMin,  LogLevel logRangeMax, unsigned int processId, const char *fileName,
+    const char *functionName, int code, const char *format, ...)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);
@@ -386,7 +386,7 @@ logInternal(
 
     // Add process and aligned log level
     bufferPos += (size_t)snprintf(
-        logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "P%0*d %*s: ", logProcessSize, 0, 6, logLevelStr(logLevel));
+        logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "P%0*u %*s: ", logProcessSize, processId, 6, logLevelStr(logLevel));
 
     // When writing to stderr the timestamp, process, and log level alignment will be skipped
     char *logBufferStdErr = logBuffer + bufferPos - strlen(logLevelStr(logLevel)) - 2;

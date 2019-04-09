@@ -98,7 +98,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Allow three-digits process IDs in logging.</p>
+                        <p>Logging improvements.  Allow three-digits process IDs in logging.  Allow process id in C logging.</p>
                     </release-item>
 
                     <release-item>

@@ -117,13 +117,13 @@ exitSafe(int result, bool error, SignalType signalType)
             else
             {
                 // Log just the error to non-debug levels
-                LOG_INTERNAL(logLevel, LOG_LEVEL_MIN, logLevelDetail, errorCode(), errorMessage());
+                LOG_INTERNAL(logLevel, LOG_LEVEL_MIN, logLevelDetail, 0, errorCode(), errorMessage());
 
                 // Log the stack trace debug levels
                 if (logWill(logLevelDebug))
                 {
                     LOG_INTERNAL(
-                        logLevel, logLevelDebug, LOG_LEVEL_MAX, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(),
+                        logLevel, logLevelDebug, LOG_LEVEL_MAX, 0, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(),
                         errorStackTrace());
                 }
             }

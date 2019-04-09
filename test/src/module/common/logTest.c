@@ -179,12 +179,13 @@ testRun(void)
     {
         TEST_RESULT_VOID(logInit(logLevelOff, logLevelOff, logLevelOff, false, 1), "init logging to off");
         TEST_RESULT_VOID(
-            logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "file", "function", 0, "format"),
+            logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "format"),
             "message not logged anywhere");
 
         TEST_RESULT_VOID(logInit(logLevelWarn, logLevelOff, logLevelOff, true, 1), "init logging to warn (timestamp on)");
         TEST_RESULT_VOID(logFileSet(BOGUS_STR), "ignore bogus filename because file logging is off");
-        TEST_RESULT_VOID(logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "file", "function", 0, "TEST"), "log timestamp");
+        TEST_RESULT_VOID(
+            logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "TEST"), "log timestamp");
 
         String *logTime = strNewN(logBuffer, 23);
         TEST_RESULT_BOOL(
@@ -205,20 +206,21 @@ testRun(void)
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
-            logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "file", "function", 0, "format %d", 99), "log warn");
+            logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "format %d", 99), "log warn");
         TEST_RESULT_STR(logBuffer, "P00   WARN: format 99\n", "    check log");
 
         // This won't be logged due to the range
         TEST_RESULT_VOID(
-            logInternal(logLevelWarn, logLevelError, logLevelError, "file", "function", 0, "NOT OUTPUT"), "out of range");
+            logInternal(logLevelWarn, logLevelError, logLevelError, 0, "file", "function", 0, "NOT OUTPUT"), "out of range");
 
         logBuffer[0] = 0;
-        TEST_RESULT_VOID(logInternal(logLevelError, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "file", "function", 26, "message"), "log error");
+        TEST_RESULT_VOID(
+            logInternal(logLevelError, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 26, "message"), "log error");
         TEST_RESULT_STR(logBuffer, "P00  ERROR: [026]: message\n", "    check log");
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
-            logInternal(logLevelError, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "file", "function", 26, "message1\nmessage2"),
+            logInternal(logLevelError, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 26, "message1\nmessage2"),
             "log error with multiple lines");
         TEST_RESULT_STR(logBuffer, "P00  ERROR: [026]: message1\nmessage2\n", "    check log");
 
@@ -231,16 +233,17 @@ testRun(void)
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
-            logInternal(logLevelDebug, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "test.c", "test_func", 0, "message\nmessage2"), "log debug");
-        TEST_RESULT_STR(logBuffer, "P000  DEBUG:     test::test_func: message\nmessage2\n", "    check log");
+            logInternal(
+                logLevelDebug, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 999, "test.c", "test_func", 0, "message\nmessage2"), "log debug");
+        TEST_RESULT_STR(logBuffer, "P999  DEBUG:     test::test_func: message\nmessage2\n", "    check log");
 
         // This won't be logged due to the range
         TEST_RESULT_VOID(
-            logInternal(logLevelDebug, logLevelTrace, logLevelTrace, "test.c", "test_func", 0, "NOT OUTPUT"), "out of range");
+            logInternal(logLevelDebug, logLevelTrace, logLevelTrace, 0, "test.c", "test_func", 0, "NOT OUTPUT"), "out of range");
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
-            logInternal(logLevelTrace, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "test.c", "test_func", 0, "message"), "log debug");
+            logInternal(logLevelTrace, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "test.c", "test_func", 0, "message"), "log debug");
         TEST_RESULT_STR(logBuffer, "P000  TRACE:         test::test_func: message\n", "    check log");
 
         // Reopen the log file
@@ -249,11 +252,11 @@ testRun(void)
 
         logBuffer[0] = 0;
         TEST_RESULT_VOID(
-            logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "test.c", "test_func", 0, "info message"), "log info");
-        TEST_RESULT_STR(logBuffer, "P00   INFO: info message\n", "    check log");
+            logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 1, "test.c", "test_func", 0, "info message"), "log info");
+        TEST_RESULT_STR(logBuffer, "P01   INFO: info message\n", "    check log");
         TEST_RESULT_VOID(
-            logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, "test.c", "test_func", 0, "info message 2"), "log info");
-        TEST_RESULT_STR(logBuffer, "P00   INFO: info message 2\n", "    check log");
+            logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 99, "test.c", "test_func", 0, "info message 2"), "log info");
+        TEST_RESULT_STR(logBuffer, "P99   INFO: info message 2\n", "    check log");
 
         // Reopen invalid log file
         TEST_RESULT_BOOL(logFileSet("/" BOGUS_STR), false, "attempt to open bogus file");
@@ -292,12 +295,12 @@ testRun(void)
         testLogResult(
             fileFile,
             "-------------------PROCESS START-------------------\n"
-            "P000  DEBUG:     test::test_func: message\n"
+            "P999  DEBUG:     test::test_func: message\n"
             "                 message2\n"
             "\n"
             "-------------------PROCESS START-------------------\n"
-            "P00   INFO: info message\n"
-            "P00   INFO: info message 2");
+            "P01   INFO: info message\n"
+            "P99   INFO: info message 2");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
