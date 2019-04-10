@@ -416,7 +416,7 @@ sub run
 
                 # Flags used to buid test.c
                 my $strTestFlags =
-                    '-O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
+                    '-DDEBUG_TEST_TRACE -O0' . ($self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -ftree-coalesce-vars' : '') .
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ?
                         ' -fprofile-arcs -ftest-coverage' : '') .
                     ($self->{oTest}->{&TEST_CTESTDEF} ? " $self->{oTest}->{&TEST_CTESTDEF}" : '');
