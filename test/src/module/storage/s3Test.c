@@ -384,6 +384,66 @@ testRun(void)
         TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
         TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->region), strPtr(region), "    check region");
         TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->host), strPtr(host), "    check host");
+        TEST_RESULT_UINT(((StorageDriverS3 *)storage->driver)->port, 443, "    check port");
+        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
+        TEST_RESULT_STR(
+            strPtr(((StorageDriverS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");
+        TEST_RESULT_STR(
+            strPtr(((StorageDriverS3 *)storage->driver)->securityToken), strPtr(securityToken), "    check security token");
+
+        // Add a port to the endpoint
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--repo1-type=s3");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(path)));
+        strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strPtr(bucket)));
+        strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strPtr(region)));
+        strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strPtr(endPoint)));
+        strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
+        strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_FAKE_PATH "/pgbackrest-test.crt");
+        setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
+        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
+        setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
+        strLstAddZ(argList, "archive-get");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
+        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
+        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->region), strPtr(region), "    check region");
+        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->host), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))), "    check host");
+        TEST_RESULT_UINT(((StorageDriverS3 *)storage->driver)->port, 999, "    check port");
+        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
+        TEST_RESULT_STR(
+            strPtr(((StorageDriverS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");
+        TEST_RESULT_STR(
+            strPtr(((StorageDriverS3 *)storage->driver)->securityToken), strPtr(securityToken), "    check security token");
+
+        // Also add port to the host
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--repo1-type=s3");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s", strPtr(path)));
+        strLstAdd(argList, strNewFmt("--repo1-s3-bucket=%s", strPtr(bucket)));
+        strLstAdd(argList, strNewFmt("--repo1-s3-region=%s", strPtr(region)));
+        strLstAdd(argList, strNewFmt("--repo1-s3-endpoint=%s:999", strPtr(endPoint)));
+        strLstAdd(argList, strNewFmt("--repo1-s3-host=%s:7777", strPtr(host)));
+        strLstAddZ(argList, "--repo1-s3-ca-path=" TLS_CERT_FAKE_PATH);
+        strLstAddZ(argList, "--repo1-s3-ca-file=" TLS_CERT_FAKE_PATH "/pgbackrest-test.crt");
+        setenv("PGBACKREST_REPO1_S3_KEY", strPtr(accessKey), true);
+        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", strPtr(secretAccessKey), true);
+        setenv("PGBACKREST_REPO1_S3_TOKEN", strPtr(securityToken), true);
+        strLstAddZ(argList, "archive-get");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
+        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
+        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->region), strPtr(region), "    check region");
+        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->host), strPtr(host), "    check host");
+        TEST_RESULT_UINT(((StorageDriverS3 *)storage->driver)->port, 7777, "    check port");
         TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
         TEST_RESULT_STR(
             strPtr(((StorageDriverS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");

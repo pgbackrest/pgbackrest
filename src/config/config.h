@@ -100,6 +100,7 @@ void cfgExeSet(const String *exeParam);
 const Variant *cfgOptionDefault(ConfigOption optionId);
 void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);
 ConfigDefineOption cfgOptionDefIdFromId(ConfigOption optionId);
+String *cfgOptionHostPort(ConfigOption optionId, unsigned int *port);
 int cfgOptionId(const char *optionName);
 ConfigOption cfgOptionIdFromDefId(ConfigDefineOption optionDefId, unsigned int index);
 bool cfgOptionNegate(ConfigOption optionId);

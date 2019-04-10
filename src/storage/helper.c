@@ -302,13 +302,19 @@ storageRepoGet(const String *type, bool write)
     // Use the S3 driver
     else if (strEqZ(type, STORAGE_TYPE_S3))
     {
+        // Set the default port
+        unsigned int port = STORAGE_DRIVER_S3_PORT_DEFAULT;
+
+        // Extract port from the endpoint and host if it is present
+        const String *endPoint = cfgOptionHostPort(cfgOptRepoS3Endpoint, &port);
+        const String *host = cfgOptionHostPort(cfgOptRepoS3Host, &port);
+
         result = storageDriverS3Interface(
             storageDriverS3New(
                 cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket),
-                cfgOptionStr(cfgOptRepoS3Endpoint), cfgOptionStr(cfgOptRepoS3Region), cfgOptionStr(cfgOptRepoS3Key),
-                cfgOptionStr(cfgOptRepoS3KeySecret), cfgOptionTest(cfgOptRepoS3Token) ? cfgOptionStr(cfgOptRepoS3Token) : NULL,
-                (size_t)5 * 1024 * 1024, cfgOptionTest(cfgOptRepoS3Host) ? cfgOptionStr(cfgOptRepoS3Host) : NULL,
-                STORAGE_DRIVER_S3_PORT_DEFAULT, STORAGE_DRIVER_S3_TIMEOUT_DEFAULT, cfgOptionBool(cfgOptRepoS3VerifySsl),
+                endPoint, cfgOptionStr(cfgOptRepoS3Region), cfgOptionStr(cfgOptRepoS3Key), cfgOptionStr(cfgOptRepoS3KeySecret),
+                cfgOptionTest(cfgOptRepoS3Token) ? cfgOptionStr(cfgOptRepoS3Token) : NULL, (size_t)5 * 1024 * 1024, host, port,
+                STORAGE_DRIVER_S3_TIMEOUT_DEFAULT, cfgOptionBool(cfgOptRepoS3VerifySsl),
                 cfgOptionTest(cfgOptRepoS3CaFile) ? cfgOptionStr(cfgOptRepoS3CaFile) : NULL,
                 cfgOptionTest(cfgOptRepoS3CaPath) ? cfgOptionStr(cfgOptRepoS3CaPath) : NULL));
     }

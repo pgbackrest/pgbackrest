@@ -195,6 +195,42 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("cfgOptionHostPort()"))
+    {
+        unsigned int port = 55555;
+
+        cfgInit();
+        cfgCommandSet(cfgCmdBackup);
+
+        cfgOptionValidSet(cfgOptRepoS3Host, true);
+        cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("host.com")) ;
+        TEST_RESULT_STR(strPtr(cfgOptionHostPort(cfgOptRepoS3Host, &port)), "host.com", "check plain host");
+        TEST_RESULT_UINT(port, 55555, "check that port was not updated");
+
+        cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("myhost.com:777")) ;
+        TEST_RESULT_STR(strPtr(cfgOptionHostPort(cfgOptRepoS3Host, &port)), "myhost.com", "check host with port");
+        TEST_RESULT_UINT(port, 777, "check that port was updated");
+
+        TEST_RESULT_STR(strPtr(cfgOptionHostPort(cfgOptRepoS3Endpoint, &port)), NULL, "check null host");
+        TEST_RESULT_UINT(port, 777, "check that port was not updated");
+
+        cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("myhost.com:777:888")) ;
+        TEST_ERROR(
+            cfgOptionHostPort(cfgOptRepoS3Host, &port), OptionInvalidError,
+            "'myhost.com:777:888' is not valid for option 'repo1-s3-host'"
+                "\nHINT: is more than one port specified?");
+        TEST_RESULT_UINT(port, 777, "check that port was not updated");
+
+        cfgOptionValidSet(cfgOptRepoS3Endpoint, true);
+        cfgOptionSet(cfgOptRepoS3Endpoint, cfgSourceConfig, varNewStrZ("myendpoint.com:ZZZ")) ;
+        TEST_ERROR(
+            cfgOptionHostPort(cfgOptRepoS3Endpoint, &port), OptionInvalidError,
+            "'myendpoint.com:ZZZ' is not valid for option 'repo1-s3-endpoint'"
+                "\nHINT: port is not a positive integer.");
+        TEST_RESULT_UINT(port, 777, "check that port was not updated");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cfgOptionDefault() and cfgOptionDefaultSet()"))
     {
         TEST_RESULT_VOID(cfgInit(), "config init");

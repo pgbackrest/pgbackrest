@@ -34,6 +34,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="kyle.nevins"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix C code to recognize <id>host:port</id> option format like Perl does.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Fix issues with <code>remote</code>/<code>local</code> command logging options.</p>
                     </release-item>
                 </release-bug-list>
@@ -6802,6 +6810,11 @@
         <contributor id="keith.fiske">
             <contributor-name-display>Keith Fiske</contributor-name-display>
             <contributor-id type="github">keithf4</contributor-id>
+        </contributor>
+
+        <contributor id="kyle.nevins">
+            <contributor-name-display>Kyle Nevins</contributor-name-display>
+            <contributor-id type="github">kyle-nevins</contributor-id>
         </contributor>
 
         <contributor id="laetitia">

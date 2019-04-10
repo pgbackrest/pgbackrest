@@ -78,6 +78,7 @@ struct StorageDriverS3
     const String *securityToken;                                    // Security token, if any
     size_t partSize;                                                // Part size for multi-part upload
     const String *host;                                             // Defaults to {bucket}.{endpoint}
+    unsigned int port;                                              // Host port
 
     // Current signing key and date it is valid for
     const String *signingKeyDate;                                   // Date of cached signing key (so we know when to regenerate)
@@ -261,6 +262,7 @@ storageDriverS3New(
         this->securityToken = strDup(securityToken);
         this->partSize = partSize;
         this->host = host == NULL ? strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint)) : strDup(host);
+        this->port = port;
 
         // Force the signing key to be generated on the first run
         this->signingKeyDate = YYYYMMDD_STR;
@@ -276,7 +278,7 @@ storageDriverS3New(
             .pathSync = (StorageInterfacePathSync)storageDriverS3PathSync, .remove = (StorageInterfaceRemove)storageDriverS3Remove);
 
         // Create the http client used to service requests
-        this->httpClient = httpClientNew(this->host, port, timeout, verifyPeer, caFile, caPath);
+        this->httpClient = httpClientNew(this->host, this->port, timeout, verifyPeer, caFile, caPath);
         this->headerRedactList = strLstAdd(strLstNew(), S3_HEADER_AUTHORIZATION_STR);
     }
     MEM_CONTEXT_NEW_END();

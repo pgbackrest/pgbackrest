@@ -546,6 +546,78 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
 }
 
 /***********************************************************************************************************************************
+Parse a host option and extract the host and port (if it exists)
+***********************************************************************************************************************************/
+String *
+cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM_P(UINT, port);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT(port != NULL);
+
+    String *result = NULL;
+
+    // Proceed if option is valid and has a value
+    if (cfgOptionTest(optionId))
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            const String *host = cfgOptionStr(optionId);
+
+            // If the host contains a colon then it has a port appended
+            if (strChr(host, ':') != -1)
+            {
+                const StringList *hostPart = strLstNewSplitZ(host, ":");
+
+                // More than one colon is invalid
+                if (strLstSize(hostPart) > 2)
+                {
+                    THROW_FMT(
+                        OptionInvalidError,
+                        "'%s' is not valid for option '%s'"
+                            "\nHINT: is more than one port specified?",
+                        strPtr(host), cfgOptionName(optionId));
+                }
+
+                // Set the host
+                memContextSwitch(MEM_CONTEXT_OLD());
+                result = strDup(strLstGet(hostPart, 0));
+                memContextSwitch(MEM_CONTEXT_TEMP());
+
+                // Set the port and error if it is not a positive integer
+                TRY_BEGIN()
+                {
+                    *port = cvtZToUInt(strPtr(strLstGet(hostPart, 1)));
+                }
+                CATCH(FormatError)
+                {
+                    THROW_FMT(
+                        OptionInvalidError,
+                        "'%s' is not valid for option '%s'"
+                            "\nHINT: port is not a positive integer.",
+                        strPtr(host), cfgOptionName(optionId));
+                }
+                TRY_END();
+            }
+            // Else there is no port and just copy the host
+            else
+            {
+                memContextSwitch(MEM_CONTEXT_OLD());
+                result = strDup(host);
+                memContextSwitch(MEM_CONTEXT_TEMP());
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
 Get index for option
 ***********************************************************************************************************************************/
 unsigned int
