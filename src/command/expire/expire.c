@@ -15,8 +15,9 @@ Expire Command
 //     String *stop;
 // };
 
-// CSHANG Putting backupRegExpGet here until figure out where it should go
+// CSHANG Putting backupRegExpGet and manifest stuff here until figure out where it should go
 #define DATE_TIME_REGEX                                             "[0-9]{8}\\-[0-9]{6}"
+#define INFO_MANIFEST_FILE                                           "backup.manifest"
 /***********************************************************************************************************************************
 Return a regex string for filtering backups based on the type
 ***********************************************************************************************************************************/
@@ -104,8 +105,8 @@ cmdExpire(void)
     {
         // Get the retention options
         // ??? Retention options will need to be indexed
-        unsigned int fullRetention =
-            cfgOptionTest(cfgOptRepoRetentionFull) ? (unsigned int) cfgOptionInt(cfgOptRepoRetentionFull) : 0;
+        unsigned int fullRetention = cfgOptionTest(cfgOptRepoRetentionFull) ?
+            (unsigned int) cfgOptionInt(cfgOptRepoRetentionFull) : 0;
         // int differentialRetention = cfgOptionTest(cfgOptRepoRetentionDiff) ? cfgOptionInt(cfgOptRepoRetentionDiff) : 0;
         // String *archiveRetentionType =
         //     cfgOptionTest(cfgOptRepoRetentionArchiveType) ? cfgOptionStr(cfgOptRepoRetentionArchiveType) : NULL;
@@ -123,6 +124,36 @@ cmdExpire(void)
         if (fullRetention > 0)
         {
             pathList = infoBackupDataLabelListP(infoBackup, .filter = backupRegExpGetP(.full = true));
+
+            // If there are more full backups then the number to retain, then expire the oldest ones
+            if (strLstSize(pathList) > fullRetention)
+            {
+                // Expire all backups that depend on the full backup
+                for (unsigned int fullIdx = 0; fullIdx < strLstSize(pathList) - fullRetention; fullIdx++)
+                {
+                    StringList *removeList = infoBackupDataLabelListP(
+                        infoBackup, .filter = strNewFmt("^%s.*", strLstGet(pathList, fullIdx)));
+
+                    // Remove the manifest files in each directory and remove the backup from the current section of backup.info
+                    for (unsigned int rmvIdx = 0; rmvIdx < strLstSize(removeList); rmvIdx++)
+                    {
+                        storageRemoveNP(
+                            storageRepo(),
+                            strNewFmt(
+                                "%s/%s/%s", strPtr(stanzaBackupPath), strPtr(strLstGet(removeList, rmvIdx)), INFO_MANIFEST_FILE));
+
+                        storageRemoveNP(
+                            storageRepo(),
+                            strNewFmt(
+                                "%s/%s/%s",
+                                strPtr(stanzaBackupPath), strPtr(strLstGet(removeList, rmvIdx)), INFO_MANIFEST_FILE INI_COPY_EXT));
+                    // CSHANG Need to create a delete function in infoBackup to remove the backup from the current section
+                    }
+
+                    // CSHANG Need the log info for the backups expired
+                }
+            }
+
         }
 
         LOG_INFO("pathlist %s", strPtr(strLstGet(pathList, 0)));
