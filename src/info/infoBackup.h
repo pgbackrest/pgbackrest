@@ -59,7 +59,22 @@ Functions
 ***********************************************************************************************************************************/
 unsigned int infoBackupCheckPg(
     const InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgCatalogVersion, uint32_t pgControlVersion);
-StringList *infoBackupDataLabelList(const InfoBackup *this, const String *filter, bool reverse);
+
+/***********************************************************************************************************************************
+infoBackupDataLabelList
+***********************************************************************************************************************************/
+typedef struct InfoBackupDataLabelListParam
+{
+    bool reverse;
+    const String *filter;
+} InfoBackupDataLabelListParam;
+
+#define infoBackupDataLabelListP(this, ...)                                                                                        \
+    infoBackupDataLabelList(this, (InfoBackupDataLabelListParam){__VA_ARGS__})
+#define infoBackupDataLabelListNP(this)                                                                                            \
+    infoBackupDataLabelList(this, (InfoBackupDataLabelListParam){0})
+
+StringList *infoBackupDataLabelList(const InfoBackup *this, InfoBackupDataLabelListParam param);
 
 /***********************************************************************************************************************************
 Getters

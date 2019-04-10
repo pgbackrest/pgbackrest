@@ -20,22 +20,22 @@ Expire Command
 /***********************************************************************************************************************************
 Return a regex string for filtering backups based on the type
 ***********************************************************************************************************************************/
-static String *
-backupRegExpGet(bool full, bool differential, bool incremental, bool anchor)
+String *
+backupRegExpGet(BackupRegExpGetParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BOOL, full);
-        FUNCTION_LOG_PARAM(BOOL, differential);
-        FUNCTION_LOG_PARAM(BOOL, incremental);
-        FUNCTION_LOG_PARAM(BOOL, anchor);
+        FUNCTION_LOG_PARAM(BOOL, param.full);
+        FUNCTION_LOG_PARAM(BOOL, param.differential);
+        FUNCTION_LOG_PARAM(BOOL, param.incremental);
+        FUNCTION_LOG_PARAM(BOOL, param.anchor);
     FUNCTION_LOG_END();
 
-    ASSERT(full || differential || incremental);
+    ASSERT(param.full || param.differential || param.incremental);
 
     String *result = NULL;
 
     // Start the expression with the anchor if requested, date/time regexp and full backup indicator
-    if (anchor)
+    if (param.anchor)
         result = strNew("^" DATE_TIME_REGEX "F");
     else
         result = strNew(DATE_TIME_REGEX "F");
@@ -43,10 +43,10 @@ backupRegExpGet(bool full, bool differential, bool incremental, bool anchor)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Add the diff and/or incr expressions if requested
-        if (differential || incremental)
+        if (param.differential || param.incremental)
         {
             // If full requested then diff/incr is optional
-            if (full)
+            if (param.full)
             {
                 strCat(result, "(\\_");
             }
@@ -60,12 +60,12 @@ backupRegExpGet(bool full, bool differential, bool incremental, bool anchor)
             strCat(result, DATE_TIME_REGEX);
 
             // Filter on both diff/incr
-            if (differential && incremental)
+            if (param.differential && param.incremental)
             {
                 strCat(result, "(D|I)");
             }
             // Else just diff
-            else if (differential)
+            else if (param.differential)
             {
                 strCatChr(result, 'D');
             }
@@ -76,14 +76,14 @@ backupRegExpGet(bool full, bool differential, bool incremental, bool anchor)
             }
 
             // If full requested then diff/incr is optional
-            if (full)
+            if (param.full)
             {
                 strCat(result, "){0,1}");
             }
         }
 
         // Append the end anchor if requested
-        if (anchor)
+        if (param.anchor)
             strCat(result, "$");    // CSHANG Did not like the "\$", errors with: unknown escape sequence: '\$'
     }
     MEM_CONTEXT_TEMP_END();
@@ -103,7 +103,9 @@ cmdExpire(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the retention options
-        int fullRetention = cfgOptionTest(cfgOptRepoRetentionFull) ? cfgOptionInt(cfgOptRepoRetentionFull) : 0;
+        // ??? Retention options will need to be indexed
+        unsigned int fullRetention =
+            cfgOptionTest(cfgOptRepoRetentionFull) ? (unsigned int) cfgOptionInt(cfgOptRepoRetentionFull) : 0;
         // int differentialRetention = cfgOptionTest(cfgOptRepoRetentionDiff) ? cfgOptionInt(cfgOptRepoRetentionDiff) : 0;
         // String *archiveRetentionType =
         //     cfgOptionTest(cfgOptRepoRetentionArchiveType) ? cfgOptionStr(cfgOptRepoRetentionArchiveType) : NULL;
@@ -112,7 +114,7 @@ cmdExpire(void)
         // Load the backup.info
         String *stanzaBackupPath = strNewFmt(STORAGE_PATH_BACKUP "/%s", strPtr(cfgOptionStr(cfgOptStanza)));
         InfoBackup *infoBackup = infoBackupNew(
-            storageRepo(), strNewFmt("/%s/%s", strPtr(stanzaBackupPath), INFO_BACKUP_FILE), false,
+            storageRepo(), strNewFmt("%s/%s", strPtr(stanzaBackupPath), INFO_BACKUP_FILE), false,
             cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
 
         StringList *pathList = NULL;
@@ -120,8 +122,14 @@ cmdExpire(void)
         // Find all the expired full backups
         if (fullRetention > 0)
         {
-            // CSHANG Want these 2 functions to have optional params
-            pathList = infoBackupDataLabelList(infoBackup, backupRegExpGet(true, false, false, false), false);
+            pathList = infoBackupDataLabelListP(infoBackup, .filter = backupRegExpGetP(.full = true));
+        }
+
+        LOG_INFO("pathlist %s", strPtr(strLstGet(pathList, 0)));
+
+        if (strLstSize(pathList) > fullRetention)
+        {
+            LOG_INFO("pathlist > fullretention");
         }
 
     }

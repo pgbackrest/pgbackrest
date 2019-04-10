@@ -12,22 +12,23 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    // Create default storage object for testing
-    Storage *storageTest = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    // Create the repo directories
+    String *repoPath = strNewFmt("%s/repo", testPath());
+    String *archivePath = strNewFmt("%s/%s", strPtr(repoPath), "archive");
+    String *backupPath = strNewFmt("%s/%s", strPtr(repoPath), "backup");
+    String *stanza = strNew("db");
+    String *archiveStanzaPath = strNewFmt("%s/%s", strPtr(archivePath), strPtr(stanza));
+    String *backupStanzaPath = strNewFmt("%s/%s", strPtr(backupPath), strPtr(stanza));
 
     // *****************************************************************************************************************************
     if (testBegin("cmdExpire()"))
     {
-        // -------------------------------------------------------------------------------------------------------------------------
-        argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--stanza=db");
-        strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
-        strLstAddZ(argList, "expire");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        storagePathCreateNP(storageLocalWrite(), archivePath);
+        storagePathCreateNP(storageLocalWrite(), backupPath);
+        storagePathCreateNP(storageLocalWrite(), backupStanzaPath);
+        storagePathCreateNP(storageLocalWrite(), archiveStanzaPath);
 
-        content = strNew
+        String *content = strNew
         (
             "[backrest]\n"
             "backrest-checksum=\"b50db7cf8f659ac15a0c7a2f45a0813f46a68c6b\"\n"
@@ -76,10 +77,19 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/backup.info", testPath())),
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanzaPath))),
                 bufNewStr(content)), "put backup info to file");
-// CHSNAG Just checking harness
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest");
+        strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
+        strLstAdd(argList, strNewFmt("--repo-path=%s", strPtr(repoPath)));
+        strLstAddZ(argList, "--repo1-retention-full=1");
+        strLstAddZ(argList, "expire");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // CSHANG Just testing harness
         TEST_RESULT_VOID(cmdExpire(), "expire");
 
     }

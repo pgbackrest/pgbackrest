@@ -237,12 +237,12 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 Return a list of current backup labels, applying a regex filter if provided and sorting in reverse if requested
 ***********************************************************************************************************************************/
 StringList *
-infoBackupDataLabelList(const InfoBackup *this, const String *filter, bool reverse)
+infoBackupDataLabelList(const InfoBackup *this, InfoBackupDataLabelListParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
-        FUNCTION_LOG_PARAM(STRING, filter);
-        FUNCTION_LOG_PARAM(BOOL, reverse);
+        FUNCTION_LOG_PARAM(BOOL, param.reverse);
+        FUNCTION_LOG_PARAM(STRING, param.filter);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -257,9 +257,9 @@ infoBackupDataLabelList(const InfoBackup *this, const String *filter, bool rever
         for (unsigned int backupLabelIdx = 0; backupLabelIdx < infoBackupDataTotal(this); backupLabelIdx++)
         {
             InfoBackupData backupData = infoBackupData(this, backupLabelIdx);
-            if (filter == NULL || regExpMatchOne(filter, backupData.backupLabel))
+            if (param.filter == NULL || regExpMatchOne(param.filter, backupData.backupLabel))
             {
-                if (!reverse)
+                if (!param.reverse)
                     strLstAdd(result, backupData.backupLabel);
                 else
                     strLstInsert(result, 0, backupData.backupLabel);
