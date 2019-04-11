@@ -8,7 +8,6 @@ Expire Command
 
 #include "common/type/string.h"
 
-// CSHANG How to do this?
 /***********************************************************************************************************************************
 backupRegExpGet
 ***********************************************************************************************************************************/
@@ -17,7 +16,7 @@ typedef struct BackupRegExpGetParam
     bool full;
     bool differential;
     bool incremental;
-    bool anchor;
+    bool noAnchor;
 } BackupRegExpGetParam;
 
 #define backupRegExpGetP(...)                                                                                                      \
