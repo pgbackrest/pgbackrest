@@ -151,10 +151,6 @@ doc/xml/user-guide.xml:
   class: doc/source
   type: xml
 
-lib/pgBackRest/Archive/Base.pm:
-  class: core
-  type: perl
-
 lib/pgBackRest/Archive/Common.pm:
   class: core
   type: perl
@@ -164,18 +160,6 @@ lib/pgBackRest/Archive/Get/File.pm:
   type: perl
 
 lib/pgBackRest/Archive/Info.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Archive/Push/Async.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Archive/Push/File.pm:
-  class: core
-  type: perl
-
-lib/pgBackRest/Archive/Push/Push.pm:
   class: core
   type: perl
 
@@ -536,6 +520,22 @@ src/command/archive/get/protocol.c:
   type: c
 
 src/command/archive/get/protocol.h:
+  class: core
+  type: c/h
+
+src/command/archive/push/file.c:
+  class: core
+  type: c
+
+src/command/archive/push/file.h:
+  class: core
+  type: c/h
+
+src/command/archive/push/protocol.c:
+  class: core
+  type: c
+
+src/command/archive/push/protocol.h:
   class: core
   type: c/h
 
@@ -1259,6 +1259,14 @@ src/protocol/server.h:
   class: core
   type: c/h
 
+src/storage/driver/cifs/storage.c:
+  class: core
+  type: c
+
+src/storage/driver/cifs/storage.h:
+  class: core
+  type: c/h
+
 src/storage/driver/posix/common.c:
   class: core
   type: c
@@ -1299,6 +1307,14 @@ src/storage/driver/remote/fileRead.h:
   class: core
   type: c/h
 
+src/storage/driver/remote/fileWrite.c:
+  class: core
+  type: c
+
+src/storage/driver/remote/fileWrite.h:
+  class: core
+  type: c/h
+
 src/storage/driver/remote/protocol.c:
   class: core
   type: c
@@ -1320,6 +1336,14 @@ src/storage/driver/s3/fileRead.c:
   type: c
 
 src/storage/driver/s3/fileRead.h:
+  class: core
+  type: c/h
+
+src/storage/driver/s3/fileWrite.c:
+  class: core
+  type: c
+
+src/storage/driver/s3/fileWrite.h:
   class: core
   type: c/h
 
@@ -1504,10 +1528,6 @@ test/lib/pgBackRestTest/Module/Command/CommandArchiveCommonPerlTest.pm:
   type: perl
 
 test/lib/pgBackRestTest/Module/Command/CommandArchiveGetPerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Command/CommandArchivePushPerlTest.pm:
   class: test/module
   type: perl
 
@@ -1892,6 +1912,10 @@ test/src/module/postgres/pageChecksumTest.c:
   type: c
 
 test/src/module/protocol/protocolTest.c:
+  class: test/module
+  type: c
+
+test/src/module/storage/cifsTest.c:
   class: test/module
   type: c
 

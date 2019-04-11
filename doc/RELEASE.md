@@ -73,6 +73,7 @@ with:
 
 - Switch to prior dir and copy coverage:
 ```
-cd ../prior/X.XX
+cd prior/X.XX
+rm -rf coverage
 cp -r ../../coverage .
 ```

@@ -1959,7 +1959,7 @@
         <title>S3-Compatible Object Store Support</title>
 
         <execute-list host="{[host-pg1]}">
-            <title>Install packages required for S3-Compatible object store support</title>
+            <title>Install packages required for S3-compatible object store support</title>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>apt-get install libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
@@ -2957,7 +2957,7 @@
 
                 <execute user="postgres" output="y">
                     <exe-cmd>cat /var/log/pgbackrest/demo-archive-push-async.log</exe-cmd>
-                    <exe-highlight> WAL file\(s\) to archive|pushed WAL file 0000000</exe-highlight>
+                    <exe-highlight> WAL file\(s\) to archive|pushed WAL file \'0000000</exe-highlight>
                 </execute>
             </execute-list>
         </section>
