@@ -133,16 +133,17 @@ cmdExpire(void)
                     // Remove the manifest files in each directory and remove the backup from the current section of backup.info
                     for (unsigned int rmvIdx = 0; rmvIdx < strLstSize(removeList); rmvIdx++)
                     {
-                        // storageRemoveNP(
-                        //     storageRepo(),
-                        //     strNewFmt(
-                        //         "%s/%s/%s", strPtr(stanzaBackupPath), strPtr(strLstGet(removeList, rmvIdx)), INFO_MANIFEST_FILE));
-                        //
-                        // storageRemoveNP(
-                        //     storageRepo(),
-                        //     strNewFmt(
-                        //         "%s/%s/%s",
-                        //         strPtr(stanzaBackupPath), strPtr(strLstGet(removeList, rmvIdx)), INFO_MANIFEST_FILE ".copy"));
+                        storageRemoveNP(
+                            storageRepo(),
+                            strNewFmt(
+                                "%s/%s/%s", strPtr(stanzaBackupPath), strPtr(strLstGet(removeList, rmvIdx)), INFO_MANIFEST_FILE));
+
+// CSHANG Maybe expose INI_COPY_EXT vs hardcode .copy, but David is working on manifest and there may be a different way of handling the file
+                        storageRemoveNP(
+                            storageRepo(),
+                            strNewFmt(
+                                "%s/%s/%s",
+                                strPtr(stanzaBackupPath), strPtr(strLstGet(removeList, rmvIdx)), INFO_MANIFEST_FILE ".copy"));
                     // CSHANG Need to create a delete function in infoBackup to remove the backup from the current section
         LOG_INFO("removeList %s", strPtr(strLstGet(removeList, rmvIdx)));
                     }
