@@ -132,7 +132,7 @@ cmdExpire(void)
                 for (unsigned int fullIdx = 0; fullIdx < strLstSize(pathList) - fullRetention; fullIdx++)
                 {
                     StringList *removeList = infoBackupDataLabelListP(
-                        infoBackup, .filter = strNewFmt("^%s.*", strLstGet(pathList, fullIdx)));
+                        infoBackup, .filter = strNewFmt("^%s.*", strPtr(strLstGet(pathList, fullIdx))));
 
                     // Remove the manifest files in each directory and remove the backup from the current section of backup.info
                     for (unsigned int rmvIdx = 0; rmvIdx < strLstSize(removeList); rmvIdx++)
@@ -148,6 +148,7 @@ cmdExpire(void)
                                 "%s/%s/%s",
                                 strPtr(stanzaBackupPath), strPtr(strLstGet(removeList, rmvIdx)), INFO_MANIFEST_FILE INI_COPY_EXT));
                     // CSHANG Need to create a delete function in infoBackup to remove the backup from the current section
+        LOG_INFO("removeList %s", strPtr(strLstGet(removeList, rmvIdx)));
                     }
 
                     // CSHANG Need the log info for the backups expired
@@ -155,8 +156,6 @@ cmdExpire(void)
             }
 
         }
-
-        LOG_INFO("pathlist %s", strPtr(strLstGet(pathList, 0)));
 
         if (strLstSize(pathList) > fullRetention)
         {
