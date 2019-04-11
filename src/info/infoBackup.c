@@ -232,6 +232,29 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 
     FUNCTION_LOG_RETURN(INFO_BACKUP_DATA, *((InfoBackupData *)lstGet(this->backup, backupDataIdx)));
 }
+/***********************************************************************************************************************************
+Delete a backup from the current backup
+***********************************************************************************************************************************/
+void
+infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(STRING, backupDeleteLabel);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    for (unsigned int idx = 0; idx < infoBackupDataTotal(this); idx++)
+    {
+        InfoBackupData backupData = infoBackupData(this, idx);
+        if (strCmp(backupData.backupLabel, backupDeleteLabel) == 0)
+        {
+            lstRemove(this->backup, idx);
+            // CSHANG Here we need to remove it from the ini
+
+    FUNCTION_LOG_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Return a list of current backup labels, applying a regex filter if provided and sorting in reverse if requested
