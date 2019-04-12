@@ -252,6 +252,8 @@ infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
         {
             lstRemove(this->backup, idx);
             // CSHANG Here we need to remove it from the ini
+        }
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }

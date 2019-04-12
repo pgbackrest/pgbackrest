@@ -91,7 +91,6 @@ testRun(void)
 
         // CSHANG Just testing harness
         TEST_RESULT_VOID(cmdExpire(), "expire");
-
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

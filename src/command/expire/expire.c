@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Expire Command
 ***********************************************************************************************************************************/
-#include "command/expire/expire.h"
+#include "command/backup/common.h"
 #include "common/debug.h"
 #include "config/config.h"
 #include "info/infoBackup.h"
@@ -15,79 +15,8 @@ Expire Command
 //     String *stop;
 // };
 
-// CSHANG Putting backupRegExpGet and manifest stuff here until figure out where it should go
-#define DATE_TIME_REGEX                                             "[0-9]{8}\\-[0-9]{6}"
+// CSHANG Putting manifest here until plans are finalized for new manifest
 #define INFO_MANIFEST_FILE                                           "backup.manifest"
-/***********************************************************************************************************************************
-Return a regex string for filtering backups based on the type
-***********************************************************************************************************************************/
-String *
-backupRegExpGet(BackupRegExpGetParam param)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BOOL, param.full);
-        FUNCTION_LOG_PARAM(BOOL, param.differential);
-        FUNCTION_LOG_PARAM(BOOL, param.incremental);
-        FUNCTION_LOG_PARAM(BOOL, param.noAnchor);
-    FUNCTION_LOG_END();
-
-    ASSERT(param.full || param.differential || param.incremental);
-
-    String *result = NULL;
-
-    // Start the expression with the anchor (unless requested not to), date/time regexp and full backup indicator
-    if (!param.noAnchor)
-        result = strNew("^" DATE_TIME_REGEX "F");
-    else
-        result = strNew(DATE_TIME_REGEX "F");
-
-    // Add the diff and/or incr expressions if requested
-    if (param.differential || param.incremental)
-    {
-        // If full requested then diff/incr is optional
-        if (param.full)
-        {
-            strCat(result, "(\\_");
-        }
-        // Else diff/incr is required
-        else
-        {
-            strCat(result, "\\_");
-        }
-
-        // Append date/time regexp for diff/incr
-        strCat(result, DATE_TIME_REGEX);
-
-        // Filter on both diff/incr
-        if (param.differential && param.incremental)
-        {
-            strCat(result, "(D|I)");
-        }
-        // Else just diff
-        else if (param.differential)
-        {
-            strCatChr(result, 'D');
-        }
-        // Else just incr
-        else
-        {
-            strCatChr(result, 'I');
-        }
-
-        // If full requested then diff/incr is optional
-        if (param.full)
-        {
-            strCat(result, "){0,1}");
-        }
-    }
-
-    // Append the end anchor
-    if (!param.noAnchor)
-        strCat(result, "$");    // CSHANG Did not like the "\$", errors with: unknown escape sequence: '\$'
-
-    FUNCTION_LOG_RETURN(STRING, result);
-}
-
 
 /***********************************************************************************************************************************
 Expire backups and archives
