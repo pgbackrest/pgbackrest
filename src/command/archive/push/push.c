@@ -295,8 +295,8 @@ cmdArchivePush(void)
                     // The async process should not output on the console at all
                     KeyValue *optionReplace = kvNew();
 
-                    kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptLogLevelConsole))), varNewStrZ("off"));
-                    kvPut(optionReplace, varNewStr(strNew(cfgOptionName(cfgOptLogLevelStderr))), varNewStrZ("off"));
+                    kvPut(optionReplace, varNewStr(CFGOPT_LOG_LEVEL_CONSOLE_STR), varNewStrZ("off"));
+                    kvPut(optionReplace, varNewStr(CFGOPT_LOG_LEVEL_STDERR_STR), varNewStrZ("off"));
 
                     // Generate command options
                     StringList *commandExec = cfgExecParam(cfgCmdArchivePushAsync, optionReplace);
@@ -316,9 +316,9 @@ cmdArchivePush(void)
                         forkDetach();
 
                         // Execute the binary.  This statement will not return if it is successful.
-                        THROW_ON_SYS_ERROR_FMT(
+                        THROW_ON_SYS_ERROR(
                             execvp(strPtr(cfgExe()), (char ** const)strLstPtr(commandExec)) == -1,
-                            ExecuteError, "unable to execute '%s'", cfgCommandName(cfgCmdArchiveGetAsync));
+                            ExecuteError, "unable to execute '" CFGCMD_ARCHIVE_PUSH_ASYNC "'");
                     }
 
                     // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be

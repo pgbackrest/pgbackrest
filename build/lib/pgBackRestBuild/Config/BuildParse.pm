@@ -109,6 +109,7 @@ sub buildConfigParse
 
                 # Generate output name
                 my $strOptionNameOut = $strOptionName;
+                my $strOptionConst;
 
                 if (defined($strOptionPrefix))
                 {
@@ -126,7 +127,14 @@ sub buildConfigParse
                 # Generate option value used for parsing (offset is added so options don't conflict with getopt_long return values)
                 my $strOptionFlag = 'PARSE_OPTION_FLAG |';
 
-                if ($iOptionNameIdx > 0)
+                # Build option constant name if this is the current name for the option
+                if ($iOptionNameIdx == 0)
+                {
+                    $strOptionConst = "CFGOPT_" . uc($strOptionNameOut);
+                    $strOptionConst =~ s/\-/_/g;
+                }
+                # Else use bare string and mark as deprecated
+                else
                 {
                     $strOptionFlag .= ' PARSE_DEPRECATE_FLAG |';
                 }
@@ -137,7 +145,7 @@ sub buildConfigParse
                 # Add option
                 $strBuildSource .=
                     "    {\n" .
-                    "        .name = \"${strOptionNameOut}\",\n" .
+                    "        .name = " . (defined($strOptionConst) ? $strOptionConst : "\"${strOptionNameOut}\"") . ",\n" .
                     $strOptionArg .
                     "        .val = ${strOptionFlag} ${strOptionVal},\n" .
                     "    },\n";
@@ -148,7 +156,8 @@ sub buildConfigParse
                 {
                     $strBuildSource .=
                         "    {\n" .
-                        "        .name = \"no-${strOptionNameOut}\",\n" .
+                        "        .name = \"no-" .
+                            (defined($strOptionConst) ? "\" ${strOptionConst}" : "${strOptionNameOut}\"") . ",\n" .
                         "        .val = ${strOptionFlag} PARSE_NEGATE_FLAG | ${strOptionVal},\n" .
                         "    },\n";
                 }
@@ -159,7 +168,8 @@ sub buildConfigParse
                 {
                     $strBuildSource .=
                         "    {\n" .
-                        "        .name = \"reset-${strOptionNameOut}\",\n" .
+                        "        .name = \"reset-" .
+                            (defined($strOptionConst) ? "\" ${strOptionConst}" : "${strOptionNameOut}\"") . ",\n" .
                         "        .val = ${strOptionFlag} PARSE_RESET_FLAG | ${strOptionVal},\n" .
                         "    },\n";
                 }

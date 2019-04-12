@@ -66,8 +66,8 @@ main(int argListSize, const char *argList[])
         // Local command.  Currently only implements a subset.
         // -------------------------------------------------------------------------------------------------------------------------
         else if (cfgCommand() == cfgCmdLocal &&
-                 (strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGetAsync)) ||
-                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchivePushAsync))))
+                 (strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_ASYNC_STR) ||
+                  strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_ASYNC_STR)))
         {
             cmdLocal(STDIN_FILENO, STDOUT_FILENO);
         }
@@ -75,11 +75,11 @@ main(int argListSize, const char *argList[])
         // Remote command.  Currently only implements a subset.
         // -------------------------------------------------------------------------------------------------------------------------
         else if (cfgCommand() == cfgCmdRemote &&
-                 (strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGet)) ||
-                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchiveGetAsync)) ||
-                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchivePush)) ||
-                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdArchivePushAsync)) ||
-                  strEqZ(cfgOptionStr(cfgOptCommand), cfgCommandName(cfgCmdInfo))))
+                 (strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_STR) ||
+                  strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_ASYNC_STR) ||
+                  strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_STR) ||
+                  strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_ASYNC_STR) ||
+                  strEq(cfgOptionStr(cfgOptCommand), CFGCMD_INFO_STR)))
         {
             cmdRemote(STDIN_FILENO, STDOUT_FILENO);
         }
