@@ -12,6 +12,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.13dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2019-04-11" version="2.12" title="C Implementation of Archive Push">
             <release-core-list>
                 <p><b>IMPORTANT NOTE</b>: The new <proper>TLS</proper>/<proper>SSL</proper> implementation forbids dots in <proper>S3</proper> bucket names per RFC-2818.  This security fix is required for compliant hostname verification.</p>
