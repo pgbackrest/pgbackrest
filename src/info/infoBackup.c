@@ -54,7 +54,7 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
         FUNCTION_LOG_PARAM(STRING, fileName);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
-        // cipherPass omitted for security
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
     ASSERT(fileName != NULL);

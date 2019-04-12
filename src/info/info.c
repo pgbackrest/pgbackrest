@@ -118,7 +118,7 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(BOOL, copyFile);                       // Is this the copy file?
         FUNCTION_LOG_PARAM(ENUM, cipherType);
-        // cipherPass omitted for security
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -203,7 +203,7 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);                     // Full path/filename to load
         FUNCTION_LOG_PARAM(ENUM, cipherType);
-        // cipherPass omitted for security
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
     ASSERT(fileName != NULL);
