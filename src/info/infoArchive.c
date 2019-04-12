@@ -20,7 +20,7 @@ Object type
 ***********************************************************************************************************************************/
 struct InfoArchive
 {
-    MemContext *memContext;                                         // Context that contains the InfoArchive
+    MemContext *memContext;                                         // Mem context
     InfoPg *infoPg;                                                 // Contents of the DB data
     String *archiveId;                                              // Archive id for the current PG version
 };
@@ -40,11 +40,13 @@ infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissin
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
+    ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
+    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
     InfoArchive *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("infoArchive")
+    MEM_CONTEXT_NEW_BEGIN("InfoArchive")
     {
         // Create object
         this = memNew(sizeof(InfoArchive));
@@ -73,7 +75,6 @@ infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissin
     }
     MEM_CONTEXT_NEW_END();
 
-    // Return buffer
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
 

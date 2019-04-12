@@ -33,7 +33,7 @@ Object type
 ***********************************************************************************************************************************/
 struct Info
 {
-    MemContext *memContext;                                         // Context that contains the info
+    MemContext *memContext;                                         // Mem context
     String *fileName;                                               // Full path name of the file
     Ini *ini;                                                       // Parsed file contents
     const String *cipherPass;                                       // Cipher passphrase if set
@@ -206,11 +206,13 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
+    ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
+    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
     Info *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("info")
+    MEM_CONTEXT_NEW_BEGIN("Info")
     {
         // Create object
         this = memNew(sizeof(Info));
@@ -263,7 +265,6 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
     }
     MEM_CONTEXT_NEW_END();
 
-    // Return buffer
     FUNCTION_LOG_RETURN(INFO, this);
 }
 

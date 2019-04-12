@@ -37,7 +37,7 @@ Object type
 ***********************************************************************************************************************************/
 struct InfoBackup
 {
-    MemContext *memContext;                                         // Context that contains the InfoBackup
+    MemContext *memContext;                                         // Mem context
     InfoPg *infoPg;                                                 // Contents of the DB data
     List *backup;                                                   // List of current backups and their associated data
 };
@@ -51,17 +51,20 @@ InfoBackup *
 infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
+    ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
+    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
     InfoBackup *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("infoBackup")
+    MEM_CONTEXT_NEW_BEGIN("InfoBackup")
     {
         // Create object
         this = memNew(sizeof(InfoBackup));
@@ -139,7 +142,6 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
     }
     MEM_CONTEXT_NEW_END();
 
-    // Return buffer
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
 

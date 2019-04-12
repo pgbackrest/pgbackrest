@@ -4,6 +4,9 @@ Manifest Info Handler
 #ifndef INFO_INFOMANIFEST_H
 #define INFO_INFOMANIFEST_H
 
+/***********************************************************************************************************************************
+Constants
+***********************************************************************************************************************************/
 #define INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START                      "backup-archive-start"
     STRING_DECLARE(INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_STR);
 #define INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP                       "backup-archive-stop"
