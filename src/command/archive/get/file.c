@@ -35,7 +35,7 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, archiveFile);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
-        // cipherPass omitted for security
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
     ASSERT(archiveFile != NULL);
@@ -121,7 +121,7 @@ archiveGetFile(
         FUNCTION_LOG_PARAM(STRING, walDestination);
         FUNCTION_LOG_PARAM(BOOL, durable);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
-        // cipherPass omitted for security
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
     ASSERT(archiveFile != NULL);

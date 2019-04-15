@@ -18,6 +18,7 @@ struct ProtocolParallelJob
     const Variant *key;                                             // Unique key used to identify the job
     const ProtocolCommand *command;                                 // Command to be executed
 
+    unsigned int processId;                                         // Process that executed this job
     int code;                                                       // Non-zero result indicates an error
     String *message;                                                // Message if there was a error
     const Variant *result;                                          // Result if job was successful
@@ -147,6 +148,37 @@ protocolParallelJobKey(const ProtocolParallelJob *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->key);
+}
+
+/***********************************************************************************************************************************
+Get/set process id
+***********************************************************************************************************************************/
+unsigned int
+protocolParallelJobProcessId(const ProtocolParallelJob *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_PARALLEL_JOB, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->processId);
+}
+
+void
+protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, this);
+        FUNCTION_LOG_PARAM(UINT, processId);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(processId > 0);
+
+    this ->processId = processId;
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

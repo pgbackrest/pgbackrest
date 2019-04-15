@@ -74,6 +74,9 @@ my $strLogLevelConsole = OFF;
 my $strLogLevelStdErr = WARN;
 my $bLogTimestamp = true;
 
+# Size of the process id log field
+my $iLogProcessSize = 2;
+
 # Flags to limit banner printing until there is actual output
 my $bLogFileExists;
 my $bLogFileFirst;
@@ -179,6 +182,7 @@ sub logLevelSet
     my $strLevelConsoleParam = shift;
     my $strLevelStdErrParam = shift;
     my $bLogTimestampParam = shift;
+    my $iLogProcessMax = shift;
 
     if (defined($strLevelFileParam))
     {
@@ -213,6 +217,11 @@ sub logLevelSet
     if (defined($bLogTimestampParam))
     {
         $bLogTimestamp = $bLogTimestampParam;
+    }
+
+    if (defined($iLogProcessMax))
+    {
+        $iLogProcessSize = $iLogProcessMax > 99 ? 3 : 2;
     }
 }
 
@@ -703,7 +712,7 @@ sub log
 
     $strMessageFormat =
         ($bLogTimestamp ? timestampFormat() . sprintf('.%03d ', (gettimeofday() - int(gettimeofday())) * 1000) : '') .
-        sprintf('P%02d', defined($iProcessId) ? $iProcessId : 0) .
+        sprintf('P%0*d', $iLogProcessSize, defined($iProcessId) ? $iProcessId : 0) .
         (' ' x (7 - length($strDisplayLevel))) . "${strDisplayLevel}: ${strMessageFormat}\n";
 
     # Skip output if disabled

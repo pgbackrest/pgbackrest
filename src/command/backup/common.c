@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Common functions and definitions for backup and expire commands
+Common Functions and Definitions for Backup and Expire Commands
 ***********************************************************************************************************************************/
 #include "command/backup/common.h"
 #include "common/debug.h"
@@ -11,10 +11,10 @@ Constants
 #define DATE_TIME_REGEX                                             "[0-9]{8}\\-[0-9]{6}"
 
 /***********************************************************************************************************************************
-backupRegExpGet returns an anchored regex string for filtering backups based on the type (at least one type is required to be true)
+Returns an anchored regex string for filtering backups based on the type (at least one type is required to be true)
 ***********************************************************************************************************************************/
 String *
-backupRegExpGet(BackupRegExpGetParam param)
+backupRegExp(BackupRegExpParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BOOL, param.full);

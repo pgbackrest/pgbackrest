@@ -212,6 +212,7 @@ protocolParallelProcess(ProtocolParallel *this)
                     protocolClientWriteCommand(
                         *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job));
 
+                    protocolParallelJobProcessIdSet(job, clientIdx + 1);
                     protocolParallelJobStateSet(job, protocolParallelJobStateRunning);
                     this->clientJobList[clientIdx] = job;
 

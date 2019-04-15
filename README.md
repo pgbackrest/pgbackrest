@@ -4,7 +4,7 @@
 
 pgBackRest aims to be a simple, reliable backup and restore solution that can seamlessly scale up to the largest databases and workloads by utilizing algorithms that are optimized for database-specific requirements.
 
-pgBackRest [v2.11](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.11) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
+pgBackRest [v2.12](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.12) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
 
 Documentation for v1 can be found [here](http://www.pgbackrest.org/1). No further releases are planned for v1 because v2 is backward-compatible with v1 options and repositories.
 
@@ -74,9 +74,9 @@ Tablespaces are fully supported and on restore tablespaces can be remapped to an
 
 File and directory links are supported for any file or directory in the PostgreSQL cluster. When restoring it is possible to restore all links to their original locations, remap some or all links, or restore some or all links as normal files or directories within the cluster directory.
 
-### Amazon S3 Support
+### S3-Compatible Object Store Support
 
-pgBackRest repositories can be stored on Amazon S3 to allow for virtually unlimited capacity and retention.
+pgBackRest repositories can be located in S3-Compatible object stores to allow for virtually unlimited capacity and retention.
 
 ### Encryption
 

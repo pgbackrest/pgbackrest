@@ -36,7 +36,7 @@ Object type
 ***********************************************************************************************************************************/
 struct InfoPg
 {
-    MemContext *memContext;                                         // Context that contains the infoPg
+    MemContext *memContext;                                         // Mem context
     List *history;                                                  // A list of InfoPgData
     unsigned int historyCurrent;                                    // Index of the current history item
     Info *info;                                                     // Info contents
@@ -58,14 +58,16 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
         FUNCTION_LOG_PARAM(STRING, fileName);
         FUNCTION_LOG_PARAM(ENUM, type);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
-        // cipherPass omitted for security
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
+    ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
+    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
     InfoPg *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("infoPg")
+    MEM_CONTEXT_NEW_BEGIN("InfoPg")
     {
         // Create object
         this = memNew(sizeof(InfoPg));
@@ -136,7 +138,6 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
     }
     MEM_CONTEXT_NEW_END();
 
-    // Return buffer
     FUNCTION_LOG_RETURN(INFO_PG, this);
 }
 

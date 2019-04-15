@@ -27,6 +27,7 @@ cfgLoadLogSetting(void)
     LogLevel logLevelStdErr = logLevelOff;
     LogLevel logLevelFile = logLevelOff;
     bool logTimestamp = true;
+    unsigned int logProcessMax = 1;
 
     if (cfgOptionValid(cfgOptLogLevelConsole))
         logLevelConsole = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelConsole)));
@@ -46,7 +47,10 @@ cfgLoadLogSetting(void)
     if (cfgOptionValid(cfgOptLogTimestamp))
         logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
 
-    logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp);
+    if (cfgOptionValid(cfgOptProcessMax))
+        logProcessMax = (unsigned int)cfgOptionInt(cfgOptProcessMax);
+
+    logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp, logProcessMax);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -95,11 +99,12 @@ cfgLoadUpdateOption(void)
         }
         else
         {
-            THROW_FMT(OptionInvalidValueError,
-                "'%s' is not valid for '%s' option\nHINT '%s' option (%s) should be greater than '%s' option (%s).",
-                strPtr(varStrForce(cfgOption(cfgOptProtocolTimeout))), cfgOptionName(cfgOptProtocolTimeout),
-                cfgOptionName(cfgOptProtocolTimeout), strPtr(varStrForce(cfgOption(cfgOptProtocolTimeout))),
-                cfgOptionName(cfgOptDbTimeout), strPtr(varStrForce(cfgOption(cfgOptDbTimeout))));
+            THROW_FMT(
+                OptionInvalidValueError,
+                "'%s' is not valid for '" CFGOPT_PROTOCOL_TIMEOUT "' option\nHINT '" CFGOPT_PROTOCOL_TIMEOUT "' option (%s)"
+                    " should be greater than '" CFGOPT_DB_TIMEOUT "' option (%s).",
+                strPtr(varStrForce(cfgOption(cfgOptProtocolTimeout))),  strPtr(varStrForce(cfgOption(cfgOptProtocolTimeout))),
+                strPtr(varStrForce(cfgOption(cfgOptDbTimeout))));
         }
     }
 
@@ -136,8 +141,9 @@ cfgLoadUpdateOption(void)
             // If the repo-type is defined, then see if corresponding retention-full is set
             if (cfgOptionTest(cfgOptRepoType + optionIdx) && !cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
             {
-                LOG_WARN("option %s is not set, the repository may run out of space\n"
-                    "HINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
+                LOG_WARN(
+                    "option %s is not set, the repository may run out of space"
+                        "\nHINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
                     cfgOptionName(cfgOptRepoRetentionFull + optionIdx),
                     cfgOptionName(cfgOptRepoRetentionFull + optionIdx));
             }
@@ -152,8 +158,9 @@ cfgLoadUpdateOption(void)
         {
             const String *archiveRetentionType = cfgOptionStr(cfgOptRepoRetentionArchiveType + optionIdx);
 
-            const String *msgArchiveOff = strNewFmt("WAL segments will not be expired: option '%s=%s' but",
-                cfgOptionName(cfgOptRepoRetentionArchiveType), strPtr(archiveRetentionType));
+            const String *msgArchiveOff = strNewFmt(
+                "WAL segments will not be expired: option '" CFGOPT_REPO1_RETENTION_ARCHIVE_TYPE "=%s' but",
+                strPtr(archiveRetentionType));
 
             // If the archive retention is not explicitly set then determine what it should be defaulted to
             if (!cfgOptionTest(cfgOptRepoRetentionArchive + optionIdx))
@@ -206,6 +213,19 @@ cfgLoadUpdateOption(void)
                 }
             }
         }
+    }
+
+    // Error if an S3 bucket name contains dots
+    if (cfgOptionTest(cfgOptRepoS3Bucket) && cfgOptionBool(cfgOptRepoS3VerifySsl) &&
+        strChr(cfgOptionStr(cfgOptRepoS3Bucket), '.') != -1)
+    {
+        THROW_FMT(
+            OptionInvalidValueError,
+            "'%s' is not valid for option '" CFGOPT_REPO1_S3_BUCKET "'"
+                "\nHINT: RFC-2818 forbids dots in wildcard matches"
+                "\nHINT: TLS/SSL verification cannot proceed with this bucket name"
+                "\nHINT: remove dots from the bucket name",
+            strPtr(cfgOptionStr(cfgOptRepoS3Bucket)));
     }
 
     FUNCTION_LOG_RETURN_VOID();

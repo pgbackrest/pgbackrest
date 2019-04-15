@@ -263,15 +263,8 @@
             ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key
 
         # Install PostgreSQL
-        RUN rpm -ivh http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm \
-                     http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-6.noarch.rpm \
-                     http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-8.noarch.rpm \
-                     http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-3.noarch.rpm \
-                     http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-3.noarch.rpm \
-                     http://yum.postgresql.org/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-3.noarch.rpm \
-                     http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm \
-                     http://yum.postgresql.org/10/redhat/rhel-6-x86_64/pgdg-centos10-10-2.noarch.rpm \
-                     http://yum.postgresql.org/11/redhat/rhel-6-x86_64/pgdg-centos11-11-2.noarch.rpm &amp;&amp; \
+        RUN rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG-10 &amp;&amp; \
+            rpm -ivh https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-6-x86_64/pgdg-redhat-repo-latest.noarch.rpm &amp;&amp; \
             yum install -y postgresql{[pg-version-nodot]}-server postgresql{[pg-version-upgrade-nodot]}-server
 
         # Create an ssh key for root so all hosts can ssh to each other as root
@@ -309,13 +302,8 @@
             ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key
 
         # Install PostgreSQL
-        RUN rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-7-x86_64/pgdg-centos92-9.2-3.noarch.rpm \
-                     http://yum.postgresql.org/9.3/redhat/rhel-7-x86_64/pgdg-centos93-9.3-3.noarch.rpm \
-                     http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-3.noarch.rpm \
-                     http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-3.noarch.rpm \
-                     http://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm \
-                     http://yum.postgresql.org/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm \
-                     http://yum.postgresql.org/11/redhat/rhel-7-x86_64/pgdg-centos11-11-2.noarch.rpm &amp;&amp; \
+        RUN rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG-10 &amp;&amp; \
+            rpm -ivh https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm  &amp;&amp; \
             yum install -y postgresql{[pg-version-nodot]}-server postgresql{[pg-version-upgrade-nodot]}-server
 
         # Create an ssh key for root so all hosts can ssh to each other as root
@@ -1959,7 +1947,7 @@
         <title>S3-Compatible Object Store Support</title>
 
         <execute-list host="{[host-pg1]}">
-            <title>Install packages required for S3-Compatible object store support</title>
+            <title>Install packages required for S3-compatible object store support</title>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>apt-get install libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
@@ -2957,7 +2945,7 @@
 
                 <execute user="postgres" output="y">
                     <exe-cmd>cat /var/log/pgbackrest/demo-archive-push-async.log</exe-cmd>
-                    <exe-highlight> WAL file\(s\) to archive|pushed WAL file 0000000</exe-highlight>
+                    <exe-highlight> WAL file\(s\) to archive|pushed WAL file \'0000000</exe-highlight>
                 </execute>
             </execute-list>
         </section>

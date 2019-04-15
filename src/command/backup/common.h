@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Common functions and definitions for backup and expire commands
+Common Functions and Definitions for Backup and Expire Commands
 ***********************************************************************************************************************************/
 #ifndef COMMAND_BACKUP_COMMON_H
 #define COMMAND_BACKUP_COMMON_H
@@ -9,18 +9,18 @@ Common functions and definitions for backup and expire commands
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
-backupRegExpGet returns an anchored regex string for filtering backups based on the type (at least one type is required to be true)
+Returns an anchored regex string for filtering backups based on the type (at least one type is required to be true)
 ***********************************************************************************************************************************/
-typedef struct BackupRegExpGetParam
+typedef struct BackupRegExpParam
 {
     bool full;
     bool differential;
     bool incremental;
-} BackupRegExpGetParam;
+} BackupRegExpParam;
 
-#define backupRegExpGetP(...)                                                                                                      \
-    backupRegExpGet((BackupRegExpGetParam){__VA_ARGS__})
+#define backupRegExpP(...)                                                                                                         \
+    backupRegExp((BackupRegExpParam){__VA_ARGS__})
 
-String *backupRegExpGet(BackupRegExpGetParam param);
+String *backupRegExp(BackupRegExpParam param);
 
 #endif

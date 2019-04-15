@@ -405,7 +405,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P00 DETAIL: found 000000010000000100000001 in the archive");
+            "P01 DETAIL: found 000000010000000100000001 in the archive");
 
         TEST_RESULT_BOOL(
             storageExistsNP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001")), true,
@@ -444,9 +444,9 @@ testRun(void)
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
         harnessLogResult(
             "P00   INFO: get 3 WAL file(s) from archive: 000000010000000100000001...000000010000000100000003\n"
-            "P00 DETAIL: found 000000010000000100000001 in the archive\n"
-            "P00 DETAIL: unable to find 000000010000000100000002 in the archive\n"
-            "P00   WARN: could not get 000000010000000100000003 from the archive (will be retried): "
+            "P01 DETAIL: found 000000010000000100000001 in the archive\n"
+            "P01 DETAIL: unable to find 000000010000000100000002 in the archive\n"
+            "P01   WARN: could not get 000000010000000100000003 from the archive (will be retried): "
                 "[45] raised from local-1 protocol: duplicates found in archive for WAL segment 000000010000000100000003: "
                 "000000010000000100000003-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, "
                 "000000010000000100000003-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"

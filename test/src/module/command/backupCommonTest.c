@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Command Control
+Test Common Functions and Definitions for Backup and Expire Commands
 ***********************************************************************************************************************************/
 #include "common/harnessConfig.h"
 #include "storage/driver/posix/storage.h"
@@ -15,7 +15,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("backupRegExpGet()"))
+    if (testBegin("backupRegExp()"))
     {
         String *full = strNew("20181119-152138F");
         String *incr = strNew("20181119-152138F_20181119-152152I");
@@ -23,18 +23,19 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
-            backupRegExpGetP(),
+            backupRegExpP(0),
             AssertError, "assertion 'param.full || param.differential || param.incremental' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
-	    String *filter = backupRegExpGetP(.full = true);
+	    String *filter = backupRegExpP(.full = true);
         TEST_RESULT_STR(strPtr(filter), "^[0-9]{8}\\-[0-9]{6}F$", "full backup regex with anchors");
         TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "    does not exactly match incr");
         TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "    does not exactly match diff");
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    exactly matches full");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        filter = backupRegExpGetP(.full = true, .incremental = true);
+        filter = backupRegExpP(.full = true, .incremental = true);
+
         TEST_RESULT_STR(
             strPtr(filter),
             "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}I){0,1}$", "full and optional incr backup regex with anchors");
@@ -49,7 +50,8 @@ testRun(void)
                 filter, strNew("A12341234-123123F_12341234-123123I")), false, "    does not match with leading character");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        filter = backupRegExpGetP(.full = true, .differential = true);
+        filter = backupRegExpP(.full = true, .differential = true);
+
         TEST_RESULT_STR(
             strPtr(filter),
             "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}D){0,1}$", "full and optional diff backup regex with anchors");
@@ -58,7 +60,8 @@ testRun(void)
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    match full");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        filter = backupRegExpGetP(.full = true,  .incremental = true, .differential = true);
+        filter = backupRegExpP(.full = true,  .incremental = true, .differential = true);
+
         TEST_RESULT_STR(
             strPtr(filter),
             "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}(D|I)){0,1}$", "full, optional diff and incr backup regex with anchors");
@@ -67,7 +70,8 @@ testRun(void)
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    match full");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        filter = backupRegExpGetP(.incremental = true, .differential = true);
+        filter = backupRegExpP(.incremental = true, .differential = true);
+
         TEST_RESULT_STR(
             strPtr(filter),
             "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}(D|I)$", "diff and incr backup regex with anchors");
@@ -82,7 +86,8 @@ testRun(void)
                 filter, strNew("A12341234-123123F_12341234-123123I")), false, "   does not match with leading character");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        filter = backupRegExpGetP(.incremental = true);
+        filter = backupRegExpP(.incremental = true);
+
         TEST_RESULT_STR(
             strPtr(filter),
             "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}I$", "incr backup regex with anchors");
@@ -91,7 +96,8 @@ testRun(void)
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "   does not match full");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        filter = backupRegExpGetP(.differential = true);
+        filter = backupRegExpP(.differential = true);
+
         TEST_RESULT_STR(
             strPtr(filter),
             "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}D$", "diff backup regex with anchors");

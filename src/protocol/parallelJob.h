@@ -40,6 +40,8 @@ int protocolParallelJobErrorCode(const ProtocolParallelJob *this);
 const String *protocolParallelJobErrorMessage(const ProtocolParallelJob *this);
 void protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *message);
 const Variant *protocolParallelJobKey(const ProtocolParallelJob *this);
+unsigned int protocolParallelJobProcessId(const ProtocolParallelJob *this);
+void protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId);
 const Variant *protocolParallelJobResult(const ProtocolParallelJob *this);
 void protocolParallelJobResultSet(ProtocolParallelJob *this, const Variant *result);
 ProtocolParallelJobState protocolParallelJobState(const ProtocolParallelJob *this);

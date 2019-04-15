@@ -249,6 +249,60 @@ testRun(void)
             "P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
                 " to the maximum.");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        setenv("PGBACKREST_REPO1_S3_KEY", "mykey", true);
+        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", "mysecretkey", true);
+
+        // Invalid bucket name with verification enabled fails
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--repo1-type=s3"));
+        strLstAdd(argList, strNew("--repo1-s3-bucket=bogus.bucket"));
+        strLstAdd(argList, strNew("--repo1-s3-region=region"));
+        strLstAdd(argList, strNew("--repo1-s3-endpoint=endpoint"));
+        strLstAdd(argList, strNew("--repo1-path=/repo"));
+        strLstAdd(argList, strNew("archive-get"));
+
+        TEST_ERROR(
+            harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError,
+            "'bogus.bucket' is not valid for option 'repo1-s3-bucket'"
+                "\nHINT: RFC-2818 forbids dots in wildcard matches"
+                "\nHINT: TLS/SSL verification cannot proceed with this bucket name"
+                "\nHINT: remove dots from the bucket name");
+
+        // Invalid bucket name with verification disabled succeeds
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--repo1-type=s3"));
+        strLstAdd(argList, strNew("--repo1-s3-bucket=bogus.bucket"));
+        strLstAdd(argList, strNew("--repo1-s3-region=region"));
+        strLstAdd(argList, strNew("--repo1-s3-endpoint=endpoint"));
+        strLstAdd(argList, strNew("--no-repo1-s3-verify-ssl"));
+        strLstAdd(argList, strNew("--repo1-path=/repo"));
+        strLstAdd(argList, strNew("archive-get"));
+
+        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "invalid bucket with no verification");
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoS3Bucket)), "bogus.bucket", "    check bucket value");
+
+        // Valid bucket name
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--repo1-type=s3"));
+        strLstAdd(argList, strNew("--repo1-s3-bucket=cool-bucket"));
+        strLstAdd(argList, strNew("--repo1-s3-region=region"));
+        strLstAdd(argList, strNew("--repo1-s3-endpoint=endpoint"));
+        strLstAdd(argList, strNew("--repo1-path=/repo"));
+        strLstAdd(argList, strNew("archive-get"));
+
+        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "valid bucket name");
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoS3Bucket)), "cool-bucket", "    check bucket value");
+
+        unsetenv("PGBACKREST_REPO1_S3_KEY");
+        unsetenv("PGBACKREST_REPO1_S3_KEY_SECRET");
     }
 
     // *****************************************************************************************************************************

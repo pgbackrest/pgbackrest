@@ -34,6 +34,9 @@ DEBUG_UNIT_EXTERN bool logFileBanner = false;
 // Is the timestamp printed in the log?
 DEBUG_UNIT_EXTERN bool logTimestamp = false;
 
+// Size of the process id field
+DEBUG_UNIT_EXTERN int logProcessSize = 2;
+
 /***********************************************************************************************************************************
 Test Asserts
 ***********************************************************************************************************************************/
@@ -102,7 +105,9 @@ logLevelStr(LogLevel logLevel)
 Initialize the log system
 ***********************************************************************************************************************************/
 void
-logInit(LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam)
+logInit(
+    LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
+    unsigned int logProcessMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevelStdOutParam);
@@ -114,11 +119,31 @@ logInit(LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel log
     ASSERT(logLevelStdOutParam <= LOG_LEVEL_MAX);
     ASSERT(logLevelStdErrParam <= LOG_LEVEL_MAX);
     ASSERT(logLevelFileParam <= LOG_LEVEL_MAX);
+    ASSERT(logProcessMax <= 999);
 
     logLevelStdOut = logLevelStdOutParam;
     logLevelStdErr = logLevelStdErrParam;
     logLevelFile = logLevelFileParam;
     logTimestamp = logTimestampParam;
+    logProcessSize = logProcessMax > 99 ? 3 : 2;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Close the log file
+***********************************************************************************************************************************/
+static void
+logFileClose(void)
+{
+    FUNCTION_TEST_VOID();
+
+    // Close the file handle if it is open
+    if (logHandleFile != -1)
+    {
+        close(logHandleFile);
+        logHandleFile = -1;
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -137,12 +162,8 @@ logFileSet(const char *logFile)
 
     ASSERT(logFile != NULL);
 
-    // Close the file handle if it is already open
-    if (logHandleFile != -1)
-    {
-        close(logHandleFile);
-        logHandleFile = -1;
-    }
+    // Close the log file if it is already open
+    logFileClose();
 
     // Only open the file if there is a chance to log something
     bool result = true;
@@ -157,13 +178,30 @@ logFileSet(const char *logFile)
             int errNo = errno;
             LOG_WARN("unable to open log file '%s': %s\nNOTE: process will continue without log file.", logFile, strerror(errNo));
             result = false;
-        };
+        }
 
         // Output the banner on first log message
         logFileBanner = false;
     }
 
     FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Close the log system
+***********************************************************************************************************************************/
+void
+logClose(void)
+{
+    FUNCTION_TEST_VOID();
+
+    // Disable all logging
+    logInit(logLevelOff, logLevelOff, logLevelOff, false, 1);
+
+    // Close the log file if it is open
+    logFileClose();
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -309,8 +347,8 @@ General log function
 ***********************************************************************************************************************************/
 void
 logInternal(
-    LogLevel logLevel, LogLevel logRangeMin,  LogLevel logRangeMax, const char *fileName, const char *functionName, int code,
-    const char *format, ...)
+    LogLevel logLevel, LogLevel logRangeMin,  LogLevel logRangeMax, unsigned int processId, const char *fileName,
+    const char *functionName, int code, const char *format, ...)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);
@@ -347,7 +385,8 @@ logInternal(
     }
 
     // Add process and aligned log level
-    bufferPos += (size_t)snprintf(logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "P00 %*s: ", 6, logLevelStr(logLevel));
+    bufferPos += (size_t)snprintf(
+        logBuffer + bufferPos, sizeof(logBuffer) - bufferPos, "P%0*u %*s: ", logProcessSize, processId, 6, logLevelStr(logLevel));
 
     // When writing to stderr the timestamp, process, and log level alignment will be skipped
     char *logBufferStdErr = logBuffer + bufferPos - strlen(logLevelStr(logLevel)) - 2;

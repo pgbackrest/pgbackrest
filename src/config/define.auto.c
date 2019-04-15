@@ -2449,7 +2449,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 96)
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 999)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
         )
     )

@@ -66,7 +66,7 @@ harnessLogInit(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false);
+    logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false, 99);
     logFileBanner = true;
 
     snprintf(logFile, sizeof(logFile), "%s/expect.log", testExpectPath());
@@ -83,7 +83,7 @@ This is info by default but it can sometimes be useful to set the log level to s
 void
 harnessLogLevelSet(LogLevel logLevel)
 {
-    logInit(logLevelTestDefault, logLevelOff, logLevel, false);
+    logInit(logLevelTestDefault, logLevelOff, logLevel, false, 99);
 }
 
 /***********************************************************************************************************************************
@@ -94,7 +94,7 @@ Set back to info
 void
 harnessLogLevelReset(void)
 {
-    logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false);
+    logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false, 99);
 }
 
 /***********************************************************************************************************************************
