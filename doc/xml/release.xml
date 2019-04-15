@@ -18,6 +18,14 @@
                     <release-item>
                         <p>Automatically generate constants for command and option names.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Migrate <code>backupRegExp()</code> to C.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>
