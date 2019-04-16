@@ -49,7 +49,7 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
 
         // Attempt to load the archive info file
         InfoArchive *info = infoArchiveNew(
-            storageRepo(), STRING_CONST(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false, cipherType, cipherPass);
+            storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false, cipherType, cipherPass);
 
         // Loop through the pg history in case the WAL we need is not in the most recent archive id
         String *archiveId = NULL;

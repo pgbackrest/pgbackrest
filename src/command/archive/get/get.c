@@ -129,7 +129,7 @@ cmdArchiveGet(void)
 
         // Destination is wherever we were told to move the WAL segment
         const String *walDestination =
-            walPath(strLstGet(commandParam, 1), cfgOptionStr(cfgOptPgPath), strNew(cfgCommandName(cfgCommand())));
+            walPath(strLstGet(commandParam, 1), cfgOptionStr(cfgOptPgPath), STR(cfgCommandName(cfgCommand())));
 
         // Async get can only be performed on WAL segments, history or other files must use synchronous mode
         if (cfgOptionBool(cfgOptArchiveAsync) && walIsSegment(walSegment))
@@ -368,7 +368,7 @@ cmdArchiveGetAsync(void)
         // On any global error write a single error file to cover all unprocessed files
         CATCH_ANY()
         {
-            archiveAsyncStatusErrorWrite(archiveModeGet, NULL, errorCode(), strNew(errorMessage()));
+            archiveAsyncStatusErrorWrite(archiveModeGet, NULL, errorCode(), STR(errorMessage()));
             RETHROW();
         }
         TRY_END();

@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Archive Push Command
 ***********************************************************************************************************************************/
+#include <string.h>
 #include <unistd.h>
 
 #include "command/archive/common.h"
@@ -96,7 +97,7 @@ archivePushReadyList(const String *walPath)
         StringList *readyListRaw = strLstSort(
             storageListP(
                 storagePg(), strNewFmt("%s/" PG_PATH_ARCHIVE_STATUS, strPtr(walPath)),
-                .expression = strNew("\\" STATUS_EXT_READY "$"), .errorOnMissing = true),
+                .expression = STRDEF("\\" STATUS_EXT_READY "$"), .errorOnMissing = true),
             sortOrderAsc);
 
         for (unsigned int readyIdx = 0; readyIdx < strLstSize(readyListRaw); readyIdx++)
@@ -135,12 +136,12 @@ archivePushProcessList(const String *walPath)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Create the spool out path if it does not already exist
-        storagePathCreateNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT));
+        storagePathCreateNP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
 
         // Read the status files from the spool directory, then remove any files that do not end in ok and create a list of the
         // ok files for further processing
         StringList *statusList = strLstSort(
-            storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT), .errorOnMissing = true), sortOrderAsc);
+            storageListP(storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT_STR, .errorOnMissing = true), sortOrderAsc);
 
         StringList *okList = strLstNew();
 
@@ -216,7 +217,7 @@ archivePushCheck(CipherType cipherType, const String *cipherPass)
 
         // Attempt to load the archive info file
         InfoArchive *info = infoArchiveNew(
-            storageRepo(), STRING_CONST(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false, cipherType, cipherPass);
+            storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false, cipherType, cipherPass);
 
         // Get archive id for the most recent version -- archive-push will only operate against the most recent version
         String *archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
@@ -268,7 +269,7 @@ cmdArchivePush(void)
         lockStopTest();
 
         // Get the segment name
-        String *walFile = walPath(strLstGet(commandParam, 0), cfgOptionStr(cfgOptPgPath), strNew(cfgCommandName(cfgCommand())));
+        String *walFile = walPath(strLstGet(commandParam, 0), cfgOptionStr(cfgOptPgPath), STR(cfgCommandName(cfgCommand())));
         String *archiveFile = strBase(walFile);
 
         if (cfgOptionBool(cfgOptArchiveAsync))
@@ -506,7 +507,7 @@ cmdArchivePushAsync(void)
         // On any global error write a single error file to cover all unprocessed files
         CATCH_ANY()
         {
-            archiveAsyncStatusErrorWrite(archiveModePush, NULL, errorCode(), strNew(errorMessage()));
+            archiveAsyncStatusErrorWrite(archiveModePush, NULL, errorCode(), STR(errorMessage()));
             RETHROW();
         }
         TRY_END();

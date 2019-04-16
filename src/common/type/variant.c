@@ -931,7 +931,7 @@ varToLog(const Variant *this)
     String *result = NULL;
 
     if (this == NULL)
-        result = strNew("null");
+        result = strDup(NULL_STR);
     else
     {
         switch (varType(this))

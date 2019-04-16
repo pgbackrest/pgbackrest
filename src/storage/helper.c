@@ -199,7 +199,7 @@ storageHelperRepoInit(void)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            storageHelper.walRegExp = regExpNew(STRING_CONST("^[0-F]{24}"));
+            storageHelper.walRegExp = regExpNew(STRDEF("^[0-F]{24}"));
         }
         MEM_CONTEXT_END();
     }

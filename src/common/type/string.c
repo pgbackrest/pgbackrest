@@ -14,8 +14,11 @@ String Handler
 /***********************************************************************************************************************************
 Constant strings that are generally useful
 ***********************************************************************************************************************************/
+STRING_EXTERN(BRACKETL_STR,                                         "[");
+STRING_EXTERN(BRACKETR_STR,                                         "]");
 STRING_EXTERN(CR_STR,                                               "\r");
 STRING_EXTERN(EMPTY_STR,                                            "");
+STRING_EXTERN(EQ_STR,                                               "=");
 STRING_EXTERN(FSLASH_STR,                                           "/");
 STRING_EXTERN(LF_STR,                                               "\n");
 STRING_EXTERN(N_STR,                                                "n");
@@ -821,14 +824,7 @@ size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *string = NULL;
-
-        if (object == NULL)
-            string = NULL_STR;
-        else
-            string = formatFunc(object);
-
-        result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
+        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? strPtr(NULL_STR) : strPtr(formatFunc(object)));
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -85,7 +85,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int protoco
         KeyValue *optionReplace = kvNew();
 
         // Add the command option
-        kvPut(optionReplace, varNewStr(CFGOPT_COMMAND_STR), varNewStr(strNew(cfgCommandName(cfgCommand()))));
+        kvPut(optionReplace, varNewStr(CFGOPT_COMMAND_STR), varNewStrZ(cfgCommandName(cfgCommand())));
 
         // Add the process id -- used when more than one process will be called
         kvPut(optionReplace, varNewStr(CFGOPT_PROCESS_STR), varNewInt((int)protocolId));
@@ -94,7 +94,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int protoco
         kvPut(optionReplace, varNewStr(CFGOPT_HOST_ID_STR), varNewInt(1));
 
         // Add the type
-        kvPut(optionReplace, varNewStr(CFGOPT_TYPE_STR), varNewStr(strNew("backup")));
+        kvPut(optionReplace, varNewStr(CFGOPT_TYPE_STR), varNewStrZ("backup"));
 
         // Only enable file logging on the local when requested
         kvPut(
@@ -212,7 +212,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 
     // Add the command option (or use the current command option if it is valid)
     if (!cfgOptionTest(cfgOptCommand))
-        kvPut(optionReplace, varNewStr(CFGOPT_COMMAND_STR), varNewStr(strNew(cfgCommandName(cfgCommand()))));
+        kvPut(optionReplace, varNewStr(CFGOPT_COMMAND_STR), varNewStrZ(cfgCommandName(cfgCommand())));
 
     // Add the process id (or use the current process id if it is valid)
     if (!cfgOptionTest(cfgOptProcess))
@@ -231,7 +231,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     kvPut(optionReplace, varNewStr(CFGOPT_LOG_LEVEL_STDERR_STR), varNewStrZ("error"));
 
     // Add the type
-    kvPut(optionReplace, varNewStr(CFGOPT_TYPE_STR), varNewStr(strNew("backup")));
+    kvPut(optionReplace, varNewStr(CFGOPT_TYPE_STR), varNewStrZ("backup"));
 
     StringList *commandExec = cfgExecParam(cfgCmdRemote, optionReplace);
     strLstInsert(commandExec, 0, cfgOptionStr(cfgOptRepoHostCmd));

@@ -24,6 +24,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>STR()</code> macro to create constant <code>String</code> objects from runtime strings.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>

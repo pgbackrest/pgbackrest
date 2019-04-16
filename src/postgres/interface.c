@@ -506,7 +506,7 @@ pgVersionFromStr(const String *version)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If format is not number.number (9.4) or number only (10) then error
-        if (!regExpMatchOne(STRING_CONST("^[0-9]+[.]*[0-9]+$"), version))
+        if (!regExpMatchOne(STRDEF("^[0-9]+[.]*[0-9]+$"), version))
             THROW_FMT(AssertError, "version %s format is invalid", strPtr(version));
 
         // If there is a dot set the major and minor versions, else just the major

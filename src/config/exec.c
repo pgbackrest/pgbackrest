@@ -8,7 +8,7 @@ Exec Configuration
 #include "config/exec.h"
 
 /***********************************************************************************************************************************
-Load log settings
+Generate a list of options required for execution of a new command, replacing options as specified in optionReplace
 ***********************************************************************************************************************************/
 StringList *
 cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace)
@@ -35,7 +35,7 @@ cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace)
                 continue;
 
             // First check for a replacement
-            const Variant *key = varNewStr(strNew(cfgOptionName(optionId)));
+            const Variant *key = varNewStr(STR(cfgOptionName(optionId)));
             const Variant *value = NULL;
             bool exists = false;
 

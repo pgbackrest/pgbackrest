@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Protocol Server
 ***********************************************************************************************************************************/
+#include <string.h>
+
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -59,9 +61,9 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
         MEM_CONTEXT_TEMP_BEGIN()
         {
             KeyValue *greetingKv = kvNew();
-            kvPut(greetingKv, varNewStr(PROTOCOL_GREETING_NAME_STR), varNewStr(strNew(PROJECT_NAME)));
+            kvPut(greetingKv, varNewStr(PROTOCOL_GREETING_NAME_STR), varNewStrZ(PROJECT_NAME));
             kvPut(greetingKv, varNewStr(PROTOCOL_GREETING_SERVICE_STR), varNewStr(service));
-            kvPut(greetingKv, varNewStr(PROTOCOL_GREETING_VERSION_STR), varNewStr(strNew(PROJECT_VERSION)));
+            kvPut(greetingKv, varNewStr(PROTOCOL_GREETING_VERSION_STR), varNewStrZ(PROJECT_VERSION));
 
             ioWriteLine(this->write, kvToJson(greetingKv, 0));
             ioWriteFlush(this->write);
@@ -107,7 +109,7 @@ protocolServerError(ProtocolServer *this, int code, const String *message)
 
     KeyValue *error = kvNew();
     kvPut(error, varNewStr(PROTOCOL_ERROR_STR), varNewInt(errorCode()));
-    kvPut(error, varNewStr(PROTOCOL_OUTPUT_STR), varNewStr(strNew(errorMessage())));
+    kvPut(error, varNewStr(PROTOCOL_OUTPUT_STR), varNewStrZ(errorMessage()));
 
     ioWriteLine(this->write, kvToJson(error, 0));
     ioWriteFlush(this->write);
@@ -174,7 +176,7 @@ protocolServerProcess(ProtocolServer *this)
         }
         CATCH_ANY()
         {
-            protocolServerError(this, errorCode(), strNew(errorMessage()));
+            protocolServerError(this, errorCode(), STR(errorMessage()));
         }
         TRY_END();
     }

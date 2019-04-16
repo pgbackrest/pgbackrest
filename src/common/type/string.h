@@ -94,27 +94,34 @@ String * will result in a segfault due to modifying read-only memory.
 
 By convention all string constant identifiers are appended with _STR.
 ***********************************************************************************************************************************/
-// Create a string constant inline.  Useful when the constant will only be use once.
-#define STRING_CONST(value)                                                                                                        \
-    ((const String *)&(const StringConst){.size = sizeof(value) - 1, .buffer = (char *)value})
+// Create a String constant inline from any zero-terminated string
+#define STR(bufferParam)                                                                                                           \
+    ((const String *)&(const StringConst){.buffer = (char *)(bufferParam), .size = (unsigned int)strlen(bufferParam)})
 
-// Used to declare string constants that will be externed using STRING_DECLARE().  Must be used in a .c file.
-#define STRING_EXTERN(name, value)                                                                                                 \
-    const String *name = STRING_CONST(value)
+// Create a String constant inline from a #define or inline string constant
+#define STRDEF(bufferParam)                                                                                                        \
+    ((const String *)&(const StringConst){.buffer = (char *)(bufferParam), .size = (unsigned int)sizeof(bufferParam) - 1})
 
-// Used to declare string constants that will be local to the .c file.  Must be used in a .c file.
-#define STRING_STATIC(name, value)                                                                                                 \
-    static const String *name = STRING_CONST(value)
+// Used to declare String constants that will be externed using STRING_DECLARE().  Must be used in a .c file.
+#define STRING_EXTERN(name, buffer)                                                                                                \
+    const String *name = STRDEF(buffer)
 
-// Used to extern string constants declared with STRING_EXTERN(.  Must be used in a .h file.
+// Used to declare String constants that will be local to the .c file.  Must be used in a .c file.
+#define STRING_STATIC(name, buffer)                                                                                                \
+    static const String *name = STRDEF(buffer)
+
+// Used to extern String constants declared with STRING_EXTERN().  Must be used in a .h file.
 #define STRING_DECLARE(name)                                                                                                       \
     extern const String *name
 
 /***********************************************************************************************************************************
 Constant strings that are generally useful
 ***********************************************************************************************************************************/
+STRING_DECLARE(BRACKETL_STR);
+STRING_DECLARE(BRACKETR_STR);
 STRING_DECLARE(CR_STR);
 STRING_DECLARE(EMPTY_STR);
+STRING_DECLARE(EQ_STR);
 STRING_DECLARE(FSLASH_STR);
 STRING_DECLARE(LF_STR);
 STRING_DECLARE(N_STR);

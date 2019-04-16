@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Protocol Parallel Executor
 ***********************************************************************************************************************************/
+#include <string.h>
 #include <sys/select.h>
 
 #include "common/debug.h"
@@ -182,7 +183,7 @@ protocolParallelProcess(ProtocolParallel *this)
                         }
                         CATCH_ANY()
                         {
-                            protocolParallelJobErrorSet(job, errorCode(), strNew(errorMessage()));
+                            protocolParallelJobErrorSet(job, errorCode(), STR(errorMessage()));
                         }
                         TRY_END();
 
