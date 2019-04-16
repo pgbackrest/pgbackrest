@@ -20,6 +20,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Use a macro instead of a nested struct to create common <code>String</code> variables.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>

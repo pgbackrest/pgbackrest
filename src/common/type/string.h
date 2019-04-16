@@ -74,12 +74,15 @@ Fields that are common between dynamically allocated and constant strings
 There is nothing user-accessible here but this construct allows constant strings to be created and then handled by the same
 functions that process dynamically allocated strings.
 ***********************************************************************************************************************************/
-struct StringCommon
+#define STRING_COMMON                                                                                                              \
+    uint64_t size:32;                                               /* Actual size of the string */                                \
+    uint64_t extra:32;                                              /* Extra space allocated for expansion */                      \
+    char *buffer;                                                   /* String buffer */
+
+typedef struct StringConst
 {
-    uint64_t size:32;
-    uint64_t extra:32;
-    char *buffer;
-};
+    STRING_COMMON
+} StringConst;
 
 /***********************************************************************************************************************************
 Macros for constant strings
@@ -93,7 +96,7 @@ By convention all string constant identifiers are appended with _STR.
 ***********************************************************************************************************************************/
 // Create a string constant inline.  Useful when the constant will only be use once.
 #define STRING_CONST(value)                                                                                                        \
-    ((const String *)&(const struct StringCommon){.size = sizeof(value) - 1, .buffer = (char *)value})
+    ((const String *)&(const StringConst){.size = sizeof(value) - 1, .buffer = (char *)value})
 
 // Used to declare string constants that will be externed using STRING_DECLARE().  Must be used in a .c file.
 #define STRING_EXTERN(name, value)                                                                                                 \

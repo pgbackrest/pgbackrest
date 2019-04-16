@@ -19,7 +19,7 @@ testRun(void)
     {
         // We don't want this struct to grow since there are generally a lot of strings, so make sure it doesn't grow without us
         // knowing about it
-        TEST_RESULT_UINT(sizeof(struct StringCommon), TEST_64BIT() ? 16 : 12, "check StringCommon struct size");
+        TEST_RESULT_UINT(sizeof(StringConst), TEST_64BIT() ? 16 : 12, "check StringConst struct size");
 
         // Test the size macro
         TEST_RESULT_VOID(CHECK_SIZE(555), "valid size");
@@ -81,11 +81,11 @@ testRun(void)
         String *string2 = strNew("ZZZZ");
 
         TEST_RESULT_STR(strPtr(strCat(string, "YYYY")), "XXXXYYYY", "cat string");
-        TEST_RESULT_SIZE(string->common.extra, 4, "check extra");
+        TEST_RESULT_SIZE(string->extra, 4, "check extra");
         TEST_RESULT_STR(strPtr(strCatFmt(string, "%05d", 777)), "XXXXYYYY00777", "cat formatted string");
-        TEST_RESULT_SIZE(string->common.extra, 6, "check extra");
+        TEST_RESULT_SIZE(string->extra, 6, "check extra");
         TEST_RESULT_STR(strPtr(strCatChr(string, '!')), "XXXXYYYY00777!", "cat chr");
-        TEST_RESULT_SIZE(string->common.extra, 5, "check extra");
+        TEST_RESULT_SIZE(string->extra, 5, "check extra");
 
         TEST_RESULT_STR(strPtr(string2), "ZZZZ", "check unaltered string");
     }
@@ -203,8 +203,8 @@ testRun(void)
         String *val = strNew("abcdef");
         TEST_ERROR(
             strTrunc(val, (int)(strSize(val) + 1)), AssertError,
-            "assertion 'idx >= 0 && (size_t)idx <= this->common.size' failed");
-        TEST_ERROR(strTrunc(val, -1), AssertError, "assertion 'idx >= 0 && (size_t)idx <= this->common.size' failed");
+            "assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
+        TEST_ERROR(strTrunc(val, -1), AssertError, "assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
 
         TEST_RESULT_STR(strPtr(strTrunc(val, strChr(val, 'd'))), "abc", "simple string truncated");
         strCat(val, "\r\n to end");
