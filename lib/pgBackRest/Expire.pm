@@ -171,9 +171,9 @@ sub process
         @stryPath = $oBackupInfo->list(backupRegExpGet(true, true));
 # CSHANG so we must know that 20190405-150606F_20190408-140449I does not depend on the DIFF backup because the number is less?
 # drwxr-x--- 3 postgres postgres 4096 Apr  5 15:06 20190405-150606F
-# drwxr-x--- 3 postgres postgres 4096 Apr  8 14:04 20190405-150606F_20190408-140449I
+# drwxr-x--- 3 postgres postgres 4096 Apr  8 14:04 20190405-150606F_20190408-140449D
 # drwxr-x--- 3 postgres postgres 4096 Apr  8 14:17 20190405-150606F_20190408-141709D
-# drwxr-x--- 3 postgres postgres 4096 Apr  8 14:17 20190405-150606F_20190408-141716I
+# drwxr-x--- 3 postgres postgres 4096 Apr  8 14:17 20190405-156666F
 
         if (@stryPath > $iDifferentialRetention)
         {
@@ -193,6 +193,7 @@ sub process
                     # Remove all differential and incremental backups before the oldest valid differential
                     if ($strPath lt $stryPath[$iDiffIdx + 1])
                     {
+# CSHANG Wait?! Where is the removal of the COPY? AND, is this path even correct? Shouldn't there be a slash after /${strPath}
                         $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strPath}" . FILE_MANIFEST);
                         $oBackupInfo->delete($strPath);
 

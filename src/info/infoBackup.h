@@ -59,9 +59,11 @@ Functions
 ***********************************************************************************************************************************/
 unsigned int infoBackupCheckPg(
     const InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, uint32_t pgCatalogVersion, uint32_t pgControlVersion);
+// Remove a backup from the current section
+void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
 
 /***********************************************************************************************************************************
-infoBackupDataLabelList
+infoBackupDataLabelList - get a list of current backup labels
 ***********************************************************************************************************************************/
 typedef struct InfoBackupDataLabelListParam
 {

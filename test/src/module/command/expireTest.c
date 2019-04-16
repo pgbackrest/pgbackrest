@@ -31,7 +31,7 @@ testRun(void)
         String *content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"b50db7cf8f659ac15a0c7a2f45a0813f46a68c6b\"\n"
+            "backrest-checksum=\"8e1d9d09036be5bb7c965e73369be1d5a7457406\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.08dev\"\n"
             "\n"
@@ -52,13 +52,29 @@ testRun(void)
             "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-            "20181119-152138F_20181119-152152I={"
-            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000003\","
-            "\"backup-info-repo-size\":2369186,"
+            "20181119-152138F_20181119-152155I={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000004\","
+            "\"backup-archive-stop\":\"000000010000000000000004\",\"backup-info-repo-size\":2369186,"
             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
             "\"backup-prior\":\"20181119-152138F_20181119-152152D\","
             "\"backup-reference\":[\"20181119-152138F\",\"20181119-152138F_20181119-152152D\"],"
             "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"incr\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152138F_20181119-152600D={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000005\","
+            "\"backup-archive-stop\":\"000000010000000000000005\",\"backup-info-repo-size\":2369186,"
+            "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+            "\"backup-prior\":\"20181119-152138F\",\"backup-reference\":[\"20181119-152138F\"],"
+            "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152800F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "\n"
@@ -80,7 +96,6 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanzaPath))),
                 bufNewStr(content)), "put backup info to file");
 
-        // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
@@ -89,8 +104,9 @@ testRun(void)
         strLstAddZ(argList, "expire");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        // CSHANG Just testing harness
+// CSHANG First test should be Nothing is expired? Or maybe that should be the last
         TEST_RESULT_VOID(cmdExpire(), "expire");
+
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

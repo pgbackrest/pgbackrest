@@ -8972,6 +8972,7 @@ static const EmbeddedModule embeddedModule[] =
             "\n\n"
             "if ($strPath lt $stryPath[$iDiffIdx + 1])\n"
             "{\n"
+            "\n"
             "$oStorageRepo->remove(STORAGE_REPO_BACKUP . \"/${strPath}\" . FILE_MANIFEST);\n"
             "$oBackupInfo->delete($strPath);\n"
             "\n"
