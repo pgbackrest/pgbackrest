@@ -29,15 +29,17 @@ cmdExpire(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+// CSHANG Where to define constants (numbers and strings) for config stuff like MIN/MAX and "full", "diff", "incr"
         // Get the retention options
         // ??? Retention options will need to be indexed
         unsigned int fullRetention = cfgOptionTest(cfgOptRepoRetentionFull) ?
             (unsigned int) cfgOptionInt(cfgOptRepoRetentionFull) : 0;
         unsigned int differentialRetention = cfgOptionTest(cfgOptRepoRetentionDiff) ?
             (unsigned int) cfgOptionInt(cfgOptRepoRetentionDiff) : 0;
-        // String *archiveRetentionType =
-        //     cfgOptionTest(cfgOptRepoRetentionArchiveType) ? cfgOptionStr(cfgOptRepoRetentionArchiveType) : NULL;
-        // int archiveRetention = cfgOptionTest(cfgOptRepoRetentionArchive) ? cfgOptionInt(cfgOptRepoRetentionArchive) : 0;
+        String *archiveRetentionType =
+            cfgOptionTest(cfgOptRepoRetentionArchiveType) ? cfgOptionStr(cfgOptRepoRetentionArchiveType) : NULL;
+        unsigned int archiveRetention = cfgOptionTest(cfgOptRepoRetentionArchive) ?
+            (unsigned int) cfgOptionInt(cfgOptRepoRetentionArchive) : 0;
 
         // Load the backup.info
         String *stanzaBackupPath = strNewFmt(STORAGE_PATH_BACKUP "/%s", strPtr(cfgOptionStr(cfgOptStanza)));
@@ -64,8 +66,6 @@ cmdExpire(void)
 
                     // Initialize the log message
                     String *backupExpired = strNew("");
-                    if (strLstSize(removeList) > 1)
-                        strCat(backupExpired, "set: ");
 
                     // Remove the manifest files in each directory and remove the backup from the current section of backup.info
                     for (unsigned int rmvIdx = 0; rmvIdx < strLstSize(removeList); rmvIdx++)
@@ -73,13 +73,13 @@ cmdExpire(void)
                         const String *removeBackupLabel = strLstGet(removeList, rmvIdx);
 
                         storageRemoveNP(
-                            storageRepo(),
+                            storageRepoWrite(),
                             strNewFmt(
                                 "%s/%s/%s", strPtr(stanzaBackupPath), strPtr(removeBackupLabel), INFO_MANIFEST_FILE));
 
 // CSHANG Maybe expose INI_COPY_EXT vs hardcode .copy, but David is working on manifest and there may be a different way of handling the file
                         storageRemoveNP(
-                            storageRepo(),
+                            storageRepoWrite(),
                             strNewFmt(
                                 "%s/%s/%s",
                                 strPtr(stanzaBackupPath), strPtr(removeBackupLabel), INFO_MANIFEST_FILE ".copy"));
@@ -87,14 +87,15 @@ cmdExpire(void)
                         // Remove the backup from the info file
                         infoBackupDataDelete(infoBackup, removeBackupLabel);
 
-                        strCat(backupExpired, strPtr(removeBackupLabel));
-
-                        // If this is not the last in the list, then separate the item in the list with a comma
-                        if (rmvIdx < strLstSize(removeList) - 1)
-                            strCat(backupExpired, ",");
+                        if (strSize(backupExpired) == 0)
+                            strCat(backupExpired, strPtr(removeBackupLabel));
+                        else
+                            strCatFmt(backupExpired, ", %s", strPtr(removeBackupLabel));
                     }
 
-                    LOG_INFO("expire full backup %s", strPtr(backupExpired));
+                    // If the message contains a comma, then prepend "set:"
+                    LOG_INFO(
+                        "expire full backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
                 }
             }
 
@@ -135,14 +136,15 @@ cmdExpire(void)
                         // (removeBackupLabel < oldest valid differential)
                         if (strCmp(removeBackupLabel, strLstGet(pathList, diffIdx + 1)) == -1)
                         {
+// CSHANG Combine the remove, delete and updating backupExpired into a function since this is duplicate of code above in full
                             storageRemoveNP(
-                                storageRepo(),
+                                storageRepoWrite(),
                                 strNewFmt(
                                     "%s/%s/%s", strPtr(stanzaBackupPath), strPtr(removeBackupLabel), INFO_MANIFEST_FILE));
-// CSHANG before this was not removing the COPY file - probably an oversight?
+
 // CSHANG Maybe expose INI_COPY_EXT vs hardcode .copy, but David is working on manifest and there may be a different way of handling the file
                             storageRemoveNP(
-                                storageRepo(),
+                                storageRepoWrite(),
                                 strNewFmt(
                                     "%s/%s/%s",
                                     strPtr(stanzaBackupPath), strPtr(removeBackupLabel), INFO_MANIFEST_FILE ".copy"));
@@ -155,15 +157,69 @@ cmdExpire(void)
                             else
                                 strCatFmt(backupExpired, ", %s", strPtr(removeBackupLabel));
                         }
-
-                        // If the message contains a comma, then prepend "set:"
-                        LOG_INFO(
-                            "expire diff backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
                     }
+
+                    // If the message contains a comma, then prepend "set:"
+                    LOG_INFO(
+                        "expire diff backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
                 }
             }
         }
 
+// CSHANG Must save infoBackup here!!!
+
+    StringList *backupList = strLstSort(
+        storageListP(storageRepo(), stanzaBackupPath, .errorOnMissing = false, .expression = backupRegExp(true, true, true)),
+        sortOrderDesc);
+
+    // Get all the current backups in backup.info
+    pathList = infoBackupDataLabelListP(infoBackup);
+
+    // Remove backups from disk not in the backup:current section of backupInfo. This also cleans up orphaned directories.
+    for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
+    {
+        if (!strLstExists(pathList, strLstGet(backupList, backupIdx)))
+        {
+            LOG_INFO("remove expired backup %s", strLstGet(backupList, backupIdx));
+
+            storagePathRemoveP(storageRepoWrite(), strLstGet(backupList, backupIdx), .recurse = true);
+        }
+    }
+
+    // If archive retention is undefined, then ignore archiving
+    if (archiveRetention == 0)
+    {
+         LOG_INFO("option '%s' is not set - archive logs will not be expired", cfgOptionName(cfgOptRepoRetentionArchive));
+    }
+    else
+    {
+        StringList *globalBackupRetentionList = NULL;
+// CSHANG Need to have global constants for these not hardcoded full, diff, incr
+        // Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
+        // remaining non-expired backups, from newest to oldest, based on the type.
+        if (strCmp(archiveRetentionType, STR("full")) == 0)
+        {
+            globalBackupRetentionList = strLstSort(
+                infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true), sortOrderDesc);
+        }
+        else if (strCmp(archiveRetentionType, STR("diff")) == 0)
+        {
+            globalBackupRetentionList = strLstSort(
+                infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true, .differential = true), sortOrderDesc);
+        }
+        else if (strCmp(archiveRetentionType, STR("incr")) == 0)
+        {
+            globalBackupRetentionList = strLstSort(
+                infoBackupDataLabelListP(
+                    infoBackup, .filter = backupRegExpP(.full = true, .differential = true, .incremental = true),
+                sortOrderDesc);
+        }
+
+        // If no backups were found then preserve current archive logs - too soon to expire them
+        if (strLstSize(globalBackupRetentionList) > 0)
+        {
+            // CSHANG STOPPED HERE
+        }
     }
     MEM_CONTEXT_TEMP_END();
 

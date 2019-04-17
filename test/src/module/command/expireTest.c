@@ -28,10 +28,34 @@ testRun(void)
         storagePathCreateNP(storageLocalWrite(), backupStanzaPath);
         storagePathCreateNP(storageLocalWrite(), archiveStanzaPath);
 
+        // Create backup directories and manifest files
+        String *full1 = strNewFmt("%s/%s", strPtr(backupStanzaPath), "20181119-152138F");
+        String *full1Diff1 = strNewFmt("%s/%s", strPtr(backupStanzaPath), "20181119-152138F_20181119-152152D");
+        String *full1Incr1 = strNewFmt("%s/%s", strPtr(backupStanzaPath), "20181119-152138F_20181119-152155I");
+        String *full1Diff2 = strNewFmt("%s/%s", strPtr(backupStanzaPath), "20181119-152138F_20181119-152600D");
+        String *full2 = strNewFmt("%s/%s", strPtr(backupStanzaPath), "20181119-152800F");
+        String *full3 = strNewFmt("%s/%s", strPtr(backupStanzaPath), "20181119-152900F");
+
+        storagePathCreateNP(storageLocalWrite(), full1);
+        storagePathCreateNP(storageLocalWrite(), full1Diff1);
+        storagePathCreateNP(storageLocalWrite(), full1Incr1);
+        storagePathCreateNP(storageLocalWrite(), full1Diff2);
+        storagePathCreateNP(storageLocalWrite(), full2);
+        storagePathCreateNP(storageLocalWrite(), full3);
+
+        system(strPtr(strNewFmt("touch %s/%s", strPtr(full1), INFO_MANIFEST_FILE)));
+        system(strPtr(strNewFmt("touch %s/%s", strPtr(full1), INFO_MANIFEST_FILE ".copy")));
+        system(strPtr(strNewFmt("touch %s/%s", strPtr(full1Diff1), INFO_MANIFEST_FILE)));
+        system(strPtr(strNewFmt("touch %s/%s", strPtr(full1Incr1), INFO_MANIFEST_FILE ".copy")));
+        system(strPtr(strNewFmt("touch %s/%s", strPtr(full1Diff2), INFO_MANIFEST_FILE)));
+        system(strPtr(strNewFmt("touch %s/%s", strPtr(full1Diff2), INFO_MANIFEST_FILE ".copy")));
+        system(strPtr(strNewFmt("touch %s/%s", strPtr(full2), INFO_MANIFEST_FILE)));
+        system(strPtr(strNewFmt("touch %s/%s", strPtr(full2), INFO_MANIFEST_FILE ".copy")));
+
         String *content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"8e1d9d09036be5bb7c965e73369be1d5a7457406\"\n"
+            "backrest-checksum=\"03b699df7362ce202995231c9060c88e6939e481\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.08dev\"\n"
             "\n"
@@ -77,6 +101,22 @@ testRun(void)
             "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152900F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000007\",\"backup-archive-stop\":\"000000010000000000000007\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152900F_20181119-152600D={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000008\","
+            "\"backup-archive-stop\":\"000000010000000000000008\",\"backup-info-repo-size\":2369186,"
+            "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+            "\"backup-prior\":\"20181119-152138F\",\"backup-reference\":[\"20181119-152900F\"],"
+            "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "\n"
             "[db]\n"
             "db-catalog-version=201510051\n"
@@ -106,6 +146,8 @@ testRun(void)
 
 // CSHANG First test should be Nothing is expired? Or maybe that should be the last
         TEST_RESULT_VOID(cmdExpire(), "expire");
+
+// CSHANG Test that only the direcories matching the regex of full, incr or diff are removed - maybe create a file with a FULL exp then _save then make sure it is not deleted but the full fir of the same name is. Also, confirm recursion
 
     }
 
