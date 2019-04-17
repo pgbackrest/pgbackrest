@@ -54,18 +54,14 @@ httpQueryAdd(HttpQuery *this, const String *key, const String *value)
     ASSERT(key != NULL);
     ASSERT(value != NULL);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        // Make sure the key does not already exist
-        Variant *keyVar = varNewStr(key);
+    // Make sure the key does not already exist
+    const Variant *keyVar = VARSTR(key);
 
-        if (kvGet(this->kv, keyVar) != NULL)
-            THROW_FMT(AssertError, "key '%s' already exists", strPtr(key));
+    if (kvGet(this->kv, keyVar) != NULL)
+        THROW_FMT(AssertError, "key '%s' already exists", strPtr(key));
 
-        // Store the key
-        kvPut(this->kv, keyVar, varNewStr(value));
-    }
-    MEM_CONTEXT_END();
+    // Store the key
+    kvPut(this->kv, keyVar, VARSTR(value));
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -84,15 +80,7 @@ httpQueryGet(const HttpQuery *this, const String *key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    String *result = NULL;
-
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        result = varStr(kvGet(this->kv, varNewStr(key)));
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(varStr(kvGet(this->kv, VARSTR(key))));
 }
 
 /***********************************************************************************************************************************
@@ -145,12 +133,8 @@ httpQueryPut(HttpQuery *this, const String *key, const String *value)
     ASSERT(key != NULL);
     ASSERT(value != NULL);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        // Store the key
-        kvPut(this->kv, varNewStr(key), varNewStr(value));
-    }
-    MEM_CONTEXT_END();
+    // Store the key
+    kvPut(this->kv, VARSTR(key), VARSTR(value));
 
     FUNCTION_TEST_RETURN(this);
 }

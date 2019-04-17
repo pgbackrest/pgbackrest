@@ -436,7 +436,7 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
         for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
         {
             String *key = strLstGet(keyList, keyIdx);
-            const Variant *value = kvGet(kv, varNewStr(key));
+            const Variant *value = kvGet(kv, VARSTR(key));
 
             // If going to add another key, prepend a comma
             if (keyIdx > 0)

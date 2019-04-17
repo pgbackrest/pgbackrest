@@ -237,7 +237,7 @@ helpRender(void)
                             section = STRDEF("command");
                         }
 
-                        kvAdd(optionKv, varNewStr(section), varNewInt((int)optionDefId));
+                        kvAdd(optionKv, VARSTR(section), VARINT((int)optionDefId));
 
                         if (strlen(cfgDefOptionName(optionDefId)) > optionSizeMax)
                             optionSizeMax = strlen(cfgDefOptionName(optionDefId));
@@ -254,7 +254,7 @@ helpRender(void)
                     strCatFmt(result, "\n%s Options:\n\n", strPtr(strFirstUpper(strDup(section))));
 
                     // Output options
-                    VariantList *optionList = kvGetList(optionKv, varNewStr(section));
+                    VariantList *optionList = kvGetList(optionKv, VARSTR(section));
 
                     for (unsigned int optionIdx = 0; optionIdx < varLstSize(optionList); optionIdx++)
                     {

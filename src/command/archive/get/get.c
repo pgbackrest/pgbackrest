@@ -211,8 +211,8 @@ cmdArchiveGet(void)
                     // The async process should not output on the console at all
                     KeyValue *optionReplace = kvNew();
 
-                    kvPut(optionReplace, varNewStr(CFGOPT_LOG_LEVEL_CONSOLE_STR), varNewStrZ("off"));
-                    kvPut(optionReplace, varNewStr(CFGOPT_LOG_LEVEL_STDERR_STR), varNewStrZ("off"));
+                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
+                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("off"));
 
                     // Generate command options
                     StringList *commandExec = cfgExecParam(cfgCmdArchiveGetAsync, optionReplace);
@@ -318,9 +318,9 @@ cmdArchiveGetAsync(void)
                 const String *walSegment = strLstGet(walSegmentList, walSegmentIdx);
 
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_STR);
-                protocolCommandParamAdd(command, varNewStr(walSegment));
+                protocolCommandParamAdd(command, VARSTR(walSegment));
 
-                protocolParallelJobAdd(parallelExec, protocolParallelJobNew(varNewStr(walSegment), command));
+                protocolParallelJobAdd(parallelExec, protocolParallelJobNew(VARSTR(walSegment), command));
             }
 
             // Process jobs

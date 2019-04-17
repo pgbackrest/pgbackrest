@@ -58,8 +58,8 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
     {
         if (strEq(command, PROTOCOL_COMMAND_STORAGE_EXISTS_STR))
         {
-            protocolServerResponse(
-                server, varNewBool(interface.exists(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))))));
+            protocolServerResponse(server, VARBOOL(             // The unusual line break is to make coverage happy -- not sure why
+                interface.exists(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_LIST_STR))
         {
@@ -80,7 +80,7 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
 
             // Check if the file exists
             bool exists = ioReadOpen(fileRead);
-            protocolServerResponse(server, varNewBool(exists));
+            protocolServerResponse(server, VARBOOL(exists));
 
             // Transfer the file if it exists
             if (exists)

@@ -85,7 +85,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
                 const String *expectedKey = expected[expectedIdx * 2];
                 const String *expectedValue = expected[expectedIdx * 2 + 1];
 
-                const Variant *actualValue = kvGet(greetingKv, varNewStr(expectedKey));
+                const Variant *actualValue = kvGet(greetingKv, VARSTR(expectedKey));
 
                 if (actualValue == NULL)
                     THROW_FMT(ProtocolError, "unable to find greeting key '%s'", strPtr(expectedKey));
@@ -136,11 +136,11 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
         KeyValue *responseKv = varKv(jsonToVar(response));
 
         // Process error if any
-        const Variant *error = kvGet(responseKv, varNewStr(PROTOCOL_ERROR_STR));
+        const Variant *error = kvGet(responseKv, VARSTR(PROTOCOL_ERROR_STR));
 
         if (error != NULL)
         {
-            const String *message = varStr(kvGet(responseKv, varNewStr(PROTOCOL_OUTPUT_STR)));
+            const String *message = varStr(kvGet(responseKv, VARSTR(PROTOCOL_OUTPUT_STR)));
 
             THROWP_FMT(
                 errorTypeFromCode(varIntForce(error)), "%s: %s", strPtr(this->errorPrefix),
@@ -148,7 +148,7 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
         }
 
         // Get output
-        result = kvGet(responseKv, varNewStr(PROTOCOL_OUTPUT_STR));
+        result = kvGet(responseKv, VARSTR(PROTOCOL_OUTPUT_STR));
 
         if (outputRequired)
         {

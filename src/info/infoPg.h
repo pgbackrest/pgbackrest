@@ -19,7 +19,7 @@ typedef struct InfoPg InfoPg;
 Constants
 ***********************************************************************************************************************************/
 #define INFO_KEY_DB_ID                                              "db-id"
-    STRING_DECLARE(INFO_KEY_DB_ID_STR);
+    VARIANT_DECLARE(INFO_KEY_DB_ID_VAR);
 
 /***********************************************************************************************************************************
 Information about the PostgreSQL cluster

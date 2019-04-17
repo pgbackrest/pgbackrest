@@ -15,13 +15,79 @@ Variant Data Type
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
+Constant variants that are generally useful
+***********************************************************************************************************************************/
+// Used to declare Bool Variant constants that will be externed using VARIANT_DECLARE().  Must be used in a .c file.
+#define VARIANT_BOOL_EXTERN(name, dataParam)                                                                                       \
+    const Variant *name = ((const Variant *)&(const VariantBoolConst){.type = varTypeBool, .data = dataParam})
+
+VARIANT_BOOL_EXTERN(BOOL_FALSE_VAR,                                 false);
+VARIANT_BOOL_EXTERN(BOOL_TRUE_VAR,                                  true);
+
+/***********************************************************************************************************************************
 Information about the variant
 ***********************************************************************************************************************************/
 struct Variant
 {
-    MemContext *memContext;                                         // Mem context
     unsigned int type:3;                                            // Variant Type
+    MemContext *memContext;                                         // Mem context
 };
+
+typedef struct VariantBool
+{
+    VARIANT_COMMON
+    VARIANT_BOOL_COMMON
+    MemContext *memContext;
+} VariantBool;
+
+typedef struct VariantDouble
+{
+    VARIANT_COMMON
+    VARIANT_DOUBLE_COMMON
+    MemContext *memContext;
+} VariantDouble;
+
+typedef struct VariantInt
+{
+    VARIANT_COMMON
+    VARIANT_INT_COMMON
+    MemContext *memContext;
+} VariantInt;
+
+typedef struct VariantInt64
+{
+    VARIANT_COMMON
+    VARIANT_INT64_COMMON
+    MemContext *memContext;
+} VariantInt64;
+
+typedef struct VariantKeyValue
+{
+    VARIANT_COMMON
+    KeyValue *data;                                                 /* KeyValue data */
+    MemContext *memContext;
+} VariantKeyValue;
+
+typedef struct VariantString
+{
+    VARIANT_COMMON
+    VARIANT_STRING_COMMON
+    MemContext *memContext;
+} VariantString;
+
+typedef struct VariantUInt64
+{
+    VARIANT_COMMON
+    VARIANT_UINT64_COMMON
+    MemContext *memContext;
+} VariantUInt64;
+
+typedef struct VariantVariantList
+{
+    VARIANT_COMMON
+    VariantList *data;                                              /* VariantList data */
+    MemContext *memContext;
+} VariantVariantList;
 
 /***********************************************************************************************************************************
 Variant type names
@@ -37,47 +103,6 @@ static const char *variantTypeName[] =
     "VariantList",                                                  // varTypeVariantList
     "uint64",                                                       // varTypeUInt64
 };
-
-/***********************************************************************************************************************************
-New variant of any supported type
-***********************************************************************************************************************************/
-static Variant *
-varNewInternal(VariantType type, void *data, size_t dataSize)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM_P(VOID, data);
-        FUNCTION_TEST_PARAM(SIZE, dataSize);
-    FUNCTION_TEST_END();
-
-    ASSERT(data != NULL);
-    ASSERT(dataSize > 0);
-
-    // Allocate memory for the variant and set the type
-    Variant *this = memNew(sizeof(Variant) + dataSize);
-    this->memContext = memContextCurrent();
-    this->type = type;
-
-    // Copy data
-    memcpy((unsigned char *)this + sizeof(Variant), data, dataSize);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
-Get a pointer to the data stored in the variant.  This hides the complicated pointer arithmetic.
-***********************************************************************************************************************************/
-static void *
-varData(const Variant *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN((void *)((unsigned char *)this + sizeof(Variant)));
-}
 
 /***********************************************************************************************************************************
 Duplicate a variant
@@ -127,8 +152,12 @@ varDup(const Variant *this)
 
             case varTypeKeyValue:
             {
-                KeyValue *data = kvDup(varKv(this));
-                result = varNewInternal(varTypeKeyValue, (void *)&data, sizeof(data));
+                VariantKeyValue *keyValue = memNew(sizeof(VariantKeyValue));
+                keyValue->memContext = memContextCurrent();
+                keyValue->type = varTypeKeyValue;
+                keyValue->data = kvDup(varKv(this));
+
+                result = (Variant *)keyValue;
                 break;
             }
 
@@ -244,7 +273,13 @@ varNewBool(bool data)
         FUNCTION_TEST_PARAM(BOOL, data);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(varNewInternal(varTypeBool, (void *)&data, sizeof(data)));
+    // Allocate memory for the variant and set the type and data
+    VariantBool *this = memNew(sizeof(VariantBool));
+    this->memContext = memContextCurrent();
+    this->type = varTypeBool;
+    this->data = data;
+
+    FUNCTION_TEST_RETURN((Variant *)this);
 }
 
 /***********************************************************************************************************************************
@@ -258,10 +293,9 @@ varBool(const Variant *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-
     ASSERT(this->type == varTypeBool);
 
-    FUNCTION_TEST_RETURN(*((bool *)varData(this)));
+    FUNCTION_TEST_RETURN(((VariantBool *)this)->data);
 }
 
 /***********************************************************************************************************************************
@@ -340,7 +374,13 @@ varNewDbl(double data)
         FUNCTION_TEST_PARAM(DOUBLE, data);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(varNewInternal(varTypeDouble, (unsigned char *)&data, sizeof(data)));
+    // Allocate memory for the variant and set the type and data
+    VariantDouble *this = memNew(sizeof(VariantDouble));
+    this->memContext = memContextCurrent();
+    this->type = varTypeDouble;
+    this->data = data;
+
+    FUNCTION_TEST_RETURN((Variant *)this);
 }
 
 /***********************************************************************************************************************************
@@ -354,10 +394,9 @@ varDbl(const Variant *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-
     ASSERT(this->type == varTypeDouble);
 
-    FUNCTION_TEST_RETURN(*((double *)varData(this)));
+    FUNCTION_TEST_RETURN(((VariantDouble *)this)->data);
 }
 
 /***********************************************************************************************************************************
@@ -429,7 +468,13 @@ varNewInt(int data)
         FUNCTION_TEST_PARAM(INT, data);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(varNewInternal(varTypeInt, (void *)&data, sizeof(data)));
+    // Allocate memory for the variant and set the type and data
+    VariantInt *this = memNew(sizeof(VariantInt));
+    this->memContext = memContextCurrent();
+    this->type = varTypeInt;
+    this->data = data;
+
+    FUNCTION_TEST_RETURN((Variant *)this);
 }
 
 /***********************************************************************************************************************************
@@ -443,10 +488,9 @@ varInt(const Variant *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-
     ASSERT(this->type == varTypeInt);
 
-    FUNCTION_TEST_RETURN(*((int *)varData(this)));
+    FUNCTION_TEST_RETURN(((VariantInt *)this)->data);
 }
 
 /***********************************************************************************************************************************
@@ -528,7 +572,13 @@ varNewInt64(int64_t data)
         FUNCTION_TEST_PARAM(INT64, data);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(varNewInternal(varTypeInt64, (void *)&data, sizeof(data)));
+    // Allocate memory for the variant and set the type and data
+    VariantInt64 *this = memNew(sizeof(VariantInt64));
+    this->memContext = memContextCurrent();
+    this->type = varTypeInt64;
+    this->data = data;
+
+    FUNCTION_TEST_RETURN((Variant *)this);
 }
 
 /***********************************************************************************************************************************
@@ -542,10 +592,9 @@ varInt64(const Variant *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-
     ASSERT(this->type == varTypeInt64);
 
-    FUNCTION_TEST_RETURN(*((int64_t *)varData(this)));
+    FUNCTION_TEST_RETURN(((VariantInt64 *)this)->data);
 }
 
 /***********************************************************************************************************************************
@@ -622,7 +671,13 @@ varNewUInt64(uint64_t data)
         FUNCTION_TEST_PARAM(UINT64, data);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(varNewInternal(varTypeUInt64, (void *)&data, sizeof(data)));
+    // Allocate memory for the variant and set the type and data
+    VariantUInt64 *this = memNew(sizeof(VariantUInt64));
+    this->memContext = memContextCurrent();
+    this->type = varTypeUInt64;
+    this->data = data;
+
+    FUNCTION_TEST_RETURN((Variant *)this);
 }
 
 /***********************************************************************************************************************************
@@ -636,10 +691,9 @@ varUInt64(const Variant *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-
     ASSERT(this->type == varTypeUInt64);
 
-    FUNCTION_TEST_RETURN(*((uint64_t *)varData(this)));
+    FUNCTION_TEST_RETURN(((VariantUInt64 *)this)->data);
 }
 
 /***********************************************************************************************************************************
@@ -725,10 +779,13 @@ varNewKv(void)
 {
     FUNCTION_TEST_VOID();
 
-    // Create a new kv for the variant
-    KeyValue *data = kvNew();
+    // Allocate memory for the variant and set the type and data
+    VariantKeyValue *this = memNew(sizeof(VariantKeyValue));
+    this->memContext = memContextCurrent();
+    this->type = varTypeKeyValue;
+    this->data = kvNew();
 
-    FUNCTION_TEST_RETURN(varNewInternal(varTypeKeyValue, (void *)&data, sizeof(data)));
+    FUNCTION_TEST_RETURN((Variant *)this);
 }
 
 /***********************************************************************************************************************************
@@ -746,7 +803,7 @@ varKv(const Variant *this)
     if (this != NULL)
     {
         ASSERT(this->type == varTypeKeyValue);
-        result = *((KeyValue **)varData(this));
+        result = ((VariantKeyValue *)this)->data;
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -762,10 +819,13 @@ varNewStr(const String *data)
         FUNCTION_TEST_PARAM(STRING, data);
     FUNCTION_TEST_END();
 
-    // Create a copy of the string for the variant
-    String *dataCopy = strDup(data);
+    // Allocate memory for the variant and set the type and data
+    VariantString *this = memNew(sizeof(VariantString));
+    this->memContext = memContextCurrent();
+    this->type = varTypeString;
+    this->data = strDup(data);
 
-    FUNCTION_TEST_RETURN(varNewInternal(varTypeString, (void *)&dataCopy, sizeof(dataCopy)));
+    FUNCTION_TEST_RETURN((Variant *)this);
 }
 
 /***********************************************************************************************************************************
@@ -778,19 +838,13 @@ varNewStrZ(const char *data)
         FUNCTION_TEST_PARAM(STRINGZ, data);
     FUNCTION_TEST_END();
 
-    // Create a string for the variant
-    String *dataCopy = NULL;
-
-    if (data != NULL)
-        dataCopy = strNew(data);
-
-    FUNCTION_TEST_RETURN(varNewInternal(varTypeString, (void *)&dataCopy, sizeof(dataCopy)));
+    FUNCTION_TEST_RETURN(varNewStr(data == NULL ? NULL : strNew(data)));
 }
 
 /***********************************************************************************************************************************
 Return string
 ***********************************************************************************************************************************/
-String *
+const String *
 varStr(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -802,7 +856,7 @@ varStr(const Variant *this)
     if (this != NULL)
     {
         ASSERT(this->type == varTypeString);
-        result = *((String **)varData(this));
+        result = ((VariantString *)this)->data;
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -892,13 +946,15 @@ varNewVarLst(const VariantList *data)
         FUNCTION_TEST_PARAM(VARIANT_LIST, data);
     FUNCTION_TEST_END();
 
-    VariantList *dataCopy = NULL;
+    // Allocate memory for the variant and set the type and data
+    VariantVariantList *this = memNew(sizeof(VariantVariantList));
+    this->memContext = memContextCurrent();
+    this->type = varTypeVariantList;
 
-    // Create a copy of the variant list if it is not null
     if (data != NULL)
-        dataCopy = varLstDup(data);
+        this->data = varLstDup(data);
 
-    FUNCTION_TEST_RETURN(varNewInternal(varTypeVariantList, (void *)&dataCopy, sizeof(dataCopy)));
+    FUNCTION_TEST_RETURN((Variant *)this);
 }
 
 /***********************************************************************************************************************************
@@ -916,7 +972,7 @@ varVarLst(const Variant *this)
     if (this != NULL)
     {
         ASSERT(this->type == varTypeVariantList);
-        result = *((VariantList **)varData(this));
+        result = ((VariantVariantList *)this)->data;
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -981,40 +1037,71 @@ varFree(Variant *this)
 
     if (this != NULL)
     {
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MemContext *contextOld = memContextCurrent();
+
+        TRY_BEGIN()
         {
-            switch (this->type)
-            {
-                case varTypeKeyValue:
+                switch (this->type)
                 {
-                    kvFree(varKv(this));
-                    break;
-                }
+                    case varTypeBool:
+                    {
+                        memContextSwitch(((VariantBool *)this)->memContext);
+                        break;
+                    }
 
-                case varTypeString:
-                {
-                    strFree(varStr(this));
-                    break;
-                }
+                    case varTypeDouble:
+                    {
+                        memContextSwitch(((VariantDouble *)this)->memContext);
+                        break;
+                    }
 
-                case varTypeVariantList:
-                {
-                    varLstFree(varVarLst(this));
-                    break;
-                }
+                    case varTypeInt:
+                    {
+                        memContextSwitch(((VariantInt *)this)->memContext);
+                        break;
+                    }
 
-                // Nothing additional to free for these types
-                case varTypeBool:
-                case varTypeDouble:
-                case varTypeInt:
-                case varTypeInt64:
-                case varTypeUInt64:
-                    break;
-            }
+                    case varTypeInt64:
+                    {
+                        memContextSwitch(((VariantInt64 *)this)->memContext);
+                        break;
+                    }
+
+                    case varTypeKeyValue:
+                    {
+                        memContextSwitch(((VariantKeyValue *)this)->memContext);
+                        kvFree(((VariantKeyValue *)this)->data);
+                        break;
+                    }
+
+                    case varTypeString:
+                    {
+                        memContextSwitch(((VariantString *)this)->memContext);
+                        strFree(((VariantString *)this)->data);
+                        break;
+                    }
+
+                    case varTypeUInt64:
+                    {
+                        memContextSwitch(((VariantUInt64 *)this)->memContext);
+                        break;
+                    }
+
+                    case varTypeVariantList:
+                    {
+                        memContextSwitch(((VariantVariantList *)this)->memContext);
+                        varLstFree(((VariantVariantList *)this)->data);
+                        break;
+                    }
+                }
 
             memFree(this);
         }
-        MEM_CONTEXT_END();
+        FINALLY()
+        {
+            memContextSwitch(contextOld);
+        }
+        TRY_END();
     }
 
     FUNCTION_TEST_RETURN_VOID();

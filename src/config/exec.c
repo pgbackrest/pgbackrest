@@ -35,7 +35,7 @@ cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace)
                 continue;
 
             // First check for a replacement
-            const Variant *key = varNewStr(STR(cfgOptionName(optionId)));
+            const Variant *key = VARSTRZ(cfgOptionName(optionId));
             const Variant *value = NULL;
             bool exists = false;
 
@@ -55,7 +55,7 @@ cfgExecParam(ConfigCommand commandId, const KeyValue *optionReplace)
             if (value == NULL && cfgOptionValid(optionId))
             {
                 if (cfgOptionNegate(optionId))
-                    value = varNewBool(false);
+                    value = BOOL_FALSE_VAR;
                 else if (cfgOptionSource(optionId) != cfgSourceDefault)
                     value = cfgOption(optionId);
             }

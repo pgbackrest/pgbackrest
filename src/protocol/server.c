@@ -61,9 +61,9 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
         MEM_CONTEXT_TEMP_BEGIN()
         {
             KeyValue *greetingKv = kvNew();
-            kvPut(greetingKv, varNewStr(PROTOCOL_GREETING_NAME_STR), varNewStrZ(PROJECT_NAME));
-            kvPut(greetingKv, varNewStr(PROTOCOL_GREETING_SERVICE_STR), varNewStr(service));
-            kvPut(greetingKv, varNewStr(PROTOCOL_GREETING_VERSION_STR), varNewStrZ(PROJECT_VERSION));
+            kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_NAME_STR), VARSTRZ(PROJECT_NAME));
+            kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_SERVICE_STR), VARSTR(service));
+            kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_VERSION_STR), VARSTRZ(PROJECT_VERSION));
 
             ioWriteLine(this->write, kvToJson(greetingKv, 0));
             ioWriteFlush(this->write);
@@ -108,8 +108,8 @@ protocolServerError(ProtocolServer *this, int code, const String *message)
     ASSERT(message != NULL);
 
     KeyValue *error = kvNew();
-    kvPut(error, varNewStr(PROTOCOL_ERROR_STR), varNewInt(errorCode()));
-    kvPut(error, varNewStr(PROTOCOL_OUTPUT_STR), varNewStrZ(errorMessage()));
+    kvPut(error, VARSTR(PROTOCOL_ERROR_STR), VARINT(errorCode()));
+    kvPut(error, VARSTR(PROTOCOL_OUTPUT_STR), VARSTRZ(errorMessage()));
 
     ioWriteLine(this->write, kvToJson(error, 0));
     ioWriteFlush(this->write);
@@ -138,8 +138,8 @@ protocolServerProcess(ProtocolServer *this)
             {
                 // Read command
                 KeyValue *commandKv = varKv(jsonToVar(ioReadLine(this->read)));
-                String *command = varStr(kvGet(commandKv, varNewStr(PROTOCOL_KEY_COMMAND_STR)));
-                VariantList *paramList = varVarLst(kvGet(commandKv, varNewStr(PROTOCOL_KEY_PARAMETER_STR)));
+                const String *command = varStr(kvGet(commandKv, VARSTR(PROTOCOL_KEY_COMMAND_STR)));
+                VariantList *paramList = varVarLst(kvGet(commandKv, VARSTR(PROTOCOL_KEY_PARAMETER_STR)));
 
                 // Process command
                 bool found = false;
@@ -199,7 +199,7 @@ protocolServerResponse(ProtocolServer *this, const Variant *output)
     KeyValue *result = kvNew();
 
     if (output != NULL)
-        kvAdd(result, varNewStr(PROTOCOL_OUTPUT_STR), output);
+        kvAdd(result, VARSTR(PROTOCOL_OUTPUT_STR), output);
 
     ioWriteLine(this->write, kvToJson(result, 0));
     ioWriteFlush(this->write);

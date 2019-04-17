@@ -106,13 +106,13 @@ storageDriverRemoteFileWriteOpen(StorageDriverRemoteFileWrite *this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR);
-        protocolCommandParamAdd(command, varNewStr(this->name));
-        protocolCommandParamAdd(command, varNewUInt64(this->modeFile));
-        protocolCommandParamAdd(command, varNewUInt64(this->modePath));
-        protocolCommandParamAdd(command, varNewBool(this->createPath));
-        protocolCommandParamAdd(command, varNewBool(this->syncFile));
-        protocolCommandParamAdd(command, varNewBool(this->syncPath));
-        protocolCommandParamAdd(command, varNewBool(this->atomic));
+        protocolCommandParamAdd(command, VARSTR(this->name));
+        protocolCommandParamAdd(command, VARUINT64(this->modeFile));
+        protocolCommandParamAdd(command, VARUINT64(this->modePath));
+        protocolCommandParamAdd(command, VARBOOL(this->createPath));
+        protocolCommandParamAdd(command, VARBOOL(this->syncFile));
+        protocolCommandParamAdd(command, VARBOOL(this->syncPath));
+        protocolCommandParamAdd(command, VARBOOL(this->atomic));
 
         protocolClientExecute(this->client, command, false);
     }

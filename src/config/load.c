@@ -65,7 +65,7 @@ cfgLoadUpdateOption(void)
 
     // Set default for repo-host-cmd
     if (cfgOptionTest(cfgOptRepoHost) && cfgOptionSource(cfgOptRepoHostCmd) == cfgSourceDefault)
-        cfgOptionDefaultSet(cfgOptRepoHostCmd, varNewStr(cfgExe()));
+        cfgOptionDefaultSet(cfgOptRepoHostCmd, VARSTR(cfgExe()));
 
     // Set default for pg-host-cmd
     if (cfgOptionValid(cfgOptPgHostCmd))
@@ -73,7 +73,7 @@ cfgLoadUpdateOption(void)
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
         {
             if (cfgOptionTest(cfgOptPgHost + optionIdx) && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
-                cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, varNewStr(cfgExe()));
+                cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, VARSTR(cfgExe()));
         }
     }
 
@@ -83,7 +83,7 @@ cfgLoadUpdateOption(void)
     {
         // If protocol-timeout is default then increase it to be greater than db-timeout
         if (cfgOptionSource(cfgOptProtocolTimeout) == cfgSourceDefault)
-            cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, varNewDbl(cfgOptionDbl(cfgOptDbTimeout) + 30));
+            cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, VARDBL(cfgOptionDbl(cfgOptDbTimeout) + 30));
         else if (cfgOptionSource(cfgOptDbTimeout) == cfgSourceDefault)
         {
             double dbTimeout = cfgOptionDbl(cfgOptProtocolTimeout) - 30;
@@ -91,11 +91,11 @@ cfgLoadUpdateOption(void)
             // Normally the protocol time will be greater than 45 seconds so db timeout can be at least 15 seconds
             if (dbTimeout >= 15)
             {
-                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(dbTimeout));
+                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARDBL(dbTimeout));
             }
             // But in some test cases the protocol timeout will be very small so make db timeout half of protocol timeout
             else
-                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(cfgOptionDbl(cfgOptProtocolTimeout) / 2));
+                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARDBL(cfgOptionDbl(cfgOptProtocolTimeout) / 2));
         }
         else
         {
@@ -172,7 +172,7 @@ cfgLoadUpdateOption(void)
                     if (cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
                     {
                         cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
-                            varNewInt(cfgOptionInt(cfgOptRepoRetentionFull + optionIdx)));
+                            VARINT(cfgOptionInt(cfgOptRepoRetentionFull + optionIdx)));
                     }
                 }
                 else if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF))
@@ -181,7 +181,7 @@ cfgLoadUpdateOption(void)
                     if (cfgOptionTest(cfgOptRepoRetentionDiff + optionIdx))
                     {
                         cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
-                            varNewInt(cfgOptionInt(cfgOptRepoRetentionDiff + optionIdx)));
+                            VARINT(cfgOptionInt(cfgOptRepoRetentionDiff + optionIdx)));
                     }
                     else
                     {

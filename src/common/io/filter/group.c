@@ -342,7 +342,7 @@ ioFilterGroupClose(IoFilterGroup *this)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            kvAdd(this->filterResult, varNewStr(ioFilterType(filterData->filter)), filterResult);
+            kvAdd(this->filterResult, VARSTR(ioFilterType(filterData->filter)), filterResult);
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -408,7 +408,7 @@ ioFilterGroupResult(const IoFilterGroup *this, const String *filterType)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = kvGet(this->filterResult, varNewStr(filterType));
+        result = kvGet(this->filterResult, VARSTR(filterType));
     }
     MEM_CONTEXT_TEMP_END();
 

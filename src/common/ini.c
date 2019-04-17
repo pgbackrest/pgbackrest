@@ -60,16 +60,12 @@ iniGetInternal(const Ini *this, const String *section, const String *key)
 
     const Variant *result = NULL;
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Get the section
-        KeyValue *sectionKv = varKv(kvGet(this->store, varNewStr(section)));
+    // Get the section
+    KeyValue *sectionKv = varKv(kvGet(this->store, VARSTR(section)));
 
-        // Section must exist to get the value
-        if (sectionKv != NULL)
-            result = kvGet(sectionKv, varNewStr(key));
-    }
-    MEM_CONTEXT_TEMP_END();
+    // Section must exist to get the value
+    if (sectionKv != NULL)
+        result = kvGet(sectionKv, VARSTR(key));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -146,7 +142,7 @@ iniSectionKeyList(const Ini *this, const String *section)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the section
-        KeyValue *sectionKv = varKv(kvGet(this->store, varNewStr(section)));
+        KeyValue *sectionKv = varKv(kvGet(this->store, VARSTR(section)));
 
         // Return key list if the section exists
         if (sectionKv != NULL)
@@ -254,7 +250,7 @@ iniParse(Ini *this, const String *content)
                                 THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx++, linePtr);
 
                             // Extract the value
-                            Variant *value = varNewStr(strTrim(strNew(lineEqual + 1)));
+                            const Variant *value = VARSTR(strTrim(strNew(lineEqual + 1)));
 
                             // Store the section/key/value
                             iniSet(this, section, key, value);
@@ -290,13 +286,13 @@ iniSet(Ini *this, const String *section, const String *key, const Variant *value
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        Variant *sectionKey = varNewStr(section);
+        const Variant *sectionKey = VARSTR(section);
         KeyValue *sectionKv = varKv(kvGet(this->store, sectionKey));
 
         if (sectionKv == NULL)
             sectionKv = kvPutKv(this->store, sectionKey);
 
-        kvAdd(sectionKv, varNewStr(key), value);
+        kvAdd(sectionKv, VARSTR(key), value);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Protocol Helper
 ***********************************************************************************************************************************/
+#include <string.h>
+
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/exec.h"
@@ -85,24 +87,24 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int protoco
         KeyValue *optionReplace = kvNew();
 
         // Add the command option
-        kvPut(optionReplace, varNewStr(CFGOPT_COMMAND_STR), varNewStrZ(cfgCommandName(cfgCommand())));
+        kvPut(optionReplace, VARSTR(CFGOPT_COMMAND_STR), VARSTRZ(cfgCommandName(cfgCommand())));
 
         // Add the process id -- used when more than one process will be called
-        kvPut(optionReplace, varNewStr(CFGOPT_PROCESS_STR), varNewInt((int)protocolId));
+        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARINT((int)protocolId));
 
         // Add the host id -- for now this is hard-coded to 1
-        kvPut(optionReplace, varNewStr(CFGOPT_HOST_ID_STR), varNewInt(1));
+        kvPut(optionReplace, VARSTR(CFGOPT_HOST_ID_STR), VARINT(1));
 
         // Add the type
-        kvPut(optionReplace, varNewStr(CFGOPT_TYPE_STR), varNewStrZ("backup"));
+        kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), VARSTRDEF("backup"));
 
         // Only enable file logging on the local when requested
         kvPut(
-            optionReplace, varNewStr(CFGOPT_LOG_LEVEL_FILE_STR),
-            cfgOptionBool(cfgOptLogSubprocess) ? cfgOption(cfgOptLogLevelFile) : varNewStrZ("off"));
+            optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR),
+            cfgOptionBool(cfgOptLogSubprocess) ? cfgOption(cfgOptLogLevelFile) : VARSTRDEF("off"));
 
         // Always output errors on stderr for debugging purposes
-        kvPut(optionReplace, varNewStr(CFGOPT_LOG_LEVEL_STDERR_STR), varNewStrZ("error"));
+        kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
 
         result = strLstMove(cfgExecParam(cfgCmdLocal, optionReplace), MEM_CONTEXT_OLD());
     }
@@ -202,36 +204,36 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 
     // Replace config options with the host versions
     if (cfgOptionSource(cfgOptRepoHostConfig) != cfgSourceDefault)
-        kvPut(optionReplace, varNewStr(CFGOPT_CONFIG_STR), cfgOption(cfgOptRepoHostConfig));
+        kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_STR), cfgOption(cfgOptRepoHostConfig));
 
     if (cfgOptionSource(cfgOptRepoHostConfigIncludePath) != cfgSourceDefault)
-        kvPut(optionReplace, varNewStr(CFGOPT_CONFIG_INCLUDE_PATH_STR), cfgOption(cfgOptRepoHostConfigIncludePath));
+        kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_INCLUDE_PATH_STR), cfgOption(cfgOptRepoHostConfigIncludePath));
 
     if (cfgOptionSource(cfgOptRepoHostConfigPath) != cfgSourceDefault)
-        kvPut(optionReplace, varNewStr(CFGOPT_CONFIG_PATH_STR), cfgOption(cfgOptRepoHostConfigPath));
+        kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR), cfgOption(cfgOptRepoHostConfigPath));
 
     // Add the command option (or use the current command option if it is valid)
     if (!cfgOptionTest(cfgOptCommand))
-        kvPut(optionReplace, varNewStr(CFGOPT_COMMAND_STR), varNewStrZ(cfgCommandName(cfgCommand())));
+        kvPut(optionReplace, VARSTR(CFGOPT_COMMAND_STR), VARSTRZ(cfgCommandName(cfgCommand())));
 
     // Add the process id (or use the current process id if it is valid)
     if (!cfgOptionTest(cfgOptProcess))
-        kvPut(optionReplace, varNewStr(CFGOPT_PROCESS_STR), varNewInt((int)protocolId));
+        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARINT((int)protocolId));
 
     // Don't pass log-path or lock-path since these are host specific
-    kvPut(optionReplace, varNewStr(CFGOPT_LOG_PATH_STR), NULL);
-    kvPut(optionReplace, varNewStr(CFGOPT_LOCK_PATH_STR), NULL);
+    kvPut(optionReplace, VARSTR(CFGOPT_LOG_PATH_STR), NULL);
+    kvPut(optionReplace, VARSTR(CFGOPT_LOCK_PATH_STR), NULL);
 
     // Only enable file logging on the remote when requested
     kvPut(
-        optionReplace, varNewStr(CFGOPT_LOG_LEVEL_FILE_STR),
-        cfgOptionBool(cfgOptLogSubprocess) ? cfgOption(cfgOptLogLevelFile) : varNewStrZ("off"));
+        optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR),
+        cfgOptionBool(cfgOptLogSubprocess) ? cfgOption(cfgOptLogLevelFile) : VARSTRDEF("off"));
 
     // Always output errors on stderr for debugging purposes
-    kvPut(optionReplace, varNewStr(CFGOPT_LOG_LEVEL_STDERR_STR), varNewStrZ("error"));
+    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
 
     // Add the type
-    kvPut(optionReplace, varNewStr(CFGOPT_TYPE_STR), varNewStrZ("backup"));
+    kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), VARSTRDEF("backup"));
 
     StringList *commandExec = cfgExecParam(cfgCmdRemote, optionReplace);
     strLstInsert(commandExec, 0, cfgOptionStr(cfgOptRepoHostCmd));

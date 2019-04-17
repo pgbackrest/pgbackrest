@@ -159,7 +159,7 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
         iniParse(this->ini, strNewBuf(buffer));
 
         // Make sure the ini is valid by testing the checksum
-        String *infoChecksum = varStr(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR));
+        const String *infoChecksum = varStr(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR));
 
         CryptoHash *hash = infoHash(this->ini);
 
@@ -255,13 +255,10 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
         TRY_END();
 
         // Load the cipher passphrase if it exists
-        String *cipherPass = varStr(iniGetDefault(this->ini, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, NULL));
+        const String *cipherPass = varStr(iniGetDefault(this->ini, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, NULL));
 
         if (cipherPass != NULL)
-        {
             this->cipherPass = strSubN(cipherPass, 1, strSize(cipherPass) - 2);
-            strFree(cipherPass);
-        }
     }
     MEM_CONTEXT_NEW_END();
 

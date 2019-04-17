@@ -41,7 +41,7 @@ archivePushProtocol(const String *command, const VariantList *paramList, Protoco
         {
             protocolServerResponse(
                 server,
-                varNewStr(
+                VARSTR(
                     archivePushFile(
                         varStr(varLstGet(paramList, 0)), varStr(varLstGet(paramList, 1)),
                         (unsigned int)varUInt64(varLstGet(paramList, 2)), varUInt64(varLstGet(paramList, 3)),

@@ -89,7 +89,7 @@ storageDriverRemoteExists(StorageDriverRemote *this, const String *path)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_EXISTS_STR);
-        protocolCommandParamAdd(command, varNewStr(path));
+        protocolCommandParamAdd(command, VARSTR(path));
 
         result = varBool(protocolClientExecute(this->client, command, true));
     }
@@ -139,9 +139,9 @@ storageDriverRemoteList(StorageDriverRemote *this, const String *path, bool erro
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_LIST_STR);
-        protocolCommandParamAdd(command, varNewStr(path));
-        protocolCommandParamAdd(command, varNewBool(errorOnMissing));
-        protocolCommandParamAdd(command, varNewStr(expression));
+        protocolCommandParamAdd(command, VARSTR(path));
+        protocolCommandParamAdd(command, VARBOOL(errorOnMissing));
+        protocolCommandParamAdd(command, VARSTR(expression));
 
         result = strLstMove(strLstNewVarLst(varVarLst(protocolClientExecute(this->client, command, true))), MEM_CONTEXT_OLD());
     }
