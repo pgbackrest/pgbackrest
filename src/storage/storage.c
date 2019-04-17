@@ -455,7 +455,7 @@ storagePath(const Storage *this, const String *pathExp)
                 String *expression = strNewN(strPtr(pathExp), (size_t)(end - strPtr(pathExp) + 1));
 
                 // Create a string from the path if there is anything left after the expression
-                String *path = NULL;
+                const String *path = NULL;
 
                 if (strSize(expression) < strSize(pathExp))
                 {
@@ -467,7 +467,7 @@ storagePath(const Storage *this, const String *pathExp)
                     if (end[2] == 0)
                         THROW_FMT(AssertError, "path '%s' should not end in '/'", strPtr(pathExp));
 
-                    path = strNew(end + 2);
+                    path = STR(end + 2);
                 }
 
                 // Evaluate the path
@@ -482,7 +482,6 @@ storagePath(const Storage *this, const String *pathExp)
 
                 // Free temp vars
                 strFree(expression);
-                strFree(path);
             }
 
             if (this->path == NULL)

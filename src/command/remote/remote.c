@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Remote Command
 ***********************************************************************************************************************************/
+#include <string.h>
+
 #include "common/debug.h"
 #include "common/io/handleRead.h"
 #include "common/io/handleWrite.h"
@@ -55,7 +57,7 @@ cmdRemote(int handleRead, int handleWrite)
         }
         CATCH_ANY()
         {
-            protocolServerError(server, errorCode(), strNew(errorMessage()));
+            protocolServerError(server, errorCode(), STR(errorMessage()));
         }
         TRY_END();
 

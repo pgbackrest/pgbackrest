@@ -111,7 +111,7 @@ convertToByte(String **value, double *valueDbl)
     String *result = strLower(strDup(*value));
 
     // Match the value against possible values
-    if (regExpMatchOne(STRING_CONST("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p|b)*$"), result))
+    if (regExpMatchOne(STRDEF("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p|b)*$"), result))
     {
         // Get the character array and size
         const char *strArray = strPtr(result);
@@ -303,7 +303,7 @@ cfgFileLoad(                                                        // NOTE: Pas
     {
         if (result != NULL)
         {
-            // Validate the file by parsing it as an Ini object. If the file is not properly formed, en error will occur.
+            // Validate the file by parsing it as an Ini object. If the file is not properly formed, an error will occur.
             Ini *ini = iniNew();
             iniParse(ini, result);
         }
@@ -318,7 +318,7 @@ cfgFileLoad(                                                        // NOTE: Pas
 
         // Get a list of conf files from the specified path -error on missing directory if the option was passed on the command line
         StringList *list = storageListP(
-            storageLocal(), configIncludePath, .expression = STRING_CONST(".+\\.conf$"), .errorOnMissing = configIncludeRequired);
+            storageLocal(), configIncludePath, .expression = STRDEF(".+\\.conf$"), .errorOnMissing = configIncludeRequired);
 
         // If conf files are found, then add them to the config string
         if (list != NULL && strLstSize(list) > 0)
@@ -382,7 +382,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Set the exe
-        cfgExeSet(strNew(argList[0]));
+        cfgExeSet(STR(argList[0]));
 
         // Phase 1: parse command line parameters
         // -------------------------------------------------------------------------------------------------------------------------
@@ -438,7 +438,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (commandParamList == NULL)
                             commandParamList = strLstNew();
 
-                        strLstAdd(commandParamList, strNew(argList[optind - 1]));
+                        strLstAdd(commandParamList, STR(argList[optind - 1]));
                     }
 
                     break;
@@ -484,7 +484,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                         // Only set the argument if the option requires one
                         if (optionList[optionListIdx].has_arg == required_argument)
-                            parseOptionList[optionId].valueList = strLstAdd(strLstNew(), strNew(optarg));
+                            parseOptionList[optionId].valueList = strLstAdd(strLstNew(), STR(optarg));
                     }
                     else
                     {
@@ -577,10 +577,10 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     ASSERT(equalPtr != NULL);
 
                     // Get key and value
-                    String *key = strReplaceChr(
+                    const String *key = strReplaceChr(
                         strLower(strNewN(keyValue + PGBACKREST_ENV_SIZE, (size_t)(equalPtr - (keyValue + PGBACKREST_ENV_SIZE)))),
                         '_', '-');
-                    String *value = strNew(equalPtr + 1);
+                    const String *value = STR(equalPtr + 1);
 
                     // Find the option
                     unsigned int optionIdx = optionFind(key);
@@ -647,8 +647,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             // ---------------------------------------------------------------------------------------------------------------------
             // Load the configuration file(s)
             String *configString = cfgFileLoad(parseOptionList,
-                strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfig))),
-                strNew(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfigIncludePath))),
+                STR(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfig))),
+                STR(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfigIncludePath))),
                 PGBACKREST_CONFIG_ORIG_PATH_FILE_STR);
 
             if (configString != NULL)
@@ -886,7 +886,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (!dependResolved && optionSet && parseOption->source == cfgSourceParam)
                         {
                             // Get the depend option name
-                            String *dependOptionName = strNew(cfgOptionName(dependOptionId));
+                            const String *dependOptionName = STR(cfgOptionName(dependOptionId));
 
                             // Build the list of possible depend values
                             StringList *dependValueList = strLstNew();
@@ -930,7 +930,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             }
 
                             // Build the error string
-                            String *errorValue = strNew("");
+                            const String *errorValue = EMPTY_STR;
 
                             if (strLstSize(dependValueList) == 1)
                                 errorValue = strNewFmt(" = %s", strPtr(strLstGet(dependValueList, 0)));
@@ -975,7 +975,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         strPtr(strLstGet(parseOption->valueList, listIdx)), cfgOptionName(optionId));
                                 }
 
-                                kvPut(keyValue, varNewStr(strNewN(pair, (size_t)(equal - pair))), varNewStr(strNew(equal + 1)));
+                                kvPut(keyValue, varNewStr(strNewN(pair, (size_t)(equal - pair))), varNewStr(STR(equal + 1)));
                             }
 
                             cfgOptionSet(optionId, parseOption->source, value);

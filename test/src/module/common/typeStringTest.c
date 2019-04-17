@@ -19,7 +19,7 @@ testRun(void)
     {
         // We don't want this struct to grow since there are generally a lot of strings, so make sure it doesn't grow without us
         // knowing about it
-        TEST_RESULT_UINT(sizeof(struct StringCommon), TEST_64BIT() ? 16 : 12, "check StringCommon struct size");
+        TEST_RESULT_UINT(sizeof(StringConst), TEST_64BIT() ? 16 : 12, "check StringConst struct size");
 
         // Test the size macro
         TEST_RESULT_VOID(CHECK_SIZE(555), "valid size");
@@ -63,15 +63,15 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strBase() and strPath()"))
     {
-        TEST_RESULT_STR(strPtr(strBase(strNew(""))), "", "empty string");
-        TEST_RESULT_STR(strPtr(strBase(strNew("/"))), "", "/ only");
-        TEST_RESULT_STR(strPtr(strBase(strNew("/file"))), "file", "root file");
-        TEST_RESULT_STR(strPtr(strBase(strNew("/dir1/dir2/file"))), "file", "subdirectory file");
+        TEST_RESULT_STR(strPtr(strBase(STRDEF(""))), "", "empty string");
+        TEST_RESULT_STR(strPtr(strBase(STRDEF("/"))), "", "/ only");
+        TEST_RESULT_STR(strPtr(strBase(STRDEF("/file"))), "file", "root file");
+        TEST_RESULT_STR(strPtr(strBase(STRDEF("/dir1/dir2/file"))), "file", "subdirectory file");
 
-        TEST_RESULT_STR(strPtr(strPath(strNew(""))), "", "empty string");
-        TEST_RESULT_STR(strPtr(strPath(strNew("/"))), "/", "/ only");
-        TEST_RESULT_STR(strPtr(strPath(strNew("/file"))), "/", "root path");
-        TEST_RESULT_STR(strPtr(strPath(strNew("/dir1/dir2/file"))), "/dir1/dir2", "subdirectory file");
+        TEST_RESULT_STR(strPtr(strPath(STRDEF(""))), "", "empty string");
+        TEST_RESULT_STR(strPtr(strPath(STRDEF("/"))), "/", "/ only");
+        TEST_RESULT_STR(strPtr(strPath(STRDEF("/file"))), "/", "root path");
+        TEST_RESULT_STR(strPtr(strPath(STRDEF("/dir1/dir2/file"))), "/dir1/dir2", "subdirectory file");
     }
 
     // *****************************************************************************************************************************
@@ -81,11 +81,11 @@ testRun(void)
         String *string2 = strNew("ZZZZ");
 
         TEST_RESULT_STR(strPtr(strCat(string, "YYYY")), "XXXXYYYY", "cat string");
-        TEST_RESULT_SIZE(string->common.extra, 4, "check extra");
+        TEST_RESULT_SIZE(string->extra, 4, "check extra");
         TEST_RESULT_STR(strPtr(strCatFmt(string, "%05d", 777)), "XXXXYYYY00777", "cat formatted string");
-        TEST_RESULT_SIZE(string->common.extra, 6, "check extra");
+        TEST_RESULT_SIZE(string->extra, 6, "check extra");
         TEST_RESULT_STR(strPtr(strCatChr(string, '!')), "XXXXYYYY00777!", "cat chr");
-        TEST_RESULT_SIZE(string->common.extra, 5, "check extra");
+        TEST_RESULT_SIZE(string->extra, 5, "check extra");
 
         TEST_RESULT_STR(strPtr(string2), "ZZZZ", "check unaltered string");
     }
@@ -93,7 +93,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strDup()"))
     {
-        String *string = strNew("duplicated string");
+        const String *string = STRDEF("duplicated string");
         String *stringDup = strDup(string);
         TEST_RESULT_STR(strPtr(stringDup), strPtr(string), "duplicated strings match");
 
@@ -103,39 +103,39 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strBeginsWith() and strBeginsWithZ()"))
     {
-        TEST_RESULT_BOOL(strBeginsWith(strNew(""), strNew("aaa")), false, "empty string");
-        TEST_RESULT_BOOL(strBeginsWith(strNew("astring"), strNew("")), true, "empty begins with");
-        TEST_RESULT_BOOL(strBeginsWithZ(strNew("astring"), "astr"), true, "partial begins with");
-        TEST_RESULT_BOOL(strBeginsWithZ(strNew("astring"), "astring"), true, "equal strings");
+        TEST_RESULT_BOOL(strBeginsWith(STRDEF(""), STRDEF("aaa")), false, "empty string");
+        TEST_RESULT_BOOL(strBeginsWith(STRDEF("astring"), STRDEF("")), true, "empty begins with");
+        TEST_RESULT_BOOL(strBeginsWithZ(STRDEF("astring"), "astr"), true, "partial begins with");
+        TEST_RESULT_BOOL(strBeginsWithZ(STRDEF("astring"), "astring"), true, "equal strings");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("strEndsWith() and strEndsWithZ()"))
     {
-        TEST_RESULT_BOOL(strEndsWith(strNew(""), strNew(".doc")), false, "empty string");
-        TEST_RESULT_BOOL(strEndsWith(strNew("astring"), strNew("")), true, "empty ends with");
-        TEST_RESULT_BOOL(strEndsWithZ(strNew("astring"), "ing"), true, "partial ends with");
-        TEST_RESULT_BOOL(strEndsWithZ(strNew("astring"), "astring"), true, "equal strings");
+        TEST_RESULT_BOOL(strEndsWith(STRDEF(""), STRDEF(".doc")), false, "empty string");
+        TEST_RESULT_BOOL(strEndsWith(STRDEF("astring"), STRDEF("")), true, "empty ends with");
+        TEST_RESULT_BOOL(strEndsWithZ(STRDEF("astring"), "ing"), true, "partial ends with");
+        TEST_RESULT_BOOL(strEndsWithZ(STRDEF("astring"), "astring"), true, "equal strings");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("strEq(), strEqZ(), strCmp(), strCmpZ()"))
     {
-        TEST_RESULT_BOOL(strEq(strNew("equalstring"), strNew("equalstring")), true, "strings equal");
-        TEST_RESULT_BOOL(strEq(strNew("astring"), strNew("anotherstring")), false, "strings not equal");
-        TEST_RESULT_BOOL(strEq(strNew("astring"), strNew("bstring")), false, "equal length strings not equal");
+        TEST_RESULT_BOOL(strEq(STRDEF("equalstring"), STRDEF("equalstring")), true, "strings equal");
+        TEST_RESULT_BOOL(strEq(STRDEF("astring"), STRDEF("anotherstring")), false, "strings not equal");
+        TEST_RESULT_BOOL(strEq(STRDEF("astring"), STRDEF("bstring")), false, "equal length strings not equal");
 
-        TEST_RESULT_INT(strCmp(strNew("equalstring"), strNew("equalstring")), 0, "strings equal");
-        TEST_RESULT_INT(strCmp(strNew("a"), strNew("b")), -1, "a < b");
-        TEST_RESULT_INT(strCmp(strNew("b"), strNew("a")), 1, "b > a");
+        TEST_RESULT_INT(strCmp(STRDEF("equalstring"), STRDEF("equalstring")), 0, "strings equal");
+        TEST_RESULT_INT(strCmp(STRDEF("a"), STRDEF("b")), -1, "a < b");
+        TEST_RESULT_INT(strCmp(STRDEF("b"), STRDEF("a")), 1, "b > a");
 
-        TEST_RESULT_BOOL(strEqZ(strNew("equalstring"), "equalstring"), true, "strings equal");
-        TEST_RESULT_BOOL(strEqZ(strNew("astring"), "anotherstring"), false, "strings not equal");
-        TEST_RESULT_BOOL(strEqZ(strNew("astring"), "bstring"), false, "equal length strings not equal");
+        TEST_RESULT_BOOL(strEqZ(STRDEF("equalstring"), "equalstring"), true, "strings equal");
+        TEST_RESULT_BOOL(strEqZ(STRDEF("astring"), "anotherstring"), false, "strings not equal");
+        TEST_RESULT_BOOL(strEqZ(STRDEF("astring"), "bstring"), false, "equal length strings not equal");
 
-        TEST_RESULT_INT(strCmpZ(strNew("equalstring"), "equalstring"), 0, "strings equal");
-        TEST_RESULT_INT(strCmpZ(strNew("a"), "b"), -1, "a < b");
-        TEST_RESULT_INT(strCmpZ(strNew("b"), "a"), 1, "b > a");
+        TEST_RESULT_INT(strCmpZ(STRDEF("equalstring"), "equalstring"), 0, "strings equal");
+        TEST_RESULT_INT(strCmpZ(STRDEF("a"), "b"), -1, "a < b");
+        TEST_RESULT_INT(strCmpZ(STRDEF("b"), "a"), 1, "b > a");
     }
 
     // *****************************************************************************************************************************
@@ -163,7 +163,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strQuote()"))
     {
-        TEST_RESULT_STR(strPtr(strQuote(strNew("abcd"), strNew("'"))), "'abcd'", "quote string");
+        TEST_RESULT_STR(strPtr(strQuote(STRDEF("abcd"), STRDEF("'"))), "'abcd'", "quote string");
     }
 
     // *****************************************************************************************************************************
@@ -175,8 +175,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strSub() and strSubN()"))
     {
-        TEST_RESULT_STR(strPtr(strSub(strNew("ABCD"), 2)), "CD", "sub string");
-        TEST_RESULT_STR(strPtr(strSubN(strNew("ABCD"), 1, 2)), "BC", "sub string with length");
+        TEST_RESULT_STR(strPtr(strSub(STRDEF("ABCD"), 2)), "CD", "sub string");
+        TEST_RESULT_STR(strPtr(strSubN(STRDEF("ABCD"), 1, 2)), "BC", "sub string with length");
     }
 
     // *****************************************************************************************************************************
@@ -195,16 +195,16 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strChr() and strTrunc()"))
     {
-        TEST_RESULT_INT(strChr(strNew("abcd"), 'c'), 2, "c found");
-        TEST_RESULT_INT(strChr(strNew("abcd"), 'C'), -1, "capital C not found");
-        TEST_RESULT_INT(strChr(strNew("abcd"), 'i'), -1, "i not found");
-        TEST_RESULT_INT(strChr(strNew(""), 'x'), -1, "empty string - x not found");
+        TEST_RESULT_INT(strChr(STRDEF("abcd"), 'c'), 2, "c found");
+        TEST_RESULT_INT(strChr(STRDEF("abcd"), 'C'), -1, "capital C not found");
+        TEST_RESULT_INT(strChr(STRDEF("abcd"), 'i'), -1, "i not found");
+        TEST_RESULT_INT(strChr(STRDEF(""), 'x'), -1, "empty string - x not found");
 
         String *val = strNew("abcdef");
         TEST_ERROR(
             strTrunc(val, (int)(strSize(val) + 1)), AssertError,
-            "assertion 'idx >= 0 && (size_t)idx <= this->common.size' failed");
-        TEST_ERROR(strTrunc(val, -1), AssertError, "assertion 'idx >= 0 && (size_t)idx <= this->common.size' failed");
+            "assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
+        TEST_ERROR(strTrunc(val, -1), AssertError, "assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
 
         TEST_RESULT_STR(strPtr(strTrunc(val, strChr(val, 'd'))), "abc", "simple string truncated");
         strCat(val, "\r\n to end");
@@ -218,14 +218,14 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strToLog() and strObjToLog()"))
     {
-        TEST_RESULT_STR(strPtr(strToLog(strNew("test"))), "{\"test\"}", "format string");
+        TEST_RESULT_STR(strPtr(strToLog(STRDEF("test"))), "{\"test\"}", "format string");
         TEST_RESULT_STR(strPtr(strToLog(NULL)), "null", "format null string");
 
         char buffer[256];
         TEST_RESULT_UINT(strObjToLog(NULL, (StrObjToLogFormat)strToLog, buffer, sizeof(buffer)), 4, "format null string");
         TEST_RESULT_STR(buffer, "null", "check null string");
 
-        TEST_RESULT_UINT(strObjToLog(strNew("teststr"), (StrObjToLogFormat)strToLog, buffer, sizeof(buffer)), 11, "format string");
+        TEST_RESULT_UINT(strObjToLog(STRDEF("teststr"), (StrObjToLogFormat)strToLog, buffer, sizeof(buffer)), 11, "format string");
         TEST_RESULT_STR(buffer, "{\"teststr\"}", "check string");
     }
 
@@ -289,24 +289,24 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strLstNewSplit()"))
     {
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplit(strNew(""), strNew(", ")), ", ")), "", "empty list");
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplit(strNew("item1"), strNew(", ")), ", ")), "item1", "one item");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplit(STRDEF(""), STRDEF(", ")), ", ")), "", "empty list");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplit(STRDEF("item1"), STRDEF(", ")), ", ")), "item1", "one item");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstNewSplit(strNew("item1, item2"), strNew(", ")), ", ")), "item1, item2", "two items");
+            strPtr(strLstJoin(strLstNewSplit(STRDEF("item1, item2"), STRDEF(", ")), ", ")), "item1, item2", "two items");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("strLstNewSplitSize()"))
     {
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSize(strNew(""), strNew(" "), 0), ", ")), "", "empty list");
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(strNew("abc def"), " ", 3), "-")), "abc-def", "two items");
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(strNew("abc def"), " ", 4), "-")), "abc-def", "one items");
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(strNew("abc def ghi"), " ", 4), "-")), "abc-def-ghi", "three items");
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(strNew("abc def ghi"), " ", 8), "-")), "abc def-ghi", "three items");
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(strNew("abc def "), " ", 4), "-")), "abc-def ", "two items");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSize(STRDEF(""), STRDEF(" "), 0), ", ")), "", "empty list");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(STRDEF("abc def"), " ", 3), "-")), "abc-def", "two items");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(STRDEF("abc def"), " ", 4), "-")), "abc-def", "one items");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(STRDEF("abc def ghi"), " ", 4), "-")), "abc-def-ghi", "three items");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(STRDEF("abc def ghi"), " ", 8), "-")), "abc def-ghi", "three items");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(STRDEF("abc def "), " ", 4), "-")), "abc-def ", "two items");
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstNewSplitSize(strNew("this is a short sentence"), strNew(" "), 10), "\n")),
+            strPtr(strLstJoin(strLstNewSplitSize(STRDEF("this is a short sentence"), STRDEF(" "), 10), "\n")),
             "this is a\n"
             "short\n"
             "sentence",
@@ -318,8 +318,8 @@ testRun(void)
     {
         VariantList *varList = varLstNew();
 
-        varLstAdd(varList, varNewStr(strNew("string1")));
-        varLstAdd(varList, varNewStr(strNew("string2")));
+        varLstAdd(varList, varNewStr(STRDEF("string1")));
+        varLstAdd(varList, varNewStr(STRDEF("string2")));
 
         TEST_RESULT_STR(strPtr(strLstJoin(strLstNewVarLst(varList), ", ")), "string1, string2", "string list from variant list");
         TEST_RESULT_PTR(strLstNewVarLst(NULL), NULL, "null list from null var list");
@@ -368,8 +368,8 @@ testRun(void)
         strLstAddZ(list, "A");
         strLstAddZ(list, "C");
 
-        TEST_RESULT_BOOL(strLstExists(list, strNew("B")), false, "string does not exist");
-        TEST_RESULT_BOOL(strLstExists(list, strNew("C")), true, "string exists");
+        TEST_RESULT_BOOL(strLstExists(list, STRDEF("B")), false, "string does not exist");
+        TEST_RESULT_BOOL(strLstExists(list, STRDEF("C")), true, "string exists");
         TEST_RESULT_BOOL(strLstExistsZ(list, "B"), false, "string does not exist");
         TEST_RESULT_BOOL(strLstExistsZ(list, "C"), true, "string exists");
     }
@@ -381,7 +381,7 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(strLstJoin(list, ", ")), "", "empty list");
 
-        strLstAdd(list, strNew("item1"));
+        strLstAdd(list, STRDEF("item1"));
         strLstAddZ(list, "item2");
 
         TEST_RESULT_STR(strPtr(strLstJoin(list, ", ")), "item1, item2", "list");
@@ -463,7 +463,7 @@ testRun(void)
         strLstInsertZ(list, 0, "item3");
         TEST_RESULT_STR(strPtr(strLstToLog(list)), "{[\"item3\"]}", "format 1 item list");
 
-        strLstInsert(list, 0, strNew("item1"));
+        strLstInsert(list, 0, STRDEF("item1"));
         strLstInsertZ(list, 1, "item2");
         TEST_RESULT_STR(strPtr(strLstToLog(list)), "{[\"item1\", \"item2\", \"item3\"]}", "format 3 item list");
     }

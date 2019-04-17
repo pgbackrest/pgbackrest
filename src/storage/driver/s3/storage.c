@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 S3 Storage Driver
 ***********************************************************************************************************************************/
+#include <string.h>
 #include <time.h>
 
 #include "common/crypto/hash.h"
@@ -326,14 +327,14 @@ storageDriverS3Request(
 
             char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
             encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, body)), HASH_TYPE_M5_SIZE, md5Hash);
-            httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, strNew(md5Hash));
+            httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
         }
 
         // Generate authorization header
         storageDriverS3Auth(
             this, verb, uri, query, storageDriverS3DateTime(time(NULL)), requestHeader,
             body == NULL || bufUsed(body) == 0 ?
-                strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855") :
+                STRDEF("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855") :
                 bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, body)));
 
         // Process request

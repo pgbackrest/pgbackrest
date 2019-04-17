@@ -104,7 +104,7 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
                 while (!ioReadEof(fileRead));
 
                 // Write a zero block to show file is complete
-                ioWriteLine(protocolServerIoWrite(server), strNew(PROTOCOL_BLOCK_HEADER "0"));
+                ioWriteLine(protocolServerIoWrite(server), STRDEF(PROTOCOL_BLOCK_HEADER "0"));
                 ioWriteFlush(protocolServerIoWrite(server));
             }
         }

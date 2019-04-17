@@ -5,6 +5,7 @@ Posix Storage Driver
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -197,13 +198,11 @@ storageDriverPosixList(StorageDriverPosix *this, const String *path, bool errorO
 
                 while (dirEntry != NULL)
                 {
-                    String *entry = strNew(dirEntry->d_name);
+                    const String *entry = STR(dirEntry->d_name);
 
                     // Exclude current/parent directory and apply the expression if specified
                     if (!strEqZ(entry, ".") && !strEqZ(entry, "..") && (regExp == NULL || regExpMatch(regExp, entry)))
                         strLstAdd(result, entry);
-
-                    strFree(entry);
 
                     dirEntry = readdir(dir);
                 }

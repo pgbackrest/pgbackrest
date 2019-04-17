@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Perl Configuration
 ***********************************************************************************************************************************/
+#include <string.h>
+
 #include "common/debug.h"
 #include "common/memContext.h"
 #include "common/type/json.h"
@@ -29,7 +31,7 @@ perlOptionJson(void)
             Variant *optionVar = varNewKv();
 
             // Add valid
-            kvPut(varKv(optionVar), varNewStr(strNew("valid")), varNewBool(true));
+            kvPut(varKv(optionVar), varNewStr(STRDEF("valid")), varNewBool(true));
 
             // Add source
             const char *source = NULL;
@@ -55,11 +57,11 @@ perlOptionJson(void)
                 }
             }
 
-            kvPut(varKv(optionVar), varNewStr(strNew("source")), varNewStr(strNew(source)));
+            kvPut(varKv(optionVar), varNewStr(STRDEF("source")), varNewStr(STR(source)));
 
             // Add negate and reset
-            kvPut(varKv(optionVar), varNewStr(strNew("negate")), varNewBool(cfgOptionNegate(optionId)));
-            kvPut(varKv(optionVar), varNewStr(strNew("reset")), varNewBool(cfgOptionReset(optionId)));
+            kvPut(varKv(optionVar), varNewStr(STRDEF("negate")), varNewBool(cfgOptionNegate(optionId)));
+            kvPut(varKv(optionVar), varNewStr(STRDEF("reset")), varNewBool(cfgOptionReset(optionId)));
 
             // Add value if it is set
             if (cfgOptionTest(optionId))
@@ -105,10 +107,10 @@ perlOptionJson(void)
                     }
                 }
 
-                kvPut(varKv(optionVar), varNewStr(strNew("value")), valueVar);
+                kvPut(varKv(optionVar), varNewStr(STRDEF("value")), valueVar);
             }
 
-            kvPut(configKv, varNewStr(strNew(cfgOptionName(optionId))), optionVar);
+            kvPut(configKv, varNewStr(STR(cfgOptionName(optionId))), optionVar);
         }
 
         memContextSwitch(MEM_CONTEXT_OLD());

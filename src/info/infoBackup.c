@@ -88,7 +88,7 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
         TRY_END();
 
         const Ini *infoIni = infoPgIni(this->infoPg);
-        const String *backupCurrentSection = strNew(INFO_BACKUP_SECTION_BACKUP_CURRENT);
+        const String *backupCurrentSection = STRDEF(INFO_BACKUP_SECTION_BACKUP_CURRENT);
 
         // If there are current backups, then parse the json for each into a list object
         if (strLstExists(iniSectionList(infoIni), backupCurrentSection))

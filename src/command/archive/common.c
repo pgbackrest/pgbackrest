@@ -59,7 +59,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *errorFile = NULL;
+        const String *errorFile = NULL;
         bool errorFileExists = false;
 
         const String *spoolQueue = archiveAsyncSpoolQueue(archiveMode);
@@ -77,7 +77,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
             // If that doesn't exist then check for a global error
             if (!errorFileExists)
             {
-                errorFile = strNew(STATUS_FILE_GLOBAL STATUS_EXT_ERROR);
+                errorFile = STRDEF(STATUS_FILE_GLOBAL STATUS_EXT_ERROR);
                 errorFileExists = storageExistsNP(storageSpool(), strNewFmt("%s/%s", strPtr(spoolQueue), strPtr(errorFile)));
             }
         }

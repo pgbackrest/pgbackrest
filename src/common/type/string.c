@@ -14,8 +14,11 @@ String Handler
 /***********************************************************************************************************************************
 Constant strings that are generally useful
 ***********************************************************************************************************************************/
+STRING_EXTERN(BRACKETL_STR,                                         "[");
+STRING_EXTERN(BRACKETR_STR,                                         "]");
 STRING_EXTERN(CR_STR,                                               "\r");
 STRING_EXTERN(EMPTY_STR,                                            "");
+STRING_EXTERN(EQ_STR,                                               "=");
 STRING_EXTERN(FSLASH_STR,                                           "/");
 STRING_EXTERN(LF_STR,                                               "\n");
 STRING_EXTERN(N_STR,                                                "n");
@@ -42,9 +45,7 @@ Object type
 ***********************************************************************************************************************************/
 struct String
 {
-    // This struct must always be declared first.  These are the fields that are shared in common with constant strings.
-    struct StringCommon common;
-
+    STRING_COMMON                                                   // Shared in common with constant strings
     MemContext *memContext;                                         // Required for dynamically allocated strings
 };
 
@@ -67,11 +68,11 @@ strNew(const char *string)
     // Create object
     String *this = memNew(sizeof(String));
     this->memContext = memContextCurrent();
-    this->common.size = (unsigned int)stringSize;
+    this->size = (unsigned int)stringSize;
 
     // Allocate and assign string
-    this->common.buffer = memNewRaw(this->common.size + 1);
-    strcpy(this->common.buffer, string);
+    this->buffer = memNewRaw(this->size + 1);
+    strcpy(this->buffer, string);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -97,12 +98,12 @@ strNewBuf(const Buffer *buffer)
     // Create object
     String *this = memNew(sizeof(String));
     this->memContext = memContextCurrent();
-    this->common.size = (unsigned int)bufUsed(buffer);
+    this->size = (unsigned int)bufUsed(buffer);
 
     // Allocate and assign string
-    this->common.buffer = memNewRaw(this->common.size + 1);
-    memcpy(this->common.buffer, (char *)bufPtr(buffer), this->common.size);
-    this->common.buffer[this->common.size] = 0;
+    this->buffer = memNewRaw(this->size + 1);
+    memcpy(this->buffer, (char *)bufPtr(buffer), this->size);
+    this->buffer[this->size] = 0;
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -133,10 +134,10 @@ strNewFmt(const char *format, ...)
     CHECK_SIZE(formatSize);
 
     // Allocate and assign string
-    this->common.size = (unsigned int)formatSize;
-    this->common.buffer = memNewRaw(this->common.size + 1);
+    this->size = (unsigned int)formatSize;
+    this->buffer = memNewRaw(this->size + 1);
     va_start(argumentList, format);
-    vsnprintf(this->common.buffer, this->common.size + 1, format, argumentList);
+    vsnprintf(this->buffer, this->size + 1, format, argumentList);
     va_end(argumentList);
 
     FUNCTION_TEST_RETURN(this);
@@ -163,12 +164,12 @@ strNewN(const char *string, size_t size)
     // Create object
     String *this = memNew(sizeof(String));
     this->memContext = memContextCurrent();
-    this->common.size = (unsigned int)size;
+    this->size = (unsigned int)size;
 
     // Allocate and assign string
-    this->common.buffer = memNewRaw(this->common.size + 1);
-    strncpy(this->common.buffer, string, this->common.size);
-    this->common.buffer[this->common.size] = 0;
+    this->buffer = memNewRaw(this->size + 1);
+    strncpy(this->buffer, string, this->size);
+    this->buffer[this->size] = 0;
 
     // Return buffer
     FUNCTION_TEST_RETURN(this);
@@ -186,9 +187,9 @@ strBase(const String *this)
 
     ASSERT(this != NULL);
 
-    const char *end = this->common.buffer + this->common.size;
+    const char *end = this->buffer + this->size;
 
-    while (end > this->common.buffer && *(end - 1) != '/')
+    while (end > this->buffer && *(end - 1) != '/')
         end--;
 
     FUNCTION_TEST_RETURN(strNew(end));
@@ -225,7 +226,7 @@ strBeginsWithZ(const String *this, const char *beginsWith)
     bool result = false;
     unsigned int beginsWithSize = (unsigned int)strlen(beginsWith);
 
-    if (this->common.size >= beginsWithSize)
+    if (this->size >= beginsWithSize)
         result = strncmp(strPtr(this), beginsWith, beginsWithSize) == 0;
 
     FUNCTION_TEST_RETURN(result);
@@ -242,17 +243,17 @@ strResize(String *this, size_t requested)
         FUNCTION_TEST_PARAM(SIZE, requested);
     FUNCTION_TEST_END();
 
-    if (requested > this->common.extra)
+    if (requested > this->extra)
     {
         // Check size
-        CHECK_SIZE((size_t)this->common.size + requested);
+        CHECK_SIZE((size_t)this->size + requested);
 
         // Calculate new extra needs to satisfy request and leave extra space for new growth
-        this->common.extra = (unsigned int)requested + ((this->common.size + (unsigned int)requested) / 2);
+        this->extra = (unsigned int)requested + ((this->size + (unsigned int)requested) / 2);
 
         MEM_CONTEXT_BEGIN(this->memContext)
         {
-            this->common.buffer = memGrowRaw(this->common.buffer, this->common.size + this->common.extra + 1);
+            this->buffer = memGrowRaw(this->buffer, this->size + this->extra + 1);
         }
         MEM_CONTEXT_END();
     }
@@ -281,9 +282,9 @@ strCat(String *this, const char *cat)
     strResize(this, sizeGrow);
 
     // Append the string
-    strcpy(this->common.buffer + this->common.size, cat);
-    this->common.size += (unsigned int)sizeGrow;
-    this->common.extra -= (unsigned int)sizeGrow;
+    strcpy(this->buffer + this->size, cat);
+    this->size += (unsigned int)sizeGrow;
+    this->extra -= (unsigned int)sizeGrow;
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -306,9 +307,9 @@ strCatChr(String *this, char cat)
     strResize(this, 1);
 
     // Append the character
-    this->common.buffer[this->common.size++] = cat;
-    this->common.buffer[this->common.size] = 0;
-    this->common.extra--;
+    this->buffer[this->size++] = cat;
+    this->buffer[this->size] = 0;
+    this->extra--;
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -338,11 +339,11 @@ strCatFmt(String *this, const char *format, ...)
 
     // Append the formatted string
     va_start(argumentList, format);
-    vsnprintf(this->common.buffer + this->common.size, sizeGrow + 1, format, argumentList);
+    vsnprintf(this->buffer + this->size, sizeGrow + 1, format, argumentList);
     va_end(argumentList);
 
-    this->common.size += (unsigned int)sizeGrow;
-    this->common.extra -= (unsigned int)sizeGrow;
+    this->size += (unsigned int)sizeGrow;
+    this->extra -= (unsigned int)sizeGrow;
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -440,8 +441,8 @@ strEndsWithZ(const String *this, const char *endsWith)
     bool result = false;
     unsigned int endsWithSize = (unsigned int)strlen(endsWith);
 
-    if (this->common.size >= endsWithSize)
-        result = strcmp(strPtr(this) + (this->common.size - endsWithSize), endsWith) == 0;
+    if (this->size >= endsWithSize)
+        result = strcmp(strPtr(this) + (this->size - endsWithSize), endsWith) == 0;
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -465,7 +466,7 @@ strEq(const String *this, const String *compare)
 
     bool result = false;
 
-    if (this->common.size == compare->common.size)
+    if (this->size == compare->size)
         result = strcmp(strPtr(this), strPtr(compare)) == 0;
 
     FUNCTION_TEST_RETURN(result);
@@ -497,8 +498,8 @@ strFirstUpper(String *this)
 
     ASSERT(this != NULL);
 
-    if (this->common.size > 0)
-        this->common.buffer[0] = (char)toupper(this->common.buffer[0]);
+    if (this->size > 0)
+        this->buffer[0] = (char)toupper(this->buffer[0]);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -515,8 +516,8 @@ strFirstLower(String *this)
 
     ASSERT(this != NULL);
 
-    if (this->common.size > 0)
-        this->common.buffer[0] = (char)tolower(this->common.buffer[0]);
+    if (this->size > 0)
+        this->buffer[0] = (char)tolower(this->buffer[0]);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -533,9 +534,9 @@ strUpper(String *this)
 
     ASSERT(this != NULL);
 
-    if (this->common.size > 0)
-        for (unsigned int idx = 0; idx <= this->common.size; idx++)
-            this->common.buffer[idx] = (char)toupper(this->common.buffer[idx]);
+    if (this->size > 0)
+        for (unsigned int idx = 0; idx <= this->size; idx++)
+            this->buffer[idx] = (char)toupper(this->buffer[idx]);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -552,9 +553,9 @@ strLower(String *this)
 
     ASSERT(this != NULL);
 
-    if (this->common.size > 0)
-        for (unsigned int idx = 0; idx <= this->common.size; idx++)
-            this->common.buffer[idx] = (char)tolower(this->common.buffer[idx]);
+    if (this->size > 0)
+        for (unsigned int idx = 0; idx <= this->size; idx++)
+            this->buffer[idx] = (char)tolower(this->buffer[idx]);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -571,15 +572,15 @@ strPath(const String *this)
 
     ASSERT(this != NULL);
 
-    const char *end = this->common.buffer + this->common.size;
+    const char *end = this->buffer + this->size;
 
-    while (end > this->common.buffer && *(end - 1) != '/')
+    while (end > this->buffer && *(end - 1) != '/')
         end--;
 
     FUNCTION_TEST_RETURN(
         strNewN(
-            this->common.buffer,
-            end - this->common.buffer <= 1 ? (size_t)(end - this->common.buffer) : (size_t)(end - this->common.buffer - 1)));
+            this->buffer,
+            end - this->buffer <= 1 ? (size_t)(end - this->buffer) : (size_t)(end - this->buffer - 1)));
 }
 
 /***********************************************************************************************************************************
@@ -595,7 +596,7 @@ strPtr(const String *this)
     char *result = NULL;
 
     if (this != NULL)
-        result = this->common.buffer;
+        result = this->buffer;
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -645,10 +646,10 @@ strReplaceChr(String *this, char find, char replace)
 
     ASSERT(this != NULL);
 
-    for (unsigned int stringIdx = 0; stringIdx < this->common.size; stringIdx++)
+    for (unsigned int stringIdx = 0; stringIdx < this->size; stringIdx++)
     {
-        if (this->common.buffer[stringIdx] == find)
-            this->common.buffer[stringIdx] = replace;
+        if (this->buffer[stringIdx] == find)
+            this->buffer[stringIdx] = replace;
     }
 
     FUNCTION_TEST_RETURN(this);
@@ -666,9 +667,9 @@ strSub(const String *this, size_t start)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(start < this->common.size);
+    ASSERT(start < this->size);
 
-    FUNCTION_TEST_RETURN(strSubN(this, start, this->common.size - start));
+    FUNCTION_TEST_RETURN(strSubN(this, start, this->size - start));
 }
 
 /***********************************************************************************************************************************
@@ -684,10 +685,10 @@ strSubN(const String *this, size_t start, size_t size)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(start < this->common.size);
-    ASSERT(start + size <= this->common.size);
+    ASSERT(start < this->size);
+    ASSERT(start + size <= this->size);
 
-    FUNCTION_TEST_RETURN(strNewN(this->common.buffer + start, size));
+    FUNCTION_TEST_RETURN(strNewN(this->buffer + start, size));
 }
 
 /***********************************************************************************************************************************
@@ -702,7 +703,7 @@ strSize(const String *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->common.size);
+    FUNCTION_TEST_RETURN(this->size);
 }
 
 /***********************************************************************************************************************************
@@ -718,16 +719,16 @@ strTrim(String *this)
     ASSERT(this != NULL);
 
     // Nothing to trim if size is zero
-    if (this->common.size > 0)
+    if (this->size > 0)
     {
         // Find the beginning of the string skipping all whitespace
-        char *begin = this->common.buffer;
+        char *begin = this->buffer;
 
         while (*begin != 0 && (*begin == ' ' || *begin == '\t' || *begin == '\r' || *begin == '\n'))
             begin++;
 
         // Find the end of the string skipping all whitespace
-        char *end = this->common.buffer + (this->common.size - 1);
+        char *end = this->buffer + (this->size - 1);
 
         while (end > begin && (*end == ' ' || *end == '\t' || *end == '\r' || *end == '\n'))
             end--;
@@ -735,20 +736,20 @@ strTrim(String *this)
         // Is there anything to trim?
         size_t newSize = (size_t)(end - begin + 1);
 
-        if (begin != this->common.buffer || newSize < strSize(this))
+        if (begin != this->buffer || newSize < strSize(this))
         {
             // Calculate new size
-            this->common.size = (unsigned int)newSize;
+            this->size = (unsigned int)newSize;
 
             // Move the substr to the beginning of the buffer
-            memmove(this->common.buffer, begin, this->common.size);
-            this->common.buffer[this->common.size] = 0;
-            this->common.extra = 0;
+            memmove(this->buffer, begin, this->size);
+            this->buffer[this->size] = 0;
+            this->extra = 0;
 
             MEM_CONTEXT_BEGIN(this->memContext)
             {
                 // Resize the buffer
-                this->common.buffer = memGrowRaw(this->common.buffer, this->common.size + 1);
+                this->buffer = memGrowRaw(this->buffer, this->size + 1);
             }
             MEM_CONTEXT_END();
         }
@@ -772,12 +773,12 @@ strChr(const String *this, char chr)
 
     int result = -1;
 
-    if (this->common.size > 0)
+    if (this->size > 0)
     {
-        const char *ptr = strchr(this->common.buffer, chr);
+        const char *ptr = strchr(this->buffer, chr);
 
         if (ptr != NULL)
-            result = (int)(ptr - this->common.buffer);
+            result = (int)(ptr - this->buffer);
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -794,19 +795,19 @@ strTrunc(String *this, int idx)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(idx >= 0 && (size_t)idx <= this->common.size);
+    ASSERT(idx >= 0 && (size_t)idx <= this->size);
 
-    if (this->common.size > 0)
+    if (this->size > 0)
     {
         // Reset the size to end at the index
-        this->common.size = (unsigned int)(idx);
-        this->common.buffer[this->common.size] = 0;
-        this->common.extra = 0;
+        this->size = (unsigned int)(idx);
+        this->buffer[this->size] = 0;
+        this->extra = 0;
 
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             // Resize the buffer
-            this->common.buffer = memGrowRaw(this->common.buffer, this->common.size + 1);
+            this->buffer = memGrowRaw(this->buffer, this->size + 1);
         }
         MEM_CONTEXT_END();
     }
@@ -823,14 +824,7 @@ size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *string = NULL;
-
-        if (object == NULL)
-            string = strNew("null");
-        else
-            string = formatFunc(object);
-
-        result = (size_t)snprintf(buffer, bufferSize, "%s", strPtr(string));
+        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? strPtr(NULL_STR) : strPtr(formatFunc(object)));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -843,7 +837,7 @@ Render as string for logging
 String *
 strToLog(const String *this)
 {
-    return this == NULL ? strNew("null") : strNewFmt("{\"%s\"}", strPtr(this));
+    return this == NULL ? strDup(NULL_STR) : strNewFmt("{\"%s\"}", strPtr(this));
 }
 
 /***********************************************************************************************************************************
@@ -900,7 +894,7 @@ strFree(String *this)
     {
         MEM_CONTEXT_BEGIN(this->memContext)
         {
-            memFree(this->common.buffer);
+            memFree(this->buffer);
             memFree(this);
         }
         MEM_CONTEXT_END();

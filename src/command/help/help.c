@@ -144,7 +144,7 @@ helpRender(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Message for more help when it is available
-        String *more = NULL;
+        const String *more = NULL;
 
         // Display general help
         if (cfgCommand() == cfgCmdHelp || cfgCommand() == cfgCmdNone)
@@ -187,12 +187,12 @@ helpRender(void)
                     strCatFmt(
                         result, "    %s%*s%s\n", cfgCommandName(commandId),
                         (int)(commandSizeMax - strlen(cfgCommandName(commandId)) + 2), "",
-                        strPtr(helpRenderText(strNew(helpSummary), commandSizeMax + 6, false, CONSOLE_WIDTH)));
+                        strPtr(helpRenderText(STR(helpSummary), commandSizeMax + 6, false, CONSOLE_WIDTH)));
                 }
             }
 
             // Construct message for more help
-            more = strNew("[command]");
+            more = STRDEF("[command]");
         }
         else
         {
@@ -214,8 +214,8 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    strPtr(helpRenderText(strNew(cfgDefCommandHelpSummary(commandDefId)), 0, true, CONSOLE_WIDTH)),
-                    strPtr(helpRenderText(strNew(cfgDefCommandHelpDescription(commandDefId)), 0, true, CONSOLE_WIDTH)));
+                    strPtr(helpRenderText(STR(cfgDefCommandHelpSummary(commandDefId)), 0, true, CONSOLE_WIDTH)),
+                    strPtr(helpRenderText(STR(cfgDefCommandHelpDescription(commandDefId)), 0, true, CONSOLE_WIDTH)));
 
                 // Construct key/value of sections and options
                 KeyValue *optionKv = kvNew();
@@ -225,16 +225,16 @@ helpRender(void)
                 {
                     if (cfgDefOptionValid(commandDefId, optionDefId) && !cfgDefOptionInternal(commandDefId, optionDefId))
                     {
-                        String *section = NULL;
+                        const String *section = NULL;
 
                         if (cfgDefOptionHelpSection(optionDefId) != NULL)
-                            section = strNew(cfgDefOptionHelpSection(optionDefId));
+                            section = STR(cfgDefOptionHelpSection(optionDefId));
 
                         if (section == NULL ||
                             (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "repository") &&
                              !strEqZ(section, "stanza")))
                         {
-                            section = strNew("command");
+                            section = STRDEF("command");
                         }
 
                         kvAdd(optionKv, varNewStr(section), varNewInt((int)optionDefId));
@@ -333,8 +333,8 @@ helpRender(void)
                     "\n"
                     "%s\n",
                     optionName,
-                    strPtr(helpRenderText(strNew(cfgDefOptionHelpSummary(commandDefId, optionDefId)), 0, true, CONSOLE_WIDTH)),
-                    strPtr(helpRenderText(strNew(cfgDefOptionHelpDescription(commandDefId, optionDefId)), 0, true, CONSOLE_WIDTH)));
+                    strPtr(helpRenderText(STR(cfgDefOptionHelpSummary(commandDefId, optionDefId)), 0, true, CONSOLE_WIDTH)),
+                    strPtr(helpRenderText(STR(cfgDefOptionHelpDescription(commandDefId, optionDefId)), 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
                 const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));

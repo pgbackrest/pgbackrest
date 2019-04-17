@@ -75,9 +75,9 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 
             const String *expected[] =
             {
-                PROTOCOL_GREETING_NAME_STR, strNew(PROJECT_NAME),
+                PROTOCOL_GREETING_NAME_STR, STRDEF(PROJECT_NAME),
                 PROTOCOL_GREETING_SERVICE_STR, service,
-                PROTOCOL_GREETING_VERSION_STR, strNew(PROJECT_VERSION),
+                PROTOCOL_GREETING_VERSION_STR, STRDEF(PROJECT_VERSION),
             };
 
             for (unsigned int expectedIdx = 0; expectedIdx < sizeof(expected) / sizeof(char *) / 2; expectedIdx++)

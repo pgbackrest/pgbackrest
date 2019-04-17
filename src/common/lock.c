@@ -96,7 +96,7 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
                 const String *errorHint = NULL;
 
                 if (errNo == EWOULDBLOCK)
-                    errorHint = STRING_CONST("\nHINT: is another " PROJECT_NAME " process running?");
+                    errorHint = STRDEF("\nHINT: is another " PROJECT_NAME " process running?");
                 else if (errNo == EACCES)
                 {
                     errorHint = strNewFmt(
