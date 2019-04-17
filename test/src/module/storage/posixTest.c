@@ -840,17 +840,17 @@ testRun(void)
 
         TEST_ERROR_FMT(
             storageDriverPosixFileWrite(storageFileWriteFileDriver(file), buffer), FileWriteError,
-            "unable to write '%s': [9] Bad file descriptor", strPtr(fileName));
+            "unable to write '%s.pgbackrest.tmp': [9] Bad file descriptor", strPtr(fileName));
         TEST_ERROR_FMT(
             storageDriverPosixFileWriteClose(storageFileWriteFileDriver(file)), FileSyncError,
-            "unable to sync '%s': [9] Bad file descriptor", strPtr(fileName));
+            "unable to sync '%s.pgbackrest.tmp': [9] Bad file descriptor", strPtr(fileName));
 
         // Disable file sync so the close can be reached
         ((StorageDriverPosixFileWrite *)file->driver)->syncFile = false;
 
         TEST_ERROR_FMT(
             storageDriverPosixFileWriteClose(storageFileWriteFileDriver(file)), FileCloseError,
-            "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
+            "unable to close '%s.pgbackrest.tmp': [9] Bad file descriptor", strPtr(fileName));
 
         // Set file handle to -1 so the close on free with not fail
         ((StorageDriverPosixFileWrite *)file->driver)->handle = -1;
