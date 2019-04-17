@@ -10,7 +10,7 @@
         <variable key="os-centos6">centos6</variable>
         <variable key="os-centos7">centos7</variable>
 
-        <!-- User-defined package to use in documentation -->
+        <!-- User-defined package to use in documentation (use "apt" to install the current pgpd apt package) -->
         <variable key="package">none</variable>
 
         <!-- Defines the general OS type that will be used to generate commands.  Also supported: centos6, centos7 -->
@@ -461,18 +461,27 @@
         <execute-list host="{[br-install-host]}">
             <title>Install <backrest/> from package</title>
 
-            <execute if="{[os-type-is-debian]}" user="root" err-suppress="y" show="n">
+            <execute if="{[os-type-is-debian]} &amp;&amp; '{[package]}' ne 'apt'" user="root" err-suppress="y" show="n">
                 <exe-cmd>dpkg -i {[pgbackrest-repo-path]}/{[package]}</exe-cmd>
                 <exe-cmd-extra> 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="{[os-type-is-debian]}" user="root" show="n">
+            <execute if="{[os-type-is-debian]} &amp;&amp; '{[package]}' ne 'apt'" user="root" show="n">
                 <exe-cmd>apt-get -y install -f</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="{[os-type-is-debian]}" user="root" skip="y">
+            <execute if="{[os-type-is-debian]} &amp;&amp; '{[package]}' ne 'apt'" user="root" skip="y">
                 <exe-cmd>apt-get install pgbackrest</exe-cmd>
+            </execute>
+
+            <execute if="{[os-type-is-debian]} &amp;&amp; '{[package]}' eq 'apt'" user="root" show="n">
+                <exe-cmd>apt-get update</exe-cmd>
+            </execute>
+
+            <execute if="{[os-type-is-debian]} &amp;&amp; '{[package]}' eq 'apt'" user="root" show="y">
+                <exe-cmd>apt-get install pgbackrest</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-centos]}" user="root" show="n">

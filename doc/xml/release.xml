@@ -46,6 +46,14 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Option to build documentation from current <proper>apt.postgres.org</proper> packages.</p>
+                    </release-item>
+                </release-development-list>
+            </release-doc-list>
         </release>
 
         <release date="2019-04-11" version="2.12" title="C Implementation of Archive Push">
