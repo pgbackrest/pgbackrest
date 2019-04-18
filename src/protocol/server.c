@@ -95,21 +95,24 @@ protocolServerHandlerAdd(ProtocolServer *this, ProtocolServerProcessHandler hand
 Return an error
 ***********************************************************************************************************************************/
 void
-protocolServerError(ProtocolServer *this, int code, const String *message)
+protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
         FUNCTION_LOG_PARAM(INT, code);
         FUNCTION_LOG_PARAM(STRING, message);
+        FUNCTION_LOG_PARAM(STRING, stack);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(code != 0);
     ASSERT(message != NULL);
+    ASSERT(stack != NULL);
 
     KeyValue *error = kvNew();
-    kvPut(error, VARSTR(PROTOCOL_ERROR_STR), VARINT(errorCode()));
-    kvPut(error, VARSTR(PROTOCOL_OUTPUT_STR), VARSTRZ(errorMessage()));
+    kvPut(error, VARSTR(PROTOCOL_ERROR_STR), VARINT(code));
+    kvPut(error, VARSTR(PROTOCOL_OUTPUT_STR), VARSTR(message));
+    kvPut(error, VARSTR(PROTOCOL_ERROR_STACK_STR), VARSTR(stack));
 
     ioWriteLine(this->write, kvToJson(error, 0));
     ioWriteFlush(this->write);
@@ -169,14 +172,10 @@ protocolServerProcess(ProtocolServer *this)
             }
             MEM_CONTEXT_TEMP_END();
         }
-        // Asserts are thrown so a stack trace will be output to aid in debugging
-        CATCH(AssertError)
-        {
-            RETHROW();
-        }
         CATCH_ANY()
         {
-            protocolServerError(this, errorCode(), STR(errorMessage()));
+            // Report error to the client
+            protocolServerError(this, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
         }
         TRY_END();
     }

@@ -21,6 +21,7 @@ STRING_EXTERN(PROTOCOL_COMMAND_NOOP_STR,                            PROTOCOL_COM
 STRING_EXTERN(PROTOCOL_COMMAND_EXIT_STR,                            PROTOCOL_COMMAND_EXIT);
 
 STRING_EXTERN(PROTOCOL_ERROR_STR,                                   PROTOCOL_ERROR);
+STRING_EXTERN(PROTOCOL_ERROR_STACK_STR,                             PROTOCOL_ERROR_STACK);
 
 STRING_EXTERN(PROTOCOL_OUTPUT_STR,                                  PROTOCOL_OUTPUT);
 
@@ -140,11 +141,14 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
 
         if (error != NULL)
         {
+            const ErrorType *type = errorTypeFromCode(varIntForce(error));
             const String *message = varStr(kvGet(responseKv, VARSTR(PROTOCOL_OUTPUT_STR)));
+            const String *stack = varStr(kvGet(responseKv, VARSTR(PROTOCOL_ERROR_STACK_STR)));
 
             THROWP_FMT(
-                errorTypeFromCode(varIntForce(error)), "%s: %s", strPtr(this->errorPrefix),
-                message == NULL ? "no details available" : strPtr(message));
+                type, "%s: %s%s", strPtr(this->errorPrefix), message == NULL ? "no details available" : strPtr(message),
+                type == &AssertError || logWill(logLevelDebug) ?
+                    (stack == NULL ? "\nno stack trace available" : strPtr(strNewFmt("\n%s", strPtr(stack)))) : "");
         }
 
         // Get output

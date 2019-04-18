@@ -57,7 +57,7 @@ cmdRemote(int handleRead, int handleWrite)
         }
         CATCH_ANY()
         {
-            protocolServerError(server, errorCode(), STR(errorMessage()));
+            protocolServerError(server, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
         }
         TRY_END();
 

@@ -5,6 +5,7 @@ Test Protocol
 #include "common/io/handleWrite.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/regExp.h"
 #include "storage/storage.h"
 #include "storage/driver/posix/storage.h"
 #include "version.h"
@@ -319,7 +320,9 @@ testRun(void)
                 TEST_RESULT_PTR(protocolClientIoWrite(client), client->write, "get write io");
 
                 // Throw errors
-                TEST_ERROR(protocolClientNoOp(client), AssertError, "raised from test client: sample error message");
+                TEST_ERROR(
+                    protocolClientNoOp(client), AssertError,
+                    "raised from test client: sample error message\nno stack trace available");
                 TEST_ERROR(protocolClientNoOp(client), UnknownError, "raised from test client: no details available");
                 TEST_ERROR(protocolClientNoOp(client), AssertError, "no output required by command");
 
@@ -366,18 +369,27 @@ testRun(void)
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{}", "noop result");
 
                 // Invalid command
+                KeyValue *result = NULL;
+
                 TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"bogus\"}")), "write bogus");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush bogus");
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"err\":39,\"out\":\"invalid command 'bogus'\"}", "bogus error");
+                TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
+                TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 39, "    check code");
+                TEST_RESULT_STR(strPtr(varStr(kvGet(result, VARSTRDEF("out")))), "invalid command 'bogus'", "    check message");
+                TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
 
                 // Simple request
                 TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"request-simple\"}")), "write simple request");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush simple request");
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"out\":true}", "simple request result");
 
-                // Assert -- no response will come backup because the process loop will terminate
+                // Throw an assert error which will include a stack trace
                 TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"assert\"}")), "write assert");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush simple request");
+                TEST_RESULT_VOID(ioWriteFlush(write), "flush assert error");
+                TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
+                TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 25, "    check code");
+                TEST_RESULT_STR(strPtr(varStr(kvGet(result, VARSTRDEF("out")))), "test assert", "    check message");
+                TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
 
                 // Complex request -- after process loop has been restarted
                 TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"request-complex\"}")), "write complex request");
@@ -417,8 +429,7 @@ testRun(void)
 
                 TEST_RESULT_VOID(protocolServerHandlerAdd(server, testServerProtocol), "add handler");
 
-                TEST_ERROR(protocolServerProcess(server), AssertError, "test assert");
-                TEST_RESULT_VOID(protocolServerProcess(server), "run process loop again");
+                TEST_RESULT_VOID(protocolServerProcess(server), "run process loop");
 
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
                 TEST_RESULT_VOID(protocolServerFree(NULL), "free null server");
