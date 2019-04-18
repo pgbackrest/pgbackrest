@@ -26,6 +26,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Move <code>lockRelease()</code> to the end of <code>exitSafe()</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Automatically generate constants for command and option names.</p>
                     </release-item>
 

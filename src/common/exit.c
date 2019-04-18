@@ -134,13 +134,6 @@ exitSafe(int result, bool error, SignalType signalType)
         result = errorCode();
     }
 
-    // Release any locks but ignore errors
-    TRY_BEGIN()
-    {
-        lockRelease(false);
-    }
-    TRY_END();
-
     // Free protocol objects but ignore errors
     TRY_BEGIN()
     {
@@ -184,6 +177,13 @@ exitSafe(int result, bool error, SignalType signalType)
 
         cmdEnd(result, errorMessage);
     }
+
+    // Release any locks but ignore errors
+    TRY_BEGIN()
+    {
+        lockRelease(false);
+    }
+    TRY_END();
 
     // Return result - caller should immediate pass this result to exit()
     FUNCTION_LOG_RETURN(INT, result);
