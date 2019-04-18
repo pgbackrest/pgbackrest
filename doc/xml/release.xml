@@ -30,6 +30,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>CHECK()</code> macro for production assertions.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Automatically generate constants for command and option names.</p>
                     </release-item>
 
