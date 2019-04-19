@@ -48,7 +48,7 @@ cfgLoadLogSetting(void)
         logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
 
     if (cfgOptionValid(cfgOptProcessMax))
-        logProcessMax = (unsigned int)cfgOptionInt(cfgOptProcessMax);
+        logProcessMax = cfgOptionUInt(cfgOptProcessMax);
 
     logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp, logProcessMax);
 
@@ -172,7 +172,7 @@ cfgLoadUpdateOption(void)
                     if (cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
                     {
                         cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
-                            VARINT(cfgOptionInt(cfgOptRepoRetentionFull + optionIdx)));
+                            VARUINT(cfgOptionUInt(cfgOptRepoRetentionFull + optionIdx)));
                     }
                 }
                 else if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF))
@@ -181,7 +181,7 @@ cfgLoadUpdateOption(void)
                     if (cfgOptionTest(cfgOptRepoRetentionDiff + optionIdx))
                     {
                         cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
-                            VARINT(cfgOptionInt(cfgOptRepoRetentionDiff + optionIdx)));
+                            VARUINT(cfgOptionUInt(cfgOptRepoRetentionDiff + optionIdx)));
                     }
                     else
                     {
@@ -270,7 +270,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         {
             // Set IO buffer size
             if (cfgOptionValid(cfgOptBufferSize))
-                ioBufferSizeSet((size_t)cfgOptionInt(cfgOptBufferSize));
+                ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
 
             // Open the log file if this command logs to a file
             if (cfgLogFile() && !cfgCommandHelp())
@@ -284,8 +284,8 @@ cfgLoad(unsigned int argListSize, const char *argList[])
                 if (cfgCommand() == cfgCmdLocal || cfgCommand() == cfgCmdRemote)
                 {
                     strCatFmt(
-                        logFile, "%s-%s-%03d.log", strPtr(cfgOptionStr(cfgOptCommand)), cfgCommandName(cfgCommand()),
-                        cfgOptionInt(cfgOptProcess));
+                        logFile, "%s-%s-%03u.log", strPtr(cfgOptionStr(cfgOptCommand)), cfgCommandName(cfgCommand()),
+                        cfgOptionUInt(cfgOptProcess));
                 }
                 // Else add command name
                 else

@@ -104,7 +104,7 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
 
                 InfoBackupData infoBackupData =
                 {
-                    .backrestFormat = (unsigned int)varUInt64(kvGet(backupKv, VARSTR(INFO_KEY_FORMAT_STR))),
+                    .backrestFormat = varUIntForce(kvGet(backupKv, VARSTR(INFO_KEY_FORMAT_STR))),
                     .backrestVersion = varStrForce(kvGet(backupKv, VARSTR(INFO_KEY_VERSION_STR))),
                     .backupInfoRepoSize = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR)),
                     .backupInfoRepoSizeDelta = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR)),

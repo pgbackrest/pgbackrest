@@ -174,7 +174,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
         // Add empty database section to archiveInfo and then fill in database id from the backup.info
         KeyValue *databaseInfo = kvPutKv(varKv(archiveInfo), KEY_DATABASE_VAR);
 
-        kvAdd(databaseInfo, DB_KEY_ID_VAR, VARUINT64(pgData->id));
+        kvAdd(databaseInfo, DB_KEY_ID_VAR, VARUINT(pgData->id));
 
         kvPut(varKv(archiveInfo), DB_KEY_ID_VAR, VARSTR(archiveId));
         kvPut(varKv(archiveInfo), ARCHIVE_KEY_MIN_VAR, (archiveStart != NULL ? VARSTR(archiveStart) : (Variant *)NULL));
@@ -231,13 +231,13 @@ backupList(VariantList *backupSection, InfoBackup *info)
         // backrest section
         KeyValue *backrestInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_BACKREST_VAR);
 
-        kvAdd(backrestInfo, BACKREST_KEY_FORMAT_VAR, VARUINT64(backupData.backrestFormat));
+        kvAdd(backrestInfo, BACKREST_KEY_FORMAT_VAR, VARUINT(backupData.backrestFormat));
         kvAdd(backrestInfo, BACKREST_KEY_VERSION_VAR, VARSTR(backupData.backrestVersion));
 
         // database section
         KeyValue *dbInfo = kvPutKv(varKv(backupInfo), KEY_DATABASE_VAR);
 
-        kvAdd(dbInfo, DB_KEY_ID_VAR, VARUINT64(backupData.backupPgId));
+        kvAdd(dbInfo, DB_KEY_ID_VAR, VARUINT(backupData.backupPgId));
 
         // info section
         KeyValue *infoInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_INFO_VAR);
@@ -347,7 +347,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
                 InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);
                 Variant *pgInfo = varNewKv();
 
-                kvPut(varKv(pgInfo), DB_KEY_ID_VAR, VARUINT64(pgData.id));
+                kvPut(varKv(pgInfo), DB_KEY_ID_VAR, VARUINT(pgData.id));
                 kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
                 kvPut(varKv(pgInfo), DB_KEY_VERSION_VAR, VARSTR(pgVersionToStr(pgData.version)));
 
@@ -421,7 +421,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
     for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
     {
         KeyValue *pgInfo = varKv(varLstGet(dbSection, dbIdx));
-        uint64_t dbId = varUInt64(kvGet(pgInfo, DB_KEY_ID_VAR));
+        unsigned int dbId = varUInt(kvGet(pgInfo, DB_KEY_ID_VAR));
 
         // List is ordered so 0 is always the current DB index
         if (dbIdx == varLstSize(dbSection) - 1)
@@ -434,7 +434,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
         {
             KeyValue *archiveInfo = varKv(varLstGet(archiveSection, archiveIdx));
             KeyValue *archiveDbInfo = varKv(kvGet(archiveInfo, KEY_DATABASE_VAR));
-            uint64_t archiveDbId = varUInt64(kvGet(archiveDbInfo, DB_KEY_ID_VAR));
+            unsigned int archiveDbId = varUInt(kvGet(archiveDbInfo, DB_KEY_ID_VAR));
 
             if (archiveDbId == dbId)
             {
@@ -461,7 +461,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
         {
             KeyValue *backupInfo = varKv(varLstGet(backupSection, backupIdx));
             KeyValue *backupDbInfo = varKv(kvGet(backupInfo, KEY_DATABASE_VAR));
-            uint64_t backupDbId = varUInt64(kvGet(backupDbInfo, DB_KEY_ID_VAR));
+            unsigned int backupDbId = varUInt(kvGet(backupDbInfo, DB_KEY_ID_VAR));
 
             if (backupDbId == dbId)
             {
@@ -474,8 +474,8 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr)
                 // Get and format the backup start/stop time
                 static char timeBufferStart[20];
                 static char timeBufferStop[20];
-                time_t timeStart = (time_t) varUInt64(kvGet(timestampInfo, KEY_START_VAR));
-                time_t timeStop = (time_t) varUInt64(kvGet(timestampInfo, KEY_STOP_VAR));
+                time_t timeStart = (time_t)varUInt64(kvGet(timestampInfo, KEY_START_VAR));
+                time_t timeStop = (time_t)varUInt64(kvGet(timestampInfo, KEY_STOP_VAR));
 
                 strftime(timeBufferStart, 20, "%Y-%m-%d %H:%M:%S", localtime(&timeStart));
                 strftime(timeBufferStop, 20, "%Y-%m-%d %H:%M:%S", localtime(&timeStop));

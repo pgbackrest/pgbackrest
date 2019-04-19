@@ -32,17 +32,15 @@ Ready file extension constants
 Format the warning when a file is dropped
 ***********************************************************************************************************************************/
 static String *
-archivePushDropWarning(const String *walFile, int64_t queueMax)
+archivePushDropWarning(const String *walFile, uint64_t queueMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, walFile);
-        FUNCTION_TEST_PARAM(INT64, queueMax);
+        FUNCTION_TEST_PARAM(UINT64, queueMax);
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(
-        strNewFmt(
-            "dropped WAL file '%s' because archive queue exceeded %s", strPtr(walFile),
-            strPtr(strSizeFormat((uint64_t)queueMax))));
+        strNewFmt("dropped WAL file '%s' because archive queue exceeded %s", strPtr(walFile), strPtr(strSizeFormat(queueMax))));
 }
 
 /***********************************************************************************************************************************
@@ -56,7 +54,7 @@ archivePushDrop(const String *walPath, const StringList *const processList)
         FUNCTION_LOG_PARAM(STRING_LIST, processList);
     FUNCTION_LOG_END();
 
-    const uint64_t queueMax = (uint64_t)cfgOptionInt64(cfgOptArchivePushQueueMax);
+    const uint64_t queueMax = cfgOptionUInt64(cfgOptArchivePushQueueMax);
     uint64_t queueSize = 0;
     bool result = false;
 
@@ -356,7 +354,7 @@ cmdArchivePush(void)
             if (cfgOptionTest(cfgOptArchivePushQueueMax) &&
                 archivePushDrop(strPath(walFile), archivePushReadyList(strPath(walFile))))
             {
-                LOG_WARN(strPtr(archivePushDropWarning(archiveFile, cfgOptionInt64(cfgOptArchivePushQueueMax))));
+                LOG_WARN(strPtr(archivePushDropWarning(archiveFile, cfgOptionUInt64(cfgOptArchivePushQueueMax))));
             }
             // Else push the file
             else
@@ -424,7 +422,7 @@ cmdArchivePushAsync(void)
                 for (unsigned int walFileIdx = 0; walFileIdx < strLstSize(walFileList); walFileIdx++)
                 {
                     const String *walFile = strLstGet(walFileList, walFileIdx);
-                    const String *warning = archivePushDropWarning(walFile, cfgOptionInt64(cfgOptArchivePushQueueMax));
+                    const String *warning = archivePushDropWarning(walFile, cfgOptionUInt64(cfgOptArchivePushQueueMax));
 
                     archiveAsyncStatusOkWrite(archiveModePush, walFile, warning);
                     LOG_WARN(strPtr(warning));
@@ -444,7 +442,7 @@ cmdArchivePushAsync(void)
                 ProtocolParallel *parallelExec = protocolParallelNew(
                     (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2);
 
-                for (unsigned int processIdx = 1; processIdx <= (unsigned int)cfgOptionInt(cfgOptProcessMax); processIdx++)
+                for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, processIdx));
 
                 // Queue jobs in executor
@@ -457,10 +455,10 @@ cmdArchivePushAsync(void)
                     ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR);
                     protocolCommandParamAdd(command, VARSTR(strNewFmt("%s/%s", strPtr(walPath), strPtr(walFile))));
                     protocolCommandParamAdd(command, VARSTR(archiveInfo.archiveId));
-                    protocolCommandParamAdd(command, VARUINT64(archiveInfo.pgVersion));
+                    protocolCommandParamAdd(command, VARUINT(archiveInfo.pgVersion));
                     protocolCommandParamAdd(command, VARUINT64(archiveInfo.pgSystemId));
                     protocolCommandParamAdd(command, VARSTR(walFile));
-                    protocolCommandParamAdd(command, VARUINT64(cipherType(cfgOptionStr(cfgOptRepoCipherType))));
+                    protocolCommandParamAdd(command, VARUINT(cipherType(cfgOptionStr(cfgOptRepoCipherType))));
                     protocolCommandParamAdd(command, VARSTR(archiveInfo.archiveCipherPass));
                     protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptCompress)));
                     protocolCommandParamAdd(command, VARINT(cfgOptionInt(cfgOptCompressLevel)));

@@ -23,7 +23,7 @@ cmdRemote(int handleRead, int handleWrite)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *name = strNewFmt(PROTOCOL_SERVICE_REMOTE "-%d", cfgOptionInt(cfgOptProcess));
+        String *name = strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u", cfgOptionUInt(cfgOptProcess));
         IoRead *read = ioHandleReadIo(ioHandleReadNew(name, handleRead, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000)));
         ioReadOpen(read);
         IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(name, handleWrite));
@@ -43,7 +43,7 @@ cmdRemote(int handleRead, int handleWrite)
             ioReadLine(read);
 
             // Only try the lock if this is process 0, i.e. the remote started from the main process
-            if (cfgOptionInt(cfgOptProcess) == 0)
+            if (cfgOptionUInt(cfgOptProcess) == 0)
             {
                 ConfigCommand commandId = cfgCommandId(strPtr(cfgOptionStr(cfgOptCommand)));
 

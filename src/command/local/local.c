@@ -22,7 +22,7 @@ cmdLocal(int handleRead, int handleWrite)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%d", cfgOptionInt(cfgOptProcess));
+        String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u", cfgOptionUInt(cfgOptProcess));
         IoRead *read = ioHandleReadIo(ioHandleReadNew(name, handleRead, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000)));
         ioReadOpen(read);
         IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(name, handleWrite));

@@ -131,7 +131,7 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int protocolI
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
-            protocolHelper.clientLocalSize = (unsigned int)cfgOptionInt(cfgOptProcessMax);
+            protocolHelper.clientLocalSize = cfgOptionUInt(cfgOptProcessMax);
             protocolHelper.clientLocal = (ProtocolHelperClient *)memNew(
                 protocolHelper.clientLocalSize * sizeof(ProtocolHelperClient));
         }
@@ -193,7 +193,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     if (cfgOptionTest(cfgOptRepoHostPort))
     {
         strLstAddZ(result, "-p");
-        strLstAdd(result, strNewFmt("%d", cfgOptionInt(cfgOptRepoHostPort)));
+        strLstAdd(result, strNewFmt("%u", cfgOptionUInt(cfgOptRepoHostPort)));
     }
 
     // Append user/host
@@ -276,7 +276,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType)
     unsigned int protocolId = 0;
 
     if (cfgOptionTest(cfgOptProcess))
-        protocolId = (unsigned int)cfgOptionInt(cfgOptProcess);
+        protocolId = cfgOptionUInt(cfgOptProcess);
 
     ASSERT(protocolId < protocolHelper.clientRemoteSize);
 

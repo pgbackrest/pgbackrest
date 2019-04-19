@@ -788,7 +788,7 @@ testRun(void)
         KeyValue *stanzaInfo = kvNew();
         VariantList *dbSection = varLstNew();
         Variant *pgInfo = varNewKv();
-        kvPut(varKv(pgInfo), DB_KEY_ID_VAR, varNewUInt64(1));
+        kvPut(varKv(pgInfo), DB_KEY_ID_VAR, varNewUInt(1));
         kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, varNewUInt64(6625633699176220261));
         kvPut(varKv(pgInfo), DB_KEY_VERSION_VAR, VARSTR(pgVersionToStr(90500)));
 
@@ -810,7 +810,7 @@ testRun(void)
         kvAdd(repoInfo, KEY_SIZE_VAR, varNewUInt64(0));
         kvAdd(repoInfo, KEY_DELTA_VAR, varNewUInt64(0));
         KeyValue *databaseInfo = kvPutKv(varKv(backupInfo), KEY_DATABASE_VAR);
-        kvAdd(databaseInfo, DB_KEY_ID_VAR, varNewUInt64(1));
+        kvAdd(databaseInfo, DB_KEY_ID_VAR, varNewUInt(1));
         KeyValue *timeInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_TIMESTAMP_VAR);
         kvAdd(timeInfo, KEY_START_VAR, varNewUInt64(1542383276));
         kvAdd(timeInfo, KEY_STOP_VAR, varNewUInt64(1542383289));

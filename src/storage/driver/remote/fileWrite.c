@@ -107,8 +107,8 @@ storageDriverRemoteFileWriteOpen(StorageDriverRemoteFileWrite *this)
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR);
         protocolCommandParamAdd(command, VARSTR(this->name));
-        protocolCommandParamAdd(command, VARUINT64(this->modeFile));
-        protocolCommandParamAdd(command, VARUINT64(this->modePath));
+        protocolCommandParamAdd(command, VARUINT(this->modeFile));
+        protocolCommandParamAdd(command, VARUINT(this->modePath));
         protocolCommandParamAdd(command, VARBOOL(this->createPath));
         protocolCommandParamAdd(command, VARBOOL(this->syncFile));
         protocolCommandParamAdd(command, VARBOOL(this->syncPath));
