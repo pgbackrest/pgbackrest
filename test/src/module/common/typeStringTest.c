@@ -451,14 +451,6 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(strLstJoin(strLstSort(list, sortOrderAsc), ", ")), "a, b, c", "sort ascending");
         TEST_RESULT_STR(strPtr(strLstJoin(strLstSort(list, sortOrderDesc), ", ")), "c, b, a", "sort descending");
-
-        strLstAddZ(list, "4-10");
-        strLstAddZ(list, "10-11");
-        strLstAddZ(list, "3-9.0");
-        strLstAddZ(list, "2-9.4");
-        strLstAddZ(list, "1-9.6");
-
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstSort(list, sortOrderAsc), ", ")), "a, b, c, 9.4-3, 9.6-1, 10-1, 11-1", "sort ascending");
     }
 
     // *****************************************************************************************************************************

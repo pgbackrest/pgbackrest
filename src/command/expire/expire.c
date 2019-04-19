@@ -9,6 +9,10 @@ Expire Command
 #include "info/infoBackup.h"
 #include "storage/helper.h"
 
+// CSHANG These are for the archiveId sort function but maybe the functions should go in stringList.c/.h
+#include <stdlib.h>
+#include "common/type/list.h"
+
 // CSHANG Need to decide if this needs to be a structure and if so if it needs to be instantiated or just variables in cmdExpire
 // struct archiveExpire
 // {
@@ -19,6 +23,68 @@ Expire Command
 
 // CSHANG Putting manifest here until plans are finalized for new manifest
 #define INFO_MANIFEST_FILE                                           "backup.manifest"
+
+static int
+archiveIdAscComparator(const void *item1, const void *item2)
+{
+    StringList *archiveSort1 = strLstNewSplitZ(*(String **)item1, "-");
+    StringList *archiveSort2 = strLstNewSplitZ(*(String **)item2, "-");
+    int int1 = atoi(strPtr(strLstGet(archiveSort1, 1)));
+    int int2 = atoi(strPtr(strLstGet(archiveSort2, 1)));
+
+    if (int1 < int2)
+        return -1;
+
+    if (int1 > int2)
+        return 1;
+
+    return 0;
+}
+
+static int
+archiveIdDescComparator(const void *item1, const void *item2)
+{
+    StringList *archiveSort1 = strLstNewSplitZ(*(String **)item1, "-");
+    StringList *archiveSort2 = strLstNewSplitZ(*(String **)item2, "-");
+    int int1 = atoi(strPtr(strLstGet(archiveSort1, 1)));
+    int int2 = atoi(strPtr(strLstGet(archiveSort2, 1)));
+
+    if (int1 > int2)
+        return -1;
+
+    if (int1 < int2)
+        return 1;
+
+    return 0;
+}
+
+static StringList *
+sortArchiveId(StringList *this, SortOrder sortOrder)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(ENUM, sortOrder);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    switch (sortOrder)
+    {
+        case sortOrderAsc:
+        {
+            lstSort((List *)this, archiveIdAscComparator);
+            break;
+        }
+
+        case sortOrderDesc:
+        {
+            lstSort((List *)this, archiveIdDescComparator);
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN(this);
+}
 
 /***********************************************************************************************************************************
 Expire backups and archives
@@ -209,35 +275,38 @@ cmdExpire(void)
                         infoBackup, .filter = backupRegExpP(.full = true, .differential = true, .incremental = true)),
                     sortOrderDesc);
             }
+LOG_INFO("size %u", strLstSize(globalBackupRetentionList));
 
-            // Expire archives. If no backups were found then preserve current archive logs - too soon to expire them.
-            if (strLstSize(globalBackupRetentionList) > 0)
-            {
-                // Attempt to load the archive info file
-                InfoArchive *info = infoArchiveNew(
-                    storageRepo(),
-                    STRDEF(STORAGE_REPO_ARCHIVE '/' INFO_ARCHIVE_FILE), false, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
-
-                // Get a list of archive directories (e.g. 9.4-1, 10-2, etc).
-                StringList *listArchiveDisk = storageListP(
-                    storageRepo(),
-                    STRDEF(STORAGE_REPO_ARCHIVE), .errorOnMissing = false, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION));
-
-                StringList *listArchiveDiskSorted = strLstNew();
-                unsigned int cmpId = 0;
-                // Since the db-id is always incrementing, sort by the db-id oldest to newest
-                for (unsigned int idx = 0; idx < strLstSize(listArchiveDisk); idx++)
-                {
-                    StringList *archiveSort = strLstNewSplitZ(strLstGet(listArchiveDisk, idx), "-");
-                    unsigned int dbId = (unsigned int) strLstGet(archiveSort, 1);
-// CSHANG Stopped here. Maybe should be trying to create a keyValue structiure so can sort by the history id.
-                    // if (dbId > cmpId)
-                    //     strLstAdd(listArchiveDiskSorted, strLstJoin(archiveSort, "-"));
-                    //     cmpId = dbId;
-
-
-
-            }
+//             // Expire archives. If no backups were found then preserve current archive logs - too soon to expire them.
+//             if (strLstSize(globalBackupRetentionList) > 0)
+//             {
+//                 // Attempt to load the archive info file
+//                 InfoArchive *info = infoArchiveNew(
+//                     storageRepo(),
+//                     STRDEF(STORAGE_REPO_ARCHIVE '/' INFO_ARCHIVE_FILE), false, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+//
+//                 // Get a list of archive directories (e.g. 9.4-1, 10-2, etc).
+//                 StringList *listArchiveDisk = storageListP(
+//                     storageRepo(),
+//                     STRDEF(STORAGE_REPO_ARCHIVE), .errorOnMissing = false, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION));
+//
+// lstSort((List *)this, sortAscComparator);
+//
+//                 StringList *listArchiveDiskSorted = strLstNew();
+//                 unsigned int cmpId = 0;
+//                 // Since the db-id is always incrementing, sort by the db-id oldest to newest
+//                 for (unsigned int idx = 0; idx < strLstSize(listArchiveDisk); idx++)
+//                 {
+//                     StringList *archiveSort = strLstNewSplitZ(strLstGet(listArchiveDisk, idx), "-");
+//                     unsigned int dbId = (unsigned int) strLstGet(archiveSort, 1);
+// // CSHANG Stopped here. Maybe should be trying to create a keyValue structiure so can sort by the history id.
+//                     // if (dbId > cmpId)
+//                     //     strLstAdd(listArchiveDiskSorted, strLstJoin(archiveSort, "-"));
+//                     //     cmpId = dbId;
+//
+//
+//
+//             }
         }
     }
     MEM_CONTEXT_TEMP_END();

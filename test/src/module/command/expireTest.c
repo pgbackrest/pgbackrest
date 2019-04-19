@@ -151,5 +151,20 @@ testRun(void)
 
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("sortArchiveId()"))
+    {
+        StringList *list = strLstNew();
+
+        strLstAddZ(list, "11-10");
+        strLstAddZ(list, "10-4");
+        strLstAddZ(list, "9.4-2");
+        strLstAddZ(list, "9.6-1");
+
+        TEST_RESULT_STR(strPtr(strLstJoin(sortArchiveId(list, sortOrderAsc), ", ")), "9.6-1, 9.4-2, 10-4, 11-10", "sort ascending");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(sortArchiveId(list, sortOrderDesc), ", ")), "11-10, 10-4, 9.4-2, 9.6-1", "sort descending");
+    }
+
     FUNCTION_HARNESS_RESULT_VOID();
 }
