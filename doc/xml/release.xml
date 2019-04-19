@@ -18,6 +18,10 @@
                     <release-item>
                         <p>Add <code>unsigned int</code> <code>Variant</code> type.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <code>cfgOptionUInt()</code> and <code>cfgOptionUInt64()</code>.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
         </release>

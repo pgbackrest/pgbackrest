@@ -57,6 +57,8 @@ int64_t cfgOptionInt64(ConfigOption optionId);
 const KeyValue *cfgOptionKv(ConfigOption optionId);
 const VariantList *cfgOptionLst(ConfigOption optionId);
 const String *cfgOptionStr(ConfigOption optionId);
+unsigned int cfgOptionUInt(ConfigOption optionId);
+uint64_t cfgOptionUInt64(ConfigOption optionId);
 
 unsigned int cfgOptionIndex(ConfigOption optionId);
 unsigned int cfgOptionIndexTotal(ConfigOption optionDefId);
