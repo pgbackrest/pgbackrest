@@ -36,8 +36,9 @@ typedef enum
     varTypeInt64,
     varTypeKeyValue,
     varTypeString,
-    varTypeVariantList,
+    varTypeUInt,
     varTypeUInt64,
+    varTypeVariantList,
 } VariantType;
 
 #include "common/type/keyValue.h"
@@ -70,6 +71,10 @@ Variant *varNewStr(const String *data);
 Variant *varNewStrZ(const char *data);
 const String *varStr(const Variant *this);
 String *varStrForce(const Variant *this);
+
+Variant *varNewUInt(unsigned int data);
+unsigned int varUInt(const Variant *this);
+unsigned int varUIntForce(const Variant *this);
 
 Variant *varNewUInt64(uint64_t data);
 uint64_t varUInt64(const Variant *this);
@@ -138,6 +143,15 @@ typedef struct VariantStringConst
     const VARIANT_STRING_COMMON
 } VariantStringConst;
 
+#define VARIANT_UINT_COMMON                                                                                                        \
+    unsigned int data;                                              /* unsigned integer data */
+
+typedef struct VariantUIntConst
+{
+    VARIANT_COMMON
+    const VARIANT_UINT_COMMON
+} VariantUIntConst;
+
 #define VARIANT_UINT64_COMMON                                                                                                      \
     uint64_t data;                                                  /* 64-bit unsigned integer data */
 
@@ -192,6 +206,10 @@ By convention all variant constant identifiers are appended with _VAR.
 // Used to declare String Variant constants that will be local to the .c file.  Must be used in a .c file.
 #define VARIANT_STRDEF_STATIC(name, dataParam)                                                                                     \
     static const Variant *name = VARSTRDEF(dataParam)
+
+// Create a UInt Variant constant inline from an unsigned int
+#define VARUINT(dataParam)                                                                                                       \
+    ((const Variant *)&(const VariantUIntConst){.type = varTypeUInt, .data = dataParam})
 
 // Create a UInt64 Variant constant inline from a uint64_t
 #define VARUINT64(dataParam)                                                                                                       \

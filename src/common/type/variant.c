@@ -29,8 +29,7 @@ Information about the variant
 ***********************************************************************************************************************************/
 struct Variant
 {
-    unsigned int type:3;                                            // Variant Type
-    MemContext *memContext;                                         // Mem context
+    VARIANT_COMMON
 };
 
 typedef struct VariantBool
@@ -75,6 +74,13 @@ typedef struct VariantString
     MemContext *memContext;
 } VariantString;
 
+typedef struct VariantUInt
+{
+    VARIANT_COMMON
+    VARIANT_UINT_COMMON
+    MemContext *memContext;
+} VariantUInt;
+
 typedef struct VariantUInt64
 {
     VARIANT_COMMON
@@ -100,8 +106,9 @@ static const char *variantTypeName[] =
     "int64",                                                        // varTypeInt64
     "KeyValue",                                                     // varTypeKeyValue
     "String",                                                       // varTypeString
-    "VariantList",                                                  // varTypeVariantList
+    "unsigned int",                                                 // varTypeUInt
     "uint64",                                                       // varTypeUInt64
+    "VariantList",                                                  // varTypeVariantList
 };
 
 /***********************************************************************************************************************************
@@ -144,12 +151,6 @@ varDup(const Variant *this)
                 break;
             }
 
-            case varTypeUInt64:
-            {
-                result = varNewUInt64(varUInt64(this));
-                break;
-            }
-
             case varTypeKeyValue:
             {
                 VariantKeyValue *keyValue = memNew(sizeof(VariantKeyValue));
@@ -164,6 +165,18 @@ varDup(const Variant *this)
             case varTypeString:
             {
                 result = varNewStr(varStr(this));
+                break;
+            }
+
+            case varTypeUInt:
+            {
+                result = varNewUInt(varUInt(this));
+                break;
+            }
+
+            case varTypeUInt64:
+            {
+                result = varNewUInt64(varUInt64(this));
                 break;
             }
 
@@ -223,15 +236,21 @@ varEq(const Variant *this1, const Variant *this2)
                     break;
                 }
 
-                case varTypeUInt64:
-                {
-                    result = varUInt64(this1) == varUInt64(this2);
-                    break;
-                }
-
                 case varTypeString:
                 {
                     result = strEq(varStr(this1), varStr(this2));
+                    break;
+                }
+
+                case varTypeUInt:
+                {
+                    result = varUInt(this1) == varUInt(this2);
+                    break;
+                }
+
+                case varTypeUInt64:
+                {
+                    result = varUInt64(this1) == varUInt64(this2);
                     break;
                 }
 
@@ -326,10 +345,6 @@ varBoolForce(const Variant *this)
             result = varInt64(this) != 0;
             break;
 
-        case varTypeUInt64:
-            result = varUInt64(this) != 0;
-            break;
-
         case varTypeString:
         {
             // List of false/true boolean string values.  Note that false/true values must be equal.
@@ -357,7 +372,17 @@ varBoolForce(const Variant *this)
             break;
         }
 
-        default:
+        case varTypeUInt:
+            result = varUInt(this) != 0;
+            break;
+
+        case varTypeUInt64:
+            result = varUInt64(this) != 0;
+            break;
+
+        case varTypeDouble:
+        case varTypeKeyValue:
+        case varTypeVariantList:
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeBool]);
     }
 
@@ -439,19 +464,26 @@ varDblForce(const Variant *this)
             break;
         }
 
-        case varTypeUInt64:
-        {
-            result = (double)varUInt64(this);
-            break;
-        }
-
         case varTypeString:
         {
             result = cvtZToDouble(strPtr(varStr(this)));
             break;
         }
 
-        default:
+        case varTypeUInt:
+        {
+            result = (double)varUInt(this);
+            break;
+        }
+
+        case varTypeUInt64:
+        {
+            result = (double)varUInt64(this);
+            break;
+        }
+
+        case varTypeKeyValue:
+        case varTypeVariantList:
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeDouble]);
     }
 
@@ -535,6 +567,26 @@ varIntForce(const Variant *this)
             break;
         }
 
+        case varTypeString:
+        {
+            result = cvtZToInt(strPtr(varStr(this)));
+            break;
+        }
+
+        case varTypeUInt:
+        {
+            unsigned int resultTest = varUInt(this);
+
+            // Make sure the value fits into a normal 32-bit int range
+            if (resultTest > INT32_MAX)
+                THROW_FMT(
+                    FormatError, "unable to convert %s %u to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeInt]);
+
+            result = (int)resultTest;
+            break;
+        }
+
         case varTypeUInt64:
         {
             uint64_t resultTest = varUInt64(this);
@@ -549,13 +601,9 @@ varIntForce(const Variant *this)
             break;
         }
 
-        case varTypeString:
-        {
-            result = cvtZToInt(strPtr(varStr(this)));
-            break;
-        }
-
-        default:
+        case varTypeDouble:
+        case varTypeKeyValue:
+        case varTypeVariantList:
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt]);
     }
 
@@ -631,6 +679,19 @@ varInt64Force(const Variant *this)
             break;
         }
 
+        case varTypeString:
+        {
+            result = cvtZToInt64(strPtr(varStr(this)));
+            break;
+        }
+
+        case varTypeUInt:
+        {
+            result = varUInt(this);
+
+            break;
+        }
+
         case varTypeUInt64:
         {
             uint64_t resultTest = varUInt64(this);
@@ -648,14 +709,139 @@ varInt64Force(const Variant *this)
             break;
         }
 
-        case varTypeString:
+        case varTypeDouble:
+        case varTypeKeyValue:
+        case varTypeVariantList:
+            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt64]);
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+New unsigned int variant
+***********************************************************************************************************************************/
+Variant *
+varNewUInt(unsigned int data)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, data);
+    FUNCTION_TEST_END();
+
+    // Allocate memory for the variant and set the type and data
+    VariantUInt *this = memNew(sizeof(VariantUInt));
+    this->memContext = memContextCurrent();
+    this->type = varTypeUInt;
+    this->data = data;
+
+    FUNCTION_TEST_RETURN((Variant *)this);
+}
+
+/***********************************************************************************************************************************
+Return unsigned int
+***********************************************************************************************************************************/
+unsigned int
+varUInt(const Variant *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VARIANT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->type == varTypeUInt);
+
+    FUNCTION_TEST_RETURN(((VariantUInt *)this)->data);
+}
+
+/***********************************************************************************************************************************
+Return unsigned int regardless of variant type
+***********************************************************************************************************************************/
+unsigned int
+varUIntForce(const Variant *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VARIANT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    unsigned int result = 0;
+
+    switch (this->type)
+    {
+        case varTypeBool:
         {
-            result = cvtZToInt64(strPtr(varStr(this)));
+            result = varBool(this);
             break;
         }
 
-        default:
-            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt64]);
+        case varTypeInt:
+        {
+            int resultTest = varInt(this);
+
+            // If integer is a negative number, throw an error since the resulting conversion would be a different number
+            if (resultTest >= 0)
+                result = (unsigned int)resultTest;
+            else
+            {
+                THROW_FMT(
+                    FormatError, "unable to convert %s %d to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeUInt]);
+            }
+
+            break;
+        }
+
+        case varTypeInt64:
+        {
+            int64_t resultTest = varInt64(this);
+
+            // If integer is a negative number or too large, throw an error since the resulting conversion would be out of bounds
+            if (resultTest >= 0 && resultTest <= UINT_MAX)
+                result = (unsigned int)resultTest;
+            else
+            {
+                THROW_FMT(
+                    FormatError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeUInt]);
+            }
+
+            break;
+        }
+
+        case varTypeUInt:
+        {
+            result = varUInt(this);
+            break;
+        }
+
+        case varTypeUInt64:
+        {
+            uint64_t resultTest = varUInt64(this);
+
+            // If integer is too large, throw an error since the resulting conversion would be out of bounds
+            if (resultTest <= UINT_MAX)
+                result = (unsigned int)resultTest;
+            else
+            {
+                THROW_FMT(
+                    FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeUInt]);
+            }
+
+            break;
+        }
+
+        case varTypeString:
+        {
+            result = cvtZToUInt(strPtr(varStr(this)));
+            break;
+        }
+
+        case varTypeDouble:
+        case varTypeKeyValue:
+        case varTypeVariantList:
+            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUInt]);
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -752,19 +938,27 @@ varUInt64Force(const Variant *this)
             break;
         }
 
-        case varTypeUInt64:
-        {
-            result = varUInt64(this);
-            break;
-        }
-
         case varTypeString:
         {
             result = cvtZToUInt64(strPtr(varStr(this)));
             break;
         }
 
-        default:
+        case varTypeUInt:
+        {
+            result = varUInt(this);
+            break;
+        }
+
+        case varTypeUInt64:
+        {
+            result = varUInt64(this);
+            break;
+        }
+
+        case varTypeDouble:
+        case varTypeKeyValue:
+        case varTypeVariantList:
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUInt64]);
     }
 
@@ -916,15 +1110,21 @@ varStrForce(const Variant *this)
             break;
         }
 
-        case varTypeUInt64:
-        {
-            result = strNewFmt("%" PRIu64, varUInt64(this));
-            break;
-        }
-
         case varTypeString:
         {
             result = strDup(varStr(this));
+            break;
+        }
+
+        case varTypeUInt:
+        {
+            result = strNewFmt("%u", varUInt(this));
+            break;
+        }
+
+        case varTypeUInt64:
+        {
+            result = strNewFmt("%" PRIu64, varUInt64(this));
             break;
         }
 
@@ -1014,6 +1214,7 @@ varToLog(const Variant *this)
             case varTypeDouble:
             case varTypeInt:
             case varTypeInt64:
+            case varTypeUInt:
             case varTypeUInt64:
             {
                 result = strNewFmt("{%s}", strPtr(varStrForce(this)));
@@ -1078,6 +1279,12 @@ varFree(Variant *this)
                     {
                         memContextSwitch(((VariantString *)this)->memContext);
                         strFree(((VariantString *)this)->data);
+                        break;
+                    }
+
+                    case varTypeUInt:
+                    {
+                        memContextSwitch(((VariantUInt *)this)->memContext);
                         break;
                     }
 
