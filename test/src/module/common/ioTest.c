@@ -255,11 +255,23 @@ testRun(void)
         TEST_RESULT_VOID(ioReadFree(read), "    free read object");
         TEST_RESULT_VOID(ioReadFree(NULL), "    free null read object");
 
+        // Read a zero-length buffer to be sure it is not passed on to the filter group
         // -------------------------------------------------------------------------------------------------------------------------
         IoBufferRead *bufferRead = NULL;
         ioBufferSizeSet(2);
         buffer = bufNew(2);
-        Buffer *bufferOriginal = bufNewZ("123");
+        Buffer *bufferOriginal = bufNew(0);
+
+        TEST_ASSIGN(bufferRead, ioBufferReadNew(bufferOriginal), "create empty buffer read object");
+        TEST_RESULT_BOOL(ioReadOpen(ioBufferReadIo(bufferRead)), true, "    open");
+        TEST_RESULT_BOOL(ioReadEof(ioBufferReadIo(bufferRead)), false, "    not eof");
+        TEST_RESULT_SIZE(ioRead(ioBufferReadIo(bufferRead), buffer), 0, "    read 0 bytes");
+        TEST_RESULT_BOOL(ioReadEof(ioBufferReadIo(bufferRead)), true, "    now eof");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        ioBufferSizeSet(2);
+        buffer = bufNew(2);
+        bufferOriginal = bufNewZ("123");
 
         MEM_CONTEXT_TEMP_BEGIN()
         {

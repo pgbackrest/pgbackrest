@@ -16,6 +16,17 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="brunre01"/>
+                            <release-item-ideator id="jwpit"/>
+                            <release-item-ideator id="tomasz.kontusz"/>
+                            <release-item-ideator id="guruguruguru"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix zero-length reads causing problems for IO filters that did not expect them.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Fix reliability of error reporting from <cmd>local</cmd>/<cmd>remote</cmd> processes.</p>
                     </release-item>
 
@@ -6692,6 +6703,11 @@
             <contributor-id type="github">baburdick</contributor-id>
         </contributor>
 
+        <contributor id="brunre01">
+            <contributor-name-display>brunre01</contributor-name-display>
+            <contributor-id type="github">brunre01</contributor-id>
+        </contributor>
+
         <contributor id="bruno.friedmann">
             <contributor-name-display>Bruno Friedmann</contributor-name-display>
             <contributor-id type="github">tigerfoot</contributor-id>
@@ -6791,6 +6807,11 @@
             <contributor-id type="github">gregscds</contributor-id>
         </contributor>
 
+        <contributor id="guruguruguru">
+            <contributor-name-display>guruguruguru</contributor-name-display>
+            <contributor-id type="github">guruguruguru</contributor-id>
+        </contributor>
+
         <contributor id="hans.jurgen.schonig">
             <contributor-name-display>Hans-J&amp;uuml;rgen Sch&amp;ouml;nig</contributor-name-display>
         </contributor>
@@ -6861,6 +6882,11 @@
         <contributor id="jungle-boogie">
             <contributor-name-display>jungle-boogie</contributor-name-display>
             <contributor-id type="github">jungle-boogie</contributor-id>
+        </contributor>
+
+        <contributor id="jwpit">
+            <contributor-name-display>jwpit</contributor-name-display>
+            <contributor-id type="github">jwpit</contributor-id>
         </contributor>
 
         <contributor id="keith.fiske">
@@ -7011,6 +7037,11 @@
         <contributor id="todd.vernick">
             <contributor-name-display>Todd Vernick</contributor-name-display>
             <contributor-id type="github">gintoddic</contributor-id>
+        </contributor>
+
+        <contributor id="tomasz.kontusz">
+            <contributor-name-display>Tomasz Kontusz</contributor-name-display>
+            <contributor-id type="github">ktosiek</contributor-id>
         </contributor>
 
         <contributor id="thomas.flatley">
