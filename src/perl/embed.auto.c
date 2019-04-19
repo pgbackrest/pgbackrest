@@ -9028,6 +9028,7 @@ static const EmbeddedModule embeddedModule[] =
             "if ($iBackupTotal > 0)\n"
             "{\n"
             "my $oArchiveInfo = new pgBackRest::Archive::Info($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), true);\n"
+            "\n"
             "my @stryListArchiveDisk = sort {((split('-', $a))[1] + 0) cmp ((split('-', $b))[1] + 0)} $oStorageRepo->list(\n"
             "STORAGE_REPO_ARCHIVE, {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});\n"
             "\n\n"

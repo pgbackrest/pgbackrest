@@ -500,96 +500,145 @@ sub run
     ################################################################################################################################
     if ($self->begin("Stanza::stanzaUpgrade()"))
     {
+# CSHANG Add a test where archive.info has db-id=1 and history 1=10, 2=9.6 and backup.info has db-id=2 and history 1=9.6, 2=10 then perform an upgrade - what happens?
         $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
 
+
+        my $tBuffer =
+                "[backrest]\n" .
+                    "backrest-checksum=\"dc00acb1fc1f802425218af9c2db53a29b8f60d5\"\n" .
+                    "backrest-format=5\n" .
+                    "backrest-version=\"2.13dev\"\n" .
+                    "\n" .
+                    "[db]\n" .
+                    "db-id=2\n" .
+                    "db-system-id=6569239123849665666\n" .
+                    "db-version=\"9.3\"\n" .
+                    "\n" .
+                    "[db:history]\n" .
+                    "1={\"db-id\":1000000000000000094," .
+                        "\"db-version\":\"9.4\"}\n" .
+                    "2={\"db-id\":6569239123849665666," .
+                        "\"db-version\":\"9.3\"}\n";
+
+        storageRepo()->put(STORAGE_REPO_ARCHIVE . "/archive.info", $tBuffer);
+        storageRepo()->put(STORAGE_REPO_ARCHIVE . "/archive.info.copy", $tBuffer);
+
+$tBuffer =
+        "[backrest]\n" .
+            "backrest-checksum=\"2c54cc0e42e669eab2abdc9e324a4199dd11cb17\"\n" .
+            "backrest-format=5\n" .
+            "backrest-version=\"2.13dev\"\n" .
+            "\n" .
+            "[db]\n" .
+            "db-catalog-version=201306121\n" .
+            "db-control-version=937\n" .
+            "db-id=2\n" .
+            "db-system-id=6569239123849665666\n" .
+            "db-version=\"9.3\"\n" .
+            "\n" .
+            "[db:history]\n" .
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":1000000000000000094," .
+                "\"db-version\":\"9.4\"}\n" .
+            "2={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666," .
+                "\"db-version\":\"9.3\"}\n";
+
+        storageRepo()->put(STORAGE_REPO_BACKUP . "/backup.info", $tBuffer);
+        storageRepo()->put(STORAGE_REPO_BACKUP . "/backup.info.copy", $tBuffer);
+
         my $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true});
-        $oArchiveInfo->create('9.3', '6999999999999999999', true);
+        # $oArchiveInfo->create('9.4', '1000000000000000094', true);
+        # $oArchiveInfo->create('9.3', '6999999999999999999', true);
 
         my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true});
-        $oBackupInfo->create('9.3', '6999999999999999999', '937', '201306121', true);
+        # $oBackupInfo->create('9.4', '1000000000000000094', '942', '201409291', true);
+        # $oBackupInfo->create('9.3', '6999999999999999999', '937', '201306121', true);
+
+
+
 
         $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
         my $oStanza = new pgBackRest::Stanza();
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(sub {$oStanza->stanzaUpgrade()}, undef, 'successfully upgraded');
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(sub {$oStanza->stanzaUpgrade()}, undef, 'upgrade not required');
+        #
+        # #---------------------------------------------------------------------------------------------------------------------------
+        # $self->testResult(sub {$oStanza->stanzaUpgrade()}, undef, 'upgrade not required');
 
         # Attempt to change the encryption settings
         #---------------------------------------------------------------------------------------------------------------------------
         # Clear the cached repo settings and change repo settings to encrypted
-        storageRepoCacheClear($self->stanza());
-        $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
-        $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
-        $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
-
-        $self->testException(sub {$oStanza->stanzaUpgrade()}, ERROR_CRYPTO,
-            "unable to parse '" . $self->{strArchivePath} . "/archive.info'" .
-            "\nHINT: Is or was the repo encrypted?");
-
-        forceStorageRemove(storageRepo(), storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO) . "*");
-        forceStorageRemove(storageRepo(), storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE) . "*");
-
-        # Create encrypted info files with prior passphrase then attempt to change
-        #---------------------------------------------------------------------------------------------------------------------------
-        $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true,
-            strCipherPassSub => cipherPassGen()});
-        $oArchiveInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), true);
-
-        $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true,
-            strCipherPassSub => cipherPassGen()});
-        $oBackupInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), '937', '201306121', true);
-
-         # Attempt to upgrade with a different passphrase
-        storageRepoCacheClear($self->stanza());
-        $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
-        $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'y');
-        $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
-
-        $self->testException(sub {$oStanza->stanzaUpgrade()}, ERROR_CRYPTO,
-            "unable to parse '" . $self->{strArchivePath} . "/archive.info'" .
-            "\nHINT: Is or was the repo encrypted?");
-
-        storageRepoCacheClear($self->stanza());
-        $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
-        $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
-        $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
-
-        # Create encrypted archived file
-        storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_93 . "-1");
-        storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_93 . "-1/0000000100000001");
-        my $strArchiveIdPath = storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_93 . "-1");
-        my $strArchivedFile = storageRepo()->pathGet($strArchiveIdPath .
-            "/0000000100000001/000000010000000100000001-" . $self->walGenerateContentChecksum(PG_VERSION_93));
-        storageRepo()->put(
-            $strArchivedFile, $self->walGenerateContent(PG_VERSION_93), {strCipherPass => $oArchiveInfo->cipherPassSub()});
-        $self->testResult(sub {storageRepo()->encrypted($strArchivedFile)}, true, 'created encrypted archive WAL');
-
-        # Upgrade
-        $self->testResult(sub {$oStanza->stanzaUpgrade()}, undef, '    successfully upgraded');
-        $self->testResult(sub {storageRepo()->encrypted(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . '/'
-            . ARCHIVE_INFO_FILE)}, true, '    upgraded archive info encrypted');
-        $self->testResult(sub {storageRepo()->encrypted(storageRepo()->pathGet(STORAGE_REPO_BACKUP) . '/'
-            . FILE_BACKUP_INFO)}, true, '    upgraded backup info encrypted');
-
-        $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath});
-        $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath});
-        my $hHistoryArchive = $oArchiveInfo->dbHistoryList();
-        my $hHistoryBackup = $oBackupInfo->dbHistoryList();
-
-        $self->testResult(sub {($hHistoryArchive->{1}{&INFO_DB_VERSION} eq PG_VERSION_93) &&
-            ($hHistoryArchive->{1}{&INFO_SYSTEM_ID} eq $self->dbSysId(PG_VERSION_93)) &&
-            ($hHistoryArchive->{2}{&INFO_DB_VERSION} eq PG_VERSION_94) &&
-            ($hHistoryArchive->{2}{&INFO_SYSTEM_ID} eq $self->dbSysId(PG_VERSION_94)) &&
-            ($hHistoryBackup->{1}{&INFO_DB_VERSION} eq PG_VERSION_93) &&
-            ($hHistoryBackup->{1}{&INFO_SYSTEM_ID} eq $self->dbSysId(PG_VERSION_93)) &&
-            ($hHistoryBackup->{2}{&INFO_DB_VERSION} eq PG_VERSION_94) &&
-            ($hHistoryBackup->{2}{&INFO_SYSTEM_ID} eq $self->dbSysId(PG_VERSION_94)) &&
-            ($oArchiveInfo->check(PG_VERSION_94, $self->dbSysId(PG_VERSION_94)) eq PG_VERSION_94 . "-2") &&
-            ($oBackupInfo->check(PG_VERSION_94, $iDbControl, $iDbCatalog, $self->dbSysId(PG_VERSION_94)) == 2) }, true,
-            '    encrypted archive and backup info files upgraded');
+        # storageRepoCacheClear($self->stanza());
+        # $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
+        # $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
+        # $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
+        #
+        # $self->testException(sub {$oStanza->stanzaUpgrade()}, ERROR_CRYPTO,
+        #     "unable to parse '" . $self->{strArchivePath} . "/archive.info'" .
+        #     "\nHINT: Is or was the repo encrypted?");
+        #
+        # forceStorageRemove(storageRepo(), storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO) . "*");
+        # forceStorageRemove(storageRepo(), storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE) . "*");
+        #
+        # # Create encrypted info files with prior passphrase then attempt to change
+        # #---------------------------------------------------------------------------------------------------------------------------
+        # $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true,
+        #     strCipherPassSub => cipherPassGen()});
+        # $oArchiveInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), true);
+        #
+        # $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true,
+        #     strCipherPassSub => cipherPassGen()});
+        # $oBackupInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), '937', '201306121', true);
+        #
+        #  # Attempt to upgrade with a different passphrase
+        # storageRepoCacheClear($self->stanza());
+        # $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
+        # $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'y');
+        # $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
+        #
+        # $self->testException(sub {$oStanza->stanzaUpgrade()}, ERROR_CRYPTO,
+        #     "unable to parse '" . $self->{strArchivePath} . "/archive.info'" .
+        #     "\nHINT: Is or was the repo encrypted?");
+        #
+        # storageRepoCacheClear($self->stanza());
+        # $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
+        # $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
+        # $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
+        #
+        # # Create encrypted archived file
+        # storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_93 . "-1");
+        # storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_93 . "-1/0000000100000001");
+        # my $strArchiveIdPath = storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_93 . "-1");
+        # my $strArchivedFile = storageRepo()->pathGet($strArchiveIdPath .
+        #     "/0000000100000001/000000010000000100000001-" . $self->walGenerateContentChecksum(PG_VERSION_93));
+        # storageRepo()->put(
+        #     $strArchivedFile, $self->walGenerateContent(PG_VERSION_93), {strCipherPass => $oArchiveInfo->cipherPassSub()});
+        # $self->testResult(sub {storageRepo()->encrypted($strArchivedFile)}, true, 'created encrypted archive WAL');
+        #
+        # # Upgrade
+        # $self->testResult(sub {$oStanza->stanzaUpgrade()}, undef, '    successfully upgraded');
+        # $self->testResult(sub {storageRepo()->encrypted(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . '/'
+        #     . ARCHIVE_INFO_FILE)}, true, '    upgraded archive info encrypted');
+        # $self->testResult(sub {storageRepo()->encrypted(storageRepo()->pathGet(STORAGE_REPO_BACKUP) . '/'
+        #     . FILE_BACKUP_INFO)}, true, '    upgraded backup info encrypted');
+        #
+        # $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath});
+        # $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath});
+        # my $hHistoryArchive = $oArchiveInfo->dbHistoryList();
+        # my $hHistoryBackup = $oBackupInfo->dbHistoryList();
+        #
+        # $self->testResult(sub {($hHistoryArchive->{1}{&INFO_DB_VERSION} eq PG_VERSION_93) &&
+        #     ($hHistoryArchive->{1}{&INFO_SYSTEM_ID} eq $self->dbSysId(PG_VERSION_93)) &&
+        #     ($hHistoryArchive->{2}{&INFO_DB_VERSION} eq PG_VERSION_94) &&
+        #     ($hHistoryArchive->{2}{&INFO_SYSTEM_ID} eq $self->dbSysId(PG_VERSION_94)) &&
+        #     ($hHistoryBackup->{1}{&INFO_DB_VERSION} eq PG_VERSION_93) &&
+        #     ($hHistoryBackup->{1}{&INFO_SYSTEM_ID} eq $self->dbSysId(PG_VERSION_93)) &&
+        #     ($hHistoryBackup->{2}{&INFO_DB_VERSION} eq PG_VERSION_94) &&
+        #     ($hHistoryBackup->{2}{&INFO_SYSTEM_ID} eq $self->dbSysId(PG_VERSION_94)) &&
+        #     ($oArchiveInfo->check(PG_VERSION_94, $self->dbSysId(PG_VERSION_94)) eq PG_VERSION_94 . "-2") &&
+        #     ($oBackupInfo->check(PG_VERSION_94, $iDbControl, $iDbCatalog, $self->dbSysId(PG_VERSION_94)) == 2) }, true,
+        #     '    encrypted archive and backup info files upgraded');
 
         # Clear configuration
         storageRepoCacheClear($self->stanza());

@@ -255,6 +255,7 @@ sub process
         if ($iBackupTotal > 0)
         {
             my $oArchiveInfo = new pgBackRest::Archive::Info($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), true);
+# CSHANG Here we sort the list from oldest history to newest since we assume the history is always incrementing
             my @stryListArchiveDisk = sort {((split('-', $a))[1] + 0) cmp ((split('-', $b))[1] + 0)} $oStorageRepo->list(
                 STORAGE_REPO_ARCHIVE, {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});
 # CSHANG I think the HINT here doesn't make any sense. If an upgrade was performed, then both the archive and backup info would have been updated and if only one is updated, then there is some corruption so what does the hint really mean here?

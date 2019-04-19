@@ -5,6 +5,7 @@ Expire Command
 #include "common/debug.h"
 #include "common/regExp.h"
 #include "config/config.h"
+#include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "storage/helper.h"
 
@@ -36,15 +37,14 @@ cmdExpire(void)
             (unsigned int) cfgOptionInt(cfgOptRepoRetentionFull) : 0;
         unsigned int differentialRetention = cfgOptionTest(cfgOptRepoRetentionDiff) ?
             (unsigned int) cfgOptionInt(cfgOptRepoRetentionDiff) : 0;
-        String *archiveRetentionType =
+        const String *archiveRetentionType =
             cfgOptionTest(cfgOptRepoRetentionArchiveType) ? cfgOptionStr(cfgOptRepoRetentionArchiveType) : NULL;
         unsigned int archiveRetention = cfgOptionTest(cfgOptRepoRetentionArchive) ?
             (unsigned int) cfgOptionInt(cfgOptRepoRetentionArchive) : 0;
 
         // Load the backup.info
-        String *stanzaBackupPath = strNewFmt(STORAGE_PATH_BACKUP "/%s", strPtr(cfgOptionStr(cfgOptStanza)));
         InfoBackup *infoBackup = infoBackupNew(
-            storageRepo(), strNewFmt("%s/%s", strPtr(stanzaBackupPath), INFO_BACKUP_FILE), false,
+            storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE), false,
             cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
 
         StringList *pathList = NULL;
@@ -74,15 +74,12 @@ cmdExpire(void)
 
                         storageRemoveNP(
                             storageRepoWrite(),
-                            strNewFmt(
-                                "%s/%s/%s", strPtr(stanzaBackupPath), strPtr(removeBackupLabel), INFO_MANIFEST_FILE));
+                            strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(removeBackupLabel), INFO_MANIFEST_FILE));
 
 // CSHANG Maybe expose INI_COPY_EXT vs hardcode .copy, but David is working on manifest and there may be a different way of handling the file
                         storageRemoveNP(
                             storageRepoWrite(),
-                            strNewFmt(
-                                "%s/%s/%s",
-                                strPtr(stanzaBackupPath), strPtr(removeBackupLabel), INFO_MANIFEST_FILE ".copy"));
+                            strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(removeBackupLabel), INFO_MANIFEST_FILE ".copy"));
 
                         // Remove the backup from the info file
                         infoBackupDataDelete(infoBackup, removeBackupLabel);
@@ -139,15 +136,12 @@ cmdExpire(void)
 // CSHANG Combine the remove, delete and updating backupExpired into a function since this is duplicate of code above in full
                             storageRemoveNP(
                                 storageRepoWrite(),
-                                strNewFmt(
-                                    "%s/%s/%s", strPtr(stanzaBackupPath), strPtr(removeBackupLabel), INFO_MANIFEST_FILE));
+                                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(removeBackupLabel), INFO_MANIFEST_FILE));
 
 // CSHANG Maybe expose INI_COPY_EXT vs hardcode .copy, but David is working on manifest and there may be a different way of handling the file
                             storageRemoveNP(
                                 storageRepoWrite(),
-                                strNewFmt(
-                                    "%s/%s/%s",
-                                    strPtr(stanzaBackupPath), strPtr(removeBackupLabel), INFO_MANIFEST_FILE ".copy"));
+                                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(removeBackupLabel), INFO_MANIFEST_FILE ".copy"));
 
                             // Remove the backup from the info file
                             infoBackupDataDelete(infoBackup, removeBackupLabel);
@@ -168,57 +162,82 @@ cmdExpire(void)
 
 // CSHANG Must save infoBackup here!!!
 
-    StringList *backupList = strLstSort(
-        storageListP(storageRepo(), stanzaBackupPath, .errorOnMissing = false, .expression = backupRegExp(true, true, true)),
-        sortOrderDesc);
+        // Get all the current backups in backup.info
+        pathList = strLstSort(infoBackupDataLabelListP(infoBackup), sortOrderDesc);
 
-    // Get all the current backups in backup.info
-    pathList = infoBackupDataLabelListP(infoBackup);
+        // Get list of all backup directories that are not in the backup:current section of backupInfo
+        StringList *backupList = strLstMergeAnti(
+            strLstSort(
+                storageListP(
+                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP), .errorOnMissing = false,
+                    .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
+                sortOrderDesc),
+            pathList);
 
-    // Remove backups from disk not in the backup:current section of backupInfo. This also cleans up orphaned directories.
-    for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
-    {
-        if (!strLstExists(pathList, strLstGet(backupList, backupIdx)))
+        // Remove non-current backups from disk
+        for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
         {
             LOG_INFO("remove expired backup %s", strLstGet(backupList, backupIdx));
-
             storagePathRemoveP(storageRepoWrite(), strLstGet(backupList, backupIdx), .recurse = true);
         }
-    }
 
-    // If archive retention is undefined, then ignore archiving
-    if (archiveRetention == 0)
-    {
-         LOG_INFO("option '%s' is not set - archive logs will not be expired", cfgOptionName(cfgOptRepoRetentionArchive));
-    }
-    else
-    {
-        StringList *globalBackupRetentionList = NULL;
-// CSHANG Need to have global constants for these not hardcoded full, diff, incr
-        // Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
-        // remaining non-expired backups, from newest to oldest, based on the type.
-        if (strCmp(archiveRetentionType, STR("full")) == 0)
+        // If archive retention is undefined, then ignore archiving
+        if (archiveRetention == 0)
         {
-            globalBackupRetentionList = strLstSort(
-                infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true), sortOrderDesc);
+             LOG_INFO("option '%s' is not set - archive logs will not be expired", cfgOptionName(cfgOptRepoRetentionArchive));
         }
-        else if (strCmp(archiveRetentionType, STR("diff")) == 0)
+        else
         {
-            globalBackupRetentionList = strLstSort(
-                infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true, .differential = true), sortOrderDesc);
-        }
-        else if (strCmp(archiveRetentionType, STR("incr")) == 0)
-        {
-            globalBackupRetentionList = strLstSort(
-                infoBackupDataLabelListP(
-                    infoBackup, .filter = backupRegExpP(.full = true, .differential = true, .incremental = true),
-                sortOrderDesc);
-        }
+            StringList *globalBackupRetentionList = NULL;
+    // CSHANG Need to have global constants for these not hardcoded full, diff, incr
+            // Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
+            // remaining non-expired backups, from newest to oldest, based on the type.
+            if (strCmp(archiveRetentionType, STRDEF("full")) == 0)
+            {
+                globalBackupRetentionList = strLstSort(
+                    infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true)), sortOrderDesc);
+            }
+            else if (strCmp(archiveRetentionType, STRDEF("diff")) == 0)
+            {
+                globalBackupRetentionList = strLstSort(
+                    infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true, .differential = true)), sortOrderDesc);
+            }
+            else if (strCmp(archiveRetentionType, STRDEF("incr")) == 0)
+            {
+                globalBackupRetentionList = strLstSort(
+                    infoBackupDataLabelListP(
+                        infoBackup, .filter = backupRegExpP(.full = true, .differential = true, .incremental = true)),
+                    sortOrderDesc);
+            }
 
-        // If no backups were found then preserve current archive logs - too soon to expire them
-        if (strLstSize(globalBackupRetentionList) > 0)
-        {
-            // CSHANG STOPPED HERE
+            // Expire archives. If no backups were found then preserve current archive logs - too soon to expire them.
+            if (strLstSize(globalBackupRetentionList) > 0)
+            {
+                // Attempt to load the archive info file
+                InfoArchive *info = infoArchiveNew(
+                    storageRepo(),
+                    STRDEF(STORAGE_REPO_ARCHIVE '/' INFO_ARCHIVE_FILE), false, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+
+                // Get a list of archive directories (e.g. 9.4-1, 10-2, etc).
+                StringList *listArchiveDisk = storageListP(
+                    storageRepo(),
+                    STRDEF(STORAGE_REPO_ARCHIVE), .errorOnMissing = false, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION));
+
+                StringList *listArchiveDiskSorted = strLstNew();
+                unsigned int cmpId = 0;
+                // Since the db-id is always incrementing, sort by the db-id oldest to newest
+                for (unsigned int idx = 0; idx < strLstSize(listArchiveDisk); idx++)
+                {
+                    StringList *archiveSort = strLstNewSplitZ(strLstGet(listArchiveDisk, idx), "-");
+                    unsigned int dbId = (unsigned int) strLstGet(archiveSort, 1);
+// CSHANG Stopped here. Maybe should be trying to create a keyValue structiure so can sort by the history id.
+                    // if (dbId > cmpId)
+                    //     strLstAdd(listArchiveDiskSorted, strLstJoin(archiveSort, "-"));
+                    //     cmpId = dbId;
+
+
+
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();
