@@ -547,6 +547,14 @@ src/command/archive/push/push.h:
   class: core
   type: c/h
 
+src/command/backup/common.c:
+  class: core
+  type: c
+
+src/command/backup/common.h:
+  class: core
+  type: c/h
+
 src/command/command.c:
   class: core
   type: c
@@ -1704,6 +1712,10 @@ test/src/module/command/archiveGetTest.c:
   type: c
 
 test/src/module/command/archivePushTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/backupCommonTest.c:
   class: test/module
   type: c
 
