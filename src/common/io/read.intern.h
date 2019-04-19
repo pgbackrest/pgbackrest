@@ -17,6 +17,7 @@ typedef size_t (*IoReadInterfaceRead)(void *driver, Buffer *buffer, bool block);
 
 typedef struct IoReadInterface
 {
+    bool block;                                               // Do reads block when buffer is larger than available bytes?
     IoReadInterfaceEof eof;
     IoReadInterfaceClose close;
     IoReadInterfaceHandle handle;

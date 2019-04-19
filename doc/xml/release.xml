@@ -14,6 +14,12 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.14dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <p>Improve performance of non-blocking reads by using maximum buffer size.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Add <code>unsigned int</code> <code>Variant</code> type and update code to use it.</p>

@@ -414,7 +414,8 @@ tlsClientOpen(TlsClient *this)
             // Create read and write interfaces
             this->write = ioWriteNewP(this, .write = (IoWriteInterfaceWrite)tlsClientWrite);
             ioWriteOpen(this->write);
-            this->read = ioReadNewP(this, .eof = (IoReadInterfaceEof)tlsClientEof, .read = (IoReadInterfaceRead)tlsClientRead);
+            this->read = ioReadNewP(
+                this, .block = true, .eof = (IoReadInterfaceEof)tlsClientEof, .read = (IoReadInterfaceRead)tlsClientRead);
             ioReadOpen(this->read);
         }
         MEM_CONTEXT_END();

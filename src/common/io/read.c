@@ -144,7 +144,7 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
                 bufUsedZero(this->input);
 
                 // If blocking then limit the amount of data requested
-                if (block && bufRemains(this->input) > bufRemains(buffer))
+                if (ioReadBlock(this) && bufRemains(this->input) > bufRemains(buffer))
                     bufLimitSet(this->input, bufRemains(buffer));
 
                 this->interface.read(this->driver, this->input, block);
@@ -306,6 +306,21 @@ ioReadClose(IoRead *this)
 }
 
 /***********************************************************************************************************************************
+Do reads block when more bytes are requested than are available to read?
+***********************************************************************************************************************************/
+bool
+ioReadBlock(const IoRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->interface.block);
+}
+
+/***********************************************************************************************************************************
 Is IO at EOF?
 
 All driver reads are complete and all data has been flushed from the filters (if any).
@@ -352,6 +367,7 @@ ioReadFilterGroupSet(IoRead *this, IoFilterGroup *filterGroup)
     ASSERT(filterGroup != NULL);
     ASSERT(this->filterGroup == NULL);
     ASSERT(!this->opened && !this->closed);
+    ASSERT(!ioReadBlock(this));
 
     this->filterGroup = filterGroup;
 
