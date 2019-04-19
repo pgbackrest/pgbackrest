@@ -64,6 +64,7 @@ ioFilterProcessIn(IoFilter *this, const Buffer *input)
 
     ASSERT(this != NULL);
     ASSERT(this->interface.in != NULL);
+    CHECK(input != NULL && bufUsed(input) > 0);
 
     this->interface.in(this->driver, input);
 
@@ -85,9 +86,11 @@ ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output)
     ASSERT(this != NULL);
     ASSERT(output != NULL);
     ASSERT(this->interface.inOut != NULL);
+    CHECK(input == NULL || bufUsed(input) > 0);
 
     this->interface.inOut(this->driver, input, output);
 
+    CHECK(!ioFilterInputSame(this) || bufUsed(output) > 0);
     FUNCTION_TEST_RETURN_VOID();
 }
 

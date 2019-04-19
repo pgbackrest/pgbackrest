@@ -122,6 +122,7 @@ typedef struct IoTestFilterMultiply
 {
     MemContext *memContext;
     unsigned int flushTotal;
+    bool writeZero;
     char flushChar;
     Buffer *multiplyBuffer;
     unsigned int multiplier;
@@ -143,9 +144,17 @@ ioTestFilterMultiplyProcess(IoTestFilterMultiply *this, const Buffer *input, Buf
 
     if (input == NULL)
     {
-        char flushZ[] = {this->flushChar, 0};
-        bufCat(output, bufNewC(1, flushZ));
-        this->flushTotal--;
+        // Write nothing into the output buffer to make sure the filter processing will skip the remaining filters
+        if (!this->writeZero)
+        {
+            this->writeZero = true;
+        }
+        else
+        {
+            char flushZ[] = {this->flushChar, 0};
+            bufCat(output, bufNewC(1, flushZ));
+            this->flushTotal--;
+        }
     }
     else
     {

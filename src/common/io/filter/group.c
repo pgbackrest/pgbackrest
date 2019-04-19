@@ -269,13 +269,19 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
 
                     ioFilterProcessInOut(filterData->filter, filterData->input, filterData->output);
 
-                    // If inputSame is set then the output buffer for this filter is full and it will need to be pre-processed with
-                    // the same input once the output buffer is cleared.
-                    if (ioFilterInputSame(filterData->filter))
+                    // If there was no output then break out of filter processing because more input is needed
+                    if (bufUsed(filterData->output) == 0)
+                    {
+                        break;
+                    }
+                    // Else if inputSame is set then the output buffer for this filter is full and it will need to be re-processed
+                    // with the same input once the output buffer is cleared
+                    else if (ioFilterInputSame(filterData->filter))
+                    {
                         this->inputSame = true;
-
-                    // Else clear the buffer if it was locally allocated.  If this is an input buffer that was passed in then the
-                    // caller is responsible for clearing it.
+                    }
+                    // Else clear the buffer if it was locally allocated.  If the input buffer was passed in then the caller is
+                    // responsible for clearing it.
                     else if (filterData->inputLocal != NULL)
                         bufUsedZero(filterData->inputLocal);
                 }

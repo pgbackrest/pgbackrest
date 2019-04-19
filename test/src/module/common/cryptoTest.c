@@ -270,7 +270,6 @@ testRun(void)
 
         bufUsedZero(decryptBuffer);
 
-        ioFilterProcessInOut(blockDecryptFilter, bufNew(0), decryptBuffer);
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer), CryptoError, "cipher header missing");
 
         cipherBlockFree(blockDecrypt);
