@@ -95,7 +95,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
-                bufNewStr(content)), "put backup info to file");
+                BUFSTR(content)), "put backup info to file");
 
         TEST_ERROR_FMT(infoRender(), FileMissingError,
             "unable to load info file '%s/archive.info' or '%s/archive.info.copy':\n"
@@ -130,7 +130,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza1Path))),
-                bufNewStr(content)), "put archive info to file");
+                BUFSTR(content)), "put archive info to file");
 
         // archive section will cross reference backup db-id 2 to archive db-id 3 but db section will only use the db-ids from
         // backup.info
@@ -258,7 +258,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
-                bufNewStr(content)), "put backup info to file");
+                BUFSTR(content)), "put backup info to file");
 
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
@@ -378,7 +378,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza1Path))),
-                bufNewStr(content)), "put archive info to file - stanza1");
+                BUFSTR(content)), "put archive info to file - stanza1");
 
         content = strNew
         (
@@ -430,7 +430,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
-                bufNewStr(content)), "put backup info to file - stanza1");
+                BUFSTR(content)), "put backup info to file - stanza1");
 
         String *archiveStanza2Path = strNewFmt("%s/stanza2", strPtr(archivePath));
         String *backupStanza2Path = strNewFmt("%s/stanza2", strPtr(backupPath));
@@ -455,7 +455,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza2Path))),
-                bufNewStr(content)), "put archive info to file - stanza2");
+                BUFSTR(content)), "put archive info to file - stanza2");
 
         content = strNew
         (
@@ -478,7 +478,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza2Path))),
-                bufNewStr(content)), "put backup info to file - stanza2");
+                BUFSTR(content)), "put backup info to file - stanza2");
 
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         TEST_RESULT_STR(strPtr(infoRender()),
@@ -765,7 +765,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/pgbackrest.conf", testPath())),
-                bufNewStr(content)), "put pgbackrest.conf file");
+                BUFSTR(content)), "put pgbackrest.conf file");
         strLstAddZ(argListText, "--repo-cipher-type=aes-256-cbc");
         strLstAdd(argListText, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
         harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));

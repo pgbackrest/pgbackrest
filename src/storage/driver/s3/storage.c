@@ -53,8 +53,10 @@ STRING_STATIC(S3_XML_TAG_PREFIX_STR,                                "Prefix");
 AWS authentication v4 constants
 ***********************************************************************************************************************************/
 #define S3                                                          "s3"
+    BUFFER_STRDEF_STATIC(S3_BUF,                                    S3);
 #define AWS4                                                        "AWS4"
 #define AWS4_REQUEST                                                "aws4_request"
+    BUFFER_STRDEF_STATIC(AWS4_REQUEST_BUF,                          AWS4_REQUEST);
 #define AWS4_HMAC_SHA256                                            "AWS4-HMAC-SHA256"
 
 /***********************************************************************************************************************************
@@ -186,14 +188,14 @@ storageDriverS3Auth(
         if (!strEq(date, this->signingKeyDate))
         {
             const Buffer *dateKey = cryptoHmacOne(
-                HASH_TYPE_SHA256_STR, bufNewStr(strNewFmt(AWS4 "%s", strPtr(this->secretAccessKey))), bufNewStr(date));
-            const Buffer *regionKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, dateKey, bufNewStr(this->region));
-            const Buffer *serviceKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, regionKey, bufNewZ(S3));
+                HASH_TYPE_SHA256_STR, BUFSTR(strNewFmt(AWS4 "%s", strPtr(this->secretAccessKey))), BUFSTR(date));
+            const Buffer *regionKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, dateKey, BUFSTR(this->region));
+            const Buffer *serviceKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, regionKey, S3_BUF);
 
             // Switch to the object context so signing key and date are not lost
             MEM_CONTEXT_BEGIN(this->memContext)
             {
-                this->signingKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, serviceKey, bufNewZ(AWS4_REQUEST));
+                this->signingKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, serviceKey, AWS4_REQUEST_BUF);
                 this->signingKeyDate = strDup(date);
             }
             MEM_CONTEXT_END();
@@ -203,7 +205,7 @@ storageDriverS3Auth(
         const String *authorization = strNewFmt(
             AWS4_HMAC_SHA256 " Credential=%s/%s/%s/" S3 "/" AWS4_REQUEST ",SignedHeaders=%s,Signature=%s",
             strPtr(this->accessKey), strPtr(date), strPtr(this->region), strPtr(signedHeaders),
-            strPtr(bufHex(cryptoHmacOne(HASH_TYPE_SHA256_STR, this->signingKey, bufNewStr(stringToSign)))));
+            strPtr(bufHex(cryptoHmacOne(HASH_TYPE_SHA256_STR, this->signingKey, BUFSTR(stringToSign)))));
 
         httpHeaderPut(httpHeader, S3_HEADER_AUTHORIZATION_STR, authorization);
     }

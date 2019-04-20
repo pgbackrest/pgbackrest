@@ -17,8 +17,6 @@ Functions
 ***********************************************************************************************************************************/
 Buffer *bufNew(size_t size);
 Buffer *bufNewC(size_t size, const void *buffer);
-Buffer *bufNewStr(const String *string);
-Buffer *bufNewZ(const char *string);
 
 Buffer *bufCat(Buffer *this, const Buffer *cat);
 Buffer *bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize);
@@ -41,6 +39,70 @@ void bufUsedSet(Buffer *this, size_t used);
 void bufUsedZero(Buffer *this);
 
 void bufFree(Buffer *this);
+
+/***********************************************************************************************************************************
+Fields that are common between dynamically allocated and constant buffers
+
+There is nothing user-accessible here but this construct allows constant buffers to be created and then handled by the same
+functions that process dynamically allocated buffers.
+***********************************************************************************************************************************/
+#define BUFFER_COMMON                                                                                                              \
+    size_t size;                                                    /* Actual size of buffer */                                    \
+    bool limitSet;                                                  /* Has a limit been set? */                                    \
+    size_t limit;                                                   /* Make the buffer appear smaller */                           \
+    size_t used;                                                    /* Amount of buffer used */                                    \
+    unsigned char *buffer;                                          /* Buffer allocation */
+
+typedef struct BufferConst
+{
+    BUFFER_COMMON
+} BufferConst;
+
+/***********************************************************************************************************************************
+Macros for constant buffers
+
+Frequently used constant buffers can be declared with these macros at compile time rather than dynamically at run time.
+
+Note that buffers created in this way are declared as const so can't be modified or freed by the buf*() methods.  Casting to
+Buffer * will result in a segfault.
+
+By convention all buffer constant identifiers are appended with _BUF.
+***********************************************************************************************************************************/
+// Create a buffer constant inline from an unsigned char[]
+#define BUF(bufferParam, sizeParam)                                                                                                \
+    ((const Buffer *)&(const BufferConst){.size = sizeParam, .used = sizeParam, .buffer = bufferParam})
+
+// Create a buffer constant inline from a non-constant zero-terminated string
+#define BUFSTRZ(stringz)                                                                                                           \
+    BUF((unsigned char *)stringz, strlen(stringz))
+
+// Create a buffer constant inline from a String
+#define BUFSTR(string)                                                                                                             \
+    BUF((unsigned char *)strPtr(string), strSize(string))
+
+// Create a buffer constant inline from a constant zero-terminated string
+#define BUFSTRDEF(stringdef)                                                                                                       \
+    BUF((unsigned char *)stringdef, (sizeof(stringdef) - 1))
+
+// Used to declare buffer constants that will be externed using BUFFER_DECLARE().  Must be used in a .c file.
+#define BUFFER_STRDEF_EXTERN(name, string)                                                                                         \
+    const Buffer *name = BUFSTRDEF(string)
+
+// Used to declare buffer constants that will be local to the .c file.  Must be used in a .c file.
+#define BUFFER_STRDEF_STATIC(name, string)                                                                                         \
+    static BUFFER_STRDEF_EXTERN(name, string)
+
+// Used to extern buffer constants declared with BUFFER_STRDEF_EXTERN(.  Must be used in a .h file.
+#define BUFFER_DECLARE(name)                                                                                                       \
+    extern const Buffer *name
+
+/***********************************************************************************************************************************
+Constant buffers that are generally useful
+***********************************************************************************************************************************/
+BUFFER_DECLARE(BRACKETL_BUF);
+BUFFER_DECLARE(BRACKETR_BUF);
+BUFFER_DECLARE(EQ_BUF);
+BUFFER_DECLARE(LF_BUF);
 
 /***********************************************************************************************************************************
 Macros for function logging

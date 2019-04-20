@@ -133,18 +133,8 @@ ioWriteLine(IoWrite *this, const String *string)
     ASSERT(string != NULL);
     ASSERT(this->opened && !this->closed);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Load a buffer with the linefeed-terminated string
-        Buffer *buffer = bufNew(strSize(string) + 1);
-        memcpy(bufPtr(buffer), strPtr(string), strSize(string));
-        bufPtr(buffer)[strSize(string)] = '\n';
-        bufUsedSet(buffer, bufSize(buffer));
-
-        // Write the string
-        ioWrite(this, buffer);
-    }
-    MEM_CONTEXT_TEMP_END()
+    ioWrite(this, BUFSTR(string));
+    ioWrite(this, LF_BUF);
 
     FUNCTION_LOG_RETURN_VOID();
 }

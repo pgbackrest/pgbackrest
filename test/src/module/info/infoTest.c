@@ -48,7 +48,7 @@ testRun(void)
         // Only copy exists and one is required
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), bufNewStr(content)), "put info.copy to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), BUFSTR(content)), "put info.copy to file");
 
         TEST_ASSIGN(info, infoNew(storageLocal(), fileName, cipherTypeNone, NULL), "infoNew() - load copy file");
         TEST_RESULT_STR(strPtr(infoFileName(info)), strPtr(fileName), "    infoFileName() is set");
@@ -64,28 +64,27 @@ testRun(void)
             storageFileWriteIo(infoWrite),
             ioFilterGroupAdd(
                 ioFilterGroupNew(),
-                cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, bufNewStr(strNew("12345678")), NULL))));
+                cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL))));
 
         storageRemoveNP(storageLocalWrite(), fileNameCopy);
         storagePutNP(
             infoWrite,
-            bufNewStr(
-                strNew(
-                    "[backrest]\n"
-                    "backrest-checksum=\"9d2f6dce339751e1a056187fad67d2834b3d4ab3\"\n"
-                    "backrest-format=5\n"
-                    "backrest-version=\"2.04\"\n"
-                    "\n"
-                    "[cipher]\n"
-                    "cipher-pass=\"ABCDEFGH\"\n"
-                    "\n"
-                    "[db]\n"
-                    "db-id=1\n"
-                    "db-system-id=6569239123849665679\n"
-                    "db-version=\"9.4\"\n"
-                    "\n"
-                    "[db:history]\n"
-                    "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n")));
+            BUFSTRDEF(
+                "[backrest]\n"
+                "backrest-checksum=\"9d2f6dce339751e1a056187fad67d2834b3d4ab3\"\n"
+                "backrest-format=5\n"
+                "backrest-version=\"2.04\"\n"
+                "\n"
+                "[cipher]\n"
+                "cipher-pass=\"ABCDEFGH\"\n"
+                "\n"
+                "[db]\n"
+                "db-id=1\n"
+                "db-system-id=6569239123849665679\n"
+                "db-version=\"9.4\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"));
 
         // Only main info exists and is required
         TEST_ASSIGN(info, infoNew(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678")), "infoNew() - load file");
@@ -118,7 +117,7 @@ testRun(void)
 
         // Only main file exists but the backrest-format is invalid
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put invalid br format to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put invalid br format to file");
 
         TEST_ERROR(
             infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FormatError,
@@ -150,7 +149,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(
-                storageNewWriteNP(storageLocalWrite(), fileNameCopy), bufNewStr(content)), "put invalid info to copy file");
+                storageNewWriteNP(storageLocalWrite(), fileNameCopy), BUFSTR(content)), "put invalid info to copy file");
 
         TEST_ERROR(
             infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileOpenError,
@@ -186,7 +185,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), bufNewStr(content)), "put invalid checksum to copy");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), BUFSTR(content)), "put invalid checksum to copy");
 
         // Empty checksum for main file
         content = strNew
@@ -207,7 +206,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put empty checksum to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put empty checksum to file");
 
         // Copy file error
         TEST_ERROR(

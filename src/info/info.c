@@ -137,7 +137,7 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
             ioReadFilterGroupSet(
                 storageFileReadIo(infoRead),
                 ioFilterGroupAdd(
-                    ioFilterGroupNew(), cipherBlockFilter(cipherBlockNew(cipherModeDecrypt, cipherType, bufNewStr(cipherPass),
+                    ioFilterGroupNew(), cipherBlockFilter(cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass),
                     NULL))));
         }
 

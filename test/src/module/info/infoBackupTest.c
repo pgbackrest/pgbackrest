@@ -50,7 +50,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put backup info to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put backup info to file");
 
         TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), "    new backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
@@ -139,7 +139,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put backup info current to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put backup info current to file");
 
         TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), "    new backup info");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 3, "    backup list contains backups");

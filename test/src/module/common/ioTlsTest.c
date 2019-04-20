@@ -183,7 +183,7 @@ testRun(void)
         TEST_ASSIGN(client, tlsClientNew(strNew(TLS_TEST_HOST), 9443, 500, true, NULL, NULL), "new client");
         TEST_RESULT_VOID(tlsClientOpen(client), "open client");
 
-        Buffer *input = bufNewStr(strNew("some protocol info"));
+        const Buffer *input = BUFSTRDEF("some protocol info");
         TEST_RESULT_VOID(ioWrite(tlsClientIoWrite(client), input), "write input");
         ioWriteFlush(tlsClientIoWrite(client));
 
@@ -206,7 +206,7 @@ testRun(void)
             "unable to read data from 'tls.test.pgbackrest.org:9443' after 500ms");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        input = bufNewStr(strNew("more protocol info"));
+        input = BUFSTRDEF("more protocol info");
         TEST_RESULT_VOID(tlsClientOpen(client), "open client again (it is already open)");
         TEST_RESULT_VOID(ioWrite(tlsClientIoWrite(client), input), "write input");
         ioWriteFlush(tlsClientIoWrite(client));

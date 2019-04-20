@@ -21,7 +21,7 @@ static size_t
 testIoRead(void *driver, Buffer *buffer)
 {
     ASSERT(driver == (void *)999);
-    bufCat(buffer, bufNewZ("Z"));
+    bufCat(buffer, BUFSTRDEF("Z"));
     return 1;
 }
 
@@ -280,7 +280,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(2);
         buffer = bufNew(2);
-        bufferOriginal = bufNewZ("123");
+        bufferOriginal = bufNewC(3, "123");
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -348,7 +348,7 @@ testRun(void)
         // Mixed line and buffer read
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(5);
-        read = ioBufferReadIo(ioBufferReadNew(bufNewZ("AAA123\n1234\n\n12\nBDDDEFF")));
+        read = ioBufferReadIo(ioBufferReadNew(BUFSTRDEF("AAA123\n1234\n\n12\nBDDDEFF")));
         ioReadOpen(read);
         buffer = bufNew(3);
 
@@ -391,7 +391,7 @@ testRun(void)
 
         // Error if buffer is full and there is no linefeed
         ioBufferSizeSet(10);
-        read = ioBufferReadIo(ioBufferReadNew(bufNewZ("0123456789")));
+        read = ioBufferReadIo(ioBufferReadNew(BUFSTRDEF("0123456789")));
         ioReadOpen(read);
         TEST_ERROR(ioReadLine(read), FileReadError, "unable to find line in 10 byte buffer");
 
@@ -399,7 +399,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(8);
 
-        bufferRead = ioBufferReadNew(bufNewStr(strNew("a test string")));
+        bufferRead = ioBufferReadNew(BUFSTRDEF("a test string"));
         ioReadOpen(ioBufferReadIo(bufferRead));
 
         TEST_RESULT_STR(strPtr(strNewBuf(ioReadBuf(ioBufferReadIo(bufferRead)))), "a test string", "read into buffer");
@@ -420,7 +420,7 @@ testRun(void)
 
         TEST_RESULT_VOID(ioWriteOpen(write), "    open io object");
         TEST_RESULT_BOOL(testIoWriteOpenCalled, true, "    check io object open");
-        TEST_RESULT_VOID(ioWrite(write, bufNewZ("ABC")), "    write 3 bytes");
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABC")), "    write 3 bytes");
         TEST_RESULT_VOID(ioWriteClose(write), "    close io object");
         TEST_RESULT_BOOL(testIoWriteCloseCalled, true, "    check io object closed");
 
@@ -458,14 +458,14 @@ testRun(void)
         TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), NULL), "    write 0 bytes");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\n", "    check write");
 
-        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNewStr(strNew("Z"))), "    write string");
+        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), BUFSTRDEF("Z")), "    write string");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\n", "    no change because output buffer is not full");
         TEST_RESULT_VOID(ioWriteFlush(ioBufferWriteIo(bufferWrite)), "    flush output");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\nZZ", "    check output is flushed");
         TEST_RESULT_VOID(ioWriteFlush(ioBufferWriteIo(bufferWrite)), "    flush again (nothing to flush)");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\nZZ", "    check output is unchanged");
 
-        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNewZ("12345")), "    write bytes");
+        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), BUFSTRDEF("12345")), "    write bytes");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\nZZ112233445", "    check write");
 
         TEST_RESULT_VOID(ioWriteClose(ioBufferWriteIo(bufferWrite)), " close buffer write object");
@@ -508,7 +508,7 @@ testRun(void)
                 ioWriteFlush(ioHandleWriteIo(write));
 
                 // Sleep so the other side will timeout
-                Buffer *buffer = bufNewStr(strNew("12345678"));
+                const Buffer *buffer = BUFSTRDEF("12345678");
                 TEST_RESULT_VOID(ioWrite(ioHandleWriteIo(write), buffer), "write buffer");
                 sleepMSec(1250);
 

@@ -32,7 +32,7 @@ testRun(void)
             "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
         );
 
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put info to file");
+        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put info to file");
 
         InfoPg *infoPg = NULL;
 
@@ -72,7 +72,7 @@ testRun(void)
                 "\"db-version\":\"9.4\"}\n"
         );
 
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put info to file");
+        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put info to file");
 
         TEST_ASSIGN(
             infoPg, infoPgNew(storageLocal(), fileName, infoPgBackup, cipherTypeNone, NULL), "new infoPg backup - load file");
@@ -109,7 +109,7 @@ testRun(void)
                 "\"db-version\":\"9.5\"}\n"
         );
 
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put info to file");
+        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put info to file");
 
         TEST_ASSIGN(
             infoPg, infoPgNew(storageLocal(), fileName, infoPgManifest, cipherTypeNone, NULL), "new infoPg manifest - load file");

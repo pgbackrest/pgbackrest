@@ -172,7 +172,7 @@ archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, 
             storageNewWriteNP(
                 storageSpoolWrite(),
                 strNewFmt("%s/%s" STATUS_EXT_ERROR, strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(errorFile))),
-            bufNewStr(strNewFmt("%d\n%s", code, strPtr(message))));
+            BUFSTR(strNewFmt("%d\n%s", code, strPtr(message))));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -200,7 +200,7 @@ archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, con
             storageNewWriteNP(
                 storageSpoolWrite(),
                 strNewFmt("%s/%s" STATUS_EXT_OK, strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(walSegment))),
-            warning == NULL ? NULL : bufNewStr(strNewFmt("0\n%s", strPtr(warning))));
+            warning == NULL ? NULL : BUFSTR(strNewFmt("0\n%s", strPtr(warning))));
     }
     MEM_CONTEXT_TEMP_END();
 

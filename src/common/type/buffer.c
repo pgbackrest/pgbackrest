@@ -8,16 +8,20 @@ Buffer Handler
 #include "common/type/buffer.h"
 
 /***********************************************************************************************************************************
+Constant buffers that are generally useful
+***********************************************************************************************************************************/
+BUFFER_STRDEF_EXTERN(BRACKETL_BUF,                                  "[");
+BUFFER_STRDEF_EXTERN(BRACKETR_BUF,                                  "]");
+BUFFER_STRDEF_EXTERN(EQ_BUF,                                        "=");
+BUFFER_STRDEF_EXTERN(LF_BUF,                                        "\n");
+
+/***********************************************************************************************************************************
 Contains information about the buffer
 ***********************************************************************************************************************************/
 struct Buffer
 {
-    MemContext *memContext;
-    size_t size;                                                    // Actual size of buffer
-    bool limitSet;                                                  // Has a limit been set?
-    size_t limit;                                                   // Limited reported size of the buffer to make it appear smaller
-    size_t used;                                                    // Amount of buffer used
-    unsigned char *buffer;                                          // Buffer allocation
+    BUFFER_COMMON                                                   // Variables that are common to static and dynamic buffers
+    MemContext *memContext;                                         // Mem context for dynamic buffers
 };
 
 /***********************************************************************************************************************************
@@ -66,46 +70,6 @@ bufNewC(size_t size, const void *buffer)
     Buffer *this = bufNew(size);
     memcpy(this->buffer, buffer, this->size);
     this->used = this->size;
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
-Create a new buffer from a string
-***********************************************************************************************************************************/
-Buffer *
-bufNewStr(const String *string)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, string);
-    FUNCTION_TEST_END();
-
-    ASSERT(string != NULL);
-
-    // Create object and copy string
-    Buffer *this = bufNew(strSize(string));
-    memcpy(this->buffer, strPtr(string), bufSize(this));
-    this->used = bufSize(this);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
-Create a new buffer from a zero-terminated string
-***********************************************************************************************************************************/
-Buffer *
-bufNewZ(const char *string)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, string);
-    FUNCTION_TEST_END();
-
-    ASSERT(string != NULL);
-
-    // Create a new buffer and then copy the string into it.
-    Buffer *this = bufNew(strlen(string));
-    memcpy(this->buffer, string, bufSize(this));
-    this->used = bufSize(this);
 
     FUNCTION_TEST_RETURN(this);
 }

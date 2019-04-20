@@ -46,7 +46,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put archive info to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put archive info to file");
 
         TEST_ASSIGN(info, infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), "    new archive info");
         TEST_RESULT_STR(strPtr(infoArchiveId(info)), "9.4-1", "    archiveId set");
@@ -80,7 +80,7 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), bufNewStr(content)), "put archive info to file");
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put archive info to file");
 
         TEST_ASSIGN(info, infoArchiveNew(storageLocal(), fileName, true, cipherTypeNone, NULL), "new archive info");
         TEST_RESULT_STR(strPtr(infoArchiveIdHistoryMatch(info, 2, 90500, 6626363367545678089)), "9.5-2", "  full match found");

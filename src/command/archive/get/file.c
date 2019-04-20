@@ -153,7 +153,7 @@ archiveGetFile(
                 ioFilterGroupAdd(
                     filterGroup,
                     cipherBlockFilter(
-                        cipherBlockNew(cipherModeDecrypt, cipherType, bufNewStr(archiveGetCheckResult.cipherPass), NULL)));
+                        cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(archiveGetCheckResult.cipherPass), NULL)));
             }
 
             // If file is compressed then add the decompression filter

@@ -131,9 +131,7 @@ archivePushFile(
             if (cipherType != cipherTypeNone)
             {
                 ioFilterGroupAdd(
-                    filterGroup,
-                    cipherBlockFilter(
-                        cipherBlockNew(cipherModeEncrypt, cipherType, bufNewStr(cipherPass), NULL)));
+                    filterGroup, cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL)));
             }
 
             ioReadFilterGroupSet(storageFileReadIo(source), filterGroup);

@@ -128,7 +128,7 @@ testRun(void)
         // Create incorrect archive info
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info")),
-            bufNewZ(
+            BUFSTRDEF(
                 "[backrest]\n"
                 "backrest-checksum=\"806471e1481804dc3ddf8dc6f1da7c34939420a8\"\n"
                 "backrest-format=5\n"
@@ -148,7 +148,7 @@ testRun(void)
         // Fix the version
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info")),
-            bufNewZ(
+            BUFSTRDEF(
                 "[backrest]\n"
                 "backrest-checksum=\"4656aad82fa16a5d87b1aed36cb8a20c2707b9f9\"\n"
                 "backrest-format=5\n"
@@ -168,7 +168,7 @@ testRun(void)
         // Fix archive info
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info")),
-            bufNewZ(
+            BUFSTRDEF(
                 "[backrest]\n"
                 "backrest-checksum=\"724b21c26c64f4c25567a11eb222c18766cbec00\"\n"
                 "backrest-format=5\n"
@@ -227,7 +227,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info")),
-            bufNewZ(
+            BUFSTRDEF(
                 "[backrest]\n"
                 "backrest-checksum=\"f5c9e17258db65e8d22609e23d1e99985d6bb063\"\n"
                 "backrest-format=5\n"
@@ -327,7 +327,7 @@ testRun(void)
         strLstAddZ(argListTemp, "pg_wal/00000001.history");
         harnessCfgLoad(strLstSize(argListTemp), strLstPtr(argListTemp));
 
-        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/00000001.history")), bufNewStr(strNew("FAKEHISTORY")));
+        storagePutNP(storageNewWriteNP(storagePgWrite(), strNew("pg_wal/00000001.history")), BUFSTRDEF("FAKEHISTORY"));
 
         TEST_RESULT_VOID(cmdArchivePush(), "push a history file");
         harnessLogResult("P00   INFO: pushed WAL file '00000001.history' to the archive");
@@ -397,11 +397,11 @@ testRun(void)
             ioFilterGroupAdd(
                 ioFilterGroupNew(),
                 cipherBlockFilter(
-                    cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, bufNewStr(strNew("badpassphrase")), NULL))));
+                    cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("badpassphrase"), NULL))));
 
         storagePutNP(
             infoWrite,
-            bufNewZ(
+            BUFSTRDEF(
                 "[backrest]\n"
                 "backrest-checksum=\"4ce1b0e8f7132e3b5193a9c385f2d039dd75062f\"\n"
                 "backrest-format=5\n"
@@ -482,7 +482,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info")),
-            bufNewZ(
+            BUFSTRDEF(
                 "[backrest]\n"
                 "backrest-checksum=\"d12be58a906afa894c34f49ac9cbb6b968efc5a4\"\n"
                 "backrest-format=5\n"
@@ -504,7 +504,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error")),
-            bufNewStr(strNew("25\nbogus error")));
+            BUFSTRDEF("25\nbogus error"));
 
         TEST_ERROR(cmdArchivePush(), AssertError, "no WAL files to process");
 

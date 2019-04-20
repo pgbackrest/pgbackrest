@@ -557,7 +557,7 @@ testRun(void)
                     "{\"name\":\"pgBackRest\",\"service\":\"error\",\"version\":\"" PROJECT_VERSION "\"}\n"
                     "{}\n");
 
-                IoRead *read = ioBufferReadIo(ioBufferReadNew(bufNewStr(protocolString)));
+                IoRead *read = ioBufferReadIo(ioBufferReadNew(BUFSTR(protocolString)));
                 ioReadOpen(read);
                 IoWrite *write = ioBufferWriteIo(ioBufferWriteNew(bufNew(1024)));
                 ioWriteOpen(write);
@@ -673,11 +673,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePut(
             storageNewWriteNP(storageTest, strNew("pgbackrest.conf")),
-            bufNewStr(
-                strNew(
-                    "[global]\n"
-                    "repo1-cipher-type=aes-256-cbc\n"
-                    "repo1-cipher-pass=acbd\n")));
+            BUFSTRDEF(
+                "[global]\n"
+                "repo1-cipher-type=aes-256-cbc\n"
+                "repo1-cipher-pass=acbd\n"));
 
         argList = strLstNew();
         strLstAddZ(argList, "/usr/bin/pgbackrest");
@@ -704,11 +703,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePut(
             storageNewWriteNP(storageTest, strNew("pgbackrest.conf")),
-            bufNewStr(
-                strNew(
-                    "[global]\n"
-                    "repo1-cipher-type=aes-256-cbc\n"
-                    "repo1-cipher-pass=dcba\n")));
+            BUFSTRDEF(
+                "[global]\n"
+                "repo1-cipher-type=aes-256-cbc\n"
+                "repo1-cipher-pass=dcba\n"));
 
         argList = strLstNew();
         strLstAddZ(argList, "/usr/bin/pgbackrest");
