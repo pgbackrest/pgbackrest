@@ -21,6 +21,7 @@ struct IoWrite
     Buffer *output;                                                 // Output buffer
 
 #ifdef DEBUG
+    bool filterGroupSet;                                            // Was an IoFilterGroup set?
     bool opened;                                                    // Has the io been opened?
     bool closed;                                                    // Has the io been closed?
 #endif
@@ -153,6 +154,7 @@ ioWriteFlush(IoWrite *this)
 
     ASSERT(this != NULL);
     ASSERT(this->opened && !this->closed);
+    ASSERT(!this->filterGroupSet);
 
     if (bufUsed(this->output) > 0)
     {
@@ -234,6 +236,11 @@ ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup)
     ASSERT(filterGroup != NULL);
     ASSERT(this->filterGroup == NULL);
     ASSERT(!this->opened && !this->closed);
+
+    // Track whether a filter group was set to prevent flush() from being called later
+#ifdef DEBUG
+    this->filterGroupSet = true;
+#endif
 
     this->filterGroup = filterGroup;
 

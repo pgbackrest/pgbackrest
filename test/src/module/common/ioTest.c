@@ -460,13 +460,8 @@ testRun(void)
 
         TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), BUFSTRDEF("Z")), "    write string");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\n", "    no change because output buffer is not full");
-        TEST_RESULT_VOID(ioWriteFlush(ioBufferWriteIo(bufferWrite)), "    flush output");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\nZZ", "    check output is flushed");
-        TEST_RESULT_VOID(ioWriteFlush(ioBufferWriteIo(bufferWrite)), "    flush again (nothing to flush)");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\nZZ", "    check output is unchanged");
-
         TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), BUFSTRDEF("12345")), "    write bytes");
-        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\nZZ112233445", "    check write");
+        TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\nZZ1122334455", "    check write");
 
         TEST_RESULT_VOID(ioWriteClose(ioBufferWriteIo(bufferWrite)), " close buffer write object");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\nZZ1122334455XXXY", "    check write after close");
@@ -505,6 +500,7 @@ testRun(void)
 
                 // Write a line to be read
                 TEST_RESULT_VOID(ioWriteLine(ioHandleWriteIo(write), strNew("test string 1")), "write test string");
+                ioWriteFlush(ioHandleWriteIo(write));
                 ioWriteFlush(ioHandleWriteIo(write));
 
                 // Sleep so the other side will timeout

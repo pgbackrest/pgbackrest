@@ -22,6 +22,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Only process next filter in <code>IoFilterGroup</code> when input buffer is full or flushing.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add macros to create constant <code>Buffer</code> objects.</p>
                     </release-item>
 

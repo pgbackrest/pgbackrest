@@ -262,21 +262,16 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
                     // Checking filterIdx - 1 is safe because the first filter's filterData->input is always set to NULL when input
                     // is NULL.
                     if (input == NULL && filterData->input != NULL && !ioFilterDone(filterData->filter) &&
-                        ioFilterDone(ioFilterGroupGet(this, filterIdx - 1)->filter) && bufUsed(filterData->input) == 0)
+                        bufUsed(filterData->input) == 0)
                     {
                         filterData->input = NULL;
                     }
 
                     ioFilterProcessInOut(filterData->filter, filterData->input, filterData->output);
 
-                    // If there was no output then break out of filter processing because more input is needed
-                    if (bufUsed(filterData->output) == 0)
-                    {
-                        break;
-                    }
-                    // Else if inputSame is set then the output buffer for this filter is full and it will need to be re-processed
-                    // with the same input once the output buffer is cleared
-                    else if (ioFilterInputSame(filterData->filter))
+                    // If inputSame is set then the output buffer for this filter is full and it will need to be re-processed with
+                    // the same input once the output buffer is cleared
+                    if (ioFilterInputSame(filterData->filter))
                     {
                         this->inputSame = true;
                     }
@@ -284,6 +279,12 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
                     // responsible for clearing it.
                     else if (filterData->inputLocal != NULL)
                         bufUsedZero(filterData->inputLocal);
+
+                    // If the output buffer is not full and the filter is not done then more data is required
+                    if (!bufFull(filterData->output) && !ioFilterDone(filterData->filter))
+                    {
+                        break;
+                    }
                 }
             }
             // Else the filter does not produce output.  No need to flush these filters because they don't buffer data.
