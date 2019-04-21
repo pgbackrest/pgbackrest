@@ -16,7 +16,7 @@ Functions
 ***********************************************************************************************************************************/
 Ini *iniNew(void);
 const Variant *iniGet(const Ini *this, const String *section, const String *key);
-const Variant *iniGetDefault(const Ini *this, const String *section, const String *key, Variant *defaultValue);
+const Variant *iniGetDefault(const Ini *this, const String *section, const String *key, const Variant *defaultValue);
 StringList *iniSectionKeyList(const Ini *this, const String *section);
 StringList *iniSectionList(const Ini *this);
 void iniParse(Ini *this, const String *content);

@@ -100,7 +100,7 @@ iniGet(const Ini *this, const String *section, const String *key)
 Get an ini value -- if it does not exist then return specified default
 ***********************************************************************************************************************************/
 const Variant *
-iniGetDefault(const Ini *this, const String *section, const String *key, Variant *defaultValue)
+iniGetDefault(const Ini *this, const String *section, const String *key, const Variant *defaultValue)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, this);
