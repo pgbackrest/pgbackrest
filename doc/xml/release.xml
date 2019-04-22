@@ -34,6 +34,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Refactor <code>main()</code> as a <code>switch()</code> statement.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>cfgOptionUInt()</code> and <code>cfgOptionUInt64()</code> and update code to use them.</p>
                     </release-item>
                 </release-development-list>

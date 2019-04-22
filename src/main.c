@@ -54,99 +54,190 @@ main(int argListSize, const char *argList[])
         {
             cmdHelp();
         }
-
-        // Display version
-        // -------------------------------------------------------------------------------------------------------------------------
-        else if (cfgCommand() == cfgCmdVersion)
-        {
-            printf(PROJECT_NAME " " PROJECT_VERSION "\n");
-            fflush(stdout);
-        }
-
-        // Local command.  Currently only implements a subset.
-        // -------------------------------------------------------------------------------------------------------------------------
-        else if (cfgCommand() == cfgCmdLocal &&
-                 (strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_ASYNC_STR) ||
-                  strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_ASYNC_STR)))
-        {
-            cmdLocal(STDIN_FILENO, STDOUT_FILENO);
-        }
-
-        // Remote command.  Currently only implements a subset.
-        // -------------------------------------------------------------------------------------------------------------------------
-        else if (cfgCommand() == cfgCmdRemote &&
-                 (strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_STR) ||
-                  strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_ASYNC_STR) ||
-                  strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_STR) ||
-                  strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_ASYNC_STR) ||
-                  strEq(cfgOptionStr(cfgOptCommand), CFGCMD_INFO_STR)))
-        {
-            cmdRemote(STDIN_FILENO, STDOUT_FILENO);
-        }
-
-        // Archive get command
-        // -------------------------------------------------------------------------------------------------------------------------
-        else if (cfgCommand() == cfgCmdArchiveGet)
-        {
-            result = cmdArchiveGet();
-        }
-
-        // Archive get async command
-        // -------------------------------------------------------------------------------------------------------------------------
-        else if (cfgCommand() == cfgCmdArchiveGetAsync)
-        {
-            cmdArchiveGetAsync();
-        }
-
-        // Archive push command.
-        // -------------------------------------------------------------------------------------------------------------------------
-        else if (cfgCommand() == cfgCmdArchivePush)
-        {
-            cmdArchivePush();
-        }
-
-        // Archive push async command
-        // -------------------------------------------------------------------------------------------------------------------------
-        else if (cfgCommand() == cfgCmdArchivePushAsync)
-        {
-            cmdArchivePushAsync();
-        }
-
-        // Backup command.  Still executed in Perl but this implements running expire after backup.
-        // -------------------------------------------------------------------------------------------------------------------------
-        else if (cfgCommand() == cfgCmdBackup)
-        {
-#ifdef DEBUG
-            // Check pg_control during testing so errors are more obvious.  Otherwise errors only happen in archive-get/archive-push
-            // and end up in the PostgreSQL log which is not output in CI.  This can be removed once backup is written in C.
-            if (cfgOptionBool(cfgOptOnline) && !cfgOptionBool(cfgOptBackupStandby) && !cfgOptionTest(cfgOptPgHost))
-                pgControlFromFile(cfgOptionStr(cfgOptPgPath));
-#endif
-
-            // Run backup
-            perlExec();
-
-            // Switch to expire command
-            cmdEnd(0, NULL);
-            cfgCommandSet(cfgCmdExpire);
-            cmdBegin(false);
-
-            // Run expire
-            perlExec();
-        }
-
-        // Info command
-        // -------------------------------------------------------------------------------------------------------------------------
-        else if (cfgCommand() == cfgCmdInfo)
-        {
-            cmdInfo();
-        }
-
-        // Execute Perl for commands not implemented in C
-        // -------------------------------------------------------------------------------------------------------------------------
         else
         {
-            result = perlExec();
+            switch (cfgCommand())
+            {
+                // Archive get command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdArchiveGet:
+                {
+                    result = cmdArchiveGet();
+                    break;
+                }
+
+                // Archive get async command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdArchiveGetAsync:
+                {
+                    cmdArchiveGetAsync();
+                    break;
+                }
+
+                // Archive push command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdArchivePush:
+                {
+                    cmdArchivePush();
+                    break;
+                }
+
+                // Archive push async command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdArchivePushAsync:
+                {
+                    cmdArchivePushAsync();
+                    break;
+                }
+
+                // Backup command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdBackup:
+                {
+#ifdef DEBUG
+                    // Check pg_control during testing so errors are more obvious.  Otherwise errors only happen in
+                    // archive-get/archive-push and end up in the PostgreSQL log which is not output in CI.  This can be removed
+                    // once backup is written in C.
+                    if (cfgOptionBool(cfgOptOnline) && !cfgOptionBool(cfgOptBackupStandby) && !cfgOptionTest(cfgOptPgHost))
+                        pgControlFromFile(cfgOptionStr(cfgOptPgPath));
+#endif
+
+                    // Run backup
+                    perlExec();
+
+                    // Switch to expire command
+                    cmdEnd(0, NULL);
+                    cfgCommandSet(cfgCmdExpire);
+                    cmdBegin(false);
+
+                    // Run expire
+                    perlExec();
+
+                    break;
+                }
+
+                // Check command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdCheck:
+                {
+                    perlExec();
+                    break;
+                }
+
+                // Expire command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdExpire:
+                {
+                    perlExec();
+                    break;
+                }
+
+                // Help command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdHelp:
+                case cfgCmdNone:
+                {
+                    THROW(AssertError, "'help' and 'none' commands should have been handled already");
+                }
+
+                // Info command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdInfo:
+                {
+                    cmdInfo();
+                    break;
+                }
+
+                // Local command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdLocal:
+                {
+                    if (strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_ASYNC_STR) ||
+                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_ASYNC_STR))
+                    {
+                        cmdLocal(STDIN_FILENO, STDOUT_FILENO);
+                    }
+                    else
+                        perlExec();
+
+                    break;
+                }
+
+                // Remote command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdRemote:
+                {
+                    if (strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_STR) ||
+                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_ASYNC_STR) ||
+                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_STR) ||
+                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_ASYNC_STR) ||
+                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_INFO_STR))
+                    {
+                        cmdRemote(STDIN_FILENO, STDOUT_FILENO);
+                    }
+                    else
+                        perlExec();
+
+                    break;
+                }
+
+                // Restore command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdRestore:
+                {
+                    perlExec();
+                    break;
+                }
+
+                // Stanza create command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdStanzaCreate:
+                {
+                    perlExec();
+                    break;
+                }
+
+                // Stanza delete command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdStanzaDelete:
+                {
+                    perlExec();
+                    break;
+                }
+
+                // Stanza upgrade command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdStanzaUpgrade:
+                {
+                    perlExec();
+                    break;
+                }
+
+                // Start command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdStart:
+                {
+                    perlExec();
+                    break;
+                }
+
+                // Stop command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdStop:
+                {
+                    perlExec();
+                    break;
+                }
+
+                // Display version
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdVersion:
+                {
+                    printf(PROJECT_NAME " " PROJECT_VERSION "\n");
+                    fflush(stdout);
+                    break;
+                }
+            }
         }
     }
     CATCH_ANY()
