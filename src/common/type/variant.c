@@ -1080,27 +1080,22 @@ varStrForce(const Variant *this)
     {
         case varTypeBool:
         {
-            char working[6];
-
-            cvtBoolToZ(varBool(this), working, sizeof(working));
-            result = strNew(working);
-
+            result = strNew(cvtBoolToConstZ(varBool(this)));
             break;
         }
 
         case varTypeDouble:
         {
-            char working[64];
+            char working[CVT_BASE10_BUFFER_SIZE];
 
             cvtDoubleToZ(varDbl(this), working, sizeof(working));
             result = strNew(working);
-
             break;
         }
 
         case varTypeInt:
         {
-            char working[64];
+            char working[CVT_BASE10_BUFFER_SIZE];
 
             cvtIntToZ(varInt(this), working, sizeof(working));
             result = strNew(working);
@@ -1109,7 +1104,7 @@ varStrForce(const Variant *this)
 
         case varTypeInt64:
         {
-            char working[64];
+            char working[CVT_BASE10_BUFFER_SIZE];
 
             cvtInt64ToZ(varInt64(this), working, sizeof(working));
             result = strNew(working);
@@ -1124,13 +1119,19 @@ varStrForce(const Variant *this)
 
         case varTypeUInt:
         {
-            result = strNewFmt("%u", varUInt(this));
+            char working[CVT_BASE10_BUFFER_SIZE];
+
+            cvtUIntToZ(varUInt(this), working, sizeof(working));
+            result = strNew(working);
             break;
         }
 
         case varTypeUInt64:
         {
-            result = strNewFmt("%" PRIu64, varUInt64(this));
+            char working[CVT_BASE10_BUFFER_SIZE];
+
+            cvtUInt64ToZ(varUInt64(this), working, sizeof(working));
+            result = strNew(working);
             break;
         }
 

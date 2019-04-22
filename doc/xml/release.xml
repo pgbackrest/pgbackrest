@@ -38,6 +38,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add constant for maximum buffer sizes required by <code>cvt*()</code> functions.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <id>true</id> and <id>false</id> <code>String</code> constants.</p>
                     </release-item>
 

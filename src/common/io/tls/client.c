@@ -298,7 +298,7 @@ tlsClientOpen(TlsClient *this)
                     hints.ai_protocol = IPPROTO_TCP;
 
                     // Convert the port to a zero-terminated string for use with getaddrinfo()
-                    char port[32];
+                    char port[CVT_BASE10_BUFFER_SIZE];
                     cvtUIntToZ(this->port, port, sizeof(port));
 
                     // Get an address for the host.  We are only going to try the first address returned.
