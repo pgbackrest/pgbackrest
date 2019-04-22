@@ -186,7 +186,7 @@ protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command)
     ASSERT(command != NULL);
 
     // Write out the command
-    ioWriteLine(this->write, protocolCommandJson(command));
+    ioWriteStrLine(this->write, protocolCommandJson(command));
     ioWriteFlush(this->write);
 
     // Reset the keep alive time

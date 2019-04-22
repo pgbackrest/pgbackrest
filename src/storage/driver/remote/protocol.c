@@ -94,7 +94,7 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
 
                     if (bufUsed(buffer) > 0)
                     {
-                        ioWriteLine(protocolServerIoWrite(server), strNewFmt(PROTOCOL_BLOCK_HEADER "%zu", bufUsed(buffer)));
+                        ioWriteStrLine(protocolServerIoWrite(server), strNewFmt(PROTOCOL_BLOCK_HEADER "%zu", bufUsed(buffer)));
                         ioWrite(protocolServerIoWrite(server), buffer);
                         ioWriteFlush(protocolServerIoWrite(server));
 
@@ -104,7 +104,7 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
                 while (!ioReadEof(fileRead));
 
                 // Write a zero block to show file is complete
-                ioWriteLine(protocolServerIoWrite(server), STRDEF(PROTOCOL_BLOCK_HEADER "0"));
+                ioWriteLine(protocolServerIoWrite(server), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
                 ioWriteFlush(protocolServerIoWrite(server));
             }
         }

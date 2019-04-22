@@ -135,7 +135,7 @@ storageDriverRemoteFileWrite(StorageDriverRemoteFileWrite *this, const Buffer *b
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    ioWriteLine(protocolClientIoWrite(this->client), strNewFmt(PROTOCOL_BLOCK_HEADER "%zu", bufUsed(buffer)));
+    ioWriteStrLine(protocolClientIoWrite(this->client), strNewFmt(PROTOCOL_BLOCK_HEADER "%zu", bufUsed(buffer)));
     ioWrite(protocolClientIoWrite(this->client), buffer);
     ioWriteFlush(protocolClientIoWrite(this->client));
 
@@ -157,7 +157,7 @@ storageDriverRemoteFileWriteClose(StorageDriverRemoteFileWrite *this)
     // Close if the file has not already been closed
     if (this->client != NULL)
     {
-        ioWriteLine(protocolClientIoWrite(this->client), STRDEF(PROTOCOL_BLOCK_HEADER "0"));
+        ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
         ioWriteFlush(protocolClientIoWrite(this->client));
         protocolClientReadOutput(this->client, false);
 
@@ -319,7 +319,7 @@ storageDriverRemoteFileWriteFree(StorageDriverRemoteFileWrite *this)
         // If freed without closing then notify the remote to close the file
         if (this->client != NULL)
         {
-            ioWriteLine(protocolClientIoWrite(this->client), STRDEF(PROTOCOL_BLOCK_HEADER "-1"));
+            ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "-1"));
             ioWriteFlush(protocolClientIoWrite(this->client));
             protocolClientReadOutput(this->client, false);
 

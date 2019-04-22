@@ -248,7 +248,7 @@ httpClientRequest(
                 // Write the request
                 String *queryStr = httpQueryRender(query);
 
-                ioWriteLine(
+                ioWriteStrLine(
                     tlsClientIoWrite(this->tls),
                     strNewFmt(
                         "%s %s%s%s " HTTP_VERSION "\r", strPtr(verb), strPtr(httpUriEncode(uri, true)), queryStr == NULL ? "" : "?",
@@ -262,14 +262,14 @@ httpClientRequest(
                     for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
                     {
                         const String *headerKey = strLstGet(headerList, headerIdx);
-                        ioWriteLine(
+                        ioWriteStrLine(
                             tlsClientIoWrite(this->tls),
                             strNewFmt("%s:%s\r", strPtr(headerKey), strPtr(httpHeaderGet(requestHeader, headerKey))));
                     }
                 }
 
                 // Write out blank line to end the headers
-                ioWriteLine(tlsClientIoWrite(this->tls), CR_STR);
+                ioWriteLine(tlsClientIoWrite(this->tls), CR_BUF);
 
                 // Write out body if any
                 if (body != NULL)

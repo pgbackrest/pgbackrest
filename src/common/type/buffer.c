@@ -12,6 +12,7 @@ Constant buffers that are generally useful
 ***********************************************************************************************************************************/
 BUFFER_STRDEF_EXTERN(BRACKETL_BUF,                                  "[");
 BUFFER_STRDEF_EXTERN(BRACKETR_BUF,                                  "]");
+BUFFER_STRDEF_EXTERN(CR_BUF,                                        "\r");
 BUFFER_STRDEF_EXTERN(EQ_BUF,                                        "=");
 BUFFER_STRDEF_EXTERN(LF_BUF,                                        "\n");
 

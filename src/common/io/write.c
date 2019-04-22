@@ -123,7 +123,27 @@ ioWrite(IoWrite *this, const Buffer *buffer)
 Write linefeed-terminated string
 ***********************************************************************************************************************************/
 void
-ioWriteLine(IoWrite *this, const String *string)
+ioWriteLine(IoWrite *this, const Buffer *buffer)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+
+    ioWrite(this, buffer);
+    ioWrite(this, LF_BUF);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Write string
+***********************************************************************************************************************************/
+void
+ioWriteStr(IoWrite *this, const String *string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -132,7 +152,25 @@ ioWriteLine(IoWrite *this, const String *string)
 
     ASSERT(this != NULL);
     ASSERT(string != NULL);
-    ASSERT(this->opened && !this->closed);
+
+    ioWrite(this, BUFSTR(string));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Write linefeed-terminated string
+***********************************************************************************************************************************/
+void
+ioWriteStrLine(IoWrite *this, const String *string)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+        FUNCTION_LOG_PARAM(STRING, string);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(string != NULL);
 
     ioWrite(this, BUFSTR(string));
     ioWrite(this, LF_BUF);

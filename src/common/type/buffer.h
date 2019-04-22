@@ -101,6 +101,7 @@ Constant buffers that are generally useful
 ***********************************************************************************************************************************/
 BUFFER_DECLARE(BRACKETL_BUF);
 BUFFER_DECLARE(BRACKETR_BUF);
+BUFFER_DECLARE(CR_BUF);
 BUFFER_DECLARE(EQ_BUF);
 BUFFER_DECLARE(LF_BUF);
 

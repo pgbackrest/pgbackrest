@@ -420,7 +420,7 @@ testRun(void)
 
         TEST_RESULT_VOID(ioWriteOpen(write), "    open io object");
         TEST_RESULT_BOOL(testIoWriteOpenCalled, true, "    check io object open");
-        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABC")), "    write 3 bytes");
+        TEST_RESULT_VOID(ioWriteStr(write, STRDEF("ABC")), "    write 3 bytes");
         TEST_RESULT_VOID(ioWriteClose(write), "    close io object");
         TEST_RESULT_BOOL(testIoWriteCloseCalled, true, "    check io object closed");
 
@@ -453,14 +453,14 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteFilterGroupSet(ioBufferWriteIo(bufferWrite), filterGroup), "    add filter group to write io");
 
         TEST_RESULT_VOID(ioWriteOpen(ioBufferWriteIo(bufferWrite)), "    open buffer write object");
-        TEST_RESULT_VOID(ioWriteLine(ioBufferWriteIo(bufferWrite), strNew("AB")), "    write string");
+        TEST_RESULT_VOID(ioWriteLine(ioBufferWriteIo(bufferWrite), BUFSTRDEF("AB")), "    write line");
         TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), bufNew(0)), "    write 0 bytes");
         TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), NULL), "    write 0 bytes");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\n", "    check write");
 
-        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), BUFSTRDEF("Z")), "    write string");
+        TEST_RESULT_VOID(ioWriteStr(ioBufferWriteIo(bufferWrite), STRDEF("Z")), "    write string");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\n", "    no change because output buffer is not full");
-        TEST_RESULT_VOID(ioWrite(ioBufferWriteIo(bufferWrite), BUFSTRDEF("12345")), "    write bytes");
+        TEST_RESULT_VOID(ioWriteStr(ioBufferWriteIo(bufferWrite), STRDEF("12345")), "    write bytes");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)), "AABB\n\nZZ1122334455", "    check write");
 
         TEST_RESULT_VOID(ioWriteClose(ioBufferWriteIo(bufferWrite)), " close buffer write object");
@@ -499,7 +499,7 @@ testRun(void)
                 ioWriteOpen(ioHandleWriteIo(write));
 
                 // Write a line to be read
-                TEST_RESULT_VOID(ioWriteLine(ioHandleWriteIo(write), strNew("test string 1")), "write test string");
+                TEST_RESULT_VOID(ioWriteStrLine(ioHandleWriteIo(write), strNew("test string 1")), "write test string");
                 ioWriteFlush(ioHandleWriteIo(write));
                 ioWriteFlush(ioHandleWriteIo(write));
 

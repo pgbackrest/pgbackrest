@@ -529,7 +529,7 @@ testRun(void)
                 lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30000, true);
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
-                ioWriteLine(write, strNew(""));
+                ioWriteStrLine(write, strNew(""));
                 ioWriteFlush(write);
                 ioReadLine(read);
 
@@ -552,7 +552,7 @@ testRun(void)
                     "unable to push WAL file '000000010000000100000001' to the archive asynchronously after 1 second(s)");
 
                 // Notify the child to release the lock
-                ioWriteLine(write, strNew(""));
+                ioWriteLine(write, bufNew(0));
                 ioWriteFlush(write);
             }
             HARNESS_FORK_PARENT_END();

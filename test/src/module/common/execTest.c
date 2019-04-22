@@ -18,7 +18,7 @@ testRun(void)
 
         TEST_ASSIGN(exec, execNew(strNew("catt"), NULL, strNew("cat"), 1000), "invalid exec");
         TEST_RESULT_VOID(execOpen(exec), "open invalid exec");
-        TEST_RESULT_VOID(ioWriteLine(execIoWrite(exec), EMPTY_STR), "write invalid exec");
+        TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), EMPTY_STR), "write invalid exec");
         sleep(1);
         TEST_ERROR(
             ioWriteFlush(execIoWrite(exec)), ExecuteError,
@@ -32,7 +32,7 @@ testRun(void)
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
         String *message = strNew("ACKBYACK");
-        TEST_RESULT_VOID(ioWriteLine(execIoWrite(exec), message), "write cat exec");
+        TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), message), "write cat exec");
         ioWriteFlush(execIoWrite(exec));
         TEST_RESULT_STR(strPtr(ioReadLine(execIoRead(exec))), strPtr(message), "read cat exec");
         TEST_RESULT_VOID(execFree(exec), "free exec");
@@ -57,7 +57,7 @@ testRun(void)
         TEST_ASSIGN(exec, execNew(strNew("cat"), strLstAddZ(strLstNew(), "-b"), strNew("cat"), 1000), "new cat exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
-        TEST_RESULT_VOID(ioWriteLine(execIoWrite(exec), message), "write cat exec");
+        TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), message), "write cat exec");
         ioWriteFlush(execIoWrite(exec));
         TEST_RESULT_STR(strPtr(ioReadLine(execIoRead(exec))), "     1\tACKBYACK", "read cat exec");
         TEST_RESULT_VOID(execFree(exec), "free exec");
@@ -76,7 +76,7 @@ testRun(void)
                 TEST_ASSIGN(exec, execNew(strNew("cat"), strLstAddZ(strLstNew(), "-b"), strNew("cat"), 1000), "new cat exec");
                 TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
-                TEST_RESULT_VOID(ioWriteLine(execIoWrite(exec), message), "write cat exec");
+                TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), message), "write cat exec");
                 ioWriteFlush(execIoWrite(exec));
                 TEST_RESULT_STR(strPtr(ioReadLine(execIoRead(exec))), "     1\tACKBYACK", "read cat exec");
                 TEST_RESULT_VOID(execFree(exec), "free exec");
@@ -92,7 +92,7 @@ testRun(void)
         TEST_ERROR(execFree(exec), ExecuteError, "sleep did not exit when expected");
 
         TEST_ERROR(ioReadLine(execIoRead(exec)), FileReadError, "unable to select from sleep read: [9] Bad file descriptor");
-        ioWriteLine(execIoWrite(exec), strNew(""));
+        ioWriteStrLine(execIoWrite(exec), strNew(""));
         TEST_ERROR(ioWriteFlush(execIoWrite(exec)), FileWriteError, "unable to write to sleep write: [9] Bad file descriptor");
 
         sleepMSec(500);
