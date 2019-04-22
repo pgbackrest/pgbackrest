@@ -114,7 +114,7 @@ perlOptionJson(void)
         }
 
         memContextSwitch(MEM_CONTEXT_OLD());
-        result = kvToJson(configKv, 0);
+        result = jsonFromKv(configKv, 0);
         memContextSwitch(MEM_CONTEXT_TEMP());
     }
     MEM_CONTEXT_TEMP_END();

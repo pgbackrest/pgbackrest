@@ -65,7 +65,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
             kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_SERVICE_STR), VARSTR(service));
             kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_VERSION_STR), VARSTRZ(PROJECT_VERSION));
 
-            ioWriteLine(this->write, kvToJson(greetingKv, 0));
+            ioWriteLine(this->write, jsonFromKv(greetingKv, 0));
             ioWriteFlush(this->write);
         }
         MEM_CONTEXT_TEMP_END();
@@ -114,7 +114,7 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
     kvPut(error, VARSTR(PROTOCOL_OUTPUT_STR), VARSTR(message));
     kvPut(error, VARSTR(PROTOCOL_ERROR_STACK_STR), VARSTR(stack));
 
-    ioWriteLine(this->write, kvToJson(error, 0));
+    ioWriteLine(this->write, jsonFromKv(error, 0));
     ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
@@ -140,7 +140,7 @@ protocolServerProcess(ProtocolServer *this)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 // Read command
-                KeyValue *commandKv = varKv(jsonToVar(ioReadLine(this->read)));
+                KeyValue *commandKv = jsonToKv(ioReadLine(this->read));
                 const String *command = varStr(kvGet(commandKv, VARSTR(PROTOCOL_KEY_COMMAND_STR)));
                 VariantList *paramList = varVarLst(kvGet(commandKv, VARSTR(PROTOCOL_KEY_PARAMETER_STR)));
 
@@ -200,7 +200,7 @@ protocolServerResponse(ProtocolServer *this, const Variant *output)
     if (output != NULL)
         kvAdd(result, VARSTR(PROTOCOL_OUTPUT_STR), output);
 
-    ioWriteLine(this->write, kvToJson(result, 0));
+    ioWriteLine(this->write, jsonFromKv(result, 0));
     ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();

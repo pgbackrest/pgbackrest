@@ -11,6 +11,7 @@ Info Handler
 #include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/type/json.h"
 #include "info/info.h"
 #include "storage/helper.h"
 #include "version.h"
@@ -159,26 +160,29 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
         iniParse(this->ini, strNewBuf(buffer));
 
         // Make sure the ini is valid by testing the checksum
-        const String *infoChecksum = iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR);
+        const String *infoChecksumJson = iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR);
+        const String *checksum = bufHex(cryptoHash(infoHash(this->ini)));
 
-        CryptoHash *hash = infoHash(this->ini);
-
-        // ??? Temporary hack until get json parser: add quotes around hash before comparing
-        if (!strEq(infoChecksum, strQuoteZ(bufHex(cryptoHash(hash)), "\"")))
+        if (strSize(infoChecksumJson) == 0)
         {
-            // Is the checksum present?
-            bool checksumMissing = strSize(infoChecksum) < 3;
-
             THROW_FMT(
-                ChecksumError, "invalid checksum in '%s', expected '%s' but %s%s%s", strPtr(storagePathNP(storage, fileName)),
-                strPtr(bufHex(cryptoHash(hash))), checksumMissing ? "no checksum found" : "found '",
-                // ??? Temporary hack until get json parser: remove quotes around hash before displaying in messsage
-                checksumMissing ? "" : strPtr(strSubN(infoChecksum, 1, strSize(infoChecksum) - 2)),
-                checksumMissing ? "" : "'");
+                ChecksumError, "invalid checksum in '%s', expected '%s' but no checksum found",
+                strPtr(storagePathNP(storage, fileName)), strPtr(checksum));
+        }
+        else
+        {
+            const String *infoChecksum = jsonToStr(infoChecksumJson);
+
+            if (!strEq(infoChecksum, checksum))
+            {
+                THROW_FMT(
+                    ChecksumError, "invalid checksum in '%s', expected '%s' but found '%s'",
+                    strPtr(storagePathNP(storage, fileName)), strPtr(checksum), strPtr(infoChecksum));
+            }
         }
 
         // Make sure that the format is current, otherwise error
-        if (varIntForce(VARSTR(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR))) != REPOSITORY_FORMAT)
+        if (jsonToUInt(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR)) != REPOSITORY_FORMAT)
         {
             THROW_FMT(
                 FormatError, "invalid format in '%s', expected %d but found %d", strPtr(fileName), REPOSITORY_FORMAT,
@@ -258,7 +262,7 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
         const String *cipherPass = iniGetDefault(this->ini, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, NULL);
 
         if (cipherPass != NULL)
-            this->cipherPass = strSubN(cipherPass, 1, strSize(cipherPass) - 2);
+            this->cipherPass = jsonToStr(cipherPass);
     }
     MEM_CONTEXT_NEW_END();
 

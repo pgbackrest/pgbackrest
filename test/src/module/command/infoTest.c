@@ -72,12 +72,12 @@ testRun(void)
         String *content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"80798255547bafa3eee805ab0fccaa1da03cab0e\"\n"
+            "backrest-checksum=\"a52ab193e02b367ab338bff842e2faa31d8aa921\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.04\"\n"
             "\n"
             "[cipher]\n"
-            "cipher-pass=12345\n"
+            "cipher-pass=\"12345\"\n"
             "\n"
             "[db]\n"
             "db-catalog-version=201409291\n"

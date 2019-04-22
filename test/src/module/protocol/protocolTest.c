@@ -285,7 +285,7 @@ testRun(void)
                 // Various bogus greetings
                 TEST_ERROR(
                     protocolClientNew(strNew("test client"), strNew("test"), read, write), JsonFormatError,
-                    "invalid type at 'bogus greeting'");
+                    "expected '{' at 'bogus greeting'");
                 TEST_ERROR(
                     protocolClientNew(strNew("test client"), strNew("test"), read, write), ProtocolError,
                     "greeting key 'name' must be string type");

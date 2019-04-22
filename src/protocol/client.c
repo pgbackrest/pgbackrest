@@ -72,7 +72,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         MEM_CONTEXT_TEMP_BEGIN()
         {
             String *greeting = ioReadLine(this->read);
-            KeyValue *greetingKv = varKv(jsonToVar(greeting));
+            KeyValue *greetingKv = jsonToKv(greeting);
 
             const String *expected[] =
             {

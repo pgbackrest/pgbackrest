@@ -83,7 +83,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
             const StringList *pgHistoryKey = iniSectionKeyList(infoPgIni, INFO_SECTION_DB_HISTORY_STR);
 
             // Get the current history id
-            unsigned int pgId = varUIntForce(VARSTR(iniGet(infoPgIni, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR))));
+            unsigned int pgId = jsonToUInt(iniGet(infoPgIni, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR)));
 
             // History must include at least one item or the file is corrupt
             ASSERT(strLstSize(pgHistoryKey) > 0);
@@ -94,8 +94,8 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
             for (unsigned int pgHistoryIdx = strLstSize(pgHistoryKey) - 1; (int)pgHistoryIdx >= 0; pgHistoryIdx--)
             {
                 // Load JSON data into a KeyValue
-                const KeyValue *pgDataKv = varKv(
-                    jsonToVar(iniGet(infoPgIni, INFO_SECTION_DB_HISTORY_STR, strLstGet(pgHistoryKey, pgHistoryIdx))));
+                const KeyValue *pgDataKv = jsonToKv(
+                    iniGet(infoPgIni, INFO_SECTION_DB_HISTORY_STR, strLstGet(pgHistoryKey, pgHistoryIdx)));
 
                 // Get db values that are common to all info files
                 InfoPgData infoPgData =
@@ -117,8 +117,8 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
                 // we must write them at least, even if we give up reading them.
                 if (type == infoPgBackup || type == infoPgManifest)
                 {
-                    infoPgData.catalogVersion = (unsigned int)varUInt64Force(kvGet(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR));
-                    infoPgData.controlVersion = (unsigned int)varUInt64Force(kvGet(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR));
+                    infoPgData.catalogVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR));
+                    infoPgData.controlVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR));
                 }
                 else if (type != infoPgArchive)
                     THROW_FMT(AssertError, "invalid InfoPg type %u", type);

@@ -26,6 +26,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add separate functions to encode/decode each JSON type.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add macros to create constant <code>Buffer</code> objects.</p>
                     </release-item>
 
