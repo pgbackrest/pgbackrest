@@ -162,7 +162,7 @@ testRun(void)
         TEST_ERROR(
             cfgOptionSet(cfgOptRecoveryOption, cfgSourceParam, varNewDbl(1.1)), AssertError,
             "option 'recovery-option' must be set with KeyValue variant");
-        TEST_RESULT_VOID(cfgOptionSet(cfgOptRecoveryOption, cfgSourceConfig, varNewKv()), "set recovery-option");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptRecoveryOption, cfgSourceConfig, varNewKv(kvNew())), "set recovery-option");
         TEST_RESULT_INT(varLstSize(kvKeyList(cfgOptionKv(cfgOptRecoveryOption))), 0, "recovery-option is set");
         TEST_ERROR(
             cfgOptionLst(cfgOptRecoveryOption), AssertError,

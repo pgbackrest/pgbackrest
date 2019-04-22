@@ -265,7 +265,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *keyValue = NULL;
 
-        TEST_ASSIGN(keyValue, varNewKv(), "new");
+        TEST_ASSIGN(keyValue, varNewKv(NULL), "new null");
+        TEST_RESULT_PTR(varKv(keyValue), NULL, "    kv is null");
+
+        TEST_ASSIGN(keyValue, varNewKv(kvNew()), "new");
         TEST_RESULT_PTR(kvPut(varKv(keyValue), VARINT(44), VARINT(55)), varKv(keyValue), "    put int/int");
         TEST_RESULT_INT(varInt(kvGet(varKv(keyValue), VARINT(44))), 55, "    get int/int");
         TEST_RESULT_PTR(varKv(NULL), NULL, "get null kv");
@@ -280,7 +283,7 @@ testRun(void)
         varFree(keyValueDup);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(varEq(varNewKv(), varNewKv()), AssertError, "unable to test equality for KeyValue");
+        TEST_ERROR(varEq(varNewKv(kvNew()), varNewKv(kvNew())), AssertError, "unable to test equality for KeyValue");
     }
 
     // *****************************************************************************************************************************
@@ -326,7 +329,7 @@ testRun(void)
         TEST_RESULT_STR(strPtr(varStrForce(varNewBool(false))), "false", "force bool to string");
         TEST_RESULT_STR(strPtr(varStrForce(VARUINT64(18446744073709551615U))), "18446744073709551615", "force uint64 to string");
 
-        TEST_ERROR(varStrForce(varNewKv()), FormatError, "unable to force KeyValue to String");
+        TEST_ERROR(varStrForce(varNewKv(kvNew())), FormatError, "unable to force KeyValue to String");
 
         // -------------------------------------------------------------------------------------------------------------------------
         string = varNewStrZ("not-an-int");
@@ -395,7 +398,7 @@ testRun(void)
     {
         TEST_RESULT_STR(strPtr(varToLog(varNewStrZ("testme"))), "{\"testme\"}", "format String");
         TEST_RESULT_STR(strPtr(varToLog(varNewBool(false))), "{false}", "format bool");
-        TEST_RESULT_STR(strPtr(varToLog(varNewKv())), "{KeyValue}", "format KeyValue");
+        TEST_RESULT_STR(strPtr(varToLog(varNewKv(kvNew()))), "{KeyValue}", "format KeyValue");
         TEST_RESULT_STR(strPtr(varToLog(varNewVarLst(varLstNew()))), "{VariantList}", "format VariantList");
         TEST_RESULT_STR(strPtr(varToLog(NULL)), "null", "format null");
     }

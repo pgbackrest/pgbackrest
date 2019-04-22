@@ -967,17 +967,23 @@ varUInt64Force(const Variant *this)
 
 /***********************************************************************************************************************************
 New key/value variant
+
+Note that the kv is not duped because it this a heavy-weight operation.  It is merely moved into the same MemContext as the Variant.
 ***********************************************************************************************************************************/
 Variant *
-varNewKv(void)
+varNewKv(KeyValue *data)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, data);
+    FUNCTION_TEST_END();
 
     // Allocate memory for the variant and set the type and data
     VariantKeyValue *this = memNew(sizeof(VariantKeyValue));
     this->memContext = memContextCurrent();
     this->type = varTypeKeyValue;
-    this->data = kvNew();
+
+    if (data != NULL)
+        this->data = kvMove(data, memContextCurrent());
 
     FUNCTION_TEST_RETURN((Variant *)this);
 }

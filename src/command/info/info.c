@@ -119,7 +119,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     String *archivePath = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strPtr(stanza), strPtr(archiveId));
     String *archiveStart = NULL;
     String *archiveStop = NULL;
-    Variant *archiveInfo = varNewKv();
+    Variant *archiveInfo = varNewKv(kvNew());
 
     // Get a list of WAL directories in the archive repo from oldest to newest, if any exist
     StringList *walDir = storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR);
@@ -206,7 +206,7 @@ backupList(VariantList *backupSection, InfoBackup *info)
         // Get the backup data
         InfoBackupData backupData = infoBackupData(info, keyIdx);
 
-        Variant *backupInfo = varNewKv();
+        Variant *backupInfo = varNewKv(kvNew());
 
         // main keys
         kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTR(backupData.backupLabel));
@@ -297,7 +297,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
         }
 
         // Create the stanzaInfo and section variables
-        Variant *stanzaInfo = varNewKv();
+        Variant *stanzaInfo = varNewKv(kvNew());
         VariantList *dbSection = varLstNew();
         VariantList *backupSection = varLstNew();
         VariantList *archiveSection = varLstNew();
@@ -345,7 +345,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
             for (unsigned int pgIdx = infoPgDataTotal(infoBackupPg(info)) - 1; (int)pgIdx >= 0; pgIdx--)
             {
                 InfoPgData pgData = infoPgData(infoBackupPg(info), pgIdx);
-                Variant *pgInfo = varNewKv();
+                Variant *pgInfo = varNewKv(kvNew());
 
                 kvPut(varKv(pgInfo), DB_KEY_ID_VAR, VARUINT(pgData.id));
                 kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
@@ -386,7 +386,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList)
     // If looking for a specific stanza and it was not found, set minimum info and the status
     if (stanza != NULL && !stanzaFound)
     {
-        Variant *stanzaInfo = varNewKv();
+        Variant *stanzaInfo = varNewKv(kvNew());
 
         kvPut(varKv(stanzaInfo), STANZA_KEY_NAME_VAR, VARSTR(stanza));
 

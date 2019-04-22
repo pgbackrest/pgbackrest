@@ -964,7 +964,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         }
                         else if (optionDefType == cfgDefOptTypeHash)
                         {
-                            Variant *value = varNewKv();
+                            Variant *value = varNewKv(kvNew());
                             KeyValue *keyValue = varKv(value);
 
                             for (unsigned int listIdx = 0; listIdx < strLstSize(parseOption->valueList); listIdx++)

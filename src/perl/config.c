@@ -28,7 +28,7 @@ perlOptionJson(void)
             if (!cfgOptionValid(optionId))
                 continue;
 
-            Variant *optionVar = varNewKv();
+            Variant *optionVar = varNewKv(kvNew());
 
             // Add valid
             kvPut(varKv(optionVar), VARSTRDEF("valid"), BOOL_TRUE_VAR);
@@ -83,7 +83,7 @@ perlOptionJson(void)
 
                     case cfgDefOptTypeHash:
                     {
-                        valueVar = varNewKv();
+                        valueVar = varNewKv(kvNew());
 
                         const KeyValue *valueKv = cfgOptionKv(optionId);
                         const VariantList *keyList = kvKeyList(valueKv);
@@ -96,7 +96,7 @@ perlOptionJson(void)
 
                     case cfgDefOptTypeList:
                     {
-                        valueVar = varNewKv();
+                        valueVar = varNewKv(kvNew());
 
                         const VariantList *valueList = cfgOptionLst(optionId);
 

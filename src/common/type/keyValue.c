@@ -293,10 +293,8 @@ kvPutKv(KeyValue *this, const Variant *key)
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
-        Variant *keyValue = varNewKv();
-        result = varKv(keyValue);
-
-        kvPutInternal(this, key, keyValue);
+        result = kvNew();
+        kvPutInternal(this, key, varNewKv(result));
     }
     MEM_CONTEXT_END();
 

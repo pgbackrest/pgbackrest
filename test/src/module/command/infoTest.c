@@ -787,7 +787,7 @@ testRun(void)
         // These tests cover branches not covered in other tests
         KeyValue *stanzaInfo = kvNew();
         VariantList *dbSection = varLstNew();
-        Variant *pgInfo = varNewKv();
+        Variant *pgInfo = varNewKv(kvNew());
         kvPut(varKv(pgInfo), DB_KEY_ID_VAR, varNewUInt(1));
         kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, varNewUInt64(6625633699176220261));
         kvPut(varKv(pgInfo), DB_KEY_VERSION_VAR, VARSTR(pgVersionToStr(90500)));
@@ -798,7 +798,7 @@ testRun(void)
         kvPut(stanzaInfo, STANZA_KEY_DB_VAR, varNewVarLst(dbSection));
 
         VariantList *backupSection = varLstNew();
-        Variant *backupInfo = varNewKv();
+        Variant *backupInfo = varNewKv(kvNew());
 
         kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTRDEF("20181119-152138F"));
         kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTRDEF("full"));

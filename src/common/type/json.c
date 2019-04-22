@@ -266,7 +266,7 @@ jsonToVarInternal(const char *json, unsigned int *jsonPos)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 memContextSwitch(MEM_CONTEXT_OLD());
-                result = varNewKv();
+                result = varNewKv(kvNew());
                 memContextSwitch(MEM_CONTEXT_TEMP());
 
                 // Move position to the first key/value in the object

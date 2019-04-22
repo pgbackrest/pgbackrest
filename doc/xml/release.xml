@@ -34,6 +34,10 @@
                     </release-item>
 
                     <release-item>
+                        <p><code>varNewKv()</code> accepts a <code>KeyValue</code> object rather than creating one.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Refactor <code>Ini</code> interface to expose <code>String</code> values instead of <code>Variant</code>.</p>
                     </release-item>
 

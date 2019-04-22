@@ -100,7 +100,7 @@ testRun(void)
         kvPut(keyValue, varNewStrZ("checknull"), (Variant *)NULL);
 
         VariantList *dbList = varLstNew();
-        Variant *dbInfo = varNewKv();
+        Variant *dbInfo = varNewKv(kvNew());
         kvPut(varKv(dbInfo), varNewStr(strNew("id")), varNewInt(1));
         kvPut(varKv(dbInfo), varNewStr(strNew("version")),  varNewStr(strNew("9.4")));
         varLstAdd(dbList, dbInfo);
@@ -153,7 +153,7 @@ testRun(void)
         String *json = NULL;
         Variant *keyValue = NULL;
 
-        TEST_ASSIGN(keyValue, varNewKv(), "build new kv");
+        TEST_ASSIGN(keyValue, varNewKv(kvNew()), "build new kv");
         kvPut(varKv(keyValue), varNewStrZ("backup-info-size-delta"), varNewInt(1982702));
         kvPut(varKv(keyValue), varNewStrZ("backup-prior"), varNewStrZ("20161219-212741F_20161219-212803I"));
 

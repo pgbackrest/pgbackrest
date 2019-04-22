@@ -64,7 +64,7 @@ Variant *varNewInt64(int64_t data);
 int64_t varInt64(const Variant *this);
 int64_t varInt64Force(const Variant *this);
 
-Variant *varNewKv(void);
+Variant *varNewKv(KeyValue *data);
 KeyValue *varKv(const Variant *this);
 
 Variant *varNewStr(const String *data);
