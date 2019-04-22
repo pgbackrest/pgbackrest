@@ -19,10 +19,12 @@ STRING_EXTERN(BRACKETR_STR,                                         "]");
 STRING_EXTERN(CR_STR,                                               "\r");
 STRING_EXTERN(EMPTY_STR,                                            "");
 STRING_EXTERN(EQ_STR,                                               "=");
+STRING_EXTERN(FALSE_STR,                                            "false");
 STRING_EXTERN(FSLASH_STR,                                           "/");
 STRING_EXTERN(LF_STR,                                               "\n");
 STRING_EXTERN(N_STR,                                                "n");
 STRING_EXTERN(NULL_STR,                                             "null");
+STRING_EXTERN(TRUE_STR,                                             "true");
 STRING_EXTERN(Y_STR,                                                "y");
 STRING_EXTERN(ZERO_STR,                                             "0");
 

@@ -38,6 +38,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <id>true</id> and <id>false</id> <code>String</code> constants.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Refactor <code>Ini</code> interface to expose <code>String</code> values instead of <code>Variant</code>.</p>
                     </release-item>
 
