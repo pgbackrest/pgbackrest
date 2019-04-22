@@ -284,7 +284,7 @@ common/exit.o: common/exit.c command/command.h common/assert.h common/debug.h co
 common/fork.o: common/fork.c common/assert.h common/debug.h common/error.auto.h common/error.h common/log.h common/logLevel.h common/stackTrace.h common/type/convert.h
 	$(CC) $(CFLAGS) -c common/fork.c -o common/fork.o
 
-common/ini.o: common/ini.c common/assert.h common/debug.h common/error.auto.h common/error.h common/ini.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
+common/ini.o: common/ini.c common/assert.h common/debug.h common/error.auto.h common/error.h common/ini.h common/io/filter/filter.h common/io/filter/group.h common/io/write.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CFLAGS) -c common/ini.c -o common/ini.o
 
 common/io/bufferRead.o: common/io/bufferRead.c common/assert.h common/debug.h common/error.auto.h common/error.h common/io/bufferRead.h common/io/filter/filter.h common/io/filter/group.h common/io/read.h common/io/read.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h

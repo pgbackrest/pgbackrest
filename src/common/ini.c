@@ -46,12 +46,13 @@ iniNew(void)
 Internal function to get an ini value
 ***********************************************************************************************************************************/
 static const Variant *
-iniGetInternal(const Ini *this, const String *section, const String *key)
+iniGetInternal(const Ini *this, const String *section, const String *key, bool required)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, this);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(BOOL, required);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -67,13 +68,17 @@ iniGetInternal(const Ini *this, const String *section, const String *key)
     if (sectionKv != NULL)
         result = kvGet(sectionKv, VARSTR(key));
 
+    // If value is null and required then error
+    if (result == NULL && required)
+        THROW_FMT(FormatError, "section '%s', key '%s' does not exist", strPtr(section), strPtr(key));
+
     FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
 Get an ini value -- error if it does not exist
 ***********************************************************************************************************************************/
-const Variant *
+const String *
 iniGet(const Ini *this, const String *section, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -87,26 +92,22 @@ iniGet(const Ini *this, const String *section, const String *key)
     ASSERT(key != NULL);
 
     // Get the value
-    const Variant *result = iniGetInternal(this, section, key);
+    const Variant *result = iniGetInternal(this, section, key, true);
 
-    // If value is null replace it with default
-    if (result == NULL)
-        THROW_FMT(FormatError, "section '%s', key '%s' does not exist", strPtr(section), strPtr(key));
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(varStr(result));
 }
 
 /***********************************************************************************************************************************
 Get an ini value -- if it does not exist then return specified default
 ***********************************************************************************************************************************/
-const Variant *
-iniGetDefault(const Ini *this, const String *section, const String *key, const Variant *defaultValue)
+const String *
+iniGetDefault(const Ini *this, const String *section, const String *key, const String *defaultValue)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, this);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(VARIANT, defaultValue);
+        FUNCTION_TEST_PARAM(STRING, defaultValue);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -114,13 +115,53 @@ iniGetDefault(const Ini *this, const String *section, const String *key, const V
     ASSERT(key != NULL);
 
     // Get the value
-    const Variant *result = iniGetInternal(this, section, key);
+    const Variant *result = iniGetInternal(this, section, key, false);
 
-    // If value is null replace it with default
-    if (result == NULL)
-        result = defaultValue;
+    FUNCTION_TEST_RETURN(result == NULL ? defaultValue : varStr(result));
+}
 
-    FUNCTION_TEST_RETURN(result);
+/***********************************************************************************************************************************
+Internal function to get an ini value list
+***********************************************************************************************************************************/
+StringList *
+iniGetList(const Ini *this, const String *section, const String *key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(section != NULL);
+    ASSERT(key != NULL);
+
+    // Get the value
+    const Variant *result = iniGetInternal(this, section, key, false);
+
+    FUNCTION_TEST_RETURN(result == NULL ? false : strLstNewVarLst(varVarLst(result)));
+}
+
+/***********************************************************************************************************************************
+Internal function to get an ini value list
+***********************************************************************************************************************************/
+bool
+iniSectionKeyIsList(const Ini *this, const String *section, const String *key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(section != NULL);
+    ASSERT(key != NULL);
+
+    // Get the value
+    const Variant *result = iniGetInternal(this, section, key, true);
+
+    FUNCTION_TEST_RETURN(varType(result) == varTypeVariantList);
 }
 
 /***********************************************************************************************************************************
@@ -249,11 +290,8 @@ iniParse(Ini *this, const String *content)
                             if (strSize(key) == 0)
                                 THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx++, linePtr);
 
-                            // Extract the value
-                            const Variant *value = VARSTR(strTrim(strNew(lineEqual + 1)));
-
                             // Store the section/key/value
-                            iniSet(this, section, key, value);
+                            iniSet(this, section, key, strTrim(strNew(lineEqual + 1)));
                         }
                     }
                 }
@@ -270,13 +308,13 @@ iniParse(Ini *this, const String *content)
 Set an ini value
 ***********************************************************************************************************************************/
 void
-iniSet(Ini *this, const String *section, const String *key, const Variant *value)
+iniSet(Ini *this, const String *section, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, this);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(VARIANT, value);
+        FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -292,7 +330,7 @@ iniSet(Ini *this, const String *section, const String *key, const Variant *value
         if (sectionKv == NULL)
             sectionKv = kvPutKv(this->store, sectionKey);
 
-        kvAdd(sectionKv, VARSTR(key), value);
+        kvAdd(sectionKv, VARSTR(key), VARSTR(value));
     }
     MEM_CONTEXT_TEMP_END();
 

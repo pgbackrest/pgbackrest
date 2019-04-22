@@ -34,6 +34,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Refactor <code>Ini</code> interface to expose <code>String</code> values instead of <code>Variant</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Refactor <code>main()</code> as a <code>switch()</code> statement.</p>
                     </release-item>
 

@@ -83,7 +83,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
             const StringList *pgHistoryKey = iniSectionKeyList(infoPgIni, INFO_SECTION_DB_HISTORY_STR);
 
             // Get the current history id
-            unsigned int pgId = (unsigned int)varUInt64Force(iniGet(infoPgIni, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR)));
+            unsigned int pgId = varUIntForce(VARSTR(iniGet(infoPgIni, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR))));
 
             // History must include at least one item or the file is corrupt
             ASSERT(strLstSize(pgHistoryKey) > 0);
@@ -95,7 +95,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
             {
                 // Load JSON data into a KeyValue
                 const KeyValue *pgDataKv = varKv(
-                    jsonToVar(varStr(iniGet(infoPgIni, INFO_SECTION_DB_HISTORY_STR, strLstGet(pgHistoryKey, pgHistoryIdx)))));
+                    jsonToVar(iniGet(infoPgIni, INFO_SECTION_DB_HISTORY_STR, strLstGet(pgHistoryKey, pgHistoryIdx))));
 
                 // Get db values that are common to all info files
                 InfoPgData infoPgData =

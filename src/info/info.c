@@ -89,7 +89,7 @@ infoHash(const Ini *ini)
                     cryptoHashProcessC(result, (const unsigned char *)"\"", 1);
                     cryptoHashProcessStr(result, key);
                     cryptoHashProcessC(result, (const unsigned char *)"\":", 2);
-                    cryptoHashProcessStr(result, varStr(iniGet(ini, section, strLstGet(keyList, keyIdx))));
+                    cryptoHashProcessStr(result, iniGet(ini, section, strLstGet(keyList, keyIdx)));
                     if ((keyListSize > 1) && (keyIdx < keyListSize - 1))
                         cryptoHashProcessC(result, (const unsigned char *)",", 1);
                 }
@@ -159,7 +159,7 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
         iniParse(this->ini, strNewBuf(buffer));
 
         // Make sure the ini is valid by testing the checksum
-        const String *infoChecksum = varStr(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR));
+        const String *infoChecksum = iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR);
 
         CryptoHash *hash = infoHash(this->ini);
 
@@ -178,11 +178,11 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
         }
 
         // Make sure that the format is current, otherwise error
-        if (varIntForce(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR)) != REPOSITORY_FORMAT)
+        if (varIntForce(VARSTR(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR))) != REPOSITORY_FORMAT)
         {
             THROW_FMT(
                 FormatError, "invalid format in '%s', expected %d but found %d", strPtr(fileName), REPOSITORY_FORMAT,
-                varIntForce(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR)));
+                varIntForce(VARSTR(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR))));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -255,7 +255,7 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
         TRY_END();
 
         // Load the cipher passphrase if it exists
-        const String *cipherPass = varStr(iniGetDefault(this->ini, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, NULL));
+        const String *cipherPass = iniGetDefault(this->ini, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, NULL);
 
         if (cipherPass != NULL)
             this->cipherPass = strSubN(cipherPass, 1, strSize(cipherPass) - 2);

@@ -759,39 +759,43 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (parseOptionList[optionId].found)
                             continue;
 
-                        // Get the option value
-                        const Variant *value = iniGetDefault(config, section, key, NULL);
-
-                        if (varType(value) == varTypeString && strSize(varStr(value)) == 0)
-                        {
-                            THROW_FMT(
-                                OptionInvalidValueError, "section '%s', key '%s' must have a value", strPtr(section), strPtr(key));
-                        }
-
                         parseOptionList[optionId].found = true;
                         parseOptionList[optionId].source = cfgSourceConfig;
 
-                        if (varType(value) == varTypeVariantList)
+                        // Process list
+                        if (iniSectionKeyIsList(config, section, key))
                         {
                             // Error if the option cannot be specified multiple times
                             if (!cfgDefOptionMulti(optionDefId))
                                 THROW_FMT(OptionInvalidError, "option '%s' cannot be set multiple times", cfgOptionName(optionId));
 
-                            parseOptionList[optionId].valueList = strLstNewVarLst(varVarLst(value));
+                            parseOptionList[optionId].valueList = iniGetList(config, section, key);
                         }
-                        // Convert boolean
-                        else if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
-                        {
-                            if (strcasecmp(strPtr(varStr(value)), "n") == 0)
-                                parseOptionList[optionId].negate = true;
-                            else if (strcasecmp(strPtr(varStr(value)), "y") != 0)
-                                THROW_FMT(OptionInvalidValueError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
-                        }
-                        // Else add the string value
                         else
                         {
-                            parseOptionList[optionId].valueList = strLstNew();
-                            strLstAdd(parseOptionList[optionId].valueList, varStr(value));
+                            // Get the option value
+                            const String *value = iniGet(config, section, key);
+
+                            if (strSize(value) == 0)
+                            {
+                                THROW_FMT(
+                                    OptionInvalidValueError, "section '%s', key '%s' must have a value", strPtr(section),
+                                    strPtr(key));
+                            }
+
+                            if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
+                            {
+                                if (strEqZ(value, "n"))
+                                    parseOptionList[optionId].negate = true;
+                                else if (!strEqZ(value, "y"))
+                                    THROW_FMT(OptionInvalidValueError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
+                            }
+                            // Else add the string value
+                            else
+                            {
+                                parseOptionList[optionId].valueList = strLstNew();
+                                strLstAdd(parseOptionList[optionId].valueList, value);
+                            }
                         }
                     }
                 }
