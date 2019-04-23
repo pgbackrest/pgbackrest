@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Backup Info Handler
 ***********************************************************************************************************************************/
+#include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -32,11 +33,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"5c17df9523543f5283efdc3c5aa7eb933c63ea0b\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -50,7 +46,8 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put backup info to file");
+            storagePutNP(
+                storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put backup info to file");
 
         TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), "    new backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
@@ -97,11 +94,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"7f77f7a8efc72bd99b1a20022b6db50d4cbd72fa\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -139,7 +131,8 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put backup info current to file");
+            storagePutNP(
+                storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put backup info current to file");
 
         TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), "    new backup info");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 3, "    backup list contains backups");

@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test PostgreSQL Info Handler
 ***********************************************************************************************************************************/
+#include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -18,11 +19,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"1efa53e0611604ad7d833c5547eb60ff716e758c\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
@@ -32,7 +28,8 @@ testRun(void)
             "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
         );
 
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put info to file");
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put info to file");
 
         InfoPg *infoPg = NULL;
 
@@ -55,11 +52,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"5c17df9523543f5283efdc3c5aa7eb933c63ea0b\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -72,7 +64,8 @@ testRun(void)
                 "\"db-version\":\"9.4\"}\n"
         );
 
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put info to file");
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put info to file");
 
         TEST_ASSIGN(
             infoPg, infoPgNew(storageLocal(), fileName, infoPgBackup, cipherTypeNone, NULL), "new infoPg backup - load file");
@@ -90,11 +83,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"62e4d16add4b111bed37c9e9ab0b6f60897e27da\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
             "[db]\n"
             "db-catalog-version=201510051\n"
             "db-control-version=942\n"
@@ -109,7 +97,8 @@ testRun(void)
                 "\"db-version\":\"9.5\"}\n"
         );
 
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put info to file");
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put info to file");
 
         TEST_ASSIGN(
             infoPg, infoPgNew(storageLocal(), fileName, infoPgManifest, cipherTypeNone, NULL), "new infoPg manifest - load file");

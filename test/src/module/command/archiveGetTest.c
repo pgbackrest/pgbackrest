@@ -1,15 +1,16 @@
 /***********************************************************************************************************************************
 Test Archive Get Command
 ***********************************************************************************************************************************/
-#include "postgres/interface.h"
-#include "postgres/version.h"
-
 #include "common/compress/gzip/compress.h"
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "postgres/interface.h"
+#include "postgres/version.h"
 #include "storage/driver/posix/storage.h"
+
+#include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -53,12 +54,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
-            BUFSTRDEF(
-                "[backrest]\n"
-                "backrest-checksum=\"806471e1481804dc3ddf8dc6f1da7c34939420a8\"\n"
-                "backrest-format=5\n"
-                "backrest-version=\"2.06\"\n"
-                "\n"
+            harnessInfoChecksumZ(
                 "[db]\n"
                 "db-id=1\n"
                 "\n"
@@ -73,12 +69,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
-            BUFSTRDEF(
-                "[backrest]\n"
-                "backrest-checksum=\"4120e2a5c3918a480af951fb99bee7dc091f080a\"\n"
-                "backrest-format=5\n"
-                "backrest-version=\"2.06\"\n"
-                "\n"
+            harnessInfoChecksumZ(
                 "[db]\n"
                 "db-id=3\n"
                 "\n"
@@ -151,12 +142,7 @@ testRun(void)
         // Create archive.info
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
-            BUFSTRDEF(
-                "[backrest]\n"
-                "backrest-checksum=\"bf9d69c6131e906898511432b4445335f377b12b\"\n"
-                "backrest-format=5\n"
-                "backrest-version=\"2.06\"\n"
-                "\n"
+            harnessInfoChecksumZ(
                 "[db]\n"
                 "db-id=1\n"
                 "\n"
@@ -208,12 +194,7 @@ testRun(void)
 
         storagePutNP(
             infoWrite,
-            BUFSTRDEF(
-                "[backrest]\n"
-                "backrest-checksum=\"5e4bf8cafff30b488c01574411e858c7866df4a2\"\n"
-                "backrest-format=5\n"
-                "backrest-version=\"2.06\"\n"
-                "\n"
+            harnessInfoChecksumZ(
                 "[cipher]\n"
                 "cipher-pass=\"worstpassphraseever\"\n"
                 "\n"
@@ -372,12 +353,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test2/archive.info")),
-            BUFSTRDEF(
-                "[backrest]\n"
-                "backrest-checksum=\"398aa38312ce69e3625b2ecfb4dfc6387e5ce7d3\"\n"
-                "backrest-format=5\n"
-                "backrest-version=\"2.11\"\n"
-                "\n"
+            harnessInfoChecksumZ(
                 "[db]\n"
                 "db-id=1\n"
                 "\n"

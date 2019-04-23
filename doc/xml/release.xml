@@ -74,6 +74,14 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Add <code>harnessInfoChecksum/Z()</code> to ease creation of test info files.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2019-04-18" version="2.13" title="Bug Fixes">

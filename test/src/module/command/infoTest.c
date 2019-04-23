@@ -4,6 +4,7 @@ Test Info Command
 #include "storage/driver/posix/storage.h"
 
 #include "common/harnessConfig.h"
+#include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -71,11 +72,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         String *content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"a52ab193e02b367ab338bff842e2faa31d8aa921\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
             "[cipher]\n"
             "cipher-pass=\"12345\"\n"
             "\n"
@@ -95,7 +91,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
-                BUFSTR(content)), "put backup info to file");
+                harnessInfoChecksum(content)), "put backup info to file");
 
         TEST_ERROR_FMT(infoRender(), FileMissingError,
             "unable to load info file '%s/archive.info' or '%s/archive.info.copy':\n"
@@ -112,11 +108,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"0da11608456bae64c42cc1dc8df4ae79b953d597\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
@@ -130,7 +121,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza1Path))),
-                BUFSTR(content)), "put archive info to file");
+                harnessInfoChecksum(content)), "put archive info to file");
 
         // archive section will cross reference backup db-id 2 to archive db-id 3 but db section will only use the db-ids from
         // backup.info
@@ -226,11 +217,6 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"c68d528a1b28f6ef1c370955ac8915eab737d402\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -258,7 +244,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
-                BUFSTR(content)), "put backup info to file");
+                harnessInfoChecksum(content)), "put backup info to file");
 
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
@@ -361,11 +347,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"075a202d42c3b6a0257da5f73a68fa77b342f777\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.08dev\"\n"
-            "\n"
             "[db]\n"
             "db-id=2\n"
             "db-system-id=6626363367545678089\n"
@@ -378,15 +359,10 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza1Path))),
-                BUFSTR(content)), "put archive info to file - stanza1");
+                harnessInfoChecksum(content)), "put archive info to file - stanza1");
 
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"b50db7cf8f659ac15a0c7a2f45a0813f46a68c6b\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.08dev\"\n"
-            "\n"
             "[backup:current]\n"
             "20181119-152138F={"
             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
@@ -430,7 +406,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
-                BUFSTR(content)), "put backup info to file - stanza1");
+                harnessInfoChecksum(content)), "put backup info to file - stanza1");
 
         String *archiveStanza2Path = strNewFmt("%s/stanza2", strPtr(archivePath));
         String *backupStanza2Path = strNewFmt("%s/stanza2", strPtr(backupPath));
@@ -439,11 +415,6 @@ testRun(void)
 
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"6779d476833114925a73e058ef9ff04e5a8c7bd2\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.08dev\"\n"
-            "\n"
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6625633699176220261\n"
@@ -455,15 +426,10 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza2Path))),
-                BUFSTR(content)), "put archive info to file - stanza2");
+                harnessInfoChecksum(content)), "put archive info to file - stanza2");
 
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"2393c52cb48aff2d6c6e87e21a34a3e28200f42e\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.08dev\"\n"
-            "\n"
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -478,7 +444,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza2Path))),
-                BUFSTR(content)), "put backup info to file - stanza2");
+                harnessInfoChecksum(content)), "put backup info to file - stanza2");
 
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         TEST_RESULT_STR(strPtr(infoRender()),
