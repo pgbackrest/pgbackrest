@@ -13,6 +13,7 @@ typedef struct InfoPg InfoPg;
 
 #include "common/crypto/common.h"
 #include "common/ini.h"
+#include "info/info.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -46,7 +47,10 @@ typedef enum
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-InfoPg *infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass);
+InfoPg *infoPgNewLoad(
+    const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass, Ini **ini);
+void infoPgSave(
+    InfoPg *this, Ini *ini, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Functions
@@ -61,8 +65,8 @@ const String *infoPgCipherPass(const InfoPg *this);
 InfoPgData infoPgData(const InfoPg *this, unsigned int pgDataIdx);
 InfoPgData infoPgDataCurrent(const InfoPg *this);
 unsigned int infoPgDataCurrentId(const InfoPg *this);
+Info *infoPgInfo(const InfoPg *this);
 unsigned int infoPgDataTotal(const InfoPg *this);
-Ini *infoPgIni(const InfoPg *this);
 
 /***********************************************************************************************************************************
 Destructor

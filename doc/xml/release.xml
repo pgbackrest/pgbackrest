@@ -46,6 +46,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>*Save()</code> functions to most <code>Info</code> objects.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Extern <code>infoHash()</code> so it can be used by other modules.</p>
                     </release-item>
 
