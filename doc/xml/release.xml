@@ -42,6 +42,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>iniSave()</code> and <code>iniMove()</code> to <code>Ini</code> object.</p>
+                    </release-item>
+
+                    <release-item>
                         <p><code>varNewKv()</code> accepts a <code>KeyValue</code> object rather than creating one.</p>
                     </release-item>
 

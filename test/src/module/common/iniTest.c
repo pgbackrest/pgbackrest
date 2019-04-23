@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Ini
 ***********************************************************************************************************************************/
+#include "storage/driver/posix/storage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -9,6 +10,9 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    Storage *storageTest = storageDriverPosixInterface(
+        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
 
     // *****************************************************************************************************************************
     if (testBegin("iniNew() and iniFree()"))
@@ -27,10 +31,18 @@ testRun(void)
     {
         Ini *ini = NULL;
 
-        TEST_ASSIGN(ini, iniNew(), "new ini");
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(ini, iniNew(), "new ini");
 
-        TEST_RESULT_VOID(iniSet(ini, strNew("section1"), strNew("key1"), strNew("11")), "set section, key");
-        TEST_RESULT_VOID(iniSet(ini, strNew("section1"), strNew("key2"), strNew("1.234")), "set section, key");
+            TEST_RESULT_VOID(iniSet(ini, strNew("section1"), strNew("key1"), strNew("11")), "set section, key");
+            TEST_RESULT_VOID(iniSet(ini, strNew("section1"), strNew("key2"), strNew("1.234")), "set section, key");
+
+            TEST_RESULT_VOID(iniMove(ini, MEM_CONTEXT_OLD()), "move ini");
+            TEST_RESULT_VOID(iniMove(NULL, MEM_CONTEXT_OLD()), "move null ini");
+        }
+        MEM_CONTEXT_TEMP_END();
+
         TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "11", "get section, key");
         TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key2"))), "1.234", "get section, key");
 
@@ -87,6 +99,28 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(iniGet(ini, strNew("global"), strNew("compress"))), "y", "get compress");
         TEST_RESULT_STR(strPtr(iniGet(ini, strNew("db"), strNew("pg1-path"))), "/path/to/pg", "get pg1-path");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("iniSave()"))
+    {
+        Ini *ini = iniNew();
+        iniSet(ini, strNew("section2"), strNew("key1"), strNew("value1"));
+        iniSet(ini, strNew("section1"), strNew("key2"), strNew("value2"));
+        iniSet(ini, strNew("section1"), strNew("key1"), strNew("value1"));
+
+        StorageFileWrite *write = storageNewWriteNP(storageTest, strNew("test.ini"));
+        TEST_RESULT_VOID(iniSave(ini, storageFileWriteIo(write)), "save ini");
+
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageTest, strNew("test.ini"))))),
+            "[section1]\n"
+                "key1=value1\n"
+                "key2=value2\n"
+                "\n"
+                "[section2]\n"
+                "key1=value1\n",
+            "check ini");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
