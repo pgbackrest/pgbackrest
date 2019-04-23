@@ -98,7 +98,7 @@ testRun(void)
         content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"b944d83dcfa33ac0eb88d41b16efc5aaa5da7ec1\"\n"
+            "backrest-checksum=\"7f77f7a8efc72bd99b1a20022b6db50d4cbd72fa\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.04\"\n"
             "\n"

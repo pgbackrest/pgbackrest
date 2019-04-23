@@ -46,6 +46,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Extern <code>infoHash()</code> so it can be used by other modules.</p>
+                    </release-item>
+
+                    <release-item>
                         <p><code>varNewKv()</code> accepts a <code>KeyValue</code> object rather than creating one.</p>
                     </release-item>
 

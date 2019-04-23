@@ -41,9 +41,9 @@ struct Info
 };
 
 /***********************************************************************************************************************************
-Return a hash of the contents of the info file
+Generate hash for the contents of an ini file
 ***********************************************************************************************************************************/
-static CryptoHash *
+String *
 infoHash(const Ini *ini)
 {
     FUNCTION_TEST_BEGIN();
@@ -52,14 +52,15 @@ infoHash(const Ini *ini)
 
     ASSERT(ini != NULL);
 
-    CryptoHash *result = cryptoHashNew(HASH_TYPE_SHA1_STR);
+    String *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StringList *sectionList = iniSectionList(ini);
+        CryptoHash *hash = cryptoHashNew(HASH_TYPE_SHA1_STR);
+        StringList *sectionList = strLstSort(iniSectionList(ini), sortOrderAsc);
 
         // Initial JSON opening bracket
-        cryptoHashProcessC(result, (const unsigned char *)"{", 1);
+        cryptoHashProcessC(hash, (const unsigned char *)"{", 1);
 
         // Loop through sections and create hash for checking checksum
         for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
@@ -68,14 +69,14 @@ infoHash(const Ini *ini)
 
             // Add a comma before additional sections
             if (sectionIdx != 0)
-                cryptoHashProcessC(result, (const unsigned char *)",", 1);
+                cryptoHashProcessC(hash, (const unsigned char *)",", 1);
 
             // Create the section header
-            cryptoHashProcessC(result, (const unsigned char *)"\"", 1);
-            cryptoHashProcessStr(result, section);
-            cryptoHashProcessC(result, (const unsigned char *)"\":{", 3);
+            cryptoHashProcessC(hash, (const unsigned char *)"\"", 1);
+            cryptoHashProcessStr(hash, section);
+            cryptoHashProcessC(hash, (const unsigned char *)"\":{", 3);
 
-            StringList *keyList = iniSectionKeyList(ini, section);
+            StringList *keyList = strLstSort(iniSectionKeyList(ini, section), sortOrderAsc);
             unsigned int keyListSize = strLstSize(keyList);
 
             // Loop through values and build the section
@@ -87,21 +88,26 @@ infoHash(const Ini *ini)
                 if ((strEq(section, INFO_SECTION_BACKREST_STR) && !strEq(key, INFO_KEY_CHECKSUM_STR)) ||
                     !strEq(section, INFO_SECTION_BACKREST_STR))
                 {
-                    cryptoHashProcessC(result, (const unsigned char *)"\"", 1);
-                    cryptoHashProcessStr(result, key);
-                    cryptoHashProcessC(result, (const unsigned char *)"\":", 2);
-                    cryptoHashProcessStr(result, iniGet(ini, section, strLstGet(keyList, keyIdx)));
+                    cryptoHashProcessC(hash, (const unsigned char *)"\"", 1);
+                    cryptoHashProcessStr(hash, key);
+                    cryptoHashProcessC(hash, (const unsigned char *)"\":", 2);
+                    cryptoHashProcessStr(hash, iniGet(ini, section, strLstGet(keyList, keyIdx)));
+
                     if ((keyListSize > 1) && (keyIdx < keyListSize - 1))
-                        cryptoHashProcessC(result, (const unsigned char *)",", 1);
+                        cryptoHashProcessC(hash, (const unsigned char *)",", 1);
                 }
             }
 
             // Close the key/value list
-            cryptoHashProcessC(result, (const unsigned char *)"}", 1);
+            cryptoHashProcessC(hash, (const unsigned char *)"}", 1);
         }
 
         // JSON closing bracket
-        cryptoHashProcessC(result, (const unsigned char *)"}", 1);
+        cryptoHashProcessC(hash, (const unsigned char *)"}", 1);
+
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result = bufHex(cryptoHash(hash));
+        memContextSwitch(MEM_CONTEXT_TEMP());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -161,7 +167,7 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
 
         // Make sure the ini is valid by testing the checksum
         const String *infoChecksumJson = iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR);
-        const String *checksum = bufHex(cryptoHash(infoHash(this->ini)));
+        const String *checksum = infoHash(this->ini);
 
         if (strSize(infoChecksumJson) == 0)
         {
