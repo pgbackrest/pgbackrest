@@ -463,7 +463,7 @@ sub containerBuild
                 "    apt-get -y install openssh-server wget sudo python-pip build-essential valgrind git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libio-socket-ssl-perl libxml-libxml-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
-                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev";
+                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev liblz4-dev";
 
             if ($strOS eq VM_U12)
             {
