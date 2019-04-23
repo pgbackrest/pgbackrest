@@ -160,7 +160,7 @@ storageDriverPosixFileWrite(StorageDriverPosixFileWrite *this, const Buffer *buf
 
     // Write the data
     if (write(this->handle, bufPtr(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
-        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strPtr(this->name));
+        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strPtr(this->nameTmp));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -182,10 +182,10 @@ storageDriverPosixFileWriteClose(StorageDriverPosixFileWrite *this)
     {
         // Sync the file
         if (this->syncFile)
-            storageDriverPosixFileSync(this->handle, this->name, true, false);
+            storageDriverPosixFileSync(this->handle, this->nameTmp, true, false);
 
         // Close the file
-        storageDriverPosixFileClose(this->handle, this->name, true);
+        storageDriverPosixFileClose(this->handle, this->nameTmp, true);
 
         // Rename from temp file
         if (this->atomic)

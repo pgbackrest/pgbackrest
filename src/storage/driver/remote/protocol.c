@@ -58,8 +58,8 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
     {
         if (strEq(command, PROTOCOL_COMMAND_STORAGE_EXISTS_STR))
         {
-            protocolServerResponse(
-                server, varNewBool(interface.exists(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))))));
+            protocolServerResponse(server, VARBOOL(             // The unusual line break is to make coverage happy -- not sure why
+                interface.exists(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_LIST_STR))
         {
@@ -80,7 +80,7 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
 
             // Check if the file exists
             bool exists = ioReadOpen(fileRead);
-            protocolServerResponse(server, varNewBool(exists));
+            protocolServerResponse(server, VARBOOL(exists));
 
             // Transfer the file if it exists
             if (exists)
@@ -94,7 +94,7 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
 
                     if (bufUsed(buffer) > 0)
                     {
-                        ioWriteLine(protocolServerIoWrite(server), strNewFmt(PROTOCOL_BLOCK_HEADER "%zu", bufUsed(buffer)));
+                        ioWriteStrLine(protocolServerIoWrite(server), strNewFmt(PROTOCOL_BLOCK_HEADER "%zu", bufUsed(buffer)));
                         ioWrite(protocolServerIoWrite(server), buffer);
                         ioWriteFlush(protocolServerIoWrite(server));
 
@@ -104,7 +104,7 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
                 while (!ioReadEof(fileRead));
 
                 // Write a zero block to show file is complete
-                ioWriteLine(protocolServerIoWrite(server), STRDEF(PROTOCOL_BLOCK_HEADER "0"));
+                ioWriteLine(protocolServerIoWrite(server), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
                 ioWriteFlush(protocolServerIoWrite(server));
             }
         }
@@ -113,9 +113,9 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
             // Create the write object
             IoWrite *fileWrite = storageFileWriteIo(
                 interface.newWrite(
-                    driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), (mode_t)varUInt64(varLstGet(paramList, 1)),
-                    (mode_t)varUInt64(varLstGet(paramList, 2)), varBool(varLstGet(paramList, 3)), varBool(varLstGet(paramList, 4)),
-                    varBool(varLstGet(paramList, 5)), varBool(varLstGet(paramList, 6))));
+                    driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), (mode_t)varUIntForce(varLstGet(paramList, 1)),
+                    (mode_t)varUIntForce(varLstGet(paramList, 2)), varBool(varLstGet(paramList, 3)),
+                    varBool(varLstGet(paramList, 4)), varBool(varLstGet(paramList, 5)), varBool(varLstGet(paramList, 6))));
 
             // Open file
             ioWriteOpen(fileWrite);

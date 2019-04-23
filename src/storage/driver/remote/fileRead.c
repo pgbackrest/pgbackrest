@@ -92,8 +92,8 @@ storageDriverRemoteFileReadOpen(StorageDriverRemoteFileRead *this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
-        protocolCommandParamAdd(command, varNewStr(this->name));
-        protocolCommandParamAdd(command, varNewBool(this->ignoreMissing));
+        protocolCommandParamAdd(command, VARSTR(this->name));
+        protocolCommandParamAdd(command, VARBOOL(this->ignoreMissing));
 
         result = varBool(protocolClientExecute(this->client, command, true));
     }

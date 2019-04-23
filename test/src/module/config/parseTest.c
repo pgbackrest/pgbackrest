@@ -66,14 +66,14 @@ testRun(void)
 
         storagePut(
             storageNewWriteNP(storageLocalWrite(), configFile),
-            bufNewZ(
+            BUFSTRDEF(
                 "[global]\n"
                 "compress-level=3\n"
                 "spool-path=/path/to/spool\n"));
 
         storagePut(
             storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/global-backup.conf", strPtr(configIncludePath))),
-            bufNewZ(
+            BUFSTRDEF(
                 "[global:backup]\n"
                 "repo1-hardlink=y\n"
                 "bogus=bogus\n"
@@ -87,14 +87,14 @@ testRun(void)
 
         storagePut(
             storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/db-backup.conf", strPtr(configIncludePath))),
-            bufNewZ(
+            BUFSTRDEF(
                 "[db:backup]\n"
                 "compress=n\n"
                 "recovery-option=a=b\n"));
 
         storagePut(
             storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/stanza.db.conf", strPtr(configIncludePath))),
-            bufNewZ(
+            BUFSTRDEF(
                 "[db]\n"
                 "pg1-host=db\n"
                 "pg1-path=/path/to/db\n"
@@ -226,7 +226,7 @@ testRun(void)
         mkdir(strPtr(strPath(oldConfigDefault)), 0750);
         storagePut(
             storageNewWriteNP(storageLocalWrite(), oldConfigDefault),
-            bufNewZ(
+            BUFSTRDEF(
                 "[global:backup]\n"
                 "buffer-size=65536\n"));
 
@@ -960,7 +960,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageLocalWrite(), configFile),
-            bufNewZ(
+            BUFSTRDEF(
                 "[global]\n"
                 "compress=bogus\n"));
 
@@ -977,7 +977,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageLocalWrite(), configFile),
-            bufNewZ(
+            BUFSTRDEF(
                 "[global]\n"
                 "compress=\n"));
 
@@ -994,7 +994,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageLocalWrite(), configFile),
-            bufNewZ(
+            BUFSTRDEF(
                 "[db]\n"
                 "pg1-path=/path/to/db\n"
                 "db-path=/also/path/to/db\n"));
@@ -1012,7 +1012,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageLocalWrite(), configFile),
-            bufNewZ(
+            BUFSTRDEF(
                 "[db]\n"
                 "pg1-path=/path/to/db\n"
                 "pg1-path=/also/path/to/db\n"));
@@ -1024,7 +1024,7 @@ testRun(void)
         // Also test with a boolean option since this gets converted immediately and will blow up if it is multi
         storagePutNP(
             storageNewWriteNP(storageLocalWrite(), configFile),
-            bufNewZ(
+            BUFSTRDEF(
                 "[db]\n"
                 "start-fast=y\n"
                 "start-fast=n\n"));
@@ -1151,7 +1151,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageLocalWrite(), configFile),
-            bufNewZ(
+            BUFSTRDEF(
                 "[global]\n"
                 "compress-level=3\n"
                 "spool-path=/path/to/spool\n"
@@ -1232,7 +1232,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageLocalWrite(), configFile),
-            bufNewZ(
+            BUFSTRDEF(
                 "[global]\n"
                 "spool-path=/path/to/spool\n"));
 
@@ -1306,7 +1306,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageLocalWrite(), configFile),
-            bufNewZ(
+            BUFSTRDEF(
                 "[global:restore]\n"
                 "recovery-option=f=g\n"
                 "recovery-option=hijk=l\n"
@@ -1352,7 +1352,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageLocalWrite(), configFile),
-            bufNewZ(
+            BUFSTRDEF(
                 "[global]\n"
                 "repo1-path=/path/to/repo\n"
                 "\n"

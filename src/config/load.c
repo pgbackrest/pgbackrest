@@ -48,7 +48,7 @@ cfgLoadLogSetting(void)
         logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
 
     if (cfgOptionValid(cfgOptProcessMax))
-        logProcessMax = (unsigned int)cfgOptionInt(cfgOptProcessMax);
+        logProcessMax = cfgOptionUInt(cfgOptProcessMax);
 
     logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp, logProcessMax);
 
@@ -65,7 +65,7 @@ cfgLoadUpdateOption(void)
 
     // Set default for repo-host-cmd
     if (cfgOptionTest(cfgOptRepoHost) && cfgOptionSource(cfgOptRepoHostCmd) == cfgSourceDefault)
-        cfgOptionDefaultSet(cfgOptRepoHostCmd, varNewStr(cfgExe()));
+        cfgOptionDefaultSet(cfgOptRepoHostCmd, VARSTR(cfgExe()));
 
     // Set default for pg-host-cmd
     if (cfgOptionValid(cfgOptPgHostCmd))
@@ -73,7 +73,7 @@ cfgLoadUpdateOption(void)
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
         {
             if (cfgOptionTest(cfgOptPgHost + optionIdx) && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
-                cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, varNewStr(cfgExe()));
+                cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, VARSTR(cfgExe()));
         }
     }
 
@@ -83,7 +83,7 @@ cfgLoadUpdateOption(void)
     {
         // If protocol-timeout is default then increase it to be greater than db-timeout
         if (cfgOptionSource(cfgOptProtocolTimeout) == cfgSourceDefault)
-            cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, varNewDbl(cfgOptionDbl(cfgOptDbTimeout) + 30));
+            cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, VARDBL(cfgOptionDbl(cfgOptDbTimeout) + 30));
         else if (cfgOptionSource(cfgOptDbTimeout) == cfgSourceDefault)
         {
             double dbTimeout = cfgOptionDbl(cfgOptProtocolTimeout) - 30;
@@ -91,11 +91,11 @@ cfgLoadUpdateOption(void)
             // Normally the protocol time will be greater than 45 seconds so db timeout can be at least 15 seconds
             if (dbTimeout >= 15)
             {
-                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(dbTimeout));
+                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARDBL(dbTimeout));
             }
             // But in some test cases the protocol timeout will be very small so make db timeout half of protocol timeout
             else
-                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(cfgOptionDbl(cfgOptProtocolTimeout) / 2));
+                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARDBL(cfgOptionDbl(cfgOptProtocolTimeout) / 2));
         }
         else
         {
@@ -172,7 +172,7 @@ cfgLoadUpdateOption(void)
                     if (cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
                     {
                         cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
-                            varNewInt(cfgOptionInt(cfgOptRepoRetentionFull + optionIdx)));
+                            VARUINT(cfgOptionUInt(cfgOptRepoRetentionFull + optionIdx)));
                     }
                 }
                 else if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF))
@@ -181,7 +181,7 @@ cfgLoadUpdateOption(void)
                     if (cfgOptionTest(cfgOptRepoRetentionDiff + optionIdx))
                     {
                         cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
-                            varNewInt(cfgOptionInt(cfgOptRepoRetentionDiff + optionIdx)));
+                            VARUINT(cfgOptionUInt(cfgOptRepoRetentionDiff + optionIdx)));
                     }
                     else
                     {
@@ -270,7 +270,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         {
             // Set IO buffer size
             if (cfgOptionValid(cfgOptBufferSize))
-                ioBufferSizeSet((size_t)cfgOptionInt(cfgOptBufferSize));
+                ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
 
             // Open the log file if this command logs to a file
             if (cfgLogFile() && !cfgCommandHelp())
@@ -284,8 +284,8 @@ cfgLoad(unsigned int argListSize, const char *argList[])
                 if (cfgCommand() == cfgCmdLocal || cfgCommand() == cfgCmdRemote)
                 {
                     strCatFmt(
-                        logFile, "%s-%s-%03d.log", strPtr(cfgOptionStr(cfgOptCommand)), cfgCommandName(cfgCommand()),
-                        cfgOptionInt(cfgOptProcess));
+                        logFile, "%s-%s-%03u.log", strPtr(cfgOptionStr(cfgOptCommand)), cfgCommandName(cfgCommand()),
+                        cfgOptionUInt(cfgOptProcess));
                 }
                 // Else add command name
                 else

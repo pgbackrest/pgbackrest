@@ -70,7 +70,7 @@ testRun(void)
         cfgOptionSet(cfgOptDbInclude, cfgSourceParam, varNewVarLst(varLstNewStrLst(list)));
 
         cfgOptionValidSet(cfgOptRecoveryOption, true);
-        Variant *recoveryVar = varNewKv();
+        Variant *recoveryVar = varNewKv(kvNew());
         KeyValue *recoveryKv = varKv(recoveryVar);
         kvPut(recoveryKv, varNewStr(strNew("standby_mode")), varNewStr(strNew("on")));
         kvPut(recoveryKv, varNewStr(strNew("primary_conn_info")), varNewStr(strNew("blah")));

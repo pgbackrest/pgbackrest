@@ -21,6 +21,7 @@ struct IoWrite
     Buffer *output;                                                 // Output buffer
 
 #ifdef DEBUG
+    bool filterGroupSet;                                            // Was an IoFilterGroup set?
     bool opened;                                                    // Has the io been opened?
     bool closed;                                                    // Has the io been closed?
 #endif
@@ -122,7 +123,27 @@ ioWrite(IoWrite *this, const Buffer *buffer)
 Write linefeed-terminated string
 ***********************************************************************************************************************************/
 void
-ioWriteLine(IoWrite *this, const String *string)
+ioWriteLine(IoWrite *this, const Buffer *buffer)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+
+    ioWrite(this, buffer);
+    ioWrite(this, LF_BUF);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Write string
+***********************************************************************************************************************************/
+void
+ioWriteStr(IoWrite *this, const String *string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -131,20 +152,28 @@ ioWriteLine(IoWrite *this, const String *string)
 
     ASSERT(this != NULL);
     ASSERT(string != NULL);
-    ASSERT(this->opened && !this->closed);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Load a buffer with the linefeed-terminated string
-        Buffer *buffer = bufNew(strSize(string) + 1);
-        memcpy(bufPtr(buffer), strPtr(string), strSize(string));
-        bufPtr(buffer)[strSize(string)] = '\n';
-        bufUsedSet(buffer, bufSize(buffer));
+    ioWrite(this, BUFSTR(string));
 
-        // Write the string
-        ioWrite(this, buffer);
-    }
-    MEM_CONTEXT_TEMP_END()
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Write linefeed-terminated string
+***********************************************************************************************************************************/
+void
+ioWriteStrLine(IoWrite *this, const String *string)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+        FUNCTION_LOG_PARAM(STRING, string);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(string != NULL);
+
+    ioWrite(this, BUFSTR(string));
+    ioWrite(this, LF_BUF);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -163,6 +192,7 @@ ioWriteFlush(IoWrite *this)
 
     ASSERT(this != NULL);
     ASSERT(this->opened && !this->closed);
+    ASSERT(!this->filterGroupSet);
 
     if (bufUsed(this->output) > 0)
     {
@@ -244,6 +274,11 @@ ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup)
     ASSERT(filterGroup != NULL);
     ASSERT(this->filterGroup == NULL);
     ASSERT(!this->opened && !this->closed);
+
+    // Track whether a filter group was set to prevent flush() from being called later
+#ifdef DEBUG
+    this->filterGroupSet = true;
+#endif
 
     this->filterGroup = filterGroup;
 

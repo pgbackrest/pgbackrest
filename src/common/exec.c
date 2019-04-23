@@ -174,7 +174,7 @@ execOpen(Exec *this)
 
     // Create wrapper interfaces that check process state
     this->ioReadExec = ioReadNewP(
-        this, .read = (IoReadInterfaceRead)execRead, .eof = (IoReadInterfaceEof)execEof,
+        this, .block = true, .read = (IoReadInterfaceRead)execRead, .eof = (IoReadInterfaceEof)execEof,
         .handle = (IoReadInterfaceHandle)execHandleRead);
     ioReadOpen(this->ioReadExec);
     this->ioWriteExec = ioWriteNewP(this, .write = (IoWriteInterfaceWrite)execWrite);

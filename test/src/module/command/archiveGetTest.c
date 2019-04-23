@@ -53,7 +53,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
-            bufNewZ(
+            BUFSTRDEF(
                 "[backrest]\n"
                 "backrest-checksum=\"806471e1481804dc3ddf8dc6f1da7c34939420a8\"\n"
                 "backrest-format=5\n"
@@ -73,7 +73,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
-            bufNewZ(
+            BUFSTRDEF(
                 "[backrest]\n"
                 "backrest-checksum=\"4120e2a5c3918a480af951fb99bee7dc091f080a\"\n"
                 "backrest-format=5\n"
@@ -151,7 +151,7 @@ testRun(void)
         // Create archive.info
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info")),
-            bufNewZ(
+            BUFSTRDEF(
                 "[backrest]\n"
                 "backrest-checksum=\"bf9d69c6131e906898511432b4445335f377b12b\"\n"
                 "backrest-format=5\n"
@@ -204,11 +204,11 @@ testRun(void)
             storageFileWriteIo(infoWrite),
             ioFilterGroupAdd(
                 ioFilterGroupNew(),
-                cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, bufNewStr(strNew("12345678")), NULL))));
+                cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL))));
 
         storagePutNP(
             infoWrite,
-            bufNewZ(
+            BUFSTRDEF(
                 "[backrest]\n"
                 "backrest-checksum=\"5e4bf8cafff30b488c01574411e858c7866df4a2\"\n"
                 "backrest-format=5\n"
@@ -233,7 +233,7 @@ testRun(void)
         ioFilterGroupAdd(
             filterGroup,
             cipherBlockFilter(
-                cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, bufNewStr(strNew("worstpassphraseever")), NULL)));
+                cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("worstpassphraseever"), NULL)));
         ioWriteFilterGroupSet(storageFileWriteIo(destination), filterGroup);
         storagePutNP(destination, buffer);
 
@@ -330,7 +330,7 @@ testRun(void)
         walSegmentSize = 1024 * 1024;
         queueSize = walSegmentSize * 5;
 
-        storagePutNP(storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/junk")), bufNewZ("JUNK"));
+        storagePutNP(storageNewWriteNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/junk")), BUFSTRDEF("JUNK"));
         storagePutNP(
             storageNewWriteNP(
                 storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFE")), walSegmentBuffer);
@@ -372,7 +372,7 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageTest, strNew("repo/archive/test2/archive.info")),
-            bufNewZ(
+            BUFSTRDEF(
                 "[backrest]\n"
                 "backrest-checksum=\"398aa38312ce69e3625b2ecfb4dfc6387e5ce7d3\"\n"
                 "backrest-format=5\n"
@@ -663,7 +663,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
-            bufNewZ("SHOULD-BE-A-REAL-WAL-FILE"));
+            BUFSTRDEF("SHOULD-BE-A-REAL-WAL-FILE"));
 
         HARNESS_FORK_BEGIN()
         {
@@ -692,10 +692,10 @@ testRun(void)
 
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment))),
-            bufNewZ("SHOULD-BE-A-REAL-WAL-FILE"));
+            BUFSTRDEF("SHOULD-BE-A-REAL-WAL-FILE"));
         storagePutNP(
             storageNewWriteNP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment2))),
-            bufNewZ("SHOULD-BE-A-REAL-WAL-FILE"));
+            BUFSTRDEF("SHOULD-BE-A-REAL-WAL-FILE"));
 
         HARNESS_FORK_BEGIN()
         {

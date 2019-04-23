@@ -20,8 +20,8 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    const Buffer *testPass = bufNewStr(strNew(TEST_PASS));
-    const Buffer *testPlainText = bufNewStr(strNew(TEST_PLAINTEXT));
+    const Buffer *testPass = BUFSTRDEF(TEST_PASS);
+    const Buffer *testPlainText = BUFSTRDEF(TEST_PLAINTEXT);
 
     // *****************************************************************************************************************************
     if (testBegin("Common"))
@@ -244,7 +244,7 @@ testRun(void)
         blockDecryptFilter = cipherBlockFilter(blockDecrypt);
 
         TEST_ERROR(
-            ioFilterProcessInOut(blockDecryptFilter, bufNewStr(strNew("1234567890123456")), decryptBuffer), CryptoError,
+            ioFilterProcessInOut(blockDecryptFilter, BUFSTRDEF("1234567890123456"), decryptBuffer), CryptoError,
             "cipher header invalid");
 
         cipherBlockFree(blockDecrypt);
@@ -256,8 +256,8 @@ testRun(void)
 
         bufUsedZero(decryptBuffer);
 
-        ioFilterProcessInOut(blockDecryptFilter, bufNewStr(strNew(CIPHER_BLOCK_MAGIC "12345678")), decryptBuffer);
-        ioFilterProcessInOut(blockDecryptFilter, bufNewStr(strNew("1234567890123456")), decryptBuffer);
+        ioFilterProcessInOut(blockDecryptFilter, BUFSTRDEF(CIPHER_BLOCK_MAGIC "12345678"), decryptBuffer);
+        ioFilterProcessInOut(blockDecryptFilter, BUFSTRDEF("1234567890123456"), decryptBuffer);
 
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer), CryptoError, "unable to flush");
 
@@ -270,7 +270,6 @@ testRun(void)
 
         bufUsedZero(decryptBuffer);
 
-        ioFilterProcessInOut(blockDecryptFilter, bufNew(0), decryptBuffer);
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer), CryptoError, "cipher header missing");
 
         cipherBlockFree(blockDecrypt);
@@ -282,7 +281,7 @@ testRun(void)
 
         bufUsedZero(decryptBuffer);
 
-        ioFilterProcessInOut(blockDecryptFilter, bufNewStr(strNew(CIPHER_BLOCK_MAGIC "12345678")), decryptBuffer);
+        ioFilterProcessInOut(blockDecryptFilter, BUFSTRDEF(CIPHER_BLOCK_MAGIC "12345678"), decryptBuffer);
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer), CryptoError, "unable to flush");
 
         cipherBlockFree(blockDecrypt);
@@ -312,9 +311,9 @@ testRun(void)
         TEST_ASSIGN(hashFilter, cryptoHashFilter(hash), "create sha1 hash");
         TEST_RESULT_VOID(cryptoHashProcessC(hash, (const unsigned char *)"1", 1), "    add 1");
         TEST_RESULT_VOID(cryptoHashProcessStr(hash, strNew("2")), "    add 2");
-        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewZ("3")), "    add 3");
-        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewZ("4")), "    add 4");
-        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, bufNewZ("5")), "    add 5");
+        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, BUFSTRDEF("3")), "    add 3");
+        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, BUFSTRDEF("4")), "    add 4");
+        TEST_RESULT_VOID(ioFilterProcessIn(hashFilter, BUFSTRDEF("5")), "    add 5");
 
         TEST_RESULT_STR(
             strPtr(varStr(ioFilterResult(hashFilter))), "8cb2237d0679ca88db6464eac60da96345513964", "    check small hash");
@@ -332,7 +331,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(
-            strPtr(bufHex(cryptoHashOne(strNew(HASH_TYPE_SHA1), bufNewZ("12345")))), "8cb2237d0679ca88db6464eac60da96345513964",
+            strPtr(bufHex(cryptoHashOne(strNew(HASH_TYPE_SHA1), BUFSTRDEF("12345")))), "8cb2237d0679ca88db6464eac60da96345513964",
             "    check small hash");
         TEST_RESULT_STR(
             strPtr(bufHex(cryptoHashOneStr(strNew(HASH_TYPE_SHA1), strNew("12345")))), "8cb2237d0679ca88db6464eac60da96345513964",
@@ -344,8 +343,8 @@ testRun(void)
                 bufHex(
                     cryptoHmacOne(
                         strNew(HASH_TYPE_SHA256),
-                        bufNewZ("AWS4wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"),
-                        bufNewZ("20170412")))),
+                        BUFSTRDEF("AWS4wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"),
+                        BUFSTRDEF("20170412")))),
             "8b05c497afe9e1f42c8ada4cb88392e118649db1e5c98f0f0fb0a158bdd2dd76",
             "    check hmac");
     }

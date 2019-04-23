@@ -9,94 +9,9 @@ Convert JSON to/from KeyValue
 #include "common/type/json.h"
 
 /***********************************************************************************************************************************
-Given a character array and its size, return a variant from the extracted string
+Prototypes
 ***********************************************************************************************************************************/
-static Variant *
-jsonToStr(const char *json, unsigned int *jsonPos)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, json);
-        FUNCTION_TEST_PARAM_P(UINT, jsonPos);
-    FUNCTION_TEST_END();
-
-    Variant *result = NULL;
-
-    if (json[*jsonPos] != '"')
-        THROW_FMT(JsonFormatError, "expected '\"' at '%s'", json + *jsonPos);
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        *jsonPos = *jsonPos + 1;
-
-        String *resultStr = strNew("");
-
-        while (json[*jsonPos] != '"')
-        {
-            if (json[*jsonPos] == '\\')
-            {
-                *jsonPos = *jsonPos + 1;
-
-                switch (json[*jsonPos])
-                {
-                    case '"':
-                            strCatChr(resultStr, '"');
-                        break;
-
-                    case '\\':
-                            strCatChr(resultStr, '\\');
-                        break;
-
-                    case '/':
-                            strCatChr(resultStr, '/');
-                        break;
-
-                    case 'n':
-                            strCatChr(resultStr, '\n');
-                        break;
-
-                    case 'r':
-                            strCatChr(resultStr, '\r');
-                        break;
-
-                    case 't':
-                            strCatChr(resultStr, '\t');
-                        break;
-
-                    case 'b':
-                            strCatChr(resultStr, '\b');
-                        break;
-
-                    case 'f':
-                            strCatChr(resultStr, '\f');
-                        break;
-
-                    default:
-                        THROW_FMT(JsonFormatError, "invalid escape character '%c'", json[*jsonPos]);
-                }
-            }
-            else
-            {
-                if (json[*jsonPos] == '\0')
-                    THROW(JsonFormatError, "expected '\"' but found null delimiter");
-
-                    strCatChr(resultStr, json[*jsonPos]);
-            }
-
-            *jsonPos = *jsonPos + 1;
-        };
-
-        // Create a variant result for the string
-        memContextSwitch(MEM_CONTEXT_OLD());
-        result = varNewStr(resultStr);
-        memContextSwitch(MEM_CONTEXT_TEMP());
-
-        // Advance the character array pointer to the next element after the string
-        *jsonPos = *jsonPos + 1;
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN(result);
-}
+static Variant *jsonToVarInternal(const char *json, unsigned int *jsonPos);
 
 /***********************************************************************************************************************************
 Consume whitespace
@@ -114,6 +29,449 @@ jsonConsumeWhiteSpace(const char *json, unsigned int *jsonPos)
         (*jsonPos)++;
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Convert a json string to a bool
+***********************************************************************************************************************************/
+static bool
+jsonToBoolInternal(const char *json, unsigned int *jsonPos)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, json);
+        FUNCTION_TEST_PARAM_P(UINT, jsonPos);
+    FUNCTION_TEST_END();
+
+    bool result;
+
+    if (strncmp(json + *jsonPos, "true", 4) == 0)
+    {
+        result = true;
+        *jsonPos += 4;
+    }
+    else if (strncmp(json + *jsonPos, "false", 5) == 0)
+    {
+        result = false;
+        *jsonPos += 5;
+    }
+    else
+        THROW_FMT(JsonFormatError, "expected boolean at '%s'", json + *jsonPos);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+bool
+jsonToBool(const String *json)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, json);
+    FUNCTION_TEST_END();
+
+    unsigned int jsonPos = 0;
+    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+
+    bool result = jsonToBoolInternal(strPtr(json), &jsonPos);
+
+    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+
+    if (jsonPos != strSize(json))
+        THROW_FMT(JsonFormatError, "unexpected characters after boolean at '%s'", strPtr(json) + jsonPos);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Convert a json number to various integer types
+***********************************************************************************************************************************/
+static Variant *
+jsonToNumberInternal(const char *json, unsigned int *jsonPos)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, json);
+        FUNCTION_TEST_PARAM_P(UINT, jsonPos);
+    FUNCTION_TEST_END();
+
+    Variant *result = NULL;
+    unsigned int beginPos = *jsonPos;
+    bool intSigned = false;
+
+    // Consume the -
+    if (json[*jsonPos] == '-')
+    {
+        (*jsonPos)++;
+        intSigned = true;
+    }
+
+    // Consume all digits
+    while (isdigit(json[*jsonPos]))
+        (*jsonPos)++;
+
+    // Invalid if only a - was found
+    if (json[*jsonPos - 1] == '-')
+        THROW_FMT(JsonFormatError, "found '-' with no integer at '%s'", json + beginPos);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Extract the numeric as a string
+        String *resultStr = strNewN(json + beginPos, *jsonPos - beginPos);
+
+        // Convert the string to a integer variant
+        memContextSwitch(MEM_CONTEXT_OLD());
+
+        if (intSigned)
+            result = varNewInt64(cvtZToInt64(strPtr(resultStr)));
+        else
+            result = varNewUInt64(cvtZToUInt64(strPtr(resultStr)));
+
+        memContextSwitch(MEM_CONTEXT_TEMP());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+static Variant *
+jsonToNumber(const String *json)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, json);
+    FUNCTION_TEST_END();
+
+    unsigned int jsonPos = 0;
+    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+
+    Variant *result = jsonToNumberInternal(strPtr(json), &jsonPos);
+
+    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+
+    if (jsonPos != strSize(json))
+        THROW_FMT(JsonFormatError, "unexpected characters after number at '%s'", strPtr(json) + jsonPos);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+int
+jsonToInt(const String *json)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, json);
+    FUNCTION_TEST_END();
+
+    int result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = varIntForce(jsonToNumber(json));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+int64_t
+jsonToInt64(const String *json)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, json);
+    FUNCTION_TEST_END();
+
+    int64_t result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = varInt64Force(jsonToNumber(json));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+unsigned int
+jsonToUInt(const String *json)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, json);
+    FUNCTION_TEST_END();
+
+    unsigned int result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = varUIntForce(jsonToNumber(json));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+uint64_t
+jsonToUInt64(const String *json)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, json);
+    FUNCTION_TEST_END();
+
+    uint64_t result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = varUInt64Force(jsonToNumber(json));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Convert a json string to a String
+***********************************************************************************************************************************/
+static String *
+jsonToStrInternal(const char *json, unsigned int *jsonPos)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, json);
+        FUNCTION_TEST_PARAM_P(UINT, jsonPos);
+    FUNCTION_TEST_END();
+
+    String *result = strNew("");
+
+    if (json[*jsonPos] != '"')
+        THROW_FMT(JsonFormatError, "expected '\"' at '%s'", json + *jsonPos);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        (*jsonPos)++;
+
+        while (json[*jsonPos] != '"')
+        {
+            if (json[*jsonPos] == '\\')
+            {
+                (*jsonPos)++;;
+
+                switch (json[*jsonPos])
+                {
+                    case '"':
+                            strCatChr(result, '"');
+                        break;
+
+                    case '\\':
+                            strCatChr(result, '\\');
+                        break;
+
+                    case '/':
+                            strCatChr(result, '/');
+                        break;
+
+                    case 'n':
+                            strCatChr(result, '\n');
+                        break;
+
+                    case 'r':
+                            strCatChr(result, '\r');
+                        break;
+
+                    case 't':
+                            strCatChr(result, '\t');
+                        break;
+
+                    case 'b':
+                            strCatChr(result, '\b');
+                        break;
+
+                    case 'f':
+                            strCatChr(result, '\f');
+                        break;
+
+                    default:
+                        THROW_FMT(JsonFormatError, "invalid escape character '%c'", json[*jsonPos]);
+                }
+            }
+            else
+            {
+                if (json[*jsonPos] == '\0')
+                    THROW(JsonFormatError, "expected '\"' but found null delimiter");
+
+                    strCatChr(result, json[*jsonPos]);
+            }
+
+            (*jsonPos)++;;
+        };
+
+        // Advance the character array pointer to the next element after the string
+        (*jsonPos)++;;
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+String *
+jsonToStr(const String *json)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, json);
+    FUNCTION_TEST_END();
+
+    unsigned int jsonPos = 0;
+    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+
+    String *result = jsonToStrInternal(strPtr(json), &jsonPos);
+
+    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+
+    if (jsonPos != strSize(json))
+        THROW_FMT(JsonFormatError, "unexpected characters after string at '%s'", strPtr(json) + jsonPos);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Convert a json object to a KeyValue
+***********************************************************************************************************************************/
+static KeyValue *
+jsonToKvInternal(const char *json, unsigned int *jsonPos)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, json);
+        FUNCTION_TEST_PARAM_P(UINT, jsonPos);
+    FUNCTION_TEST_END();
+
+    KeyValue *result = kvNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Move position to the first key/value in the object
+        (*jsonPos)++;
+        jsonConsumeWhiteSpace(json, jsonPos);
+
+        // Only proceed if the array is not empty
+        if (json[*jsonPos] != '}')
+        {
+            do
+            {
+                if (json[*jsonPos] == ',')
+                {
+                    (*jsonPos)++;
+                    jsonConsumeWhiteSpace(json, jsonPos);
+                }
+
+                Variant *key = varNewStr(jsonToStrInternal(json, jsonPos));
+
+                jsonConsumeWhiteSpace(json, jsonPos);
+
+                if (json[*jsonPos] != ':')
+                    THROW_FMT(JsonFormatError, "expected ':' at '%s'", json + *jsonPos);
+                (*jsonPos)++;
+
+                jsonConsumeWhiteSpace(json, jsonPos);
+
+                kvPut(result, key, jsonToVarInternal(json, jsonPos));
+            }
+            while (json[*jsonPos] == ',');
+        }
+
+        if (json[*jsonPos] != '}')
+            THROW_FMT(JsonFormatError, "expected '}' at '%s'", json + *jsonPos);
+        (*jsonPos)++;
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+KeyValue *
+jsonToKv(const String *json)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, json);
+    FUNCTION_TEST_END();
+
+    unsigned int jsonPos = 0;
+    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+
+    if (strPtr(json)[jsonPos] != '{')
+        THROW_FMT(JsonFormatError, "expected '{' at '%s'", strPtr(json) + jsonPos);
+
+    KeyValue *result = jsonToKvInternal(strPtr(json), &jsonPos);
+
+    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+
+    if (jsonPos != strSize(json))
+        THROW_FMT(JsonFormatError, "unexpected characters after object at '%s'", strPtr(json) + jsonPos);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Convert a json string to an array
+***********************************************************************************************************************************/
+static VariantList *
+jsonToVarLstInternal(const char *json, unsigned int *jsonPos)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, json);
+        FUNCTION_TEST_PARAM_P(UINT, jsonPos);
+    FUNCTION_TEST_END();
+
+    VariantList *result = varLstNew();
+
+    if (json[*jsonPos] != '[')
+        THROW_FMT(JsonFormatError, "expected '[' at '%s'", json + *jsonPos);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Move position to the first element in the array
+        (*jsonPos)++;
+        jsonConsumeWhiteSpace(json, jsonPos);
+
+        // Only proceed if the array is not empty
+        if (json[*jsonPos] != ']')
+        {
+            do
+            {
+                if (json[*jsonPos] == ',')
+                {
+                    (*jsonPos)++;
+                    jsonConsumeWhiteSpace(json, jsonPos);
+                }
+
+                memContextSwitch(MEM_CONTEXT_OLD());
+                varLstAdd(result, jsonToVarInternal(json, jsonPos));
+                memContextSwitch(MEM_CONTEXT_TEMP());
+
+                jsonConsumeWhiteSpace(json, jsonPos);
+            }
+            while (json[*jsonPos] == ',');
+        }
+
+        if (json[*jsonPos] != ']')
+            THROW_FMT(JsonFormatError, "expected ']' at '%s'", json + *jsonPos);
+
+        (*jsonPos)++;
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+VariantList *
+jsonToVarLst(const String *json)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, json);
+    FUNCTION_TEST_END();
+
+    unsigned int jsonPos = 0;
+    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+
+    VariantList *result = jsonToVarLstInternal(strPtr(json), &jsonPos);
+
+    jsonConsumeWhiteSpace(strPtr(json), &jsonPos);
+
+    if (jsonPos != strSize(json))
+        THROW_FMT(JsonFormatError, "unexpected characters after array at '%s'", strPtr(json) + jsonPos);
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -141,7 +499,7 @@ jsonToVarInternal(const char *json, unsigned int *jsonPos)
         // String
         case '"':
         {
-            result = jsonToStr(json, jsonPos);
+            result = varNewStr(jsonToStrInternal(json, jsonPos));
             break;
         }
 
@@ -149,41 +507,7 @@ jsonToVarInternal(const char *json, unsigned int *jsonPos)
         case '-':
         case '0' ... '9':
         {
-            unsigned int beginPos = *jsonPos;
-            bool intSigned = false;
-
-            // Consume the -
-            if (json[*jsonPos] == '-')
-            {
-                (*jsonPos)++;
-                intSigned = true;
-            }
-
-            // Consume all digits
-            while (isdigit(json[*jsonPos]))
-                (*jsonPos)++;
-
-            // Invalid if only a - was found
-            if (json[*jsonPos - 1] == '-')
-                THROW_FMT(JsonFormatError, "found '-' with no integer at '%s'", json + beginPos);
-
-            MEM_CONTEXT_TEMP_BEGIN()
-            {
-                // Extract the numeric as a string
-                String *resultStr = strNewN(json + beginPos, *jsonPos - beginPos);
-
-                // Convert the string to a int64 variant
-                memContextSwitch(MEM_CONTEXT_OLD());
-
-                if (intSigned)
-                    result = varNewInt64(cvtZToInt64(strPtr(resultStr)));
-                else
-                    result = varNewUInt64(cvtZToUInt64(strPtr(resultStr)));
-
-                memContextSwitch(MEM_CONTEXT_TEMP());
-            }
-            MEM_CONTEXT_TEMP_END();
-
+            result = jsonToNumberInternal(json, jsonPos);
             break;
         }
 
@@ -191,19 +515,7 @@ jsonToVarInternal(const char *json, unsigned int *jsonPos)
         case 't':
         case 'f':
         {
-            if (strncmp(json + *jsonPos, "true", 4) == 0)
-            {
-                result = varNewBool(true);
-                *jsonPos += 4;
-            }
-            else if (strncmp(json + *jsonPos, "false", 5) == 0)
-            {
-                result = varNewBool(false);
-                *jsonPos += 5;
-            }
-            else
-                THROW_FMT(JsonFormatError, "expected boolean at '%s'", json + *jsonPos);
-
+            result = varNewBool(jsonToBoolInternal(json, jsonPos));
             break;
         }
 
@@ -221,90 +533,14 @@ jsonToVarInternal(const char *json, unsigned int *jsonPos)
         // Array
         case '[':
         {
-            MEM_CONTEXT_TEMP_BEGIN()
-            {
-                VariantList *valueList = varLstNew();
-
-                // Move position to the first element in the array
-                (*jsonPos)++;
-                jsonConsumeWhiteSpace(json, jsonPos);
-
-                // Only proceed if the array is not empty
-                if (json[*jsonPos] != ']')
-                {
-                    do
-                    {
-                        if (json[*jsonPos] == ',')
-                        {
-                            (*jsonPos)++;
-                            jsonConsumeWhiteSpace(json, jsonPos);
-                        }
-
-                        varLstAdd(valueList, jsonToVarInternal(json, jsonPos));
-
-                        jsonConsumeWhiteSpace(json, jsonPos);
-                    }
-                    while (json[*jsonPos] == ',');
-                }
-
-                if (json[*jsonPos] != ']')
-                    THROW_FMT(JsonFormatError, "expected ']' at '%s'", json + *jsonPos);
-                (*jsonPos)++;
-
-                memContextSwitch(MEM_CONTEXT_OLD());
-                result = varNewVarLst(varLstMove(valueList, MEM_CONTEXT_OLD()));
-                memContextSwitch(MEM_CONTEXT_TEMP());
-            }
-            MEM_CONTEXT_TEMP_END();
-
+            result = varNewVarLst(jsonToVarLstInternal(json, jsonPos));
             break;
         }
 
         // Object
         case '{':
         {
-            MEM_CONTEXT_TEMP_BEGIN()
-            {
-                memContextSwitch(MEM_CONTEXT_OLD());
-                result = varNewKv();
-                memContextSwitch(MEM_CONTEXT_TEMP());
-
-                // Move position to the first key/value in the object
-                (*jsonPos)++;
-                jsonConsumeWhiteSpace(json, jsonPos);
-
-                // Only proceed if the array is not empty
-                if (json[*jsonPos] != '}')
-                {
-                    do
-                    {
-                        if (json[*jsonPos] == ',')
-                        {
-                            (*jsonPos)++;
-                            jsonConsumeWhiteSpace(json, jsonPos);
-                        }
-
-                        Variant *key = jsonToStr(json, jsonPos);
-
-                        jsonConsumeWhiteSpace(json, jsonPos);
-
-                        if (json[*jsonPos] != ':')
-                            THROW_FMT(JsonFormatError, "expected ':' at '%s'", json + *jsonPos);
-                        (*jsonPos)++;
-
-                        jsonConsumeWhiteSpace(json, jsonPos);
-
-                        kvPut(varKv(result), key, jsonToVarInternal(json, jsonPos));
-                    }
-                    while (json[*jsonPos] == ',');
-                }
-
-                if (json[*jsonPos] != '}')
-                    THROW_FMT(JsonFormatError, "expected '}' at '%s'", json + *jsonPos);
-                (*jsonPos)++;
-            }
-            MEM_CONTEXT_TEMP_END();
-
+            result = varNewKv(jsonToKvInternal(json, jsonPos));
             break;
         }
 
@@ -335,10 +571,78 @@ jsonToVar(const String *json)
 }
 
 /***********************************************************************************************************************************
+Convert a boolean to JSON
+***********************************************************************************************************************************/
+const String *
+jsonFromBool(bool value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BOOL, value);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(value ? TRUE_STR : FALSE_STR);
+}
+
+/***********************************************************************************************************************************
+Convert a number to JSON
+***********************************************************************************************************************************/
+String *
+jsonFromInt(int number)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, number);
+    FUNCTION_TEST_END();
+
+    char working[CVT_BASE10_BUFFER_SIZE];
+    cvtIntToZ(number, working, sizeof(working));
+
+    FUNCTION_TEST_RETURN(strNew(working));
+}
+
+String *
+jsonFromInt64(int64_t number)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT64, number);
+    FUNCTION_TEST_END();
+
+    char working[CVT_BASE10_BUFFER_SIZE];
+    cvtInt64ToZ(number, working, sizeof(working));
+
+    FUNCTION_TEST_RETURN(strNew(working));
+}
+
+String *
+jsonFromUInt(unsigned int number)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, number);
+    FUNCTION_TEST_END();
+
+    char working[CVT_BASE10_BUFFER_SIZE];
+    cvtUIntToZ(number, working, sizeof(working));
+
+    FUNCTION_TEST_RETURN(strNew(working));
+}
+
+String *
+jsonFromUInt64(uint64_t number)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, number);
+    FUNCTION_TEST_END();
+
+    char working[CVT_BASE10_BUFFER_SIZE];
+    cvtUInt64ToZ(number, working, sizeof(working));
+
+    FUNCTION_TEST_RETURN(strNew(working));
+}
+
+/***********************************************************************************************************************************
 Output and escape a string
 ***********************************************************************************************************************************/
 static void
-jsonStringRender(String *json, const String *string)
+jsonFromStrInternal(String *json, const String *string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, json);
@@ -407,11 +711,24 @@ jsonStringRender(String *json, const String *string)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+String *
+jsonFromStr(const String *string)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, string);
+    FUNCTION_TEST_END();
+
+    String *json = strNew("");
+    jsonFromStrInternal(json, string);
+
+    FUNCTION_TEST_RETURN(json);
+}
+
 /***********************************************************************************************************************************
 Internal recursive function to walk a KeyValue and return a json string
 ***********************************************************************************************************************************/
 static String *
-kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
+jsonFromKvInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, kv);
@@ -436,7 +753,7 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
         for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
         {
             String *key = strLstGet(keyList, keyIdx);
-            const Variant *value = kvGet(kv, varNewStr(key));
+            const Variant *value = kvGet(kv, VARSTR(key));
 
             // If going to add another key, prepend a comma
             if (keyIdx > 0)
@@ -456,7 +773,7 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
             else if (varType(value) == varTypeKeyValue)
             {
                 strCat(indentDepth, strPtr(indentSpace));
-                strCat(result, strPtr(kvToJsonInternal(kvDup(varKv(value)), indentSpace, indentDepth)));
+                strCat(result, strPtr(jsonFromKvInternal(kvDup(varKv(value)), indentSpace, indentDepth)));
             }
             // VariantList
             else if (varType(value) == varTypeVariantList)
@@ -487,12 +804,12 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
                         // If the type is a string, add leading and trailing double quotes
                         else if (varType(arrayValue) == varTypeString)
                         {
-                            jsonStringRender(result, varStr(arrayValue));
+                            jsonFromStrInternal(result, varStr(arrayValue));
                         }
                         else if (varType(arrayValue) == varTypeKeyValue)
                         {
                             strCat(indentDepth, strPtr(indentSpace));
-                            strCat(result, strPtr(kvToJsonInternal(kvDup(varKv(arrayValue)), indentSpace, indentDepth)));
+                            strCat(result, strPtr(jsonFromKvInternal(kvDup(varKv(arrayValue)), indentSpace, indentDepth)));
                         }
                         // Numeric, Boolean or other type
                         else
@@ -508,7 +825,7 @@ kvToJsonInternal(const KeyValue *kv, String *indentSpace, String *indentDepth)
             // String
             else if (varType(value) == varTypeString)
             {
-                jsonStringRender(result, varStr(value));
+                jsonFromStrInternal(result, varStr(value));
             }
             // Numeric, Boolean or other type
             else
@@ -536,7 +853,7 @@ needed.  Since this function is only intended to read internally-generated JSON 
 whitespace.
 ***********************************************************************************************************************************/
 String *
-kvToJson(const KeyValue *kv, unsigned int indent)
+jsonFromKv(const KeyValue *kv, unsigned int indent)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(KEY_VALUE, kv);
@@ -562,7 +879,7 @@ kvToJson(const KeyValue *kv, unsigned int indent)
             strCat(indentDepth, "\n");
 
         strCat(indentDepth, strPtr(indentSpace));
-        strCat(jsonStr, strPtr(kvToJsonInternal(kv, indentSpace, indentDepth)));
+        strCat(jsonStr, strPtr(jsonFromKvInternal(kv, indentSpace, indentDepth)));
 
         // Add terminating linefeed for pretty print if it is not already added
         if (indent > 0 && !strEndsWithZ(jsonStr, "\n"))
@@ -585,7 +902,7 @@ Currently this function is only intended to convert the limited types that are i
 needed.
 ***********************************************************************************************************************************/
 String *
-varToJson(const Variant *var, unsigned int indent)
+jsonFromVar(const Variant *var, unsigned int indent)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(VARIANT, var);
@@ -636,7 +953,7 @@ varToJson(const Variant *var, unsigned int indent)
 
                     // Update the depth before processing the contents of the list element
                     strCat(indentDepth, strPtr(indentSpace));
-                    strCat(jsonStr, strPtr(kvToJsonInternal(varKv(varLstGet(vl, vlIdx)), indentSpace, indentDepth)));
+                    strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(varLstGet(vl, vlIdx)), indentSpace, indentDepth)));
                 }
 
                 // Decrease the depth
@@ -652,7 +969,7 @@ varToJson(const Variant *var, unsigned int indent)
         }
         // Else just convert the KeyValue
         else
-            strCat(jsonStr, strPtr(kvToJsonInternal(varKv(var), indentSpace, indentDepth)));
+            strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(var), indentSpace, indentDepth)));
 
         // Add terminating linefeed for pretty print if it is not already added
         if (indent > 0 && !strEndsWithZ(jsonStr, "\n"))

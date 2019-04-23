@@ -22,14 +22,14 @@ PostgreSQL Info Handler
 /***********************************************************************************************************************************
 Internal constants
 ***********************************************************************************************************************************/
-STRING_STATIC(INFO_SECTION_DB_STR,                                  "db");
-STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                          "db:history");
+STRING_STATIC(INFO_SECTION_DB_STR,                                          "db");
+STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                                  "db:history");
 
-STRING_EXTERN(INFO_KEY_DB_ID_STR,                                   INFO_KEY_DB_ID);
-STRING_STATIC(INFO_KEY_DB_CATALOG_VERSION_STR,                      "db-catalog-version");
-STRING_STATIC(INFO_KEY_DB_CONTROL_VERSION_STR,                      "db-control-version");
-STRING_STATIC(INFO_KEY_DB_SYSTEM_ID_STR,                            "db-system-id");
-STRING_STATIC(INFO_KEY_DB_VERSION_STR,                              "db-version");
+VARIANT_STRDEF_EXTERN(INFO_KEY_DB_ID_VAR,                                   INFO_KEY_DB_ID);
+VARIANT_STRDEF_STATIC(INFO_KEY_DB_CATALOG_VERSION_VAR,                      "db-catalog-version");
+VARIANT_STRDEF_STATIC(INFO_KEY_DB_CONTROL_VERSION_VAR,                      "db-control-version");
+VARIANT_STRDEF_STATIC(INFO_KEY_DB_SYSTEM_ID_VAR,                            "db-system-id");
+VARIANT_STRDEF_STATIC(INFO_KEY_DB_VERSION_VAR,                              "db-version");
 
 /***********************************************************************************************************************************
 Object type
@@ -80,15 +80,10 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
         MEM_CONTEXT_TEMP_BEGIN()
         {
             const Ini *infoPgIni = infoIni(this->info);
-            const String *pgSection = INFO_SECTION_DB_STR;
-            const String *pgHistorySection = INFO_SECTION_DB_HISTORY_STR;
-            const StringList *pgHistoryKey = iniSectionKeyList(infoPgIni, pgHistorySection);
-            const Variant *idKey = varNewStr(INFO_KEY_DB_ID_STR);
-            const Variant *systemIdKey = varNewStr(INFO_KEY_DB_SYSTEM_ID_STR);
-            const Variant *versionKey = varNewStr(INFO_KEY_DB_VERSION_STR);
+            const StringList *pgHistoryKey = iniSectionKeyList(infoPgIni, INFO_SECTION_DB_HISTORY_STR);
 
             // Get the current history id
-            unsigned int pgId = (unsigned int)varUInt64Force(iniGet(infoPgIni, pgSection, varStr(idKey)));
+            unsigned int pgId = jsonToUInt(iniGet(infoPgIni, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR)));
 
             // History must include at least one item or the file is corrupt
             ASSERT(strLstSize(pgHistoryKey) > 0);
@@ -99,17 +94,18 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
             for (unsigned int pgHistoryIdx = strLstSize(pgHistoryKey) - 1; (int)pgHistoryIdx >= 0; pgHistoryIdx--)
             {
                 // Load JSON data into a KeyValue
-                const KeyValue *pgDataKv = varKv(
-                    jsonToVar(varStr(iniGet(infoPgIni, pgHistorySection, strLstGet(pgHistoryKey, pgHistoryIdx)))));
+                const KeyValue *pgDataKv = jsonToKv(
+                    iniGet(infoPgIni, INFO_SECTION_DB_HISTORY_STR, strLstGet(pgHistoryKey, pgHistoryIdx)));
 
                 // Get db values that are common to all info files
                 InfoPgData infoPgData =
                 {
                     .id = cvtZToUInt(strPtr(strLstGet(pgHistoryKey, pgHistoryIdx))),
-                    .version = pgVersionFromStr(varStr(kvGet(pgDataKv, versionKey))),
+                    .version = pgVersionFromStr(varStr(kvGet(pgDataKv, INFO_KEY_DB_VERSION_VAR))),
 
                     // This is different in archive.info due to a typo that can't be fixed without a format version bump
-                    .systemId = varUInt64Force(kvGet(pgDataKv, type == infoPgArchive ? idKey : systemIdKey)),
+                    .systemId = varUInt64Force(
+                        kvGet(pgDataKv, type == infoPgArchive ? INFO_KEY_DB_ID_VAR : INFO_KEY_DB_SYSTEM_ID_VAR)),
                 };
 
                 // Set index if this is the current history item
@@ -121,11 +117,8 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
                 // we must write them at least, even if we give up reading them.
                 if (type == infoPgBackup || type == infoPgManifest)
                 {
-                    const Variant *catalogVersionKey = varNewStr(INFO_KEY_DB_CATALOG_VERSION_STR);
-                    const Variant *controlVersionKey = varNewStr(INFO_KEY_DB_CONTROL_VERSION_STR);
-
-                    infoPgData.catalogVersion = (unsigned int)varUInt64Force(kvGet(pgDataKv, catalogVersionKey));
-                    infoPgData.controlVersion = (unsigned int)varUInt64Force(kvGet(pgDataKv, controlVersionKey));
+                    infoPgData.catalogVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR));
+                    infoPgData.controlVersion = varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR));
                 }
                 else if (type != infoPgArchive)
                     THROW_FMT(AssertError, "invalid InfoPg type %u", type);

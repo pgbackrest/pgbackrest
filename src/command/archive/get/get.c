@@ -29,12 +29,12 @@ Archive Get Command
 Clean the queue and prepare a list of WAL segments that the async process should get
 ***********************************************************************************************************************************/
 static StringList *
-queueNeed(const String *walSegment, bool found, size_t queueSize, size_t walSegmentSize, unsigned int pgVersion)
+queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSegmentSize, unsigned int pgVersion)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walSegment);
         FUNCTION_LOG_PARAM(BOOL, found);
-        FUNCTION_LOG_PARAM(SIZE, queueSize);
+        FUNCTION_LOG_PARAM(UINT64, queueSize);
         FUNCTION_LOG_PARAM(SIZE, walSegmentSize);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
     FUNCTION_LOG_END();
@@ -192,7 +192,7 @@ cmdArchiveGet(void)
 
                         // Use WAL segment size to estimate queue size and determine if the async process should be launched
                         queueFull =
-                            strLstSize(queue) * walSegmentSize > (size_t)cfgOptionInt64(cfgOptArchiveGetQueueMax) / 2;
+                            strLstSize(queue) * walSegmentSize > cfgOptionUInt64(cfgOptArchiveGetQueueMax) / 2;
                     }
                 }
 
@@ -211,8 +211,8 @@ cmdArchiveGet(void)
                     // The async process should not output on the console at all
                     KeyValue *optionReplace = kvNew();
 
-                    kvPut(optionReplace, varNewStr(CFGOPT_LOG_LEVEL_CONSOLE_STR), varNewStrZ("off"));
-                    kvPut(optionReplace, varNewStr(CFGOPT_LOG_LEVEL_STDERR_STR), varNewStrZ("off"));
+                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
+                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("off"));
 
                     // Generate command options
                     StringList *commandExec = cfgExecParam(cfgCmdArchiveGetAsync, optionReplace);
@@ -221,7 +221,7 @@ cmdArchiveGet(void)
                     // Clean the current queue using the list of WAL that we ideally want in the queue.  queueNeed()
                     // will return the list of WAL needed to fill the queue and this will be passed to the async process.
                     const StringList *queue = queueNeed(
-                        walSegment, found, (size_t)cfgOptionInt64(cfgOptArchiveGetQueueMax), pgControl.walSegmentSize,
+                        walSegment, found, cfgOptionUInt64(cfgOptArchiveGetQueueMax), pgControl.walSegmentSize,
                         pgControl.version);
 
                     for (unsigned int queueIdx = 0; queueIdx < strLstSize(queue); queueIdx++)
@@ -309,7 +309,7 @@ cmdArchiveGetAsync(void)
             ProtocolParallel *parallelExec = protocolParallelNew(
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2);
 
-            for (unsigned int processIdx = 1; processIdx <= (unsigned int)cfgOptionInt(cfgOptProcessMax); processIdx++)
+            for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                 protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, processIdx));
 
             // Queue jobs in executor
@@ -318,9 +318,9 @@ cmdArchiveGetAsync(void)
                 const String *walSegment = strLstGet(walSegmentList, walSegmentIdx);
 
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_STR);
-                protocolCommandParamAdd(command, varNewStr(walSegment));
+                protocolCommandParamAdd(command, VARSTR(walSegment));
 
-                protocolParallelJobAdd(parallelExec, protocolParallelJobNew(varNewStr(walSegment), command));
+                protocolParallelJobAdd(parallelExec, protocolParallelJobNew(VARSTR(walSegment), command));
             }
 
             // Process jobs

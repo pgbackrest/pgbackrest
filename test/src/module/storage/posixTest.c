@@ -203,7 +203,7 @@ testRun(void)
         TEST_RESULT_INT(info.mode, 0770, "    check mode");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        Buffer *buffer = bufNewZ("TESTFILE");
+        const Buffer *buffer = BUFSTRDEF("TESTFILE");
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, fileName), buffer), "put test file");
 
         TEST_ASSIGN(info, storageInfoNP(storageTest, fileName), "get file info");
@@ -259,13 +259,13 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNew("aaa.txt")), bufNewZ("aaa")), "write aaa.text");
+            storagePutNP(storageNewWriteNP(storageTest, strNew("aaa.txt")), BUFSTRDEF("aaa")), "write aaa.text");
         TEST_RESULT_STR(
             strPtr(strLstJoin(storageListNP(storageTest, NULL), ", ")), "aaa.txt, noperm",
             "dir list");
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNew("bbb.txt")), bufNewZ("bbb")), "write bbb.text");
+            storagePutNP(storageNewWriteNP(storageTest, strNew("bbb.txt")), BUFSTRDEF("bbb")), "write bbb.text");
         TEST_RESULT_STR(
             strPtr(strLstJoin(storageListP(storageTest, NULL, .expression = strNew("^bbb")), ", ")), "bbb.txt", "dir list");
     }
@@ -289,7 +289,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageCopyNP(source, destination), false, "copy and ignore missing file");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        Buffer *expectedBuffer = bufNewZ("TESTFILE\n");
+        const Buffer *expectedBuffer = BUFSTRDEF("TESTFILE\n");
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, sourceFile), expectedBuffer), "write source file");
 
         source = storageNewReadNP(storageTest, sourceFile);
@@ -324,7 +324,7 @@ testRun(void)
             "unable to move '%s' to '%s': [13] Permission denied", strPtr(fileNoPerm), strPtr(destinationFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        Buffer *buffer = bufNewZ("TESTFILE");
+        const Buffer *buffer = BUFSTRDEF("TESTFILE");
         storagePutNP(storageNewWriteNP(storageTest, sourceFile), buffer);
 
         source = storageNewReadNP(storageTest, sourceFile);
@@ -583,7 +583,7 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
-        TEST_RESULT_VOID(ioWrite(storageFileWriteIo(file), bufNewStr(strNew("TESTDATA"))), "write data");
+        TEST_RESULT_VOID(ioWrite(storageFileWriteIo(file), BUFSTRDEF("TESTDATA")), "write data");
         TEST_RESULT_VOID(ioWriteFlush(storageFileWriteIo(file)), "flush data");
         TEST_RESULT_VOID(ioWriteFree(storageFileWriteIo(file)), "   free file");
 
@@ -627,7 +627,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsNP(storageTest, emptyFile), true, "check empty file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        Buffer *buffer = bufNewZ("TESTFILE\n");
+        const Buffer *buffer = BUFSTRDEF("TESTFILE\n");
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/test.txt", testPath())), buffer), "put test file");
@@ -718,7 +718,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *outBuffer = bufNew(2);
-        Buffer *expectedBuffer = bufNewZ("TESTFILE\n");
+        const Buffer *expectedBuffer = BUFSTRDEF("TESTFILE\n");
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, fileName), expectedBuffer), "write test file");
 
         TEST_ASSIGN(file, storageNewReadNP(storageTest, fileName), "new read file");
@@ -828,7 +828,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileTmp = strNewFmt("%s.pgbackrest.tmp", strPtr(fileName));
         ioBufferSizeSet(10);
-        Buffer *buffer = bufNewZ("TESTFILE\n");
+        const Buffer *buffer = BUFSTRDEF("TESTFILE\n");
 
         TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file");
         TEST_RESULT_STR(strPtr(storageFileWriteName(file)), strPtr(fileName), "    check file name");
@@ -840,17 +840,17 @@ testRun(void)
 
         TEST_ERROR_FMT(
             storageDriverPosixFileWrite(storageFileWriteFileDriver(file), buffer), FileWriteError,
-            "unable to write '%s': [9] Bad file descriptor", strPtr(fileName));
+            "unable to write '%s.pgbackrest.tmp': [9] Bad file descriptor", strPtr(fileName));
         TEST_ERROR_FMT(
             storageDriverPosixFileWriteClose(storageFileWriteFileDriver(file)), FileSyncError,
-            "unable to sync '%s': [9] Bad file descriptor", strPtr(fileName));
+            "unable to sync '%s.pgbackrest.tmp': [9] Bad file descriptor", strPtr(fileName));
 
         // Disable file sync so the close can be reached
         ((StorageDriverPosixFileWrite *)file->driver)->syncFile = false;
 
         TEST_ERROR_FMT(
             storageDriverPosixFileWriteClose(storageFileWriteFileDriver(file)), FileCloseError,
-            "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
+            "unable to close '%s.pgbackrest.tmp': [9] Bad file descriptor", strPtr(fileName));
 
         // Set file handle to -1 so the close on free with not fail
         ((StorageDriverPosixFileWrite *)file->driver)->handle = -1;

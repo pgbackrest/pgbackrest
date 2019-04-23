@@ -477,7 +477,7 @@ testRun(void)
             httpClientRequest(
                 client, strNew("GET"), strNew("/path/file 1.txt"), NULL,
                 httpHeaderAdd(httpHeaderNew(NULL), strNew("content-length"), strNew("30")),
-                bufNewStr(strNew("012345678901234567890123456789")), true),
+                BUFSTRDEF("012345678901234567890123456789"), true),
             "request with content length");
         TEST_RESULT_STR(
             strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{connection: 'close', content-length: '32'}",

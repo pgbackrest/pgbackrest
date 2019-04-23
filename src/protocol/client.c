@@ -21,6 +21,7 @@ STRING_EXTERN(PROTOCOL_COMMAND_NOOP_STR,                            PROTOCOL_COM
 STRING_EXTERN(PROTOCOL_COMMAND_EXIT_STR,                            PROTOCOL_COMMAND_EXIT);
 
 STRING_EXTERN(PROTOCOL_ERROR_STR,                                   PROTOCOL_ERROR);
+STRING_EXTERN(PROTOCOL_ERROR_STACK_STR,                             PROTOCOL_ERROR_STACK);
 
 STRING_EXTERN(PROTOCOL_OUTPUT_STR,                                  PROTOCOL_OUTPUT);
 
@@ -71,7 +72,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         MEM_CONTEXT_TEMP_BEGIN()
         {
             String *greeting = ioReadLine(this->read);
-            KeyValue *greetingKv = varKv(jsonToVar(greeting));
+            KeyValue *greetingKv = jsonToKv(greeting);
 
             const String *expected[] =
             {
@@ -85,7 +86,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
                 const String *expectedKey = expected[expectedIdx * 2];
                 const String *expectedValue = expected[expectedIdx * 2 + 1];
 
-                const Variant *actualValue = kvGet(greetingKv, varNewStr(expectedKey));
+                const Variant *actualValue = kvGet(greetingKv, VARSTR(expectedKey));
 
                 if (actualValue == NULL)
                     THROW_FMT(ProtocolError, "unable to find greeting key '%s'", strPtr(expectedKey));
@@ -136,19 +137,22 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
         KeyValue *responseKv = varKv(jsonToVar(response));
 
         // Process error if any
-        const Variant *error = kvGet(responseKv, varNewStr(PROTOCOL_ERROR_STR));
+        const Variant *error = kvGet(responseKv, VARSTR(PROTOCOL_ERROR_STR));
 
         if (error != NULL)
         {
-            const String *message = varStr(kvGet(responseKv, varNewStr(PROTOCOL_OUTPUT_STR)));
+            const ErrorType *type = errorTypeFromCode(varIntForce(error));
+            const String *message = varStr(kvGet(responseKv, VARSTR(PROTOCOL_OUTPUT_STR)));
+            const String *stack = varStr(kvGet(responseKv, VARSTR(PROTOCOL_ERROR_STACK_STR)));
 
             THROWP_FMT(
-                errorTypeFromCode(varIntForce(error)), "%s: %s", strPtr(this->errorPrefix),
-                message == NULL ? "no details available" : strPtr(message));
+                type, "%s: %s%s", strPtr(this->errorPrefix), message == NULL ? "no details available" : strPtr(message),
+                type == &AssertError || logWill(logLevelDebug) ?
+                    (stack == NULL ? "\nno stack trace available" : strPtr(strNewFmt("\n%s", strPtr(stack)))) : "");
         }
 
         // Get output
-        result = kvGet(responseKv, varNewStr(PROTOCOL_OUTPUT_STR));
+        result = kvGet(responseKv, VARSTR(PROTOCOL_OUTPUT_STR));
 
         if (outputRequired)
         {
@@ -182,7 +186,7 @@ protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command)
     ASSERT(command != NULL);
 
     // Write out the command
-    ioWriteLine(this->write, protocolCommandJson(command));
+    ioWriteStrLine(this->write, protocolCommandJson(command));
     ioWriteFlush(this->write);
 
     // Reset the keep alive time

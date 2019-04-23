@@ -173,8 +173,8 @@ convertToByte(String **value, double *valueDbl)
         }
 
         // Convert string to bytes
-        double newDbl = varDblForce(varNewStr(result)) * multiplier;
-        result = varStrForce(varNewDbl(newDbl));
+        double newDbl = varDblForce(VARSTR(result)) * multiplier;
+        result = varStrForce(VARDBL(newDbl));
 
         // If nothing has blown up then safe to overwrite the original values
         *valueDbl = newDbl;
@@ -718,7 +718,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         }
 
                         // Make sure this option does not appear in the same section with an alternate name
-                        Variant *optionFoundKey = varNewInt(optionId);
+                        const Variant *optionFoundKey = VARINT(optionId);
                         const Variant *optionFoundName = kvGet(optionFound, optionFoundKey);
 
                         if (optionFoundName != NULL)
@@ -728,7 +728,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                 strPtr(key), strPtr(varStr(optionFoundName)), strPtr(section));
                         }
                         else
-                            kvPut(optionFound, optionFoundKey, varNewStr(key));
+                            kvPut(optionFound, optionFoundKey, VARSTR(key));
 
                         // Continue if the option is not valid for this command
                         if (!cfgDefOptionValid(commandDefId, optionDefId))
@@ -759,39 +759,43 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (parseOptionList[optionId].found)
                             continue;
 
-                        // Get the option value
-                        const Variant *value = iniGetDefault(config, section, key, NULL);
-
-                        if (varType(value) == varTypeString && strSize(varStr(value)) == 0)
-                        {
-                            THROW_FMT(
-                                OptionInvalidValueError, "section '%s', key '%s' must have a value", strPtr(section), strPtr(key));
-                        }
-
                         parseOptionList[optionId].found = true;
                         parseOptionList[optionId].source = cfgSourceConfig;
 
-                        if (varType(value) == varTypeVariantList)
+                        // Process list
+                        if (iniSectionKeyIsList(config, section, key))
                         {
                             // Error if the option cannot be specified multiple times
                             if (!cfgDefOptionMulti(optionDefId))
                                 THROW_FMT(OptionInvalidError, "option '%s' cannot be set multiple times", cfgOptionName(optionId));
 
-                            parseOptionList[optionId].valueList = strLstNewVarLst(varVarLst(value));
+                            parseOptionList[optionId].valueList = iniGetList(config, section, key);
                         }
-                        // Convert boolean
-                        else if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
-                        {
-                            if (strcasecmp(strPtr(varStr(value)), "n") == 0)
-                                parseOptionList[optionId].negate = true;
-                            else if (strcasecmp(strPtr(varStr(value)), "y") != 0)
-                                THROW_FMT(OptionInvalidValueError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
-                        }
-                        // Else add the string value
                         else
                         {
-                            parseOptionList[optionId].valueList = strLstNew();
-                            strLstAdd(parseOptionList[optionId].valueList, varStr(value));
+                            // Get the option value
+                            const String *value = iniGet(config, section, key);
+
+                            if (strSize(value) == 0)
+                            {
+                                THROW_FMT(
+                                    OptionInvalidValueError, "section '%s', key '%s' must have a value", strPtr(section),
+                                    strPtr(key));
+                            }
+
+                            if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
+                            {
+                                if (strEqZ(value, "n"))
+                                    parseOptionList[optionId].negate = true;
+                                else if (!strEqZ(value, "y"))
+                                    THROW_FMT(OptionInvalidValueError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
+                            }
+                            // Else add the string value
+                            else
+                            {
+                                parseOptionList[optionId].valueList = strLstNew();
+                                strLstAdd(parseOptionList[optionId].valueList, value);
+                            }
                         }
                     }
                 }
@@ -854,9 +858,9 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (dependOptionDefType == cfgDefOptTypeBoolean)
                         {
                             if (cfgOptionBool(dependOptionId))
-                                dependValue = varNewStrZ("1");
+                                dependValue = VARSTRDEF("1");
                             else
-                                dependValue = varNewStrZ("0");
+                                dependValue = VARSTRDEF("0");
                         }
                     }
 
@@ -956,11 +960,11 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     {
                         if (optionDefType == cfgDefOptTypeBoolean)
                         {
-                            cfgOptionSet(optionId, parseOption->source, varNewBool(!parseOption->negate));
+                            cfgOptionSet(optionId, parseOption->source, VARBOOL(!parseOption->negate));
                         }
                         else if (optionDefType == cfgDefOptTypeHash)
                         {
-                            Variant *value = varNewKv();
+                            Variant *value = varNewKv(kvNew());
                             KeyValue *keyValue = varKv(value);
 
                             for (unsigned int listIdx = 0; listIdx < strLstSize(parseOption->valueList); listIdx++)
@@ -975,7 +979,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         strPtr(strLstGet(parseOption->valueList, listIdx)), cfgOptionName(optionId));
                                 }
 
-                                kvPut(keyValue, varNewStr(strNewN(pair, (size_t)(equal - pair))), varNewStr(STR(equal + 1)));
+                                kvPut(keyValue, VARSTR(strNewN(pair, (size_t)(equal - pair))), VARSTRZ(equal + 1));
                             }
 
                             cfgOptionSet(optionId, parseOption->source, value);
@@ -1000,14 +1004,14 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                                     if (optionDefType == cfgDefOptTypeInteger)
                                     {
-                                        valueDbl = (double)varInt64Force(varNewStr(value));
+                                        valueDbl = (double)varInt64Force(VARSTR(value));
                                     }
                                     else if (optionDefType == cfgDefOptTypeSize)
                                     {
                                         convertToByte(&value, &valueDbl);
                                     }
                                     else
-                                        valueDbl = varDblForce(varNewStr(value));
+                                        valueDbl = varDblForce(VARSTR(value));
                                 }
                                 CATCH(AssertError)
                                 {
@@ -1072,7 +1076,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     cfgOptionName(optionId));
                             }
 
-                            cfgOptionSet(optionId, parseOption->source, varNewStr(value));
+                            cfgOptionSet(optionId, parseOption->source, VARSTR(value));
                         }
                     }
                     else if (parseOption->negate)
@@ -1084,7 +1088,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         const char *value = cfgDefOptionDefault(commandDefId, optionDefId);
 
                         if (value != NULL)
-                            cfgOptionSet(optionId, cfgSourceDefault, varNewStrZ(value));
+                            cfgOptionSet(optionId, cfgSourceDefault, VARSTRZ(value));
                         else if (cfgOptionIndex(optionId) == 0 && cfgDefOptionRequired(commandDefId, optionDefId) &&
                                  !cfgCommandHelp())
                         {

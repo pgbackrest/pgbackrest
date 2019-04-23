@@ -358,12 +358,12 @@ P00  DEBUG:     Backup::Info->current=>: bTest = true
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00  DEBUG:     perl/exec::perlExec: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: expire command end: completed successfully
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     common/exit::exitSafe: => 0
 P00  DEBUG:     main::main: => 0
 
@@ -530,12 +530,12 @@ P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExist
 P00   INFO: sent term signal to process [PROCESS-ID]
 P00  DEBUG:     perl/exec::perlExec: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: stop command end: completed successfully
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     common/exit::exitSafe: => 0
 P00  DEBUG:     main::main: => 0
 
@@ -646,12 +646,12 @@ P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExist
 P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
 P00  ERROR: [062]: stop file exists for all stanzas
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: true, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 62
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: backup command end: aborted with exception [062]
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     common/exit::exitSafe: => 62
 P00  DEBUG:     main::main: => 62
 
@@ -666,12 +666,12 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/lock
 P00  DEBUG:     perl/exec::perlExec: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: stop command end: completed successfully
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     common/exit::exitSafe: => 0
 P00  DEBUG:     main::main: => 0
 
@@ -687,12 +687,12 @@ P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExist
 P00   WARN: stop file already exists for stanza db
 P00  DEBUG:     perl/exec::perlExec: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: stop command end: completed successfully
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     common/exit::exitSafe: => 0
 P00  DEBUG:     main::main: => 0
 
@@ -716,12 +716,12 @@ P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExist
 P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
 P00  ERROR: [062]: stop file exists for stanza db
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: true, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 62
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: backup command end: aborted with exception [062]
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     common/exit::exitSafe: => 62
 P00  DEBUG:     main::main: => 62
 
@@ -733,12 +733,12 @@ P00  DEBUG:     config/load::cfgLoad: => void
 P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     perl/exec::perlExec: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: start command end: completed successfully
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     common/exit::exitSafe: => 0
 P00  DEBUG:     main::main: => 0
 
@@ -750,12 +750,12 @@ P00  DEBUG:     config/load::cfgLoad: => void
 P00  DEBUG:     perl/exec::perlExec: (void)
 P00  DEBUG:     perl/exec::perlExec: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: start command end: completed successfully
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     common/exit::exitSafe: => 0
 P00  DEBUG:     main::main: => 0
 
@@ -768,12 +768,12 @@ P00  DEBUG:     perl/exec::perlExec: (void)
 P00   WARN: stop file does not exist
 P00  DEBUG:     perl/exec::perlExec: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: start command end: completed successfully
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     common/exit::exitSafe: => 0
 P00  DEBUG:     main::main: => 0
 
@@ -1053,12 +1053,12 @@ P00  DEBUG:     Backup::Info->current=>: bTest = true
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00  DEBUG:     perl/exec::perlExec: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: expire command end: completed successfully
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     common/exit::exitSafe: => 0
 P00  DEBUG:     main::main: => 0
 
@@ -1565,12 +1565,12 @@ P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     perl/exec::perlExec: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: restore command end: completed successfully
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     common/exit::exitSafe: => 0
 P00  DEBUG:     main::main: => 0
 
@@ -2228,12 +2228,12 @@ P00  DEBUG:     Backup::Info->current=>: bTest = true
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00  DEBUG:     perl/exec::perlExec: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: expire command end: completed successfully
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     common/exit::exitSafe: => 0
 P00  DEBUG:     main::main: => 0
 
@@ -2747,12 +2747,12 @@ P00  DEBUG:     Backup::Info->current=>: bTest = true
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
 P00  DEBUG:     perl/exec::perlExec: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: expire command end: completed successfully
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => true
 P00  DEBUG:     common/exit::exitSafe: => 0
 P00  DEBUG:     main::main: => 0
 
@@ -3658,12 +3658,12 @@ P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->pathSync(): strPathExp = [TEST_PATH]/db-master/db/base-2
 P00  DEBUG:     perl/exec::perlExec: => 0
 P00  DEBUG:     common/exit::exitSafe: (result: 0, error: false, signalType: 0)
-P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
-P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     Main::mainCleanup(): iExitCode = 0
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: restore command end: completed successfully
+P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)
+P00  DEBUG:     common/lock::lockRelease: => false
 P00  DEBUG:     common/exit::exitSafe: => 0
 P00  DEBUG:     main::main: => 0
 

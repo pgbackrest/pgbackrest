@@ -28,40 +28,40 @@ perlOptionJson(void)
             if (!cfgOptionValid(optionId))
                 continue;
 
-            Variant *optionVar = varNewKv();
+            Variant *optionVar = varNewKv(kvNew());
 
             // Add valid
-            kvPut(varKv(optionVar), varNewStr(STRDEF("valid")), varNewBool(true));
+            kvPut(varKv(optionVar), VARSTRDEF("valid"), BOOL_TRUE_VAR);
 
             // Add source
-            const char *source = NULL;
+            const Variant *source = NULL;
 
             switch (cfgOptionSource(optionId))
             {
                 case cfgSourceParam:
                 {
-                    source = "param";
+                    source = VARSTRDEF("param");
                     break;
                 }
 
                 case cfgSourceConfig:
                 {
-                    source = "config";
+                    source = VARSTRDEF("config");
                     break;
                 }
 
                 case cfgSourceDefault:
                 {
-                    source = "default";
+                    source = VARSTRDEF("default");
                     break;
                 }
             }
 
-            kvPut(varKv(optionVar), varNewStr(STRDEF("source")), varNewStr(STR(source)));
+            kvPut(varKv(optionVar), VARSTRDEF("source"), source);
 
             // Add negate and reset
-            kvPut(varKv(optionVar), varNewStr(STRDEF("negate")), varNewBool(cfgOptionNegate(optionId)));
-            kvPut(varKv(optionVar), varNewStr(STRDEF("reset")), varNewBool(cfgOptionReset(optionId)));
+            kvPut(varKv(optionVar), VARSTRDEF("negate"), VARBOOL(cfgOptionNegate(optionId)));
+            kvPut(varKv(optionVar), VARSTRDEF("reset"), VARBOOL(cfgOptionReset(optionId)));
 
             // Add value if it is set
             if (cfgOptionTest(optionId))
@@ -83,7 +83,7 @@ perlOptionJson(void)
 
                     case cfgDefOptTypeHash:
                     {
-                        valueVar = varNewKv();
+                        valueVar = varNewKv(kvNew());
 
                         const KeyValue *valueKv = cfgOptionKv(optionId);
                         const VariantList *keyList = kvKeyList(valueKv);
@@ -96,25 +96,25 @@ perlOptionJson(void)
 
                     case cfgDefOptTypeList:
                     {
-                        valueVar = varNewKv();
+                        valueVar = varNewKv(kvNew());
 
                         const VariantList *valueList = cfgOptionLst(optionId);
 
                         for (unsigned int listIdx = 0; listIdx < varLstSize(valueList); listIdx++)
-                            kvPut(varKv(valueVar), varLstGet(valueList, listIdx), varNewBool(true));
+                            kvPut(varKv(valueVar), varLstGet(valueList, listIdx), BOOL_TRUE_VAR);
 
                         break;
                     }
                 }
 
-                kvPut(varKv(optionVar), varNewStr(STRDEF("value")), valueVar);
+                kvPut(varKv(optionVar), VARSTRDEF("value"), valueVar);
             }
 
-            kvPut(configKv, varNewStr(STR(cfgOptionName(optionId))), optionVar);
+            kvPut(configKv, VARSTRZ(cfgOptionName(optionId)), optionVar);
         }
 
         memContextSwitch(MEM_CONTEXT_OLD());
-        result = kvToJson(configKv, 0);
+        result = jsonFromKv(configKv, 0);
         memContextSwitch(MEM_CONTEXT_TEMP());
     }
     MEM_CONTEXT_TEMP_END();

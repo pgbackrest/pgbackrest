@@ -838,6 +838,32 @@ cfgOptionInt64(ConfigOption optionId)
     FUNCTION_LOG_RETURN(INT64, varInt64(configOptionValue[optionId].value));
 }
 
+unsigned int
+cfgOptionUInt(ConfigOption optionId)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, optionId);
+    FUNCTION_LOG_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT(varType(configOptionValue[optionId].value) == varTypeInt64);
+
+    FUNCTION_LOG_RETURN(UINT, varUIntForce(configOptionValue[optionId].value));
+}
+
+uint64_t
+cfgOptionUInt64(ConfigOption optionId)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, optionId);
+    FUNCTION_LOG_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT(varType(configOptionValue[optionId].value) == varTypeInt64);
+
+    FUNCTION_LOG_RETURN(UINT64, varUInt64Force(configOptionValue[optionId].value));
+}
+
 const KeyValue *
 cfgOptionKv(ConfigOption optionId)
 {

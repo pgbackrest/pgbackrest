@@ -577,7 +577,7 @@ testRun(void)
         // File is written all at once
         StorageFileWrite *write = NULL;
         TEST_ASSIGN(write, storageNewWriteNP(s3, strNew("file.txt")), "new write file");
-        TEST_RESULT_VOID(storagePutNP(write, bufNewStr(strNew("ABCD"))), "put file all at once");
+        TEST_RESULT_VOID(storagePutNP(write, BUFSTRDEF("ABCD")), "put file all at once");
 
         TEST_RESULT_BOOL(storageFileWriteAtomic(write), true, "write is atomic");
         TEST_RESULT_BOOL(storageFileWriteCreatePath(write), true, "path will be created");
@@ -602,13 +602,13 @@ testRun(void)
         // File is written in chunks with nothing left over on close
         TEST_ASSIGN(write, storageNewWriteNP(s3, strNew("file.txt")), "new write file");
         TEST_RESULT_VOID(
-            storagePutNP(write, bufNewStr(strNew("12345678901234567890123456789012"))),
+            storagePutNP(write, BUFSTRDEF("12345678901234567890123456789012")),
             "write file in chunks -- nothing left on close");
 
         // File is written in chunks with something left over on close
         TEST_ASSIGN(write, storageNewWriteNP(s3, strNew("file.txt")), "new write file");
         TEST_RESULT_VOID(
-            storagePutNP(write, bufNewStr(strNew("12345678901234567890"))),
+            storagePutNP(write, BUFSTRDEF("12345678901234567890")),
             "write file in chunks -- something left on close");
 
         // storageDriverExists()

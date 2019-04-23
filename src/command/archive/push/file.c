@@ -86,7 +86,7 @@ archivePushFile(
             while (!ioReadEof(read));
 
             ioReadClose(read);
-            String *walSegmentChecksum = varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR));
+            const String *walSegmentChecksum = varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR));
 
             // If the wal segment already exists in the repo then compare checksums
             walSegmentFile = walSegmentFind(storageRepo(), archiveId, archiveFile);
@@ -131,9 +131,7 @@ archivePushFile(
             if (cipherType != cipherTypeNone)
             {
                 ioFilterGroupAdd(
-                    filterGroup,
-                    cipherBlockFilter(
-                        cipherBlockNew(cipherModeEncrypt, cipherType, bufNewStr(cipherPass), NULL)));
+                    filterGroup, cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL)));
             }
 
             ioReadFilterGroupSet(storageFileReadIo(source), filterGroup);

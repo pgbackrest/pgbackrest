@@ -412,8 +412,10 @@ sub regExpReplaceAll
     my $strTimestampRegExp = "[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]";
 
     $strLine = $self->regExpReplace($strLine, 'TS_PATH', "PG\\_[0-9]\\.[0-9]\\_[0-9]{9}");
+    my $strProjectVersion = PROJECT_VERSION;
+    $strProjectVersion =~ s/\./\\./g;
     $strLine = $self->regExpReplace($strLine, 'VERSION',
-        "version[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}" . PROJECT_VERSION, PROJECT_VERSION . '$');
+        "version[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}" . $strProjectVersion, $strProjectVersion . '$');
 
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', 'timestamp"[ ]{0,1}:[ ]{0,1}[0-9]{10}','[0-9]{10}$');
 

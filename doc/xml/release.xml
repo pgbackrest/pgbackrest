@@ -12,9 +12,98 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.13dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.14dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <p>Improve performance of non-blocking reads by using maximum buffer size.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
+                    <release-item>
+                        <p>Only process next filter in <code>IoFilterGroup</code> when input buffer is full or flushing.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>ioWriteStr()</code> and <code>ioWriteStrLine()</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add separate functions to encode/decode each JSON type.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add macros to create constant <code>Buffer</code> objects.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>unsigned int</code> <code>Variant</code> type and update code to use it.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p><code>varNewKv()</code> accepts a <code>KeyValue</code> object rather than creating one.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add constant for maximum buffer sizes required by <code>cvt*()</code> functions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <id>true</id> and <id>false</id> <code>String</code> constants.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Refactor <code>Ini</code> interface to expose <code>String</code> values instead of <code>Variant</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Refactor <code>main()</code> as a <code>switch()</code> statement.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>cfgOptionUInt()</code> and <code>cfgOptionUInt64()</code> and update code to use them.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+        </release>
+
+        <release date="2019-04-18" version="2.13" title="Bug Fixes">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="brunre01"/>
+                            <release-item-ideator id="jwpit"/>
+                            <release-item-ideator id="tomasz.kontusz"/>
+                            <release-item-ideator id="guruguruguru"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix zero-length reads causing problems for IO filters that did not expect them.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fix reliability of error reporting from <cmd>local</cmd>/<cmd>remote</cmd> processes.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fix <proper>Posix</proper>/<proper>CIFS</proper> error messages reporting the wrong filename on write/sync/close.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Harden IO filters against zero input and optimize zero output case.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Move <code>lockRelease()</code> to the end of <code>exitSafe()</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>CHECK()</code> macro for production assertions.</p>
+                    </release-item>
+
                     <release-item>
                         <p>Automatically generate constants for command and option names.</p>
                     </release-item>
@@ -28,6 +117,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add macros to create constant <code>Variant</code> types.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
@@ -36,6 +129,14 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Option to build documentation from current <proper>apt.postgres.org</proper> packages.</p>
+                    </release-item>
+                </release-development-list>
+            </release-doc-list>
         </release>
 
         <release date="2019-04-11" version="2.12" title="C Implementation of Archive Push">
@@ -6662,6 +6763,11 @@
             <contributor-id type="github">baburdick</contributor-id>
         </contributor>
 
+        <contributor id="brunre01">
+            <contributor-name-display>brunre01</contributor-name-display>
+            <contributor-id type="github">brunre01</contributor-id>
+        </contributor>
+
         <contributor id="bruno.friedmann">
             <contributor-name-display>Bruno Friedmann</contributor-name-display>
             <contributor-id type="github">tigerfoot</contributor-id>
@@ -6761,6 +6867,11 @@
             <contributor-id type="github">gregscds</contributor-id>
         </contributor>
 
+        <contributor id="guruguruguru">
+            <contributor-name-display>guruguruguru</contributor-name-display>
+            <contributor-id type="github">guruguruguru</contributor-id>
+        </contributor>
+
         <contributor id="hans.jurgen.schonig">
             <contributor-name-display>Hans-J&amp;uuml;rgen Sch&amp;ouml;nig</contributor-name-display>
         </contributor>
@@ -6831,6 +6942,11 @@
         <contributor id="jungle-boogie">
             <contributor-name-display>jungle-boogie</contributor-name-display>
             <contributor-id type="github">jungle-boogie</contributor-id>
+        </contributor>
+
+        <contributor id="jwpit">
+            <contributor-name-display>jwpit</contributor-name-display>
+            <contributor-id type="github">jwpit</contributor-id>
         </contributor>
 
         <contributor id="keith.fiske">
@@ -6981,6 +7097,11 @@
         <contributor id="todd.vernick">
             <contributor-name-display>Todd Vernick</contributor-name-display>
             <contributor-id type="github">gintoddic</contributor-id>
+        </contributor>
+
+        <contributor id="tomasz.kontusz">
+            <contributor-name-display>Tomasz Kontusz</contributor-name-display>
+            <contributor-id type="github">ktosiek</contributor-id>
         </contributor>
 
         <contributor id="thomas.flatley">

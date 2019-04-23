@@ -9,21 +9,41 @@ Ini object
 ***********************************************************************************************************************************/
 typedef struct Ini Ini;
 
+#include "common/io/write.h"
 #include "common/type/variant.h"
+
+/***********************************************************************************************************************************
+Constructor
+***********************************************************************************************************************************/
+Ini *iniNew(void);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-Ini *iniNew(void);
-const Variant *iniGet(const Ini *this, const String *section, const String *key);
-const Variant *iniGetDefault(const Ini *this, const String *section, const String *key, Variant *defaultValue);
+void iniParse(Ini *this, const String *content);
+void iniSet(Ini *this, const String *section, const String *key, const String *value);
+
+/***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+const String *iniGet(const Ini *this, const String *section, const String *key);
+const String *iniGetDefault(const Ini *this, const String *section, const String *key, const String *defaultValue);
+StringList *iniGetList(const Ini *this, const String *section, const String *key);
+bool iniSectionKeyIsList(const Ini *this, const String *section, const String *key);
 StringList *iniSectionKeyList(const Ini *this, const String *section);
 StringList *iniSectionList(const Ini *this);
-void iniParse(Ini *this, const String *content);
-void iniSet(Ini *this, const String *section, const String *key, const Variant *value);
-void iniFree(Ini *this);
 String *iniFileName(const Ini *this);
 bool iniFileExists(const Ini *this);
+
+/***********************************************************************************************************************************
+Constructor
+***********************************************************************************************************************************/
+void iniFree(Ini *this);
+
+/***********************************************************************************************************************************
+Destructor
+***********************************************************************************************************************************/
+void iniFree(Ini *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

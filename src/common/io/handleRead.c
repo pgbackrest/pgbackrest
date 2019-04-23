@@ -42,7 +42,7 @@ ioHandleReadNew(const String *name, int handle, TimeMSec timeout)
         this = memNew(sizeof(IoHandleRead));
         this->memContext = memContextCurrent();
         this->io = ioReadNewP(
-            this, .eof = (IoReadInterfaceEof)ioHandleReadEof, .handle = (IoReadInterfaceHandle)ioHandleReadHandle,
+            this, .block = true, .eof = (IoReadInterfaceEof)ioHandleReadEof, .handle = (IoReadInterfaceHandle)ioHandleReadHandle,
             .read = (IoReadInterfaceRead)ioHandleRead);
         this->name = strDup(name);
         this->handle = handle;

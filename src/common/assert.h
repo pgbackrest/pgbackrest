@@ -21,5 +21,15 @@ Asserts are used in test code to ensure that certain conditions are true.  They 
     #define ASSERT(condition)
 #endif
 
+/***********************************************************************************************************************************
+Checks are used in production builds to test very important conditions.  Be sure to limit use to the most critical cases.
+***********************************************************************************************************************************/
+#define CHECK(condition)                                                                                                           \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        if (!(condition))                                                                                                          \
+            THROW_FMT(AssertError, "check '%s' failed", #condition);                                                               \
+    }                                                                                                                              \
+    while (0)
 
 #endif

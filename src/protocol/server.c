@@ -61,11 +61,11 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
         MEM_CONTEXT_TEMP_BEGIN()
         {
             KeyValue *greetingKv = kvNew();
-            kvPut(greetingKv, varNewStr(PROTOCOL_GREETING_NAME_STR), varNewStrZ(PROJECT_NAME));
-            kvPut(greetingKv, varNewStr(PROTOCOL_GREETING_SERVICE_STR), varNewStr(service));
-            kvPut(greetingKv, varNewStr(PROTOCOL_GREETING_VERSION_STR), varNewStrZ(PROJECT_VERSION));
+            kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_NAME_STR), VARSTRZ(PROJECT_NAME));
+            kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_SERVICE_STR), VARSTR(service));
+            kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_VERSION_STR), VARSTRZ(PROJECT_VERSION));
 
-            ioWriteLine(this->write, kvToJson(greetingKv, 0));
+            ioWriteStrLine(this->write, jsonFromKv(greetingKv, 0));
             ioWriteFlush(this->write);
         }
         MEM_CONTEXT_TEMP_END();
@@ -95,23 +95,26 @@ protocolServerHandlerAdd(ProtocolServer *this, ProtocolServerProcessHandler hand
 Return an error
 ***********************************************************************************************************************************/
 void
-protocolServerError(ProtocolServer *this, int code, const String *message)
+protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
         FUNCTION_LOG_PARAM(INT, code);
         FUNCTION_LOG_PARAM(STRING, message);
+        FUNCTION_LOG_PARAM(STRING, stack);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(code != 0);
     ASSERT(message != NULL);
+    ASSERT(stack != NULL);
 
     KeyValue *error = kvNew();
-    kvPut(error, varNewStr(PROTOCOL_ERROR_STR), varNewInt(errorCode()));
-    kvPut(error, varNewStr(PROTOCOL_OUTPUT_STR), varNewStrZ(errorMessage()));
+    kvPut(error, VARSTR(PROTOCOL_ERROR_STR), VARINT(code));
+    kvPut(error, VARSTR(PROTOCOL_OUTPUT_STR), VARSTR(message));
+    kvPut(error, VARSTR(PROTOCOL_ERROR_STACK_STR), VARSTR(stack));
 
-    ioWriteLine(this->write, kvToJson(error, 0));
+    ioWriteStrLine(this->write, jsonFromKv(error, 0));
     ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
@@ -137,9 +140,9 @@ protocolServerProcess(ProtocolServer *this)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 // Read command
-                KeyValue *commandKv = varKv(jsonToVar(ioReadLine(this->read)));
-                String *command = varStr(kvGet(commandKv, varNewStr(PROTOCOL_KEY_COMMAND_STR)));
-                VariantList *paramList = varVarLst(kvGet(commandKv, varNewStr(PROTOCOL_KEY_PARAMETER_STR)));
+                KeyValue *commandKv = jsonToKv(ioReadLine(this->read));
+                const String *command = varStr(kvGet(commandKv, VARSTR(PROTOCOL_KEY_COMMAND_STR)));
+                VariantList *paramList = varVarLst(kvGet(commandKv, VARSTR(PROTOCOL_KEY_PARAMETER_STR)));
 
                 // Process command
                 bool found = false;
@@ -169,14 +172,10 @@ protocolServerProcess(ProtocolServer *this)
             }
             MEM_CONTEXT_TEMP_END();
         }
-        // Asserts are thrown so a stack trace will be output to aid in debugging
-        CATCH(AssertError)
-        {
-            RETHROW();
-        }
         CATCH_ANY()
         {
-            protocolServerError(this, errorCode(), STR(errorMessage()));
+            // Report error to the client
+            protocolServerError(this, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
         }
         TRY_END();
     }
@@ -199,9 +198,9 @@ protocolServerResponse(ProtocolServer *this, const Variant *output)
     KeyValue *result = kvNew();
 
     if (output != NULL)
-        kvAdd(result, varNewStr(PROTOCOL_OUTPUT_STR), output);
+        kvAdd(result, VARSTR(PROTOCOL_OUTPUT_STR), output);
 
-    ioWriteLine(this->write, kvToJson(result, 0));
+    ioWriteStrLine(this->write, jsonFromKv(result, 0));
     ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();

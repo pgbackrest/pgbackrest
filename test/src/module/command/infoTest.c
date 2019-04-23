@@ -72,12 +72,12 @@ testRun(void)
         String *content = strNew
         (
             "[backrest]\n"
-            "backrest-checksum=\"80798255547bafa3eee805ab0fccaa1da03cab0e\"\n"
+            "backrest-checksum=\"a52ab193e02b367ab338bff842e2faa31d8aa921\"\n"
             "backrest-format=5\n"
             "backrest-version=\"2.04\"\n"
             "\n"
             "[cipher]\n"
-            "cipher-pass=12345\n"
+            "cipher-pass=\"12345\"\n"
             "\n"
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -95,7 +95,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
-                bufNewStr(content)), "put backup info to file");
+                BUFSTR(content)), "put backup info to file");
 
         TEST_ERROR_FMT(infoRender(), FileMissingError,
             "unable to load info file '%s/archive.info' or '%s/archive.info.copy':\n"
@@ -130,7 +130,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza1Path))),
-                bufNewStr(content)), "put archive info to file");
+                BUFSTR(content)), "put archive info to file");
 
         // archive section will cross reference backup db-id 2 to archive db-id 3 but db section will only use the db-ids from
         // backup.info
@@ -258,7 +258,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
-                bufNewStr(content)), "put backup info to file");
+                BUFSTR(content)), "put backup info to file");
 
         TEST_RESULT_STR(strPtr(infoRender()),
             "[\n"
@@ -378,7 +378,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza1Path))),
-                bufNewStr(content)), "put archive info to file - stanza1");
+                BUFSTR(content)), "put archive info to file - stanza1");
 
         content = strNew
         (
@@ -430,7 +430,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza1Path))),
-                bufNewStr(content)), "put backup info to file - stanza1");
+                BUFSTR(content)), "put backup info to file - stanza1");
 
         String *archiveStanza2Path = strNewFmt("%s/stanza2", strPtr(archivePath));
         String *backupStanza2Path = strNewFmt("%s/stanza2", strPtr(backupPath));
@@ -455,7 +455,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanza2Path))),
-                bufNewStr(content)), "put archive info to file - stanza2");
+                BUFSTR(content)), "put archive info to file - stanza2");
 
         content = strNew
         (
@@ -478,7 +478,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanza2Path))),
-                bufNewStr(content)), "put backup info to file - stanza2");
+                BUFSTR(content)), "put backup info to file - stanza2");
 
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         TEST_RESULT_STR(strPtr(infoRender()),
@@ -765,7 +765,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/pgbackrest.conf", testPath())),
-                bufNewStr(content)), "put pgbackrest.conf file");
+                BUFSTR(content)), "put pgbackrest.conf file");
         strLstAddZ(argListText, "--repo-cipher-type=aes-256-cbc");
         strLstAdd(argListText, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
         harnessCfgLoad(strLstSize(argListText), strLstPtr(argListText));
@@ -787,38 +787,38 @@ testRun(void)
         // These tests cover branches not covered in other tests
         KeyValue *stanzaInfo = kvNew();
         VariantList *dbSection = varLstNew();
-        Variant *pgInfo = varNewKv();
-        kvPut(varKv(pgInfo), varNewStr(DB_KEY_ID_STR), varNewUInt64(1));
-        kvPut(varKv(pgInfo), varNewStr(DB_KEY_SYSTEM_ID_STR), varNewUInt64(6625633699176220261));
-        kvPut(varKv(pgInfo), varNewStr(DB_KEY_VERSION_STR), varNewStr(pgVersionToStr(90500)));
+        Variant *pgInfo = varNewKv(kvNew());
+        kvPut(varKv(pgInfo), DB_KEY_ID_VAR, varNewUInt(1));
+        kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, varNewUInt64(6625633699176220261));
+        kvPut(varKv(pgInfo), DB_KEY_VERSION_VAR, VARSTR(pgVersionToStr(90500)));
 
         varLstAdd(dbSection, pgInfo);
 
         // Add the database history, backup and archive sections to the stanza info
-        kvPut(stanzaInfo, varNewStr(STANZA_KEY_DB_STR), varNewVarLst(dbSection));
+        kvPut(stanzaInfo, STANZA_KEY_DB_VAR, varNewVarLst(dbSection));
 
         VariantList *backupSection = varLstNew();
-        Variant *backupInfo = varNewKv();
+        Variant *backupInfo = varNewKv(kvNew());
 
-        kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_LABEL_STR), varNewStr(strNew("20181119-152138F")));
-        kvPut(varKv(backupInfo), varNewStr(BACKUP_KEY_TYPE_STR), varNewStr(strNew("full")));
-        kvPutKv(varKv(backupInfo), varNewStr(KEY_ARCHIVE_STR));
-        KeyValue *infoInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_INFO_STR));
-        kvPut(infoInfo, varNewStr(KEY_SIZE_STR), varNewUInt64(0));
-        kvPut(infoInfo, varNewStr(KEY_DELTA_STR), varNewUInt64(0));
-        KeyValue *repoInfo = kvPutKv(infoInfo, varNewStr(INFO_KEY_REPOSITORY_STR));
-        kvAdd(repoInfo, varNewStr(KEY_SIZE_STR), varNewUInt64(0));
-        kvAdd(repoInfo, varNewStr(KEY_DELTA_STR), varNewUInt64(0));
-        KeyValue *databaseInfo = kvPutKv(varKv(backupInfo), varNewStr(KEY_DATABASE_STR));
-        kvAdd(databaseInfo, varNewStr(DB_KEY_ID_STR), varNewUInt64(1));
-        KeyValue *timeInfo = kvPutKv(varKv(backupInfo), varNewStr(BACKUP_KEY_TIMESTAMP_STR));
-        kvAdd(timeInfo, varNewStr(KEY_START_STR), varNewUInt64(1542383276));
-        kvAdd(timeInfo, varNewStr(KEY_STOP_STR), varNewUInt64(1542383289));
+        kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTRDEF("20181119-152138F"));
+        kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTRDEF("full"));
+        kvPutKv(varKv(backupInfo), KEY_ARCHIVE_VAR);
+        KeyValue *infoInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_INFO_VAR);
+        kvPut(infoInfo, KEY_SIZE_VAR, varNewUInt64(0));
+        kvPut(infoInfo, KEY_DELTA_VAR, varNewUInt64(0));
+        KeyValue *repoInfo = kvPutKv(infoInfo, INFO_KEY_REPOSITORY_VAR);
+        kvAdd(repoInfo, KEY_SIZE_VAR, varNewUInt64(0));
+        kvAdd(repoInfo, KEY_DELTA_VAR, varNewUInt64(0));
+        KeyValue *databaseInfo = kvPutKv(varKv(backupInfo), KEY_DATABASE_VAR);
+        kvAdd(databaseInfo, DB_KEY_ID_VAR, varNewUInt(1));
+        KeyValue *timeInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_TIMESTAMP_VAR);
+        kvAdd(timeInfo, KEY_START_VAR, varNewUInt64(1542383276));
+        kvAdd(timeInfo, KEY_STOP_VAR, varNewUInt64(1542383289));
 
         varLstAdd(backupSection, backupInfo);
 
-        kvPut(stanzaInfo, varNewStr(STANZA_KEY_BACKUP_STR), varNewVarLst(backupSection));
-        kvPut(stanzaInfo, varNewStr(KEY_ARCHIVE_STR), varNewVarLst(varLstNew()));
+        kvPut(stanzaInfo, STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
+        kvPut(stanzaInfo, KEY_ARCHIVE_VAR, varNewVarLst(varLstNew()));
 
         String *result = strNew("");
         formatTextDb(stanzaInfo, result);

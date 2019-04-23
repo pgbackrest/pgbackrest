@@ -109,7 +109,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool confe
                     THROW_FMT(FormatError, "%s message must be > 0", strPtr(statusFile));
 
                 // Get contents
-                code = varIntForce(varNewStr(strNewN(strPtr(content), (size_t)(linefeedPtr - strPtr(content)))));
+                code = varIntForce(VARSTR(strNewN(strPtr(content), (size_t)(linefeedPtr - strPtr(content)))));
                 message = strTrim(strNew(linefeedPtr + 1));
             }
 
@@ -172,7 +172,7 @@ archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, 
             storageNewWriteNP(
                 storageSpoolWrite(),
                 strNewFmt("%s/%s" STATUS_EXT_ERROR, strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(errorFile))),
-            bufNewStr(strNewFmt("%d\n%s", code, strPtr(message))));
+            BUFSTR(strNewFmt("%d\n%s", code, strPtr(message))));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -200,7 +200,7 @@ archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, con
             storageNewWriteNP(
                 storageSpoolWrite(),
                 strNewFmt("%s/%s" STATUS_EXT_OK, strPtr(archiveAsyncSpoolQueue(archiveMode)), strPtr(walSegment))),
-            warning == NULL ? NULL : bufNewStr(strNewFmt("0\n%s", strPtr(warning))));
+            warning == NULL ? NULL : BUFSTR(strNewFmt("0\n%s", strPtr(warning))));
     }
     MEM_CONTEXT_TEMP_END();
 

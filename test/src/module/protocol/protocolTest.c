@@ -5,6 +5,7 @@ Test Protocol
 #include "common/io/handleWrite.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/regExp.h"
 #include "storage/storage.h"
 #include "storage/driver/posix/storage.h"
 #include "version.h"
@@ -42,7 +43,7 @@ testServerProtocol(const String *command, const VariantList *paramList, Protocol
         else if (strEq(command, strNew("request-complex")))
         {
             protocolServerResponse(server, varNewBool(false));
-            ioWriteLine(protocolServerIoWrite(server), strNew("LINEOFTEXT"));
+            ioWriteStrLine(protocolServerIoWrite(server), strNew("LINEOFTEXT"));
             ioWriteFlush(protocolServerIoWrite(server));
         }
         else
@@ -229,44 +230,44 @@ testRun(void)
                 ioWriteOpen(write);
 
                 // Various bogus greetings
-                ioWriteLine(write, strNew("bogus greeting"));
+                ioWriteStrLine(write, strNew("bogus greeting"));
                 ioWriteFlush(write);
-                ioWriteLine(write, strNew("{\"name\":999}"));
+                ioWriteStrLine(write, strNew("{\"name\":999}"));
                 ioWriteFlush(write);
-                ioWriteLine(write, strNew("{\"name\":null}"));
+                ioWriteStrLine(write, strNew("{\"name\":null}"));
                 ioWriteFlush(write);
-                ioWriteLine(write, strNew("{\"name\":\"bogus\"}"));
+                ioWriteStrLine(write, strNew("{\"name\":\"bogus\"}"));
                 ioWriteFlush(write);
-                ioWriteLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"bogus\"}"));
+                ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"bogus\"}"));
                 ioWriteFlush(write);
-                ioWriteLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"bogus\"}"));
+                ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"bogus\"}"));
                 ioWriteFlush(write);
 
                 // Correct greeting with noop
-                ioWriteLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
+                ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop");
-                ioWriteLine(write, strNew("{}"));
+                ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
                 // Throw errors
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop with error text");
-                ioWriteLine(write, strNew("{\"err\":25,\"out\":\"sample error message\"}"));
+                ioWriteStrLine(write, strNew("{\"err\":25,\"out\":\"sample error message\"}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop with no error text");
-                ioWriteLine(write, strNew("{\"err\":255}"));
+                ioWriteStrLine(write, strNew("{\"err\":255}"));
                 ioWriteFlush(write);
 
                 // No output expected
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop with parameters returned");
-                ioWriteLine(write, strNew("{\"out\":[\"bogus\"]}"));
+                ioWriteStrLine(write, strNew("{\"out\":[\"bogus\"]}"));
                 ioWriteFlush(write);
 
                 // Send output
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"test\"}", "test command");
-                ioWriteLine(write, strNew("{\"out\":[\"value1\",\"value2\"]}"));
+                ioWriteStrLine(write, strNew("{\"out\":[\"value1\",\"value2\"]}"));
                 ioWriteFlush(write);
 
                 // Wait for exit
@@ -284,7 +285,7 @@ testRun(void)
                 // Various bogus greetings
                 TEST_ERROR(
                     protocolClientNew(strNew("test client"), strNew("test"), read, write), JsonFormatError,
-                    "invalid type at 'bogus greeting'");
+                    "expected '{' at 'bogus greeting'");
                 TEST_ERROR(
                     protocolClientNew(strNew("test client"), strNew("test"), read, write), ProtocolError,
                     "greeting key 'name' must be string type");
@@ -319,7 +320,9 @@ testRun(void)
                 TEST_RESULT_PTR(protocolClientIoWrite(client), client->write, "get write io");
 
                 // Throw errors
-                TEST_ERROR(protocolClientNoOp(client), AssertError, "raised from test client: sample error message");
+                TEST_ERROR(
+                    protocolClientNoOp(client), AssertError,
+                    "raised from test client: sample error message\nno stack trace available");
                 TEST_ERROR(protocolClientNoOp(client), UnknownError, "raised from test client: no details available");
                 TEST_ERROR(protocolClientNoOp(client), AssertError, "no output required by command");
 
@@ -361,32 +364,41 @@ testRun(void)
                     "check greeting");
 
                 // Noop
-                TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"noop\"}")), "write noop");
+                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"noop\"}")), "write noop");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush noop");
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{}", "noop result");
 
                 // Invalid command
-                TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"bogus\"}")), "write bogus");
+                KeyValue *result = NULL;
+
+                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"bogus\"}")), "write bogus");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush bogus");
-                TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"err\":39,\"out\":\"invalid command 'bogus'\"}", "bogus error");
+                TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
+                TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 39, "    check code");
+                TEST_RESULT_STR(strPtr(varStr(kvGet(result, VARSTRDEF("out")))), "invalid command 'bogus'", "    check message");
+                TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
 
                 // Simple request
-                TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"request-simple\"}")), "write simple request");
+                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"request-simple\"}")), "write simple request");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush simple request");
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"out\":true}", "simple request result");
 
-                // Assert -- no response will come backup because the process loop will terminate
-                TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"assert\"}")), "write assert");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush simple request");
+                // Throw an assert error which will include a stack trace
+                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"assert\"}")), "write assert");
+                TEST_RESULT_VOID(ioWriteFlush(write), "flush assert error");
+                TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
+                TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 25, "    check code");
+                TEST_RESULT_STR(strPtr(varStr(kvGet(result, VARSTRDEF("out")))), "test assert", "    check message");
+                TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
 
                 // Complex request -- after process loop has been restarted
-                TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"request-complex\"}")), "write complex request");
+                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"request-complex\"}")), "write complex request");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush complex request");
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"out\":false}", "complex request result");
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "LINEOFTEXT", "complex request result");
 
                 // Exit
-                TEST_RESULT_VOID(ioWriteLine(write, strNew("{\"cmd\":\"exit\"}")), "write exit");
+                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"exit\"}")), "write exit");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush exit");
             }
             HARNESS_FORK_CHILD_END();
@@ -417,8 +429,7 @@ testRun(void)
 
                 TEST_RESULT_VOID(protocolServerHandlerAdd(server, testServerProtocol), "add handler");
 
-                TEST_ERROR(protocolServerProcess(server), AssertError, "test assert");
-                TEST_RESULT_VOID(protocolServerProcess(server), "run process loop again");
+                TEST_RESULT_VOID(protocolServerProcess(server), "run process loop");
 
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
                 TEST_RESULT_VOID(protocolServerFree(NULL), "free null server");
@@ -465,16 +476,16 @@ testRun(void)
                 ioWriteOpen(write);
 
                 // Greeting with noop
-                ioWriteLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
+                ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop");
-                ioWriteLine(write, strNew("{}"));
+                ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"command1\",\"param\":[\"param1\",\"param2\"]}", "command1");
                 sleepMSec(4000);
-                ioWriteLine(write, strNew("{\"out\":1}"));
+                ioWriteStrLine(write, strNew("{\"out\":1}"));
                 ioWriteFlush(write);
 
                 // Wait for exit
@@ -491,21 +502,21 @@ testRun(void)
                 ioWriteOpen(write);
 
                 // Greeting with noop
-                ioWriteLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
+                ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop");
-                ioWriteLine(write, strNew("{}"));
+                ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"command2\",\"param\":[\"param1\"]}", "command2");
                 sleepMSec(1000);
-                ioWriteLine(write, strNew("{\"out\":2}"));
+                ioWriteStrLine(write, strNew("{\"out\":2}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"command3\",\"param\":[\"param1\"]}", "command3");
 
-                ioWriteLine(write, strNew("{\"err\":39,\"out\":\"very serious error\"}"));
+                ioWriteStrLine(write, strNew("{\"err\":39,\"out\":\"very serious error\"}"));
                 ioWriteFlush(write);
 
                 // Wait for exit
@@ -546,7 +557,7 @@ testRun(void)
                     "{\"name\":\"pgBackRest\",\"service\":\"error\",\"version\":\"" PROJECT_VERSION "\"}\n"
                     "{}\n");
 
-                IoRead *read = ioBufferReadIo(ioBufferReadNew(bufNewStr(protocolString)));
+                IoRead *read = ioBufferReadIo(ioBufferReadNew(BUFSTR(protocolString)));
                 ioReadOpen(read);
                 IoWrite *write = ioBufferWriteIo(ioBufferWriteNew(bufNew(1024)));
                 ioWriteOpen(write);
@@ -662,11 +673,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePut(
             storageNewWriteNP(storageTest, strNew("pgbackrest.conf")),
-            bufNewStr(
-                strNew(
-                    "[global]\n"
-                    "repo1-cipher-type=aes-256-cbc\n"
-                    "repo1-cipher-pass=acbd\n")));
+            BUFSTRDEF(
+                "[global]\n"
+                "repo1-cipher-type=aes-256-cbc\n"
+                "repo1-cipher-pass=acbd\n"));
 
         argList = strLstNew();
         strLstAddZ(argList, "/usr/bin/pgbackrest");
@@ -693,11 +703,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePut(
             storageNewWriteNP(storageTest, strNew("pgbackrest.conf")),
-            bufNewStr(
-                strNew(
-                    "[global]\n"
-                    "repo1-cipher-type=aes-256-cbc\n"
-                    "repo1-cipher-pass=dcba\n")));
+            BUFSTRDEF(
+                "[global]\n"
+                "repo1-cipher-type=aes-256-cbc\n"
+                "repo1-cipher-pass=dcba\n"));
 
         argList = strLstNew();
         strLstAddZ(argList, "/usr/bin/pgbackrest");

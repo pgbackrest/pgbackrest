@@ -30,6 +30,8 @@ Constants
 
 #define PROTOCOL_ERROR                                              "err"
     STRING_DECLARE(PROTOCOL_ERROR_STR);
+#define PROTOCOL_ERROR_STACK                                        "errStack"
+    STRING_DECLARE(PROTOCOL_ERROR_STACK_STR);
 
 #define PROTOCOL_OUTPUT                                             "out"
     STRING_DECLARE(PROTOCOL_OUTPUT_STR);

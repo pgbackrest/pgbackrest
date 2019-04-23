@@ -262,22 +262,29 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
                     // Checking filterIdx - 1 is safe because the first filter's filterData->input is always set to NULL when input
                     // is NULL.
                     if (input == NULL && filterData->input != NULL && !ioFilterDone(filterData->filter) &&
-                        ioFilterDone(ioFilterGroupGet(this, filterIdx - 1)->filter) && bufUsed(filterData->input) == 0)
+                        bufUsed(filterData->input) == 0)
                     {
                         filterData->input = NULL;
                     }
 
                     ioFilterProcessInOut(filterData->filter, filterData->input, filterData->output);
 
-                    // If inputSame is set then the output buffer for this filter is full and it will need to be pre-processed with
-                    // the same input once the output buffer is cleared.
+                    // If inputSame is set then the output buffer for this filter is full and it will need to be re-processed with
+                    // the same input once the output buffer is cleared
                     if (ioFilterInputSame(filterData->filter))
+                    {
                         this->inputSame = true;
-
-                    // Else clear the buffer if it was locally allocated.  If this is an input buffer that was passed in then the
-                    // caller is responsible for clearing it.
+                    }
+                    // Else clear the buffer if it was locally allocated.  If the input buffer was passed in then the caller is
+                    // responsible for clearing it.
                     else if (filterData->inputLocal != NULL)
                         bufUsedZero(filterData->inputLocal);
+
+                    // If the output buffer is not full and the filter is not done then more data is required
+                    if (!bufFull(filterData->output) && !ioFilterDone(filterData->filter))
+                    {
+                        break;
+                    }
                 }
             }
             // Else the filter does not produce output.  No need to flush these filters because they don't buffer data.
@@ -342,7 +349,7 @@ ioFilterGroupClose(IoFilterGroup *this)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            kvAdd(this->filterResult, varNewStr(ioFilterType(filterData->filter)), filterResult);
+            kvAdd(this->filterResult, VARSTR(ioFilterType(filterData->filter)), filterResult);
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -408,7 +415,7 @@ ioFilterGroupResult(const IoFilterGroup *this, const String *filterType)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = kvGet(this->filterResult, varNewStr(filterType));
+        result = kvGet(this->filterResult, VARSTR(filterType));
     }
     MEM_CONTEXT_TEMP_END();
 
