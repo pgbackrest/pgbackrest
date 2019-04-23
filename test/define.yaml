@@ -241,6 +241,15 @@ unit:
           common/compress/gzip/decompress: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: compress-lz4
+        total: 3
+
+        coverage:
+          common/compress/lz4/common: full
+          common/compress/gzip/compress: full
+          common/compress/gzip/decompress: full
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto
         total: 3
 

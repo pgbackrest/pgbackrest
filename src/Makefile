@@ -47,7 +47,7 @@ LDPERL = `perl -MExtUtils::Embed -e ldopts`
 LDEXTRA =
 
 # Concatenate options for easy usage
-LDFLAGS = -lcrypto -lssl -lxml2 -lz $(LDPERL) $(LDEXTRA)
+LDFLAGS = -lcrypto -lssl -lxml2 -lz -llz4 $(LDPERL) $(LDEXTRA)
 
 ####################################################################################################################################
 # Install options
@@ -75,6 +75,7 @@ SRCS = \
 	common/compress/gzip/common.c \
 	common/compress/gzip/compress.c \
 	common/compress/gzip/decompress.c \
+	common/compress/lz4/common.c \
 	common/crypto/cipherBlock.c \
 	common/crypto/common.c \
 	common/crypto/hash.c \
@@ -253,6 +254,15 @@ common/compress/gzip/compress.o: common/compress/gzip/compress.c common/assert.h
 
 common/compress/gzip/decompress.o: common/compress/gzip/decompress.c common/assert.h common/compress/gzip/common.h common/compress/gzip/decompress.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CFLAGS) -c common/compress/gzip/decompress.c -o common/compress/gzip/decompress.o
+
+common/compress/lz4/common.o: common/compress/lz4/common.c common/assert.h common/compress/lz4/common.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/stackTrace.h common/type/convert.h
+	$(CC) $(CFLAGS) -c common/compress/lz4/common.c -o common/compress/lz4/common.o
+
+common/compress/lz4/compress.o: common/compress/lz4/compress.c common/assert.h common/compress/lz4/common.h common/compress/lz4/compress.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
+	$(CC) $(CFLAGS) -c common/compress/lz4/compress.c -o common/compress/lz4/compress.o
+
+common/compress/lz4/decompress.o: common/compress/lz4/decompress.c common/assert.h common/compress/lz4/common.h common/compress/lz4/decompress.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
+	$(CC) $(CFLAGS) -c common/compress/lz4/decompress.c -o common/compress/lz4/decompress.o
 
 common/crypto/cipherBlock.o: common/crypto/cipherBlock.c common/assert.h common/crypto/cipherBlock.h common/crypto/common.h common/debug.h common/error.auto.h common/error.h common/io/filter/filter.h common/io/filter/filter.intern.h common/log.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/string.h common/type/variant.h common/type/variantList.h
 	$(CC) $(CFLAGS) -c common/crypto/cipherBlock.c -o common/crypto/cipherBlock.o
