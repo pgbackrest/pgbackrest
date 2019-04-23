@@ -4,6 +4,8 @@ Posix Storage Driver
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -15,6 +17,13 @@ Posix Storage Driver
 #include "common/regExp.h"
 #include "storage/driver/posix/storage.h"
 #include "storage/driver/posix/common.h"
+
+/***********************************************************************************************************************************
+Define PATH_MAX if it is not defined
+***********************************************************************************************************************************/
+#ifndef PATH_MAX
+#define PATH_MAX                                                    (4 * 1024)
+#endif
 
 /***********************************************************************************************************************************
 Driver type constant string
@@ -60,8 +69,8 @@ storageDriverPosixNew(
         this->interface = storageNewP(
             STORAGE_DRIVER_POSIX_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, this,
             .exists = (StorageInterfaceExists)storageDriverPosixExists, .info = (StorageInterfaceInfo)storageDriverPosixInfo,
-            .list = (StorageInterfaceList)storageDriverPosixList, .move = (StorageInterfaceMove)storageDriverPosixMove,
-            .newRead = (StorageInterfaceNewRead)storageDriverPosixNewRead,
+            .infoList = (StorageInterfaceInfoList)storageDriverPosixInfoList, .list = (StorageInterfaceList)storageDriverPosixList,
+            .move = (StorageInterfaceMove)storageDriverPosixMove, .newRead = (StorageInterfaceNewRead)storageDriverPosixNewRead,
             .newWrite = (StorageInterfaceNewWrite)storageDriverPosixNewWrite,
             .pathCreate = (StorageInterfacePathCreate)storageDriverPosixPathCreate,
             .pathRemove = (StorageInterfacePathRemove)storageDriverPosixPathRemove,
@@ -134,16 +143,40 @@ storageDriverPosixInfo(StorageDriverPosix *this, const String *file, bool ignore
     else
     {
         result.exists = true;
+        result.timeModified = statFile.st_mtime;
+
+        // Get user name if it exists
+        struct passwd *userData = getpwuid(statFile.st_uid);
+
+        if (userData != NULL)
+            result.user = strNew(userData->pw_name);
+
+        // Get group name if it exists
+        struct group *groupData = getgrgid(statFile.st_gid);
+
+        if (groupData != NULL)
+            result.group = strNew(groupData->gr_name);
 
         if (S_ISREG(statFile.st_mode))
         {
             result.type = storageTypeFile;
-            result.size = (size_t)statFile.st_size;
+            result.size = (uint64_t)statFile.st_size;
         }
         else if (S_ISDIR(statFile.st_mode))
             result.type = storageTypePath;
         else if (S_ISLNK(statFile.st_mode))
+        {
             result.type = storageTypeLink;
+
+            char linkDestination[PATH_MAX];
+            ssize_t linkDestinationSize = 0;
+
+            THROW_ON_SYS_ERROR_FMT(
+                (linkDestinationSize = readlink(strPtr(file), linkDestination, sizeof(linkDestination) - 1)) == -1,
+                FileReadError, "unable to get destination for link '%s'", strPtr(file));
+
+            result.linkDestination = strNewN(linkDestination, (size_t)linkDestinationSize);
+        }
         else
             THROW_FMT(FileInfoError, "invalid type for '%s'", strPtr(file));
 
@@ -151,6 +184,106 @@ storageDriverPosixInfo(StorageDriverPosix *this, const String *file, bool ignore
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
+}
+
+/***********************************************************************************************************************************
+Info for all files/paths in a path
+***********************************************************************************************************************************/
+static void
+storageDriverPosixInfoListEntry(
+    StorageDriverPosix *this, const String *path, const String *name, StorageInfoListCallback callback, void *callbackData)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX, this);
+        FUNCTION_TEST_PARAM(STRING, path);
+        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(FUNCTIONP, callback);
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
+    ASSERT(name != NULL);
+    ASSERT(callback != NULL);
+
+    if (!strEqZ(name, ".."))
+    {
+        String *pathInfo = strEqZ(name, ".") ? strDup(path) : strNewFmt("%s/%s", strPtr(path), strPtr(name));
+
+        StorageInfo storageInfo = storageDriverPosixInfo(this, pathInfo, true);
+
+        if (storageInfo.exists)
+        {
+            storageInfo.name = name;
+            callback(callbackData, &storageInfo);
+        }
+
+        strFree(pathInfo);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+bool
+storageDriverPosixInfoList(
+    StorageDriverPosix *this, const String *path, bool errorOnMissing, StorageInfoListCallback callback, void *callbackData)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
+    ASSERT(callback != NULL);
+
+    DIR *dir = NULL;
+    bool result = false;
+
+    TRY_BEGIN()
+    {
+        // Open the directory for read
+        dir = opendir(strPtr(path));
+
+        // If the directory could not be opened process errors but ignore missing directories when specified
+        if (!dir)
+        {
+            if (errorOnMissing || errno != ENOENT)
+                THROW_SYS_ERROR_FMT(PathOpenError, "unable to open path '%s' for read", strPtr(path));
+        }
+        else
+        {
+            // Directory was found
+            result = true;
+
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                // Read the directory entries
+                struct dirent *dirEntry = readdir(dir);
+
+                while (dirEntry != NULL)
+                {
+                    // Get info and perform callback
+                    storageDriverPosixInfoListEntry(this, path, STR(dirEntry->d_name), callback, callbackData);
+
+                    // Get next entry
+                    dirEntry = readdir(dir);
+                }
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+    }
+    FINALLY()
+    {
+        if (dir != NULL)
+            closedir(dir);
+    }
+    TRY_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************

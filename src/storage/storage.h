@@ -73,6 +73,24 @@ typedef struct StorageInfoParam
 StorageInfo storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param);
 
 /***********************************************************************************************************************************
+storageInfoList
+***********************************************************************************************************************************/
+typedef void (*StorageInfoListCallback)(void *callbackData, const StorageInfo *info);
+
+typedef struct StorageInfoListParam
+{
+    bool errorOnMissing;
+} StorageInfoListParam;
+
+#define storageInfoListP(this, fileExp, callback, callbackData, ...)                                                               \
+    storageInfoList(this, fileExp, callback, callbackData, (StorageInfoListParam){__VA_ARGS__})
+#define storageInfoListNP(this, fileExp, callback, callbackData)                                                                   \
+    storageInfoList(this, fileExp, callback, callbackData, (StorageInfoListParam){0})
+
+bool storageInfoList(
+    const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param);
+
+/***********************************************************************************************************************************
 storageList
 ***********************************************************************************************************************************/
 typedef struct StorageListParam

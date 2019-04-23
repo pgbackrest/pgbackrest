@@ -21,7 +21,9 @@ typedef String *(*StoragePathExpressionCallback)(const String *expression, const
 Constructor
 ***********************************************************************************************************************************/
 typedef bool (*StorageInterfaceExists)(void *driver, const String *path);
-typedef StorageInfo (*StorageInterfaceInfo)(void *driver, const String *file, bool ignoreMissing);
+typedef StorageInfo (*StorageInterfaceInfo)(void *driver, const String *path, bool ignoreMissing);
+typedef bool (*StorageInterfaceInfoList)(
+    void *driver, const String *file, bool ignoreMissing, StorageInfoListCallback callback, void *callbackData);
 typedef StringList *(*StorageInterfaceList)(void *driver, const String *path, bool errorOnMissing, const String *expression);
 typedef bool (*StorageInterfaceMove)(void *driver, void *source, void *destination);
 typedef StorageFileRead *(*StorageInterfaceNewRead)(void *driver, const String *file, bool ignoreMissing);
@@ -37,6 +39,7 @@ typedef struct StorageInterface
 {
     StorageInterfaceExists exists;
     StorageInterfaceInfo info;
+    StorageInterfaceInfoList infoList;
     StorageInterfaceList list;
     StorageInterfaceMove move;
     StorageInterfaceNewRead newRead;

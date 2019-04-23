@@ -26,6 +26,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>storageInfoList()</code> to get detailed info about all entries in a path.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>ioWriteStr()</code> and <code>ioWriteStrLine()</code>.</p>
                     </release-item>
 

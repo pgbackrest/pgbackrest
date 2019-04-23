@@ -35,6 +35,8 @@ Functions
 ***********************************************************************************************************************************/
 bool storageDriverPosixExists(StorageDriverPosix *this, const String *path);
 StorageInfo storageDriverPosixInfo(StorageDriverPosix *this, const String *file, bool ignoreMissing);
+bool storageDriverPosixInfoList(
+    StorageDriverPosix *this, const String *path, bool errorOnMissing, StorageInfoListCallback callback, void *callbackData);
 StringList *storageDriverPosixList(StorageDriverPosix *this, const String *path, bool errorOnMissing, const String *expression);
 bool storageDriverPosixMove(StorageDriverPosix *this, StorageDriverPosixFileRead *source, StorageDriverPosixFileWrite *destination);
 StorageFileRead *storageDriverPosixNewRead(StorageDriverPosix *this, const String *file, bool ignoreMissing);
