@@ -9,7 +9,7 @@ Expire Command
 #include "info/infoBackup.h"
 #include "storage/helper.h"
 
-// CSHANG These are for the archiveId sort function but maybe the functions should go in stringList.c/.h
+// CSHANG These are for the archiveId sort function but maybe the functions should go in stringList.c/.h? I think they only should go there if there is another use case or maybe go in the command/backup/common.c file? Or maybe we need an info/common.c file
 #include <stdlib.h>
 #include "common/type/list.h"
 
@@ -118,6 +118,7 @@ cmdExpire(void)
         // Find all the expired full backups
         if (fullRetention > 0)
         {
+            // Get list of current full backups (defaul order is oldest to newest)
             pathList = infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true));
 
             // If there are more full backups then the number to retain, then expire the oldest ones
@@ -247,7 +248,8 @@ cmdExpire(void)
             storagePathRemoveP(storageRepoWrite(), strLstGet(backupList, backupIdx), .recurse = true);
         }
 
-        // If archive retention is undefined, then ignore archiving
+        // If archive retention is undefined, then ignore archiving. The user does not have to set this - it will be defaulted in
+        // cfgLoadUpdateOption based on certain rules.
         if (archiveRetention == 0)
         {
              LOG_INFO("option '%s' is not set - archive logs will not be expired", cfgOptionName(cfgOptRepoRetentionArchive));
@@ -275,38 +277,83 @@ cmdExpire(void)
                         infoBackup, .filter = backupRegExpP(.full = true, .differential = true, .incremental = true)),
                     sortOrderDesc);
             }
-LOG_INFO("size %u", strLstSize(globalBackupRetentionList));
 
-//             // Expire archives. If no backups were found then preserve current archive logs - too soon to expire them.
-//             if (strLstSize(globalBackupRetentionList) > 0)
-//             {
-//                 // Attempt to load the archive info file
-//                 InfoArchive *info = infoArchiveNew(
-//                     storageRepo(),
-//                     STRDEF(STORAGE_REPO_ARCHIVE '/' INFO_ARCHIVE_FILE), false, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
-//
-//                 // Get a list of archive directories (e.g. 9.4-1, 10-2, etc).
-//                 StringList *listArchiveDisk = storageListP(
-//                     storageRepo(),
-//                     STRDEF(STORAGE_REPO_ARCHIVE), .errorOnMissing = false, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION));
-//
-// lstSort((List *)this, sortAscComparator);
-//
-//                 StringList *listArchiveDiskSorted = strLstNew();
-//                 unsigned int cmpId = 0;
-//                 // Since the db-id is always incrementing, sort by the db-id oldest to newest
-//                 for (unsigned int idx = 0; idx < strLstSize(listArchiveDisk); idx++)
-//                 {
-//                     StringList *archiveSort = strLstNewSplitZ(strLstGet(listArchiveDisk, idx), "-");
-//                     unsigned int dbId = (unsigned int) strLstGet(archiveSort, 1);
-// // CSHANG Stopped here. Maybe should be trying to create a keyValue structiure so can sort by the history id.
-//                     // if (dbId > cmpId)
-//                     //     strLstAdd(listArchiveDiskSorted, strLstJoin(archiveSort, "-"));
-//                     //     cmpId = dbId;
-//
-//
-//
-//             }
+            // Expire archives. If no backups were found then preserve current archive logs - too soon to expire them.
+            if (strLstSize(globalBackupRetentionList) > 0)
+            {
+                // Attempt to load the archive info file
+                InfoArchive *infoArchive = infoArchiveNew(
+                    storageRepo(),
+                    STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+                InfoPg *infoArchivePg = infoArchivePg(infoArchive);
+
+                // Get a list of archive directories (e.g. 9.4-1, 10-2, etc) sorted by the db-id (number after the dash).
+                StringList *listArchiveDisk = sortArchiveId(
+                    storageListP(
+                        storageRepo(),
+                        STRDEF(STORAGE_REPO_ARCHIVE), .errorOnMissing = false, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
+                    sortOrderAsc);
+
+
+                StringList *globalBackupArchiveRetentionList = strLstNew();
+
+                // globalBackupRetentionList is ordered newest to oldest backup, so create globalBackupArchiveRetentionList of the
+                // newest backups whose archives will be retained
+                for (unsigned int idx = 0; idx < archiveRetention; idx++)
+                    strLstAdd(globalBackupArchiveRetentionList, strLstGet(globalBackupRetentionList, idx));
+
+                // Loop through the archive.info history from oldest to newest and if there is a corresponding directory on disk
+                // then remove WAL that are not part of retention
+                for (unsigned int pgIdx = infoPgDataTotal(infoArchivePg) - 1; (int)pgIdx >= 0; pgIdx--))
+                {
+                    String *archiveId = infoPgArchiveId(infoArchivePg, pgIdx);
+                    StringList *localBackupRetentionList = strLstNew();
+
+                    for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(listArchiveDisk); archiveIdx++)
+                    {
+                        if (strCmp(archiveId, strLstGet(listArchiveDisk, archiveIdx)) != 0)
+                            continue;
+
+                        StringList *archiveSplit = strLstNewSplitZ(archiveId, "-");
+                        unsigned int archivePgId = cvtZToUInt(strPtr(strLstGet(archiveSplit, 1)));
+
+                        // From the global list of backups to retain, create a list of backups, oldest to newest, associated with this
+                        // archiveId (e.g. 9.4-1), e.g. If globalBackupRetention has 4F, 3F, 2F, 1F then localBackupRetentionList will
+                        // have 1F, 2F, 3F, 4F (assuming they all have same history id)
+                        for (unsigned int retentionIdx = strLstSize(globalBackupRetentionList) - 1;
+                            (int)retentionIdx >=0; retentionIdx--)
+                        {
+                            for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
+                            {
+                                InfoBackupData backupData = infoBackupData(infoBackup, backupIdx);
+                                if ((strCmp(backupData.backupLabel, strLstGet(globalBackupRetentionList, retentionIdx)) == 0) &&
+                                    (backupData.backupPgId == archivePgId)
+                                {
+                                    strLstAdd(localBackupRetentionList, backupData.backupLabel);
+                                }
+                            }
+                        }
+
+                        // If no backup to retain was found
+                        if (strLstSize(localBackupRetentionList) == 0)
+                        {
+                            // If this is not the current database, then delete the archive directory else do nothing since the
+                            // current DB archive directory must not be deleted
+                            InfoPgData currentPg = infoPgDataCurrent(infoArchivePg);
+                            if (currentPg.id != archivePgId)
+                            {
+                                String *fullPath = storagePath(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId));
+                                storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
+                                LOG_INFO("remove archive path: %s", strPtr(fullPath));
+                            }
+
+                            // Continue to next directory
+                            break;
+                        }
+                    }
+                // CSHANG Stooped here. Next: my @stryLocalBackupArchiveRentention;
+                }
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();
