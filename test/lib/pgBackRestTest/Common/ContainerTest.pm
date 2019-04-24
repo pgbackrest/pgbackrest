@@ -695,10 +695,15 @@ sub containerBuild
             $strScript = '';
             $strCopy = undef;
 
+            $strScript = sectionHeader() .
+                "# Set worker clusters lower than the default for testing\n" .
+                "    cd /root/scalitys3 && \\\n" .
+                '    sed -i "s/clusters\"\: [0-9]*/clusters\"\: 2/" ./config.json';
+
             if ($strOS ne VM_CO6 && $strOS ne VM_U12)
             {
                 $strImageParent = containerRepo() . ":${strOS}-base";
-                $strScript = "\n\nENTRYPOINT npm start --prefix /root/scalitys3";
+                $strScript .= "\n\nENTRYPOINT npm start --prefix /root/scalitys3";
             }
             else
             {

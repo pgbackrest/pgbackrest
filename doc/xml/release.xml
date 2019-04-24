@@ -88,6 +88,10 @@
                     <release-item>
                         <p>Add <code>harnessInfoChecksum/Z()</code> to ease creation of test info files.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Reduce <proper>ScalityS3</proper> processes since only two are needed.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
