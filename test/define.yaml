@@ -246,8 +246,8 @@ unit:
 
         coverage:
           common/compress/lz4/common: full
-          common/compress/gzip/compress: full
-          common/compress/gzip/decompress: full
+          common/compress/lz4/compress: full
+          common/compress/lz4/decompress: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto
