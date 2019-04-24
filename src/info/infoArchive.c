@@ -26,8 +26,7 @@ struct InfoArchive
 };
 
 /***********************************************************************************************************************************
-Create a new InfoArchive object
-// ??? Need loadFile parameter
+Create new object and load contents from a file
 ***********************************************************************************************************************************/
 InfoArchive *
 infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass)
@@ -55,7 +54,7 @@ infoArchiveNew(const Storage *storage, const String *fileName, bool ignoreMissin
         // Catch file missing error and add archive-specific hints before rethrowing
         TRY_BEGIN()
         {
-            this->infoPg = infoPgNew(storage, fileName, infoPgArchive, cipherType, cipherPass);
+            this->infoPg = infoPgNewLoad(storage, fileName, infoPgArchive, cipherType, cipherPass, NULL);
         }
         CATCH_ANY()
         {

@@ -26,6 +26,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>storageInfoList()</code> to get detailed info about all entries in a path.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>ioWriteStr()</code> and <code>ioWriteStrLine()</code>.</p>
                     </release-item>
 
@@ -43,6 +47,10 @@
 
                     <release-item>
                         <p>Add <code>iniSave()</code> and <code>iniMove()</code> to <code>Ini</code> object.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>*Save()</code> functions to most <code>Info</code> objects.</p>
                     </release-item>
 
                     <release-item>
@@ -79,6 +87,14 @@
                 <release-development-list>
                     <release-item>
                         <p>Add <code>harnessInfoChecksum/Z()</code> to ease creation of test info files.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <id>build-max</id> option to set max build processes.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Reduce <proper>ScalityS3</proper> processes since only two are needed.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>

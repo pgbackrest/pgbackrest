@@ -188,11 +188,10 @@ cmdArchiveGet(void)
                     if (strLstSize(queue) > 0)
                     {
                         // Get size of the WAL segment
-                        size_t walSegmentSize = storageInfoNP(storageLocal(), walDestination).size;
+                        uint64_t walSegmentSize = storageInfoNP(storageLocal(), walDestination).size;
 
                         // Use WAL segment size to estimate queue size and determine if the async process should be launched
-                        queueFull =
-                            strLstSize(queue) * walSegmentSize > cfgOptionUInt64(cfgOptArchiveGetQueueMax) / 2;
+                        queueFull = strLstSize(queue) * walSegmentSize > cfgOptionUInt64(cfgOptArchiveGetQueueMax) / 2;
                     }
                 }
 

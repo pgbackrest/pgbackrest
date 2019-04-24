@@ -19,7 +19,7 @@ Info Handler
 /***********************************************************************************************************************************
 Internal constants
 ***********************************************************************************************************************************/
-#define INI_COPY_EXT                                                ".copy"
+#define INFO_COPY_EXT                                                ".copy"
 
 STRING_STATIC(INFO_SECTION_BACKREST_STR,                            "backrest");
 STRING_STATIC(INFO_SECTION_CIPHER_STR,                              "cipher");
@@ -35,8 +35,6 @@ Object type
 struct Info
 {
     MemContext *memContext;                                         // Mem context
-    String *fileName;                                               // Full path name of the file
-    Ini *ini;                                                       // Parsed file contents
     const String *cipherPass;                                       // Cipher passphrase if set
 };
 
@@ -117,27 +115,29 @@ infoHash(const Ini *ini)
 /***********************************************************************************************************************************
 Load and validate the info file (or copy)
 ***********************************************************************************************************************************/
-static bool
-infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherType, const String *cipherPass)
+static Ini *
+infoLoad(Info *this, const Storage *storage, const String *fileName, bool copyFile, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
         FUNCTION_LOG_PARAM(INFO, this);
         FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);                     // Full path/filename to load
         FUNCTION_LOG_PARAM(BOOL, copyFile);                       // Is this the copy file?
         FUNCTION_LOG_PARAM(ENUM, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(fileName != NULL);
 
-    bool result = false;
+    Ini *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *fileName = copyFile ? strCat(strDup(this->fileName), INI_COPY_EXT) : this->fileName;
+        const String *fileNameExt = copyFile ? strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName)) : fileName;
 
         // Attempt to load the file
-        StorageFileRead *infoRead = storageNewReadNP(storage, fileName);
+        StorageFileRead *infoRead = storageNewReadNP(storage, fileNameExt);
 
         if (cipherType != cipherTypeNone)
         {
@@ -158,22 +158,23 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
         CATCH(CryptoError)
         {
             THROW_FMT(
-                CryptoError, "'%s' %s\nHINT: Is or was the repo encrypted?", strPtr(storagePathNP(storage, fileName)),
+                CryptoError, "'%s' %s\nHINT: Is or was the repo encrypted?", strPtr(storagePathNP(storage, fileNameExt)),
                 errorMessage());
         }
         TRY_END();
 
-        iniParse(this->ini, strNewBuf(buffer));
+        result = iniNew();
+        iniParse(result, strNewBuf(buffer));
 
         // Make sure the ini is valid by testing the checksum
-        const String *infoChecksumJson = iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR);
-        const String *checksum = infoHash(this->ini);
+        const String *infoChecksumJson = iniGet(result, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR);
+        const String *checksum = infoHash(result);
 
         if (strSize(infoChecksumJson) == 0)
         {
             THROW_FMT(
                 ChecksumError, "invalid checksum in '%s', expected '%s' but no checksum found",
-                strPtr(storagePathNP(storage, fileName)), strPtr(checksum));
+                strPtr(storagePathNP(storage, fileNameExt)), strPtr(checksum));
         }
         else
         {
@@ -183,42 +184,32 @@ infoLoad(Info *this, const Storage *storage, bool copyFile, CipherType cipherTyp
             {
                 THROW_FMT(
                     ChecksumError, "invalid checksum in '%s', expected '%s' but found '%s'",
-                    strPtr(storagePathNP(storage, fileName)), strPtr(checksum), strPtr(infoChecksum));
+                    strPtr(storagePathNP(storage, fileNameExt)), strPtr(checksum), strPtr(infoChecksum));
             }
         }
 
         // Make sure that the format is current, otherwise error
-        if (jsonToUInt(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR)) != REPOSITORY_FORMAT)
+        if (jsonToUInt(iniGet(result, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR)) != REPOSITORY_FORMAT)
         {
             THROW_FMT(
-                FormatError, "invalid format in '%s', expected %d but found %d", strPtr(fileName), REPOSITORY_FORMAT,
-                varIntForce(VARSTR(iniGet(this->ini, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR))));
+                FormatError, "invalid format in '%s', expected %d but found %d", strPtr(fileNameExt), REPOSITORY_FORMAT,
+                varIntForce(VARSTR(iniGet(result, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR))));
         }
+
+        iniMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(INI, result);
 }
 
 /***********************************************************************************************************************************
-Load an Info object
-// ??? Need loadFile parameter to be able to load from a string.
-// ??? Need to handle modified flag, encryption and checksum, initialization, etc.
-// ??? The file MUST exist currently, so this is not actually creating the object - rather it is loading it
+Create new object
 ***********************************************************************************************************************************/
 Info *
-infoNew(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+infoNew(void)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, fileName);                     // Full path/filename to load
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
-    FUNCTION_LOG_END();
-
-    ASSERT(storage != NULL);
-    ASSERT(fileName != NULL);
-    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+    FUNCTION_LOG_VOID(logLevelTrace);
 
     Info *this = NULL;
 
@@ -227,14 +218,40 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
         // Create object
         this = memNew(sizeof(Info));
         this->memContext = MEM_CONTEXT_NEW();
+    }
+    MEM_CONTEXT_NEW_END();
 
-        this->ini = iniNew();
-        this->fileName = strDup(fileName);
+    FUNCTION_LOG_RETURN(INFO, this);
+}
+
+/***********************************************************************************************************************************
+Create new object and load contents from a file
+***********************************************************************************************************************************/
+Info *
+infoNewLoad(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass, Ini **ini)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);                     // Full path/filename to load
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM_P(INI, ini);
+    FUNCTION_LOG_END();
+
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+
+    Info *this = infoNew();
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        Ini *iniLocal = NULL;
 
         // Attempt to load the primary file
         TRY_BEGIN()
         {
-            infoLoad(this, storage, false, cipherType, cipherPass);
+            iniLocal = infoLoad(this, storage, fileName, false, cipherType, cipherPass);
         }
         CATCH_ANY()
         {
@@ -245,7 +262,7 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
 
             TRY_BEGIN()
             {
-                infoLoad(this, storage, true, cipherType, cipherPass);
+                iniLocal = infoLoad(this, storage, fileName, true, cipherType, cipherPass);
             }
             CATCH_ANY()
             {
@@ -256,8 +273,8 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
                     errorType() == primaryErrorType ? errorType() :
                         (errorType() == &FileMissingError ? primaryErrorType :
                         (primaryMissing ? errorType() : &FileOpenError)),
-                    "unable to load info file '%s' or '%s" INI_COPY_EXT "':\n%s\n%s: %s",
-                    strPtr(storagePathNP(storage, this->fileName)), strPtr(storagePathNP(storage, this->fileName)),
+                    "unable to load info file '%s' or '%s" INFO_COPY_EXT "':\n%s\n%s: %s",
+                    strPtr(storagePathNP(storage, fileName)), strPtr(storagePathNP(storage, fileName)),
                     strPtr(primaryError), errorTypeName(errorType()), errorMessage());
             }
             TRY_END();
@@ -265,14 +282,69 @@ infoNew(const Storage *storage, const String *fileName, CipherType cipherType, c
         TRY_END();
 
         // Load the cipher passphrase if it exists
-        const String *cipherPass = iniGetDefault(this->ini, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, NULL);
+        const String *cipherPass = iniGetDefault(iniLocal, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, NULL);
 
         if (cipherPass != NULL)
             this->cipherPass = jsonToStr(cipherPass);
+
+        if (ini != NULL)
+            *ini = iniMove(iniLocal, MEM_CONTEXT_OLD());
     }
-    MEM_CONTEXT_NEW_END();
+    MEM_CONTEXT_END();
 
     FUNCTION_LOG_RETURN(INFO, this);
+}
+
+/***********************************************************************************************************************************
+Save to file
+***********************************************************************************************************************************/
+void
+infoSave(
+    Info *this, Ini *ini, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO, this);
+        FUNCTION_LOG_PARAM(INI, ini);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(ini != NULL);
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Add common info values
+        iniSet(ini, INFO_SECTION_BACKREST_STR, INFO_KEY_VERSION_STR, jsonFromStr(STRDEF(PROJECT_VERSION)));
+        iniSet(ini, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR, jsonFromUInt(REPOSITORY_FORMAT));
+        iniSet(ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR, jsonFromStr(infoHash(ini)));
+
+        // Save info file
+        IoWrite *infoWrite = storageFileWriteIo(storageNewWriteNP(storage, fileName));
+
+        if (cipherType != cipherTypeNone)
+        {
+            ioWriteFilterGroupSet(
+                infoWrite,
+                ioFilterGroupAdd(
+                    ioFilterGroupNew(), cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass),
+                    NULL))));
+        }
+
+        iniSave(ini, infoWrite);
+
+        // Copy to .copy file
+        storageCopyNP(
+            storageNewReadNP(storage, fileName), storageNewWriteNP(storage, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -288,30 +360,6 @@ infoCipherPass(const Info *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->cipherPass);
-}
-
-Ini *
-infoIni(const Info *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->ini);
-}
-
-String *
-infoFileName(const Info *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->fileName);
 }
 
 /***********************************************************************************************************************************

@@ -1,6 +1,9 @@
 /***********************************************************************************************************************************
 Test Posix Storage Driver
 ***********************************************************************************************************************************/
+#include <unistd.h>
+#include <utime.h>
+
 #include "common/io/io.h"
 #include "common/time.h"
 #include "storage/fileRead.h"
@@ -34,6 +37,24 @@ Macro to create a path and file that cannot be accessed
             strPtr(strNewFmt("sudo mkdir -m 700 %s && sudo touch %s && sudo chmod 600 %s", strPtr(pathNoPerm), strPtr(fileNoPerm), \
             strPtr(fileNoPerm)))),                                                                                                 \
         0, "create no perm path/file");
+
+/***********************************************************************************************************************************
+Callback and data for storageInfoList() tests
+***********************************************************************************************************************************/
+unsigned int testStorageInfoListSize = 0;
+StorageInfo testStorageInfoList[256];
+
+void
+testStorageInfoListCallback(void *callbackData, const StorageInfo *info)
+{
+    MEM_CONTEXT_BEGIN((MemContext *)callbackData)
+    {
+        testStorageInfoList[testStorageInfoListSize] = *info;
+        testStorageInfoList[testStorageInfoListSize].name = strDup(info->name);
+        testStorageInfoListSize++;
+    }
+    MEM_CONTEXT_END();
+}
 
 /***********************************************************************************************************************************
 Test Run
@@ -196,21 +217,39 @@ testRun(void)
         TEST_RESULT_BOOL(info.exists, false, "    check not exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
+        THROW_ON_SYS_ERROR_FMT(utime(testPath(), &utimeTest) != 0, FileWriteError, "unable to set time for '%s'", testPath());
+
         TEST_ASSIGN(info, storageInfoNP(storageTest, strNew(testPath())), "get path info");
+        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypePath, "    check type");
         TEST_RESULT_INT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0770, "    check mode");
+        TEST_RESULT_UINT(info.timeModified, 1555160000, "    check mod time");
+        TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_STR(strPtr(info.user), getpwuid(getuid())->pw_name, "    check user");
+        TEST_RESULT_STR(strPtr(info.group), getgrgid(getgid())->gr_name, "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *buffer = BUFSTRDEF("TESTFILE");
         TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageTest, fileName), buffer), "put test file");
 
+        utimeTest.modtime = 1555155555;
+        THROW_ON_SYS_ERROR_FMT(utime(strPtr(fileName), &utimeTest) != 0, FileWriteError, "unable to set time for '%s'", testPath());
+
+        TEST_RESULT_INT(system(strPtr(strNewFmt("sudo chown 999999:999999 %s", strPtr(fileName)))), 0, "set invalid user/group");
+
         TEST_ASSIGN(info, storageInfoNP(storageTest, fileName), "get file info");
+        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
         TEST_RESULT_INT(info.size, 8, "    check size");
         TEST_RESULT_INT(info.mode, 0640, "    check mode");
+        TEST_RESULT_UINT(info.timeModified, 1555155555, "    check mod time");
+        TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_STR(strPtr(info.user), NULL, "    check user");
+        TEST_RESULT_STR(strPtr(info.group), NULL, "    check group");
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 
@@ -219,10 +258,14 @@ testRun(void)
         TEST_RESULT_INT(system(strPtr(strNewFmt("ln -s /tmp %s", strPtr(linkName)))), 0, "create link");
 
         TEST_ASSIGN(info, storageInfoNP(storageTest, linkName), "get link info");
+        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_INT(info.type, storageTypeLink, "    check type");
         TEST_RESULT_INT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0777, "    check mode");
+        TEST_RESULT_STR(strPtr(info.linkDestination), "/tmp", "    check link destination");
+        TEST_RESULT_STR(strPtr(info.user), getpwuid(getuid())->pw_name, "    check user");
+        TEST_RESULT_STR(strPtr(info.group), getgrgid(getgid())->gr_name, "    check group");
 
         storageRemoveP(storageTest, linkName, .errorOnMissing = true);
 
@@ -233,6 +276,46 @@ testRun(void)
         TEST_ERROR_FMT(storageInfoNP(storageTest, pipeName), FileInfoError, "invalid type for '%s'", strPtr(pipeName));
 
         storageRemoveP(storageTest, pipeName, .errorOnMissing = true);
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageInfoList()"))
+    {
+        TEST_CREATE_NOPERM();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ERROR_FMT(
+            storageInfoListP(storageTest, strNew(BOGUS_STR), (StorageInfoListCallback)1, NULL, .errorOnMissing = true),
+            PathOpenError, "unable to open path '%s/BOGUS' for read: [2] No such file or directory", testPath());
+
+        TEST_RESULT_BOOL(
+            storageInfoListNP(storageTest, strNew(BOGUS_STR), (StorageInfoListCallback)1, NULL), false, "ignore missing dir");
+
+        TEST_ERROR_FMT(
+            storageInfoListNP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
+            "unable to open path '%s' for read: [13] Permission denied", strPtr(pathNoPerm));
+
+        // Should still error even when ignore missing
+        TEST_ERROR_FMT(
+            storageInfoListNP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
+            "unable to open path '%s' for read: [13] Permission denied", strPtr(pathNoPerm));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        testStorageInfoListSize = 0;
+        TEST_RESULT_VOID(
+            storageDriverPosixInfoListEntry((StorageDriverPosix *)storageDriver(storageTest), strNew("pg"), strNew("missing"),
+                testStorageInfoListCallback, (void *)memContextCurrent()),
+            "missing file");
+        TEST_RESULT_UINT(testStorageInfoListSize, 0, "    no file found");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePathCreateP(storageTest, strNew("pg"), .mode = 0766);
+
+        TEST_RESULT_VOID(
+            storageInfoListNP(storageTest, strNew("pg"), testStorageInfoListCallback, (void *)memContextCurrent()),
+            "empty directory");
+        TEST_RESULT_UINT(testStorageInfoListSize, 1, "    only path returned");
+        TEST_RESULT_STR(strPtr(testStorageInfoList[0].name), ".", "    check name");
     }
 
     // *****************************************************************************************************************************

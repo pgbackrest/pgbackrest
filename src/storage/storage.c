@@ -247,10 +247,51 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
 
         // Call driver function
         result = this->interface.info(this->driver, file, param.ignoreMissing);
+
+        // Dup the strings into the calling context
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result.linkDestination = strDup(result.linkDestination);
+        result.user = strDup(result.user);
+        result.group = strDup(result.group);
+        memContextSwitch(MEM_CONTEXT_TEMP());
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
+}
+
+/***********************************************************************************************************************************
+Info for all files/paths in a path
+***********************************************************************************************************************************/
+bool
+storageInfoList(
+    const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, pathExp);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
+        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(callback != NULL);
+    ASSERT(this->interface.infoList != NULL);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Build the path
+        String *path = storagePathNP(this, pathExp);
+
+        // Call driver function
+        result = this->interface.infoList(this->driver, path, param.errorOnMissing, callback, callbackData);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************

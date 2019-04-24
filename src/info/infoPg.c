@@ -37,21 +37,17 @@ Object type
 struct InfoPg
 {
     MemContext *memContext;                                         // Mem context
+    Info *info;                                                     // Info contents
     List *history;                                                  // A list of InfoPgData
     unsigned int historyCurrent;                                    // Index of the current history item
-    Info *info;                                                     // Info contents
 };
 
 /***********************************************************************************************************************************
-Load an InfoPg object
-??? Need to consider adding the following parameters in order to throw errors
-        $bRequired,                                 # Is archive info required?  --- may not need this if ignoreMissing is enough
-        $bLoad,                                     # Should the file attempt to be loaded?
-        $strCipherPassSub,                          # Passphrase to encrypt the subsequent archive files if repo is encrypted
-??? Currently this assumes the file exists and loads data from it
+Create new object and load contents from a file
 ***********************************************************************************************************************************/
 InfoPg *
-infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass)
+infoPgNewLoad(
+    const Storage *storage, const String *fileName, InfoPgType type, CipherType cipherType, const String *cipherPass, Ini **ini)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -59,6 +55,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
         FUNCTION_LOG_PARAM(ENUM, type);
         FUNCTION_LOG_PARAM(ENUM, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM_P(INI, ini);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -72,18 +69,20 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
         // Create object
         this = memNew(sizeof(InfoPg));
         this->memContext = MEM_CONTEXT_NEW();
-        this->info = infoNew(storage, fileName, cipherType, cipherPass);
+
+        // Load info
+        Ini *iniLocal = NULL;
+        this->info = infoNewLoad(storage, fileName, cipherType, cipherPass, &iniLocal);
 
         // Get the pg history list
         this->history = lstNew(sizeof(InfoPgData));
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            const Ini *infoPgIni = infoIni(this->info);
-            const StringList *pgHistoryKey = iniSectionKeyList(infoPgIni, INFO_SECTION_DB_HISTORY_STR);
+            const StringList *pgHistoryKey = iniSectionKeyList(iniLocal, INFO_SECTION_DB_HISTORY_STR);
 
             // Get the current history id
-            unsigned int pgId = jsonToUInt(iniGet(infoPgIni, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR)));
+            unsigned int pgId = jsonToUInt(iniGet(iniLocal, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR)));
 
             // History must include at least one item or the file is corrupt
             ASSERT(strLstSize(pgHistoryKey) > 0);
@@ -95,7 +94,7 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
             {
                 // Load JSON data into a KeyValue
                 const KeyValue *pgDataKv = jsonToKv(
-                    iniGet(infoPgIni, INFO_SECTION_DB_HISTORY_STR, strLstGet(pgHistoryKey, pgHistoryIdx)));
+                    iniGet(iniLocal, INFO_SECTION_DB_HISTORY_STR, strLstGet(pgHistoryKey, pgHistoryIdx)));
 
                 // Get db values that are common to all info files
                 InfoPgData infoPgData =
@@ -128,6 +127,9 @@ infoPgNew(const Storage *storage, const String *fileName, InfoPgType type, Ciphe
             }
         }
         MEM_CONTEXT_TEMP_END();
+
+        if (ini != NULL)
+            *ini = iniMove(iniLocal, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_NEW_END();
 
@@ -149,6 +151,60 @@ infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
     ASSERT(infoPgData != NULL);
 
     lstInsert(this->history, 0, infoPgData);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Save to file
+***********************************************************************************************************************************/
+void
+infoPgSave(
+    InfoPg *this, Ini *ini, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_PG, this);
+        FUNCTION_LOG_PARAM(INI, ini);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(ini != NULL);
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Set the db section
+        InfoPgData pgData = infoPgDataCurrent(this);
+
+        iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR), jsonFromUInt(pgData.id));
+        iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CATALOG_VERSION_VAR), jsonFromUInt(pgData.catalogVersion));
+        iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CONTROL_VERSION_VAR), jsonFromUInt(pgData.controlVersion));
+        iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_SYSTEM_ID_VAR), jsonFromUInt64(pgData.systemId));
+        iniSet(ini, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_VERSION_VAR), jsonFromStr(pgVersionToStr(pgData.version)));
+
+        // Set the db history section
+        for (unsigned int pgDataIdx = 0; pgDataIdx < infoPgDataTotal(this); pgDataIdx++)
+        {
+            InfoPgData pgData = infoPgData(this, pgDataIdx);
+
+            KeyValue *pgDataKv = kvNew();
+            kvPut(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR, VARUINT(pgData.catalogVersion));
+            kvPut(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR, VARUINT(pgData.controlVersion));
+            kvPut(pgDataKv, INFO_KEY_DB_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
+            kvPut(pgDataKv, INFO_KEY_DB_VERSION_VAR, VARSTR(pgVersionToStr(pgData.version)));
+
+            iniSet(ini, INFO_SECTION_DB_HISTORY_STR, varStrForce(VARUINT(pgData.id)), jsonFromKv(pgDataKv, 0));
+        }
+
+        infoSave(infoPgInfo(this), ini, storage, fileName, cipherType, cipherPass);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -233,6 +289,21 @@ infoPgDataCurrentId(const InfoPg *this)
 }
 
 /***********************************************************************************************************************************
+Get base info
+***********************************************************************************************************************************/
+Info *
+infoPgInfo(const InfoPg *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_PG, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->info);
+}
+
+/***********************************************************************************************************************************
 Return total Postgres data in the history
 ***********************************************************************************************************************************/
 unsigned int
@@ -245,21 +316,6 @@ infoPgDataTotal(const InfoPg *this)
     ASSERT(this != NULL);
 
     FUNCTION_LOG_RETURN(UINT, lstSize(this->history));
-}
-
-/***********************************************************************************************************************************
-Return the ini object
-***********************************************************************************************************************************/
-Ini *
-infoPgIni(const InfoPg *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INFO_PG, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_LOG_RETURN(INI, infoIni(this->info));
 }
 
 /***********************************************************************************************************************************
