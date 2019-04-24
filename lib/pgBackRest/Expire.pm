@@ -359,9 +359,10 @@ sub process
                         # cannot be played any further forward with PITR.
                         my $strArchiveExpireMax;
                         my @oyArchiveRange;
-                        my @stryBackupList = $oBackupInfo->list();
+                        my @stryBackupList = $oBackupInfo->list(); # CSHANG oldest to newest
 
                         # With the full list of backups, loop through only those associated with this archiveId
+        # CSHANG this loop is also oldest to newest
                         foreach my $strBackup (
                             $oBackupInfo->listByArchiveId(
                                 $strArchiveId, $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), \@stryBackupList))

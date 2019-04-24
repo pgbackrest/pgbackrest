@@ -86,6 +86,12 @@ sortArchiveId(StringList *this, SortOrder sortOrder)
     FUNCTION_TEST_RETURN(this);
 }
 
+typedef struct ArchiveRange
+{
+    const String *start;
+    const String *stop;
+} ArchiveRange;
+
 /***********************************************************************************************************************************
 Expire backups and archives
 ***********************************************************************************************************************************/
@@ -162,7 +168,6 @@ cmdExpire(void)
                         "expire full backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
                 }
             }
-
         }
 
         // Find all the expired differential backups
@@ -283,9 +288,10 @@ cmdExpire(void)
             {
                 // Attempt to load the archive info file
                 InfoArchive *infoArchive = infoArchiveNew(
-                    storageRepo(),
-                    STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
-                InfoPg *infoArchivePg = infoArchivePg(infoArchive);
+                    storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/" INFO_ARCHIVE_FILE), false,
+                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
+
+                InfoPg *infoArchivePgData = infoArchivePg(infoArchive);
 
                 // Get a list of archive directories (e.g. 9.4-1, 10-2, etc) sorted by the db-id (number after the dash).
                 StringList *listArchiveDisk = sortArchiveId(
@@ -293,7 +299,6 @@ cmdExpire(void)
                         storageRepo(),
                         STRDEF(STORAGE_REPO_ARCHIVE), .errorOnMissing = false, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
                     sortOrderAsc);
-
 
                 StringList *globalBackupArchiveRetentionList = strLstNew();
 
@@ -304,9 +309,9 @@ cmdExpire(void)
 
                 // Loop through the archive.info history from oldest to newest and if there is a corresponding directory on disk
                 // then remove WAL that are not part of retention
-                for (unsigned int pgIdx = infoPgDataTotal(infoArchivePg) - 1; (int)pgIdx >= 0; pgIdx--))
+                for (unsigned int pgIdx = infoPgDataTotal(infoArchivePgData) - 1; (int)pgIdx >= 0; pgIdx--)
                 {
-                    String *archiveId = infoPgArchiveId(infoArchivePg, pgIdx);
+                    String *archiveId = infoPgArchiveId(infoArchivePgData, pgIdx);
                     StringList *localBackupRetentionList = strLstNew();
 
                     for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(listArchiveDisk); archiveIdx++)
@@ -327,7 +332,7 @@ cmdExpire(void)
                             {
                                 InfoBackupData backupData = infoBackupData(infoBackup, backupIdx);
                                 if ((strCmp(backupData.backupLabel, strLstGet(globalBackupRetentionList, retentionIdx)) == 0) &&
-                                    (backupData.backupPgId == archivePgId)
+                                    (backupData.backupPgId == archivePgId))
                                 {
                                     strLstAdd(localBackupRetentionList, backupData.backupLabel);
                                 }
@@ -339,10 +344,11 @@ cmdExpire(void)
                         {
                             // If this is not the current database, then delete the archive directory else do nothing since the
                             // current DB archive directory must not be deleted
-                            InfoPgData currentPg = infoPgDataCurrent(infoArchivePg);
+                            InfoPgData currentPg = infoPgDataCurrent(infoArchivePgData);
                             if (currentPg.id != archivePgId)
                             {
-                                String *fullPath = storagePath(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId));
+                                String *fullPath = storagePath(
+                                    storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)));
                                 storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
                                 LOG_INFO("remove archive path: %s", strPtr(fullPath));
                             }
@@ -350,8 +356,114 @@ cmdExpire(void)
                             // Continue to next directory
                             break;
                         }
+
+                        // If get here, then a local backup was found for retention
+                        StringList *localBackupArchiveRententionList = strLstNew();
+
+                        // If the archive retention is less than or equal to the number of all backups, then perform selective
+                        // expiration
+                        if ((strLstSize(globalBackupArchiveRetentionList) > 0) &&
+                            (archiveRetention <= strLstSize(globalBackupRetentionList)))
+                        {
+                            // From the full list of backups in archive retention, find the intersection of local backups to retain
+                            // from oldest to newest
+                            for (unsigned int globalIdx = strLstSize(globalBackupArchiveRetentionList) - 1;
+                                (int)globalIdx >= 0; globalIdx--)
+                            {
+                                for (unsigned int localIdx = 0; localIdx < strLstSize(localBackupRetentionList); localIdx++)
+                                {
+                                    if (strCmp(strLstGet(globalBackupArchiveRetentionList, globalIdx),
+                                        strLstGet(localBackupRetentionList, localIdx)) == 0)
+                                    {
+                                        strLstAdd(localBackupArchiveRententionList, strLstGet(localBackupRetentionList, localIdx));
+                                    }
+                                }
+                            }
+                        }
+                        // Else if there are not enough backups yet globally to start archive expiration then set the archive
+                        // retention to the oldest backup so anything prior to that will be removed as it is not needed but
+                        // everything else is. This is incase there are old archives left around so that they don't stay around
+                        // forever.
+                        else
+                        {
+                            if ((strCmp(archiveRetentionType, STRDEF("full")) == 0) &&
+                                (strLstSize(localBackupRetentionList) > 0))
+                            {
+                                LOG_INFO(
+                                    "full backup total < %u - using oldest full backup for %s archive retention",
+                                    archiveRetention, strPtr(archiveId));
+                                strLstAdd(localBackupArchiveRententionList, strLstGet(localBackupRetentionList, 0));
+                            }
+                        }
+
+                        // If no local backups were found as part of retention then set the backup archive retention to the newest backup
+                        // so that the database is fully recoverable (can be recovered from the last backup through pitr)
+                        if (strLstSize(localBackupArchiveRententionList) == 0)
+                        {
+                            strLstAdd(
+                                localBackupArchiveRententionList,
+                                strLstGet(localBackupRetentionList, strLstSize(localBackupRetentionList) - 1));
+                        }
+
+                        // Get the data for the backup selected for retention and all backups associated with this archive id
+                        List *archiveIdBackupList = NULL;
+                        InfoBackupData archiveRetentionBackup = {0};
+                        for (unsigned int infoBackupIdx = 0; infoBackupIdx < infoBackupDataTotal(infoBackup); infoBackupIdx++)
+                        {
+                            InfoBackupData archiveIdBackup = infoBackupData(infoBackup, infoBackupIdx);
+
+                            if (strCmp(archiveIdBackup.backupLabel, strLstGet(localBackupArchiveRententionList, 0)) == 0)
+                                archiveRetentionBackup = infoBackupData(infoBackup, infoBackupIdx);
+
+                            if (archiveIdBackup.backupPgId == archivePgId)
+                                lstAdd(archiveIdBackupList, &archiveIdBackup);
+                        }
+
+                        bool removeArchive = false;
+                        // Only expire if the selected backup has archive info - backups performed with --no-online will
+                        // not have archive info and cannot be used for expiration.
+                        if (archiveRetentionBackup.backupArchiveStart != NULL)
+                        {
+                            // Get archive ranges to preserve.  Because archive retention can be less than total retention it is
+                            // important to preserve archive that is required to make the older backups consistent even though they
+                            // cannot be played any further forward with PITR.
+                            String *archiveExpireMax = NULL;
+                            List *archiveRangeList = NULL;
+
+                            // From the full list of backups, loop through those associated with this archiveId
+                            for (unsigned int backupListIdx = 0; backupListIdx < lstSize(archiveIdBackupList); backupListIdx++)
+                            {
+                                InfoBackupData *backupData = lstGet(archiveIdBackupList, backupListIdx);
+
+                                // If the backup is earlier than or the same as the retention backup and the backup has an
+                                // archive start
+                                if ((strCmp(backupData->backupLabel, archiveRetentionBackup.backupLabel) <= 0) &&
+                                    (backupData->backupArchiveStart != NULL))
+                                {
+                                    ArchiveRange archiveRange =
+                                    {
+                                        .start = strDup(backupData->backupArchiveStart),
+                                        .stop = NULL,
+                                    };
+
+                                    if (strCmp(backupData->backupLabel, archiveRetentionBackup.backupLabel) != 0)
+                                        archiveRange.stop = strDup(backupData->backupArchiveStop);
+                                    else
+                                        archiveExpireMax = strDup(archiveRange.start);
+
+                                    LOG_DEBUG("archive retention on backup %s, archiveId = %s, start = %s",
+                                        strPtr(backupData->backupLabel),  strPtr(archiveId), strPtr(archiveRange.start),
+                                        (archiveRange.stop != NULL ?
+                                            strPtr(strNewFmt(", stop = %s", strPtr(archiveRange.stop))) : ""));
+
+                                    // Add the archive range to the list
+                                    lstAdd(archiveRangeList, &archiveRange);
+                                }
+                            }
+                            // CSHANG STOPPED HERE
+                            // Get all major archive paths (timeline and first 32 bits of LSN)
+                        }
                     }
-                // CSHANG Stooped here. Next: my @stryLocalBackupArchiveRentention;
                 }
             }
         }
