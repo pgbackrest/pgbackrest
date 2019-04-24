@@ -86,16 +86,7 @@ testRun(void)
         #ifndef WITHOUT_LZ4
 
         TEST_RESULT_UINT(lz4Error(0), 0, "check success");
-        // TEST_RESULT_INT(gzipError(Z_OK), Z_OK, "check ok");
-        // TEST_RESULT_INT(gzipError(Z_STREAM_END), Z_STREAM_END, "check stream end");
-        // TEST_ERROR(gzipError(Z_NEED_DICT), AssertError, "zlib threw error: [2] need dictionary");
-        // TEST_ERROR(gzipError(Z_ERRNO), AssertError, "zlib threw error: [-1] file error");
-        // TEST_ERROR(gzipError(Z_STREAM_ERROR), FormatError, "zlib threw error: [-2] stream error");
-        // TEST_ERROR(gzipError(Z_DATA_ERROR), FormatError, "zlib threw error: [-3] data error");
-        // TEST_ERROR(gzipError(Z_MEM_ERROR), MemoryError, "zlib threw error: [-4] insufficient memory");
-        // TEST_ERROR(gzipError(Z_BUF_ERROR), AssertError, "zlib threw error: [-5] no space in buffer");
-        // TEST_ERROR(gzipError(Z_VERSION_ERROR), FormatError, "zlib threw error: [-6] incompatible version");
-        // TEST_ERROR(gzipError(999), AssertError, "zlib threw error: [999] unknown error");
+        TEST_ERROR(lz4Error((size_t)-2), FormatError, "lz4 error: [18446744073709551614] ERROR_maxBlockSize_invalid");
 
         #endif // WITHOUT_LZ4
     }
