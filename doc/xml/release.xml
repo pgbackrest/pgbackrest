@@ -90,6 +90,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <id>build-max</id> option to set max build processes.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Reduce <proper>ScalityS3</proper> processes since only two are needed.</p>
                     </release-item>
                 </release-development-list>

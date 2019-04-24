@@ -75,6 +75,7 @@ sub new
         $self->{bProfile},
         $self->{bDebug},
         $self->{bDebugTestTrace},
+        $self->{iBuildMax},
     ) =
         logDebugParam
         (
@@ -103,6 +104,7 @@ sub new
             {name => 'bProfile'},
             {name => 'bDebug'},
             {name => 'bDebugTestTrace'},
+            {name => 'iBuildMax'},
         );
 
     # Set try to 0
@@ -246,7 +248,7 @@ sub run
             $strCommand =
                 'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
                 "cd $self->{strGCovPath} && " .
-                "make -s 2>&1 &&" .
+                "make -j $self->{iBuildMax} -s 2>&1 &&" .
                 ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{bValgrindUnit}?
                     " valgrind -q --gen-suppressions=all --suppressions=$self->{strGCovPath}/test/valgrind.suppress" .
                     " --leak-check=full --leak-resolution=high --error-exitcode=25" : '') .

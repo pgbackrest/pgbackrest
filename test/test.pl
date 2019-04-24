@@ -79,6 +79,7 @@ test.pl [options]
    --log-force          force overwrite of current test log files
    --no-lint            disable static source code analysis
    --build-only         compile the test library / packages and run tests only
+   --build-max          max processes to use for builds (default 4)
    --coverage-only      only run coverage tests (as a subset of selected tests)
    --c-only             only run C tests
    --gen-only           only run auto-generation
@@ -143,6 +144,7 @@ my $bVmBuild = false;
 my $bVmForce = false;
 my $bNoLint = false;
 my $bBuildOnly = false;
+my $iBuildMax = 4;
 my $bCoverageOnly = false;
 my $bNoCoverage = false;
 my $bCOnly = false;
@@ -186,6 +188,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'log-force' => \$bLogForce,
             'no-lint' => \$bNoLint,
             'build-only' => \$bBuildOnly,
+            'build-max=s' => \$iBuildMax,
             'no-package' => \$bNoPackage,
             'no-ci-config' => \$bNoCiConfig,
             'coverage-only' => \$bCoverageOnly,
@@ -821,8 +824,8 @@ eval
                         executeTest(
                             'docker exec -i test-build' .
                             (vmLintC($strVm) && !$bNoLint ? ' scan-build-6.0' : '') .
-                            " make --silent --directory ${strBuildPath} CEXTRA='${strCExtra}' LDEXTRA='${strLdExtra}'" .
-                                " CDEBUG='${strCDebug}'",
+                            " make -j ${iBuildMax} --silent --directory ${strBuildPath} CEXTRA='${strCExtra}'" .
+                                " LDEXTRA='${strLdExtra}' CDEBUG='${strCDebug}'",
                             {bShowOutputAsync => $bLogDetail});
 
                         executeTest("docker rm -f test-build");
@@ -924,7 +927,7 @@ eval
 
                         executeTest(
                             ($bContainerExists ? 'docker exec -i test-build ' : '') .
-                                "make --silent --directory ${strBuildPath}",
+                                "make -j ${iBuildMax} --silent --directory ${strBuildPath}",
                             {bShowOutputAsync => $bLogDetail});
 
                         if ($bContainerExists)
@@ -1230,8 +1233,9 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut,
-                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry,
-                        !$bNoValgrind, !$bNoCoverage, !$bNoOptimize, $bBackTrace, $bProfile, !$bNoDebug, $bDebugTestTrace);
+                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $bLogForce, $bShowOutputAsync,
+                        $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, !$bNoOptimize, $bBackTrace, $bProfile, !$bNoDebug,
+                        $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                     $iTestIdx++;
 
                     if ($oJob->run())
