@@ -83,6 +83,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lz4Error"))
     {
+        #ifndef WITHOUT_LZ4
+
         // TEST_RESULT_INT(gzipError(Z_OK), Z_OK, "check ok");
         // TEST_RESULT_INT(gzipError(Z_STREAM_END), Z_STREAM_END, "check stream end");
         // TEST_ERROR(gzipError(Z_NEED_DICT), AssertError, "zlib threw error: [2] need dictionary");
@@ -93,11 +95,15 @@ testRun(void)
         // TEST_ERROR(gzipError(Z_BUF_ERROR), AssertError, "zlib threw error: [-5] no space in buffer");
         // TEST_ERROR(gzipError(Z_VERSION_ERROR), FormatError, "zlib threw error: [-6] incompatible version");
         // TEST_ERROR(gzipError(999), AssertError, "zlib threw error: [999] unknown error");
+
+        #endif // WITH_LZ4
     }
 
     // *****************************************************************************************************************************
     if (testBegin("Lz4Compress and Lz4Decompress"))
     {
+        #ifndef WITHOUT_LZ4
+
         // const char *simpleData = "A simple string";
         // Buffer *compressed = NULL;
         // Buffer *decompressed = bufNewC(strlen(simpleData), simpleData);
@@ -151,11 +157,15 @@ testRun(void)
         // // -------------------------------------------------------------------------------------------------------------------------
         // TEST_RESULT_VOID(gzipCompressFree(NULL), "free null decompress object");
         // TEST_RESULT_VOID(gzipDecompressFree(NULL), "free null decompress object");
+
+        #endif // WITH_LZ4
     }
 
     // *****************************************************************************************************************************
     if (testBegin("lz4DecompressToLog() and lz4CompressToLog()"))
     {
+        #ifndef WITHOUT_LZ4
+
         // GzipDecompress *decompress = gzipDecompressNew(false);
         //
         // TEST_RESULT_STR(strPtr(gzipDecompressToLog(decompress)), "{inputSame: false, done: false, availIn: 0}", "format object");
@@ -163,6 +173,8 @@ testRun(void)
         // decompress->inputSame = true;
         // decompress->done = true;
         // TEST_RESULT_STR(strPtr(gzipDecompressToLog(decompress)), "{inputSame: true, done: true, availIn: 0}", "format object");
+
+        #endif // WITH_LZ4
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

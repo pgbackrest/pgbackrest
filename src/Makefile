@@ -46,8 +46,11 @@ LDPERL = `perl -MExtUtils::Embed -e ldopts`
 # Extra linker options to be set by caller
 LDEXTRA =
 
+# Linker options for LZ4
+LDLZ4 = -llz4
+
 # Concatenate options for easy usage
-LDFLAGS = -lcrypto -lssl -lxml2 -lz -llz4 $(LDPERL) $(LDEXTRA)
+LDFLAGS = -lcrypto -lssl -lxml2 -lz $(LDLZ4) $(LDPERL) $(LDEXTRA)
 
 ####################################################################################################################################
 # Install options
@@ -76,6 +79,8 @@ SRCS = \
 	common/compress/gzip/compress.c \
 	common/compress/gzip/decompress.c \
 	common/compress/lz4/common.c \
+	common/compress/lz4/compress.c \
+	common/compress/lz4/decompress.c \
 	common/crypto/cipherBlock.c \
 	common/crypto/common.c \
 	common/crypto/hash.c \

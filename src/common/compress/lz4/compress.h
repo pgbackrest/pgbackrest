@@ -3,6 +3,8 @@ LZ4 Compress
 
 Compress IO using the lz4 format.
 ***********************************************************************************************************************************/
+#ifndef WITHOUT_LZ4
+
 #ifndef COMMON_COMPRESS_LZ4_COMPRESS_H
 #define COMMON_COMPRESS_LZ4_COMPRESS_H
 
@@ -47,3 +49,5 @@ String *lz4CompressToLog(const Lz4Compress *this);
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, lz4CompressToLog, buffer, bufferSize)
 
 #endif
+
+#endif // WITH_LZ4

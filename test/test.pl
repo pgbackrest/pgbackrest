@@ -816,7 +816,8 @@ eval
 
                         my $strCExtra =
                             "-g -fPIC -D_FILE_OFFSET_BITS=64" .
-                            (vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace ? ' -DWITH_BACKTRACE' : '');
+                            (vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace ? ' -DWITH_BACKTRACE' : '') .
+                            (!vmWithLz4($strBuildVM) ? ' -DWITHOUT_LZ4' : '');
                         my $strLdExtra = vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace  ? '-lbacktrace' : '';
                         my $strCDebug =
                             (vmDebugIntegration($strBuildVM) ? '' : '-DNDEBUG') . ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
@@ -825,7 +826,8 @@ eval
                             'docker exec -i test-build' .
                             (vmLintC($strVm) && !$bNoLint ? ' scan-build-6.0' : '') .
                             " make -j ${iBuildMax} --silent --directory ${strBuildPath} CEXTRA='${strCExtra}'" .
-                                " LDEXTRA='${strLdExtra}' CDEBUG='${strCDebug}'",
+                                " LDEXTRA='${strLdExtra}' CDEBUG='${strCDebug}'" .
+                                (vmWithLz4($strBuildVM) ? '' : ' LDLZ4='),
                             {bShowOutputAsync => $bLogDetail});
 
                         executeTest("docker rm -f test-build");

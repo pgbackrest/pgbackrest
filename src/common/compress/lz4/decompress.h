@@ -3,6 +3,8 @@ LZ4 Decompress
 
 Decompress IO from the lz4 format.
 ***********************************************************************************************************************************/
+#ifndef WITHOUT_LZ4
+
 #ifndef COMMON_COMPRESS_LZ4_DECOMPRESS_H
 #define COMMON_COMPRESS_LZ4_DECOMPRESS_H
 
@@ -47,3 +49,5 @@ String *lz4DecompressToLog(const Lz4Decompress *this);
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, lz4DecompressToLog, buffer, bufferSize)
 
 #endif
+
+#endif // WITH_LZ4

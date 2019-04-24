@@ -412,13 +412,20 @@
             <title>Install required Perl packages</title>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>apt-get install libdbd-pg-perl</exe-cmd>
+                <exe-cmd>apt-get install libdbd-pg-perl liblz4-1</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <execute if="{[os-type-is-centos6]}" user="root" pre="y">
+                <exe-cmd>
+                    yum install epel-release
+                </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-centos6]}" user="root" pre="y">
                 <exe-cmd>yum install perl perl-Time-HiRes perl-parent perl-JSON
-                    perl-Digest-SHA perl-DBD-Pg</exe-cmd>
+                    perl-Digest-SHA perl-DBD-Pg lz4</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
@@ -660,14 +667,24 @@
             </execute>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>apt-get install build-essential libssl-dev libxml2-dev libperl-dev zlib1g-dev</exe-cmd>
+                <exe-cmd>
+                    apt-get install build-essential libssl-dev libxml2-dev libperl-dev zlib1g-dev
+                    liblz4-dev
+                </exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <execute if="{[os-type-is-centos6]}" user="root" pre="y">
+                <exe-cmd>
+                    yum install epel-release
+                </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-centos6]}" user="root" pre="y">
                 <exe-cmd>
                     yum install build-essential gcc openssl-devel libxml2-devel
-                        perl-ExtUtils-Embed
+                        perl-ExtUtils-Embed lz4-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -675,7 +692,7 @@
             <execute if="{[os-type-is-centos7]}" user="root" pre="y">
                 <exe-cmd>
                     yum install build-essential gcc make openssl-devel libxml2-devel
-                        perl-ExtUtils-Embed
+                        perl-ExtUtils-Embed lz4-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>

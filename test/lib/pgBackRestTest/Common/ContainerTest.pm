@@ -436,7 +436,7 @@ sub containerBuild
                 "    yum -y install openssh-server openssh-clients wget sudo python-pip build-essential valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL perl-YAML-LibYAML \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
-                "        zlib-devel libxml2-devel";
+                "        zlib-devel libxml2-devel lz4-devel";
 
             if ($strOS eq VM_CO6)
             {
@@ -463,11 +463,15 @@ sub containerBuild
                 "    apt-get -y install openssh-server wget sudo python-pip build-essential valgrind git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libio-socket-ssl-perl libxml-libxml-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
-                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev liblz4-dev";
+                "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev";
 
             if ($strOS eq VM_U12)
             {
                 $strScript .= ' libperl5.14';
+            }
+            else
+            {
+                $strScript .= ' liblz4-dev';
             }
 
             if (vmLintC($strOS))
@@ -535,26 +539,20 @@ sub containerBuild
                 if ($strOS eq VM_CO6)
                 {
                     $strScript .=
+                        "    rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG-10 && \\\n" .
                         "    rpm -ivh \\\n" .
                         "        http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm \\\n" .
                         "        http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-6.noarch.rpm \\\n" .
                         "        http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-8.noarch.rpm \\\n" .
-                        "        http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-3.noarch.rpm \\\n" .
-                        "        http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-3.noarch.rpm \\\n" .
-                        "        http://yum.postgresql.org/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-3.noarch.rpm \\\n" .
-                        "        http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm \\\n" .
-                        "        http://yum.postgresql.org/10/redhat/rhel-6-x86_64/pgdg-centos10-10-2.noarch.rpm";
+                        "        https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-6-x86_64/pgdg-redhat-repo-latest.noarch.rpm";
                 }
                 elsif ($strOS eq VM_CO7)
                 {
                     $strScript .=
+                        "    rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG-10 && \\\n" .
                         "    rpm -ivh \\\n" .
                         "        http://yum.postgresql.org/9.2/redhat/rhel-7-x86_64/pgdg-centos92-9.2-3.noarch.rpm \\\n" .
-                        "        http://yum.postgresql.org/9.3/redhat/rhel-7-x86_64/pgdg-centos93-9.3-3.noarch.rpm \\\n" .
-                        "        http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-3.noarch.rpm \\\n" .
-                        "        http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-3.noarch.rpm \\\n" .
-                        "        http://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm \\\n" .
-                        "        http://yum.postgresql.org/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm";
+                        "        https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm";
                 }
             }
             else

@@ -51,6 +51,8 @@ use constant VMDEF_PERL_ARCH_PATH                                   => 'perl-arc
     push @EXPORT, qw(VMDEF_PERL_ARCH_PATH);
 use constant VMDEF_WITH_BACKTRACE                                   => 'with-backtrace';
     push @EXPORT, qw(VMDEF_WITH_BACKTRACE);
+use constant VMDEF_WITH_LZ4                                         => 'with-lz4';
+    push @EXPORT, qw(VMDEF_WITH_LZ4);
 
 ####################################################################################################################################
 # Valid OS base List
@@ -134,13 +136,13 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
+        # &VMDEF_WITH_LZ4 => false,
 
         &VM_DB =>
         [
             PG_VERSION_90,
             PG_VERSION_91,
             PG_VERSION_92,
-            PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
@@ -165,13 +167,13 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
+        # &VMDEF_WITH_LZ4 => false,
 
         &VMDEF_DEBUG_INTEGRATION => false,
 
         &VM_DB =>
         [
             PG_VERSION_92,
-            PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
@@ -253,6 +255,7 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_I386,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.14.2',
+        &VMDEF_WITH_LZ4 => false,
 
         &VM_DB =>
         [
@@ -262,9 +265,6 @@ my $oyVm =
             PG_VERSION_91,
             PG_VERSION_92,
             PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
         ],
 
         &VM_DB_TEST =>
@@ -519,6 +519,18 @@ sub vmWithBackTrace
 }
 
 push @EXPORT, qw(vmWithBackTrace);
+
+####################################################################################################################################
+# Does the VM support liblz4?
+####################################################################################################################################
+sub vmWithLz4
+{
+    my $strVm = shift;
+
+    return (defined($oyVm->{$strVm}{&VMDEF_WITH_LZ4}) ? $oyVm->{$strVm}{&VMDEF_WITH_LZ4} : true);
+}
+
+push @EXPORT, qw(vmWithLz4);
 
 ####################################################################################################################################
 # Will integration tests be run in debug mode?
