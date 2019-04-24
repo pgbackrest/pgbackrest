@@ -18,4 +18,4 @@ size_t lz4Error(size_t error);
 
 #endif
 
-#endif // WITH_LZ4
+#endif // WITHOUT_LZ4

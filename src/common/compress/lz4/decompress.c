@@ -183,4 +183,4 @@ lz4DecompressFree(Lz4Decompress *this)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-#endif // WITH_LZ4
+#endif // WITHOUT_LZ4

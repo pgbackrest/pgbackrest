@@ -21,4 +21,4 @@ lz4Error(LZ4F_errorCode_t error)
     FUNCTION_TEST_RETURN(error);
 }
 
-#endif // WITH_LZ4
+#endif // WITHOUT_LZ4

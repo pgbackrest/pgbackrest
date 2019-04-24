@@ -85,6 +85,7 @@ testRun(void)
     {
         #ifndef WITHOUT_LZ4
 
+        TEST_RESULT_UINT(lz4Error(0), 0, "check success");
         // TEST_RESULT_INT(gzipError(Z_OK), Z_OK, "check ok");
         // TEST_RESULT_INT(gzipError(Z_STREAM_END), Z_STREAM_END, "check stream end");
         // TEST_ERROR(gzipError(Z_NEED_DICT), AssertError, "zlib threw error: [2] need dictionary");
@@ -96,7 +97,7 @@ testRun(void)
         // TEST_ERROR(gzipError(Z_VERSION_ERROR), FormatError, "zlib threw error: [-6] incompatible version");
         // TEST_ERROR(gzipError(999), AssertError, "zlib threw error: [999] unknown error");
 
-        #endif // WITH_LZ4
+        #endif // WITHOUT_LZ4
     }
 
     // *****************************************************************************************************************************
@@ -158,7 +159,7 @@ testRun(void)
         // TEST_RESULT_VOID(gzipCompressFree(NULL), "free null decompress object");
         // TEST_RESULT_VOID(gzipDecompressFree(NULL), "free null decompress object");
 
-        #endif // WITH_LZ4
+        #endif // WITHOUT_LZ4
     }
 
     // *****************************************************************************************************************************
@@ -174,7 +175,7 @@ testRun(void)
         // decompress->done = true;
         // TEST_RESULT_STR(strPtr(gzipDecompressToLog(decompress)), "{inputSame: true, done: true, availIn: 0}", "format object");
 
-        #endif // WITH_LZ4
+        #endif // WITHOUT_LZ4
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

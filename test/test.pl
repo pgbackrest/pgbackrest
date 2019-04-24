@@ -1031,6 +1031,17 @@ eval
                             $oStorageBackRest->put("${strBuildPath}/debian/rules", $strRules);
                         }
 
+                        # If lz4 is not present update rules to exclude it from the build
+                        if (!vmWithLz4($strBuildVM))
+                        {
+                            my $strRules = ${$oStorageBackRest->get("${strBuildPath}/debian/rules")};
+
+                            $strRules =~ s/CEXTRA\=\"\$\(CFLAGS\)\"/CEXTRA="\$(CFLAGS) -DWITHOUT_LZ4"/g;
+                            $strRules =~ s/LDEXTRA\=/LDLZ4= LDEXTRA=/g;
+
+                            $oStorageBackRest->put("${strBuildPath}/debian/rules", $strRules);
+                        }
+
                         # Remove patches that should be applied to core code
                         $oStorageBackRest->remove("${strBuildPath}/debian/patches", {bRecurse => true, bIgnoreExists => true});
 

@@ -50,4 +50,4 @@ String *lz4CompressToLog(const Lz4Compress *this);
 
 #endif
 
-#endif // WITH_LZ4
+#endif // WITHOUT_LZ4
