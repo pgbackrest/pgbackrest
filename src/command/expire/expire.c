@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Expire Command
 ***********************************************************************************************************************************/
+#include "command/archive/common.h"
 #include "command/backup/common.h"
 #include "common/debug.h"
 #include "common/regExp.h"
@@ -199,7 +200,7 @@ cmdExpire(void)
                     {
                         const String *removeBackupLabel = strLstGet(removeList, rmvIdx);
 
-                        LOG_DEBUG("checking %s for differential expiration",  strPtr(removeBackupLabel));
+                        LOG_DEBUG("Expire process, checking %s for differential expiration",  strPtr(removeBackupLabel));
 
                         // Remove all differential and incremental backups before the oldest valid differential
                         // (removeBackupLabel < oldest valid differential)
@@ -297,7 +298,7 @@ cmdExpire(void)
                 StringList *listArchiveDisk = sortArchiveId(
                     storageListP(
                         storageRepo(),
-                        STRDEF(STORAGE_REPO_ARCHIVE), .errorOnMissing = false, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
+                        STRDEF(STORAGE_REPO_ARCHIVE), .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
                     sortOrderAsc);
 
                 StringList *globalBackupArchiveRetentionList = strLstNew();
@@ -446,6 +447,8 @@ cmdExpire(void)
                                         .stop = NULL,
                                     };
 
+                                    // If this is not the retention backup, then set the stop, otherwise set the expire max to
+                                    // the archive start of the archive to retain
                                     if (strCmp(backupData->backupLabel, archiveRetentionBackup.backupLabel) != 0)
                                         archiveRange.stop = strDup(backupData->backupArchiveStop);
                                     else
@@ -460,8 +463,96 @@ cmdExpire(void)
                                     lstAdd(archiveRangeList, &archiveRange);
                                 }
                             }
-                            // CSHANG STOPPED HERE
+
                             // Get all major archive paths (timeline and first 32 bits of LSN)
+// CSHANG Wait, what is being returned here - the fully qualified path or just the subdir
+                            StringList *walPathList =
+                                storageListP(
+                                    storageRepo(),
+                                    strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)), .errorOnMissing = true,
+                                    .expression = STRDEF(WAL_SEGMENT_DIR_REGEXP));
+
+                            for (unsigned int walIdx = 0; walIdx < strLstSize(walPathList); walIdx++)
+                            {
+                                String *walPath = strLstGet(walPathList, walIdx);
+                                removeArchive = true;
+
+                                LOG_DEBUG("Expire process, found major WAL path: %s", strPtr(walPath));
+
+                                // Keep the path if it falls in the range of any backup in retention
+                                for (unsigned int rangeIdx = 0; rangeIdx < lstSize(archiveRangeList); rangeIdx++)
+                                {
+                                    ArchiveRange *archiveRange = lstGet(archiveRangeList, rangeIdx);
+
+                                    if ((strCmp(walPath, strSubN(archiveRange->start, 0, 16)) >= 0) &&
+                                        (archiveRange->stop != NULL || strCmp(walPath, strSubN(archiveRange->stop, 0, 16)) <= 0))
+                                    {
+                                        removeArchive = false;
+                                        break;
+                                    }
+                                }
+
+                                // Remove the entire directory if all archive is expired
+                                if (removeArchive)
+                                {
+                                    String *fullPath = strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath));
+                                    storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
+                                    LOG_DEBUG("Expire process, remove major WAL path: %s", strPtr(fullPath));
+// CSHANG Must figure out how to deal with the logging self->logExpire($strArchiveId, $strPath);
+                                }
+                                // Else delete individual files instead if the major path is less than or equal to the most recent
+                                // retention backup.  This optimization prevents scanning though major paths that could not possibly
+                                // have anything to expire.
+                                else if (strCmp(walPath, strSubN(archiveExpireMax, 0, 16)) <= 0)
+                                {
+                                    // Look for files in the archive directory
+// CSHANG What does this really return? Should be like 000000010000000000000002-224520cda22b2788ca91630706080cca2634f813.gz
+                                    StringList *walSubPathList =
+                                        storageListP(
+                                            storageRepo(),
+                                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath)),
+                                            .errorOnMissing = true, .expression = STRDEF("^[0-F]{24}.*$"));
+
+                                    for (unsigned int subIdx = 0; subIdx < strLstSize(walSubPathList); subIdx++)
+                                    {
+                                        removeArchive = true;
+                                        String *walSubPath = strLstGet(walSubPathList, subIdx);
+
+                                        // Determine if the individual archive log is used in a backup
+                                        for (unsigned int rangeIdx = 0; rangeIdx < lstSize(archiveRangeList); rangeIdx++)
+                                        {
+                                            ArchiveRange *archiveRange = lstGet(archiveRangeList, rangeIdx);
+
+                                            if ((strCmp(strSubN(walSubPath, 0, 24), archiveRange->start) >= 0) &&
+                                                ((archiveRange->stop != NULL) ||
+                                                (strCmp(strSubN(walSubPath, 0, 24), archiveRange->stop) <= 0)))
+                                            {
+                                                removeArchive = false;
+                                                break;
+                                            }
+                                        }
+// CSHANG ??? I don't understand how the old code actually removed the archive log. I've changed it here.
+                                        // Remove archive log if it is not used in a backup
+                                        if (removeArchive)
+                                        {
+                                            storageRemoveNP(
+                                                storageRepoWrite(),
+                                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s",
+                                                    strPtr(archiveId), strPtr(walPath), strPtr(walSubPath)));
+
+                                            LOG_DEBUG("Expire process, remove WAL segment: %s", strPtr(walSubPath));
+// CSHANG Must figure out how to deal with the logging $self->logExpire($strArchiveId, substr($strSubPath, 0, 24));
+                                        }
+// CSHANG Need else condition here: # Log that the file was not expired $self->logExpire($strArchiveId);
+                                    }
+                                }
+                            }
+// CSHANG Must figure out how to deal with the logging:
+                        // # Log if no archive was expired
+                        // if ($self->{iArchiveExpireTotal} == 0)
+                        // {
+                        //     &log(DETAIL, "no archive to remove, archiveId = ${strArchiveId}");
+                        // }
                         }
                     }
                 }

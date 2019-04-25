@@ -134,7 +134,30 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanzaPath))),
-                bufNewStr(content)), "put backup info to file");
+                BUFSTR(content)), "put backup info to file");
+
+        content = strNew
+        (
+            "[backrest]\n"
+            "backrest-checksum=\"075a202d42c3b6a0257da5f73a68fa77b342f777\"\n"
+            "backrest-format=5\n"
+            "backrest-version=\"2.08dev\"\n"
+            "\n"
+            "[db]\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6625592122879095702,"
+                "\"db-version\":\"9.4\"}\n"
+            "2={\"db-id\":6626363367545678089,"
+                "\"db-version\":\"9.5\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanzaPath))),
+                BUFSTR(content)), "put archive info to file");
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
