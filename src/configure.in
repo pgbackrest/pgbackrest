@@ -4,22 +4,25 @@
 AC_PREREQ([2.69])
 AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
 AC_CONFIG_SRCDIR([version.h])
-# AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CC
 # AC_PROG_INSTALL
 
-# Checks for libraries.
-# FIXME: Replace `main' with a function in `-lcrypto':
-# AC_CHECK_LIB([crypto], [main])
-# FIXME: Replace `main' with a function in `-lssl':
-# AC_CHECK_LIB([ssl], [main])
-# FIXME: Replace `main' with a function in `-lxml2':
-# AC_CHECK_LIB([xml2], [main])
-# FIXME: Replace `main' with a function in `-lz':
-# AC_CHECK_LIB([z], [main])
-AC_CHECK_LIB([lz4], [LZ4F_isError])
+# Checks for libraries
+AC_CHECK_LIB([crypto], [CRYPTO_new_ex_data], [], [AC_MSG_ERROR([library 'crypto' is required])])
+AC_CHECK_LIB([ssl], [SSL_new], [], [AC_MSG_ERROR([library 'ssl' is required])])
+AC_CHECK_LIB([xml2], [xmlSaveToBuffer], [], [AC_MSG_ERROR([library 'xml2' is required])])
+AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([library 'z' is required])])
+
+withlz4=0
+AC_CHECK_LIB([lz4], [LZ4F_isError], [lz4=1])
+
+if test $withlz4 == 0
+then
+    AC_DEFINE(WITH_LZ4)
+fi
 
 # Checks for header files.
 # AC_CHECK_HEADERS([arpa/inet.h fcntl.h inttypes.h limits.h netdb.h stddef.h stdint.h stdlib.h string.h strings.h sys/file.h sys/socket.h sys/time.h unistd.h])
@@ -44,5 +47,5 @@ AC_CHECK_LIB([lz4], [LZ4F_isError])
 # AC_FUNC_REALLOC
 # AC_CHECK_FUNCS([dup2 gettimeofday memchr memmove memset mkdir regcomp rmdir select socket strcasecmp strchr strerror strstr strtol strtoull])
 
-AC_CONFIG_FILES([../config/Makefile])
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

@@ -1,5 +1,7 @@
-pgbackrest
+/pgbackrest
 *.o
-autom4te.cache
-config.log
+/autom4te.cache
+/config.log
 config.status
+config.h
+Makefile

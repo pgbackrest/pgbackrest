@@ -543,7 +543,7 @@ eval
             if (!$bSmart || grep(/^(src|libc)\//, @stryModifiedList))
             {
                 my @stryBuilt;
-                my $strBuilt = 'src/Makefile';
+                my $strBuilt = 'src/Makefile.in';
 
                 if (buildPutDiffers(
                     $oStorageBackRest,

@@ -47,7 +47,7 @@ LDPERL = `perl -MExtUtils::Embed -e ldopts`
 LDEXTRA =
 
 # Concatenate options for easy usage
-LDFLAGS = -lcrypto -lssl -lxml2 -lz @LIBS@$(LDPERL) $(LDEXTRA)
+LDFLAGS = @LIBS@$(LDPERL) $(LDEXTRA)
 
 ####################################################################################################################################
 # Install options
