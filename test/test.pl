@@ -550,7 +550,7 @@ eval
                     $strBuilt,
                     buildMakefile(
                         $oStorageBackRest,
-                        ${$oStorageBackRest->get("src/Makefile")},
+                        ${$oStorageBackRest->get("src/Makefile.in")},
                         {rhOption => {'postgres/pageChecksum.o' => '-funroll-loops -ftree-vectorize'}})))
                 {
                     push(@stryBuilt, $strBuilt);
