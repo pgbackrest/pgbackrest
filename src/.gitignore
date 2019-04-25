@@ -2,6 +2,7 @@
 *.o
 /autom4te.cache
 /config.log
-config.status
-config.h
-Makefile
+/config.status
+/config.h
+/build.auto.h
+/Makefile
