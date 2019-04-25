@@ -10,8 +10,8 @@
 #
 # To upload a new image:
 # - docker login
-# - docker tag pgbackrest/test:co7-base pgbackrest/test:co7-base-20190424A
-# - docker push pgbackrest/test:co7-base-20190424A
+# - docker tag pgbackrest/test:{vm}-base pgbackrest/test:{vm}-base-YYYYMMDDA
+# - docker push pgbackrest/test:{vm}-base-YYYYMMDDA
 # **********************************************************************************************************************************
 20190424A:
   u18: 72f9a453557e21dd3269b8b3fba1b4b8d6dc9d77
