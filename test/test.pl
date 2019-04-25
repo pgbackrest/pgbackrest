@@ -640,6 +640,27 @@ eval
             {
                 $oStorageTest->put($strCVersionFile, $strCVersionNew);
             }
+
+            # Update version for configure based on the current Perl version
+            #-----------------------------------------------------------------------------------------------------------------------
+            my $strConfigureFile = "${strBackRestBase}/src/configure.in";
+            my $strConfigureOld = ${$oStorageTest->get($strConfigureFile)};
+            my $strConfigureNew;
+
+            foreach my $strLine (split("\n", $strConfigureOld))
+            {
+                if ($strLine =~ /^AC_INIT\(/)
+                {
+                    $strLine = 'AC_INIT([' . PROJECT_NAME . '], [' . PROJECT_VERSION . '])';
+                }
+
+                $strConfigureNew .= "${strLine}\n";
+            }
+
+            if ($strConfigureNew ne $strConfigureOld)
+            {
+                $oStorageTest->put($strConfigureFile, $strConfigureNew);
+            }
         }
 
         # Clean up
