@@ -606,7 +606,7 @@ eval
                     buildMakefile(
                         $oStorageBackRest,
                         ${$oStorageBackRest->get("src/Makefile.in")},
-                        {rhOption => {'postgres/pageChecksum.o' => '-funroll-loops -ftree-vectorize'}})))
+                        {rhOption => {'postgres/pageChecksum.o' => '@COPTIMIZE_PAGE_CHECKSUM@'}})))
                 {
                     push(@stryBuilt, $strBuilt);
                     push(@stryBuiltAll, @stryBuilt);

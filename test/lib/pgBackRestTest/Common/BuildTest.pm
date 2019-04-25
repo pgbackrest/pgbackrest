@@ -231,7 +231,7 @@ sub buildMakefileObjectCompile
             $strMakefile .=
                 (defined($strMakefile) ? "\n" : '') .
                 "${strObject}: ${strDepend}\n" .
-                "\t\$(CC) \$(CFLAGS)" . (defined($rhOption->{$strObject}) ? ' ' . $rhOption->{$strObject} : '') .
+                "\t\$(CC) \$(CFLAGS) \$(CMAKE)" . (defined($rhOption->{$strObject}) ? ' ' . $rhOption->{$strObject} : '') .
                     " -c ${strFile} -o ${strObject}\n";
         }
     }

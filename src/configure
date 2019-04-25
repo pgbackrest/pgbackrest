@@ -584,6 +584,11 @@ PACKAGE_URL=''
 ac_unique_file="version.h"
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+CLIBRARY
+CINCLUDE
+CWARNING
+COPTIMIZE_PAGE_CHECKSUM
+COPTIMIZE
 OBJEXT
 EXEEXT
 ac_ct_CC
@@ -633,6 +638,8 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+enable_test
+enable_optimize
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1257,6 +1264,14 @@ if test -n "$ac_init_help"; then
      short | recursive ) echo "Configuration of pgBackRest 2.14dev:";;
    esac
   cat <<\_ACEOF
+
+Optional Features:
+  --disable-option-checking  ignore unrecognized --enable/--with options
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-test           enable internal test code and assertions for
+                          debugging
+  --disable-optimize      disable compiler optimizations
 
 Some influential environment variables:
   CC          C compiler command
@@ -2752,7 +2767,52 @@ fi
 
 
 
-# Check required Perl (this must be the first library checked since it overwrites LIBS)
+# Enable internal test code and assertions by undefining NDEBUG
+warning='-Wall -Wextra -Wno-clobbered'
+
+# Check whether --enable-test was given.
+if test "${enable_test+set}" = set; then :
+  enableval=$enable_test;
+fi
+
+
+if test "$enable_test" != yes
+then
+    $as_echo "#define NDEBUG 1" >>confdefs.h
+
+
+    # Enable optimizations if not testing and they have not been disabled
+    # Check whether --enable-optimize was given.
+if test "${enable_optimize+set}" = set; then :
+  enableval=$enable_optimize;
+fi
+
+
+    if test "$enable_optimize" != no
+    then
+        COPTIMIZE="-O2"
+
+        COPTIMIZE_PAGE_CHECKSUM="-funroll-loops -ftree-vectorize"
+
+    fi
+
+    CWARNING=$warning
+
+else
+    CWARNING="$warning -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2 -Wformat-nonliteral -Wno-missing-field-initializers -Wstrict-prototypes -Wpointer-arith -Wvla"
+
+fi
+
+# Set includes
+CINCLUDE="-I. -I../libc"
+
+
+# Set library C options
+CLIBRARY="`perl -MExtUtils::Embed -e ccopts` `xml2-config --cflags`"
+
+
+# Check required Perl
+LIBS_BEFORE_PERL=$LIBS
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for perl_parse in -lperl" >&5
 $as_echo_n "checking for perl_parse in -lperl... " >&6; }
@@ -2801,7 +2861,7 @@ else
   as_fn_error $? "library 'perl' is required" "$LINENO" 5
 fi
 
-LIBS=`perl -MExtUtils::Embed -e ldopts`
+LIBS="$LIBS_BEFORE_PERL `perl -MExtUtils::Embed -e ldopts`"
 
 # Check other required libraries
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CRYPTO_new_ex_data in -lcrypto" >&5
