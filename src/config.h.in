@@ -1,3 +1,3 @@
 
 // Is liblz4 present?
-#undef WITH_LZ4
+#undef HAVE_LIBLZ4

@@ -13,13 +13,13 @@ AC_CHECK_LIB([xml2], [xmlSaveToBuffer], [], [AC_MSG_ERROR([library 'xml2' is req
 AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([library 'z' is required])])
 
 # Check optional lz4 library
-withlz4=1
-# AC_SEARCH_LIBS(LZ4F_isError, lz4, [], [withlz4=1])
-AC_CHECK_LIB([lz4], [LZ4F_isError], [], [withlz4=0])
+have_liblz4=1
+# AC_SEARCH_LIBS(LZ4F_isError, lz4, [], [have_liblz4=1])
+AC_CHECK_LIB([lz4], [LZ4F_isError], [], [have_liblz4=0])
 
-if test $withlz4 == 1
+if test $have_liblz4 == 1
 then
-    AC_DEFINE(WITH_LZ4)
+    AC_DEFINE(HAVE_LIBLZ4)
 fi
 
 # Write output

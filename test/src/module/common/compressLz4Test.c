@@ -83,18 +83,18 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lz4Error"))
     {
-#ifdef WITH_LZ4
+#ifdef HAVE_LIBLZ4
 
         TEST_RESULT_UINT(lz4Error(0), 0, "check success");
         TEST_ERROR(lz4Error((size_t)-2), FormatError, "lz4 error: [-2] ERROR_maxBlockSize_invalid");
 
-#endif // WITH_LZ4
+#endif // HAVE_LIBLZ4
     }
 
     // *****************************************************************************************************************************
     if (testBegin("Lz4Compress and Lz4Decompress"))
     {
-#ifdef WITH_LZ4
+#ifdef HAVE_LIBLZ4
 
         // const char *simpleData = "A simple string";
         // Buffer *compressed = NULL;
@@ -150,13 +150,13 @@ testRun(void)
         // TEST_RESULT_VOID(lz4CompressFree(NULL), "free null decompress object");
         // TEST_RESULT_VOID(lz4DecompressFree(NULL), "free null decompress object");
 
-#endif // WITH_LZ4
+#endif // HAVE_LIBLZ4
     }
 
     // *****************************************************************************************************************************
     if (testBegin("lz4DecompressToLog() and lz4CompressToLog()"))
     {
-#ifdef WITH_LZ4
+#ifdef HAVE_LIBLZ4
 
         // Lz4Decompress *decompress = lz4DecompressNew(false);
         //
@@ -166,7 +166,7 @@ testRun(void)
         // decompress->done = true;
         // TEST_RESULT_STR(strPtr(lz4DecompressToLog(decompress)), "{inputSame: true, done: true, availIn: 0}", "format object");
 
-#endif // WITH_LZ4
+#endif // HAVE_LIBLZ4
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

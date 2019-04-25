@@ -643,7 +643,7 @@ eval
 
             # Update version for configure based on the current Perl version
             #-----------------------------------------------------------------------------------------------------------------------
-            my $strConfigureFile = "${strBackRestBase}/src/configure.in";
+            my $strConfigureFile = "${strBackRestBase}/src/configure.ac";
             my $strConfigureOld = ${$oStorageTest->get($strConfigureFile)};
             my $strConfigureNew;
 

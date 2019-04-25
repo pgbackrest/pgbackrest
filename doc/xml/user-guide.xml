@@ -713,6 +713,10 @@
         <execute-list host="{[host-build]}">
             <title>Build <backrest/> package</title>
 
+            <execute user="root" user-force="y">
+                <exe-cmd>(cd /root/pgbackrest-release-{[version]}/src &amp;&amp; ./configure)</exe-cmd>
+            </execute>
+
             <execute user="root">
                 <exe-cmd>make -s -C /root/pgbackrest-release-{[version]}/src</exe-cmd>
             </execute>
