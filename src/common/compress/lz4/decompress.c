@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 LZ4 Decompress
 ***********************************************************************************************************************************/
-#ifndef WITHOUT_LZ4
+#ifdef WITH_LZ4
 
 #include <stdio.h>
 #include <lz4frame.h>
@@ -183,4 +183,4 @@ lz4DecompressFree(Lz4Decompress *this)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-#endif // WITHOUT_LZ4
+#endif // WITH_LZ4

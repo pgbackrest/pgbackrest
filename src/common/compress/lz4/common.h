@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 LZ4 Common
 ***********************************************************************************************************************************/
-#ifndef WITHOUT_LZ4
+#ifdef WITH_LZ4
 
 #ifndef COMMON_COMPRESS_LZ4_COMMON_H
 #define COMMON_COMPRESS_LZ4_COMMON_H
@@ -18,4 +18,4 @@ size_t lz4Error(size_t error);
 
 #endif
 
-#endif // WITHOUT_LZ4
+#endif // WITH_LZ4

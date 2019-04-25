@@ -1,0 +1,10 @@
+--- rules
++++ rules
+@@ -26,6 +26,7 @@
+ 	# The Makefile doesn't accepts *FLAGS as environment variables.
+ 	# However, it offers a method to pass extra arguments via *EXTRA
+ 	# variable.
++	cd $(CURDIR)/src && ./configure
+ 	make -C $(CURDIR)/src/ CEXTRA="$(CFLAGS)" LDEXTRA="$(LDFLAGS)"
+ 	dh_auto_build
+ 

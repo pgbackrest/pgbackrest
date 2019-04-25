@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 LZ4 Compress
 ***********************************************************************************************************************************/
-#ifndef WITHOUT_LZ4
+#ifdef WITH_LZ4
 
 #include <stdio.h>
 #include <lz4frame.h>
@@ -150,9 +150,9 @@ lz4CompressProcess(Lz4Compress *this, const Buffer *uncompressed, Buffer *compre
         // Normal processing call
         if (uncompressed != NULL)
         {
-            Buffer *output = lz4CompressBuffer(this, LZ4F_compressBound(bufUsed(uncompressed), NULL), compressed);
-            bufUsedInc(
-                output, LZ4F_compressUpdate(this->context, bufRemainsPtr(output), bufRemains(output), bufPtr(uncompressed), NULL));
+            // Buffer *output = lz4CompressBuffer(this, LZ4F_compressBound(bufUsed(uncompressed), NULL), compressed);
+            // bufUsedInc(
+            //     output, LZ4F_compressUpdate(this->context, bufRemainsPtr(output), bufRemains(output), bufPtr(uncompressed), NULL));
         }
         // Else flush remaining output
         else
@@ -242,4 +242,4 @@ lz4CompressFree(Lz4Compress *this)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-#endif // WITHOUT_LZ4
+#endif // WITH_LZ4

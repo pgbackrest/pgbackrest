@@ -837,18 +837,20 @@ eval
 
                         my $strCExtra =
                             "-g -fPIC -D_FILE_OFFSET_BITS=64" .
-                            (vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace ? ' -DWITH_BACKTRACE' : '') .
-                            (!vmWithLz4($strBuildVM) ? ' -DWITHOUT_LZ4' : '');
+                            (vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace ? ' -DWITH_BACKTRACE' : '');
                         my $strLdExtra = vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace  ? '-lbacktrace' : '';
                         my $strCDebug =
                             (vmDebugIntegration($strBuildVM) ? '' : '-DNDEBUG') . ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
 
                         executeTest(
+                            "docker exec -i test-build bash -c 'cd ${strBuildPath} && ./configure'",
+                            {bShowOutputAsync => $bLogDetail});
+
+                        executeTest(
                             'docker exec -i test-build' .
                             (vmLintC($strVm) && !$bNoLint ? ' scan-build-6.0' : '') .
                             " make -j ${iBuildMax} --silent --directory ${strBuildPath} CEXTRA='${strCExtra}'" .
-                                " LDEXTRA='${strLdExtra}' CDEBUG='${strCDebug}'" .
-                                (vmWithLz4($strBuildVM) ? '' : ' LDLZ4='),
+                                " LDEXTRA='${strLdExtra}' CDEBUG='${strCDebug}'",
                             {bShowOutputAsync => $bLogDetail});
 
                         executeTest("docker rm -f test-build");
@@ -1048,17 +1050,6 @@ eval
 
                             $strRules =~ s/\-\-var\=release-date-static\=y/\-\-var\=release-date-static\=n/g;
                             $strRules =~ s/\-\-out\=html \-\-cache\-only/\-\-out\=html \-\-no\-exe/g;
-
-                            $oStorageBackRest->put("${strBuildPath}/debian/rules", $strRules);
-                        }
-
-                        # If lz4 is not present update rules to exclude it from the build
-                        if (!vmWithLz4($strBuildVM))
-                        {
-                            my $strRules = ${$oStorageBackRest->get("${strBuildPath}/debian/rules")};
-
-                            $strRules =~ s/CEXTRA\=\"\$\(CFLAGS\)\"/CEXTRA="\$(CFLAGS) -DWITHOUT_LZ4"/g;
-                            $strRules =~ s/LDEXTRA\=/LDLZ4= LDEXTRA=/g;
 
                             $oStorageBackRest->put("${strBuildPath}/debian/rules", $strRules);
                         }
