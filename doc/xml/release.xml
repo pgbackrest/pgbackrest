@@ -90,6 +90,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Update containers with <postgres/> minor releases and <id>liblz4</id>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <id>build-max</id> option to set max build processes.</p>
                     </release-item>
 
