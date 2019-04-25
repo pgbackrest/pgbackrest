@@ -9,6 +9,8 @@ The following C types are mapped by the current typemap:
 'ssize_t', 'time_t', 'unsigned', 'unsigned char', 'unsigned char *', 'unsigned int', 'unsigned long', 'unsigned long *',
 'unsigned short', 'void *', 'wchar_t', 'wchar_t *'
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #define PERL_NO_GET_CONTEXT
 
 /***********************************************************************************************************************************

@@ -2768,7 +2768,7 @@ fi
 
 # Check optional lz4 library
 have_liblz4=1
-# AC_SEARCH_LIBS(LZ4F_isError, lz4, [], [have_liblz4=1])
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LZ4F_isError in -llz4" >&5
 $as_echo_n "checking for LZ4F_isError in -llz4... " >&6; }
 if ${ac_cv_lib_lz4_LZ4F_isError+:} false; then :
@@ -2824,7 +2824,7 @@ then
 fi
 
 # Write output
-ac_config_headers="$ac_config_headers config.h"
+ac_config_headers="$ac_config_headers build.auto.h"
 
 ac_config_files="$ac_config_files Makefile"
 
@@ -3517,7 +3517,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
+    "build.auto.h") CONFIG_HEADERS="$CONFIG_HEADERS build.auto.h" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;

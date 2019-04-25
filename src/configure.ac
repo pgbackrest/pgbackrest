@@ -14,7 +14,7 @@ AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([library 'z' is required])])
 
 # Check optional lz4 library
 have_liblz4=1
-# AC_SEARCH_LIBS(LZ4F_isError, lz4, [], [have_liblz4=1])
+
 AC_CHECK_LIB([lz4], [LZ4F_isError], [], [have_liblz4=0])
 
 if test $have_liblz4 == 1
@@ -23,6 +23,6 @@ then
 fi
 
 # Write output
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([build.auto.h])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

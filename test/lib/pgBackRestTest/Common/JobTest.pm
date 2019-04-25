@@ -346,7 +346,7 @@ sub run
                 # Build dependencies for the test file
                 my $rhDependencyTree = {};
                 buildDependencyTreeSub(
-                    $self->{oStorageTest}, $rhDependencyTree, $strTestFile, $self->{strGCovPath}, ['', 'test']);
+                    $self->{oStorageTest}, $rhDependencyTree, $strTestFile, false, $self->{strGCovPath}, ['', 'test']);
 
                 foreach my $strDepend (@{$rhDependencyTree->{$strTestFile}{include}})
                 {
@@ -385,6 +385,12 @@ sub run
                 $strTestC =~ s/\{\[C\_TEST\_LIST\]\}/$strTestInit/g;
                 buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/test.c", $strTestC);
 
+                # Create build.auto.h
+                my $strBuildAutoH =
+                    (vmWithLz4($self->{oTest}->{&TEST_VM}) ? '#define HAVE_LIBLZ4' : '') . "\n";
+
+                buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/" . BUILD_AUTO_H, $strBuildAutoH);
+
                 # Determine which warnings are available
                 my $strWarningFlags =
                     '-Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2' .
@@ -402,7 +408,6 @@ sub run
                     '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered -D_POSIX_C_SOURCE=200112L' .
                         ' `perl -MExtUtils::Embed -e ccopts` -DWITH_PERL' .
                         ' `xml2-config --cflags`' . ($self->{bProfile} ? " -pg" : '') .
-                    (vmWithLz4($self->{oTest}->{&TEST_VM}) ? ' -DHAVE_LIBLZ4' : '') .
                     ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : " -DDEBUG_UNIT") .
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
                     ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
@@ -462,17 +467,20 @@ sub run
                 # Build C file dependencies
                 foreach my $strCFile (@stryCFile)
                 {
+                    my $bHarnessFile = $strCFile =~ /^test\// ? true : false;
+
                     buildDependencyTreeSub(
-                        $self->{oStorageTest}, $rhDependencyTree, $strCFile, $self->{strGCovPath}, ['', 'test']);
+                        $self->{oStorageTest}, $rhDependencyTree, $strCFile, !$bHarnessFile, $self->{strGCovPath}, ['', 'test']);
 
                     $strMakefile .=
                         "\n" . substr($strCFile, 0, length($strCFile) - 2) . ".o:" .
-                        ($strCFile =~ /^test\// ? " harnessflags" : " buildflags") . " $strCFile";
+                        ($bHarnessFile ? " harnessflags" : " buildflags") . " $strCFile";
 
                     foreach my $strDepend (@{$rhDependencyTree->{$strCFile}{include}})
                     {
                         $strMakefile .=
-                            ' ' . ($rhDependencyTree->{$strDepend}{path} ne '' ? $rhDependencyTree->{$strDepend}{path} . '/' : '') .
+                            ' ' .
+                            ($rhDependencyTree->{$strDepend}{path} ne '' ? $rhDependencyTree->{$strDepend}{path} . '/' : '') .
                             $strDepend;
                     }
 
