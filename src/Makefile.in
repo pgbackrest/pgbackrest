@@ -23,7 +23,7 @@ CWARN = -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion 
 		-Wno-clobbered -Wno-missing-field-initializers -Wstrict-prototypes -Wpointer-arith -Wvla
 
 # Automatically generate Perl compile options for the local system
-CPERL = `perl -MExtUtils::Embed -e ccopts` -DWITH_PERL
+CPERL = `perl -MExtUtils::Embed -e ccopts`
 
 # Automatically generate xml compile options for the local system
 CXML = `xml2-config --cflags`
@@ -40,14 +40,11 @@ CFLAGS = $(CINCLUDE) $(CSTD) $(COPT) $(CWARN) $(CXML) $(CPERL) $(CDEBUG) $(CEXTR
 ####################################################################################################################################
 # Link options
 ####################################################################################################################################
-# Automatically generate Perl linker options for the local system
-LDPERL = `perl -MExtUtils::Embed -e ldopts`
-
 # Extra linker options to be set by caller
 LDEXTRA =
 
 # Concatenate options for easy usage
-LDFLAGS = @LIBS@$(LDPERL) $(LDEXTRA)
+LDFLAGS = @LIBS@ $(LDEXTRA)
 
 ####################################################################################################################################
 # Install options

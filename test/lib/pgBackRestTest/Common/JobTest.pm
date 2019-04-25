@@ -387,6 +387,7 @@ sub run
 
                 # Create build.auto.h
                 my $strBuildAutoH =
+                    "#define HAVE_LIBPERL\n" .
                     (vmWithLz4($self->{oTest}->{&TEST_VM}) ? '#define HAVE_LIBLZ4' : '') . "\n";
 
                 buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/" . BUILD_AUTO_H, $strBuildAutoH);
@@ -406,7 +407,7 @@ sub run
                 # Flags that are common to all builds
                 my $strCommonFlags =
                     '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered -D_POSIX_C_SOURCE=200112L' .
-                        ' `perl -MExtUtils::Embed -e ccopts` -DWITH_PERL' .
+                        ' `perl -MExtUtils::Embed -e ccopts`' .
                         ' `xml2-config --cflags`' . ($self->{bProfile} ? " -pg" : '') .
                     ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : " -DDEBUG_UNIT") .
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
