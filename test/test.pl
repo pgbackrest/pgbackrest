@@ -830,18 +830,31 @@ eval
                     my $bRebuild = !$bSmart;
                     $rhBinBuild->{$strBuildVM} = true;
 
+                    # Build configure/compile options and see if they have changed from the previous build
+                    my $strCFlags =
+                        "-Wfatal-errors -g -fPIC -D_FILE_OFFSET_BITS=64" .
+                        (vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace ? ' -DWITH_BACKTRACE' : '') .
+                        ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
+                    my $strLdFlags = vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace  ? '-lbacktrace' : '';
+                    my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
+
+                    my $bBuildOptionsDiffer = buildPutDiffers(
+                        $oStorageBackRest, "${strBinPath}/${strBuildVM}/build.flags",
+                        "CFLAGS=${strCFlags}\nLDFLAGS=${strLdFlags}\nCONFIGURE=${strConfigOptions}");
+
+                    $bBuildOptionsDiffer |= grep(/^src\/configure|src\/Makefile.in|src\/build\.auto\.h$/, @stryModifiedList);
+
                     # Rebuild if the modification time of the smart file does equal the last changes in source paths
-                    if ($bSmart)
+                    my $strBinSmart = "${strBuildPath}/pgbackrest";
+
+                    if ($bBuildOptionsDiffer ||
+                        ($bSmart &&
+                         (!$oStorageBackRest->exists($strBinSmart) ||
+                          $oStorageBackRest->info($strBinSmart)->mtime < $lTimestampLast)))
                     {
-                        my $strBinSmart = "${strBuildPath}/pgbackrest";
+                        &log(INFO, "    bin dependencies have changed for ${strBuildVM}, rebuilding...");
 
-                        if (!$oStorageBackRest->exists($strBinSmart) ||
-                            $oStorageBackRest->info($strBinSmart)->mtime < $lTimestampLast)
-                        {
-                            &log(INFO, "    bin dependencies have changed for ${strBuildVM}, rebuilding...");
-
-                            $bRebuild = true;
-                        }
+                        $bRebuild = true;
                     }
 
                     if ($bRebuild)
@@ -860,7 +873,7 @@ eval
                         }
 
                         executeTest(
-                            "rsync -rt" . (!$bSmart ? " --delete-excluded" : '') .
+                            "rsync -rt" . (!$bSmart || $bBuildOptionsDiffer ? " --delete-excluded" : '') .
                             " --include=" . join('/*** --include=', @stryBinSrcPath) . '/*** --exclude=*' .
                             " ${strBackRestBase}/ ${strBinPath}/${strBuildVM}");
 
@@ -869,25 +882,18 @@ eval
                             &log(INFO, "    clang static analyzer ${strBuildVM} (${strBuildPath})");
                         }
 
-                        my $strCExtra =
-                            "-g -fPIC -D_FILE_OFFSET_BITS=64" .
-                            (vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace ? ' -DWITH_BACKTRACE' : '');
-                        my $strLdExtra = vmWithBackTrace($strBuildVM) && $bNoLint && $bBackTrace  ? '-lbacktrace' : '';
-                        my $strCDebug =
-                            (vmDebugIntegration($strBuildVM) ? '' : '-DNDEBUG') . ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
-
-                        if (!$bSmart || grep(/^src\/configure$/, @stryModifiedList) || !$oStorageBackRest->exists('src/configure'))
+                        if ($bBuildOptionsDiffer || !$oStorageBackRest->exists('src/configure'))
                         {
                             executeTest(
-                                "docker exec -i test-build bash -c 'cd ${strBuildPath} && ./configure'",
+                                "docker exec -i test-build bash -c 'cd ${strBuildPath} && ./configure${strConfigOptions}'",
                                 {bShowOutputAsync => $bLogDetail});
                         }
 
                         executeTest(
                             'docker exec -i test-build' .
                             (vmLintC($strVm) && !$bNoLint ? ' scan-build-6.0' : '') .
-                            " make -j ${iBuildMax} --silent --directory ${strBuildPath} CEXTRA='${strCExtra}'" .
-                                " LDEXTRA='${strLdExtra}' CDEBUG='${strCDebug}'",
+                            " make -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
+                                " --directory ${strBuildPath} CFLAGS='${strCFlags}' LDFLAGS='${strLdFlags}'",
                             {bShowOutputAsync => $bLogDetail});
 
                         executeTest("docker rm -f test-build");

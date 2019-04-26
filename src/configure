@@ -2811,59 +2811,11 @@ CINCLUDE="-I. -I../libc"
 CLIBRARY="`perl -MExtUtils::Embed -e ccopts` `xml2-config --cflags`"
 
 
-# Check required Perl
-LIBS_BEFORE_PERL=$LIBS
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for perl_parse in -lperl" >&5
-$as_echo_n "checking for perl_parse in -lperl... " >&6; }
-if ${ac_cv_lib_perl_perl_parse+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lperl  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char perl_parse ();
-int
-main ()
-{
-return perl_parse ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_perl_perl_parse=yes
-else
-  ac_cv_lib_perl_perl_parse=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_perl_perl_parse" >&5
-$as_echo "$ac_cv_lib_perl_perl_parse" >&6; }
-if test "x$ac_cv_lib_perl_perl_parse" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBPERL 1
-_ACEOF
-
-  LIBS="-lperl $LIBS"
-
-else
-  as_fn_error $? "library 'perl' is required" "$LINENO" 5
-fi
-
-LIBS="$LIBS_BEFORE_PERL `perl -MExtUtils::Embed -e ldopts`"
+# Add libs for Perl
+LIBS="$LIBS `perl -MExtUtils::Embed -e ldopts`"
 
 # Check other required libraries
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CRYPTO_new_ex_data in -lcrypto" >&5
 $as_echo_n "checking for CRYPTO_new_ex_data in -lcrypto... " >&6; }
 if ${ac_cv_lib_crypto_CRYPTO_new_ex_data+:} false; then :
@@ -4376,4 +4328,3 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
-

@@ -36,10 +36,8 @@ AC_SUBST(CINCLUDE, "-I. -I../libc")
 # Set library C options
 AC_SUBST(CLIBRARY, "`perl -MExtUtils::Embed -e ccopts` `xml2-config --cflags`")
 
-# Check required Perl
-LIBS_BEFORE_PERL=$LIBS
-AC_CHECK_LIB([perl], [perl_parse], [], [AC_MSG_ERROR([library 'perl' is required])])
-LIBS="$LIBS_BEFORE_PERL `perl -MExtUtils::Embed -e ldopts`"
+# Add libs for Perl
+LIBS="$LIBS `perl -MExtUtils::Embed -e ldopts`"
 
 # Check other required libraries
 AC_CHECK_LIB([crypto], [CRYPTO_new_ex_data], [], [AC_MSG_ERROR([library 'crypto' is required])])
