@@ -475,7 +475,7 @@ strLstJoinQuote(const StringList *this, const char *separator, const char *quote
 /***********************************************************************************************************************************
 Return all items in this list which are not in the anti list
 
-The input lists must *both* be sorted or the results will be unpredictable.
+The input lists must *both* be sorted ascending or the results will be unpredictable.
 ***********************************************************************************************************************************/
 StringList *
 strLstMergeAnti(const StringList *this, const StringList *anti)
