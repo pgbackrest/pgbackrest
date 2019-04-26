@@ -882,7 +882,7 @@ eval
                             &log(INFO, "    clang static analyzer ${strBuildVM} (${strBuildPath})");
                         }
 
-                        if ($bBuildOptionsDiffer || !$oStorageBackRest->exists('src/configure'))
+                        if ($bBuildOptionsDiffer || !$oStorageBackRest->exists("${strBuildPath}/Makefile"))
                         {
                             executeTest(
                                 "docker exec -i test-build bash -c 'cd ${strBuildPath} && ./configure${strConfigOptions}'",
@@ -924,6 +924,7 @@ eval
                 {
                     my $strBuildPath = "${strLibCPath}/${strBuildVM}/libc";
                     my $bContainerExists = $strBuildVM ne $strVmHost;
+                    my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
 
                     my $strLibCSmart = "${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so";
                     my $bRebuild = !$bSmart;
@@ -991,6 +992,14 @@ eval
                                 "cd ${strBuildPath} && perl ${strBuildPath}/Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
                                 ($bContainerExists ? "'" : ''),
                                 {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+                        }
+
+                        if (!$oStorageBackRest->exists("${strLibCPath}/${strBuildVM}/src/Makefile"))
+                        {
+                            executeTest(
+                                ($bContainerExists ? 'docker exec -i test-build ' : '') .
+                                    "bash -c 'cd ${strLibCPath}/${strBuildVM}/src && ./configure${strConfigOptions}'",
+                                {bShowOutputAsync => $bLogDetail});
                         }
 
                         executeTest(

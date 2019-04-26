@@ -18,6 +18,10 @@
                     <release-item>
                         <p>Improve performance of non-blocking reads by using maximum buffer size.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <file>configure</file> script for improved multi-platform support.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>

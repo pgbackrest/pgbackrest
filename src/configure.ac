@@ -7,7 +7,7 @@ AC_CONFIG_SRCDIR([version.h])
 AC_PROG_CC_C99
 
 # Enable internal test code and assertions by undefining NDEBUG
-warning='-Wall -Wextra -Wno-clobbered'
+warning='-Wall -Wextra -Wno-clobbered -Wno-missing-field-initializers'
 
 AC_ARG_ENABLE(
     test, [AS_HELP_STRING([--enable-test], [enable internal test code and assertions for debugging])])
@@ -27,25 +27,30 @@ then
 
     AC_SUBST(CWARNING, $warning)
 else
-    AC_SUBST(CWARNING, "$warning -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2 -Wformat-nonliteral -Wno-missing-field-initializers -Wstrict-prototypes -Wpointer-arith -Wvla")
+    AC_SUBST(CWARNING, "$warning -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla")
 fi
 
 # Set includes
 AC_SUBST(CINCLUDE, "-I. -I../libc")
 
-# Set library C options
-AC_SUBST(CLIBRARY, "`perl -MExtUtils::Embed -e ccopts` `xml2-config --cflags`")
+# Check required perl library
+LIBS_BEFORE_PERL=$LIBS
+AC_CHECK_LIB([perl], [perl_parse], [], [AC_MSG_ERROR([library 'perl' is required])], [`perl -MExtUtils::Embed -e ldopts`])
+LIBS="$LIBS_BEFORE_PERL `perl -MExtUtils::Embed -e ldopts`"
+AC_SUBST(CLIBRARY, "`perl -MExtUtils::Embed -e ccopts`")
 
-# Add libs for Perl
-LIBS="$LIBS `perl -MExtUtils::Embed -e ldopts`"
-
-# Check other required libraries
-AC_CHECK_LIB([crypto], [CRYPTO_new_ex_data], [], [AC_MSG_ERROR([library 'crypto' is required])])
+# Check required openssl libraries
+AC_CHECK_LIB([crypto], [EVP_get_digestbyname], [], [AC_MSG_ERROR([library 'crypto' is required])])
 AC_CHECK_LIB([ssl], [SSL_new], [], [AC_MSG_ERROR([library 'ssl' is required])])
+
+# Check required xml library
 AC_CHECK_LIB([xml2], [xmlSaveToBuffer], [], [AC_MSG_ERROR([library 'xml2' is required])])
+AC_SUBST(CLIBRARY, "$CLIBRARY `xml2-config --cflags`")
+
+# Check required gzip library
 AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([library 'z' is required])])
 
-# Check optional libraries
+# Check optional lz4 library
 AC_CHECK_LIB([lz4], [LZ4F_isError])
 
 # Write output

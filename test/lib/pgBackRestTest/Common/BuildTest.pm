@@ -47,7 +47,7 @@ sub buildPutDiffers
     # Save if the contents are different or missing
     if ($bSave)
     {
-        $oStorage->put($strFile, $strContents);
+        $oStorage->put($oStorage->openWrite($strFile, {bPathCreate => true}), $strContents);
     }
 
     # Was the file saved?
