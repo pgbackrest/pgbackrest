@@ -52,7 +52,7 @@ testRun(void)
         system(strPtr(strNewFmt("touch %s/%s", strPtr(full2), INFO_MANIFEST_FILE)));
         system(strPtr(strNewFmt("touch %s/%s", strPtr(full2), INFO_MANIFEST_FILE ".copy")));
 
-        String *content = strNew
+        String *backupContent = strNew
         (
             "[backrest]\n"
             "backrest-checksum=\"03b699df7362ce202995231c9060c88e6939e481\"\n"
@@ -134,9 +134,9 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanzaPath))),
-                BUFSTR(content)), "put backup info to file");
+                BUFSTR(backupContent)), "put backup info to file");
 
-        content = strNew
+        String *archiveContent = strNew
         (
             "[backrest]\n"
             "backrest-checksum=\"075a202d42c3b6a0257da5f73a68fa77b342f777\"\n"
@@ -157,7 +157,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanzaPath))),
-                BUFSTR(content)), "put archive info to file");
+                BUFSTR(archiveContent)), "put archive info to file");
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");

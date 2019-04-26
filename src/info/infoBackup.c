@@ -274,12 +274,11 @@ infoBackupDataLabelList(const InfoBackup *this, InfoBackupDataLabelListParam par
 
     ASSERT(this != NULL);
 
-    StringList *result = NULL;
+    // Return a 0 sized list if no current backups or none matching the filter
+    StringList *result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = strLstNew();
-
         // For each backup label, compare it to the filter (if any) and sort it for return
         for (unsigned int backupLabelIdx = 0; backupLabelIdx < infoBackupDataTotal(this); backupLabelIdx++)
         {
@@ -292,8 +291,6 @@ infoBackupDataLabelList(const InfoBackup *this, InfoBackupDataLabelListParam par
                     strLstInsert(result, 0, backupData.backupLabel);
             }
         }
-
-        strLstMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
