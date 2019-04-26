@@ -16,6 +16,13 @@ use Exporter qw(import);
     our @EXPORT = qw();
 
 use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
+
+####################################################################################################################################
+# VM hash keywords
+####################################################################################################################################
+use constant BUILD_AUTO_H                                           => 'build.auto.h';
+    push @EXPORT, qw(BUILD_AUTO_H);
 
 ####################################################################################################################################
 # Save contents to a file if the file is missing or the contents are different.  This saves write IO and prevents the timestamp from
@@ -40,7 +47,7 @@ sub buildPutDiffers
     # Save if the contents are different or missing
     if ($bSave)
     {
-        $oStorage->put($strFile, $strContents);
+        $oStorage->put($oStorage->openWrite($strFile, {bPathCreate => true}), $strContents);
     }
 
     # Was the file saved?
@@ -101,7 +108,7 @@ sub buildDependencyTree
         # Only process non-auto files
         if ($strFile =~ /^[A-Za-z0-9\/]+\.(c|h)$/)
         {
-            buildDependencyTreeSub($oStorage, $rhDependencyTree, $strFile, undef, ['src', 'libc']);
+            buildDependencyTreeSub($oStorage, $rhDependencyTree, $strFile, true, undef, ['src', 'libc']);
         }
     }
 
@@ -115,6 +122,7 @@ sub buildDependencyTreeSub
     my $oStorage = shift;
     my $rhDependencyTree = shift;
     my $strFile = shift;
+    my $bErrorOnBuildHeaderMissing = shift;
     my $strBasePath = shift;
     my $rstryPath = shift;
 
@@ -132,37 +140,53 @@ sub buildDependencyTreeSub
                     (defined($strBasePath) ? "${strBasePath}/" : '') . ($strPath ne '' ? "${strPath}/" : '') . "${strFile}",
                     {bIgnoreMissing => true}));
 
-            if (defined($rstrContent))
+            if (defined($rstrContent) || $strFile eq BUILD_AUTO_H)
             {
                 $rhDependencyTree->{$strFile}{path} = $strPath;
                 last;
             }
         }
 
-        if (!defined($rstrContent))
+        if ($strFile ne BUILD_AUTO_H)
         {
-            confess &log(ERROR,
-                "unable to find ${strFile} in " . $oStorage->pathGet($strBasePath) . " + [" . join(', ', @{$rstryPath}) . "]");
-        }
-
-        # Process includes
-        my $rhInclude = {};
-
-        foreach my $strInclude (sort($$rstrContent =~ /\#include \".*\"$/mg))
-        {
-            $strInclude = (split('"', $strInclude))[1];
-            $rhInclude->{$strInclude} = true;
-
-            buildDependencyTreeSub($oStorage, $rhDependencyTree, $strInclude, $strBasePath, $rstryPath);
-
-            foreach my $strIncludeSub (@{$rhDependencyTree->{$strInclude}{include}})
+            if (!defined($rstrContent))
             {
-                $rhInclude->{$strIncludeSub} = true;
+                confess &log(ERROR,
+                    "unable to find ${strFile} in " . $oStorage->pathGet($strBasePath) . " + [" . join(', ', @{$rstryPath}) . "]");
             }
-        }
 
-        my @stryInclude = sort(keys(%{$rhInclude}));
-        $rhDependencyTree->{$strFile}{include} = \@stryInclude;
+            # Process includes
+            my $rhInclude = {};
+            my $first = true;
+
+            foreach my $strInclude ($$rstrContent =~ /^\s*\#include [\"\<].+[\"\>]\s*$/mg)
+            {
+                if ($bErrorOnBuildHeaderMissing && $first &&
+                    $strFile =~ /\.c/ && trim($strInclude) ne ('#include "' . BUILD_AUTO_H . '"'))
+                {
+                    confess &log(ERROR, "'" . BUILD_AUTO_H . "' must be included first in '${strFile}'");
+                }
+
+                if (trim($strInclude) =~ /^\#include \"/)
+                {
+                    $strInclude = (split('"', $strInclude))[1];
+                    $rhInclude->{$strInclude} = true;
+
+                    buildDependencyTreeSub(
+                        $oStorage, $rhDependencyTree, $strInclude, $bErrorOnBuildHeaderMissing, $strBasePath, $rstryPath);
+
+                    foreach my $strIncludeSub (@{$rhDependencyTree->{$strInclude}{include}})
+                    {
+                        $rhInclude->{$strIncludeSub} = true;
+                    }
+                }
+
+                $first = false;
+            }
+
+            my @stryInclude = sort(keys(%{$rhInclude}));
+            $rhDependencyTree->{$strFile}{include} = \@stryInclude;
+        }
     }
 }
 
@@ -200,13 +224,14 @@ sub buildMakefileObjectCompile
 
             foreach my $strInclude (@{$rhDependencyTree->{$strFile}{include}})
             {
-                $strDepend .= ' ' . ($oStorage->exists("src/${strInclude}") ? '' : '../libc/') . $strInclude;
+                $strDepend .=
+                    ' ' . ($oStorage->exists("src/${strInclude}") || $strInclude eq BUILD_AUTO_H ? '' : '../libc/') . $strInclude;
             }
 
             $strMakefile .=
                 (defined($strMakefile) ? "\n" : '') .
                 "${strObject}: ${strDepend}\n" .
-                "\t\$(CC) \$(CFLAGS)" . (defined($rhOption->{$strObject}) ? ' ' . $rhOption->{$strObject} : '') .
+                "\t\$(CC) \$(CFLAGS) \$(CMAKE)" . (defined($rhOption->{$strObject}) ? ' ' . $rhOption->{$strObject} : '') .
                     " -c ${strFile} -o ${strObject}\n";
         }
     }

@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Common Functions and Definitions for Backup and Expire Commands
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include "command/backup/common.h"
 #include "common/debug.h"
 #include "common/log.h"
