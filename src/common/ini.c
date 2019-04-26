@@ -338,6 +338,75 @@ iniSet(Ini *this, const String *section, const String *key, const String *value)
 }
 
 /***********************************************************************************************************************************
+Save the ini file
+***********************************************************************************************************************************/
+void
+iniSave(Ini *this, IoWrite *write)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+        FUNCTION_TEST_PARAM(IO_WRITE, write);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(write != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ioWriteOpen(write);
+
+        StringList *sectionList = strLstSort(iniSectionList(this), sortOrderAsc);
+
+        for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
+        {
+            const String *section = strLstGet(sectionList, sectionIdx);
+
+            if (sectionIdx != 0)
+                ioWrite(write, LF_BUF);
+
+            ioWrite(write, BRACKETL_BUF);
+            ioWriteStr(write, section);
+            ioWriteLine(write, BRACKETR_BUF);
+
+            StringList *keyList = strLstSort(iniSectionKeyList(this, section), sortOrderAsc);
+
+            for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+            {
+                const String *key = strLstGet(keyList, keyIdx);
+
+                ioWriteStr(write, key);
+                ioWrite(write, EQ_BUF);
+                ioWriteStrLine(write, iniGet(this, section, key));
+            }
+        }
+
+        ioWriteClose(write);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Move to a new mem context
+***********************************************************************************************************************************/
+Ini *
+iniMove(Ini *this, MemContext *parentNew)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
+    FUNCTION_TEST_END();
+
+    ASSERT(parentNew != NULL);
+
+    if (this != NULL)
+        memContextMove(this->memContext, parentNew);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
 Free the ini
 ***********************************************************************************************************************************/
 void

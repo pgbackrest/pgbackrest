@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Backup Info Handler
 ***********************************************************************************************************************************/
+#include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -12,6 +13,7 @@ testRun(void)
     //--------------------------------------------------------------------------------------------------------------------------
     String *content = NULL;
     String *fileName = strNewFmt("%s/test.ini", testPath());
+    String *fileName2 = strNewFmt("%s/test2.ini", testPath());
     InfoBackup *infoBackup = NULL;
 
     // *****************************************************************************************************************************
@@ -32,11 +34,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"5c17df9523543f5283efdc3c5aa7eb933c63ea0b\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -50,7 +47,8 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put backup info to file");
+            storagePutNP(
+                storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put backup info to file");
 
         TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), "    new backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
@@ -97,18 +95,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"b944d83dcfa33ac0eb88d41b16efc5aaa5da7ec1\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
-            "[db]\n"
-            "db-catalog-version=201409291\n"
-            "db-control-version=942\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
-            "\n"
             "[backup:current]\n"
             "20161219-212741F={\"backrest-format\":5,\"backrest-version\":\"2.04\","
             "\"backup-archive-start\":\"00000007000000000000001C\",\"backup-archive-stop\":\"00000007000000000000001C\","
@@ -133,15 +119,31 @@ testRun(void)
             "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "\n"
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.4\"\n"
+            "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.4\"}\n"
         );
 
         TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put backup info current to file");
-
+            storagePutNP(
+                storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put backup info current to file");
         TEST_ASSIGN(infoBackup, infoBackupNew(storageLocal(), fileName, false, cipherTypeNone, NULL), "    new backup info");
+
+        // Save the file and verify it
+        TEST_RESULT_VOID(infoBackupSave(infoBackup, storageLocalWrite(), fileName2, cipherTypeNone, NULL), "save file");
+        TEST_RESULT_BOOL(
+            bufEq(
+                storageGetNP(storageNewReadNP(storageLocal(), fileName)),
+                storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
+            true, "files are equal");
+
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 3, "    backup list contains backups");
 
         InfoBackupData backupData = infoBackupData(infoBackup, 0);

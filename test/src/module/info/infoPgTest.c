@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test PostgreSQL Info Handler
 ***********************************************************************************************************************************/
+#include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -9,20 +10,16 @@ void
 testRun(void)
 {
     // *****************************************************************************************************************************
-    if (testBegin("infoPgNew(), infoPgFree(), infoPgDataCurrent(), infoPgDataToLog(), infoPgAdd(), infoPgIni()"))
+    if (testBegin("infoPgNewLoad(), infoPgFree(), infoPgDataCurrent(), infoPgDataToLog(), infoPgAdd(), infoPgIni()"))
     {
         String *content = NULL;
         String *fileName = strNewFmt("%s/test.ini", testPath());
+        String *fileName2 = strNewFmt("%s/test2.ini", testPath());
 
         // Archive info
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"1efa53e0611604ad7d833c5547eb60ff716e758c\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
@@ -32,12 +29,15 @@ testRun(void)
             "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
         );
 
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put info to file");
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put info to file");
 
         InfoPg *infoPg = NULL;
+        Ini *ini = NULL;
 
         TEST_ASSIGN(
-            infoPg, infoPgNew(storageLocal(), fileName, infoPgArchive, cipherTypeNone, NULL), "new infoPg archive - load file");
+            infoPg, infoPgNewLoad(storageLocal(), fileName, infoPgArchive, cipherTypeNone, NULL, &ini), "load file");
+        TEST_RESULT_STR(strPtr(iniGet(ini, strNew("db"), strNew("db-id"))), "1", "    check ini");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
 
@@ -55,11 +55,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"5c17df9523543f5283efdc3c5aa7eb933c63ea0b\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -72,10 +67,11 @@ testRun(void)
                 "\"db-version\":\"9.4\"}\n"
         );
 
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put info to file");
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put info to file");
 
         TEST_ASSIGN(
-            infoPg, infoPgNew(storageLocal(), fileName, infoPgBackup, cipherTypeNone, NULL), "new infoPg backup - load file");
+            infoPg, infoPgNewLoad(storageLocal(), fileName, infoPgBackup, cipherTypeNone, NULL, NULL), "load file");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
 
@@ -90,11 +86,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
-            "[backrest]\n"
-            "backrest-checksum=\"62e4d16add4b111bed37c9e9ab0b6f60897e27da\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.04\"\n"
-            "\n"
             "[db]\n"
             "db-catalog-version=201510051\n"
             "db-control-version=942\n"
@@ -109,10 +100,20 @@ testRun(void)
                 "\"db-version\":\"9.5\"}\n"
         );
 
-        TEST_RESULT_VOID(storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put info to file");
-
+        // Put the file and load it
+        TEST_RESULT_VOID(
+            storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), harnessInfoChecksum(content)), "put info to file");
         TEST_ASSIGN(
-            infoPg, infoPgNew(storageLocal(), fileName, infoPgManifest, cipherTypeNone, NULL), "new infoPg manifest - load file");
+            infoPg, infoPgNewLoad(storageLocal(), fileName, infoPgManifest, cipherTypeNone, NULL, NULL), "load file");
+
+        // Save the file and verify it
+        ini = iniNew();
+        TEST_RESULT_VOID(infoPgSave(infoPg, ini, storageLocalWrite(), fileName2, cipherTypeNone, NULL), "save file");
+        TEST_RESULT_BOOL(
+            bufEq(
+                storageGetNP(storageNewReadNP(storageLocal(), fileName)),
+                storageGetNP(storageNewReadNP(storageLocal(), fileName2))),
+            true, "files are equal");
 
         TEST_RESULT_INT(lstSize(infoPg->history), 2, "history record added");
 
@@ -139,17 +140,11 @@ testRun(void)
         TEST_RESULT_INT(infoPgDataTest.catalogVersion, 201608131, "    catalog-version set");
         TEST_RESULT_INT(infoPgDataTest.controlVersion, 960, "    control-version set");
 
-        // infoPgIni
-        //--------------------------------------------------------------------------------------------------------------------------
-        Ini *infoIni = NULL;
-        TEST_ASSIGN(infoIni, infoPgIni(infoPg), "get ini from infoPg");
-        TEST_RESULT_BOOL(strLstExists(iniSectionList(infoIni), strNew("backrest")), true, "    section exists in ini");
-
         // Errors
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(infoPgNew(storageLocal(), fileName, 10, cipherTypeNone, NULL), AssertError, "invalid InfoPg type 10");
+        TEST_ERROR(infoPgNewLoad(storageLocal(), fileName, 10, cipherTypeNone, NULL, NULL), AssertError, "invalid InfoPg type 10");
         TEST_ERROR(
-            infoPgNew(storageLocal(), NULL, infoPgManifest, cipherTypeNone, NULL), AssertError,
+            infoPgNewLoad(storageLocal(), NULL, infoPgManifest, cipherTypeNone, NULL, NULL), AssertError,
             "assertion 'fileName != NULL' failed");
 
         TEST_ERROR(infoPgDataCurrent(NULL), AssertError, "assertion 'this != NULL' failed");

@@ -42,6 +42,18 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>iniSave()</code> and <code>iniMove()</code> to <code>Ini</code> object.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>*Save()</code> functions to most <code>Info</code> objects.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Extern <code>infoHash()</code> so it can be used by other modules.</p>
+                    </release-item>
+
+                    <release-item>
                         <p><code>varNewKv()</code> accepts a <code>KeyValue</code> object rather than creating one.</p>
                     </release-item>
 
@@ -66,6 +78,14 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Add <code>harnessInfoChecksum/Z()</code> to ease creation of test info files.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2019-04-18" version="2.13" title="Bug Fixes">

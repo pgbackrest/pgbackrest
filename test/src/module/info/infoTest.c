@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Info Handler
 ***********************************************************************************************************************************/
+#include "storage/driver/posix/storage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -8,8 +9,12 @@ Test Run
 void
 testRun(void)
 {
+    // Create default storage object for testing
+    Storage *storageTest = storageDriverPosixInterface(
+        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+
     // *****************************************************************************************************************************
-    if (testBegin("infoNew(), infoExists(), infoFileName(), infoIni()"))
+    if (testBegin("infoNewLoad(), infoFileName(), infoIni()"))
     {
         // Initialize test variables
         //--------------------------------------------------------------------------------------------------------------------------
@@ -37,7 +42,7 @@ testRun(void)
         // Info files missing and at least one is required
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
-            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileMissingError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL), FileMissingError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
@@ -50,10 +55,8 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileNameCopy), BUFSTR(content)), "put info.copy to file");
 
-        TEST_ASSIGN(info, infoNew(storageLocal(), fileName, cipherTypeNone, NULL), "infoNew() - load copy file");
-        TEST_RESULT_STR(strPtr(infoFileName(info)), strPtr(fileName), "    infoFileName() is set");
+        TEST_ASSIGN(info, infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL), "load copy file");
 
-        TEST_RESULT_PTR(infoIni(info), info->ini, "    infoIni() returns pointer to info->ini");
         TEST_RESULT_PTR(infoCipherPass(info), NULL, "    cipherPass is not set");
 
         // Remove the copy and store only the main info file and encrypt it. One is required.
@@ -87,9 +90,10 @@ testRun(void)
                 "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"));
 
         // Only main info exists and is required
-        TEST_ASSIGN(info, infoNew(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678")), "infoNew() - load file");
+        Ini *ini = NULL;
+        TEST_ASSIGN(info, infoNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678"), &ini), "load file");
 
-        TEST_RESULT_STR(strPtr(infoFileName(info)), strPtr(fileName), "    infoFileName() is set");
+        TEST_RESULT_STR(strPtr(iniGet(ini, strNew("cipher"), strNew("cipher-pass"))), "\"ABCDEFGH\"", "    check ini");
         TEST_RESULT_STR(strPtr(infoCipherPass(info)), "ABCDEFGH", "    cipherPass is set");
 
         // Invalid format
@@ -120,7 +124,7 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put invalid br format to file");
 
         TEST_ERROR(
-            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FormatError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL), FormatError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
@@ -152,7 +156,7 @@ testRun(void)
                 storageNewWriteNP(storageLocalWrite(), fileNameCopy), BUFSTR(content)), "put invalid info to copy file");
 
         TEST_ERROR(
-            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), FileOpenError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL), FileOpenError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
@@ -210,7 +214,7 @@ testRun(void)
 
         // Copy file error
         TEST_ERROR(
-            infoNew(storageLocal(), fileName, cipherTypeNone, NULL), ChecksumError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL), ChecksumError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
@@ -224,7 +228,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         storageRemoveNP(storageLocalWrite(), fileName);
         TEST_ERROR(
-            infoNew(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678")), CryptoError,
+            infoNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678"), NULL), CryptoError,
             strPtr(
                 strNewFmt(
                     "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
@@ -239,5 +243,33 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(infoFree(info), "infoFree() - free info memory context");
         TEST_RESULT_VOID(infoFree(NULL), "    NULL ptr");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("infoSave()"))
+    {
+        const String *fileName = strNew("test.info");
+        const String *cipherPass = strNew("12345");
+
+        Ini *ini = iniNew();
+        iniSet(ini, strNew("section1"), strNew("key1"), strNew("value1"));
+        TEST_RESULT_VOID(infoSave(infoNew(), ini, storageTest, fileName, cipherTypeNone, NULL), "save info");
+
+        ini = NULL;
+        TEST_RESULT_VOID(infoNewLoad(storageTest, fileName, cipherTypeNone, NULL, &ini), "    reload info");
+        TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value1", "    check ini");
+
+        TEST_RESULT_BOOL(storageExistsNP(storageTest, fileName), true, "check main exists");
+        TEST_RESULT_BOOL(storageExistsNP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName))), true, "check main exists");
+
+        // Add encryption
+        // -------------------------------------------------------------------------------------------------------------------------
+        ini = iniNew();
+        iniSet(ini, strNew("section1"), strNew("key1"), strNew("value4"));
+        TEST_RESULT_VOID(infoSave(infoNew(), ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), "save encrypted info");
+
+        ini = NULL;
+        TEST_RESULT_VOID(infoNewLoad(storageTest, fileName, cipherTypeAes256Cbc, cipherPass, &ini), "    reload info");
+        TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value4", "    check ini");
     }
 }

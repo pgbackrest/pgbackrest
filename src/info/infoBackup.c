@@ -44,9 +44,7 @@ struct InfoBackup
 };
 
 /***********************************************************************************************************************************
-Create a new InfoBackup object
-// ??? Need loadFile parameter
-// ??? Need to handle ignoreMissing = true
+Create new object and load contents from a file
 ***********************************************************************************************************************************/
 InfoBackup *
 infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing, CipherType cipherType, const String *cipherPass)
@@ -67,6 +65,8 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
 
     MEM_CONTEXT_NEW_BEGIN("InfoBackup")
     {
+        Ini *ini = NULL;
+
         // Create object
         this = memNew(sizeof(InfoBackup));
         this->memContext = MEM_CONTEXT_NEW();
@@ -74,7 +74,7 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
         // Catch file missing error and add backup-specific hints before rethrowing
         TRY_BEGIN()
         {
-            this->infoPg = infoPgNew(storage, fileName, infoPgBackup, cipherType, cipherPass);
+            this->infoPg = infoPgNewLoad(storage, fileName, infoPgBackup, cipherType, cipherPass, &ini);
         }
         CATCH_ANY()
         {
@@ -87,21 +87,20 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
         }
         TRY_END();
 
-        const Ini *infoIni = infoPgIni(this->infoPg);
         const String *backupCurrentSection = STRDEF(INFO_BACKUP_SECTION_BACKUP_CURRENT);
 
         // If there are current backups, then parse the json for each into a list object
-        if (strLstExists(iniSectionList(infoIni), backupCurrentSection))
+        if (strLstExists(iniSectionList(ini), backupCurrentSection))
         {
             // Initialize the store and get the list of backup labels
             this->backup = lstNew(sizeof(InfoBackupData));
-            const StringList *backupLabelList = iniSectionKeyList(infoIni, backupCurrentSection);
+            const StringList *backupLabelList = iniSectionKeyList(ini, backupCurrentSection);
 
             // For each backup label, store the information
             for (unsigned int backupLabelIdx = 0; backupLabelIdx < strLstSize(backupLabelList); backupLabelIdx++)
             {
                 const String *backupLabelKey = strLstGet(backupLabelList, backupLabelIdx);
-                const KeyValue *backupKv = jsonToKv(iniGet(infoIni, backupCurrentSection, backupLabelKey));
+                const KeyValue *backupKv = jsonToKv(iniGet(ini, backupCurrentSection, backupLabelKey));
 
                 InfoBackupData infoBackupData =
                 {
@@ -139,6 +138,8 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
                 lstAdd(this->backup, &infoBackupData);
             }
         }
+
+        iniFree(ini);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -148,7 +149,6 @@ infoBackupNew(const Storage *storage, const String *fileName, bool ignoreMissing
 /***********************************************************************************************************************************
 Checks the backup info file's DB section against the PG version, system id, catolog and constrol version passed in and returns
 the history id of the current PG database.
-// ??? Should we still check that the file exists if it is required?
 ***********************************************************************************************************************************/
 unsigned int
 infoBackupCheckPg(
@@ -186,6 +186,79 @@ infoBackupCheckPg(
     }
 
     FUNCTION_LOG_RETURN(UINT, backupPg.id);
+}
+
+/***********************************************************************************************************************************
+Save to file
+***********************************************************************************************************************************/
+void
+infoBackupSave(
+    InfoBackup *this, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_PG, this);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        Ini *ini = iniNew();
+
+        // Set the backup current section
+        for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(this); backupIdx++)
+        {
+            InfoBackupData backupData = infoBackupData(this, backupIdx);
+
+            KeyValue *backupDataKv = kvNew();
+            kvPut(backupDataKv, VARSTR(INFO_KEY_FORMAT_STR), VARUINT(backupData.backrestFormat));
+            kvPut(backupDataKv, VARSTR(INFO_KEY_VERSION_STR), VARSTR(backupData.backrestVersion));
+
+            kvPut(backupDataKv, INFO_KEY_DB_ID_VAR, VARUINT(backupData.backupPgId));
+
+            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_START_VAR, VARSTR(backupData.backupArchiveStart));
+            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_ARCHIVE_STOP_VAR, VARSTR(backupData.backupArchiveStop));
+
+            if (backupData.backupPrior != NULL)
+                kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_PRIOR_VAR, VARSTR(backupData.backupPrior));
+
+            if (backupData.backupReference != NULL)
+            {
+                kvPut(
+                    backupDataKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR, varNewVarLst(varLstNewStrLst(backupData.backupReference)));
+            }
+
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR, VARUINT64(backupData.backupInfoRepoSize));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR, VARUINT64(backupData.backupInfoRepoSizeDelta));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR, VARUINT64(backupData.backupInfoSize));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR, VARUINT64(backupData.backupInfoSizeDelta));
+            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_START_VAR, VARUINT64(backupData.backupTimestampStart));
+            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_VAR, VARUINT64(backupData.backupTimestampStop));
+            kvPut(backupDataKv, INFO_MANIFEST_KEY_BACKUP_TYPE_VAR, VARSTR(backupData.backupType));
+
+            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_ARCHIVE_CHECK_VAR, VARBOOL(backupData.optionArchiveCheck));
+            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_ARCHIVE_COPY_VAR, VARBOOL(backupData.optionArchiveCopy));
+            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_BACKUP_STANDBY_VAR, VARBOOL(backupData.optionBackupStandby));
+            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_CHECKSUM_PAGE_VAR, VARBOOL(backupData.optionChecksumPage));
+            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_COMPRESS_VAR, VARBOOL(backupData.optionCompress));
+            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_HARDLINK_VAR, VARBOOL(backupData.optionHardlink));
+            kvPut(backupDataKv, INFO_MANIFEST_KEY_OPT_ONLINE_VAR, VARBOOL(backupData.optionOnline));
+
+            iniSet(ini, STRDEF(INFO_BACKUP_SECTION_BACKUP_CURRENT), backupData.backupLabel, jsonFromKv(backupDataKv, 0));
+        }
+
+        infoPgSave(infoBackupPg(this), ini, storage, fileName, cipherType, cipherPass);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

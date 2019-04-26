@@ -22,15 +22,18 @@ Constants
     STRING_DECLARE(INFO_KEY_FORMAT_STR);
 
 /***********************************************************************************************************************************
-Constructor
+Constructors
 ***********************************************************************************************************************************/
-Info *infoNew(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+Info *infoNew(void);
+Info *infoNewLoad(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass, Ini **ini);
+void infoSave(
+    Info *this, Ini *ini, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
 const String *infoCipherPass(const Info *this);
-String *infoFileName(const Info *this);
+String *infoHash(const Ini *ini);
 Ini *infoIni(const Info *this);
 
 /***********************************************************************************************************************************
