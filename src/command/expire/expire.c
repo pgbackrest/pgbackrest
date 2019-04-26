@@ -619,7 +619,8 @@ cmdExpire(void)
         expireFullBackup(infoBackup);
         expireDiffBackup(infoBackup);
 
-// CSHANG Must save infoBackup here!!!  Created functions for easier testing
+        infoBackupSave(infoBackup, storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE),
+            cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
 
         removeExpiredBackup(infoBackup);
         removeExpiredArchive(infoBackup);
