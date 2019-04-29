@@ -89,7 +89,7 @@ testS3Server(void)
         // storageDriverS3NewRead() and StorageDriverS3FileRead
         // -------------------------------------------------------------------------------------------------------------------------
         // Ignore missing file
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/fi%26le.txt", NULL));
         harnessTlsServerReply(testS3ServerResponse(404, "Not Found", NULL, NULL));
 
         // Error on missing file
@@ -543,7 +543,7 @@ testRun(void)
         // storageDriverS3NewRead() and StorageDriverS3FileRead
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(
-            storageGetNP(storageNewReadP(s3, strNew("file.txt"), .ignoreMissing = true)), NULL, "ignore missing file");
+            storageGetNP(storageNewReadP(s3, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "ignore missing file");
         TEST_ERROR(
             storageGetNP(storageNewReadNP(s3, strNew("file.txt"))), FileMissingError,
             "unable to open '/file.txt': No such file or directory");

@@ -336,7 +336,7 @@ storageDriverS3Request(
 
         // Generate authorization header
         storageDriverS3Auth(
-            this, verb, uri, query, storageDriverS3DateTime(time(NULL)), requestHeader,
+            this, verb, httpUriEncode(uri, true), query, storageDriverS3DateTime(time(NULL)), requestHeader,
             body == NULL || bufUsed(body) == 0 ?
                 STRDEF("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855") :
                 bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, body)));

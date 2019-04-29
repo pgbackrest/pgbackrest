@@ -50,6 +50,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add missing <code>httpUriEncode()</code> in S3 request.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>unsigned int</code> <code>Variant</code> type and update code to use it.</p>
                     </release-item>
 
