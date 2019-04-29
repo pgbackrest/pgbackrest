@@ -420,7 +420,7 @@ sub process
 
                                 # Log expire info
                                 logDebugMisc($strOperation, "remove major WAL path: ${strFullPath}");
-# CSHANG ??? But this will not log that this was expired because strPath is defined but it will set the ExpireStart and Stop if Start is not yet defined. The problem is if this is the only thing that happens during expire, then the info in the logExpire will not be logged
+# CSHANG ??? But this will not log that this was expired because strPath is defined but it will set the ExpireStart and Stop if Start is not yet defined. The problem is if this is the only thing that happens during expire, then the info in the logExpire will not be logged.
                                 $self->logExpire($strArchiveId, $strPath);
                             }
                             # Else delete individual files instead if the major path is less than or equal to the most recent
