@@ -245,6 +245,9 @@ testRun(void)
         varLstAdd(paramList, varNewStr(strNew("test3.txt")));
         varLstAdd(paramList, varNewUInt64(0640));
         varLstAdd(paramList, varNewUInt64(0750));
+        varLstAdd(paramList, NULL);
+        varLstAdd(paramList, NULL);
+        varLstAdd(paramList, varNewInt(0));
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
@@ -282,6 +285,9 @@ testRun(void)
         varLstAdd(paramList, varNewStr(strNew("test4.txt")));
         varLstAdd(paramList, varNewUInt64(0640));
         varLstAdd(paramList, varNewUInt64(0750));
+        varLstAdd(paramList, NULL);
+        varLstAdd(paramList, NULL);
+        varLstAdd(paramList, varNewInt(0));
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewBool(true));

@@ -48,6 +48,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow <code>StorageFileWrite</code> to set user, group, and modification time.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>ioWriteStr()</code> and <code>ioWriteStrLine()</code>.</p>
                     </release-item>
 

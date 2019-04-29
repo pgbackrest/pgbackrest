@@ -20,8 +20,8 @@ typedef struct StorageDriverRemoteFileWrite StorageDriverRemoteFileWrite;
 Constructor
 ***********************************************************************************************************************************/
 StorageDriverRemoteFileWrite *storageDriverRemoteFileWriteNew(
-    StorageDriverRemote *storage, ProtocolClient *client, const String *name, mode_t modeFile, mode_t modePath, bool createPath,
-    bool syncFile, bool syncPath, bool atomic);
+    StorageDriverRemote *storage, ProtocolClient *client, const String *name, mode_t modeFile, mode_t modePath, const String *user,
+    const String *group, time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic);
 
 /***********************************************************************************************************************************
 Functions

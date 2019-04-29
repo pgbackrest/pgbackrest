@@ -115,9 +115,10 @@ storageDriverRemoteProtocol(const String *command, const VariantList *paramList,
             // Create the write object
             IoWrite *fileWrite = storageFileWriteIo(
                 interface.newWrite(
-                    driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), (mode_t)varUIntForce(varLstGet(paramList, 1)),
-                    (mode_t)varUIntForce(varLstGet(paramList, 2)), varBool(varLstGet(paramList, 3)),
-                    varBool(varLstGet(paramList, 4)), varBool(varLstGet(paramList, 5)), varBool(varLstGet(paramList, 6))));
+                    driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varUIntForce(varLstGet(paramList, 1)),
+                    varUIntForce(varLstGet(paramList, 2)), varStr(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)),
+                    (time_t)varIntForce(varLstGet(paramList, 5)), varBool(varLstGet(paramList, 6)),
+                    varBool(varLstGet(paramList, 7)), varBool(varLstGet(paramList, 8)), varBool(varLstGet(paramList, 9))));
 
             // Open file
             ioWriteOpen(fileWrite);

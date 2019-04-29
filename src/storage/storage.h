@@ -138,6 +138,9 @@ typedef struct StorageNewWriteParam
 {
     mode_t modeFile;
     mode_t modePath;
+    const String *user;
+    const String *group;
+    time_t timeModified;
     bool noCreatePath;
     bool noSyncFile;
     bool noSyncPath;

@@ -28,7 +28,8 @@ typedef StringList *(*StorageInterfaceList)(void *driver, const String *path, bo
 typedef bool (*StorageInterfaceMove)(void *driver, void *source, void *destination);
 typedef StorageFileRead *(*StorageInterfaceNewRead)(void *driver, const String *file, bool ignoreMissing);
 typedef StorageFileWrite *(*StorageInterfaceNewWrite)(
-    void *driver, const String *file, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool syncPath, bool atomic);
+    void *driver, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
+    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic);
 typedef void (*StorageInterfacePathCreate)(
     void *driver, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
 typedef void (*StorageInterfacePathRemove)(void *driver, const String *path, bool errorOnMissing, bool recurse);

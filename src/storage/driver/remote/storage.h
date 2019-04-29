@@ -33,8 +33,8 @@ StorageInfo storageDriverRemoteInfo(StorageDriverRemote *this, const String *fil
 StringList *storageDriverRemoteList(StorageDriverRemote *this, const String *path, bool errorOnMissing, const String *expression);
 StorageFileRead *storageDriverRemoteNewRead(StorageDriverRemote *this, const String *file, bool ignoreMissing);
 StorageFileWrite *storageDriverRemoteNewWrite(
-    StorageDriverRemote *this, const String *file, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool syncPath,
-    bool atomic);
+    StorageDriverRemote *this, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
+    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic);
 void storageDriverRemotePathCreate(
     StorageDriverRemote *this, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
 void storageDriverRemotePathRemove(StorageDriverRemote *this, const String *path, bool errorOnMissing, bool recurse);

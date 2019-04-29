@@ -41,8 +41,8 @@ StringList *storageDriverPosixList(StorageDriverPosix *this, const String *path,
 bool storageDriverPosixMove(StorageDriverPosix *this, StorageDriverPosixFileRead *source, StorageDriverPosixFileWrite *destination);
 StorageFileRead *storageDriverPosixNewRead(StorageDriverPosix *this, const String *file, bool ignoreMissing);
 StorageFileWrite *storageDriverPosixNewWrite(
-    StorageDriverPosix *this, const String *file, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool syncPath,
-    bool atomic);
+    StorageDriverPosix *this, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
+    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic);
 void storageDriverPosixPathCreate(
     StorageDriverPosix *this, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
 void storageDriverPosixPathRemove(StorageDriverPosix *this, const String *path, bool errorOnMissing, bool recurse);

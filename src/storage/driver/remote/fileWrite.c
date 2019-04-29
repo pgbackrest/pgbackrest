@@ -25,6 +25,10 @@ struct StorageDriverRemoteFileWrite
     String *name;
     mode_t modeFile;
     mode_t modePath;
+    const String *user;
+    const String *group;
+    time_t timeModified;
+
     bool createPath;
     bool syncFile;
     bool syncPath;
@@ -36,14 +40,17 @@ Create a new file
 ***********************************************************************************************************************************/
 StorageDriverRemoteFileWrite *
 storageDriverRemoteFileWriteNew(
-    StorageDriverRemote *storage, ProtocolClient *client, const String *name, mode_t modeFile, mode_t modePath, bool createPath,
-    bool syncFile, bool syncPath, bool atomic)
+    StorageDriverRemote *storage, ProtocolClient *client, const String *name, mode_t modeFile, mode_t modePath, const String *user,
+    const String *group, time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_REMOTE, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
+        FUNCTION_LOG_PARAM(STRING, user);
+        FUNCTION_LOG_PARAM(STRING, group);
+        FUNCTION_LOG_PARAM(INT64, timeModified);
         FUNCTION_LOG_PARAM(BOOL, createPath);
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, syncPath);
@@ -83,6 +90,9 @@ storageDriverRemoteFileWriteNew(
         this->name = strDup(name);
         this->modeFile = modeFile;
         this->modePath = modePath;
+        this->user = strDup(user);
+        this->group = strDup(group);
+        this->timeModified = timeModified;
         this->createPath = createPath;
         this->syncFile = syncFile;
         this->syncPath = syncPath;
@@ -111,6 +121,9 @@ storageDriverRemoteFileWriteOpen(StorageDriverRemoteFileWrite *this)
         protocolCommandParamAdd(command, VARSTR(this->name));
         protocolCommandParamAdd(command, VARUINT(this->modeFile));
         protocolCommandParamAdd(command, VARUINT(this->modePath));
+        protocolCommandParamAdd(command, VARSTR(this->user));
+        protocolCommandParamAdd(command, VARSTR(this->group));
+        protocolCommandParamAdd(command, VARINT64(this->timeModified));
         protocolCommandParamAdd(command, VARBOOL(this->createPath));
         protocolCommandParamAdd(command, VARBOOL(this->syncFile));
         protocolCommandParamAdd(command, VARBOOL(this->syncPath));

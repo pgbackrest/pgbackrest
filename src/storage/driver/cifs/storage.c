@@ -74,14 +74,17 @@ New file write object
 ***********************************************************************************************************************************/
 StorageFileWrite *
 storageDriverCifsNewWrite(
-    StorageDriverCifs *this, const String *file, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool syncPath,
-    bool atomic)
+    StorageDriverCifs *this, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
+    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_CIFS, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
+        FUNCTION_LOG_PARAM(STRING, user);
+        FUNCTION_LOG_PARAM(STRING, group);
+        FUNCTION_LOG_PARAM(INT64, timeModified);
         FUNCTION_LOG_PARAM(BOOL, createPath);
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, syncPath);
@@ -95,7 +98,8 @@ storageDriverCifsNewWrite(
         STORAGE_FILE_WRITE,
         storageDriverPosixFileWriteInterface(
             storageDriverPosixFileWriteNew(
-                (StorageDriverPosix *)this, file, modeFile, modePath, createPath, syncFile, false, atomic)));
+                (StorageDriverPosix *)this, file, modeFile, modePath, user, group, timeModified, createPath, syncFile, false,
+                atomic)));
 }
 
 /***********************************************************************************************************************************

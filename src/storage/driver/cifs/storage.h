@@ -34,8 +34,8 @@ StorageDriverCifs *storageDriverCifsNew(
 Functions
 ***********************************************************************************************************************************/
 StorageFileWrite *storageDriverCifsNewWrite(
-    StorageDriverCifs *this, const String *file, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool syncPath,
-    bool atomic);
+    StorageDriverCifs *this, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
+    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic);
 void storageDriverCifsPathSync(StorageDriverCifs *this, const String *path, bool ignoreMissing);
 
 /***********************************************************************************************************************************

@@ -654,6 +654,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageNewWrite()"))
     {
+        String *fileName = strNewFmt("%s/sub1/testfile", testPath());
+
         TEST_CREATE_NOPERM();
         StorageFileWrite *file = NULL;
 
@@ -662,23 +664,35 @@ testRun(void)
             ioWriteOpen(storageFileWriteIo(file)), FileOpenError,
             "unable to open '%s' for write: [13] Permission denied", strPtr(fileNoPerm));
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        String *fileName = strNewFmt("%s/sub1/testfile", testPath());
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .user = strNew("bogus")), "new write file (bogus user)");
+        TEST_ERROR(ioWriteOpen(storageFileWriteIo(file)), UserMissingError, "unable to find user 'bogus': [0] Success");
 
-        TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file (defaults)");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .group = strNew("bogus")), "new write file (bogus group)");
+        TEST_ERROR(ioWriteOpen(storageFileWriteIo(file)), GroupMissingError, "unable to find group 'bogus': [0] Success");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(
+            file,
+            storageNewWriteP(
+                storageTest, fileName, .user = strNew(getpwuid(getuid())->pw_name), .group = strNew(getgrgid(getgid())->gr_name),
+                .timeModified = 1),
+            "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
         TEST_RESULT_INT(
             ioWriteHandle(storageFileWriteIo(file)), ((StorageDriverPosixFileWrite *)file->driver)->handle, "check write handle");
         TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
         TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
         TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0640, "    check file mode");
+        TEST_RESULT_INT(storageInfoNP(storageTest, fileName).timeModified, 1, "    check file modified times");
 
         // Test that a premature free (from error or otherwise) does not rename the file
         // -------------------------------------------------------------------------------------------------------------------------
         fileName = strNewFmt("%s/sub1/testfile-abort", testPath());
         String *fileNameTmp = strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(fileName));
 
-        TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file (defaults)");
+        TEST_ASSIGN(
+            file, storageNewWriteP(storageTest, fileName, .user = strNew(getpwuid(getuid())->pw_name)),
+            "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
         TEST_RESULT_VOID(ioWrite(storageFileWriteIo(file), BUFSTRDEF("TESTDATA")), "write data");
         TEST_RESULT_VOID(ioWriteFlush(storageFileWriteIo(file)), "flush data");

@@ -4,8 +4,11 @@ Posix Storage File Write Driver
 #include "build.auto.h"
 
 #include <fcntl.h>
+#include <grp.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <utime.h>
 
 #include "common/debug.h"
 #include "common/io/write.intern.h"
@@ -24,12 +27,16 @@ struct StorageDriverPosixFileWrite
     StorageDriverPosix *storage;
     StorageFileWrite *interface;
     IoWrite *io;
+    String *nameTmp;
 
     String *path;
     String *name;
-    String *nameTmp;
     mode_t modeFile;
     mode_t modePath;
+    const String *user;
+    const String *group;
+    time_t timeModified;
+
     bool createPath;
     bool syncFile;
     bool syncPath;
@@ -51,14 +58,17 @@ Create a new file
 ***********************************************************************************************************************************/
 StorageDriverPosixFileWrite *
 storageDriverPosixFileWriteNew(
-    StorageDriverPosix *storage, const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile,
-    bool syncPath, bool atomic)
+    StorageDriverPosix *storage, const String *name, mode_t modeFile, mode_t modePath, const String *user, const String *group,
+    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
+        FUNCTION_LOG_PARAM(STRING, user);
+        FUNCTION_LOG_PARAM(STRING, group);
+        FUNCTION_LOG_PARAM(INT64, timeModified);
         FUNCTION_LOG_PARAM(BOOL, createPath);
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, syncPath);
@@ -100,6 +110,9 @@ storageDriverPosixFileWriteNew(
         this->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(name)) : this->name;
         this->modeFile = modeFile;
         this->modePath = modePath;
+        this->user = strDup(user);
+        this->group = strDup(group);
+        this->timeModified = timeModified;
         this->createPath = createPath;
         this->syncFile = syncFile;
         this->syncPath = syncPath;
@@ -142,6 +155,33 @@ storageDriverPosixFileWriteOpen(StorageDriverPosixFileWrite *this)
     // On success set free callback to ensure file handle is freed
     else
         memContextCallback(this->memContext, (MemContextCallback)storageDriverPosixFileWriteFree, this);
+
+    // Update user/group owner
+    if (this->user != NULL || this->group != NULL)
+    {
+        struct passwd *userData = NULL;
+        struct group *groupData = NULL;
+
+        if (this->user != NULL)
+        {
+            THROW_ON_SYS_ERROR_FMT(
+                (userData = getpwnam(strPtr(this->user))) == NULL, UserMissingError, "unable to find user '%s'",
+                strPtr(this->user));
+        }
+
+        if (this->group != NULL)
+        {
+            THROW_ON_SYS_ERROR_FMT(
+                (groupData = getgrnam(strPtr(this->group))) == NULL, GroupMissingError, "unable to find group '%s'",
+                strPtr(this->group));
+        }
+
+        THROW_ON_SYS_ERROR_FMT(
+            chown(
+                strPtr(this->nameTmp), userData != NULL ? userData->pw_uid : (uid_t)-1,
+                groupData != NULL ? groupData->gr_gid : (gid_t)-1) == -1,
+            FileOwnerError, "unable to set ownership for '%s'", strPtr(this->nameTmp));
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -189,6 +229,15 @@ storageDriverPosixFileWriteClose(StorageDriverPosixFileWrite *this)
 
         // Close the file
         storageDriverPosixFileClose(this->handle, this->nameTmp, true);
+
+        // Update modified time
+        if (this->timeModified != 0)
+        {
+            THROW_ON_SYS_ERROR_FMT(
+                utime(
+                    strPtr(this->nameTmp), &((struct utimbuf){.actime = this->timeModified, .modtime = this->timeModified})) == -1,
+                FileInfoError, "unable to set time for '%s'", strPtr(this->nameTmp));
+        }
 
         // Rename from temp file
         if (this->atomic)

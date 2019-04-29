@@ -410,6 +410,9 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
         FUNCTION_LOG_PARAM(STRING, fileExp);
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
+        FUNCTION_LOG_PARAM(STRING, param.user);
+        FUNCTION_LOG_PARAM(STRING, param.group);
+        FUNCTION_LOG_PARAM(INT64, param.timeModified);
         FUNCTION_LOG_PARAM(BOOL, param.noCreatePath);
         FUNCTION_LOG_PARAM(BOOL, param.noSyncFile);
         FUNCTION_LOG_PARAM(BOOL, param.noSyncPath);
@@ -426,8 +429,8 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
     {
         result = this->interface.newWrite(
             this->driver, storagePathNP(this, fileExp), param.modeFile != 0 ? param.modeFile : this->modeFile,
-            param.modePath != 0 ? param.modePath : this->modePath, !param.noCreatePath, !param.noSyncFile, !param.noSyncPath,
-            !param.noAtomic);
+            param.modePath != 0 ? param.modePath : this->modePath, param.user, param.group, param.timeModified, !param.noCreatePath,
+            !param.noSyncFile, !param.noSyncPath, !param.noAtomic);
 
         if (param.filterGroup != NULL)
             ioWriteFilterGroupSet(storageFileWriteIo(result), param.filterGroup);

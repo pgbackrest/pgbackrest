@@ -629,14 +629,17 @@ New file write object
 ***********************************************************************************************************************************/
 StorageFileWrite *
 storageDriverS3NewWrite(
-    StorageDriverS3 *this, const String *file, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile,
-    bool syncPath, bool atomic)
+    StorageDriverS3 *this, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
+    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
+        FUNCTION_LOG_PARAM(STRING, user);
+        FUNCTION_LOG_PARAM(STRING, group);
+        FUNCTION_LOG_PARAM(INT64, timeModified);
         FUNCTION_LOG_PARAM(BOOL, createPath);
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, syncPath);
@@ -646,6 +649,9 @@ storageDriverS3NewWrite(
     ASSERT(this != NULL);
     ASSERT(file != NULL);
     ASSERT(createPath);
+    ASSERT(user == NULL);
+    ASSERT(group == NULL);
+    ASSERT(timeModified == 0);
 
     FUNCTION_LOG_RETURN(
         STORAGE_FILE_WRITE, storageDriverS3FileWriteInterface(storageDriverS3FileWriteNew(this, file, this->partSize)));

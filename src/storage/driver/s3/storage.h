@@ -42,8 +42,8 @@ StorageInfo storageDriverS3Info(StorageDriverS3 *this, const String *file, bool 
 StringList *storageDriverS3List(StorageDriverS3 *this, const String *path, bool errorOnMissing, const String *expression);
 StorageFileRead *storageDriverS3NewRead(StorageDriverS3 *this, const String *file, bool ignoreMissing);
 StorageFileWrite *storageDriverS3NewWrite(
-    StorageDriverS3 *this, const String *file, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool syncPath,
-    bool atomic);
+    StorageDriverS3 *this, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
+    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic);
 void storageDriverS3PathCreate(StorageDriverS3 *this, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
 void storageDriverS3PathRemove(StorageDriverS3 *this, const String *path, bool errorOnMissing, bool recurse);
 void storageDriverS3PathSync(StorageDriverS3 *this, const String *path, bool ignoreMissing);
