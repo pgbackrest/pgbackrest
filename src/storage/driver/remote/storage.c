@@ -45,6 +45,7 @@ storageDriverRemoteNew(
 
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
+    ASSERT(client != NULL);
 
     // Create the object
     StorageDriverRemote *this = NULL;
