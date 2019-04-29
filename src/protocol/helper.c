@@ -266,7 +266,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType)
             // that pg remotes will always be greater but we'll protect that assumption with an assertion.
             ASSERT(cfgDefOptionIndexTotal(cfgDefOptPgPath) >= cfgDefOptionIndexTotal(cfgDefOptRepoPath));
 
-            protocolHelper.clientRemoteSize = cfgDefOptionIndexTotal(cfgDefOptPgPath) +1;
+            protocolHelper.clientRemoteSize = cfgDefOptionIndexTotal(cfgDefOptPgPath) + 1;
             protocolHelper.clientRemote = (ProtocolHelperClient *)memNew(
                 protocolHelper.clientRemoteSize * sizeof(ProtocolHelperClient));
         }
