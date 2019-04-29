@@ -685,7 +685,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
         strLstAddZ(argList, "--repo1-host=localhost");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
-        strLstAddZ(argList, "--process=4");
+        strLstAddZ(argList, "--process=999");
         strLstAddZ(argList, "--command=archive-get");
         strLstAddZ(argList, "--host-id=1");
         strLstAddZ(argList, "--type=db");
@@ -694,7 +694,7 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass before");
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo), "get remote protocol");
-        TEST_RESULT_PTR(protocolHelper.clientRemote[4].client, client, "check position in cache");
+        TEST_RESULT_PTR(protocolHelper.clientRemote[0].client, client, "check position in cache");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptRepoCipherPass)), "acbd", "check cipher pass after");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");

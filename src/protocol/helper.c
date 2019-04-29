@@ -274,16 +274,18 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType)
     }
 
     // Determine protocol id for the remote.  If the process option is set then use that since we want to remote protocol id to
-    // match the local protocol id.  Otherwise set to 0 since the remote is being started from a main process.
+    // match the local protocol id (but we'll still save it in position 0 or we'd need to allocated up to process-max slots).
+    // Otherwise set to 0 since the remote is being started from a main process.
     unsigned int protocolId = 0;
+    unsigned int protocolIdx = 0;
 
     if (cfgOptionTest(cfgOptProcess))
         protocolId = cfgOptionUInt(cfgOptProcess);
 
-    ASSERT(protocolId < protocolHelper.clientRemoteSize);
+    CHECK(protocolIdx < protocolHelper.clientRemoteSize);
 
     // Create protocol object
-    ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[protocolId];
+    ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[protocolIdx];
 
     if (protocolHelperClient->client == NULL)
     {

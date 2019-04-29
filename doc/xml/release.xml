@@ -14,6 +14,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.14dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="jens.wilke"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix segfault when <br-option>process-max</br-option> > 8 for <cmd>archive-push</cmd>/<cmd>archive-get</cmd>.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p>Improve performance of non-blocking reads by using maximum buffer size.</p>
@@ -6975,6 +6985,7 @@
 
         <contributor id="jens.wilke">
             <contributor-name-display>Jens Wilke</contributor-name-display>
+            <contributor-id type="github">jwpit</contributor-id>
         </contributor>
 
         <contributor id="jesper.st.john">
