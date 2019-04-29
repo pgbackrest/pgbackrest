@@ -460,16 +460,18 @@ storageDriverS3Exists(StorageDriverS3 *this, const String *path)
 File/path info
 ***********************************************************************************************************************************/
 StorageInfo
-storageDriverS3Info(StorageDriverS3 *this, const String *file, bool ignoreMissing)
+storageDriverS3Info(StorageDriverS3 *this, const String *file, bool ignoreMissing, bool followLink)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(BOOL, followLink);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(followLink == false);
 
     THROW(AssertError, "NOT YET IMPLEMENTED");
 

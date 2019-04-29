@@ -34,7 +34,7 @@ StorageDriverPosix *storageDriverPosixNew(
 Functions
 ***********************************************************************************************************************************/
 bool storageDriverPosixExists(StorageDriverPosix *this, const String *path);
-StorageInfo storageDriverPosixInfo(StorageDriverPosix *this, const String *file, bool ignoreMissing);
+StorageInfo storageDriverPosixInfo(StorageDriverPosix *this, const String *file, bool ignoreMissing, bool followLink);
 bool storageDriverPosixInfoList(
     StorageDriverPosix *this, const String *path, bool errorOnMissing, StorageInfoListCallback callback, void *callbackData);
 StringList *storageDriverPosixList(StorageDriverPosix *this, const String *path, bool errorOnMissing, const String *expression);

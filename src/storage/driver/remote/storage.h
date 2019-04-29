@@ -29,7 +29,7 @@ StorageDriverRemote *storageDriverRemoteNew(
 Functions
 ***********************************************************************************************************************************/
 bool storageDriverRemoteExists(StorageDriverRemote *this, const String *path);
-StorageInfo storageDriverRemoteInfo(StorageDriverRemote *this, const String *file, bool ignoreMissing);
+StorageInfo storageDriverRemoteInfo(StorageDriverRemote *this, const String *file, bool ignoreMissing, bool followLink);
 StringList *storageDriverRemoteList(StorageDriverRemote *this, const String *path, bool errorOnMissing, const String *expression);
 StorageFileRead *storageDriverRemoteNewRead(StorageDriverRemote *this, const String *file, bool ignoreMissing);
 StorageFileWrite *storageDriverRemoteNewWrite(

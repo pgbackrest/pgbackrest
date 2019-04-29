@@ -120,12 +120,13 @@ storageDriverPosixExists(StorageDriverPosix *this, const String *path)
 File/path info
 ***********************************************************************************************************************************/
 StorageInfo
-storageDriverPosixInfo(StorageDriverPosix *this, const String *file, bool ignoreMissing)
+storageDriverPosixInfo(StorageDriverPosix *this, const String *file, bool ignoreMissing, bool followLink)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(BOOL, followLink);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -136,7 +137,7 @@ storageDriverPosixInfo(StorageDriverPosix *this, const String *file, bool ignore
     // Attempt to stat the file
     struct stat statFile;
 
-    if (lstat(strPtr(file), &statFile) == -1)
+    if ((followLink ? stat(strPtr(file), &statFile) : lstat(strPtr(file), &statFile)) == -1)
     {
         if (errno != ENOENT || !ignoreMissing)
             THROW_SYS_ERROR_FMT(FileOpenError, "unable to get info for '%s'", strPtr(file));
@@ -212,7 +213,7 @@ storageDriverPosixInfoListEntry(
     {
         String *pathInfo = strEqZ(name, ".") ? strDup(path) : strNewFmt("%s/%s", strPtr(path), strPtr(name));
 
-        StorageInfo storageInfo = storageDriverPosixInfo(this, pathInfo, true);
+        StorageInfo storageInfo = storageDriverPosixInfo(this, pathInfo, true, false);
 
         if (storageInfo.exists)
         {

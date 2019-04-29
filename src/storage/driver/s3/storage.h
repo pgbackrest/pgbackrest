@@ -38,7 +38,7 @@ StorageDriverS3 *storageDriverS3New(
 Functions
 ***********************************************************************************************************************************/
 bool storageDriverS3Exists(StorageDriverS3 *this, const String *path);
-StorageInfo storageDriverS3Info(StorageDriverS3 *this, const String *file, bool ignoreMissing);
+StorageInfo storageDriverS3Info(StorageDriverS3 *this, const String *file, bool ignoreMissing, bool followLink);
 StringList *storageDriverS3List(StorageDriverS3 *this, const String *path, bool errorOnMissing, const String *expression);
 StorageFileRead *storageDriverS3NewRead(StorageDriverS3 *this, const String *file, bool ignoreMissing);
 StorageFileWrite *storageDriverS3NewWrite(

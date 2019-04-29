@@ -236,6 +236,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, fileExp);
         FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -248,7 +249,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         String *file = storagePathNP(this, fileExp);
 
         // Call driver function
-        result = this->interface.info(this->driver, file, param.ignoreMissing);
+        result = this->interface.info(this->driver, file, param.ignoreMissing, param.followLink);
 
         // Dup the strings into the calling context
         memContextSwitch(MEM_CONTEXT_OLD());

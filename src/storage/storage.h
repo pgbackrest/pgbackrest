@@ -63,6 +63,7 @@ storageInfo
 typedef struct StorageInfoParam
 {
     bool ignoreMissing;
+    bool followLink;
 } StorageInfoParam;
 
 #define storageInfoP(this, fileExp, ...)                                                                                           \

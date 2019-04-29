@@ -34,6 +34,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow <code>storageInfo()</code> to follow links.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>ioWriteStr()</code> and <code>ioWriteStrLine()</code>.</p>
                     </release-item>
 

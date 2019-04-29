@@ -267,6 +267,16 @@ testRun(void)
         TEST_RESULT_STR(strPtr(info.user), getpwuid(getuid())->pw_name, "    check user");
         TEST_RESULT_STR(strPtr(info.group), getgrgid(getgid())->gr_name, "    check group");
 
+        TEST_ASSIGN(info, storageInfoP(storageTest, linkName, .followLink = true), "get info from path pointed to by link");
+        TEST_RESULT_PTR(info.name, NULL, "    name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "    check exists");
+        TEST_RESULT_INT(info.type, storageTypePath, "    check type");
+        TEST_RESULT_INT(info.size, 0, "    check size");
+        TEST_RESULT_INT(info.mode, 0777, "    check mode");
+        TEST_RESULT_STR(strPtr(info.linkDestination), NULL, "    check link destination");
+        TEST_RESULT_STR(strPtr(info.user), "root", "    check user");
+        TEST_RESULT_STR(strPtr(info.group), "root", "    check group");
+
         storageRemoveP(storageTest, linkName, .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
