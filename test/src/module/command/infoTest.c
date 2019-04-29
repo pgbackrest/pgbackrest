@@ -816,8 +816,7 @@ testRun(void)
         int stdoutSave = dup(STDOUT_FILENO);
         String *stdoutFile = strNewFmt("%s/stdout.info", testPath());
 
-        if (freopen(strPtr(stdoutFile), "w", stdout) == NULL)                                       // {uncoverable - does not fail}
-            THROW_SYS_ERROR(FileWriteError, "unable to reopen stdout");                             // {uncoverable+}
+        THROW_ON_SYS_ERROR(freopen(strPtr(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
         // Not in a test wrapper to avoid writing to stdout
         cmdInfo();

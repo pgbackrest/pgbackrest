@@ -22,8 +22,7 @@ testLogOpen(const char *logFile, int flags, int mode)
 
     int result = open(logFile, flags, mode);
 
-    if (result == -1)                                                                           // {uncovered - no errors in test}
-        THROW_SYS_ERROR_FMT(FileOpenError, "unable to open log file '%s'", logFile);            // {+uncovered}
+    THROW_ON_SYS_ERROR_FMT(result == -1, FileOpenError, "unable to open log file '%s'", logFile);
 
     FUNCTION_HARNESS_RESULT(INT, result);
 }
@@ -52,17 +51,15 @@ testLogLoad(const char *logFile, char *buffer, size_t bufferSize)
 
     do
     {
-        actualBytes = read(handle, buffer, bufferSize - totalBytes);
-
-        if (actualBytes == -1)                                                                  // {uncovered - no errors in test}
-            THROW_SYS_ERROR_FMT(FileOpenError, "unable to read log file '%s'", logFile);        // {+uncovered}
+        THROW_ON_SYS_ERROR_FMT(
+            (actualBytes = read(handle, buffer, bufferSize - totalBytes)) == -1, FileOpenError, "unable to read log file '%s'",
+            logFile);
 
         totalBytes += (size_t)actualBytes;
     }
     while (actualBytes != 0);
 
-    if (close(handle) == -1)                                                                    // {uncovered - no errors in test}
-        THROW_SYS_ERROR_FMT(FileOpenError, "unable to close log file '%s'", logFile);           // {+uncovered}
+    THROW_ON_SYS_ERROR_FMT(close(handle) == -1, FileOpenError, "unable to close log file '%s'", logFile);
 
     // Remove final linefeed
     buffer[totalBytes - 1] = 0;

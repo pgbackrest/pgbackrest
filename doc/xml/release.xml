@@ -114,6 +114,10 @@
                     <release-item>
                         <p>Add <code>cfgOptionUInt()</code> and <code>cfgOptionUInt64()</code> and update code to use them.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Use <code>THROW_ON_SYS_ERROR*()</code> to improve code coverage.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

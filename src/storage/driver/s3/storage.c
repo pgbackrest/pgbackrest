@@ -107,9 +107,9 @@ storageDriverS3DateTime(time_t authTime)
 
     char buffer[ISO_8601_DATE_TIME_SIZE + 1];
 
-    if (strftime(                                                                   // {uncoverable - nothing invalid can be passed}
-            buffer, sizeof(buffer), "%Y%m%dT%H%M%SZ", gmtime(&authTime)) != ISO_8601_DATE_TIME_SIZE)
-        THROW_SYS_ERROR(AssertError, "unable to format date");                      // {+uncoverable}
+    THROW_ON_SYS_ERROR(
+        strftime(buffer, sizeof(buffer), "%Y%m%dT%H%M%SZ", gmtime(&authTime)) != ISO_8601_DATE_TIME_SIZE, AssertError,
+        "unable to format date");
 
     FUNCTION_TEST_RETURN(strNew(buffer));
 }
