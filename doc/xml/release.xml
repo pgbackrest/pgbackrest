@@ -50,6 +50,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Expose handle (file descriptor) from <code>IoWrite</code> when applicable.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>iniSave()</code> and <code>iniMove()</code> to <code>Ini</code> object.</p>
                     </release-item>
 

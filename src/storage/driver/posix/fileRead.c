@@ -65,6 +65,7 @@ storageDriverPosixFileReadNew(StorageDriverPosix *storage, const String *name, b
         this->io = ioReadNewP(
             this, .eof = (IoReadInterfaceEof)storageDriverPosixFileReadEof,
             .close = (IoReadInterfaceClose)storageDriverPosixFileReadClose,
+            .handle = (IoReadInterfaceHandle)storageDriverPosixFileReadHandle,
             .open = (IoReadInterfaceOpen)storageDriverPosixFileReadOpen, .read = (IoReadInterfaceRead)storageDriverPosixFileRead);
     }
     MEM_CONTEXT_NEW_END();
@@ -177,6 +178,21 @@ storageDriverPosixFileReadEof(const StorageDriverPosixFileRead *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->eof);
+}
+
+/***********************************************************************************************************************************
+Get handle (file descriptor)
+***********************************************************************************************************************************/
+int
+storageDriverPosixFileReadHandle(const StorageDriverPosixFileRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->handle);
 }
 
 /***********************************************************************************************************************************

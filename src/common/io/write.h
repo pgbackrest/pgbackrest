@@ -32,6 +32,7 @@ Getters/Setters
 ***********************************************************************************************************************************/
 const IoFilterGroup *ioWriteFilterGroup(const IoWrite *this);
 void ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup);
+int ioWriteHandle(const IoWrite *this);
 
 /***********************************************************************************************************************************
 Destructor

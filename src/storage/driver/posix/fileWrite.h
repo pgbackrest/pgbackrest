@@ -35,6 +35,7 @@ Getters
 bool storageDriverPosixFileWriteAtomic(const StorageDriverPosixFileWrite *this);
 bool storageDriverPosixFileWriteCreatePath(const StorageDriverPosixFileWrite *this);
 mode_t storageDriverPosixFileWriteModeFile(const StorageDriverPosixFileWrite *this);
+int storageDriverPosixFileWriteHandle(const StorageDriverPosixFileWrite *this);
 StorageFileWrite* storageDriverPosixFileWriteInterface(const StorageDriverPosixFileWrite *this);
 IoWrite *storageDriverPosixFileWriteIo(const StorageDriverPosixFileWrite *this);
 mode_t storageDriverPosixFileWriteModePath(const StorageDriverPosixFileWrite *this);

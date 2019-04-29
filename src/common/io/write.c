@@ -288,6 +288,23 @@ ioWriteFilterGroupSet(IoWrite *this, IoFilterGroup *filterGroup)
 }
 
 /***********************************************************************************************************************************
+Handle (file descriptor) for the write object
+
+No all write objects have a handle and -1 will be returned in that case.
+***********************************************************************************************************************************/
+int
+ioWriteHandle(const IoWrite *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_LOG_RETURN(INT, this->interface.handle == NULL ? -1 : this->interface.handle(this->driver));
+}
+
+/***********************************************************************************************************************************
 Free the object
 ***********************************************************************************************************************************/
 void

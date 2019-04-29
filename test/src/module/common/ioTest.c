@@ -497,6 +497,7 @@ testRun(void)
                 MEM_CONTEXT_TEMP_END();
 
                 ioWriteOpen(ioHandleWriteIo(write));
+                TEST_RESULT_INT(ioWriteHandle(ioHandleWriteIo(write)), write->handle, "check write handle");
 
                 // Write a line to be read
                 TEST_RESULT_VOID(ioWriteStrLine(ioHandleWriteIo(write), strNew("test string 1")), "write test string");

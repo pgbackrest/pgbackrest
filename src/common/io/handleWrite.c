@@ -38,7 +38,8 @@ ioHandleWriteNew(const String *name, int handle)
     {
         this = memNew(sizeof(IoHandleWrite));
         this->memContext = memContextCurrent();
-        this->io = ioWriteNewP(this, .write = (IoWriteInterfaceWrite)ioHandleWrite);
+        this->io = ioWriteNewP(
+            this, .handle = (IoWriteInterfaceHandle)ioHandleWriteHandle, .write = (IoWriteInterfaceWrite)ioHandleWrite);
         this->name = strDup(name);
         this->handle = handle;
     }
@@ -84,6 +85,21 @@ ioHandleWriteMove(IoHandleWrite *this, MemContext *parentNew)
         memContextMove(this->memContext, parentNew);
 
     FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
+Get handle (file descriptor)
+***********************************************************************************************************************************/
+int
+ioHandleWriteHandle(const IoHandleWrite *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_HANDLE_WRITE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->handle);
 }
 
 /***********************************************************************************************************************************

@@ -30,6 +30,7 @@ void storageDriverPosixFileReadClose(StorageDriverPosixFileRead *this);
 Getters
 ***********************************************************************************************************************************/
 bool storageDriverPosixFileReadEof(const StorageDriverPosixFileRead *this);
+int storageDriverPosixFileReadHandle(const StorageDriverPosixFileRead *this);
 bool storageDriverPosixFileReadIgnoreMissing(const StorageDriverPosixFileRead *this);
 StorageFileRead *storageDriverPosixFileReadInterface(const StorageDriverPosixFileRead *this);
 IoRead *storageDriverPosixFileReadIo(const StorageDriverPosixFileRead *this);

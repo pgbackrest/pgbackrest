@@ -631,6 +631,8 @@ testRun(void)
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileName)))), 0, "create read file");
 
         TEST_RESULT_BOOL(ioReadOpen(storageFileReadIo(file)), true, "    open file");
+        TEST_RESULT_INT(
+            ioReadHandle(storageFileReadIo(file)), ((StorageDriverPosixFileRead *)file->driver)->handle, "check read handle");
         TEST_RESULT_VOID(ioReadClose(storageFileReadIo(file)), "    close file");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -655,6 +657,8 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
+        TEST_RESULT_INT(
+            ioWriteHandle(storageFileWriteIo(file)), ((StorageDriverPosixFileWrite *)file->driver)->handle, "check write handle");
         TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
         TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
         TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0640, "    check file mode");

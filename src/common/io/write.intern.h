@@ -10,12 +10,14 @@ IO Write Interface Internal
 Constructor
 ***********************************************************************************************************************************/
 typedef void (*IoWriteInterfaceClose)(void *driver);
+typedef int (*IoWriteInterfaceHandle)(void *driver);
 typedef void (*IoWriteInterfaceOpen)(void *driver);
 typedef void (*IoWriteInterfaceWrite)(void *driver, const Buffer *buffer);
 
 typedef struct IoWriteInterface
 {
     IoWriteInterfaceClose close;
+    IoWriteInterfaceHandle handle;
     IoWriteInterfaceOpen open;
     IoWriteInterfaceWrite write;
 } IoWriteInterface;

@@ -91,6 +91,7 @@ storageDriverPosixFileWriteNew(
 
         this->io = ioWriteNewP(
             this, .close = (IoWriteInterfaceClose)storageDriverPosixFileWriteClose,
+            .handle = (IoWriteInterfaceHandle)storageDriverPosixFileWriteHandle,
             .open = (IoWriteInterfaceOpen)storageDriverPosixFileWriteOpen,
             .write = (IoWriteInterfaceWrite)storageDriverPosixFileWrite);
 
@@ -237,6 +238,21 @@ storageDriverPosixFileWriteCreatePath(const StorageDriverPosixFileWrite *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->createPath);
+}
+
+/***********************************************************************************************************************************
+Get handle (file descriptor)
+***********************************************************************************************************************************/
+int
+storageDriverPosixFileWriteHandle(const StorageDriverPosixFileWrite *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->handle);
 }
 
 /***********************************************************************************************************************************
