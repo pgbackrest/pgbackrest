@@ -665,10 +665,10 @@ testRun(void)
             "unable to open '%s' for write: [13] Permission denied", strPtr(fileNoPerm));
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .user = strNew("bogus")), "new write file (bogus user)");
-        TEST_ERROR(ioWriteOpen(storageFileWriteIo(file)), UserMissingError, "unable to find user 'bogus': [0] Success");
+        TEST_ERROR(ioWriteOpen(storageFileWriteIo(file)), UserMissingError, "unable to find user 'bogus'");
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .group = strNew("bogus")), "new write file (bogus group)");
-        TEST_ERROR(ioWriteOpen(storageFileWriteIo(file)), GroupMissingError, "unable to find group 'bogus': [0] Success");
+        TEST_ERROR(ioWriteOpen(storageFileWriteIo(file)), GroupMissingError, "unable to find group 'bogus'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(

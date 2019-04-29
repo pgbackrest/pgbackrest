@@ -52,6 +52,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Don't append <code>strerror()</code> to error message when <code>errno</code> is 0.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>ioWriteStr()</code> and <code>ioWriteStrLine()</code>.</p>
                     </release-item>
 
