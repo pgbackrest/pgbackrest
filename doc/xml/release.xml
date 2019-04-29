@@ -140,7 +140,7 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="brunre01"/>
-                            <release-item-ideator id="jwpit"/>
+                            <release-item-ideator id="jens.wilke"/>
                             <release-item-ideator id="tomasz.kontusz"/>
                             <release-item-ideator id="guruguruguru"/>
                         </release-item-contributor-list>
@@ -7009,11 +7009,6 @@
         <contributor id="jungle-boogie">
             <contributor-name-display>jungle-boogie</contributor-name-display>
             <contributor-id type="github">jungle-boogie</contributor-id>
-        </contributor>
-
-        <contributor id="jwpit">
-            <contributor-name-display>jwpit</contributor-name-display>
-            <contributor-id type="github">jwpit</contributor-id>
         </contributor>
 
         <contributor id="keith.fiske">
