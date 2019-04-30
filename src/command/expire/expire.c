@@ -93,11 +93,43 @@ typedef struct ArchiveRange
     const String *stop;
 } ArchiveRange;
 
+static void
+expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupExpired)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_TEST_PARAM(STRING, removeBackupLabel);
+        FUNCTION_TEST_PARAM(STRING, backupExpired);
+    FUNCTION_TEST_END();
+
+    ASSERT(infoBackup != NULL);
+    ASSERT(removeBackupLabel != NULL);
+    ASSERT(backupExpired != NULL);
+
+// CSHANG Maybe expose INI_COPY_EXT in info.c/.h vs hardcode .copy, but David is working on manifest and there may be a different way of handling the file
+    storageRemoveNP(
+        storageRepoWrite(),
+        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(removeBackupLabel), INFO_MANIFEST_FILE));
+
+    storageRemoveNP(
+        storageRepoWrite(),
+        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(removeBackupLabel), INFO_MANIFEST_FILE ".copy"));
+
+    // Remove the backup from the info file
+    infoBackupDataDelete(infoBackup, removeBackupLabel);
+
+    if (strSize(backupExpired) == 0)
+        strCat(backupExpired, strPtr(removeBackupLabel));
+    else
+        strCatFmt(backupExpired, ", %s", strPtr(removeBackupLabel));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Expire differential backups
 ***********************************************************************************************************************************/
-static void
+static unsigned int
 expireDiffBackup(InfoBackup *infoBackup)
 {
     FUNCTION_TEST_BEGIN();
@@ -106,72 +138,65 @@ expireDiffBackup(InfoBackup *infoBackup)
 
     ASSERT(infoBackup != NULL);
 
-    // ??? Retention options will need to be indexed
-    unsigned int differentialRetention = cfgOptionTest(cfgOptRepoRetentionDiff) ?
-        (unsigned int) cfgOptionInt(cfgOptRepoRetentionDiff) : 0;
+    unsigned int result = 0;
 
-    // Find all the expired differential backups
-    if (differentialRetention > 0)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get a list of full and differential backups. Full are considered differential for the purpose of retention.
-        // Example: F1, D1, D2, F2, repo-retention-diff=2, then F1,D2,F2 will be retained, not D2 and D1 as might be expected.
-        StringList *currentBackupList = infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true, .differential = true));
+        // ??? Retention options will need to be indexed
+        unsigned int differentialRetention = cfgOptionTest(cfgOptRepoRetentionDiff) ?
+            (unsigned int) cfgOptionInt(cfgOptRepoRetentionDiff) : 0;
 
-        // If there are more full backups then the number to retain, then expire the oldest ones
-        if (strLstSize(currentBackupList) > differentialRetention)
+        // Find all the expired differential backups
+        if (differentialRetention > 0)
         {
-            for (unsigned int diffIdx = 0; diffIdx < strLstSize(currentBackupList) - differentialRetention; diffIdx++)
+            // Get a list of full and differential backups. Full are considered differential for the purpose of retention.
+            // Example: F1, D1, D2, F2, repo-retention-diff=2, then F1,D2,F2 will be retained, not D2 and D1 as might be expected.
+            StringList *currentBackupList = infoBackupDataLabelListP(
+                infoBackup, .filter = backupRegExpP(.full = true, .differential = true));
+
+            // If there are more full backups then the number to retain, then expire the oldest ones
+            if (strLstSize(currentBackupList) > differentialRetention)
             {
-                // Skip if this is a full backup.  Full backups only count as differential when deciding which differential
-                // backups to expire.
-                if (regExpMatchOne(backupRegExpP(.full = true), strLstGet(currentBackupList, diffIdx)))
-                    continue;
-
-                // Get a list of all differential and incremental backups
-                StringList *removeList = infoBackupDataLabelListP(
-                    infoBackup, .filter = backupRegExpP(.differential = true, .incremental = true));
-
-                // Initialize the log message
-                String *backupExpired = strNew("");
-
-                // Remove the manifest files in each directory and remove the backup from the current section of backup.info
-                for (unsigned int rmvIdx = 0; rmvIdx < strLstSize(removeList); rmvIdx++)
+                for (unsigned int diffIdx = 0; diffIdx < strLstSize(currentBackupList) - differentialRetention; diffIdx++)
                 {
-                    const String *removeBackupLabel = strLstGet(removeList, rmvIdx);
+                    // Skip if this is a full backup.  Full backups only count as differential when deciding which differential
+                    // backups to expire.
+                    if (regExpMatchOne(backupRegExpP(.full = true), strLstGet(currentBackupList, diffIdx)))
+                        continue;
 
-                    LOG_DEBUG("Expire process, checking %s for differential expiration",  strPtr(removeBackupLabel));
+                    // Get a list of all differential and incremental backups
+                    StringList *removeList = infoBackupDataLabelListP(
+                        infoBackup, .filter = backupRegExpP(.differential = true, .incremental = true));
 
-                    // Remove all differential and incremental backups before the oldest valid differential
-                    // (removeBackupLabel < oldest valid differential)
-                    if (strCmp(removeBackupLabel, strLstGet(currentBackupList, diffIdx + 1)) < 0)
+                    // Initialize the log message
+                    String *backupExpired = strNew("");
+
+                    // Remove the manifest files in each directory and remove the backup from the current section of backup.info
+                    for (unsigned int rmvIdx = 0; rmvIdx < strLstSize(removeList); rmvIdx++)
                     {
-// CSHANG Combine the remove, delete and updating backupExpired into a function since this is duplicate of code above in full
-                        storageRemoveNP(
-                            storageRepoWrite(),
-                            strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(removeBackupLabel), INFO_MANIFEST_FILE));
+                        String *removeBackupLabel = strLstGet(removeList, rmvIdx);
 
-// CSHANG Maybe expose INI_COPY_EXT in info.c/.h vs hardcode .copy, but David is working on manifest and there may be a different way of handling the file
-                        storageRemoveNP(
-                            storageRepoWrite(),
-                            strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(removeBackupLabel), INFO_MANIFEST_FILE ".copy"));
+                        LOG_DEBUG("Expire process, checking %s for differential expiration",  strPtr(removeBackupLabel));
 
-                        // Remove the backup from the info file
-                        infoBackupDataDelete(infoBackup, removeBackupLabel);
-
-                        if (strSize(backupExpired) == 0)
-                            strCat(backupExpired, strPtr(removeBackupLabel));
-                        else
-                            strCatFmt(backupExpired, ", %s", strPtr(removeBackupLabel));
+                        // Remove all differential and incremental backups before the oldest valid differential
+                        // (removeBackupLabel < oldest valid differential)
+                        if (strCmp(removeBackupLabel, strLstGet(currentBackupList, diffIdx + 1)) < 0)
+                        {
+                            expireBackup(infoBackup, removeBackupLabel, backupExpired);
+                            result++;
+                        }
                     }
-                }
 
-                // If the message contains a comma, then prepend "set:"
-                LOG_INFO(
-                    "expire diff backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
+                    // If the message contains a comma, then prepend "set:"
+                    LOG_INFO(
+                        "expire diff backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
+                }
             }
         }
     }
-    FUNCTION_TEST_RETURN_VOID();
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -188,59 +213,48 @@ expireFullBackup(InfoBackup *infoBackup)
 
     unsigned int result = 0;
 
-    // ??? Retention options will need to be indexed
-    unsigned int fullRetention = cfgOptionTest(cfgOptRepoRetentionFull) ?
-        (unsigned int) cfgOptionInt(cfgOptRepoRetentionFull) : 0;
-
-    // Find all the expired full backups
-    if (fullRetention > 0)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get list of current full backups (default order is oldest to newest)
-        StringList *currentBackupList = infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true));
+        // ??? Retention options will need to be indexed
+        unsigned int fullRetention = cfgOptionTest(cfgOptRepoRetentionFull) ?
+            (unsigned int) cfgOptionInt(cfgOptRepoRetentionFull) : 0;
 
-        // If there are more full backups then the number to retain, then expire the oldest ones
-        if (strLstSize(currentBackupList) > fullRetention)
+        // Find all the expired full backups
+        if (fullRetention > 0)
         {
-            // Expire all backups that depend on the full backup
-            for (unsigned int fullIdx = 0; fullIdx < strLstSize(currentBackupList) - fullRetention; fullIdx++)
+            // Get list of current full backups (default order is oldest to newest)
+            StringList *currentBackupList = infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true));
+
+            // If there are more full backups then the number to retain, then expire the oldest ones
+            if (strLstSize(currentBackupList) > fullRetention)
             {
-                // The list of backups to remove includes the full backup and the default sort order will put it first
-                StringList *removeList = infoBackupDataLabelListP(
-                    infoBackup, .filter = strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList, fullIdx))));
-
-                // Initialize the log message
-                String *backupExpired = strNew("");
-
-                // Remove the manifest files in each directory and remove the backup from the current section of backup.info
-                for (unsigned int rmvIdx = 0; rmvIdx < strLstSize(removeList); rmvIdx++)
+                // Expire all backups that depend on the full backup
+                for (unsigned int fullIdx = 0; fullIdx < strLstSize(currentBackupList) - fullRetention; fullIdx++)
                 {
-                    const String *removeBackupLabel = strLstGet(removeList, rmvIdx);
+                    // The list of backups to remove includes the full backup and the default sort order will put it first
+                    StringList *removeList = infoBackupDataLabelListP(
+                        infoBackup, .filter = strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList, fullIdx))));
 
-                    storageRemoveNP(
-                        storageRepoWrite(),
-                        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(removeBackupLabel), INFO_MANIFEST_FILE));
+                    // Initialize the log message
+                    String *backupExpired = strNew("");
 
-// CSHANG Maybe expose INI_COPY_EXT in info.c/.h vs hardcode .copy, but David is working on manifest and there may be a different way of handling the file
-                    storageRemoveNP(
-                        storageRepoWrite(),
-                        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(removeBackupLabel), INFO_MANIFEST_FILE ".copy"));
+                    // Remove the manifest files in each directory and remove the backup from the current section of backup.info
+                    for (unsigned int rmvIdx = 0; rmvIdx < strLstSize(removeList); rmvIdx++)
+                    {
+                        String *removeBackupLabel = strLstGet(removeList, rmvIdx);
+                        expireBackup(infoBackup, removeBackupLabel, backupExpired);
+                        result++;
+                    }
 
-                    // Remove the backup from the info file
-                    infoBackupDataDelete(infoBackup, removeBackupLabel);
-                    result++;
-
-                    if (strSize(backupExpired) == 0)
-                        strCat(backupExpired, strPtr(removeBackupLabel));
-                    else
-                        strCatFmt(backupExpired, ", %s", strPtr(removeBackupLabel));
+                    // If the message contains a comma, then prepend "set:"
+                    LOG_INFO(
+                        "expire full backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
                 }
-
-                // If the message contains a comma, then prepend "set:"
-                LOG_INFO(
-                    "expire full backup %s%s", (strChr(backupExpired, ',') != -1 ? "set: " : ""), strPtr(backupExpired));
             }
         }
     }
+    MEM_CONTEXT_TEMP_END();
+
     FUNCTION_TEST_RETURN(result);
 }
 
@@ -628,7 +642,9 @@ removeExpiredBackup(InfoBackup *infoBackup)
         if (!strLstExists(currentBackupList, strLstGet(backupList, backupIdx)))
         {
             LOG_INFO("remove expired backup %s", strPtr(strLstGet(backupList, backupIdx)));
-            storagePathRemoveP(storageRepoWrite(), strLstGet(backupList, backupIdx), .recurse = true);
+            storagePathRemoveP(
+                storageRepoWrite(),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s", strPtr(strLstGet(backupList, backupIdx))), .recurse = true);
         }
     }
 
