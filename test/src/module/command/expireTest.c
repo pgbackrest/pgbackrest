@@ -99,47 +99,44 @@ testRun(void)
 //     // *****************************************************************************************************************************
 //     if (testBegin("cmdExpire()"))
 //     {
-//         storagePathCreateNP(storageLocalWrite(), archivePath);
-//         storagePathCreateNP(storageLocalWrite(), backupPath);
-//         storagePathCreateNP(storageLocalWrite(), backupStanzaPath);
-//         storagePathCreateNP(storageLocalWrite(), archiveStanzaPath);
-//
-        // // Create backup directories and manifest files
-        // String *full1 = strNewFmt("%s/%s", strPtr(backupStanzaPath), "20181119-152138F");
-        // String *full2 = strNewFmt("%s/%s", strPtr(backupStanzaPath), "20181119-152800F");
-        // String *full2Diff1 = strNewFmt("%s/%s", strPtr(backupStanzaPath), "20181119-152800F_20181119-152152D");
-        // String *full2Incr1 = strNewFmt("%s/%s", strPtr(backupStanzaPath), "20181119-152800F_20181119-152155I");
-        // String *full3 = strNewFmt("%s/%s", strPtr(backupStanzaPath), "20181119-152900F");
-        // String *full3Diff2 = strNewFmt("%s/%s", strPtr(backupStanzaPath), "20181119-152900F_20181119-152600D");
+        // // Load Parameters
+        // StringList *argList = strLstDup(argListBase);
+        // strLstAddZ(argList, "--repo1-retention-full=1");  // avoid warning
+        // harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
         //
+        // // Create backup.info
+        // storagePutNP(storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(backupInfoBase));
+        //
+        // InfoBackup *infoBackup = NULL;
+        // TEST_ASSIGN(
+        //     infoBackup,
+        //     infoBackupNew(storageTest, backupInfoFileName, false, cipherTypeNone, NULL),
+        //     "get backup.info");
+
+        // Create backup directories and manifest files
+        // String *full1 = strNew("20181119-152138F");
+        // String *full2 = strNew("20181119-152800F");
+        // String *full2Diff1 = strNew("20181119-152800F_20181119-152152D");
+        // String *full2Incr1 = strNew("20181119-152800F_20181119-152155I");
+        // String *full3 = strNew("20181119-152900F");
+
+        // String *full1Path = strNewFmt("%s/%s", strPtr(backupStanzaPath), strPtr(full1));
+        // String *full2Path = strNewFmt("%s/%s", strPtr(backupStanzaPath), strPtr(full2));
+        // String *full2Diff1Path = strNewFmt("%s/%s", strPtr(backupStanzaPath), strPtr(full2Diff1));
+        // String *full2Incr1Path = strNewFmt("%s/%s", strPtr(backupStanzaPath), strPtr(full2Incr1));
+        // String *full3Path = strNewFmt("%s/%s", strPtr(backupStanzaPath), strPtr(full3));
         // TEST_RESULT_VOID(
-        //     storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1), INFO_MANIFEST_FILE)),
-        //         BUFSTRDEF(BOGUS_STR)), "put manifest");
+        //     storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full2Diff1Path), INFO_MANIFEST_FILE)),
+        //         BUFSTRDEF(BOGUS_STR)), "full2Diff1 put only manifest - no copy");
         // TEST_RESULT_VOID(
-        //     storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1), INFO_MANIFEST_FILE ".copy")),
-        //         BUFSTRDEF(BOGUS_STR)), "put manifest copy");
+        //     storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full2Incr1Path), INFO_MANIFEST_FILE ".copy")),
+        //         BUFSTRDEF(BOGUS_STR)), "full2Incr1 put only manifest copy");
         // TEST_RESULT_VOID(
-        //     storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full2Diff1), INFO_MANIFEST_FILE)),
-        //         BUFSTRDEF(BOGUS_STR)), "put only manifest - no copy");
+        //     storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full3Path), INFO_MANIFEST_FILE)),
+        //         BUFSTRDEF(BOGUS_STR)), "full3 put manifest");
         // TEST_RESULT_VOID(
-        //     storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full2Incr1), INFO_MANIFEST_FILE ".copy")),
-        //         BUFSTRDEF(BOGUS_STR)), "put only manifest copy");
-//
-//         storagePathCreateNP(storageLocalWrite(), full1);
-//         storagePathCreateNP(storageLocalWrite(), full1Diff1);
-//         storagePathCreateNP(storageLocalWrite(), full1Incr1);
-//         storagePathCreateNP(storageLocalWrite(), full1Diff2);
-//         storagePathCreateNP(storageLocalWrite(), full2);
-//         storagePathCreateNP(storageLocalWrite(), full3);
-//
-//         system(strPtr(strNewFmt("touch %s/%s", strPtr(full1), INFO_MANIFEST_FILE)));
-//         system(strPtr(strNewFmt("touch %s/%s", strPtr(full1), INFO_MANIFEST_FILE ".copy")));
-//         system(strPtr(strNewFmt("touch %s/%s", strPtr(full1Diff1), INFO_MANIFEST_FILE)));
-//         system(strPtr(strNewFmt("touch %s/%s", strPtr(full1Incr1), INFO_MANIFEST_FILE ".copy")));
-//         system(strPtr(strNewFmt("touch %s/%s", strPtr(full1Diff2), INFO_MANIFEST_FILE)));
-//         system(strPtr(strNewFmt("touch %s/%s", strPtr(full1Diff2), INFO_MANIFEST_FILE ".copy")));
-//         system(strPtr(strNewFmt("touch %s/%s", strPtr(full2), INFO_MANIFEST_FILE)));
-//         system(strPtr(strNewFmt("touch %s/%s", strPtr(full2), INFO_MANIFEST_FILE ".copy")));
+        //     storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full3Path), INFO_MANIFEST_FILE ".copy")),
+        //         BUFSTRDEF(BOGUS_STR)), "full3 put manifest copy");
 //
 //         String *backupContent = strNew
 //         (
@@ -274,7 +271,7 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=1");  // surpress warning
+        strLstAddZ(argList, "--repo1-retention-full=1");  // avoid warning
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // Create backup.info
@@ -289,15 +286,8 @@ testRun(void)
         // Create backup directories and manifest files
         String *full1 = strNew("20181119-152138F");
         String *full2 = strNew("20181119-152800F");
-        String *full2Diff1 = strNew("20181119-152800F_20181119-152152D");
-        String *full2Incr1 = strNew("20181119-152800F_20181119-152155I");
-        String *full3 = strNew("20181119-152900F");
-
         String *full1Path = strNewFmt("%s/%s", strPtr(backupStanzaPath), strPtr(full1));
         String *full2Path = strNewFmt("%s/%s", strPtr(backupStanzaPath), strPtr(full2));
-        String *full2Diff1Path = strNewFmt("%s/%s", strPtr(backupStanzaPath), strPtr(full2Diff1));
-        String *full2Incr1Path = strNewFmt("%s/%s", strPtr(backupStanzaPath), strPtr(full2Incr1));
-        String *full3Path = strNewFmt("%s/%s", strPtr(backupStanzaPath), strPtr(full3));
 
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1Path), INFO_MANIFEST_FILE)),
@@ -309,18 +299,6 @@ testRun(void)
             storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1Path), "bogus")),
                 BUFSTRDEF(BOGUS_STR)), "full1 put extra file");
         TEST_RESULT_VOID(storagePathCreateNP(storageTest, full2Path), "full2 empty");
-        TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full2Diff1Path), INFO_MANIFEST_FILE)),
-                BUFSTRDEF(BOGUS_STR)), "full2Diff1 put only manifest - no copy");
-        TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full2Incr1Path), INFO_MANIFEST_FILE ".copy")),
-                BUFSTRDEF(BOGUS_STR)), "full2Incr1 put only manifest copy");
-        TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full3Path), INFO_MANIFEST_FILE)),
-                BUFSTRDEF(BOGUS_STR)), "full3 put manifest");
-        TEST_RESULT_VOID(
-            storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full3Path), INFO_MANIFEST_FILE ".copy")),
-                BUFSTRDEF(BOGUS_STR)), "full3 put manifest copy");
 
         String *backupExpired = strNew("");
 
@@ -328,10 +306,14 @@ testRun(void)
         TEST_RESULT_BOOL(
             (strLstSize(storageListNP(storageTest, full1Path)) && strLstExistsZ(storageListNP(storageTest, full1Path), "bogus")),
             true, "  full1 - only manifest files removed");
-// CSHANG Need to finish these
-        TEST_RESULT_VOID(expireBackup(infoBackup, full2Incr1, backupExpired), "expire backup with manifest copy only");
-        TEST_RESULT_VOID(expireBackup(infoBackup, full2Diff1, backupExpired), "expire backup with manifest only");
-        TEST_RESULT_VOID(expireBackup(infoBackup, full2, backupExpired), "expire backup with no manifest");
+
+        TEST_RESULT_VOID(expireBackup(infoBackup, full2, backupExpired), "expire backup with no manifest - does not error");
+
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(infoBackupDataLabelListP(infoBackup), ", ")),
+                "20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I, 20181119-152900F, "
+                "20181119-152900F_20181119-152600D",
+            "only backups passed to expireBackup are removed from backup:current");
     }
 
     // *****************************************************************************************************************************
@@ -535,16 +517,37 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("removeExpiredArchive()"))
+    {
+        // Load Parameters
+        StringList *argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-retention-full=1");  // avoid warning
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // Create backup.info
+        storagePutNP(storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(backupInfoBase));
+
+        InfoBackup *infoBackup = NULL;
+        TEST_ASSIGN(
+            infoBackup,
+            infoBackupNew(storageTest, backupInfoFileName, false, cipherTypeNone, NULL),
+            "get backup.info");
+// CSHANG Problem - in C archive retention is being defaulted
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention not set");
+        harnessLogResult("P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("sortArchiveId()"))
     {
         StringList *list = strLstNew();
 
-        strLstAddZ(list, "11-10");
         strLstAddZ(list, "10-4");
-        strLstAddZ(list, "9.4-2");
+        strLstAddZ(list, "11-10");
         strLstAddZ(list, "9.6-1");
 
-        TEST_RESULT_STR(strPtr(strLstJoin(sortArchiveId(list, sortOrderAsc), ", ")), "9.6-1, 9.4-2, 10-4, 11-10", "sort ascending");
+        TEST_RESULT_STR(strPtr(strLstJoin(sortArchiveId(list, sortOrderAsc), ", ")), "9.6-1, 10-4, 11-10", "sort ascending");
+                strLstAddZ(list, "9.4-2");
         TEST_RESULT_STR(
             strPtr(strLstJoin(sortArchiveId(list, sortOrderDesc), ", ")), "11-10, 10-4, 9.4-2, 9.6-1", "sort descending");
     }

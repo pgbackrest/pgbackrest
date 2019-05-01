@@ -33,13 +33,7 @@ archiveIdAscComparator(const void *item1, const void *item2)
     int int1 = atoi(strPtr(strLstGet(archiveSort1, 1)));
     int int2 = atoi(strPtr(strLstGet(archiveSort2, 1)));
 
-    if (int1 < int2)
-        return -1;
-
-    if (int1 > int2)
-        return 1;
-
-    return 0;
+    return (int1 - int2);
 }
 
 static int
@@ -50,13 +44,7 @@ archiveIdDescComparator(const void *item1, const void *item2)
     int int1 = atoi(strPtr(strLstGet(archiveSort1, 1)));
     int int2 = atoi(strPtr(strLstGet(archiveSort2, 1)));
 
-    if (int1 > int2)
-        return -1;
-
-    if (int1 < int2)
-        return 1;
-
-    return 0;
+    return (int2 - int1);
 }
 
 static StringList *
@@ -277,7 +265,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
             cfgOptionTest(cfgOptRepoRetentionArchiveType) ? cfgOptionStr(cfgOptRepoRetentionArchiveType) : NULL;
         unsigned int archiveRetention = cfgOptionTest(cfgOptRepoRetentionArchive) ?
             (unsigned int) cfgOptionInt(cfgOptRepoRetentionArchive) : 0;
-
+LOG_INFO("ARCHIVE-RETENT: %u", (unsigned int) cfgOptionTest(cfgOptRepoRetentionArchive));
         // If archive retention is undefined, then ignore archiving. The user does not have to set this - it will be defaulted in
         // cfgLoadUpdateOption based on certain rules.
         if (archiveRetention == 0)
@@ -287,20 +275,20 @@ removeExpiredArchive(InfoBackup *infoBackup)
         else
         {
             StringList *globalBackupRetentionList = NULL;
-    // CSHANG Need to have global constants for these not hardcoded full, diff, incr
+
             // Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
             // remaining non-expired backups, from newest to oldest, based on the type.
-            if (strCmp(archiveRetentionType, STRDEF("full")) == 0)
+            if (strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL)) == 0)
             {
                 globalBackupRetentionList = strLstSort(
                     infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true)), sortOrderDesc);
             }
-            else if (strCmp(archiveRetentionType, STRDEF("diff")) == 0)
+            else if (strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF)) == 0)
             {
                 globalBackupRetentionList = strLstSort(
                     infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true, .differential = true)), sortOrderDesc);
             }
-            else if (strCmp(archiveRetentionType, STRDEF("incr")) == 0)
+            else if (strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR)) == 0)
             {
                 globalBackupRetentionList = strLstSort(
                     infoBackupDataLabelListP(
@@ -414,7 +402,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                         // forever.
                         else
                         {
-                            if ((strCmp(archiveRetentionType, STRDEF("full")) == 0) &&
+                            if ((strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL)) == 0) &&
                                 (strLstSize(localBackupRetentionList) > 0))
                             {
                                 LOG_INFO(
@@ -661,8 +649,6 @@ cmdExpire(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-// CSHANG Where to define constants (numbers and strings) for config stuff like MIN/MAX and "full", "diff", "incr"
-
         // Load the backup.info
         InfoBackup *infoBackup = infoBackupNew(
             storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE), false,
