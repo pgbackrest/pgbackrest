@@ -487,9 +487,13 @@ libc/xs/storage/storage.xs:
   class: core
   type: xs
 
-src/Makefile:
+src/Makefile.in:
   class: build
   type: make
+
+src/build.auto.h.in:
+  class: core
+  type: c/h
 
 src/command/archive/common.c:
   class: core
@@ -1074,6 +1078,14 @@ src/config/protocol.c:
 src/config/protocol.h:
   class: core
   type: c/h
+
+src/configure:
+  class: build
+  type: make
+
+src/configure.ac:
+  class: build
+  type: make
 
 src/info/info.c:
   class: core

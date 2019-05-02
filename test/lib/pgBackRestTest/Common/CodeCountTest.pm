@@ -79,7 +79,8 @@ sub codeCountScan
         {
             $strClass = 'doc/core';
         }
-        elsif ($strFile =~ '^build/' || $strFile =~ '^libc/build/' || $strFile eq 'libc/Makefile.PL' || $strFile eq 'src/Makefile')
+        elsif ($strFile =~ '^build/' || $strFile =~ '^libc/build/' || $strFile eq 'libc/Makefile.PL' ||
+               $strFile eq 'src/Makefile.in' || $strFile eq 'src/configure' || $strFile eq 'src/configure.ac')
         {
             $strClass = 'build';
         }
@@ -109,7 +110,7 @@ sub codeCountScan
             $strType = 'xs';
             $strForceLang = 'XS';
         }
-        elsif ($strFile =~ '\.h$' || $strFile =~ '\.xsh$')
+        elsif ($strFile =~ '\.h$' || $strFile =~ '\.h\.in$' || $strFile =~ '\.xsh$')
         {
             $strType = 'c/h';
             $strForceLang = 'C/C++ Header';
@@ -129,7 +130,7 @@ sub codeCountScan
             $strType = 'yaml';
             $strForceLang = 'YAML';
         }
-        elsif ($strFile =~ 'Makefile$')
+        elsif ($strFile =~ 'Makefile\.in$' || $strFile =~ '^src\/configure')
         {
             $strType = 'make';
             $strForceLang = 'make';
