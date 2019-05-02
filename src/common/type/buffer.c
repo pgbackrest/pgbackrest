@@ -24,6 +24,7 @@ Contains information about the buffer
 struct Buffer
 {
     BUFFER_COMMON                                                   // Variables that are common to static and dynamic buffers
+    unsigned char *buffer;                                          // Internal buffer
     MemContext *memContext;                                         // Mem context for dynamic buffers
 };
 
@@ -60,11 +61,11 @@ bufNew(size_t size)
 Create a new buffer from a C buffer
 ***********************************************************************************************************************************/
 Buffer *
-bufNewC(size_t size, const void *buffer)
+bufNewC(const void *buffer, size_t size)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(SIZE, size);
         FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
     ASSERT(buffer != NULL);
@@ -72,6 +73,50 @@ bufNewC(size_t size, const void *buffer)
     // Create object and copy data
     Buffer *this = bufNew(size);
     memcpy(this->buffer, buffer, this->size);
+    this->used = this->size;
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
+Create a new buffer using the provided C buffer instead of creating one
+
+Note that this type of buffer cannot be resized.
+***********************************************************************************************************************************/
+Buffer *
+bufNewUseC(void *buffer, size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
+
+    // Create object and copy data
+    Buffer *this = bufNew(0);
+    this->buffer = buffer;
+    this->size = size;
+    this->fixedSize = true;
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
+Duplicate a buffer
+***********************************************************************************************************************************/
+Buffer *
+bufDup(const Buffer *buffer)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, buffer);
+    FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
+
+    // Create object and copy data
+    Buffer *this = bufNew(buffer->used);
+    memcpy(this->buffer, buffer->buffer, this->size);
     this->used = this->size;
 
     FUNCTION_TEST_RETURN(this);
@@ -189,7 +234,7 @@ bufHex(const Buffer *this)
 
     String *result = strNew("");
 
-    for (unsigned int bufferIdx = 0; bufferIdx < bufSize(this); bufferIdx++)
+    for (unsigned int bufferIdx = 0; bufferIdx < bufUsed(this); bufferIdx++)
         strCatFmt(result, "%02x", this->buffer[bufferIdx]);
 
     FUNCTION_TEST_RETURN(result);
@@ -230,6 +275,9 @@ bufResize(Buffer *this, size_t size)
     // Only resize if it the new size is different
     if (this->size != size)
     {
+        if (this->fixedSize)
+            THROW(AssertError, "fixed size buffer cannot be resized");
+
         // If new size is zero then free memory if allocated
         if (size == 0)
         {

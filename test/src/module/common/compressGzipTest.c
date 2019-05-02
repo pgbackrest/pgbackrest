@@ -27,8 +27,8 @@ testCompress(GzipCompress *compress, Buffer *decompressed, size_t inputSize, siz
     {
         // Generate the input buffer based on input size.  This breaks the data up into chunks as it would be in a real scenario.
         Buffer *input = bufNewC(
-            inputSize > bufSize(decompressed) - inputTotal ? bufSize(decompressed) - inputTotal : inputSize,
-            bufPtr(decompressed) + inputTotal);
+            bufPtr(decompressed) + inputTotal,
+            inputSize > bufSize(decompressed) - inputTotal ? bufSize(decompressed) - inputTotal : inputSize);
 
         ioWrite(write, input);
 
@@ -108,7 +108,7 @@ testRun(void)
     {
         const char *simpleData = "A simple string";
         Buffer *compressed = NULL;
-        Buffer *decompressed = bufNewC(strlen(simpleData), simpleData);
+        Buffer *decompressed = bufNewC(simpleData, strlen(simpleData));
 
         TEST_ASSIGN(
             compressed, testCompress(gzipCompressNew(3, false), decompressed, 1024, 1024),

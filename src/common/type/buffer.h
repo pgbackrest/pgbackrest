@@ -16,7 +16,10 @@ typedef struct Buffer Buffer;
 Functions
 ***********************************************************************************************************************************/
 Buffer *bufNew(size_t size);
-Buffer *bufNewC(size_t size, const void *buffer);
+Buffer *bufNewC(const void *buffer, size_t size);
+Buffer *bufNewUseC(void *buffer, size_t size);
+
+Buffer *bufDup(const Buffer *buffer);
 
 Buffer *bufCat(Buffer *this, const Buffer *cat);
 Buffer *bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize);
@@ -49,13 +52,16 @@ functions that process dynamically allocated buffers.
 #define BUFFER_COMMON                                                                                                              \
     size_t size;                                                    /* Actual size of buffer */                                    \
     bool limitSet;                                                  /* Has a limit been set? */                                    \
+    bool fixedSize;                                                 /* Is this a fixed size buffer? */                             \
     size_t limit;                                                   /* Make the buffer appear smaller */                           \
-    size_t used;                                                    /* Amount of buffer used */                                    \
-    unsigned char *buffer;                                          /* Buffer allocation */
+    size_t used;                                                    /* Amount of buffer used */
 
 typedef struct BufferConst
 {
     BUFFER_COMMON
+
+    // This version of buffer is for const macro assignments because casting can be dangerous
+    const void *buffer;
 } BufferConst;
 
 /***********************************************************************************************************************************

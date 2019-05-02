@@ -152,7 +152,7 @@ ioTestFilterMultiplyProcess(IoTestFilterMultiply *this, const Buffer *input, Buf
         else
         {
             char flushZ[] = {this->flushChar, 0};
-            bufCat(output, bufNewC(1, flushZ));
+            bufCat(output, bufNewC(flushZ, 1));
             this->flushTotal--;
         }
     }
@@ -280,7 +280,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(2);
         buffer = bufNew(2);
-        bufferOriginal = bufNewC(3, "123");
+        bufferOriginal = bufNewC("123", 3);
 
         MEM_CONTEXT_TEMP_BEGIN()
         {

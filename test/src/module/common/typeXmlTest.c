@@ -13,7 +13,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("xml*()"))
     {
-        TEST_ERROR(xmlDocumentNewBuf(bufNewC(strlen(BOGUS_STR), BOGUS_STR)), FormatError, "invalid xml");
+        TEST_ERROR(xmlDocumentNewBuf(bufNewC(BOGUS_STR, strlen(BOGUS_STR))), FormatError, "invalid xml");
 
         XmlDocument *xmlDocument = NULL;
         TEST_ASSIGN(

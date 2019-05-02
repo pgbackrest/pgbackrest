@@ -181,7 +181,7 @@ testRun(void)
 
         bufUsedZero(decryptBuffer);
 
-        ioFilterProcessInOut(blockDecryptFilter, bufNewC(CIPHER_BLOCK_MAGIC_SIZE, bufPtr(encryptBuffer)), decryptBuffer);
+        ioFilterProcessInOut(blockDecryptFilter, bufNewC(bufPtr(encryptBuffer), CIPHER_BLOCK_MAGIC_SIZE), decryptBuffer);
         TEST_RESULT_INT(bufUsed(decryptBuffer), 0, "no decrypt since header read is not complete");
         TEST_RESULT_BOOL(blockDecrypt->saltDone, false, "salt done is false");
         TEST_RESULT_BOOL(blockDecrypt->processDone, false, "process done is false");
@@ -190,7 +190,7 @@ testRun(void)
             memcmp(blockDecrypt->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) == 0, true, "check header magic");
 
         ioFilterProcessInOut(
-            blockDecryptFilter, bufNewC(PKCS5_SALT_LEN, bufPtr(encryptBuffer) + CIPHER_BLOCK_MAGIC_SIZE), decryptBuffer);
+            blockDecryptFilter, bufNewC(bufPtr(encryptBuffer) + CIPHER_BLOCK_MAGIC_SIZE, PKCS5_SALT_LEN), decryptBuffer);
         TEST_RESULT_INT(bufUsed(decryptBuffer), 0, "no decrypt since no data processed yet");
         TEST_RESULT_BOOL(blockDecrypt->saltDone, true, "salt done is true");
         TEST_RESULT_BOOL(blockDecrypt->processDone, false, "process done is false");
@@ -203,7 +203,7 @@ testRun(void)
 
         ioFilterProcessInOut(
             blockDecryptFilter,
-            bufNewC(bufUsed(encryptBuffer) - CIPHER_BLOCK_HEADER_SIZE, bufPtr(encryptBuffer) + CIPHER_BLOCK_HEADER_SIZE),
+            bufNewC(bufPtr(encryptBuffer) + CIPHER_BLOCK_HEADER_SIZE, bufUsed(encryptBuffer) - CIPHER_BLOCK_HEADER_SIZE),
             decryptBuffer);
         TEST_RESULT_INT(bufUsed(decryptBuffer), EVP_CIPHER_block_size(blockDecrypt->cipher), "decrypt size is one block");
 

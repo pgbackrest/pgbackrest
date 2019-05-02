@@ -498,7 +498,7 @@ xmlDocumentBuf(const XmlDocument *this)
     int xmlSize;
 
     xmlDocDumpMemoryEnc(this->xml, &xml, &xmlSize, XML_ENCODING_TYPE_UTF8);
-    Buffer *result = bufNewC((unsigned int)xmlSize, xml);
+    Buffer *result = bufNewC(xml, (size_t)xmlSize);
     xmlFree(xml);
 
     FUNCTION_TEST_RETURN(result);

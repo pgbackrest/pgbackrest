@@ -163,6 +163,7 @@ cryptoHash(CryptoHash *this)
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             this->hash = bufNew((size_t)EVP_MD_size(this->hashType));
+            bufUsedSet(this->hash, bufSize(this->hash));
 
             cryptoError(!EVP_DigestFinal_ex(this->hashContext, bufPtr(this->hash), NULL), "unable to finalize message hash");
 
@@ -257,7 +258,7 @@ cryptoHashOneC(const String *type, const unsigned char *message, size_t messageS
         cryptoHashProcessC(hash, message, messageSize);
 
         memContextSwitch(MEM_CONTEXT_OLD());
-        result = bufNewC(bufSize(cryptoHash(hash)), bufPtr(cryptoHash(hash)));
+        result = bufDup(cryptoHash(hash));
         memContextSwitch(MEM_CONTEXT_TEMP());
     }
     MEM_CONTEXT_TEMP_END();
@@ -320,9 +321,10 @@ cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
 
     // Allocate a buffer to hold the hmac
     Buffer *result = bufNew((size_t)EVP_MD_size(hashType));
+    bufUsedSet(result, bufSize(result));
 
     // Calculate the HMAC
-    HMAC(hashType, bufPtr(key), (int)bufSize(key), bufPtr(message), bufSize(message), bufPtr(result), NULL);
+    HMAC(hashType, bufPtr(key), (int)bufUsed(key), bufPtr(message), bufUsed(message), bufPtr(result), NULL);
 
     FUNCTION_TEST_RETURN(result);
 }
