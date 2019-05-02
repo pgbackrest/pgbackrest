@@ -18,6 +18,9 @@ testRun(void)
 
     String *backupStanzaPath = strNew("repo/backup/db");
     String *backupInfoFileName = strNewFmt("%s/backup.info", strPtr(backupStanzaPath));
+    String *archiveStanzaPath = strNew("repo/archive/db");
+    String *archiveInfoFileName = strNewFmt("%s/archive.info", strPtr(archiveStanzaPath));
+
     StringList *argListBase = strLstNew();
     strLstAddZ(argListBase, "pgbackrest");
     strLstAddZ(argListBase, "--stanza=db");
@@ -137,133 +140,38 @@ testRun(void)
         // TEST_RESULT_VOID(
         //     storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full3Path), INFO_MANIFEST_FILE ".copy")),
         //         BUFSTRDEF(BOGUS_STR)), "full3 put manifest copy");
+// Here's the problem: given the following backup.info
 //
-//         String *backupContent = strNew
-//         (
-//             "[backrest]\n"
-//             "backrest-checksum=\"03b699df7362ce202995231c9060c88e6939e481\"\n"
-//             "backrest-format=5\n"
-//             "backrest-version=\"2.08dev\"\n"
-//             "\n"
-//             "[backup:current]\n"
-//             "20181119-152138F={"
-//             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-//             "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
-//             "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-//             "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-//             "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-//             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-//             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-//             "20181119-152138F_20181119-152152D={"
-//             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000003\","
-//             "\"backup-archive-stop\":\"000000010000000000000003\",\"backup-info-repo-size\":2369186,"
-//             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-//             "\"backup-prior\":\"20181119-152138F\",\"backup-reference\":[\"20181119-152138F\"],"
-//             "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
-//             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-//             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-//             "20181119-152138F_20181119-152155I={"
-//             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000004\","
-//             "\"backup-archive-stop\":\"000000010000000000000004\",\"backup-info-repo-size\":2369186,"
-//             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-//             "\"backup-prior\":\"20181119-152138F_20181119-152152D\","
-//             "\"backup-reference\":[\"20181119-152138F\",\"20181119-152138F_20181119-152152D\"],"
-//             "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"incr\","
-//             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-//             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-//             "20181119-152138F_20181119-152600D={"
-//             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000005\","
-//             "\"backup-archive-stop\":\"000000010000000000000005\",\"backup-info-repo-size\":2369186,"
-//             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-//             "\"backup-prior\":\"20181119-152138F\",\"backup-reference\":[\"20181119-152138F\"],"
-//             "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
-//             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-//             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-//             "20181119-152800F={"
-//             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-//             "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
-//             "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-//             "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-//             "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-//             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-//             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-//             "20181119-152900F={"
-//             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-//             "\"backup-archive-start\":\"000000010000000000000007\",\"backup-archive-stop\":\"000000010000000000000007\","
-//             "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-//             "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-//             "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-//             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-//             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-//             "20181119-152900F_20181119-152600D={"
-//             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000008\","
-//             "\"backup-archive-stop\":\"000000010000000000000008\",\"backup-info-repo-size\":2369186,"
-//             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-//             "\"backup-prior\":\"20181119-152138F\",\"backup-reference\":[\"20181119-152900F\"],"
-//             "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
-//             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-//             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-//             "\n"
-//             "[db]\n"
-//             "db-catalog-version=201510051\n"
-//             "db-control-version=942\n"
-//             "db-id=2\n"
-//             "db-system-id=6626363367545678089\n"
-//             "db-version=\"9.5\"\n"
-//             "\n"
-//             "[db:history]\n"
-//             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-//                 "\"db-version\":\"9.4\"}\n"
-//             "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
-//                 "\"db-version\":\"9.5\"}\n"
-//         );
+// [backup:current]
+// [BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000000000000C","backup-archive-stop":"00000001000000000000000E","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-backup-standby":false,"option-checksum-page":true,"option-compress":true,"option-hardlink":false,"option-online":true}
+// [BACKUP-FULL-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":2,"option-archive-check":true,"option-archive-copy":false,"option-backup-standby":false,"option-checksum-page":true,"option-compress":true,"option-hardlink":false,"option-online":true}
+// [BACKUP-FULL-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":3,"option-archive-check":true,"option-archive-copy":false,"option-backup-standby":false,"option-checksum-page":true,"option-compress":true,"option-hardlink":false,"option-online":true}
 //
-//         TEST_RESULT_VOID(
-//             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/backup.info", strPtr(backupStanzaPath))),
-//                 BUFSTR(backupContent)), "put backup info to file");
+// [db]
+// db-catalog-version=201204301
+// db-control-version=922
+// db-id=3
+// db-system-id=1000000000000000092
+// db-version="9.2"
 //
-//         String *archiveContent = strNew
-//         (
-//             "[backrest]\n"
-//             "backrest-checksum=\"075a202d42c3b6a0257da5f73a68fa77b342f777\"\n"
-//             "backrest-format=5\n"
-//             "backrest-version=\"2.08dev\"\n"
-//             "\n"
-//             "[db]\n"
-//             "db-id=2\n"
-//             "db-system-id=6626363367545678089\n"
-//             "db-version=\"9.5\"\n"
-//             "\n"
-//             "[db:history]\n"
-//             "1={\"db-id\":6625592122879095702,"
-//                 "\"db-version\":\"9.4\"}\n"
-//             "2={\"db-id\":6626363367545678089,"
-//                 "\"db-version\":\"9.5\"}\n"
-//         );
+// [db:history]
+// 1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+// 2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+// 3={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 //
-//         TEST_RESULT_VOID(
-//             storagePutNP(storageNewWriteNP(storageLocalWrite(), strNewFmt("%s/archive.info", strPtr(archiveStanzaPath))),
-//                 BUFSTR(archiveContent)), "put archive info to file");
+// The code is looking at BACKUP-FULL-5 for 9.2-1 when it should be looking at BACKUP-FULL-3 to remove the archive prior to "backup-archive-start":"00000001000000000000000C"
 //
-//         StringList *argList = strLstNew();
-//         strLstAddZ(argList, "pgbackrest");
-//         strLstAdd(argList, strNewFmt("--stanza=%s", strPtr(stanza)));
-//         strLstAdd(argList, strNewFmt("--repo-path=%s", strPtr(repoPath)));
-//         strLstAddZ(argList, "--repo1-retention-full=1");
-//         strLstAddZ(argList, "expire");
-//         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+// P00 DETAIL: archive retention on backup [BACKUP-FULL-5], archiveId = 9.2-1, start = 000000010000000000000000
+// P00 DETAIL: no archive to remove, archiveId = 9.2-1
+// P00 DETAIL: archive retention on backup [BACKUP-FULL-4], archiveId = 9.3-2, start = 000000010000000000000000
+// P00 DETAIL: no archive to remove, archiveId = 9.3-2
+// P00 DETAIL: archive retention on backup [BACKUP-FULL-5], archiveId = 9.2-3, start = 000000010000000000000000
+// P00 DETAIL: no archive to remove, archiveId = 9.2-3
 //
-// // CSHANG First test should be Nothing is expired? Or maybe that should be the last
+// So I need to fix this in the C code. I also need to see how this behaves in the info command since it appears I don't have a test for for this scenario there either.
+
 //         TEST_RESULT_VOID(cmdExpire(), "expire");
-//
-// // CSHANG Test that only the direcories matching the regex of full, incr or diff are removed - maybe create a file with a FULL exp then _save then make sure it is not deleted but the full fir of the same name is. Also, confirm recursion
-//
-        // TEST_RESULT_VOID(
-        //     storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1), INFO_MANIFEST_FILE)),
-        //         BUFSTRDEF(BOGUS_STR)), "put manifest");
-        // TEST_RESULT_VOID(
-        //     storagePutNP(storageNewWriteNP(storageTest, strNewFmt("%s/%s", strPtr(full1), INFO_MANIFEST_FILE ".copy")),
-        //         BUFSTRDEF(BOGUS_STR)), "put manifest copy");
+
 //     }
 
     // *****************************************************************************************************************************
@@ -521,20 +429,137 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=1");  // avoid warning
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        // Create backup.info
-        storagePutNP(storageNewWriteNP(storageTest, backupInfoFileName), harnessInfoChecksum(backupInfoBase));
+        // Create backup.info without current backups
+        storagePutNP(
+            storageNewWriteNP(storageTest, backupInfoFileName),
+            harnessInfoChecksumZ(
+                "[db]\n"
+                "db-catalog-version=201409291\n"
+                "db-control-version=942\n"
+                "db-id=1\n"
+                "db-system-id=6625592122879095702\n"
+                "db-version=\"9.4\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+                    "\"db-version\":\"9.4\"}"));
 
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(
             infoBackup,
             infoBackupNew(storageTest, backupInfoFileName, false, cipherTypeNone, NULL),
             "get backup.info");
-// CSHANG Problem - in C archive retention is being defaulted
+
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention not set");
-        harnessLogResult("P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired");
+        harnessLogResult(
+            "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), "
+            "set option 'repo1-retention-full' to the maximum.\n"
+            "P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Set archive retention, archive retention type default but no current backups
+        strLstAddZ(argList, "--repo1-retention-archive=3");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention set, retention type default, no current backups");
+        harnessLogResult(
+            "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), "
+            "set option 'repo1-retention-full' to the maximum.");
+
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        strLstAddZ(argList, "--repo1-retention-full=1"); // avoid warning
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        // Create backup.info with current backups
+        storagePutNP(storageNewWriteNP(storageTest, backupInfoFileName),
+            harnessInfoChecksumZ(
+                "[backup:current]\n"
+                "20181119-152138F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152800F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000005\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152800F_20181119-152152D={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000007\","
+                "\"backup-archive-stop\":\"000000010000000000000007\",\"backup-info-repo-size\":2369186,"
+                "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+                "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
+                "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152800F_20181119-152155I={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000009\","
+                "\"backup-archive-stop\":\"000000010000000000000009\",\"backup-info-repo-size\":2369186,"
+                "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+                "\"backup-prior\":\"20181119-152800F_20181119-152152D\","
+                "\"backup-reference\":[\"20181119-152800F\",\"20181119-152800F_20181119-152152D\"],"
+                "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"incr\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152900F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000010000000000000011\",\"backup-archive-stop\":\"000000010000000000000011\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152900F_20181119-152600D={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000013\","
+                "\"backup-archive-stop\":\"000000010000000000000013\",\"backup-info-repo-size\":2369186,"
+                "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+                "\"backup-prior\":\"20181119-152138F\",\"backup-reference\":[\"20181119-152900F\"],"
+                "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "\n"
+                "[db]\n"
+                "db-catalog-version=201510051\n"
+                "db-control-version=942\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"9.5\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+                    "\"db-version\":\"9.4\"}\n"
+                "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
+                    "\"db-version\":\"9.5\"}\n"));
+
+        TEST_ASSIGN(
+            infoBackup,
+            infoBackupNew(storageTest, backupInfoFileName, false, cipherTypeNone, NULL),
+            "get backup.info");
+
+        storagePutNP(
+            storageNewWriteNP(storageTest, archiveInfoFileName),
+            harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"9.5\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
+                "2={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}"));
+
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "no archive on disk");
     }
 
     // *****************************************************************************************************************************

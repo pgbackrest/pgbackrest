@@ -3,27 +3,24 @@ Expire Command
 ***********************************************************************************************************************************/
 #include "command/archive/common.h"
 #include "command/backup/common.h"
+#include "common/type/list.h"
 #include "common/debug.h"
 #include "common/regExp.h"
 #include "config/config.h"
+#include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
+#include "info/infoManifest.h"
 #include "storage/helper.h"
 
-// CSHANG These are for the archiveId sort function but maybe the functions should go in stringList.c/.h? I think they only should go there if there is another use case or maybe go in the command/backup/common.c file? Or maybe we need an info/common.c file
 #include <stdlib.h>
-#include "common/type/list.h"
 
-// CSHANG Need to decide if this needs to be a structure and if so if it needs to be instantiated or just variables in cmdExpire
-struct ArchiveExpired
+typedef struct ArchiveExpired
 {
     uint64_t total;
     String *start;
     String *stop;
-};
-
-// CSHANG Putting manifest here until plans are finalized for new manifest
-#define INFO_MANIFEST_FILE                                           "backup.manifest"
+} ArchiveExpired;
 
 static int
 archiveIdAscComparator(const void *item1, const void *item2)
@@ -48,31 +45,31 @@ archiveIdDescComparator(const void *item1, const void *item2)
 }
 
 static StringList *
-sortArchiveId(StringList *this, SortOrder sortOrder)
+sortArchiveId(StringList *sortString, SortOrder sortOrder)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-        FUNCTION_TEST_PARAM(ENUM, sortOrder);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING_LIST, sortString);
+        FUNCTION_LOG_PARAM(ENUM, sortOrder);
+    FUNCTION_LOG_END();
 
-    ASSERT(this != NULL);
+    ASSERT(sortString != NULL);
 
     switch (sortOrder)
     {
         case sortOrderAsc:
         {
-            lstSort((List *)this, archiveIdAscComparator);
+            lstSort((List *)sortString, archiveIdAscComparator);
             break;
         }
 
         case sortOrderDesc:
         {
-            lstSort((List *)this, archiveIdDescComparator);
+            lstSort((List *)sortString, archiveIdDescComparator);
             break;
         }
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_LOG_RETURN(STRING_LIST, sortString);
 }
 
 typedef struct ArchiveRange
@@ -84,24 +81,23 @@ typedef struct ArchiveRange
 static void
 expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupExpired)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_BACKUP, infoBackup);
-        FUNCTION_TEST_PARAM(STRING, removeBackupLabel);
-        FUNCTION_TEST_PARAM(STRING, backupExpired);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(STRING, removeBackupLabel);
+        FUNCTION_LOG_PARAM(STRING, backupExpired);
+    FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
     ASSERT(removeBackupLabel != NULL);
     ASSERT(backupExpired != NULL);
 
-// CSHANG Maybe expose INI_COPY_EXT in info.c/.h vs hardcode .copy, but David is working on manifest and there may be a different way of handling the file
     storageRemoveNP(
         storageRepoWrite(),
         strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(removeBackupLabel), INFO_MANIFEST_FILE));
 
     storageRemoveNP(
         storageRepoWrite(),
-        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(removeBackupLabel), INFO_MANIFEST_FILE ".copy"));
+        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strPtr(removeBackupLabel), INFO_MANIFEST_FILE INFO_COPY_EXT));
 
     // Remove the backup from the info file
     infoBackupDataDelete(infoBackup, removeBackupLabel);
@@ -111,7 +107,7 @@ expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupEx
     else
         strCatFmt(backupExpired, ", %s", strPtr(removeBackupLabel));
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -120,9 +116,9 @@ Expire differential backups
 static unsigned int
 expireDiffBackup(InfoBackup *infoBackup)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_BACKUP, infoBackup);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+    FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
 
@@ -184,7 +180,7 @@ expireDiffBackup(InfoBackup *infoBackup)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_LOG_RETURN(UINT, result);
 }
 
 /***********************************************************************************************************************************
@@ -193,9 +189,9 @@ Expire full backups
 static unsigned int
 expireFullBackup(InfoBackup *infoBackup)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_BACKUP, infoBackup);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+    FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
 
@@ -243,7 +239,24 @@ expireFullBackup(InfoBackup *infoBackup)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_LOG_RETURN(UINT, result);
+}
+
+/***********************************************************************************************************************************
+logExpire
+***********************************************************************************************************************************/
+void
+logExpire(ArchiveExpired *archiveExpire, String *archiveId)
+{
+    if (archiveExpire->start != NULL)
+    {
+        // Force out any remaining message
+        LOG_DETAIL(
+            "remove archive: archiveId = %s, start = %s, stop = %s",
+            archiveId, strPtr(archiveExpire->start), strPtr(archiveExpire->stop));
+
+        archiveExpire->start = NULL;
+    }
 }
 
 /***********************************************************************************************************************************
@@ -252,20 +265,19 @@ Process archive retention
 static void
 removeExpiredArchive(InfoBackup *infoBackup)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_BACKUP, infoBackup);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug); // cshang make these all debug level
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+    FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the retention options
-        const String *archiveRetentionType =
-            cfgOptionTest(cfgOptRepoRetentionArchiveType) ? cfgOptionStr(cfgOptRepoRetentionArchiveType) : NULL;
+        // Get the retention options. repo-archive-retention-type always has a value as it defaults to "full"
+        const String *archiveRetentionType = cfgOptionStr(cfgOptRepoRetentionArchiveType);
         unsigned int archiveRetention = cfgOptionTest(cfgOptRepoRetentionArchive) ?
             (unsigned int) cfgOptionInt(cfgOptRepoRetentionArchive) : 0;
-LOG_INFO("ARCHIVE-RETENT: %u", (unsigned int) cfgOptionTest(cfgOptRepoRetentionArchive));
+
         // If archive retention is undefined, then ignore archiving. The user does not have to set this - it will be defaulted in
         // cfgLoadUpdateOption based on certain rules.
         if (archiveRetention == 0)
@@ -286,7 +298,8 @@ LOG_INFO("ARCHIVE-RETENT: %u", (unsigned int) cfgOptionTest(cfgOptRepoRetentionA
             else if (strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF)) == 0)
             {
                 globalBackupRetentionList = strLstSort(
-                    infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true, .differential = true)), sortOrderDesc);
+                    infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true, .differential = true)),
+                    sortOrderDesc);
             }
             else if (strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR)) == 0)
             {
@@ -328,7 +341,7 @@ LOG_INFO("ARCHIVE-RETENT: %u", (unsigned int) cfgOptionTest(cfgOptRepoRetentionA
                     StringList *localBackupRetentionList = strLstNew();
 
                     // Initialize the expired archive information for this archive ID
-                    struct ArchiveExpired archiveExpire = {.total = 0, .start = NULL, .stop = NULL};
+                    ArchiveExpired archiveExpire = {.total = 0, .start = NULL, .stop = NULL};
 
                     for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(listArchiveDisk); archiveIdx++)
                     {
@@ -567,32 +580,17 @@ LOG_INFO("ARCHIVE-RETENT: %u", (unsigned int) cfgOptionTest(cfgOptRepoRetentionA
                                                 archiveExpire.start = strDup(strSubN(walSubPath, 0, 24));
                                         }
                                         else
-                                        {
-                                            if (archiveExpire.start != NULL)
-                                            {
-                                                LOG_DETAIL(
-                                                    "remove archive: archiveId = %s, start = %s, stop = %s",
-                                                    archiveId, strPtr(archiveExpire.start), strPtr(archiveExpire.stop));
-
-                                                archiveExpire.start = NULL;
-                                            }
-                                        }
+                                            logExpire(&archiveExpire, archiveId);
                                     }
                                 }
                             }
-    // CSHANG Must figure out how to deal with the logging:
-                        // Log if no archive was expired
+
+                            // Log if no archive was expired
                             if (archiveExpire.total == 0)
                                 LOG_DETAIL("no archive to remove, archiveId = %s", strPtr(archiveId));
-                            else if (archiveExpire.start != NULL)
-                            {
-                                // Force out any remaining message
-                                LOG_DETAIL(
-                                    "remove archive: archiveId = %s, start = %s, stop = %s",
-                                    archiveId, strPtr(archiveExpire.start), strPtr(archiveExpire.stop));
-
-                                archiveExpire.start = NULL;
-                            }
+                            // Log if there is more to log
+                            else
+                                logExpire(&archiveExpire, archiveId);
                         }
                     }
                 }
@@ -601,7 +599,7 @@ LOG_INFO("ARCHIVE-RETENT: %u", (unsigned int) cfgOptionTest(cfgOptRepoRetentionA
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -610,9 +608,9 @@ Remove expired backups from repo
 static void
 removeExpiredBackup(InfoBackup *infoBackup)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_BACKUP, infoBackup);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+    FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
 
@@ -636,7 +634,7 @@ removeExpiredBackup(InfoBackup *infoBackup)
         }
     }
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
