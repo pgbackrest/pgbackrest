@@ -133,6 +133,21 @@ ioFilterDone(const IoFilter *this)
 }
 
 /***********************************************************************************************************************************
+Driver for the filter
+***********************************************************************************************************************************/
+void *
+ioFilterDriver(IoFilter *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_FILTER, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->driver);
+}
+
+/***********************************************************************************************************************************
 Does the filter need the same input again?
 
 If the filter cannot get all its output into the output buffer then it may need access to the same input again.
@@ -147,6 +162,21 @@ ioFilterInputSame(const IoFilter *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->interface.inputSame != NULL ? this->interface.inputSame(this->driver) : false);
+}
+
+/***********************************************************************************************************************************
+Interface for the filter
+***********************************************************************************************************************************/
+const IoFilterInterface *
+ioFilterInterface(const IoFilter *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_FILTER, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(&this->interface);
 }
 
 /***********************************************************************************************************************************
@@ -169,7 +199,7 @@ ioFilterOutput(const IoFilter *this)
 /***********************************************************************************************************************************
 Get filter result
 ***********************************************************************************************************************************/
-const Variant *
+Variant *
 ioFilterResult(const IoFilter *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -196,4 +226,20 @@ ioFilterType(const IoFilter *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->type);
+}
+
+/***********************************************************************************************************************************
+Free object
+***********************************************************************************************************************************/
+void
+ioFilterFree(IoFilter *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_FILTER, this);
+    FUNCTION_TEST_END();
+
+    if (this != NULL)
+        memContextFree(this->memContext);
+
+    FUNCTION_TEST_RETURN_VOID();
 }

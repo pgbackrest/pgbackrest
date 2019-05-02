@@ -17,7 +17,6 @@ typedef struct Exec Exec;
 #include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/time.h"
-#include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
 Constructor
@@ -28,17 +27,12 @@ Exec *execNew(const String *command, const StringList *param, const String *name
 Functions
 ***********************************************************************************************************************************/
 void execOpen(Exec *this);
-size_t execRead(Exec *this, Buffer *buffer, bool block);
-void execWrite(Exec *this, Buffer *buffer);
-
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-bool execEof(Exec *this);
 IoRead *execIoRead(const Exec *this);
 IoWrite *execIoWrite(const Exec *this);
 MemContext *execMemContext(const Exec *this);
-int execHandleRead(Exec *this);
 
 /***********************************************************************************************************************************
 Destructor

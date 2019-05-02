@@ -12,11 +12,12 @@ S3 Storage Driver
 #include "common/io/http/common.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/regExp.h"
 #include "common/type/xml.h"
 #include "storage/driver/s3/fileRead.h"
 #include "storage/driver/s3/fileWrite.h"
-#include "storage/driver/s3/storage.h"
+#include "storage/driver/s3/storage.intern.h"
 
 /***********************************************************************************************************************************
 Driver type constant string
@@ -72,7 +73,6 @@ Object type
 struct StorageDriverS3
 {
     MemContext *memContext;
-    Storage *interface;                                             // Driver interface
     HttpClient *httpClient;                                         // Http client to service requests
     const StringList *headerRedactList;                             // List of headers to redact from logging
 
@@ -182,7 +182,7 @@ storageDriverS3Auth(
         // Generate string to sign
         const String *stringToSign = strNewFmt(
             AWS4_HMAC_SHA256 "\n%s\n%s/%s/" S3 "/" AWS4_REQUEST "\n%s", strPtr(dateTime), strPtr(date), strPtr(this->region),
-            strPtr(bufHex(cryptoHashOneStr(HASH_TYPE_SHA256_STR, canonicalRequest))));
+            strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(canonicalRequest)))));
 
         // Generate signing key.  This key only needs to be regenerated every seven days but we'll do it once a day to keep the
         // logic simple.  It's a relatively expensive operation so we'd rather not do it for every request.
@@ -214,81 +214,6 @@ storageDriverS3Auth(
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
-StorageDriverS3 *
-storageDriverS3New(
-    const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    const String *endPoint, const String *region, const String *accessKey, const String *secretAccessKey,
-    const String *securityToken, size_t partSize, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer,
-    const String *caFile, const String *caPath)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, write);
-        FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
-        FUNCTION_LOG_PARAM(STRING, bucket);
-        FUNCTION_LOG_PARAM(STRING, endPoint);
-        FUNCTION_LOG_PARAM(STRING, region);
-        FUNCTION_TEST_PARAM(STRING, accessKey);
-        FUNCTION_TEST_PARAM(STRING, secretAccessKey);
-        FUNCTION_TEST_PARAM(STRING, securityToken);
-        FUNCTION_TEST_PARAM(SIZE, partSize);
-        FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(UINT, port);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-        FUNCTION_LOG_PARAM(BOOL, verifyPeer);
-        FUNCTION_LOG_PARAM(STRING, caFile);
-        FUNCTION_LOG_PARAM(STRING, caPath);
-    FUNCTION_LOG_END();
-
-    ASSERT(path != NULL);
-    ASSERT(bucket != NULL);
-    ASSERT(endPoint != NULL);
-    ASSERT(region != NULL);
-    ASSERT(accessKey != NULL);
-    ASSERT(secretAccessKey != NULL);
-
-    // Create the object
-    StorageDriverS3 *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("StorageDriverS3")
-    {
-        this = memNew(sizeof(StorageDriverS3));
-        this->memContext = MEM_CONTEXT_NEW();
-
-        this->bucket = strDup(bucket);
-        this->region = strDup(region);
-        this->accessKey = strDup(accessKey);
-        this->secretAccessKey = strDup(secretAccessKey);
-        this->securityToken = strDup(securityToken);
-        this->partSize = partSize;
-        this->host = host == NULL ? strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint)) : strDup(host);
-        this->port = port;
-
-        // Force the signing key to be generated on the first run
-        this->signingKeyDate = YYYYMMDD_STR;
-
-        // Create the storage interface
-        this->interface = storageNewP(
-            STORAGE_DRIVER_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, this,
-            .exists = (StorageInterfaceExists)storageDriverS3Exists, .info = (StorageInterfaceInfo)storageDriverS3Info,
-            .list = (StorageInterfaceList)storageDriverS3List, .newRead = (StorageInterfaceNewRead)storageDriverS3NewRead,
-            .newWrite = (StorageInterfaceNewWrite)storageDriverS3NewWrite,
-            .pathCreate = (StorageInterfacePathCreate)storageDriverS3PathCreate,
-            .pathRemove = (StorageInterfacePathRemove)storageDriverS3PathRemove,
-            .pathSync = (StorageInterfacePathSync)storageDriverS3PathSync, .remove = (StorageInterfaceRemove)storageDriverS3Remove);
-
-        // Create the http client used to service requests
-        this->httpClient = httpClientNew(this->host, this->port, timeout, verifyPeer, caFile, caPath);
-        this->headerRedactList = strLstAdd(strLstNew(), S3_HEADER_AUTHORIZATION_STR);
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(STORAGE_DRIVER_S3, this);
 }
 
 /***********************************************************************************************************************************
@@ -410,9 +335,11 @@ storageDriverS3Request(
 /***********************************************************************************************************************************
 Does a file exist? This function is only for files, not paths.
 ***********************************************************************************************************************************/
-bool
-storageDriverS3Exists(StorageDriverS3 *this, const String *path)
+static bool
+storageDriverS3Exists(THIS_VOID, const String *path)
 {
+    THIS(StorageDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -459,9 +386,11 @@ storageDriverS3Exists(StorageDriverS3 *this, const String *path)
 /***********************************************************************************************************************************
 File/path info
 ***********************************************************************************************************************************/
-StorageInfo
-storageDriverS3Info(StorageDriverS3 *this, const String *file, bool ignoreMissing, bool followLink)
+static StorageInfo
+storageDriverS3Info(THIS_VOID, const String *file, bool ignoreMissing, bool followLink)
 {
+    THIS(StorageDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
@@ -481,9 +410,11 @@ storageDriverS3Info(StorageDriverS3 *this, const String *file, bool ignoreMissin
 /***********************************************************************************************************************************
 Get a list of files from a directory
 ***********************************************************************************************************************************/
-StringList *
-storageDriverS3List(StorageDriverS3 *this, const String *path, bool errorOnMissing, const String *expression)
+static StringList *
+storageDriverS3List(THIS_VOID, const String *path, bool errorOnMissing, const String *expression)
 {
+    THIS(StorageDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -608,9 +539,11 @@ storageDriverS3List(StorageDriverS3 *this, const String *path, bool errorOnMissi
 /***********************************************************************************************************************************
 New file read object
 ***********************************************************************************************************************************/
-StorageFileRead *
-storageDriverS3NewRead(StorageDriverS3 *this, const String *file, bool ignoreMissing)
+static StorageFileRead *
+storageDriverS3NewRead(THIS_VOID, const String *file, bool ignoreMissing)
 {
+    THIS(StorageDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
@@ -620,18 +553,19 @@ storageDriverS3NewRead(StorageDriverS3 *this, const String *file, bool ignoreMis
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    FUNCTION_LOG_RETURN(
-        STORAGE_FILE_READ, storageDriverS3FileReadInterface(storageDriverS3FileReadNew(this, file, ignoreMissing)));
+    FUNCTION_LOG_RETURN(STORAGE_FILE_READ, storageFileReadDriverS3New(this, file, ignoreMissing));
 }
 
 /***********************************************************************************************************************************
 New file write object
 ***********************************************************************************************************************************/
-StorageFileWrite *
+static StorageFileWrite *
 storageDriverS3NewWrite(
-    StorageDriverS3 *this, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
+    THIS_VOID, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
     time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic)
 {
+    THIS(StorageDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
@@ -653,8 +587,7 @@ storageDriverS3NewWrite(
     ASSERT(group == NULL);
     ASSERT(timeModified == 0);
 
-    FUNCTION_LOG_RETURN(
-        STORAGE_FILE_WRITE, storageDriverS3FileWriteInterface(storageDriverS3FileWriteNew(this, file, this->partSize)));
+    FUNCTION_LOG_RETURN(STORAGE_FILE_WRITE, storageFileWriteDriverS3New(this, file, this->partSize));
 }
 
 /***********************************************************************************************************************************
@@ -662,9 +595,11 @@ Create a path
 
 There are no physical paths on S3 so just return success.
 ***********************************************************************************************************************************/
-void
-storageDriverS3PathCreate(StorageDriverS3 *this, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode)
+static void
+storageDriverS3PathCreate(THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode)
 {
+    THIS(StorageDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -683,9 +618,11 @@ storageDriverS3PathCreate(StorageDriverS3 *this, const String *path, bool errorO
 /***********************************************************************************************************************************
 Remove a path
 ***********************************************************************************************************************************/
-void
-storageDriverS3PathRemove(StorageDriverS3 *this, const String *path, bool errorOnMissing, bool recurse)
+static void
+storageDriverS3PathRemove(THIS_VOID, const String *path, bool errorOnMissing, bool recurse)
 {
+    THIS(StorageDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -706,9 +643,11 @@ Sync a path
 
 There's no need for this on S3 so just return success.
 ***********************************************************************************************************************************/
-void
-storageDriverS3PathSync(StorageDriverS3 *this, const String *path, bool ignoreMissing)
+static void
+storageDriverS3PathSync(THIS_VOID, const String *path, bool ignoreMissing)
 {
+    THIS(StorageDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -724,9 +663,11 @@ storageDriverS3PathSync(StorageDriverS3 *this, const String *path, bool ignoreMi
 /***********************************************************************************************************************************
 Remove a file
 ***********************************************************************************************************************************/
-void
-storageDriverS3Remove(StorageDriverS3 *this, const String *file, bool errorOnMissing)
+static void
+storageDriverS3Remove(THIS_VOID, const String *file, bool errorOnMissing)
 {
+    THIS(StorageDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
@@ -757,16 +698,71 @@ storageDriverS3HttpClient(const StorageDriverS3 *this)
 }
 
 /***********************************************************************************************************************************
-Get storage interface
+New object
 ***********************************************************************************************************************************/
 Storage *
-storageDriverS3Interface(const StorageDriverS3 *this)
+storageDriverS3New(
+    const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
+    const String *endPoint, const String *region, const String *accessKey, const String *secretAccessKey,
+    const String *securityToken, size_t partSize, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer,
+    const String *caFile, const String *caPath)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, this);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
+        FUNCTION_LOG_PARAM(STRING, bucket);
+        FUNCTION_LOG_PARAM(STRING, endPoint);
+        FUNCTION_LOG_PARAM(STRING, region);
+        FUNCTION_TEST_PARAM(STRING, accessKey);
+        FUNCTION_TEST_PARAM(STRING, secretAccessKey);
+        FUNCTION_TEST_PARAM(STRING, securityToken);
+        FUNCTION_TEST_PARAM(SIZE, partSize);
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(UINT, port);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+        FUNCTION_LOG_PARAM(BOOL, verifyPeer);
+        FUNCTION_LOG_PARAM(STRING, caFile);
+        FUNCTION_LOG_PARAM(STRING, caPath);
+    FUNCTION_LOG_END();
 
-    ASSERT(this != NULL);
+    ASSERT(path != NULL);
+    ASSERT(bucket != NULL);
+    ASSERT(endPoint != NULL);
+    ASSERT(region != NULL);
+    ASSERT(accessKey != NULL);
+    ASSERT(secretAccessKey != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface);
+    Storage *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("StorageDriverS3")
+    {
+        StorageDriverS3 *driver = memNew(sizeof(StorageDriverS3));
+        driver->memContext = MEM_CONTEXT_NEW();
+
+        driver->bucket = strDup(bucket);
+        driver->region = strDup(region);
+        driver->accessKey = strDup(accessKey);
+        driver->secretAccessKey = strDup(secretAccessKey);
+        driver->securityToken = strDup(securityToken);
+        driver->partSize = partSize;
+        driver->host = host == NULL ? strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint)) : strDup(host);
+        driver->port = port;
+
+        // Force the signing key to be generated on the first run
+        driver->signingKeyDate = YYYYMMDD_STR;
+
+        // Create the http client used to service requests
+        driver->httpClient = httpClientNew(driver->host, driver->port, timeout, verifyPeer, caFile, caPath);
+        driver->headerRedactList = strLstAdd(strLstNew(), S3_HEADER_AUTHORIZATION_STR);
+
+        this = storageNewP(
+            STORAGE_DRIVER_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver,
+            .exists = storageDriverS3Exists, .info = storageDriverS3Info, .list = storageDriverS3List,
+            .newRead = storageDriverS3NewRead, .newWrite = storageDriverS3NewWrite, .pathCreate = storageDriverS3PathCreate,
+            .pathRemove = storageDriverS3PathRemove, .pathSync = storageDriverS3PathSync, .remove = storageDriverS3Remove);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(STORAGE, this);
 }

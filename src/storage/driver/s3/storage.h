@@ -4,13 +4,6 @@ S3 Storage Driver
 #ifndef STORAGE_DRIVER_S3_STORAGE_H
 #define STORAGE_DRIVER_S3_STORAGE_H
 
-/***********************************************************************************************************************************
-Object type
-***********************************************************************************************************************************/
-typedef struct StorageDriverS3 StorageDriverS3;
-
-#include "common/io/http/client.h"
-#include "common/type/string.h"
 #include "storage/storage.intern.h"
 
 /***********************************************************************************************************************************
@@ -24,66 +17,15 @@ Defaults
 ***********************************************************************************************************************************/
 #define STORAGE_DRIVER_S3_PORT_DEFAULT                              443
 #define STORAGE_DRIVER_S3_TIMEOUT_DEFAULT                           60000
+#define STORAGE_DRIVER_S3_PARTSIZE_MIN                              ((size_t)5 * 1024 * 1024)
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-StorageDriverS3 *storageDriverS3New(
+Storage *storageDriverS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, const String *region, const String *accessKey, const String *secretAccessKey,
     const String *securityToken, size_t partSize, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer,
     const String *caFile, const String *caPath);
-
-/***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-bool storageDriverS3Exists(StorageDriverS3 *this, const String *path);
-StorageInfo storageDriverS3Info(StorageDriverS3 *this, const String *file, bool ignoreMissing, bool followLink);
-StringList *storageDriverS3List(StorageDriverS3 *this, const String *path, bool errorOnMissing, const String *expression);
-StorageFileRead *storageDriverS3NewRead(StorageDriverS3 *this, const String *file, bool ignoreMissing);
-StorageFileWrite *storageDriverS3NewWrite(
-    StorageDriverS3 *this, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
-    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic);
-void storageDriverS3PathCreate(StorageDriverS3 *this, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
-void storageDriverS3PathRemove(StorageDriverS3 *this, const String *path, bool errorOnMissing, bool recurse);
-void storageDriverS3PathSync(StorageDriverS3 *this, const String *path, bool ignoreMissing);
-void storageDriverS3Remove(StorageDriverS3 *this, const String *file, bool errorOnMissing);
-
-/***********************************************************************************************************************************
-Perform an S3 Request
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_DRIVER_S3_REQUEST_RESULT_TYPE                                                                         \
-    StorageDriverS3RequestResult
-#define FUNCTION_LOG_STORAGE_DRIVER_S3_REQUEST_RESULT_FORMAT(value, buffer, bufferSize)                                            \
-    objToLog(&value, "StorageDriverS3RequestResult", buffer, bufferSize)
-
-typedef struct StorageDriverS3RequestResult
-{
-    HttpHeader *responseHeader;
-    Buffer *response;
-} StorageDriverS3RequestResult;
-
-StorageDriverS3RequestResult storageDriverS3Request(
-    StorageDriverS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool returnContent,
-    bool allowMissing);
-
-/***********************************************************************************************************************************
-Getters
-***********************************************************************************************************************************/
-HttpClient *storageDriverS3HttpClient(const StorageDriverS3 *this);
-Storage *storageDriverS3Interface(const StorageDriverS3 *this);
-
-/***********************************************************************************************************************************
-Destructor
-***********************************************************************************************************************************/
-void storageDriverS3Free(StorageDriverS3 *this);
-
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_DRIVER_S3_TYPE                                                                                        \
-    StorageDriverS3 *
-#define FUNCTION_LOG_STORAGE_DRIVER_S3_FORMAT(value, buffer, bufferSize)                                                           \
-    objToLog(value, "StorageDriverS3", buffer, bufferSize)
 
 #endif

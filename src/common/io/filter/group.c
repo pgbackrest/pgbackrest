@@ -134,7 +134,7 @@ ioFilterGroupOpen(IoFilterGroup *this)
         // If the last filter is not an output filter then add a filter to buffer/copy data.  Input filters won't copy to an output
         // buffer so we need some way to get the data to the output buffer.
         if (lstSize(this->filterList) == 0 || !ioFilterOutput((ioFilterGroupGet(this, lstSize(this->filterList) - 1))->filter))
-            ioFilterGroupAdd(this, ioBufferFilter(ioBufferNew()));
+            ioFilterGroupAdd(this, ioBufferNew());
 
         // Create filter input/output buffers.  Input filters do not get an output buffer since they don't produce output.
         Buffer *lastOutputBuffer = NULL;

@@ -348,7 +348,7 @@ storageMove(const Storage *this, StorageFileRead *source, StorageFileWrite *dest
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If the file can't be moved it will need to be copied
-        if (!this->interface.move(this->driver, storageFileReadDriver(source), storageFileWriteFileDriver(destination)))
+        if (!this->interface.move(this->driver, source, destination))
         {
             // Perform the copy
             storageCopyNP(source, destination);

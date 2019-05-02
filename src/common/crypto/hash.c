@@ -14,6 +14,7 @@ Cryptographic Hash
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
@@ -31,125 +32,49 @@ STRING_EXTERN(HASH_TYPE_SHA256_STR,                                 HASH_TYPE_SH
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-struct CryptoHash
+typedef struct CryptoHash
 {
     MemContext *memContext;                                         // Context to store data
     const EVP_MD *hashType;                                         // Hash type (sha1, md5, etc.)
     EVP_MD_CTX *hashContext;                                        // Message hash context
     Buffer *hash;                                                   // Hash in binary form
-    IoFilter *filter;                                               // Filter interface
-};
+} CryptoHash;
 
 /***********************************************************************************************************************************
-New object
+Macros for function logging
 ***********************************************************************************************************************************/
-CryptoHash *
-cryptoHashNew(const String *type)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, type);
-    FUNCTION_LOG_END();
-
-    ASSERT(type != NULL);
-
-    // Init crypto subsystem
-    cryptoInit();
-
-    // Allocate memory to hold process state
-    CryptoHash *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("CryptoHash")
-    {
-        // Allocate state and set context
-        this = memNew(sizeof(CryptoHash));
-        this->memContext = MEM_CONTEXT_NEW();
-
-        // Lookup digest
-        if ((this->hashType = EVP_get_digestbyname(strPtr(type))) == NULL)
-            THROW_FMT(AssertError, "unable to load hash '%s'", strPtr(type));
-
-        // Create context
-        cryptoError((this->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
-
-        // Set free callback to ensure hash context is freed
-        memContextCallback(this->memContext, (MemContextCallback)cryptoHashFree, this);
-
-        // Initialize context
-        cryptoError(!EVP_DigestInit_ex(this->hashContext, this->hashType, NULL), "unable to initialize hash context");
-
-        // Create filter interface
-        this->filter = ioFilterNewP(
-            CRYPTO_HASH_FILTER_TYPE_STR, this, .in = (IoFilterInterfaceProcessIn)cryptoHashProcess,
-            .result = (IoFilterInterfaceResult)cryptoHashResult);
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(CRYPTO_HASH, this);
-}
+#define FUNCTION_LOG_CRYPTO_HASH_TYPE                                                                                              \
+    CryptoHash *
+#define FUNCTION_LOG_CRYPTO_HASH_FORMAT(value, buffer, bufferSize)                                                                 \
+    objToLog(value, "CryptoHash", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Add message data to the hash
+Add message data to the hash from a Buffer
 ***********************************************************************************************************************************/
-void
-cryptoHashProcessC(CryptoHash *this, const unsigned char *message, size_t messageSize)
+static void
+cryptoHashProcess(THIS_VOID, const Buffer *message)
 {
+    THIS(CryptoHash);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
-        FUNCTION_LOG_PARAM_P(UCHARDATA, message);
-        FUNCTION_LOG_PARAM(SIZE, messageSize);
+        FUNCTION_LOG_PARAM(BUFFER, message);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(this->hashContext != NULL);
+    ASSERT(this->hash == NULL);
     ASSERT(message != NULL);
 
-    cryptoError(!EVP_DigestUpdate(this->hashContext, message, messageSize), "unable to process message hash");
+    cryptoError(!EVP_DigestUpdate(this->hashContext, bufPtr(message), bufUsed(message)), "unable to process message hash");
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
-Add message data to the hash from a Buffer
-***********************************************************************************************************************************/
-void
-cryptoHashProcess(CryptoHash *this, const Buffer *message)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CRYPTO_HASH, this);
-        FUNCTION_TEST_PARAM(BUFFER, message);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(message != NULL);
-
-    cryptoHashProcessC(this, bufPtr(message), bufUsed(message));
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Add message data to the hash from a String
-***********************************************************************************************************************************/
-void
-cryptoHashProcessStr(CryptoHash *this, const String *message)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CRYPTO_HASH, this);
-        FUNCTION_TEST_PARAM(STRING, message);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(message != NULL);
-
-    cryptoHashProcessC(this, (const unsigned char *)strPtr(message), strSize(message));
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Get binary representation of the hash
 ***********************************************************************************************************************************/
-const Buffer *
+static const Buffer *
 cryptoHash(CryptoHash *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -166,10 +91,6 @@ cryptoHash(CryptoHash *this)
             bufUsedSet(this->hash, bufSize(this->hash));
 
             cryptoError(!EVP_DigestFinal_ex(this->hashContext, bufPtr(this->hash), NULL), "unable to finalize message hash");
-
-            // Free the context
-            EVP_MD_CTX_destroy(this->hashContext);
-            this->hashContext = NULL;
         }
         MEM_CONTEXT_END();
     }
@@ -178,73 +99,90 @@ cryptoHash(CryptoHash *this)
 }
 
 /***********************************************************************************************************************************
-Get filter interface
-***********************************************************************************************************************************/
-IoFilter *
-cryptoHashFilter(CryptoHash *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_LOG_RETURN(IO_FILTER, this->filter);
-}
-
-/***********************************************************************************************************************************
 Get string representation of the hash as a filter result
 ***********************************************************************************************************************************/
-const Variant *
-cryptoHashResult(CryptoHash *this)
+static Variant *
+cryptoHashResult(THIS_VOID)
 {
+    THIS(CryptoHash);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
 
-    Variant *result = NULL;
-
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        result = varNewStr(bufHex(cryptoHash(this)));
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_LOG_RETURN(VARIANT, result);
+    FUNCTION_LOG_RETURN(VARIANT, varNewStr(bufHex(cryptoHash(this))));
 }
 
 /***********************************************************************************************************************************
 Free memory
 ***********************************************************************************************************************************/
-void
-cryptoHashFree(CryptoHash *this)
+static void
+cryptoHashFreeCallback(CryptoHash *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
     FUNCTION_LOG_END();
 
-    if (this != NULL)
-    {
-        EVP_MD_CTX_destroy(this->hashContext);
-
-        memContextCallbackClear(this->memContext);
-        memContextFree(this->memContext);
-    }
+    EVP_MD_CTX_destroy(this->hashContext);
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+New object
+***********************************************************************************************************************************/
+IoFilter *
+cryptoHashNew(const String *type)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, type);
+    FUNCTION_LOG_END();
+
+    ASSERT(type != NULL);
+
+    // Init crypto subsystem
+    cryptoInit();
+
+    // Allocate memory to hold process state
+    IoFilter *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("CryptoHash")
+    {
+        CryptoHash *driver = memNew(sizeof(CryptoHash));
+        driver->memContext = MEM_CONTEXT_NEW();
+
+        // Lookup digest
+        if ((driver->hashType = EVP_get_digestbyname(strPtr(type))) == NULL)
+            THROW_FMT(AssertError, "unable to load hash '%s'", strPtr(type));
+
+        // Create context
+        cryptoError((driver->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
+
+        // Set free callback to ensure hash context is freed
+        memContextCallback(driver->memContext, (MemContextCallback)cryptoHashFreeCallback, driver);
+
+        // Initialize context
+        cryptoError(!EVP_DigestInit_ex(driver->hashContext, driver->hashType, NULL), "unable to initialize hash context");
+
+        // Create filter interface
+        this = ioFilterNewP(CRYPTO_HASH_FILTER_TYPE_STR, driver, .in = cryptoHashProcess, .result = cryptoHashResult);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
 
 /***********************************************************************************************************************************
 Get hash for one C buffer
 ***********************************************************************************************************************************/
 Buffer *
-cryptoHashOneC(const String *type, const unsigned char *message, size_t messageSize)
+cryptoHashOne(const String *type, const Buffer *message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, type);
-        FUNCTION_LOG_PARAM_P(UCHARDATA, message);
+        FUNCTION_LOG_PARAM(BUFFER, message);
     FUNCTION_LOG_END();
 
     ASSERT(type != NULL);
@@ -254,50 +192,20 @@ cryptoHashOneC(const String *type, const unsigned char *message, size_t messageS
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        CryptoHash *hash = cryptoHashNew(type);
-        cryptoHashProcessC(hash, message, messageSize);
+        IoFilter *hash = cryptoHashNew(type);
+
+        if (bufUsed(message) > 0)
+            ioFilterProcessIn(hash, message);
+
+        const Buffer *buffer = cryptoHash((CryptoHash *)ioFilterDriver(hash));
 
         memContextSwitch(MEM_CONTEXT_OLD());
-        result = bufDup(cryptoHash(hash));
+        result = bufDup(buffer);
         memContextSwitch(MEM_CONTEXT_TEMP());
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BUFFER, result);
-}
-
-/***********************************************************************************************************************************
-Get hash for one Buffer
-***********************************************************************************************************************************/
-Buffer *
-cryptoHashOne(const String *type, const Buffer *message)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, type);
-        FUNCTION_TEST_PARAM(BUFFER, message);
-    FUNCTION_TEST_END();
-
-    ASSERT(type != NULL);
-    ASSERT(message != NULL);
-
-    FUNCTION_TEST_RETURN(cryptoHashOneC(type, bufPtr(message), bufUsed(message)));
-}
-
-/***********************************************************************************************************************************
-Get hash for one String
-***********************************************************************************************************************************/
-Buffer *
-cryptoHashOneStr(const String *type, const String *message)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, type);
-        FUNCTION_TEST_PARAM(STRING, message);
-    FUNCTION_TEST_END();
-
-    ASSERT(type != NULL);
-    ASSERT(message != NULL);
-
-    FUNCTION_TEST_RETURN(cryptoHashOneC(type, (const unsigned char *)strPtr(message), strSize(message)));
 }
 
 /***********************************************************************************************************************************

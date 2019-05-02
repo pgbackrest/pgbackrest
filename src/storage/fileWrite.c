@@ -13,11 +13,19 @@ Object type
 ***********************************************************************************************************************************/
 struct StorageFileWrite
 {
-    MemContext *memContext;
-    const String *type;
+    MemContext *memContext;                                         // Object mem context
     void *driver;
-    StorageFileWriteInterface interface;
+    const StorageFileWriteInterface *interface;
+    IoWrite *io;
 };
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_STORAGE_FILE_WRITE_INTERFACE_TYPE                                                                             \
+    StorageFileWriteInterface
+#define FUNCTION_LOG_STORAGE_FILE_WRITE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                \
+    objToLog(&value, "StorageFileWriteInterface", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Create a new storage file
@@ -26,31 +34,23 @@ This object expects its context to be created in advance.  This is so the callin
 required multiple functions and contexts to make it safe.
 ***********************************************************************************************************************************/
 StorageFileWrite *
-storageFileWriteNew(const String *type, void *driver, StorageFileWriteInterface interface)
+storageFileWriteNew(void *driver, const StorageFileWriteInterface *interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, type);
         FUNCTION_LOG_PARAM_P(VOID, driver);
-        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE_INTERFACE, interface);
+        FUNCTION_LOG_PARAM_P(STORAGE_FILE_WRITE_INTERFACE, interface);
     FUNCTION_LOG_END();
 
-    ASSERT(type != NULL);
     ASSERT(driver != NULL);
-    ASSERT(interface.atomic != NULL);
-    ASSERT(interface.createPath != NULL);
-    ASSERT(interface.io != NULL);
-    ASSERT(interface.modeFile != NULL);
-    ASSERT(interface.modePath != NULL);
-    ASSERT(interface.name != NULL);
-    ASSERT(interface.syncFile != NULL);
-    ASSERT(interface.syncPath != NULL);
+    ASSERT(interface != NULL);
 
     StorageFileWrite *this = memNew(sizeof(StorageFileWrite));
     this->memContext = memContextCurrent();
 
-    this->type = type;
     this->driver = driver;
     this->interface = interface;
+
+    this->io = ioWriteNew(driver, interface->ioInterface);
 
     FUNCTION_LOG_RETURN(STORAGE_FILE_WRITE, this);
 }
@@ -88,7 +88,7 @@ storageFileWriteAtomic(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface.atomic(this->driver));
+    FUNCTION_TEST_RETURN(this->interface->atomic);
 }
 
 /***********************************************************************************************************************************
@@ -103,7 +103,7 @@ storageFileWriteCreatePath(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface.createPath(this->driver));
+    FUNCTION_TEST_RETURN(this->interface->createPath);
 }
 
 /***********************************************************************************************************************************
@@ -133,7 +133,7 @@ storageFileWriteIo(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface.io(this->driver));
+    FUNCTION_TEST_RETURN(this->io);
 }
 
 /***********************************************************************************************************************************
@@ -148,7 +148,7 @@ storageFileWriteModeFile(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface.modeFile(this->driver));
+    FUNCTION_TEST_RETURN(this->interface->modeFile);
 }
 
 /***********************************************************************************************************************************
@@ -163,7 +163,7 @@ storageFileWriteModePath(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface.modePath(this->driver));
+    FUNCTION_TEST_RETURN(this->interface->modePath);
 }
 
 /***********************************************************************************************************************************
@@ -178,7 +178,7 @@ storageFileWriteName(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface.name(this->driver));
+    FUNCTION_TEST_RETURN(this->interface->name);
 }
 
 /***********************************************************************************************************************************
@@ -193,7 +193,7 @@ storageFileWriteSyncFile(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface.syncFile(this->driver));
+    FUNCTION_TEST_RETURN(this->interface->syncFile);
 }
 
 /***********************************************************************************************************************************
@@ -208,7 +208,7 @@ storageFileWriteSyncPath(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface.syncPath(this->driver));
+    FUNCTION_TEST_RETURN(this->interface->syncPath);
 }
 
 /***********************************************************************************************************************************
@@ -223,7 +223,7 @@ storageFileWriteType(const StorageFileWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->type);
+    FUNCTION_TEST_RETURN(this->interface->type);
 }
 
 /***********************************************************************************************************************************
@@ -234,7 +234,7 @@ storageFileWriteToLog(const StorageFileWrite *this)
 {
     return strNewFmt(
         "{type: %s, name: %s, modeFile: %04o, modePath: %04o, createPath: %s, syncFile: %s, syncPath: %s, atomic: %s}",
-        strPtr(this->type), strPtr(strToLog(storageFileWriteName(this))), storageFileWriteModeFile(this),
+        strPtr(storageFileWriteType(this)), strPtr(strToLog(storageFileWriteName(this))), storageFileWriteModeFile(this),
         storageFileWriteModePath(this), cvtBoolToConstZ(storageFileWriteCreatePath(this)),
         cvtBoolToConstZ(storageFileWriteSyncFile(this)), cvtBoolToConstZ(storageFileWriteSyncPath(this)),
         cvtBoolToConstZ(storageFileWriteAtomic(this)));

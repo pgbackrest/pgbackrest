@@ -35,7 +35,7 @@ testS3ServerRequest(const char *verb, const char *uri, const char *content)
     if (content != NULL)
     {
         char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-        encodeToStr(encodeBase64, bufPtr(cryptoHashOneStr(HASH_TYPE_MD5_STR, strNew(content))), HASH_TYPE_M5_SIZE, md5Hash);
+        encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRZ(content))), HASH_TYPE_M5_SIZE, md5Hash);
         strCatFmt(request, "content-md5:%s\r\n", md5Hash);
     }
 
@@ -47,7 +47,7 @@ testS3ServerRequest(const char *verb, const char *uri, const char *content)
         "\r\n",
         content == NULL ?
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" :
-            strPtr(bufHex(cryptoHashOneStr(HASH_TYPE_SHA256_STR, strNew(content)))));
+            strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTRZ(content)))));
 
     if (content != NULL)
         strCat(request, content);
@@ -104,7 +104,7 @@ testS3Server(void)
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL));
         harnessTlsServerReply(testS3ServerResponse(303, "Some bad status", NULL, "CONTENT"));
 
-        // storageDriverS3NewWrite() and StorageDriverS3FileWrite
+        // storageDriverS3NewWrite() and StorageFileWriteDriverS3
         // -------------------------------------------------------------------------------------------------------------------------
         // File is written all at once
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", "ABCD"));
@@ -457,8 +457,9 @@ testRun(void)
         TEST_RESULT_STR(strPtr(storageDriverS3DateTime(1491267845)), "20170404T010405Z", "static date");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        StorageDriverS3 *driver = storageDriverS3New(
-            path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, NULL, 0, 0, true, NULL, NULL);
+        StorageDriverS3 *driver = (StorageDriverS3 *)storageDriver(
+            storageDriverS3New(
+                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, NULL, 0, 0, true, NULL, NULL));
 
         HttpHeader *header = httpHeaderNew(NULL);
 
@@ -509,9 +510,10 @@ testRun(void)
 
         // Test with security token
         // -------------------------------------------------------------------------------------------------------------------------
-        driver = storageDriverS3New(
-            path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, securityToken, 16, NULL, 0, 0, true, NULL,
-            NULL);
+        driver = (StorageDriverS3 *)storageDriver(
+            storageDriverS3New(
+                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, securityToken, 16, NULL, 0, 0, true, NULL,
+                NULL));
 
         TEST_RESULT_VOID(
             storageDriverS3Auth(
@@ -527,13 +529,12 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageDriverS3*(), StorageDriverS3FileRead, and StorageDriverS3FileWrite"))
+    if (testBegin("storageDriverS3*(), StorageDriverS3FileRead, and StorageFileWriteDriverS3"))
     {
         testS3Server();
 
-        StorageDriverS3 *s3Driver = storageDriverS3New(
+        Storage *s3 = storageDriverS3New(
             path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, host, port, 1000, true, NULL, NULL);
-        Storage *s3 = storageDriverS3Interface(s3Driver);
 
         // Coverage for noop functions
         // -------------------------------------------------------------------------------------------------------------------------
@@ -572,7 +573,7 @@ testRun(void)
             "*** Response Content ***:\n"
             "CONTENT")
 
-        // storageDriverS3NewWrite() and StorageDriverS3FileWrite
+        // storageDriverS3NewWrite() and StorageFileWriteDriverS3
         // -------------------------------------------------------------------------------------------------------------------------
         // File is written all at once
         StorageFileWrite *write = NULL;
@@ -588,12 +589,8 @@ testRun(void)
         TEST_RESULT_BOOL(storageFileWriteSyncPath(write), true, "path is synced");
 
         TEST_RESULT_VOID(
-            storageDriverS3FileWriteClose((StorageDriverS3FileWrite *)storageFileWriteFileDriver(write)),
+            storageFileWriteDriverS3Close((StorageFileWriteDriverS3 *)storageFileWriteFileDriver(write)),
             "close file again");
-        TEST_RESULT_VOID(
-            storageDriverS3FileWriteFree((StorageDriverS3FileWrite *)storageFileWriteFileDriver(write)),
-            "free file");
-        TEST_RESULT_VOID(storageDriverS3FileWriteFree(NULL), "free null file");
 
         // Zero-length file
         TEST_ASSIGN(write, storageNewWriteNP(s3, strNew("file.txt")), "new write file");

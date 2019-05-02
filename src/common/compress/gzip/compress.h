@@ -6,44 +6,11 @@ Compress IO using the gzip format.
 #ifndef COMMON_COMPRESS_GZIP_COMPRESS_H
 #define COMMON_COMPRESS_GZIP_COMPRESS_H
 
-/***********************************************************************************************************************************
-Object type
-***********************************************************************************************************************************/
-typedef struct GzipCompress GzipCompress;
-
 #include "common/io/filter/filter.h"
-#include "common/type/buffer.h"
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-GzipCompress *gzipCompressNew(int level, bool raw);
-
-/***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-void gzipCompressProcess(GzipCompress *this, const Buffer *uncompressed, Buffer *compressed);
-
-/***********************************************************************************************************************************
-Getters
-***********************************************************************************************************************************/
-bool gzipCompressDone(const GzipCompress *this);
-IoFilter *gzipCompressFilter(const GzipCompress *this);
-bool gzipCompressInputSame(const GzipCompress *this);
-
-/***********************************************************************************************************************************
-Destructor
-***********************************************************************************************************************************/
-void gzipCompressFree(GzipCompress *this);
-
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-String *gzipCompressToLog(const GzipCompress *this);
-
-#define FUNCTION_LOG_GZIP_COMPRESS_TYPE                                                                                            \
-    GzipCompress *
-#define FUNCTION_LOG_GZIP_COMPRESS_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, gzipCompressToLog, buffer, bufferSize)
+IoFilter *gzipCompressNew(int level, bool raw);
 
 #endif

@@ -15,8 +15,8 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Test storage
-    Storage *storageTest = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    Storage *storageTest = storageDriverPosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // Load configuration to set repo-path and stanza
     StringList *argList = strLstNew();
@@ -32,8 +32,8 @@ testRun(void)
     // Start a protocol server to test the remote protocol
     Buffer *serverRead = bufNew(8192);
     Buffer *serverWrite = bufNew(8192);
-    IoRead *serverReadIo = ioBufferReadIo(ioBufferReadNew(serverRead));
-    IoWrite *serverWriteIo = ioBufferWriteIo(ioBufferWriteNew(serverWrite));
+    IoRead *serverReadIo = ioBufferReadNew(serverRead);
+    IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
     ioReadOpen(serverReadIo);
     ioWriteOpen(serverWriteIo);
 
@@ -133,7 +133,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageFileReadIgnoreMissing(fileRead), false, "check ignore missing");
         TEST_RESULT_STR(strPtr(storageFileReadName(fileRead)), "test.txt", "check name");
         TEST_RESULT_SIZE(
-            storageDriverRemoteFileRead((StorageDriverRemoteFileRead *)storageFileReadDriver(fileRead), bufNew(32), false), 0,
+            storageFileReadDriverRemote(storageFileReadDriver(fileRead), bufNew(32), false), 0,
             "nothing more to read");
 
         TEST_RESULT_BOOL(
@@ -212,10 +212,10 @@ testRun(void)
 
         TEST_RESULT_VOID(storagePutNP(write, contentBuf), "write file");
         TEST_RESULT_VOID(
-            storageDriverRemoteFileWriteClose((StorageDriverRemoteFileWrite *)storageFileWriteFileDriver(write)),
+            storageFileWriteDriverRemoteClose((StorageFileWriteDriverRemote *)storageFileWriteFileDriver(write)),
             "close file again");
         TEST_RESULT_VOID(
-            storageDriverRemoteFileWriteFree((StorageDriverRemoteFileWrite *)storageFileWriteFileDriver(write)),
+            storageFileWriteDriverRemoteFree((StorageFileWriteDriverRemote *)storageFileWriteFileDriver(write)),
             "free file");
 
         // Make sure the file was written correctly
@@ -230,9 +230,9 @@ testRun(void)
         TEST_RESULT_VOID(ioWrite(storageFileWriteIo(write), contentBuf), "write bytes");
 
         TEST_RESULT_VOID(
-            storageDriverRemoteFileWriteFree((StorageDriverRemoteFileWrite *)storageFileWriteFileDriver(write)),
+            storageFileWriteDriverRemoteFree((StorageFileWriteDriverRemote *)storageFileWriteFileDriver(write)),
             "free file");
-        TEST_RESULT_VOID(storageDriverRemoteFileWriteFree(NULL), "free null file");
+        TEST_RESULT_VOID(storageFileWriteDriverRemoteFree(NULL), "free null file");
 
         TEST_RESULT_UINT(
             storageInfoNP(storageTest, strNew("repo/test2.txt.pgbackrest.tmp")).size, 16384, "file exists and is partial");

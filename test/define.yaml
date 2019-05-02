@@ -498,6 +498,7 @@ unit:
 
         coverage:
           storage/driver/cifs/storage: full
+          storage/driver/posix/storage: full
           storage/helper: full
           storage/storage: full
 

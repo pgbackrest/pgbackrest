@@ -11,73 +11,40 @@ S3 Storage File Read Driver
 #include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "storage/driver/s3/fileRead.h"
 #include "storage/fileRead.intern.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-struct StorageDriverS3FileRead
+typedef struct StorageFileReadDriverS3
 {
-    MemContext *memContext;
-    StorageDriverS3 *storage;
-    StorageFileRead *interface;
-    IoRead *io;
-    String *name;
-    bool ignoreMissing;
+    MemContext *memContext;                                         // Object mem context
+    StorageFileReadInterface interface;                             // Driver interface
+    StorageDriverS3 *storage;                                       // Storage that created this object
 
     HttpClient *httpClient;                                         // Http client for requests
-};
+} StorageFileReadDriverS3;
 
 /***********************************************************************************************************************************
-Create a new file
+Macros for function logging
 ***********************************************************************************************************************************/
-StorageDriverS3FileRead *
-storageDriverS3FileReadNew(StorageDriverS3 *storage, const String *name, bool ignoreMissing)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, storage);
-        FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-    FUNCTION_LOG_END();
-
-    ASSERT(storage != NULL);
-    ASSERT(name != NULL);
-
-    StorageDriverS3FileRead *this = NULL;
-
-    // Create the file object
-    MEM_CONTEXT_NEW_BEGIN("StorageDriverS3FileRead")
-    {
-        this = memNew(sizeof(StorageDriverS3FileRead));
-        this->memContext = MEM_CONTEXT_NEW();
-        this->storage = storage;
-        this->name = strDup(name);
-        this->ignoreMissing = ignoreMissing;
-
-        this->interface = storageFileReadNewP(
-            strNew(STORAGE_DRIVER_S3_TYPE), this,
-            .ignoreMissing = (StorageFileReadInterfaceIgnoreMissing)storageDriverS3FileReadIgnoreMissing,
-            .io = (StorageFileReadInterfaceIo)storageDriverS3FileReadIo,
-            .name = (StorageFileReadInterfaceName)storageDriverS3FileReadName);
-
-        this->io = ioReadNewP(
-            this, .eof = (IoReadInterfaceEof)storageDriverS3FileReadEof,
-            .open = (IoReadInterfaceOpen)storageDriverS3FileReadOpen, .read = (IoReadInterfaceRead)storageDriverS3FileRead);
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(STORAGE_DRIVER_S3_FILE_READ, this);
-}
+#define FUNCTION_LOG_STORAGE_FILE_READ_DRIVER_S3_TYPE                                                                              \
+    StorageFileReadDriverS3 *
+#define FUNCTION_LOG_STORAGE_FILE_READ_DRIVER_S3_FORMAT(value, buffer, bufferSize)                                                 \
+    objToLog(value, "StorageFileReadDriverS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
-bool
-storageDriverS3FileReadOpen(StorageDriverS3FileRead *this)
+static bool
+storageFileReadDriverS3Open(THIS_VOID)
 {
+    THIS(StorageFileReadDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_READ_DRIVER_S3, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -86,7 +53,7 @@ storageDriverS3FileReadOpen(StorageDriverS3FileRead *this)
     bool result = false;
 
     // Request the file
-    storageDriverS3Request(this->storage, HTTP_VERB_GET_STR, this->name, NULL, NULL, false, true);
+    storageDriverS3Request(this->storage, HTTP_VERB_GET_STR, this->interface.name, NULL, NULL, false, true);
 
     // On success
     this->httpClient = storageDriverS3HttpClient(this->storage);
@@ -95,8 +62,8 @@ storageDriverS3FileReadOpen(StorageDriverS3FileRead *this)
         result = true;
 
     // Else error unless ignore missing
-    else if (!this->ignoreMissing)
-        THROW_FMT(FileMissingError, "unable to open '%s': No such file or directory", strPtr(this->name));
+    else if (!this->interface.ignoreMissing)
+        THROW_FMT(FileMissingError, "unable to open '%s': No such file or directory", strPtr(this->interface.name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -104,11 +71,13 @@ storageDriverS3FileReadOpen(StorageDriverS3FileRead *this)
 /***********************************************************************************************************************************
 Read from a file
 ***********************************************************************************************************************************/
-size_t
-storageDriverS3FileRead(StorageDriverS3FileRead *this, Buffer *buffer, bool block)
+static size_t
+storageFileReadDriverS3(THIS_VOID, Buffer *buffer, bool block)
 {
+    THIS(StorageFileReadDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_READ_DRIVER_S3, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
@@ -122,11 +91,13 @@ storageDriverS3FileRead(StorageDriverS3FileRead *this, Buffer *buffer, bool bloc
 /***********************************************************************************************************************************
 Has file reached EOF?
 ***********************************************************************************************************************************/
-bool
-storageDriverS3FileReadEof(const StorageDriverS3FileRead *this)
+static bool
+storageFileReadDriverS3Eof(THIS_VOID)
 {
+    THIS(StorageFileReadDriverS3);
+
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
+        FUNCTION_TEST_PARAM(STORAGE_FILE_READ_DRIVER_S3, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL && this->httpClient != NULL);
@@ -135,61 +106,46 @@ storageDriverS3FileReadEof(const StorageDriverS3FileRead *this)
 }
 
 /***********************************************************************************************************************************
-Should a missing file be ignored?
-***********************************************************************************************************************************/
-bool
-storageDriverS3FileReadIgnoreMissing(const StorageDriverS3FileRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->ignoreMissing);
-}
-
-/***********************************************************************************************************************************
-Get the interface
+Create a new file
 ***********************************************************************************************************************************/
 StorageFileRead *
-storageDriverS3FileReadInterface(const StorageDriverS3FileRead *this)
+storageFileReadDriverS3New(StorageDriverS3 *storage, const String *name, bool ignoreMissing)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, storage);
+        FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+    FUNCTION_LOG_END();
 
-    ASSERT(this != NULL);
+    ASSERT(storage != NULL);
+    ASSERT(name != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface);
-}
+    StorageFileRead *this = NULL;
 
-/***********************************************************************************************************************************
-Get the I/O interface
-***********************************************************************************************************************************/
-IoRead *
-storageDriverS3FileReadIo(const StorageDriverS3FileRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
-    FUNCTION_TEST_END();
+    MEM_CONTEXT_NEW_BEGIN("StorageFileReadDriverS3")
+    {
+        StorageFileReadDriverS3 *driver = memNew(sizeof(StorageFileReadDriverS3));
+        driver->memContext = MEM_CONTEXT_NEW();
 
-    ASSERT(this != NULL);
+        driver->interface = (StorageFileReadInterface)
+        {
+            .type = STORAGE_DRIVER_S3_TYPE_STR,
+            .name = strDup(name),
+            .ignoreMissing = ignoreMissing,
 
-    FUNCTION_TEST_RETURN(this->io);
-}
+            .ioInterface = (IoReadInterface)
+            {
+                .eof = storageFileReadDriverS3Eof,
+                .open = storageFileReadDriverS3Open,
+                .read = storageFileReadDriverS3,
+            },
+        };
 
-/***********************************************************************************************************************************
-File name
-***********************************************************************************************************************************/
-const String *
-storageDriverS3FileReadName(const StorageDriverS3FileRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_READ, this);
-    FUNCTION_TEST_END();
+        driver->storage = storage;
 
-    ASSERT(this != NULL);
+        this = storageFileReadNew(driver, &driver->interface);
+    }
+    MEM_CONTEXT_NEW_END();
 
-    FUNCTION_TEST_RETURN(this->name);
+    FUNCTION_LOG_RETURN(STORAGE_FILE_READ, this);
 }

@@ -7,6 +7,7 @@ S3 Storage File Write Driver
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/type/xml.h"
 #include "storage/driver/s3/fileWrite.h"
 #include "storage/fileWrite.intern.h"
@@ -30,76 +31,36 @@ STRING_STATIC(S3_XML_TAG_PART_NUMBER_STR,                           "PartNumber"
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-struct StorageDriverS3FileWrite
+typedef struct StorageFileWriteDriverS3
 {
-    MemContext *memContext;
-    StorageDriverS3 *storage;
-    StorageFileWrite *interface;
-    IoWrite *io;
+    MemContext *memContext;                                         // Object mem context
+    StorageFileWriteInterface interface;                            // Driver interface
+    StorageDriverS3 *storage;                                       // Storage that created this object
 
-    const String *path;
-    const String *name;
     size_t partSize;
     Buffer *partBuffer;
     const String *uploadId;
     StringList *uploadPartList;
-};
+} StorageFileWriteDriverS3;
 
 /***********************************************************************************************************************************
-Create a new file
+Macros for function logging
 ***********************************************************************************************************************************/
-StorageDriverS3FileWrite *
-storageDriverS3FileWriteNew(StorageDriverS3 *storage, const String *name, size_t partSize)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, storage);
-        FUNCTION_LOG_PARAM(STRING, name);
-    FUNCTION_LOG_END();
-
-    ASSERT(storage != NULL);
-    ASSERT(name != NULL);
-
-    StorageDriverS3FileWrite *this = NULL;
-
-    // Create the file
-    MEM_CONTEXT_NEW_BEGIN("StorageDriverS3FileWrite")
-    {
-        this = memNew(sizeof(StorageDriverS3FileWrite));
-        this->memContext = MEM_CONTEXT_NEW();
-        this->storage = storage;
-
-        this->interface = storageFileWriteNewP(
-            STORAGE_DRIVER_S3_TYPE_STR, this, .atomic = (StorageFileWriteInterfaceAtomic)storageDriverS3FileWriteAtomic,
-            .createPath = (StorageFileWriteInterfaceCreatePath)storageDriverS3FileWriteCreatePath,
-            .io = (StorageFileWriteInterfaceIo)storageDriverS3FileWriteIo,
-            .modeFile = (StorageFileWriteInterfaceModeFile)storageDriverS3FileWriteModeFile,
-            .modePath = (StorageFileWriteInterfaceModePath)storageDriverS3FileWriteModePath,
-            .name = (StorageFileWriteInterfaceName)storageDriverS3FileWriteName,
-            .syncFile = (StorageFileWriteInterfaceSyncFile)storageDriverS3FileWriteSyncFile,
-            .syncPath = (StorageFileWriteInterfaceSyncPath)storageDriverS3FileWriteSyncPath);
-
-        this->io = ioWriteNewP(
-            this, .close = (IoWriteInterfaceClose)storageDriverS3FileWriteClose,
-            .open = (IoWriteInterfaceOpen)storageDriverS3FileWriteOpen,
-            .write = (IoWriteInterfaceWrite)storageDriverS3FileWrite);
-
-        this->path = strPath(name);
-        this->name = strDup(name);
-        this->partSize = partSize;
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(STORAGE_DRIVER_S3_FILE_WRITE, this);
-}
+#define FUNCTION_LOG_STORAGE_FILE_WRITE_DRIVER_S3_TYPE                                                                             \
+    StorageFileWriteDriverS3 *
+#define FUNCTION_LOG_STORAGE_FILE_WRITE_DRIVER_S3_FORMAT(value, buffer, bufferSize)                                                \
+    objToLog(value, "StorageFileWriteDriverS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
-void
-storageDriverS3FileWriteOpen(StorageDriverS3FileWrite *this)
+static void
+storageFileWriteDriverS3Open(THIS_VOID)
 {
+    THIS(StorageFileWriteDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE_DRIVER_S3, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -119,10 +80,10 @@ storageDriverS3FileWriteOpen(StorageDriverS3FileWrite *this)
 Flush bytes to upload part
 ***********************************************************************************************************************************/
 static void
-storageDriverS3FileWritePart(StorageDriverS3FileWrite *this)
+storageFileWriteDriverS3Part(StorageFileWriteDriverS3 *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE_DRIVER_S3, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -138,7 +99,7 @@ storageDriverS3FileWritePart(StorageDriverS3FileWrite *this)
             XmlNode *xmlRoot = xmlDocumentRoot(
                 xmlDocumentNewBuf(
                     storageDriverS3Request(
-                        this->storage, HTTP_VERB_POST_STR, this->name,
+                        this->storage, HTTP_VERB_POST_STR, this->interface.name,
                         httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOADS_STR, EMPTY_STR), NULL, true, false).response));
 
             // Store the upload id
@@ -159,7 +120,7 @@ storageDriverS3FileWritePart(StorageDriverS3FileWrite *this)
             this->uploadPartList,
             httpHeaderGet(
                 storageDriverS3Request(
-                    this->storage, HTTP_VERB_PUT_STR, this->name, query, this->partBuffer, true, false).responseHeader,
+                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, query, this->partBuffer, true, false).responseHeader,
                 HTTP_HEADER_ETAG_STR));
 
         ASSERT(strLstGet(this->uploadPartList, strLstSize(this->uploadPartList) - 1) != NULL);
@@ -172,11 +133,13 @@ storageDriverS3FileWritePart(StorageDriverS3FileWrite *this)
 /***********************************************************************************************************************************
 Write to internal buffer
 ***********************************************************************************************************************************/
-void
-storageDriverS3FileWrite(StorageDriverS3FileWrite *this, const Buffer *buffer)
+static void
+storageFileWriteDriverS3(THIS_VOID, const Buffer *buffer)
 {
+    THIS(StorageFileWriteDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE_DRIVER_S3, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
     FUNCTION_LOG_END();
 
@@ -197,7 +160,7 @@ storageDriverS3FileWrite(StorageDriverS3FileWrite *this, const Buffer *buffer)
         // If the part buffer is full then write it
         if (bufRemains(this->partBuffer) == 0)
         {
-            storageDriverS3FileWritePart(this);
+            storageFileWriteDriverS3Part(this);
             bufUsedZero(this->partBuffer);
         }
     }
@@ -209,11 +172,13 @@ storageDriverS3FileWrite(StorageDriverS3FileWrite *this, const Buffer *buffer)
 /***********************************************************************************************************************************
 Close the file
 ***********************************************************************************************************************************/
-void
-storageDriverS3FileWriteClose(StorageDriverS3FileWrite *this)
+static void
+storageFileWriteDriverS3Close(THIS_VOID)
 {
+    THIS(StorageFileWriteDriverS3);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE_DRIVER_S3, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -228,7 +193,7 @@ storageDriverS3FileWriteClose(StorageDriverS3FileWrite *this)
             {
                 // If there is anything left in the part buffer then write it
                 if (bufUsed(this->partBuffer) > 0)
-                    storageDriverS3FileWritePart(this);
+                    storageFileWriteDriverS3Part(this);
 
                 // Generate the xml part list
                 XmlDocument *partList = xmlDocumentNew(S3_XML_TAG_COMPLETE_MULTIPART_UPLOAD_STR);
@@ -242,12 +207,15 @@ storageDriverS3FileWriteClose(StorageDriverS3FileWrite *this)
 
                 // Finalize the multi-part upload
                 storageDriverS3Request(
-                    this->storage, HTTP_VERB_POST_STR, this->name,
+                    this->storage, HTTP_VERB_POST_STR, this->interface.name,
                     httpQueryAdd(httpQueryNew(), S3_QUERY_UPLOAD_ID_STR, this->uploadId), xmlDocumentBuf(partList), false, false);
             }
             // Else upload all the data in a single put
             else
-                storageDriverS3Request(this->storage, HTTP_VERB_PUT_STR, this->name, NULL, this->partBuffer, false, false);
+            {
+                storageDriverS3Request(
+                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, NULL, this->partBuffer, false, false);
+            }
 
             bufFree(this->partBuffer);
             this->partBuffer = NULL;
@@ -259,158 +227,49 @@ storageDriverS3FileWriteClose(StorageDriverS3FileWrite *this)
 }
 
 /***********************************************************************************************************************************
-S3 operations are always atomic, so return true
-***********************************************************************************************************************************/
-bool
-storageDriverS3FileWriteAtomic(const StorageDriverS3FileWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    (void)this;
-
-    FUNCTION_TEST_RETURN(true);
-}
-
-/***********************************************************************************************************************************
-S3 paths are always implicitly created
-***********************************************************************************************************************************/
-bool
-storageDriverS3FileWriteCreatePath(const StorageDriverS3FileWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    (void)this;
-
-    FUNCTION_TEST_RETURN(true);
-}
-
-/***********************************************************************************************************************************
-Get interface
+New object
 ***********************************************************************************************************************************/
 StorageFileWrite *
-storageDriverS3FileWriteInterface(const StorageDriverS3FileWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface);
-}
-
-/***********************************************************************************************************************************
-Get I/O interface
-***********************************************************************************************************************************/
-IoWrite *
-storageDriverS3FileWriteIo(const StorageDriverS3FileWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->io);
-}
-
-/***********************************************************************************************************************************
-S3 does not support Posix-style mode
-***********************************************************************************************************************************/
-mode_t
-storageDriverS3FileWriteModeFile(const StorageDriverS3FileWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    (void)this;
-
-    FUNCTION_TEST_RETURN(0);
-}
-
-/***********************************************************************************************************************************
-S3 does not support Posix-style mode
-***********************************************************************************************************************************/
-mode_t
-storageDriverS3FileWriteModePath(const StorageDriverS3FileWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    (void)this;
-
-    FUNCTION_TEST_RETURN(0);
-}
-
-/***********************************************************************************************************************************
-File name
-***********************************************************************************************************************************/
-const String *
-storageDriverS3FileWriteName(const StorageDriverS3FileWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->name);
-}
-
-/***********************************************************************************************************************************
-S3 operations are always atomic, so return true
-***********************************************************************************************************************************/
-bool
-storageDriverS3FileWriteSyncFile(const StorageDriverS3FileWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    (void)this;
-
-    FUNCTION_TEST_RETURN(true);
-}
-
-/***********************************************************************************************************************************
-S3 operations are always atomic, so return true
-***********************************************************************************************************************************/
-bool
-storageDriverS3FileWriteSyncPath(const StorageDriverS3FileWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    (void)this;
-
-    FUNCTION_TEST_RETURN(true);
-}
-
-/***********************************************************************************************************************************
-Free the file
-***********************************************************************************************************************************/
-void
-storageDriverS3FileWriteFree(StorageDriverS3FileWrite *this)
+storageFileWriteDriverS3New(StorageDriverS3 *storage, const String *name, size_t partSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3_FILE_WRITE, this);
+        FUNCTION_LOG_PARAM(STORAGE_DRIVER_S3, storage);
+        FUNCTION_LOG_PARAM(STRING, name);
     FUNCTION_LOG_END();
 
-    if (this != NULL)
-        memContextFree(this->memContext);
+    ASSERT(storage != NULL);
+    ASSERT(name != NULL);
 
-    FUNCTION_LOG_RETURN_VOID();
+    StorageFileWrite *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("StorageFileWriteDriverS3")
+    {
+        StorageFileWriteDriverS3 *driver = memNew(sizeof(StorageFileWriteDriverS3));
+        driver->memContext = MEM_CONTEXT_NEW();
+
+        driver->interface = (StorageFileWriteInterface)
+        {
+            .type = STORAGE_DRIVER_S3_TYPE_STR,
+            .name = strDup(name),
+            .atomic = true,
+            .createPath = true,
+            .syncFile = true,
+            .syncPath = true,
+
+            .ioInterface = (IoWriteInterface)
+            {
+                .close = storageFileWriteDriverS3Close,
+                .open = storageFileWriteDriverS3Open,
+                .write = storageFileWriteDriverS3,
+            },
+        };
+
+        driver->storage = storage;
+        driver->partSize = partSize;
+
+        this = storageFileWriteNew(driver, &driver->interface);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(STORAGE_FILE_WRITE, this);
 }

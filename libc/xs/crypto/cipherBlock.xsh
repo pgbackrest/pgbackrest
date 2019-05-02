@@ -1,7 +1,9 @@
 /***********************************************************************************************************************************
 Block Cipher XS Header
 ***********************************************************************************************************************************/
+#include "common/assert.h"
 #include "common/crypto/cipherBlock.h"
+#include "common/io/io.h"
 #include "common/memContext.h"
 
 // Encrypt/decrypt modes
@@ -11,5 +13,5 @@ Block Cipher XS Header
 typedef struct CipherBlockXs
 {
     MemContext *memContext;
-    CipherBlock *pxPayload;
+    IoFilter *pxPayload;
 } CipherBlockXs, *pgBackRest__LibC__Cipher__Block;

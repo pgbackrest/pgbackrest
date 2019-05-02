@@ -36,14 +36,11 @@ TlsClient *tlsClientNew(
 Functions
 ***********************************************************************************************************************************/
 void tlsClientOpen(TlsClient *this);
-size_t tlsClientRead(TlsClient *this, Buffer *buffer, bool block);
-void tlsClientWrite(TlsClient *this, const Buffer *buffer);
 void tlsClientClose(TlsClient *this);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-bool tlsClientEof(const TlsClient *this);
 IoRead *tlsClientIoRead(const TlsClient *this);
 IoWrite *tlsClientIoWrite(const TlsClient *this);
 

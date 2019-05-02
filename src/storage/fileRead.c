@@ -13,37 +13,42 @@ Object type
 ***********************************************************************************************************************************/
 struct StorageFileRead
 {
-    MemContext *memContext;
-    const String *type;
+    MemContext *memContext;                                         // Object mem context
     void *driver;
-    StorageFileReadInterface interface;
+    const StorageFileReadInterface *interface;
+    IoRead *io;
 };
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_STORAGE_FILE_READ_INTERFACE_TYPE                                                                              \
+    StorageFileReadInterface
+#define FUNCTION_LOG_STORAGE_FILE_READ_INTERFACE_FORMAT(value, buffer, bufferSize)                                                 \
+    objToLog(&value, "StorageFileReadInterface", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Create a new storage file
 ***********************************************************************************************************************************/
 StorageFileRead *
-storageFileReadNew(const String *type, void *driver, StorageFileReadInterface interface)
+storageFileReadNew(void *driver, const StorageFileReadInterface *interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, type);
         FUNCTION_LOG_PARAM_P(VOID, driver);
-        FUNCTION_LOG_PARAM(STORAGE_FILE_READ_INTERFACE, interface);
+        FUNCTION_LOG_PARAM_P(STORAGE_FILE_READ_INTERFACE, interface);
     FUNCTION_LOG_END();
 
-    ASSERT(type != NULL);
     ASSERT(driver != NULL);
-    ASSERT(interface.ignoreMissing != NULL);
-    ASSERT(interface.io != NULL);
-    ASSERT(interface.name != NULL);
+    ASSERT(interface != NULL);
 
     StorageFileRead *this = NULL;
 
     this = memNew(sizeof(StorageFileRead));
     this->memContext = memContextCurrent();
-    this->type = type;
-    this->interface = interface;
     this->driver = driver;
+    this->interface = interface;
+
+    this->io = ioReadNew(driver, interface->ioInterface);
 
     FUNCTION_LOG_RETURN(STORAGE_FILE_READ, this);
 }
@@ -94,7 +99,7 @@ storageFileReadIgnoreMissing(const StorageFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface.ignoreMissing(this->driver));
+    FUNCTION_TEST_RETURN(this->interface->ignoreMissing);
 }
 
 /***********************************************************************************************************************************
@@ -109,7 +114,7 @@ storageFileReadIo(const StorageFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface.io(this->driver));
+    FUNCTION_TEST_RETURN(this->io);
 }
 
 /***********************************************************************************************************************************
@@ -124,7 +129,7 @@ storageFileReadName(const StorageFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface.name(this->driver));
+    FUNCTION_TEST_RETURN(this->interface->name);
 }
 
 /***********************************************************************************************************************************
@@ -139,7 +144,7 @@ storageFileReadType(const StorageFileRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->type);
+    FUNCTION_TEST_RETURN(this->interface->type);
 }
 
 /***********************************************************************************************************************************
@@ -149,8 +154,8 @@ String *
 storageFileReadToLog(const StorageFileRead *this)
 {
     return strNewFmt(
-        "{type: %s, name: %s, ignoreMissing: %s}", strPtr(this->type), strPtr(strToLog(storageFileReadName(this))),
-        cvtBoolToConstZ(storageFileReadIgnoreMissing(this)));
+        "{type: %s, name: %s, ignoreMissing: %s}", strPtr(this->interface->type), strPtr(strToLog(this->interface->name)),
+        cvtBoolToConstZ(this->interface->ignoreMissing));
 }
 
 /***********************************************************************************************************************************

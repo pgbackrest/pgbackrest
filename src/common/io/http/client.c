@@ -10,6 +10,7 @@ Http Client
 #include "common/io/read.intern.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
+#include "common/object.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
@@ -64,8 +65,10 @@ struct HttpClient
 Read content
 ***********************************************************************************************************************************/
 static size_t
-httpClientRead(HttpClient *this, Buffer *buffer, bool block)
+httpClientRead(THIS_VOID, Buffer *buffer, bool block)
 {
+    THIS(HttpClient);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
@@ -145,8 +148,10 @@ httpClientRead(HttpClient *this, Buffer *buffer, bool block)
 Has all content been read?
 ***********************************************************************************************************************************/
 static bool
-httpClientEof(const HttpClient *this)
+httpClientEof(THIS_VOID)
 {
+    THIS(HttpClient);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
     FUNCTION_LOG_END();
@@ -388,8 +393,7 @@ httpClientRequest(
                     {
                         MEM_CONTEXT_BEGIN(this->memContext)
                         {
-                            this->ioRead = ioReadNewP(
-                                this, .eof = (IoReadInterfaceEof)httpClientEof, .read = (IoReadInterfaceRead)httpClientRead);
+                            this->ioRead = ioReadNewP(this, .eof = httpClientEof, .read = httpClientRead);
                             ioReadOpen(this->ioRead);
                         }
                         MEM_CONTEXT_END();

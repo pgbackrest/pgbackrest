@@ -1,39 +1,31 @@
 /***********************************************************************************************************************************
-IO Write Interface Internal
+Posix Storage Driver Internal
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_WRITE_INTERN_H
-#define COMMON_IO_WRITE_INTERN_H
+#ifndef STORAGE_DRIVER_POSIX_STORAGE_INTERN_H
+#define STORAGE_DRIVER_POSIX_STORAGE_INTERN_H
 
-#include "common/io/write.h"
+#include "common/object.h"
+#include "storage/driver/posix/storage.h"
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-typedef struct IoWriteInterface
-{
-    void (*close)(void *driver);
-    int (*handle)(const void *driver);
-    void (*open)(void *driver);
-    void (*write)(void *driver, const Buffer *buffer);
-} IoWriteInterface;
-
-#define ioWriteNewP(driver, ...)                                                                                                   \
-    ioWriteNew(driver, (IoWriteInterface){__VA_ARGS__})
-
-IoWrite *ioWriteNew(void *driver, IoWriteInterface interface);
+Storage *storageDriverPosixNewInternal(
+    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
+    StoragePathExpressionCallback pathExpressionFunction, bool pathSync);
 
 /***********************************************************************************************************************************
-Getters
+Functions
 ***********************************************************************************************************************************/
-void *ioWriteDriver(IoWrite *this);
-const IoWriteInterface *ioWriteInterface(const IoWrite *this);
+void storageDriverPosixPathCreate(THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
+void storageDriverPosixPathSync(THIS_VOID, const String *path, bool ignoreMissing);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_IO_WRITE_INTERFACE_TYPE                                                                                       \
-    IoWriteInterface
-#define FUNCTION_LOG_IO_WRITE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(&value, "IoWriteInterface", buffer, bufferSize)
+#define FUNCTION_LOG_STORAGE_DRIVER_POSIX_TYPE                                                                                     \
+    StorageDriverPosix *
+#define FUNCTION_LOG_STORAGE_DRIVER_POSIX_FORMAT(value, buffer, bufferSize)                                                        \
+    objToLog(value, "StorageDriverPosix *", buffer, bufferSize)
 
 #endif

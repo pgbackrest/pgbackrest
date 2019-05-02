@@ -10,8 +10,8 @@ void
 testRun(void)
 {
     // Create default storage object for testing
-    Storage *storageTest = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    Storage *storageTest = storageDriverPosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // *****************************************************************************************************************************
     if (testBegin("infoNewLoad(), infoFileName(), infoIni()"))
@@ -66,8 +66,7 @@ testRun(void)
         ioWriteFilterGroupSet(
             storageFileWriteIo(infoWrite),
             ioFilterGroupAdd(
-                ioFilterGroupNew(),
-                cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL))));
+                ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL)));
 
         storageRemoveNP(storageLocalWrite(), fileNameCopy);
         storagePutNP(

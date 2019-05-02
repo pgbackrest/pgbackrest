@@ -323,6 +323,21 @@ ioReadBlock(const IoRead *this)
 }
 
 /***********************************************************************************************************************************
+Driver for the read object
+***********************************************************************************************************************************/
+void *
+ioReadDriver(IoRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->driver);
+}
+
+/***********************************************************************************************************************************
 Is IO at EOF?
 
 All driver reads are complete and all data has been flushed from the filters (if any).
@@ -391,6 +406,21 @@ ioReadHandle(const IoRead *this)
     ASSERT(this != NULL);
 
     FUNCTION_LOG_RETURN(INT, this->interface.handle == NULL ? -1 : this->interface.handle(this->driver));
+}
+
+/***********************************************************************************************************************************
+Interface for the read object
+***********************************************************************************************************************************/
+const IoReadInterface *
+ioReadInterface(const IoRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(&this->interface);
 }
 
 /***********************************************************************************************************************************

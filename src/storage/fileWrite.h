@@ -4,10 +4,8 @@ Storage File Write Interface
 #ifndef STORAGE_FILEWRITE_H
 #define STORAGE_FILEWRITE_H
 
-#include <sys/types.h>
-
 /***********************************************************************************************************************************
-Object type
+Object types
 ***********************************************************************************************************************************/
 typedef struct StorageFileWrite StorageFileWrite;
 
@@ -25,7 +23,6 @@ Getters
 ***********************************************************************************************************************************/
 bool storageFileWriteAtomic(const StorageFileWrite *this);
 bool storageFileWriteCreatePath(const StorageFileWrite *this);
-void *storageFileWriteFileDriver(const StorageFileWrite *this);
 IoWrite *storageFileWriteIo(const StorageFileWrite *this);
 mode_t storageFileWriteModeFile(const StorageFileWrite *this);
 mode_t storageFileWriteModePath(const StorageFileWrite *this);

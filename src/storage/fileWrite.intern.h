@@ -4,6 +4,7 @@ Storage File Write Internal
 #ifndef STORAGE_FILEWRITE_INTERN_H
 #define STORAGE_FILEWRITE_INTERN_H
 
+#include "common/io/write.intern.h"
 #include "storage/fileWrite.h"
 #include "version.h"
 
@@ -15,38 +16,29 @@ Temporary file extension
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-typedef bool (*StorageFileWriteInterfaceAtomic)(const void *data);
-typedef bool (*StorageFileWriteInterfaceCreatePath)(const void *data);
-typedef IoWrite *(*StorageFileWriteInterfaceIo)(const void *data);
-typedef mode_t (*StorageFileWriteInterfaceModeFile)(const void *data);
-typedef mode_t (*StorageFileWriteInterfaceModePath)(const void *data);
-typedef const String *(*StorageFileWriteInterfaceName)(const void *data);
-typedef bool (*StorageFileWriteInterfaceSyncFile)(const void *data);
-typedef bool (*StorageFileWriteInterfaceSyncPath)(const void *data);
-
 typedef struct StorageFileWriteInterface
 {
-    StorageFileWriteInterfaceAtomic atomic;
-    StorageFileWriteInterfaceCreatePath createPath;
-    StorageFileWriteInterfaceIo io;
-    StorageFileWriteInterfaceModeFile modeFile;
-    StorageFileWriteInterfaceModePath modePath;
-    StorageFileWriteInterfaceName name;
-    StorageFileWriteInterfaceSyncFile syncFile;
-    StorageFileWriteInterfaceSyncPath syncPath;
+    const String *type;
+    const String *name;
+
+    bool atomic;
+    bool createPath;
+    const String *group;                                            // Group that owns the file
+    mode_t modeFile;
+    mode_t modePath;
+    bool syncFile;
+    bool syncPath;
+    time_t timeModified;                                            // Time file was last modified
+    const String *user;                                             // User that owns the file
+
+    IoWriteInterface ioInterface;
 } StorageFileWriteInterface;
 
-#define storageFileWriteNewP(type, driver, ...)                                                                                    \
-    storageFileWriteNew(type, driver, (StorageFileWriteInterface){__VA_ARGS__})
-
-StorageFileWrite *storageFileWriteNew(const String *type, void *driver, StorageFileWriteInterface interface);
+StorageFileWrite *storageFileWriteNew(void *driver, const StorageFileWriteInterface *interface);
 
 /***********************************************************************************************************************************
-Macros for function logging
+Functions
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_FILE_WRITE_INTERFACE_TYPE                                                                             \
-    StorageFileWriteInterface
-#define FUNCTION_LOG_STORAGE_FILE_WRITE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                \
-    objToLog(&value, "StorageFileWriteInterface", buffer, bufferSize)
+void *storageFileWriteFileDriver(const StorageFileWrite *this);
 
 #endif

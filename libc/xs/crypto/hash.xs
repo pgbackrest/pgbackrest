@@ -36,9 +36,10 @@ CODE:
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
         STRLEN messageSize;
-        const unsigned char *messagePtr = (const unsigned char *)SvPV(message, messageSize);
+        const void *messagePtr = SvPV(message, messageSize);
 
-        cryptoHashProcessC(self->pxPayload, messagePtr, messageSize);
+        if (messageSize > 0)
+            ioFilterProcessIn(self->pxPayload, BUF(messagePtr, messageSize));
     }
     MEM_CONTEXT_XS_TEMP_END();
 
@@ -51,7 +52,7 @@ CODE:
 
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        String *hash = bufHex(cryptoHash(self->pxPayload));
+        const String *hash = varStr(ioFilterResult(self->pxPayload));
 
         RETVAL = newSV(strSize(hash));
         SvPOK_only(RETVAL);
@@ -82,9 +83,9 @@ CODE:
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
         STRLEN messageSize;
-        const unsigned char *messagePtr = (const unsigned char *)SvPV(message, messageSize);
+        const void *messagePtr = SvPV(message, messageSize);
 
-        String *hash = bufHex(cryptoHashOneC(strNew(type), messagePtr, messageSize));
+        String *hash = bufHex(cryptoHashOne(strNew(type), BUF(messagePtr, messageSize)));
 
         RETVAL = newSV(strSize(hash));
         SvPOK_only(RETVAL);

@@ -20,16 +20,16 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    Storage *storageTest = storageDriverPosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // Start a protocol server to test the protocol directly
     Buffer *serverWrite = bufNew(8192);
-    IoWrite *serverWriteIo = ioBufferWriteIo(ioBufferWriteNew(serverWrite));
+    IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
     ioWriteOpen(serverWriteIo);
 
     ProtocolServer *server = protocolServerNew(
-        strNew("test"), strNew("test"), ioBufferReadIo(ioBufferReadNew(bufNew(0))), serverWriteIo);
+        strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
 
     bufUsedSet(serverWrite, 0);
 
@@ -189,8 +189,7 @@ testRun(void)
         ioWriteFilterGroupSet(
             storageFileWriteIo(infoWrite),
             ioFilterGroupAdd(
-                ioFilterGroupNew(),
-                cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL))));
+                ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL)));
 
         storagePutNP(
             infoWrite,
@@ -210,11 +209,9 @@ testRun(void)
                 "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
 
         IoFilterGroup *filterGroup = ioFilterGroupNew();
-        ioFilterGroupAdd(filterGroup, gzipCompressFilter(gzipCompressNew(3, false)));
+        ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
         ioFilterGroupAdd(
-            filterGroup,
-            cipherBlockFilter(
-                cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("worstpassphraseever"), NULL)));
+            filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("worstpassphraseever"), NULL));
         ioWriteFilterGroupSet(storageFileWriteIo(destination), filterGroup);
         storagePutNP(destination, buffer);
 

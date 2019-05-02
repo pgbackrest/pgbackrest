@@ -6,43 +6,12 @@ Read from a handle using the IoRead interface.
 #ifndef COMMON_IO_HANDLEREAD_H
 #define COMMON_IO_HANDLEREAD_H
 
-/***********************************************************************************************************************************
-Object type
-***********************************************************************************************************************************/
-typedef struct IoHandleRead IoHandleRead;
-
 #include "common/io/read.h"
 #include "common/time.h"
 
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-IoHandleRead *ioHandleReadNew(const String *name, int handle, TimeMSec timeout);
-
-/***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-size_t ioHandleRead(IoHandleRead *this, Buffer *buffer, bool block);
-IoHandleRead *ioHandleReadMove(IoHandleRead *this, MemContext *parentNew);
-
-/***********************************************************************************************************************************
-Getters
-***********************************************************************************************************************************/
-bool ioHandleReadEof(const IoHandleRead *this);
-int ioHandleReadHandle(const IoHandleRead *this);
-IoRead *ioHandleReadIo(const IoHandleRead *this);
-
-/***********************************************************************************************************************************
-Destructor
-***********************************************************************************************************************************/
-void ioHandleReadFree(IoHandleRead *this);
-
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_IO_HANDLE_READ_TYPE                                                                                           \
-    IoHandleRead *
-#define FUNCTION_LOG_IO_HANDLE_READ_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "IoHandleRead", buffer, bufferSize)
+IoRead *ioHandleReadNew(const String *name, int handle, TimeMSec timeout);
 
 #endif

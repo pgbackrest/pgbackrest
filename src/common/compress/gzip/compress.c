@@ -12,6 +12,7 @@ Gzip Compress
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -22,16 +23,31 @@ Filter type constant
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-struct GzipCompress
+typedef struct GzipCompress
 {
     MemContext *memContext;                                         // Context to store data
     z_stream *stream;                                               // Compression stream state
-    IoFilter *filter;                                               // Filter interface
 
     bool inputSame;                                                 // Is the same input required on the next process call?
     bool flush;                                                     // Is input complete and flushing in progress?
     bool done;                                                      // Is compression done?
-};
+} GzipCompress;
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+static String *
+gzipCompressToLog(const GzipCompress *this)
+{
+    return strNewFmt(
+        "{inputSame: %s, done: %s, flushing: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
+        cvtBoolToConstZ(this->done), this->stream->avail_in);
+}
+
+#define FUNCTION_LOG_GZIP_COMPRESS_TYPE                                                                                            \
+    GzipCompress *
+#define FUNCTION_LOG_GZIP_COMPRESS_FORMAT(value, buffer, bufferSize)                                                               \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, gzipCompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Compression constants
@@ -39,50 +55,13 @@ Compression constants
 #define MEM_LEVEL                                                   9
 
 /***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
-GzipCompress *
-gzipCompressNew(int level, bool raw)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, level);
-        FUNCTION_LOG_PARAM(BOOL, raw);
-    FUNCTION_LOG_END();
-
-    ASSERT(level >= -1 && level <= 9);
-
-    GzipCompress *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("GzipCompress")
-    {
-        // Allocate state and set context
-        this = memNew(sizeof(GzipCompress));
-        this->memContext = MEM_CONTEXT_NEW();
-
-        // Create gzip stream
-        this->stream = memNew(sizeof(z_stream));
-        gzipError(deflateInit2(this->stream, level, Z_DEFLATED, gzipWindowBits(raw), MEM_LEVEL, Z_DEFAULT_STRATEGY));
-
-        // Set free callback to ensure gzip context is freed
-        memContextCallback(this->memContext, (MemContextCallback)gzipCompressFree, this);
-
-        // Create filter interface
-        this->filter = ioFilterNewP(
-            GZIP_COMPRESS_FILTER_TYPE_STR, this, .done = (IoFilterInterfaceDone)gzipCompressDone,
-            .inOut = (IoFilterInterfaceProcessInOut)gzipCompressProcess,
-            .inputSame = (IoFilterInterfaceInputSame)gzipCompressInputSame);
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(GZIP_COMPRESS, this);
-}
-
-/***********************************************************************************************************************************
 Compress data
 ***********************************************************************************************************************************/
-void
-gzipCompressProcess(GzipCompress *this, const Buffer *uncompressed, Buffer *compressed)
+static void
+gzipCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
 {
+    THIS(GzipCompress);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(GZIP_COMPRESS, this);
         FUNCTION_LOG_PARAM(BUFFER, uncompressed);
@@ -136,9 +115,11 @@ gzipCompressProcess(GzipCompress *this, const Buffer *uncompressed, Buffer *comp
 /***********************************************************************************************************************************
 Is compress done?
 ***********************************************************************************************************************************/
-bool
-gzipCompressDone(const GzipCompress *this)
+static bool
+gzipCompressDone(const THIS_VOID)
 {
+    THIS(const GzipCompress);
+
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(GZIP_COMPRESS, this);
     FUNCTION_TEST_END();
@@ -149,26 +130,13 @@ gzipCompressDone(const GzipCompress *this)
 }
 
 /***********************************************************************************************************************************
-Get filter interface
-***********************************************************************************************************************************/
-IoFilter *
-gzipCompressFilter(const GzipCompress *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(GZIP_COMPRESS, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->filter);
-}
-
-/***********************************************************************************************************************************
 Is the same input required on the next process call?
 ***********************************************************************************************************************************/
-bool
-gzipCompressInputSame(const GzipCompress *this)
+static bool
+gzipCompressInputSame(const THIS_VOID)
 {
+    THIS(const GzipCompress);
+
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(GZIP_COMPRESS, this);
     FUNCTION_TEST_END();
@@ -179,20 +147,9 @@ gzipCompressInputSame(const GzipCompress *this)
 }
 
 /***********************************************************************************************************************************
-Render as string for logging
-***********************************************************************************************************************************/
-String *
-gzipCompressToLog(const GzipCompress *this)
-{
-    return strNewFmt(
-        "{inputSame: %s, done: %s, flushing: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
-        cvtBoolToConstZ(this->done), this->stream->avail_in);
-}
-
-/***********************************************************************************************************************************
 Free memory
 ***********************************************************************************************************************************/
-void
+static void
 gzipCompressFree(GzipCompress *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -209,4 +166,41 @@ gzipCompressFree(GzipCompress *this)
     }
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+New object
+***********************************************************************************************************************************/
+IoFilter *
+gzipCompressNew(int level, bool raw)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, level);
+        FUNCTION_LOG_PARAM(BOOL, raw);
+    FUNCTION_LOG_END();
+
+    ASSERT(level >= -1 && level <= 9);
+
+    IoFilter *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("GzipCompress")
+    {
+        GzipCompress *driver = memNew(sizeof(GzipCompress));
+        driver->memContext = MEM_CONTEXT_NEW();
+
+        // Create gzip stream
+        driver->stream = memNew(sizeof(z_stream));
+        gzipError(deflateInit2(driver->stream, level, Z_DEFLATED, gzipWindowBits(raw), MEM_LEVEL, Z_DEFAULT_STRATEGY));
+
+        // Set free callback to ensure gzip context is freed
+        memContextCallback(driver->memContext, (MemContextCallback)gzipCompressFree, driver);
+
+        // Create filter interface
+        this = ioFilterNewP(
+            GZIP_COMPRESS_FILTER_TYPE_STR, driver, .done = gzipCompressDone, .inOut = gzipCompressProcess,
+            .inputSame = gzipCompressInputSame);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

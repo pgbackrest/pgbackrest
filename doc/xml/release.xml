@@ -56,6 +56,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve type safety of interfaces and drivers.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Various <code>Buffer</code> improvements.</p>
                     </release-item>
 

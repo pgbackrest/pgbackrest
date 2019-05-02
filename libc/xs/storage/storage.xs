@@ -13,6 +13,8 @@ storageDriverPosixPathRemove(path, errorOnMissing, recurse)
 CODE:
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
-        storageDriverPosixPathRemove(storageDriverPosixNew(strNew("/"), 0640, 750, true, NULL), strNew(path), errorOnMissing, recurse);
+        storagePathRemoveP(
+            storageDriverPosixNew(strNew("/"), 0640, 750, true, NULL), strNew(path), .errorOnMissing = errorOnMissing,
+            .recurse = recurse);
     }
     MEM_CONTEXT_XS_TEMP_END();

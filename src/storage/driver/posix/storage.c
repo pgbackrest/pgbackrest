@@ -7,6 +7,7 @@ Posix Storage Driver
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,15 +18,10 @@ Posix Storage Driver
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
-#include "storage/driver/posix/storage.h"
+#include "storage/driver/posix/fileRead.h"
+#include "storage/driver/posix/fileWrite.h"
+#include "storage/driver/posix/storage.intern.h"
 #include "storage/driver/posix/common.h"
-
-/***********************************************************************************************************************************
-Define PATH_MAX if it is not defined
-***********************************************************************************************************************************/
-#ifndef PATH_MAX
-#define PATH_MAX                                                    (4 * 1024)
-#endif
 
 /***********************************************************************************************************************************
 Driver type constant string
@@ -38,58 +34,17 @@ Object type
 struct StorageDriverPosix
 {
     MemContext *memContext;                                         // Object memory context
-    Storage *interface;                                             // Driver interface
+    bool syncPath;                                                  // Will paths be synced?
 };
-
-/***********************************************************************************************************************************
-New object
-***********************************************************************************************************************************/
-StorageDriverPosix *
-storageDriverPosixNew(
-    const String *path, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(MODE, modeFile);
-        FUNCTION_LOG_PARAM(MODE, modePath);
-        FUNCTION_LOG_PARAM(BOOL, write);
-        FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
-    FUNCTION_LOG_END();
-
-    ASSERT(path != NULL);
-    ASSERT(modeFile != 0);
-    ASSERT(modePath != 0);
-
-    // Create the object
-    StorageDriverPosix *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("StorageDriverPosix")
-    {
-        this = memNew(sizeof(StorageDriverPosix));
-        this->memContext = MEM_CONTEXT_NEW();
-
-        this->interface = storageNewP(
-            STORAGE_DRIVER_POSIX_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, this,
-            .exists = (StorageInterfaceExists)storageDriverPosixExists, .info = (StorageInterfaceInfo)storageDriverPosixInfo,
-            .infoList = (StorageInterfaceInfoList)storageDriverPosixInfoList, .list = (StorageInterfaceList)storageDriverPosixList,
-            .move = (StorageInterfaceMove)storageDriverPosixMove, .newRead = (StorageInterfaceNewRead)storageDriverPosixNewRead,
-            .newWrite = (StorageInterfaceNewWrite)storageDriverPosixNewWrite,
-            .pathCreate = (StorageInterfacePathCreate)storageDriverPosixPathCreate,
-            .pathRemove = (StorageInterfacePathRemove)storageDriverPosixPathRemove,
-            .pathSync = (StorageInterfacePathSync)storageDriverPosixPathSync,
-            .remove = (StorageInterfaceRemove)storageDriverPosixRemove);
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(STORAGE_DRIVER_POSIX, this);
-}
 
 /***********************************************************************************************************************************
 Does a file exist? This function is only for files, not paths.
 ***********************************************************************************************************************************/
-bool
-storageDriverPosixExists(StorageDriverPosix *this, const String *path)
+static bool
+storageDriverPosixExists(THIS_VOID,  const String *path)
 {
+    THIS(StorageDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -119,9 +74,11 @@ storageDriverPosixExists(StorageDriverPosix *this, const String *path)
 /***********************************************************************************************************************************
 File/path info
 ***********************************************************************************************************************************/
-StorageInfo
-storageDriverPosixInfo(StorageDriverPosix *this, const String *file, bool ignoreMissing, bool followLink)
+static StorageInfo
+storageDriverPosixInfo(THIS_VOID, const String *file, bool ignoreMissing, bool followLink)
 {
+    THIS(StorageDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
@@ -227,10 +184,12 @@ storageDriverPosixInfoListEntry(
     FUNCTION_TEST_RETURN_VOID();
 }
 
-bool
+static bool
 storageDriverPosixInfoList(
-    StorageDriverPosix *this, const String *path, bool errorOnMissing, StorageInfoListCallback callback, void *callbackData)
+    THIS_VOID, const String *path, bool errorOnMissing, StorageInfoListCallback callback, void *callbackData)
 {
+    THIS(StorageDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -292,9 +251,11 @@ storageDriverPosixInfoList(
 /***********************************************************************************************************************************
 Get a list of files from a directory
 ***********************************************************************************************************************************/
-StringList *
-storageDriverPosixList(StorageDriverPosix *this, const String *path, bool errorOnMissing, const String *expression)
+static StringList *
+storageDriverPosixList(THIS_VOID, const String *path, bool errorOnMissing, const String *expression)
 {
+    THIS(StorageDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -362,13 +323,15 @@ storageDriverPosixList(StorageDriverPosix *this, const String *path, bool errorO
 /***********************************************************************************************************************************
 Move a path/file
 ***********************************************************************************************************************************/
-bool
-storageDriverPosixMove(StorageDriverPosix *this, StorageDriverPosixFileRead *source, StorageDriverPosixFileWrite *destination)
+static bool
+storageDriverPosixMove(THIS_VOID,  StorageFileRead *source, StorageFileWrite *destination)
 {
+    THIS(StorageDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, source);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_WRITE, destination);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_READ, source);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE, destination);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -379,8 +342,8 @@ storageDriverPosixMove(StorageDriverPosix *this, StorageDriverPosixFileRead *sou
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *sourceFile = storageDriverPosixFileReadName(source);
-        const String *destinationFile = storageDriverPosixFileWriteName(destination);
+        const String *sourceFile = storageFileReadName(source);
+        const String *destinationFile = storageFileWriteName(destination);
         const String *destinationPath = strPath(destinationFile);
 
         // Attempt to move the file
@@ -392,13 +355,13 @@ storageDriverPosixMove(StorageDriverPosix *this, StorageDriverPosixFileRead *sou
                 if (!storageDriverPosixExists(this, sourceFile))
                     THROW_SYS_ERROR_FMT(FileMissingError, "unable to move missing file '%s'", strPtr(sourceFile));
 
-                if (!storageDriverPosixFileWriteCreatePath(destination))
+                if (!storageFileWriteCreatePath(destination))
                 {
                     THROW_SYS_ERROR_FMT(
                         PathMissingError, "unable to move '%s' to missing path '%s'", strPtr(sourceFile), strPtr(destinationPath));
                 }
 
-                storageDriverPosixPathCreate(this, destinationPath, false, false, storageDriverPosixFileWriteModePath(destination));
+                storageDriverPosixPathCreate(this, destinationPath, false, false, storageFileWriteModePath(destination));
                 result = storageDriverPosixMove(this, source, destination);
             }
             // Else the destination is on a different device so a copy will be needed
@@ -413,7 +376,7 @@ storageDriverPosixMove(StorageDriverPosix *this, StorageDriverPosixFileRead *sou
         else
         {
             // Sync source path if the destination path was synced and the paths are not equal
-            if (storageDriverPosixFileWriteSyncPath(destination))
+            if (storageFileWriteSyncPath(destination))
             {
                 String *sourcePath = strPath(sourceFile);
 
@@ -430,9 +393,11 @@ storageDriverPosixMove(StorageDriverPosix *this, StorageDriverPosixFileRead *sou
 /***********************************************************************************************************************************
 New file read object
 ***********************************************************************************************************************************/
-StorageFileRead *
-storageDriverPosixNewRead(StorageDriverPosix *this, const String *file, bool ignoreMissing)
+static StorageFileRead *
+storageDriverPosixNewRead(THIS_VOID, const String *file, bool ignoreMissing)
 {
+    THIS(StorageDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
@@ -442,18 +407,19 @@ storageDriverPosixNewRead(StorageDriverPosix *this, const String *file, bool ign
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    FUNCTION_LOG_RETURN(
-        STORAGE_FILE_READ, storageDriverPosixFileReadInterface(storageDriverPosixFileReadNew(this, file, ignoreMissing)));
+    FUNCTION_LOG_RETURN(STORAGE_FILE_READ, storageFileReadDriverPosixNew(this, file, ignoreMissing));
 }
 
 /***********************************************************************************************************************************
 New file write object
 ***********************************************************************************************************************************/
-StorageFileWrite *
+static StorageFileWrite *
 storageDriverPosixNewWrite(
-    StorageDriverPosix *this, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
+    THIS_VOID, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
     time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic)
 {
+    THIS(StorageDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
@@ -473,17 +439,19 @@ storageDriverPosixNewWrite(
 
     FUNCTION_LOG_RETURN(
         STORAGE_FILE_WRITE,
-        storageDriverPosixFileWriteInterface(
-            storageDriverPosixFileWriteNew(
-                this, file, modeFile, modePath, user, group, timeModified, createPath, syncFile, syncPath, atomic)));
+        storageFileWriteDriverPosixNew(
+            this, file, modeFile, modePath, user, group, timeModified, createPath, syncFile, this->syncPath ? syncPath : false,
+            atomic));
 }
 
 /***********************************************************************************************************************************
 Create a path
 ***********************************************************************************************************************************/
 void
-storageDriverPosixPathCreate(StorageDriverPosix *this, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode)
+storageDriverPosixPathCreate(THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode)
 {
+    THIS(StorageDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -515,9 +483,11 @@ storageDriverPosixPathCreate(StorageDriverPosix *this, const String *path, bool 
 /***********************************************************************************************************************************
 Remove a path
 ***********************************************************************************************************************************/
-void
-storageDriverPosixPathRemove(StorageDriverPosix *this, const String *path, bool errorOnMissing, bool recurse)
+static void
+storageDriverPosixPathRemove(THIS_VOID, const String *path, bool errorOnMissing, bool recurse)
 {
+    THIS(StorageDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -574,8 +544,10 @@ storageDriverPosixPathRemove(StorageDriverPosix *this, const String *path, bool 
 Sync a path
 ***********************************************************************************************************************************/
 void
-storageDriverPosixPathSync(StorageDriverPosix *this, const String *path, bool ignoreMissing)
+storageDriverPosixPathSync(THIS_VOID, const String *path, bool ignoreMissing)
 {
+    THIS(StorageDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -585,17 +557,20 @@ storageDriverPosixPathSync(StorageDriverPosix *this, const String *path, bool ig
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    // Open directory and handle errors
-    int handle = storageDriverPosixFileOpen(path, O_RDONLY, 0, ignoreMissing, false, "sync");
-
-    // On success
-    if (handle != -1)
+    if (this->syncPath)
     {
-        // Attempt to sync the directory
-        storageDriverPosixFileSync(handle, path, false, true);
+        // Open directory and handle errors
+        int handle = storageDriverPosixFileOpen(path, O_RDONLY, 0, ignoreMissing, false, "sync");
 
-        // Close the directory
-        storageDriverPosixFileClose(handle, path, false);
+        // On success
+        if (handle != -1)
+        {
+            // Attempt to sync the directory
+            storageDriverPosixFileSync(handle, path, false, true);
+
+            // Close the directory
+            storageDriverPosixFileClose(handle, path, false);
+        }
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -604,9 +579,11 @@ storageDriverPosixPathSync(StorageDriverPosix *this, const String *path, bool ig
 /***********************************************************************************************************************************
 Remove a file
 ***********************************************************************************************************************************/
-void
-storageDriverPosixRemove(StorageDriverPosix *this, const String *file, bool errorOnMissing)
+static void
+storageDriverPosixRemove(THIS_VOID, const String *file, bool errorOnMissing)
 {
+    THIS(StorageDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
@@ -627,32 +604,63 @@ storageDriverPosixRemove(StorageDriverPosix *this, const String *file, bool erro
 }
 
 /***********************************************************************************************************************************
-Getters
+New object
 ***********************************************************************************************************************************/
 Storage *
-storageDriverPosixInterface(const StorageDriverPosix *this)
+storageDriverPosixNewInternal(
+    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
+    StoragePathExpressionCallback pathExpressionFunction, bool syncPath)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface);
-}
-
-/***********************************************************************************************************************************
-Free the file
-***********************************************************************************************************************************/
-void
-storageDriverPosixFree(StorageDriverPosix *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX, this);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(MODE, modeFile);
+        FUNCTION_LOG_PARAM(MODE, modePath);
+        FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
+        FUNCTION_LOG_PARAM(BOOL, syncPath);
     FUNCTION_LOG_END();
 
-    if (this != NULL)
-        memContextFree(this->memContext);
+    ASSERT(type != NULL);
+    ASSERT(path != NULL);
+    ASSERT(modeFile != 0);
+    ASSERT(modePath != 0);
 
-    FUNCTION_LOG_RETURN_VOID();
+    // Create the object
+    Storage *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("StorageDriverPosix")
+    {
+        StorageDriverPosix *driver = memNew(sizeof(StorageDriverPosix));
+        driver->memContext = MEM_CONTEXT_NEW();
+        driver->syncPath = syncPath;
+
+        this = storageNewP(
+            type, path, modeFile, modePath, write, pathExpressionFunction, driver, .exists = storageDriverPosixExists,
+            .info = storageDriverPosixInfo, .infoList = storageDriverPosixInfoList, .list = storageDriverPosixList,
+            .move = storageDriverPosixMove, .newRead = storageDriverPosixNewRead, .newWrite = storageDriverPosixNewWrite,
+            .pathCreate = storageDriverPosixPathCreate, .pathRemove = storageDriverPosixPathRemove,
+            .pathSync = storageDriverPosixPathSync, .remove = storageDriverPosixRemove);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(STORAGE, this);
+}
+
+Storage *
+storageDriverPosixNew(
+    const String *path, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(MODE, modeFile);
+        FUNCTION_LOG_PARAM(MODE, modePath);
+        FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(
+        STORAGE,
+        storageDriverPosixNewInternal(
+            STORAGE_DRIVER_POSIX_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, true));
 }

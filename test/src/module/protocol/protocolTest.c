@@ -62,8 +62,8 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    Storage *storageTest = storageDriverPosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // *****************************************************************************************************************************
     if (testBegin("repoIsLocal()"))
@@ -224,9 +224,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 2000));
+                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE()));
+                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
                 // Various bogus greetings
@@ -277,9 +277,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000));
+                IoRead *read = ioHandleReadNew(strNew("client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                IoWrite *write = ioHandleWriteNew(strNew("client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
                 ioWriteOpen(write);
 
                 // Various bogus greetings
@@ -353,9 +353,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("client read"), HARNESS_FORK_CHILD_READ(), 2000));
+                IoRead *read = ioHandleReadNew(strNew("client read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("client write"), HARNESS_FORK_CHILD_WRITE()));
+                IoWrite *write = ioHandleWriteNew(strNew("client write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
                 // Check greeting
@@ -405,9 +405,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000));
+                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
                 ioWriteOpen(write);
 
                 // Send greeting
@@ -470,9 +470,9 @@ testRun(void)
             // Local 1
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000));
+                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE()));
+                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
                 // Greeting with noop
@@ -496,9 +496,9 @@ testRun(void)
             // Local 2
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000));
+                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE()));
+                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
                 // Greeting with noop
@@ -538,11 +538,11 @@ testRun(void)
 
                 for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
                 {
-                    IoRead *read = ioHandleReadIo(
-                        ioHandleReadNew(strNewFmt("client %u read", clientIdx), HARNESS_FORK_PARENT_READ_PROCESS(clientIdx), 2000));
+                    IoRead *read = ioHandleReadNew(
+                        strNewFmt("client %u read", clientIdx), HARNESS_FORK_PARENT_READ_PROCESS(clientIdx), 2000);
                     ioReadOpen(read);
-                    IoWrite *write = ioHandleWriteIo(
-                        ioHandleWriteNew(strNewFmt("client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx)));
+                    IoWrite *write = ioHandleWriteNew(
+                        strNewFmt("client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx));
                     ioWriteOpen(write);
 
                     TEST_ASSIGN(
@@ -557,9 +557,9 @@ testRun(void)
                     "{\"name\":\"pgBackRest\",\"service\":\"error\",\"version\":\"" PROJECT_VERSION "\"}\n"
                     "{}\n");
 
-                IoRead *read = ioBufferReadIo(ioBufferReadNew(BUFSTR(protocolString)));
+                IoRead *read = ioBufferReadNew(BUFSTR(protocolString));
                 ioReadOpen(read);
-                IoWrite *write = ioBufferWriteIo(ioBufferWriteNew(bufNew(1024)));
+                IoWrite *write = ioBufferWriteNew(bufNew(1024));
                 ioWriteOpen(write);
 
                 ProtocolClient *clientError = protocolClientNew(strNew("error"), strNew("error"), read, write);

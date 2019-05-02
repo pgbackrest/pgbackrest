@@ -65,10 +65,10 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
-    Storage *storageTmp = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew("/tmp"), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    Storage *storageTest = storageDriverPosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+    Storage *storageTmp = storageDriverPosixNew(
+        strNew("/tmp"), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
     ioBufferSizeSet(2);
 
     // Directory and file that cannot be accessed to test permissions errors
@@ -126,8 +126,7 @@ testRun(void)
     if (testBegin("storageNew() and storageFree()"))
     {
         Storage *storageTest = NULL;
-        TEST_ASSIGN(
-            storageTest, storageDriverPosixInterface(storageDriverPosixNew(strNew("/"), 0640, 0750, false, NULL)), "new storage (defaults)");
+        TEST_ASSIGN(storageTest, storageDriverPosixNew(strNew("/"), 0640, 0750, false, NULL), "new storage (defaults)");
         TEST_RESULT_STR(strPtr(storageTest->path), "/", "    check path");
         TEST_RESULT_INT(storageTest->modeFile, 0640, "    check file mode");
         TEST_RESULT_INT(storageTest->modePath, 0750, "     check path mode");
@@ -135,7 +134,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageTest->pathExpressionFunction == NULL, true, "    check expression function is not set");
 
         TEST_ASSIGN(
-            storageTest, storageDriverPosixInterface(storageDriverPosixNew(strNew("/path/to"), 0600, 0700, true, storageTestPathExpression)),
+            storageTest, storageDriverPosixNew(strNew("/path/to"), 0600, 0700, true, storageTestPathExpression),
             "new storage (non-default)");
         TEST_RESULT_STR(strPtr(storageTest->path), "/path/to", "    check path");
         TEST_RESULT_INT(storageTest->modeFile, 0600, "    check file mode");
@@ -148,9 +147,6 @@ testRun(void)
 
         TEST_RESULT_VOID(storageFree(storageTest), "free storage");
         TEST_RESULT_VOID(storageFree(NULL), "free null storage");
-
-        TEST_RESULT_VOID(storageDriverPosixFree(storageDriverPosixNew(strNew("/"), 0640, 0750, false, NULL)), "free posix storage");
-        TEST_RESULT_VOID(storageDriverPosixFree(NULL), "free null posix storage");
     }
 
     // *****************************************************************************************************************************
@@ -484,7 +480,7 @@ testRun(void)
     {
         Storage *storageTest = NULL;
 
-        TEST_ASSIGN(storageTest, storageDriverPosixInterface(storageDriverPosixNew(strNew("/"), 0640, 0750, false, NULL)), "new storage /");
+        TEST_ASSIGN(storageTest, storageDriverPosixNew(strNew("/"), 0640, 0750, false, NULL), "new storage /");
         TEST_RESULT_STR(strPtr(storagePathNP(storageTest, NULL)), "/", "    root dir");
         TEST_RESULT_STR(strPtr(storagePathNP(storageTest, strNew("/"))), "/", "    same as root dir");
         TEST_RESULT_STR(strPtr(storagePathNP(storageTest, strNew("subdir"))), "/subdir", "    simple subdir");
@@ -494,7 +490,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            storageTest, storageDriverPosixInterface(storageDriverPosixNew(strNew("/path/to"), 0640, 0750, false, storageTestPathExpression)),
+            storageTest, storageDriverPosixNew(strNew("/path/to"), 0640, 0750, false, storageTestPathExpression),
             "new storage /path/to with expression");
         TEST_RESULT_STR(strPtr(storagePathNP(storageTest, NULL)), "/path/to", "    root dir");
         TEST_RESULT_STR(strPtr(storagePathNP(storageTest, strNew("/path/to"))), "/path/to", "    absolute root dir");
@@ -642,7 +638,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(ioReadOpen(storageFileReadIo(file)), true, "    open file");
         TEST_RESULT_INT(
-            ioReadHandle(storageFileReadIo(file)), ((StorageDriverPosixFileRead *)file->driver)->handle, "check read handle");
+            ioReadHandle(storageFileReadIo(file)), ((StorageFileReadDriverPosix *)file->driver)->handle, "check read handle");
         TEST_RESULT_VOID(ioReadClose(storageFileReadIo(file)), "    close file");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -679,7 +675,7 @@ testRun(void)
             "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
         TEST_RESULT_INT(
-            ioWriteHandle(storageFileWriteIo(file)), ((StorageDriverPosixFileWrite *)file->driver)->handle, "check write handle");
+            ioWriteHandle(storageFileWriteIo(file)), ((StorageFileWriteDriverPosix *)file->driver)->handle, "check write handle");
         TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
         TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
         TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0640, "    check file mode");
@@ -709,9 +705,7 @@ testRun(void)
             file, storageNewWriteP(storageTest, fileName, .modePath = 0700, .modeFile = 0600), "new write file (set mode)");
         TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
         TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
-        TEST_RESULT_VOID(
-            storageDriverPosixFileWriteClose((StorageDriverPosixFileWrite *)storageFileWriteFileDriver(file)),
-            "   close file again");
+        TEST_RESULT_VOID(storageFileWriteDriverPosixClose(storageFileWriteFileDriver(file)), "   close file again");
         TEST_RESULT_INT(storageInfoNP(storageTest, strPath(fileName)).mode, 0700, "    check path mode");
         TEST_RESULT_INT(storageInfoNP(storageTest, fileName).mode, 0600, "    check file mode");
 
@@ -726,7 +720,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storagePut() and storageGet()"))
     {
-        Storage *storageTest = storageDriverPosixInterface(storageDriverPosixNew(strNew("/"), 0640, 0750, true, NULL));
+        Storage *storageTest = storageDriverPosixNew(strNew("/"), 0640, 0750, true, NULL);
 
         TEST_ERROR_FMT(
             storageGetNP(storageNewReadNP(storageTest, strNew(testPath()))), FileReadError,
@@ -836,17 +830,14 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadOpen(storageFileReadIo(file)), true, "   open file");
 
         // Close the file handle so operations will fail
-        close(((StorageDriverPosixFileRead *)file->driver)->handle);
+        close(((StorageFileReadDriverPosix *)file->driver)->handle);
 
         TEST_ERROR_FMT(
             ioRead(storageFileReadIo(file), outBuffer), FileReadError,
             "unable to read '%s': [9] Bad file descriptor", strPtr(fileName));
-        TEST_ERROR_FMT(
-            ioReadClose(storageFileReadIo(file)), FileCloseError,
-            "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
 
-        // Set file handle to -1 so the close on free with not fail
-        ((StorageDriverPosixFileRead *)file->driver)->handle = -1;
+        // Set file handle to -1 so the close on free will not fail
+        ((StorageFileReadDriverPosix *)file->driver)->handle = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *buffer = bufNew(0);
@@ -883,7 +874,8 @@ testRun(void)
         TEST_RESULT_INT(bufUsed(outBuffer), 0, "    buffer is empty");
 
         TEST_RESULT_VOID(
-            storageDriverPosixFileRead(storageFileReadDriver(file), outBuffer, true), "    no data to load from driver either");
+            storageFileReadDriverPosix(storageFileReadDriver(file), outBuffer, true),
+            "    no data to load from driver either");
         TEST_RESULT_INT(bufUsed(outBuffer), 0, "    buffer is empty");
 
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents (all loaded)");
@@ -895,7 +887,7 @@ testRun(void)
 
         TEST_RESULT_VOID(storageFileReadFree(storageNewReadNP(storageTest, fileName)), "   free file");
         TEST_RESULT_VOID(storageFileReadFree(NULL), "   free null file");
-        TEST_RESULT_VOID(storageDriverPosixFileReadFree(NULL), "   free null posix file");
+        TEST_RESULT_VOID(storageFileReadDriverPosixFree(NULL), "   free null posix file");
 
         TEST_RESULT_VOID(storageFileReadMove(NULL, memContextTop()), "   move null file");
     }
@@ -946,25 +938,25 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(file)), "    open file");
 
         // Close the file handle so operations will fail
-        close(((StorageDriverPosixFileWrite *)file->driver)->handle);
+        close(((StorageFileWriteDriverPosix *)file->driver)->handle);
         storageRemoveP(storageTest, fileTmp, .errorOnMissing = true);
 
         TEST_ERROR_FMT(
-            storageDriverPosixFileWrite(storageFileWriteFileDriver(file), buffer), FileWriteError,
+            storageFileWriteDriverPosix(storageFileWriteFileDriver(file), buffer), FileWriteError,
             "unable to write '%s.pgbackrest.tmp': [9] Bad file descriptor", strPtr(fileName));
         TEST_ERROR_FMT(
-            storageDriverPosixFileWriteClose(storageFileWriteFileDriver(file)), FileSyncError,
+            storageFileWriteDriverPosixClose(storageFileWriteFileDriver(file)), FileSyncError,
             "unable to sync '%s.pgbackrest.tmp': [9] Bad file descriptor", strPtr(fileName));
 
-        // Disable file sync so the close can be reached
-        ((StorageDriverPosixFileWrite *)file->driver)->syncFile = false;
+        // Disable file sync so close() can be reached
+        ((StorageFileWriteDriverPosix *)file->driver)->interface.syncFile = false;
 
         TEST_ERROR_FMT(
-            storageDriverPosixFileWriteClose(storageFileWriteFileDriver(file)), FileCloseError,
+            storageFileWriteDriverPosixClose(storageFileWriteFileDriver(file)), FileCloseError,
             "unable to close '%s.pgbackrest.tmp': [9] Bad file descriptor", strPtr(fileName));
 
         // Set file handle to -1 so the close on free with not fail
-        ((StorageDriverPosixFileWrite *)file->driver)->handle = -1;
+        ((StorageFileWriteDriverPosix *)file->driver)->handle = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewWriteNP(storageTest, fileName), "new write file");
@@ -979,7 +971,7 @@ testRun(void)
             "unable to move '%s' to '%s': [2] No such file or directory", strPtr(fileTmp), strPtr(fileName));
 
         // Set file handle to -1 so the close on free with not fail
-        ((StorageDriverPosixFileWrite *)file->driver)->handle = -1;
+        ((StorageFileWriteDriverPosix *)file->driver)->handle = -1;
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 
@@ -997,7 +989,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(storageFileWriteIo(file)), "   close file");
         TEST_RESULT_VOID(storageFileWriteFree(storageNewWriteNP(storageTest, fileName)), "   free file");
         TEST_RESULT_VOID(storageFileWriteFree(NULL), "   free null file");
-        TEST_RESULT_VOID(storageDriverPosixFileWriteFree(NULL), "   free null posix file");
+        TEST_RESULT_VOID(storageFileWriteDriverPosixFree(NULL), "   free null posix file");
         TEST_RESULT_VOID(storageFileWriteMove(NULL, memContextTop()), "   move null file");
 
         Buffer *expectedBuffer = storageGetNP(storageNewReadNP(storageTest, fileName));

@@ -36,7 +36,7 @@ harnessInfoChecksum(const String *info)
 
         // Write to a buffer
         result = bufNew(0);
-        iniSave(ini, ioBufferWriteIo(ioBufferWriteNew(result)));
+        iniSave(ini, ioBufferWriteNew(result));
         bufMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();

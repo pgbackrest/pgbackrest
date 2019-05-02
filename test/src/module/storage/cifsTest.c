@@ -37,11 +37,6 @@ testRun(void)
         // Test the path sync function -- pass a bogus path to ensure that this is a noop
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storagePathSyncNP(storage, strNew(BOGUS_STR)), "path sync is a noop");
-
-        // Free the storage object
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageDriverCifsFree((StorageDriverCifs *)storageDriver(storage)), "free cifs driver");
-        TEST_RESULT_VOID(storageDriverCifsFree(NULL), "free null cifs driver");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

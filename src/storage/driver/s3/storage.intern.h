@@ -1,45 +1,46 @@
 /***********************************************************************************************************************************
-IO Read Interface Internal
+S3 Storage Driver Internal
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_READ_INTERN_H
-#define COMMON_IO_READ_INTERN_H
+#ifndef STORAGE_DRIVER_S3_STORAGE_INTERN_H
+#define STORAGE_DRIVER_S3_STORAGE_INTERN_H
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#include "common/io/read.h"
+typedef struct StorageDriverS3 StorageDriverS3;
+
+#include "common/io/http/client.h"
+#include "storage/driver/s3/storage.h"
 
 /***********************************************************************************************************************************
-Constructor
+Perform an S3 Request
 ***********************************************************************************************************************************/
-typedef struct IoReadInterface
+#define FUNCTION_LOG_STORAGE_DRIVER_S3_REQUEST_RESULT_TYPE                                                                         \
+    StorageDriverS3RequestResult
+#define FUNCTION_LOG_STORAGE_DRIVER_S3_REQUEST_RESULT_FORMAT(value, buffer, bufferSize)                                            \
+    objToLog(&value, "StorageDriverS3RequestResult", buffer, bufferSize)
+
+typedef struct StorageDriverS3RequestResult
 {
-    bool block;                                               // Do reads block when buffer is larger than available bytes?
+    HttpHeader *responseHeader;
+    Buffer *response;
+} StorageDriverS3RequestResult;
 
-    bool (*eof)(void *driver);
-    void (*close)(void *driver);
-    bool (*open)(void *driver);
-    int (*handle)(const void *driver);
-    size_t (*read)(void *driver, Buffer *buffer, bool block);
-} IoReadInterface;
-
-#define ioReadNewP(driver, ...)                                                                                                    \
-    ioReadNew(driver, (IoReadInterface){__VA_ARGS__})
-
-IoRead *ioReadNew(void *driver, IoReadInterface interface);
+StorageDriverS3RequestResult storageDriverS3Request(
+    StorageDriverS3 *this, const String *verb, const String *uri, const HttpQuery *query, const Buffer *body, bool returnContent,
+    bool allowMissing);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-void *ioReadDriver(IoRead *this);
-const IoReadInterface *ioReadInterface(const IoRead *this);
+HttpClient *storageDriverS3HttpClient(const StorageDriverS3 *this);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_IO_READ_INTERFACE_TYPE                                                                                        \
-    IoReadInterface
-#define FUNCTION_LOG_IO_READ_INTERFACE_FORMAT(value, buffer, bufferSize)                                                           \
-    objToLog(&value, "IoReadInterface", buffer, bufferSize)
+#define FUNCTION_LOG_STORAGE_DRIVER_S3_TYPE                                                                                        \
+    StorageDriverS3 *
+#define FUNCTION_LOG_STORAGE_DRIVER_S3_FORMAT(value, buffer, bufferSize)                                                           \
+    objToLog(value, "StorageDriverS3", buffer, bufferSize)
 
 #endif

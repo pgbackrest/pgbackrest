@@ -10,77 +10,90 @@ Posix Storage File Read Driver
 #include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "storage/driver/posix/common.h"
 #include "storage/driver/posix/fileRead.h"
+#include "storage/driver/posix/storage.intern.h"
 #include "storage/fileRead.intern.h"
 
 /***********************************************************************************************************************************
-Object type
+Object types
 ***********************************************************************************************************************************/
-struct StorageDriverPosixFileRead
+typedef struct StorageFileReadDriverPosix
 {
-    MemContext *memContext;
-    StorageDriverPosix *storage;
-    StorageFileRead *interface;
-    IoRead *io;
-    String *name;
-    bool ignoreMissing;
+    MemContext *memContext;                                         // Object mem context
+    StorageFileReadInterface interface;                             // Driver interface
+    StorageDriverPosix *storage;                                    // Storage that created this object
 
     int handle;
     bool eof;
-};
+} StorageFileReadDriverPosix;
 
 /***********************************************************************************************************************************
-Create a new file
+Macros for function logging
 ***********************************************************************************************************************************/
-StorageDriverPosixFileRead *
-storageDriverPosixFileReadNew(StorageDriverPosix *storage, const String *name, bool ignoreMissing)
+#define FUNCTION_LOG_STORAGE_FILE_READ_DRIVER_POSIX_TYPE                                                                           \
+    StorageFileReadDriverPosix *
+#define FUNCTION_LOG_STORAGE_FILE_READ_DRIVER_POSIX_FORMAT(value, buffer, bufferSize)                                              \
+    objToLog(value, "StorageFileReadDriverPosix", buffer, bufferSize)
+
+/***********************************************************************************************************************************
+Close the file
+***********************************************************************************************************************************/
+static void
+storageFileReadDriverPosixClose(THIS_VOID)
 {
+    THIS(StorageFileReadDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_READ_DRIVER_POSIX, this);
     FUNCTION_LOG_END();
 
-    ASSERT(name != NULL);
+    ASSERT(this != NULL);
 
-    StorageDriverPosixFileRead *this = NULL;
-
-    // Create the file object
-    MEM_CONTEXT_NEW_BEGIN("StorageDriverPosixFileRead")
+    // Close if the file has not already been closed
+    if (this->handle != -1)
     {
-        this = memNew(sizeof(StorageDriverPosixFileRead));
-        this->memContext = MEM_CONTEXT_NEW();
-        this->storage = storage;
-        this->name = strDup(name);
-        this->ignoreMissing = ignoreMissing;
+        // Close the file
+        storageDriverPosixFileClose(this->handle, this->interface.name, true);
 
         this->handle = -1;
-
-        this->interface = storageFileReadNewP(
-            STORAGE_DRIVER_POSIX_TYPE_STR, this,
-            .ignoreMissing = (StorageFileReadInterfaceIgnoreMissing)storageDriverPosixFileReadIgnoreMissing,
-            .io = (StorageFileReadInterfaceIo)storageDriverPosixFileReadIo,
-            .name = (StorageFileReadInterfaceName)storageDriverPosixFileReadName);
-
-        this->io = ioReadNewP(
-            this, .eof = (IoReadInterfaceEof)storageDriverPosixFileReadEof,
-            .close = (IoReadInterfaceClose)storageDriverPosixFileReadClose,
-            .handle = (IoReadInterfaceHandle)storageDriverPosixFileReadHandle,
-            .open = (IoReadInterfaceOpen)storageDriverPosixFileReadOpen, .read = (IoReadInterfaceRead)storageDriverPosixFileRead);
     }
-    MEM_CONTEXT_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_DRIVER_POSIX_FILE_READ, this);
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Free the object
+***********************************************************************************************************************************/
+static void
+storageFileReadDriverPosixFree(StorageFileReadDriverPosix *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_READ_DRIVER_POSIX, this);
+    FUNCTION_LOG_END();
+
+    if (this != NULL)
+    {
+        storageFileReadDriverPosixClose(this);
+
+        memContextCallbackClear(this->memContext);
+        memContextFree(this->memContext);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
-bool
-storageDriverPosixFileReadOpen(StorageDriverPosixFileRead *this)
+static bool
+storageFileReadDriverPosixOpen(THIS_VOID)
 {
+    THIS(StorageFileReadDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_READ_DRIVER_POSIX, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -89,12 +102,12 @@ storageDriverPosixFileReadOpen(StorageDriverPosixFileRead *this)
     bool result = false;
 
     // Open the file and handle errors
-    this->handle = storageDriverPosixFileOpen(this->name, O_RDONLY, 0, this->ignoreMissing, true, "read");
+        this->handle = storageDriverPosixFileOpen(this->interface.name, O_RDONLY, 0, this->interface.ignoreMissing, true, "read");
 
     // On success set free callback to ensure file handle is freed
     if (this->handle != -1)
     {
-        memContextCallback(this->memContext, (MemContextCallback)storageDriverPosixFileReadFree, this);
+        memContextCallback(this->memContext, (MemContextCallback)storageFileReadDriverPosixFree, this);
         result = true;
     }
 
@@ -104,11 +117,13 @@ storageDriverPosixFileReadOpen(StorageDriverPosixFileRead *this)
 /***********************************************************************************************************************************
 Read from a file
 ***********************************************************************************************************************************/
-size_t
-storageDriverPosixFileRead(StorageDriverPosixFileRead *this, Buffer *buffer, bool block)
+static size_t
+storageFileReadDriverPosix(THIS_VOID, Buffer *buffer, bool block)
 {
+    THIS(StorageFileReadDriverPosix);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+        FUNCTION_LOG_PARAM(STORAGE_FILE_READ_DRIVER_POSIX, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
@@ -127,7 +142,7 @@ storageDriverPosixFileRead(StorageDriverPosixFileRead *this, Buffer *buffer, boo
 
         // Error occurred during read
         if (actualBytes == -1)
-            THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strPtr(this->name));
+            THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strPtr(this->interface.name));
 
         // Update amount of buffer used
         bufUsedInc(buffer, (size_t)actualBytes);
@@ -142,37 +157,15 @@ storageDriverPosixFileRead(StorageDriverPosixFileRead *this, Buffer *buffer, boo
 }
 
 /***********************************************************************************************************************************
-Close the file
-***********************************************************************************************************************************/
-void
-storageDriverPosixFileReadClose(StorageDriverPosixFileRead *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Close if the file has not already been closed
-    if (this->handle != -1)
-    {
-        // Close the file
-        storageDriverPosixFileClose(this->handle, this->name, true);
-
-        this->handle = -1;
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Has file reached EOF?
 ***********************************************************************************************************************************/
-bool
-storageDriverPosixFileReadEof(const StorageDriverPosixFileRead *this)
+static bool
+storageFileReadDriverPosixEof(THIS_VOID)
 {
+    THIS(StorageFileReadDriverPosix);
+
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+        FUNCTION_TEST_PARAM(STORAGE_FILE_READ_DRIVER_POSIX, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -183,11 +176,13 @@ storageDriverPosixFileReadEof(const StorageDriverPosixFileRead *this)
 /***********************************************************************************************************************************
 Get handle (file descriptor)
 ***********************************************************************************************************************************/
-int
-storageDriverPosixFileReadHandle(const StorageDriverPosixFileRead *this)
+static int
+storageFileReadDriverPosixHandle(const THIS_VOID)
 {
+    THIS(const StorageFileReadDriverPosix);
+
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+        FUNCTION_TEST_PARAM(STORAGE_FILE_READ_DRIVER_POSIX, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -196,82 +191,46 @@ storageDriverPosixFileReadHandle(const StorageDriverPosixFileRead *this)
 }
 
 /***********************************************************************************************************************************
-Should a missing file be ignored?
-***********************************************************************************************************************************/
-bool
-storageDriverPosixFileReadIgnoreMissing(const StorageDriverPosixFileRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->ignoreMissing);
-}
-
-/***********************************************************************************************************************************
-Get the interface
+New object
 ***********************************************************************************************************************************/
 StorageFileRead *
-storageDriverPosixFileReadInterface(const StorageDriverPosixFileRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface);
-}
-
-/***********************************************************************************************************************************
-Get the I/O interface
-***********************************************************************************************************************************/
-IoRead *
-storageDriverPosixFileReadIo(const StorageDriverPosixFileRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->io);
-}
-
-/***********************************************************************************************************************************
-File name
-***********************************************************************************************************************************/
-const String *
-storageDriverPosixFileReadName(const StorageDriverPosixFileRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->name);
-}
-
-/***********************************************************************************************************************************
-Free the file
-***********************************************************************************************************************************/
-void
-storageDriverPosixFileReadFree(StorageDriverPosixFileRead *this)
+storageFileReadDriverPosixNew(StorageDriverPosix *storage, const String *name, bool ignoreMissing)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_DRIVER_POSIX_FILE_READ, this);
+        FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
-    if (this != NULL)
+    ASSERT(name != NULL);
+
+    StorageFileRead *this = NULL;
+
+    MEM_CONTEXT_NEW_BEGIN("StorageFileReadDriverPosix")
     {
-        storageDriverPosixFileReadClose(this);
+        StorageFileReadDriverPosix *driver = memNew(sizeof(StorageFileReadDriverPosix));
+        driver->memContext = MEM_CONTEXT_NEW();
 
-        memContextCallbackClear(this->memContext);
-        memContextFree(this->memContext);
+        driver->interface = (StorageFileReadInterface)
+        {
+            .type = STORAGE_DRIVER_POSIX_TYPE_STR,
+            .name = strDup(name),
+            .ignoreMissing = ignoreMissing,
+
+            .ioInterface = (IoReadInterface)
+            {
+                .eof = storageFileReadDriverPosixEof,
+                .handle = storageFileReadDriverPosixHandle,
+                .open = storageFileReadDriverPosixOpen,
+                .read = storageFileReadDriverPosix,
+            },
+        };
+
+        driver->storage = storage;
+        driver->handle = -1;
+
+        this = storageFileReadNew(driver, &driver->interface);
     }
+    MEM_CONTEXT_NEW_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(STORAGE_FILE_READ, this);
 }

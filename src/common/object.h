@@ -1,21 +1,20 @@
 /***********************************************************************************************************************************
-Handle IO Write
-
-Write to a handle using the IoWrite interface.
+Object Macros
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_HANDLEWRITE_H
-#define COMMON_IO_HANDLEWRITE_H
-
-#include "common/io/write.h"
+#ifndef COMMON_OBJECT_H
+#define COMMON_OBJECT_H
 
 /***********************************************************************************************************************************
-Constructor
+Used in function parameter lists to discourage use of the untyped thisVoid parameter, e.g.:
+
+size_t bufferRead(THIS_VOID, Buffer *buffer)
 ***********************************************************************************************************************************/
-IoWrite *ioHandleWriteNew(const String *name, int handle);
+#define THIS_VOID                                                   void *thisVoid
 
 /***********************************************************************************************************************************
-Helper functions
+Create a local "this" variable of the correct type from a void parameter.
 ***********************************************************************************************************************************/
-void ioHandleWriteOneStr(int handle, const String *string);
+#define THIS(type)                                                                                                                 \
+    type *this = thisVoid;
 
 #endif
