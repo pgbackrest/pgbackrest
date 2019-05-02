@@ -408,7 +408,7 @@ storageDriverS3Request(
 }
 
 /***********************************************************************************************************************************
-Does a file/path exist?
+Does a file exist? This function is only for files, not paths.
 ***********************************************************************************************************************************/
 bool
 storageDriverS3Exists(StorageDriverS3 *this, const String *path)

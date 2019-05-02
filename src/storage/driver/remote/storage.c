@@ -74,7 +74,7 @@ storageDriverRemoteNew(
 }
 
 /***********************************************************************************************************************************
-Does a file/path exist?
+Does a file exist? This function is only for files, not paths.
 ***********************************************************************************************************************************/
 bool
 storageDriverRemoteExists(StorageDriverRemote *this, const String *path)

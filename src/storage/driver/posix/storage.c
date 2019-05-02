@@ -85,7 +85,7 @@ storageDriverPosixNew(
 }
 
 /***********************************************************************************************************************************
-Does a file/path exist?
+Does a file exist? This function is only for files, not paths.
 ***********************************************************************************************************************************/
 bool
 storageDriverPosixExists(StorageDriverPosix *this, const String *path)

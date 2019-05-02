@@ -128,7 +128,7 @@ storageCopy(StorageFileRead *source, StorageFileWrite *destination)
 }
 
 /***********************************************************************************************************************************
-Does a file exist? This function is only for files, not directories.
+Does a file exist? This function is only for files, not paths.
 ***********************************************************************************************************************************/
 bool
 storageExists(const Storage *this, const String *pathExp, StorageExistsParam param)
