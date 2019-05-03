@@ -53,7 +53,6 @@ testRun(void)
         TEST_RESULT_BOOL(end - begin < wait->waitTime + 1200, true, "    upper range check");
 
         TEST_RESULT_VOID(waitFree(wait), "    free wait");
-        TEST_RESULT_VOID(waitFree(NULL), "    free null wait");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

@@ -10,6 +10,7 @@ IO Write Interface
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -28,6 +29,8 @@ struct IoWrite
     bool closed;                                                    // Has the io been closed?
 #endif
 };
+
+OBJECT_DEFINE_FREE(IO_WRITE);
 
 /***********************************************************************************************************************************
 New object
@@ -332,20 +335,4 @@ ioWriteInterface(const IoWrite *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(&this->interface);
-}
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-void
-ioWriteFree(IoWrite *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_WRITE, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

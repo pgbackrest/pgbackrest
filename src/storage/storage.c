@@ -10,6 +10,7 @@ Storage Interface
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/wait.h"
 #include "storage/storage.intern.h"
 
@@ -30,6 +31,8 @@ struct Storage
     bool pathResolve;
     StoragePathExpressionCallback pathExpressionFunction;
 };
+
+OBJECT_DEFINE_FREE(STORAGE);
 
 /***********************************************************************************************************************************
 New storage object
@@ -722,20 +725,4 @@ storageToLog(const Storage *this)
 {
     return strNewFmt(
         "{type: %s, path: %s, write: %s}", strPtr(this->type), strPtr(strToLog(this->path)), cvtBoolToConstZ(this->write));
-}
-
-/***********************************************************************************************************************************
-Free storage
-***********************************************************************************************************************************/
-void
-storageFree(const Storage *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

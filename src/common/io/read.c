@@ -10,6 +10,7 @@ IO Read Interface
 #include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -30,6 +31,8 @@ struct IoRead
     bool closed;                                                    // Has the io been closed?
 #endif
 };
+
+OBJECT_DEFINE_FREE(IO_READ);
 
 /***********************************************************************************************************************************
 New object
@@ -421,20 +424,4 @@ ioReadInterface(const IoRead *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(&this->interface);
-}
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-void
-ioReadFree(IoRead *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_READ, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

@@ -12,6 +12,7 @@ IO Filter Group
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/type/list.h"
 
 /***********************************************************************************************************************************
@@ -51,6 +52,8 @@ struct IoFilterGroup
     bool closed;                                                    // Has the filter set been closed?
 #endif
 };
+
+OBJECT_DEFINE_FREE(IO_FILTER_GROUP);
 
 /***********************************************************************************************************************************
 New Object
@@ -431,20 +434,4 @@ String *
 ioFilterGroupToLog(const IoFilterGroup *this)
 {
     return strNewFmt("{inputSame: %s, done: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done));
-}
-
-/***********************************************************************************************************************************
-Free the filter group
-***********************************************************************************************************************************/
-void
-ioFilterGroupFree(IoFilterGroup *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

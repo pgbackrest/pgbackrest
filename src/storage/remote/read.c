@@ -23,7 +23,7 @@ typedef struct StorageReadRemote
 {
     MemContext *memContext;                                         // Object mem context
     StorageReadInterface interface;                                 // Interface
-    StorageRemote *storage;                                   // Storage that created this object
+    StorageRemote *storage;                                         // Storage that created this object
 
     ProtocolClient *client;                                         // Protocol client for requests
     size_t remaining;                                               // Bytes remaining to be read in block

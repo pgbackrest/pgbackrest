@@ -99,9 +99,6 @@ testRun(void)
         TEST_RESULT_PTR_NE(cipherBlock->digest, NULL, "digest is set");
         TEST_RESULT_PTR(cipherBlock->cipherContext, NULL, "cipher context is not set");
 
-        TEST_RESULT_VOID(cipherBlockFree(cipherBlock), "free cipher block");
-        TEST_RESULT_VOID(cipherBlockFree(NULL), "free null cipher block");
-
         // Encrypt
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *encryptBuffer = bufNew(TEST_BUFFER_SIZE);
@@ -150,7 +147,7 @@ testRun(void)
             "cipher size increases by one block on flush");
         TEST_RESULT_BOOL(ioFilterDone(blockEncryptFilter), true,  "filter is done");
 
-        cipherBlockFree(blockEncrypt);
+        ioFilterFree(blockEncryptFilter);
 
         // Decrypt in one pass
         // -------------------------------------------------------------------------------------------------------------------------
@@ -171,7 +168,7 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(strNewBuf(decryptBuffer)), TEST_PLAINTEXT TEST_PLAINTEXT, "check final decrypt buffer");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
 
         // Decrypt in small chunks to test buffering
         // -------------------------------------------------------------------------------------------------------------------------
@@ -211,7 +208,7 @@ testRun(void)
 
         TEST_RESULT_STR(strPtr(strNewBuf(decryptBuffer)), TEST_PLAINTEXT TEST_PLAINTEXT, "check final decrypt buffer");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
 
         // Encrypt zero byte file and decrypt it
         // -------------------------------------------------------------------------------------------------------------------------
@@ -223,7 +220,7 @@ testRun(void)
         ioFilterProcessInOut(blockEncryptFilter, NULL, encryptBuffer);
         TEST_RESULT_INT(bufUsed(encryptBuffer), 32, "check remaining size");
 
-        cipherBlockFree(blockEncrypt);
+        ioFilterFree(blockEncryptFilter);
 
         blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
@@ -235,7 +232,7 @@ testRun(void)
         ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer);
         TEST_RESULT_INT(bufUsed(decryptBuffer), 0, "0 bytes on flush");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
 
         // Invalid cipher header
         // -------------------------------------------------------------------------------------------------------------------------
@@ -246,7 +243,7 @@ testRun(void)
             ioFilterProcessInOut(blockDecryptFilter, BUFSTRDEF("1234567890123456"), decryptBuffer), CryptoError,
             "cipher header invalid");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
 
         // Invalid encrypted data cannot be flushed
         // -------------------------------------------------------------------------------------------------------------------------
@@ -260,7 +257,7 @@ testRun(void)
 
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer), CryptoError, "unable to flush");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
 
         // File with no header should not flush
         // -------------------------------------------------------------------------------------------------------------------------
@@ -271,7 +268,7 @@ testRun(void)
 
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer), CryptoError, "cipher header missing");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
 
         // File with header only should error
         // -------------------------------------------------------------------------------------------------------------------------
@@ -283,7 +280,7 @@ testRun(void)
         ioFilterProcessInOut(blockDecryptFilter, BUFSTRDEF(CIPHER_BLOCK_MAGIC "12345678"), decryptBuffer);
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer), CryptoError, "unable to flush");
 
-        cipherBlockFree(blockDecrypt);
+        ioFilterFree(blockDecryptFilter);
     }
 
     // *****************************************************************************************************************************

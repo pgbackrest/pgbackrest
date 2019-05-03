@@ -49,7 +49,7 @@ Move data from the input buffer to the output buffer
 static void
 ioBufferProcess(THIS_VOID, const Buffer *input, Buffer *output)
 {
-    THIS(IoBuffer)
+    THIS(IoBuffer);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_BUFFER, this);
@@ -95,7 +95,7 @@ again.
 static bool
 ioBufferInputSame(const THIS_VOID)
 {
-    THIS(const IoBuffer)
+    THIS(const IoBuffer);
 
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_BUFFER, this);

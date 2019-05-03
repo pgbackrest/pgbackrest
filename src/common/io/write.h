@@ -11,6 +11,9 @@ allocate/open or deallocate/free resources.  An example of an IoWrite object is 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define IO_WRITE_TYPE                                               IoWrite
+#define IO_WRITE_PREFIX                                             ioWrite
+
 typedef struct IoWrite IoWrite;
 
 #include "common/io/filter/group.h"

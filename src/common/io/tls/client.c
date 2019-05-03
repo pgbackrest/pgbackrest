@@ -48,6 +48,18 @@ struct TlsClient
     IoWrite *write;                                                 // Write interface
 };
 
+OBJECT_DEFINE_FREE(TLS_CLIENT);
+
+/***********************************************************************************************************************************
+Free connection
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TLS_CLIENT, LOG, logLevelTrace)
+{
+    tlsClientClose(this);
+    SSL_CTX_free(this->context);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
+
 /***********************************************************************************************************************************
 New object
 ***********************************************************************************************************************************/
@@ -94,7 +106,7 @@ tlsClientNew(
         this->context = SSL_CTX_new(method);
         cryptoError(this->context == NULL, "unable to create TLS context");
 
-        memContextCallbackSet(this->memContext, (MemContextCallback)tlsClientFree, this);
+        memContextCallbackSet(this->memContext, tlsClientFreeResource, this);
 
         // Exclude SSL versions to only allow TLS and also disable compression
         SSL_CTX_set_options(this->context, (long)(SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION));
@@ -595,26 +607,4 @@ tlsClientIoWrite(const TlsClient *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->write);
-}
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-void
-tlsClientFree(TlsClient *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(TLS_CLIENT, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-    {
-        tlsClientClose(this);
-        SSL_CTX_free(this->context);
-
-        memContextCallbackClear(this->memContext);
-        memContextFree(this->memContext);
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
 }

@@ -6,10 +6,11 @@ Wait Handler
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
-Contains information about the wait handler
+Object type
 ***********************************************************************************************************************************/
 struct Wait
 {
@@ -19,6 +20,8 @@ struct Wait
     TimeMSec sleepPrevTime;                                         // Previous time slept (in usec)
     TimeMSec beginTime;                                             // Time the wait began (in epoch usec)
 };
+
+OBJECT_DEFINE_FREE(WAIT);
 
 /***********************************************************************************************************************************
 New wait handler
@@ -105,20 +108,4 @@ waitMore(Wait *this)
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/***********************************************************************************************************************************
-Free the wait
-***********************************************************************************************************************************/
-void
-waitFree(Wait *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(WAIT, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

@@ -7,6 +7,9 @@ Storage Write Interface
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define STORAGE_WRITE_TYPE                                          StorageWrite
+#define STORAGE_WRITE_PREFIX                                        storageWrite
+
 typedef struct StorageWrite StorageWrite;
 
 #include "common/io/write.h"
@@ -34,7 +37,7 @@ const String *storageWriteType(const StorageWrite *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void storageWriteFree(const StorageWrite *this);
+void storageWriteFree(StorageWrite *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

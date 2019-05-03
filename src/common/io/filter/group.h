@@ -13,6 +13,9 @@ only call ioFilterGroupNew(), ioFilterGroupAdd(), and ioFilterGroupResult().
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define IO_FILTER_GROUP_TYPE                                        IoFilterGroup
+#define IO_FILTER_GROUP_PREFIX                                      ioFilterGroup
+
 typedef struct IoFilterGroup IoFilterGroup;
 
 #include "common/io/filter/filter.h"

@@ -35,7 +35,6 @@ testRun(void)
 
         TEST_RESULT_VOID(bufFree(buffer), "free buffer");
         TEST_RESULT_VOID(bufFree(bufNew(0)), "free empty buffer");
-        TEST_RESULT_VOID(bufFree(NULL), "free null buffer");
 
         TEST_RESULT_VOID(bufMove(NULL, memContextTop()), "move null buffer");
 

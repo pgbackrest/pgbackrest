@@ -6,6 +6,7 @@ Http Header
 #include "common/debug.h"
 #include "common/io/http/header.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/type/keyValue.h"
 
 /***********************************************************************************************************************************
@@ -17,6 +18,8 @@ struct HttpHeader
     const StringList *redactList;                                   // List of headers to redact during logging
     KeyValue *kv;                                                   // KeyValue store
 };
+
+OBJECT_DEFINE_FREE(HTTP_HEADER);
 
 /***********************************************************************************************************************************
 New object
@@ -216,20 +219,4 @@ httpHeaderToLog(const HttpHeader *this)
     strCat(result, "}");
 
     return result;
-}
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-void
-httpHeaderFree(HttpHeader *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_HEADER, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_TEST_RETURN_VOID();
 }

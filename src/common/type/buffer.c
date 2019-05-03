@@ -8,6 +8,7 @@ Buffer Handler
 
 #include "common/debug.h"
 #include "common/type/buffer.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
 Constant buffers that are generally useful
@@ -27,6 +28,8 @@ struct Buffer
     unsigned char *buffer;                                          // Internal buffer
     MemContext *memContext;                                         // Mem context for dynamic buffers
 };
+
+OBJECT_DEFINE_FREE(BUFFER);
 
 /***********************************************************************************************************************************
 Create a new buffer
@@ -505,20 +508,4 @@ bufToLog(const Buffer *this)
         strCat(result, "<off>}");
 
     return result;
-}
-
-/***********************************************************************************************************************************
-Free the buffer
-***********************************************************************************************************************************/
-void
-bufFree(Buffer *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_TEST_RETURN_VOID();
 }

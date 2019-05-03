@@ -37,7 +37,7 @@ testCompress(IoFilter *compress, Buffer *decompressed, size_t inputSize, size_t 
     }
 
     ioWriteClose(write);
-    gzipCompressFree(ioFilterDriver(compress));
+    memContextFree(((GzipCompress *)ioFilterDriver(compress))->memContext);
 
     return compressed;
 }
@@ -67,7 +67,7 @@ testDecompress(IoFilter *decompress, Buffer *compressed, size_t inputSize, size_
 
     ioReadClose(read);
     bufFree(output);
-    gzipDecompressFree(ioFilterDriver(decompress));
+    memContextFree(((GzipDecompress *)ioFilterDriver(decompress))->memContext);
 
     return decompressed;
 }
@@ -155,10 +155,6 @@ testRun(void)
         TEST_RESULT_BOOL(
             bufEq(decompressed, testDecompress(gzipDecompressNew(true), compressed, bufSize(compressed), 1024 * 256)), true,
             "zero data - decompress large in/small out buffer");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(gzipCompressFree(NULL), "free null decompress object");
-        TEST_RESULT_VOID(gzipDecompressFree(NULL), "free null decompress object");
     }
 
     // *****************************************************************************************************************************
@@ -171,8 +167,6 @@ testRun(void)
         decompress->inputSame = true;
         decompress->done = true;
         TEST_RESULT_STR(strPtr(gzipDecompressToLog(decompress)), "{inputSame: true, done: true, availIn: 0}", "format object");
-
-        gzipDecompressFree(decompress);
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

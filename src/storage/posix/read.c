@@ -19,6 +19,9 @@ Posix Storage Read
 /***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
+#define STORAGE_READ_POSIX_TYPE                                     StorageReadPosix
+#define STORAGE_READ_POSIX_PREFIX                                   storageReadPosix
+
 typedef struct StorageReadPosix
 {
     MemContext *memContext;                                         // Object mem context
@@ -38,51 +41,14 @@ Macros for function logging
     objToLog(value, "StorageReadPosix", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Close the file
+Close the file handle
 ***********************************************************************************************************************************/
-static void
-storageReadPosixClose(THIS_VOID)
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_READ_POSIX, LOG, logLevelTrace)
 {
-    THIS(StorageReadPosix);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_POSIX, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Close if the file has not already been closed
     if (this->handle != -1)
-    {
-        // Close the file
         storagePosixFileClose(this->handle, this->interface.name, true);
-
-        this->handle = -1;
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
 }
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-static void
-storageReadPosixFree(StorageReadPosix *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_POSIX, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-    {
-        storageReadPosixClose(this);
-
-        memContextCallbackClear(this->memContext);
-        memContextFree(this->memContext);
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Open the file
@@ -107,7 +73,7 @@ storageReadPosixOpen(THIS_VOID)
     // On success set free callback to ensure file handle is freed
     if (this->handle != -1)
     {
-        memContextCallbackSet(this->memContext, (MemContextCallback)storageReadPosixFree, this);
+        memContextCallbackSet(this->memContext, storageReadPosixFreeResource, this);
         result = true;
     }
 
@@ -154,6 +120,27 @@ storageReadPosix(THIS_VOID, Buffer *buffer, bool block)
     }
 
     FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
+}
+
+/***********************************************************************************************************************************
+Close the file
+***********************************************************************************************************************************/
+static void
+storageReadPosixClose(THIS_VOID)
+{
+    THIS(StorageReadPosix);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_POSIX, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    storageReadPosixFreeResource(this);
+    memContextCallbackClear(this->memContext);
+    this->handle = -1;
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -218,6 +205,7 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
 
             .ioInterface = (IoReadInterface)
             {
+                .close = storageReadPosixClose,
                 .eof = storageReadPosixEof,
                 .handle = storageReadPosixHandle,
                 .open = storageReadPosixOpen,

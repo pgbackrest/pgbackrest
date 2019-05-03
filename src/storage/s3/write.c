@@ -35,7 +35,7 @@ typedef struct StorageWriteS3
 {
     MemContext *memContext;                                         // Object mem context
     StorageWriteInterface interface;                                // Interface
-    StorageS3 *storage;                                       // Storage that created this object
+    StorageS3 *storage;                                             // Storage that created this object
 
     size_t partSize;
     Buffer *partBuffer;

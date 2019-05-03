@@ -6,6 +6,7 @@ Storage Read Interface
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "storage/read.intern.h"
 
 /***********************************************************************************************************************************
@@ -18,6 +19,8 @@ struct StorageRead
     const StorageReadInterface *interface;
     IoRead *io;
 };
+
+OBJECT_DEFINE_FREE(STORAGE_READ);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -156,20 +159,4 @@ storageReadToLog(const StorageRead *this)
     return strNewFmt(
         "{type: %s, name: %s, ignoreMissing: %s}", strPtr(this->interface->type), strPtr(strToLog(this->interface->name)),
         cvtBoolToConstZ(this->interface->ignoreMissing));
-}
-
-/***********************************************************************************************************************************
-Free the file
-***********************************************************************************************************************************/
-void
-storageReadFree(const StorageRead *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

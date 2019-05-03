@@ -214,7 +214,6 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(protocolCommandFree(command), "free command");
-        TEST_RESULT_VOID(protocolCommandFree(NULL), "free null command");
     }
 
     // *****************************************************************************************************************************
@@ -339,7 +338,6 @@ testRun(void)
 
                 // Free client
                 TEST_RESULT_VOID(protocolClientFree(client), "free client");
-                TEST_RESULT_VOID(protocolClientFree(NULL), "free null client");
             }
             HARNESS_FORK_PARENT_END();
         }
@@ -432,7 +430,6 @@ testRun(void)
                 TEST_RESULT_VOID(protocolServerProcess(server), "run process loop");
 
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
-                TEST_RESULT_VOID(protocolServerFree(NULL), "free null server");
             }
             HARNESS_FORK_PARENT_END();
         }
@@ -462,7 +459,6 @@ testRun(void)
 
         // Free job
         TEST_RESULT_VOID(protocolParallelJobFree(job), "free job");
-        TEST_RESULT_VOID(protocolParallelJobFree(NULL), "free null job");
 
         // -------------------------------------------------------------------------------------------------------------------------
         HARNESS_FORK_BEGIN()
@@ -633,7 +629,6 @@ testRun(void)
 
                 // Free parallel
                 TEST_RESULT_VOID(protocolParallelFree(parallel), "free parallel");
-                TEST_RESULT_VOID(protocolParallelFree(NULL), "free null parallel");
             }
             HARNESS_FORK_PARENT_END();
         }

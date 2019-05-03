@@ -23,7 +23,6 @@ testRun(void)
         TEST_RESULT_PTR_NE(ini->memContext, NULL, "mem context is set");
         TEST_RESULT_PTR_NE(ini->store, NULL, "store is set");
         TEST_RESULT_VOID(iniFree(ini), "free ini");
-        TEST_RESULT_VOID(iniFree(NULL), "free null ini");
     }
 
     // *****************************************************************************************************************************

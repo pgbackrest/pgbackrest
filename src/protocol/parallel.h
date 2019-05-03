@@ -7,6 +7,9 @@ Protocol Parallel Executor
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define PROTOCOL_PARALLEL_TYPE                                      ProtocolParallel
+#define PROTOCOL_PARALLEL_PREFIX                                    protocolParallel
+
 typedef struct ProtocolParallel ProtocolParallel;
 
 #include "common/time.h"

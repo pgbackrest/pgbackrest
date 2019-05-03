@@ -86,7 +86,6 @@ testRun(void)
         // Free
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(infoBackupFree(infoBackup), "infoBackupFree() - free backup info");
-        TEST_RESULT_VOID(infoBackupFree(NULL), "    NULL ptr");
     }
     // *****************************************************************************************************************************
     if (testBegin("infoBackupData(), infoBackupDataTotal(), infoBackupDataToLog()"))

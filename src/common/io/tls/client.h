@@ -19,6 +19,9 @@ be called directly.  Instead use the read/write interfaces available from tlsCli
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define TLS_CLIENT_TYPE                                             TlsClient
+#define TLS_CLIENT_PREFIX                                           tlsClient
+
 typedef struct TlsClient TlsClient;
 
 #include "common/io/read.h"

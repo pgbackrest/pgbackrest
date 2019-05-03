@@ -21,7 +21,6 @@ testRun(void)
         TEST_RESULT_BOOL(regExpMatch(regExp, strNew("bcdef")), false, "no match regexp");
 
         TEST_RESULT_VOID(regExpFree(regExp), "free regexp");
-        TEST_RESULT_VOID(regExpFree(NULL), "free NULL regexp");
     }
 
     // *****************************************************************************************************************************

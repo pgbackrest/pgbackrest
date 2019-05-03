@@ -14,6 +14,9 @@ Information on implementing a filter is in filter.internal.h.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define IO_FILTER_TYPE                                              IoFilter
+#define IO_FILTER_PREFIX                                            ioFilter
+
 typedef struct IoFilter IoFilter;
 
 #include "common/type/string.h"

@@ -9,10 +9,10 @@ PostgreSQL Info Handler
 #include <string.h>
 
 #include "common/debug.h"
+#include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/ini.h"
-#include "common/memContext.h"
+#include "common/object.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
 #include "info/info.h"
@@ -43,6 +43,8 @@ struct InfoPg
     List *history;                                                  // A list of InfoPgData
     unsigned int historyCurrent;                                    // Index of the current history item
 };
+
+OBJECT_DEFINE_FREE(INFO_PG);
 
 /***********************************************************************************************************************************
 Create new object and load contents from a file
@@ -329,20 +331,4 @@ infoPgDataToLog(const InfoPgData *this)
     return strNewFmt(
         "{id: %u, version: %u, systemId: %" PRIu64 ", catalogVersion: %" PRIu32 ", controlVersion: %" PRIu32 "}",
         this->id, this->version, this->systemId, this->catalogVersion, this->controlVersion);
-}
-
-/***********************************************************************************************************************************
-Free the info
-***********************************************************************************************************************************/
-void
-infoPgFree(InfoPg *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INFO_PG, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

@@ -34,8 +34,11 @@ Header constants and sizes
 #define CIPHER_BLOCK_HEADER_SIZE                                    (CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN)
 
 /***********************************************************************************************************************************
-Track state during block encrypt/decrypt
+Object type
 ***********************************************************************************************************************************/
+#define CIPHER_BLOCK_TYPE                                           CipherBlock
+#define CIPHER_BLOCK_PREFIX                                         cipherBlock
+
 typedef struct CipherBlock
 {
     MemContext *memContext;                                         // Context to store data
@@ -71,28 +74,13 @@ cipherBlockToLog(const CipherBlock *this)
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, cipherBlockToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Free object
+Free cipher context
 ***********************************************************************************************************************************/
-static void
-cipherBlockFree(CipherBlock *this)
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(CIPHER_BLOCK, LOG, logLevelTrace)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(CIPHER_BLOCK, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-    {
-        // Free cipher context
-        if (this->cipherContext)
-            EVP_CIPHER_CTX_cleanup(this->cipherContext);
-
-        // Free mem context
-        memContextCallbackClear(this->memContext);
-        memContextFree(this->memContext);
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
+    EVP_CIPHER_CTX_cleanup(this->cipherContext);
 }
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Determine how large the destination buffer should be
@@ -200,7 +188,7 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
             cryptoError(!(this->cipherContext = EVP_CIPHER_CTX_new()), "unable to create context");
 
             // Set free callback to ensure cipher context is freed
-            memContextCallbackSet(this->memContext, (MemContextCallback)cipherBlockFree, this);
+            memContextCallbackSet(this->memContext, cipherBlockFreeResource, this);
 
             // Initialize cipher
             cryptoError(

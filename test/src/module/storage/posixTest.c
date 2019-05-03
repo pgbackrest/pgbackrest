@@ -146,7 +146,6 @@ testRun(void)
         TEST_RESULT_PTR(storageDriver(storageTest), storageTest->driver, "    check driver");
 
         TEST_RESULT_VOID(storageFree(storageTest), "free storage");
-        TEST_RESULT_VOID(storageFree(NULL), "free null storage");
     }
 
     // *****************************************************************************************************************************
@@ -886,8 +885,6 @@ testRun(void)
         TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "    close file");
 
         TEST_RESULT_VOID(storageReadFree(storageNewReadNP(storageTest, fileName)), "   free file");
-        TEST_RESULT_VOID(storageReadFree(NULL), "   free null file");
-        TEST_RESULT_VOID(storageReadPosixFree(NULL), "   free null posix file");
 
         TEST_RESULT_VOID(storageReadMove(NULL, memContextTop()), "   move null file");
     }
@@ -988,8 +985,6 @@ testRun(void)
         TEST_RESULT_VOID(ioWrite(storageWriteIo(file), buffer), "   write to file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
         TEST_RESULT_VOID(storageWriteFree(storageNewWriteNP(storageTest, fileName)), "   free file");
-        TEST_RESULT_VOID(storageWriteFree(NULL), "   free null file");
-        TEST_RESULT_VOID(storageWritePosixFree(NULL), "   free null posix file");
         TEST_RESULT_VOID(storageWriteMove(NULL, memContextTop()), "   move null file");
 
         Buffer *expectedBuffer = storageGetNP(storageNewReadNP(storageTest, fileName));

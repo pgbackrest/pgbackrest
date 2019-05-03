@@ -758,9 +758,9 @@ storageS3New(
 
         this = storageNewP(
             STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver,
-            .exists = storageS3Exists, .info = storageS3Info, .list = storageS3List,
-            .newRead = storageS3NewRead, .newWrite = storageS3NewWrite, .pathCreate = storageS3PathCreate,
-            .pathRemove = storageS3PathRemove, .pathSync = storageS3PathSync, .remove = storageS3Remove);
+            .exists = storageS3Exists, .info = storageS3Info, .list = storageS3List, .newRead = storageS3NewRead,
+            .newWrite = storageS3NewWrite, .pathCreate = storageS3PathCreate, .pathRemove = storageS3PathRemove,
+            .pathSync = storageS3PathSync, .remove = storageS3Remove);
     }
     MEM_CONTEXT_NEW_END();
 

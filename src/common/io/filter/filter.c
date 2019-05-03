@@ -7,6 +7,7 @@ IO Filter Interface
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -18,6 +19,8 @@ struct IoFilter
     void *driver;                                                   // Filter driver
     IoFilterInterface interface;                                    // Filter interface
 };
+
+OBJECT_DEFINE_FREE(IO_FILTER);
 
 /***********************************************************************************************************************************
 New object
@@ -226,20 +229,4 @@ ioFilterType(const IoFilter *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->type);
-}
-
-/***********************************************************************************************************************************
-Free object
-***********************************************************************************************************************************/
-void
-ioFilterFree(IoFilter *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_FILTER, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_TEST_RETURN_VOID();
 }

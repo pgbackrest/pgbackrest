@@ -23,6 +23,9 @@ Posix Storage File write
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define STORAGE_WRITE_POSIX_TYPE                                    StorageWritePosix
+#define STORAGE_WRITE_POSIX_PREFIX                                  storageWritePosix
+
 typedef struct StorageWritePosix
 {
     MemContext *memContext;                                         // Object mem context
@@ -51,85 +54,14 @@ Since open is called more than once use constants to make sure these parameters 
 #define FILE_OPEN_PURPOSE                                           "write"
 
 /***********************************************************************************************************************************
-Close the file
+Close file handle
 ***********************************************************************************************************************************/
-static void
-storageWritePosixClose(THIS_VOID)
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_WRITE_POSIX, LOG, logLevelTrace)
 {
-    THIS(StorageWritePosix);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_POSIX, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Close if the file has not already been closed
     if (this->handle != -1)
-    {
-        // Sync the file
-        if (this->interface.syncFile)
-            storagePosixFileSync(this->handle, this->nameTmp, true, false);
-
-        // Close the file
-        storagePosixFileClose(this->handle, this->nameTmp, true);
-
-        // Update modified time
-        if (this->interface.timeModified != 0)
-        {
-            THROW_ON_SYS_ERROR_FMT(
-                utime(
-                    strPtr(this->nameTmp),
-                    &((struct utimbuf){.actime = this->interface.timeModified, .modtime = this->interface.timeModified})) == -1,
-                FileInfoError, "unable to set time for '%s'", strPtr(this->nameTmp));
-        }
-
-        // Rename from temp file
-        if (this->interface.atomic)
-        {
-            if (rename(strPtr(this->nameTmp), strPtr(this->interface.name)) == -1)
-            {
-                THROW_SYS_ERROR_FMT(
-                    FileMoveError, "unable to move '%s' to '%s'", strPtr(this->nameTmp), strPtr(this->interface.name));
-            }
-        }
-
-        // Sync the path
-        if (this->interface.syncPath)
-            storagePosixPathSync(this->storage, this->path, false);
-
-        // This marks the file as closed
-        this->handle = -1;
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
+        storagePosixFileClose(this->handle, this->interface.name, true);
 }
-
-/***********************************************************************************************************************************
-Free object
-***********************************************************************************************************************************/
-static void
-storageWritePosixFree(StorageWritePosix *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_POSIX, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-    {
-        memContextCallbackClear(this->memContext);
-
-        // Close the temp file.  *Close() must be called explicitly in order for the file to be sycn'ed, renamed, etc.  If *Free()
-        // is called first the assumption is that some kind of error occurred and we should only close the handle to free
-        // resources.
-        if (this->handle != -1)
-            storagePosixFileClose(this->handle, this->interface.name, true);
-
-        memContextFree(this->memContext);
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Open the file
@@ -162,7 +94,7 @@ storageWritePosixOpen(THIS_VOID)
     }
 
     // Set free callback to ensure file handle is freed
-    memContextCallbackSet(this->memContext, (MemContextCallback)storageWritePosixFree, this);
+    memContextCallbackSet(this->memContext, storageWritePosixFreeResource, this);
 
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)
@@ -214,6 +146,60 @@ storageWritePosix(THIS_VOID, const Buffer *buffer)
     // Write the data
     if (write(this->handle, bufPtr(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
         THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strPtr(this->nameTmp));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Close the file
+***********************************************************************************************************************************/
+static void
+storageWritePosixClose(THIS_VOID)
+{
+    THIS(StorageWritePosix);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_POSIX, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    // Close if the file has not already been closed
+    if (this->handle != -1)
+    {
+        // Sync the file
+        if (this->interface.syncFile)
+            storagePosixFileSync(this->handle, this->nameTmp, true, false);
+
+        // Close the file
+        storagePosixFileClose(this->handle, this->nameTmp, true);
+        memContextCallbackClear(this->memContext);
+        this->handle = -1;
+
+        // Update modified time
+        if (this->interface.timeModified != 0)
+        {
+            THROW_ON_SYS_ERROR_FMT(
+                utime(
+                    strPtr(this->nameTmp),
+                    &((struct utimbuf){.actime = this->interface.timeModified, .modtime = this->interface.timeModified})) == -1,
+                FileInfoError, "unable to set time for '%s'", strPtr(this->nameTmp));
+        }
+
+        // Rename from temp file
+        if (this->interface.atomic)
+        {
+            if (rename(strPtr(this->nameTmp), strPtr(this->interface.name)) == -1)
+            {
+                THROW_SYS_ERROR_FMT(
+                    FileMoveError, "unable to move '%s' to '%s'", strPtr(this->nameTmp), strPtr(this->interface.name));
+            }
+        }
+
+        // Sync the path
+        if (this->interface.syncPath)
+            storagePosixPathSync(this->storage, this->path, false);
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }

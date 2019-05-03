@@ -68,6 +68,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add macros for object free functions.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Various <code>MemContext</code> callback improvements.</p>
                     </release-item>
 

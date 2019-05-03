@@ -14,6 +14,7 @@ Info Handler
 #include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/type/json.h"
 #include "info/info.h"
 #include "storage/helper.h"
@@ -40,6 +41,8 @@ struct Info
     MemContext *memContext;                                         // Mem context
     const String *cipherPass;                                       // Cipher passphrase if set
 };
+
+OBJECT_DEFINE_FREE(INFO);
 
 /***********************************************************************************************************************************
 Generate hash for the contents of an ini file
@@ -361,20 +364,4 @@ infoCipherPass(const Info *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->cipherPass);
-}
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-void
-infoFree(Info *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INFO, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

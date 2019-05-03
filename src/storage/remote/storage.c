@@ -285,9 +285,8 @@ storageRemoteNew(
 
         this = storageNewP(
             STORAGE_REMOTE_TYPE_STR, NULL, modeFile, modePath, write, pathExpressionFunction, driver,
-            .exists = storageRemoteExists, .info = storageRemoteInfo, .list = storageRemoteList,
-            .newRead = storageRemoteNewRead, .newWrite = storageRemoteNewWrite,
-            .pathCreate = storageRemotePathCreate, .pathRemove = storageRemotePathRemove,
+            .exists = storageRemoteExists, .info = storageRemoteInfo, .list = storageRemoteList, .newRead = storageRemoteNewRead,
+            .newWrite = storageRemoteNewWrite, .pathCreate = storageRemotePathCreate, .pathRemove = storageRemotePathRemove,
             .pathSync = storageRemotePathSync, .remove = storageRemoteRemove);
     }
     MEM_CONTEXT_NEW_END();

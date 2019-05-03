@@ -15,11 +15,14 @@ Remote Storage File write
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define STORAGE_WRITE_REMOTE_TYPE                                   StorageWriteRemote
+#define STORAGE_WRITE_REMOTE_PREFIX                                 storageWriteRemote
+
 typedef struct StorageWriteRemote
 {
     MemContext *memContext;                                         // Object mem context
     StorageWriteInterface interface;                                // Interface
-    StorageRemote *storage;                                   // Storage that created this object
+    StorageRemote *storage;                                         // Storage that created this object
     ProtocolClient *client;                                         // Protocol client to make requests with
 } StorageWriteRemote;
 
@@ -32,61 +35,15 @@ Macros for function logging
     objToLog(value, "StorageWriteRemote", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Close the file
+Close file on the remote
 ***********************************************************************************************************************************/
-static void
-storageWriteRemoteClose(THIS_VOID)
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_WRITE_REMOTE, LOG, logLevelTrace)
 {
-    THIS(StorageWriteRemote);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_REMOTE, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Close if the file has not already been closed
-    if (this->client != NULL)
-    {
-        ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
-        ioWriteFlush(protocolClientIoWrite(this->client));
-        protocolClientReadOutput(this->client, false);
-
-        this->client = NULL;
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
+    ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "-1"));
+    ioWriteFlush(protocolClientIoWrite(this->client));
+    protocolClientReadOutput(this->client, false);
 }
-
-/***********************************************************************************************************************************
-Free the file
-***********************************************************************************************************************************/
-static void
-storageWriteRemoteFree(StorageWriteRemote *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_REMOTE, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-    {
-        memContextCallbackClear(this->memContext);
-
-        // If freed without closing then notify the remote to close the file
-        if (this->client != NULL)
-        {
-            ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "-1"));
-            ioWriteFlush(protocolClientIoWrite(this->client));
-            protocolClientReadOutput(this->client, false);
-
-            this->client = NULL;
-        }
-
-        memContextFree(this->memContext);
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Open the file
@@ -119,7 +76,7 @@ storageWriteRemoteOpen(THIS_VOID)
         protocolClientExecute(this->client, command, false);
 
         // Set free callback to ensure remote file is freed
-        memContextCallbackSet(this->memContext, (MemContextCallback)storageWriteRemoteFree, this);
+        memContextCallbackSet(this->memContext, storageWriteRemoteFreeResource, this);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -145,6 +102,34 @@ storageWriteRemote(THIS_VOID, const Buffer *buffer)
     ioWriteStrLine(protocolClientIoWrite(this->client), strNewFmt(PROTOCOL_BLOCK_HEADER "%zu", bufUsed(buffer)));
     ioWrite(protocolClientIoWrite(this->client), buffer);
     ioWriteFlush(protocolClientIoWrite(this->client));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Close the file
+***********************************************************************************************************************************/
+static void
+storageWriteRemoteClose(THIS_VOID)
+{
+    THIS(StorageWriteRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_REMOTE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    // Close if the file has not already been closed
+    if (this->client != NULL)
+    {
+        ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
+        ioWriteFlush(protocolClientIoWrite(this->client));
+        protocolClientReadOutput(this->client, false);
+        this->client = NULL;
+
+        memContextCallbackClear(this->memContext);
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }

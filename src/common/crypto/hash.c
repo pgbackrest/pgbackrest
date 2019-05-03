@@ -32,6 +32,9 @@ STRING_EXTERN(HASH_TYPE_SHA256_STR,                                 HASH_TYPE_SH
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define CRYPTO_HASH_TYPE                                            CryptoHash
+#define CRYPTO_HASH_PREFIX                                          cryptoHash
+
 typedef struct CryptoHash
 {
     MemContext *memContext;                                         // Context to store data
@@ -47,6 +50,15 @@ Macros for function logging
     CryptoHash *
 #define FUNCTION_LOG_CRYPTO_HASH_FORMAT(value, buffer, bufferSize)                                                                 \
     objToLog(value, "CryptoHash", buffer, bufferSize)
+
+/***********************************************************************************************************************************
+Free hash context
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(CRYPTO_HASH, LOG, logLevelTrace)
+{
+    EVP_MD_CTX_destroy(this->hashContext);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Add message data to the hash from a Buffer
@@ -116,21 +128,6 @@ cryptoHashResult(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-Free memory
-***********************************************************************************************************************************/
-static void
-cryptoHashFreeCallback(CryptoHash *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
-    FUNCTION_LOG_END();
-
-    EVP_MD_CTX_destroy(this->hashContext);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 New object
 ***********************************************************************************************************************************/
 IoFilter *
@@ -161,7 +158,7 @@ cryptoHashNew(const String *type)
         cryptoError((driver->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
 
         // Set free callback to ensure hash context is freed
-        memContextCallbackSet(driver->memContext, (MemContextCallback)cryptoHashFreeCallback, driver);
+        memContextCallbackSet(driver->memContext, cryptoHashFreeResource, driver);
 
         // Initialize context
         cryptoError(!EVP_DigestInit_ex(driver->hashContext, driver->hashType, NULL), "unable to initialize hash context");

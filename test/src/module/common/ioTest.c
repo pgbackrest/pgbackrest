@@ -265,7 +265,6 @@ testRun(void)
         TEST_RESULT_BOOL(testIoReadCloseCalled, true, "    check io object closed");
 
         TEST_RESULT_VOID(ioReadFree(read), "    free read object");
-        TEST_RESULT_VOID(ioReadFree(NULL), "    free null read object");
 
         // Read a zero-length buffer to be sure it is not passed on to the filter group
         // -------------------------------------------------------------------------------------------------------------------------
@@ -333,10 +332,7 @@ testRun(void)
         TEST_RESULT_PTR(ioFilterInterface(bufferFilter), &bufferFilter->interface, "    check filter interface");
 
         TEST_RESULT_VOID(ioFilterFree(bufferFilter), "    free buffer filter");
-        TEST_RESULT_VOID(ioFilterFree(NULL), "    free NULL filter");
-
         TEST_RESULT_VOID(ioFilterGroupFree(filterGroup), "    free filter group object");
-        TEST_RESULT_VOID(ioFilterGroupFree(NULL), "    free NULL filter group object");
 
         // Mixed line and buffer read
         // -------------------------------------------------------------------------------------------------------------------------
@@ -415,7 +411,6 @@ testRun(void)
         TEST_RESULT_BOOL(testIoWriteCloseCalled, true, "    check io object closed");
 
         TEST_RESULT_VOID(ioWriteFree(write), "    free write object");
-        TEST_RESULT_VOID(ioWriteFree(NULL), "    free null write object");
 
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(3);

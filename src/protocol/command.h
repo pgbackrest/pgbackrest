@@ -7,6 +7,9 @@ Protocol Command
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define PROTOCOL_COMMAND_TYPE                                       ProtocolCommand
+#define PROTOCOL_COMMAND_PREFIX                                     protocolCommand
+
 typedef struct ProtocolCommand ProtocolCommand;
 
 #include "common/type/variant.h"

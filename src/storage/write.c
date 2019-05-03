@@ -6,6 +6,7 @@ Storage Write Interface
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
@@ -18,6 +19,8 @@ struct StorageWrite
     const StorageWriteInterface *interface;
     IoWrite *io;
 };
+
+OBJECT_DEFINE_FREE(STORAGE_WRITE);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -237,20 +240,4 @@ storageWriteToLog(const StorageWrite *this)
         strPtr(storageWriteType(this)), strPtr(strToLog(storageWriteName(this))), storageWriteModeFile(this),
         storageWriteModePath(this), cvtBoolToConstZ(storageWriteCreatePath(this)), cvtBoolToConstZ(storageWriteSyncFile(this)),
         cvtBoolToConstZ(storageWriteSyncPath(this)), cvtBoolToConstZ(storageWriteAtomic(this)));
-}
-
-/***********************************************************************************************************************************
-Free the file
-***********************************************************************************************************************************/
-void
-storageWriteFree(const StorageWrite *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

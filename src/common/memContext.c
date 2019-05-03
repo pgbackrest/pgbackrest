@@ -44,7 +44,7 @@ struct MemContext
     unsigned int allocListSize;                                     // Size of alloc list (not the actual count of allocations)
     unsigned int allocFreeIdx;                                      // Index of first free space in the alloc list
 
-    MemContextCallback callbackFunction;                            // Function to call before the context is freed
+    void (*callbackFunction)(void *);                               // Function to call before the context is freed
     void *callbackArgument;                                         // Argument to pass to callback function
 };
 

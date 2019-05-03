@@ -45,6 +45,8 @@ struct Exec
     IoWrite *ioWriteExec;                                           // Wrapper for handle write interface
 };
 
+OBJECT_DEFINE_FREE(EXEC);
+
 /***********************************************************************************************************************************
 Macro to close file descriptors after dup2() in the child process
 
@@ -67,6 +69,41 @@ other code.
             close(pipe[1]);                                                                                                        \
     }                                                                                                                              \
     while (0);
+
+/***********************************************************************************************************************************
+Free exec handles and ensure process is shut down
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(EXEC, LOG, logLevelTrace)
+{
+    // Close the io handles
+    close(this->handleRead);
+    close(this->handleWrite);
+    close(this->handleError);
+
+    // Wait for the child to exit. We don't really care how it exits as long as it does.
+    if (this->processId != 0)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            int processResult = 0;
+            Wait *wait = waitNew(this->timeout);
+
+            do
+            {
+                THROW_ON_SYS_ERROR(
+                    (processResult = waitpid(this->processId, NULL, WNOHANG)) == -1, ExecuteError,
+                    "unable to wait on child process");
+            }
+            while (processResult == 0 && waitMore(wait));
+
+            // If the process did not exit then error -- else we may end up with a collection of zombie processes
+            if (processResult == 0)
+                THROW_FMT(ExecuteError, "%s did not exit when expected", strPtr(this->name));
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 New object
@@ -331,7 +368,7 @@ execOpen(Exec *this)
     ioWriteOpen(this->ioWriteExec);
 
     // Set a callback so the handles will get freed
-    memContextCallbackSet(this->memContext, (MemContextCallback)execFree, this);
+    memContextCallbackSet(this->memContext, execFreeResource, this);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -379,53 +416,4 @@ execMemContext(const Exec *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->memContext);
-}
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-void
-execFree(Exec *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(EXEC, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-    {
-        memContextCallbackClear(this->memContext);
-
-        // Close the io handles
-        close(this->handleRead);
-        close(this->handleWrite);
-        close(this->handleError);
-
-        // Wait for the child to exit. We don't really care how it exits as long as it does.
-        if (this->processId != 0)
-        {
-            MEM_CONTEXT_TEMP_BEGIN()
-            {
-                int processResult = 0;
-                Wait *wait = waitNew(this->timeout);
-
-                do
-                {
-                    THROW_ON_SYS_ERROR(
-                        (processResult = waitpid(this->processId, NULL, WNOHANG)) == -1, ExecuteError,
-                        "unable to wait on child process");
-                }
-                while (processResult == 0 && waitMore(wait));
-
-                // If the process did not exit then error -- else we may end up with a collection of zombie processes
-                if (processResult == 0)
-                    THROW_FMT(ExecuteError, "%s did not exit when expected", strPtr(this->name));
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-
-        // Free mem context
-        memContextFree(this->memContext);
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
 }

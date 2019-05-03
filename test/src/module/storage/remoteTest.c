@@ -211,12 +211,8 @@ testRun(void)
         TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
 
         TEST_RESULT_VOID(storagePutNP(write, contentBuf), "write file");
-        TEST_RESULT_VOID(
-            storageWriteRemoteClose((StorageWriteRemote *)storageWriteDriver(write)),
-            "close file again");
-        TEST_RESULT_VOID(
-            storageWriteRemoteFree((StorageWriteRemote *)storageWriteDriver(write)),
-            "free file");
+        TEST_RESULT_VOID(storageWriteRemoteClose((StorageWriteRemote *)storageWriteDriver(write)), "close file again");
+        TEST_RESULT_VOID(storageWriteFree(write), "free file");
 
         // Make sure the file was written correctly
         TEST_RESULT_BOOL(
@@ -229,10 +225,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(write)), "open file");
         TEST_RESULT_VOID(ioWrite(storageWriteIo(write), contentBuf), "write bytes");
 
-        TEST_RESULT_VOID(
-            storageWriteRemoteFree((StorageWriteRemote *)storageWriteDriver(write)),
-            "free file");
-        TEST_RESULT_VOID(storageWriteRemoteFree(NULL), "free null file");
+        TEST_RESULT_VOID(storageWriteFree(write), "free file");
 
         TEST_RESULT_UINT(
             storageInfoNP(storageTest, strNew("repo/test2.txt.pgbackrest.tmp")).size, 16384, "file exists and is partial");

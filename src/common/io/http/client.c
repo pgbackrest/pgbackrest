@@ -61,6 +61,8 @@ struct HttpClient
     bool contentEof;                                                // Has all content been read?
 };
 
+OBJECT_DEFINE_FREE(HTTP_CLIENT);
+
 /***********************************************************************************************************************************
 Read content
 ***********************************************************************************************************************************/
@@ -496,20 +498,4 @@ httpClientResponseMessage(const HttpClient *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->responseMessage);
-}
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-void
-httpClientFree(HttpClient *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_CLIENT, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_TEST_RETURN_VOID();
 }

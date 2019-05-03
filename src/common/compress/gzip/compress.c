@@ -23,6 +23,9 @@ Filter type constant
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define GZIP_COMPRESS_TYPE                                          GzipCompress
+#define GZIP_COMPRESS_PREFIX                                        gzipCompress
+
 typedef struct GzipCompress
 {
     MemContext *memContext;                                         // Context to store data
@@ -53,6 +56,15 @@ gzipCompressToLog(const GzipCompress *this)
 Compression constants
 ***********************************************************************************************************************************/
 #define MEM_LEVEL                                                   9
+
+/***********************************************************************************************************************************
+Free deflate stream
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(GZIP_COMPRESS, LOG, logLevelTrace)
+{
+    deflateEnd(this->stream);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Compress data
@@ -147,28 +159,6 @@ gzipCompressInputSame(const THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-Free memory
-***********************************************************************************************************************************/
-static void
-gzipCompressFree(GzipCompress *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(GZIP_COMPRESS, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-    {
-        deflateEnd(this->stream);
-        this->stream = NULL;
-
-        memContextCallbackClear(this->memContext);
-        memContextFree(this->memContext);
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 New object
 ***********************************************************************************************************************************/
 IoFilter *
@@ -193,7 +183,7 @@ gzipCompressNew(int level, bool raw)
         gzipError(deflateInit2(driver->stream, level, Z_DEFLATED, gzipWindowBits(raw), MEM_LEVEL, Z_DEFAULT_STRATEGY));
 
         // Set free callback to ensure gzip context is freed
-        memContextCallbackSet(driver->memContext, (MemContextCallback)gzipCompressFree, driver);
+        memContextCallbackSet(driver->memContext, gzipCompressFreeResource, driver);
 
         // Create filter interface
         this = ioFilterNewP(
