@@ -4,6 +4,7 @@ Test Debug Macros and Routines
 #include "common/log.h"
 
 #include "common/harnessLog.h"
+#include "common/macro.h"
 
 static void
 testFunction3(void)
@@ -108,7 +109,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("DEBUG_UNIT_EXTERN"))
     {
-        const char *debugUnitExtern = MACRO_TO_STR(DEBUG_UNIT_EXTERN);
+        const char *debugUnitExtern = STRINGIFY(DEBUG_UNIT_EXTERN);
         TEST_RESULT_STR(debugUnitExtern, "", "DEBUG_UNIT_EXTERN is blank (extern)");
     }
 

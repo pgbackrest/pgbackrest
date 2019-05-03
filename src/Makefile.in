@@ -352,7 +352,7 @@ common/type/keyValue.o: common/type/keyValue.c build.auto.h common/assert.h comm
 common/type/list.o: common/type/list.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/list.h common/type/string.h
 	$(CC) $(CFLAGS) $(CMAKE) -c common/type/list.c -o common/type/list.o
 
-common/type/string.o: common/type/string.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h
+common/type/string.o: common/type/string.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/macro.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/string.h
 	$(CC) $(CFLAGS) $(CMAKE) -c common/type/string.c -o common/type/string.o
 
 common/type/stringList.o: common/type/stringList.c build.auto.h common/assert.h common/debug.h common/error.auto.h common/error.h common/logLevel.h common/memContext.h common/stackTrace.h common/type/buffer.h common/type/convert.h common/type/keyValue.h common/type/list.h common/type/string.h common/type/stringList.h common/type/variant.h common/type/variantList.h

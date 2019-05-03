@@ -64,6 +64,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <file>common/macro.h</file> for general-purpose macros.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Various <code>Buffer</code> improvements.</p>
                     </release-item>
 
