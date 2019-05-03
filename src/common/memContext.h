@@ -29,7 +29,7 @@ Space is reserved for this many allocations when a context is created.  When mor
 #define MEM_CONTEXT_ALLOC_INITIAL_SIZE                              4
 
 /***********************************************************************************************************************************
-Memory context callback function type, useful for casts in memContextCallback()
+Memory context callback function type, useful for casts in memContextCallbackSet()
 ***********************************************************************************************************************************/
 typedef void (*MemContextCallback)(void *callbackArgument);
 
@@ -60,7 +60,7 @@ Use the MEM_CONTEXT*() macros when possible rather than implement error-handling
 ***********************************************************************************************************************************/
 MemContext *memContextNew(const char *name);
 void memContextMove(MemContext *this, MemContext *parentNew);
-void memContextCallback(MemContext *this, void (*callbackFunction)(void *), void *callbackArgument);
+void memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *callbackArgument);
 void memContextCallbackClear(MemContext *this);
 MemContext *memContextSwitch(MemContext *this);
 void memContextFree(MemContext *this);

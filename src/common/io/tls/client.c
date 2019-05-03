@@ -94,7 +94,7 @@ tlsClientNew(
         this->context = SSL_CTX_new(method);
         cryptoError(this->context == NULL, "unable to create TLS context");
 
-        memContextCallback(this->memContext, (MemContextCallback)tlsClientFree, this);
+        memContextCallbackSet(this->memContext, (MemContextCallback)tlsClientFree, this);
 
         // Exclude SSL versions to only allow TLS and also disable compression
         SSL_CTX_set_options(this->context, (long)(SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION));

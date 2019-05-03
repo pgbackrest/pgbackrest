@@ -162,7 +162,7 @@ storageWritePosixOpen(THIS_VOID)
     }
 
     // Set free callback to ensure file handle is freed
-    memContextCallback(this->memContext, (MemContextCallback)storageWritePosixFree, this);
+    memContextCallbackSet(this->memContext, (MemContextCallback)storageWritePosixFree, this);
 
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)

@@ -107,7 +107,7 @@ storageReadPosixOpen(THIS_VOID)
     // On success set free callback to ensure file handle is freed
     if (this->handle != -1)
     {
-        memContextCallback(this->memContext, (MemContextCallback)storageReadPosixFree, this);
+        memContextCallbackSet(this->memContext, (MemContextCallback)storageReadPosixFree, this);
         result = true;
     }
 

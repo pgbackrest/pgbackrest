@@ -331,7 +331,7 @@ execOpen(Exec *this)
     ioWriteOpen(this->ioWriteExec);
 
     // Set a callback so the handles will get freed
-    memContextCallback(this->memContext, (MemContextCallback)execFree, this);
+    memContextCallbackSet(this->memContext, (MemContextCallback)execFree, this);
 
     FUNCTION_LOG_RETURN_VOID();
 }

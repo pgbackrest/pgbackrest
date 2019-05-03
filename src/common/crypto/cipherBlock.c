@@ -200,7 +200,7 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
             cryptoError(!(this->cipherContext = EVP_CIPHER_CTX_new()), "unable to create context");
 
             // Set free callback to ensure cipher context is freed
-            memContextCallback(this->memContext, (MemContextCallback)cipherBlockFree, this);
+            memContextCallbackSet(this->memContext, (MemContextCallback)cipherBlockFree, this);
 
             // Initialize cipher
             cryptoError(

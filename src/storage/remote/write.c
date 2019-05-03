@@ -119,7 +119,7 @@ storageWriteRemoteOpen(THIS_VOID)
         protocolClientExecute(this->client, command, false);
 
         // Set free callback to ensure remote file is freed
-        memContextCallback(this->memContext, (MemContextCallback)storageWriteRemoteFree, this);
+        memContextCallbackSet(this->memContext, (MemContextCallback)storageWriteRemoteFree, this);
     }
     MEM_CONTEXT_TEMP_END();
 

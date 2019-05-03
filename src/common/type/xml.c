@@ -402,7 +402,7 @@ xmlDocumentNew(const String *rootName)
         this->xml = xmlNewDoc(BAD_CAST "1.0");
 
         // Set callback to ensure xml document is freed
-        memContextCallback(this->memContext, (MemContextCallback)xmlDocumentFree, this);
+        memContextCallbackSet(this->memContext, (MemContextCallback)xmlDocumentFree, this);
 
         this->root = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strPtr(rootName)));
         xmlDocSetRootElement(this->xml, this->root->node);
@@ -440,7 +440,7 @@ xmlDocumentNewC(const unsigned char *buffer, size_t bufferSize)
             THROW_FMT(FormatError, "invalid xml");
 
         // Set callback to ensure xml document is freed
-        memContextCallback(this->memContext, (MemContextCallback)xmlDocumentFree, this);
+        memContextCallbackSet(this->memContext, (MemContextCallback)xmlDocumentFree, this);
 
         // Get the root node
         this->root = xmlNodeNew(xmlDocGetRootElement(this->xml));

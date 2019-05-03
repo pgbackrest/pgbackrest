@@ -193,7 +193,7 @@ gzipCompressNew(int level, bool raw)
         gzipError(deflateInit2(driver->stream, level, Z_DEFLATED, gzipWindowBits(raw), MEM_LEVEL, Z_DEFAULT_STRATEGY));
 
         // Set free callback to ensure gzip context is freed
-        memContextCallback(driver->memContext, (MemContextCallback)gzipCompressFree, driver);
+        memContextCallbackSet(driver->memContext, (MemContextCallback)gzipCompressFree, driver);
 
         // Create filter interface
         this = ioFilterNewP(

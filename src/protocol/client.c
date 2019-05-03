@@ -110,7 +110,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         protocolClientNoOp(this);
 
         // Set a callback to shutdown the protocol
-        memContextCallback(this->memContext, (MemContextCallback)protocolClientFree, this);
+        memContextCallbackSet(this->memContext, (MemContextCallback)protocolClientFree, this);
     }
     MEM_CONTEXT_NEW_END();
 

@@ -161,7 +161,7 @@ cryptoHashNew(const String *type)
         cryptoError((driver->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
 
         // Set free callback to ensure hash context is freed
-        memContextCallback(driver->memContext, (MemContextCallback)cryptoHashFreeCallback, driver);
+        memContextCallbackSet(driver->memContext, (MemContextCallback)cryptoHashFreeCallback, driver);
 
         // Initialize context
         cryptoError(!EVP_DigestInit_ex(driver->hashContext, driver->hashType, NULL), "unable to initialize hash context");

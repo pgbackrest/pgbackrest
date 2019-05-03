@@ -65,7 +65,7 @@ regExpNew(const String *expression)
         }
 
         // Set free callback to ensure cipher context is freed
-        memContextCallback(this->memContext, (MemContextCallback)regExpFree, this);
+        memContextCallbackSet(this->memContext, (MemContextCallback)regExpFree, this);
     }
     MEM_CONTEXT_NEW_END();
 
