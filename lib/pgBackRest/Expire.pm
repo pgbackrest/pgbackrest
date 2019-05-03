@@ -270,7 +270,7 @@ sub process
             }
 # CSHANG Since the list should be ordered from newest to oldest, then get only the backups from the array for the count of the retention. The globalBackupRetention will have, say 4F, 3F, 2F, 1F and if we're retaining 2, then 4F and 3F will be in the globalBackupArchiveRetention
             # Get the list of backups that are part of archive retention
-            my @stryTmp = @stryGlobalBackupRetention; # CSHANG copied to tmp becase splice removes the elements 0 to whatever from the array
+            my @stryTmp = @stryGlobalBackupRetention; # CSHANG copied to tmp becase splice removes the elements 0 to length from the array
             my @stryGlobalBackupArchiveRetention = splice(@stryTmp, 0, $iArchiveRetention); # CSHANG splice returns an array
 
             # For each archiveId, remove WAL that are not part of retention

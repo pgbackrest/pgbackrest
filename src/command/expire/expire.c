@@ -351,9 +351,9 @@ removeExpiredArchive(InfoBackup *infoBackup)
                         StringList *archiveSplit = strLstNewSplitZ(archiveId, "-");
                         unsigned int archivePgId = cvtZToUInt(strPtr(strLstGet(archiveSplit, 1)));
 
-                        // From the global list of backups to retain, create a list of backups, oldest to newest, associated with this
-                        // archiveId (e.g. 9.4-1), e.g. If globalBackupRetention has 4F, 3F, 2F, 1F then localBackupRetentionList will
-                        // have 1F, 2F, 3F, 4F (assuming they all have same history id)
+                        // From the global list of backups to retain, create a list of backups, oldest to newest, associated with
+                        // this archiveId (e.g. 9.4-1), e.g. If globalBackupRetention has 4F, 3F, 2F, 1F then
+                        // localBackupRetentionList will have 1F, 2F, 3F, 4F (assuming they all have same history id)
                         for (unsigned int retentionIdx = strLstSize(globalBackupRetentionList) - 1;
                             (int)retentionIdx >=0; retentionIdx--)
                         {
@@ -435,15 +435,17 @@ removeExpiredArchive(InfoBackup *infoBackup)
                         }
 
                         // Get the data for the backup selected for retention and all backups associated with this archive id
-                        List *archiveIdBackupList = NULL;
+                        List *archiveIdBackupList = lstNew(sizeof(InfoBackupData));
                         InfoBackupData archiveRetentionBackup = {0};
                         for (unsigned int infoBackupIdx = 0; infoBackupIdx < infoBackupDataTotal(infoBackup); infoBackupIdx++)
                         {
                             InfoBackupData archiveIdBackup = infoBackupData(infoBackup, infoBackupIdx);
 
+                            // If this is the backup selected for retention, store its data
                             if (strCmp(archiveIdBackup.backupLabel, strLstGet(localBackupArchiveRententionList, 0)) == 0)
                                 archiveRetentionBackup = infoBackupData(infoBackup, infoBackupIdx);
 
+                            // If this is a backup associated with this archive Id, then add it to the list to check
                             if (archiveIdBackup.backupPgId == archivePgId)
                                 lstAdd(archiveIdBackupList, &archiveIdBackup);
                         }
@@ -457,7 +459,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                             // important to preserve archive that is required to make the older backups consistent even though they
                             // cannot be played any further forward with PITR.
                             String *archiveExpireMax = NULL;
-                            List *archiveRangeList = NULL;
+                            List *archiveRangeList = lstNew(sizeof(ArchiveRange));
 
                             // From the full list of backups, loop through those associated with this archiveId
                             for (unsigned int backupListIdx = 0; backupListIdx < lstSize(archiveIdBackupList); backupListIdx++)
@@ -493,12 +495,13 @@ removeExpiredArchive(InfoBackup *infoBackup)
                             }
 
                             // Get all major archive paths (timeline and first 32 bits of LSN)
-    // CSHANG Wait, what is being returned here - the fully qualified path or just the subdir
                             StringList *walPathList =
-                                storageListP(
-                                    storageRepo(),
-                                    strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)), .errorOnMissing = true,
-                                    .expression = STRDEF(WAL_SEGMENT_DIR_REGEXP));
+                                strLstSort(
+                                    storageListP(
+                                        storageRepo(),
+                                        strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strPtr(archiveId)), .errorOnMissing = true,
+                                        .expression = STRDEF(WAL_SEGMENT_DIR_REGEXP)),
+                                    sortOrderAsc);
 
                             for (unsigned int walIdx = 0; walIdx < strLstSize(walPathList); walIdx++)
                             {
@@ -513,7 +516,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                     ArchiveRange *archiveRange = lstGet(archiveRangeList, rangeIdx);
 
                                     if ((strCmp(walPath, strSubN(archiveRange->start, 0, 16)) >= 0) &&
-                                        (archiveRange->stop != NULL || strCmp(walPath, strSubN(archiveRange->stop, 0, 16)) <= 0))
+                                        (archiveRange->stop == NULL || strCmp(walPath, strSubN(archiveRange->stop, 0, 16)) <= 0))
                                     {
                                         removeArchive = false;
                                         break;
@@ -529,7 +532,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                     archiveExpire.total++;
                                     archiveExpire.start = strDup(walPath);
                                     archiveExpire.stop = strDup(walPath);
-    // CSHANG Must figure out how to deal with the logging self->logExpire($strArchiveId, $strPath);
+
                                 }
                                 // Else delete individual files instead if the major path is less than or equal to the most recent
                                 // retention backup.  This optimization prevents scanning though major paths that could not possibly
@@ -537,12 +540,13 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                 else if (strCmp(walPath, strSubN(archiveExpireMax, 0, 16)) <= 0)
                                 {
                                     // Look for files in the archive directory
-    // CSHANG What does this really return? Should be like 000000010000000000000002-224520cda22b2788ca91630706080cca2634f813.gz
                                     StringList *walSubPathList =
-                                        storageListP(
-                                            storageRepo(),
-                                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath)),
-                                            .errorOnMissing = true, .expression = STRDEF("^[0-F]{24}.*$"));
+                                        strLstSort(
+                                            storageListP(
+                                                storageRepo(),
+                                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath)),
+                                                .errorOnMissing = true, .expression = STRDEF("^[0-F]{24}.*$")),
+                                            sortOrderAsc);
 
                                     for (unsigned int subIdx = 0; subIdx < strLstSize(walSubPathList); subIdx++)
                                     {
@@ -555,14 +559,14 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                             ArchiveRange *archiveRange = lstGet(archiveRangeList, rangeIdx);
 
                                             if ((strCmp(strSubN(walSubPath, 0, 24), archiveRange->start) >= 0) &&
-                                                ((archiveRange->stop != NULL) ||
+                                                ((archiveRange->stop == NULL) ||
                                                 (strCmp(strSubN(walSubPath, 0, 24), archiveRange->stop) <= 0)))
                                             {
                                                 removeArchive = false;
                                                 break;
                                             }
                                         }
-    // CSHANG ??? I don't understand how the old code actually removed the archive log. I've changed it here.
+
                                         // Remove archive log if it is not used in a backup
                                         if (removeArchive)
                                         {
