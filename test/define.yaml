@@ -497,8 +497,8 @@ unit:
         total: 1
 
         coverage:
-          storage/driver/cifs/storage: full
-          storage/driver/posix/storage: full
+          storage/cifs/storage: full
+          storage/posix/storage: full
           storage/helper: full
           storage/storage: full
 
@@ -507,14 +507,14 @@ unit:
         total: 21
 
         coverage:
-          storage/driver/posix/common: full
-          storage/driver/posix/fileRead: full
-          storage/driver/posix/fileWrite: full
-          storage/driver/posix/storage: full
-          storage/fileRead: full
-          storage/fileWrite: full
+          storage/posix/common: full
+          storage/posix/read: full
+          storage/posix/storage: full
+          storage/posix/write: full
           storage/helper: full
+          storage/read: full
           storage/storage: full
+          storage/write: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
@@ -522,10 +522,10 @@ unit:
         perlReq: true
 
         coverage:
-          storage/driver/remote/fileRead: full
-          storage/driver/remote/fileWrite: full
-          storage/driver/remote/protocol: full
-          storage/driver/remote/storage: full
+          storage/remote/read: full
+          storage/remote/protocol: full
+          storage/remote/storage: full
+          storage/remote/write: full
           storage/helper: full
           storage/storage: full
 
@@ -534,9 +534,9 @@ unit:
         total: 3
 
         coverage:
-          storage/driver/s3/fileRead: full
-          storage/driver/s3/fileWrite: full
-          storage/driver/s3/storage: full
+          storage/s3/read: full
+          storage/s3/storage: full
+          storage/s3/write: full
           storage/helper: full
           storage/storage: full
 

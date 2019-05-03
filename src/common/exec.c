@@ -38,7 +38,7 @@ struct Exec
     int handleWrite;                                                // Write handle
     int handleError;                                                // Error handle
 
-    IoRead *ioReadHandle;                                           // Handle read driver
+    IoRead *ioReadHandle;                                           // Handle read interface
     IoWrite *ioWriteHandle;                                         // Handle write interface
 
     IoRead *ioReadExec;                                             // Wrapper for handle read interface

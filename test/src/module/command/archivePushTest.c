@@ -7,7 +7,7 @@ Test Archive Push Command
 #include "common/io/handleWrite.h"
 #include "common/time.h"
 #include "postgres/version.h"
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
@@ -22,7 +22,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storageDriverPosixNew(
+    Storage *storageTest = storagePosixNew(
         strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // Start a protocol server to test the protocol directly
@@ -371,10 +371,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathRemoveP(storageTest, strNew("repo"), .errorOnMissing = true, .recurse = true);
 
-        StorageFileWrite *infoWrite = storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info"));
+        StorageWrite *infoWrite = storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info"));
 
         ioWriteFilterGroupSet(
-            storageFileWriteIo(infoWrite),
+            storageWriteIo(infoWrite),
             ioFilterGroupAdd(
                 ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("badpassphrase"), NULL)));
 

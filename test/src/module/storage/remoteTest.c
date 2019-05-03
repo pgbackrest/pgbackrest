@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Remote Storage Driver
+Test Remote Storage
 ***********************************************************************************************************************************/
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
@@ -15,7 +15,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Test storage
-    Storage *storageTest = storageDriverPosixNew(
+    Storage *storageTest = storagePosixNew(
         strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // Load configuration to set repo-path and stanza
@@ -59,7 +59,7 @@ testRun(void)
         varLstAdd(paramList, varNewStr(strNew("test.txt")));
 
         TEST_RESULT_BOOL(
-            storageDriverRemoteProtocol(PROTOCOL_COMMAND_STORAGE_EXISTS_STR, paramList, server), true, "protocol exists");
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_EXISTS_STR, paramList, server), true, "protocol exists");
         TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":true}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -91,14 +91,14 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, varNewStr(strNew("^testy$")));
 
-        TEST_RESULT_BOOL(storageDriverRemoteProtocol(PROTOCOL_COMMAND_STORAGE_LIST_STR, paramList, server), true, "protocol list");
+        TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_LIST_STR, paramList, server), true, "protocol list");
         TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":[\"testy\"]}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
 
         // Check invalid protocol function
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(storageDriverRemoteProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
+        TEST_RESULT_BOOL(storageRemoteProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
     }
 
     // *****************************************************************************************************************************
@@ -125,22 +125,22 @@ testRun(void)
 
         storagePutNP(storageNewWriteNP(storageTest, strNew("repo/test.txt")), contentBuf);
 
-        StorageFileRead *fileRead = NULL;
+        StorageRead *fileRead = NULL;
 
         ioBufferSizeSet(8193);
         TEST_ASSIGN(fileRead, storageNewReadNP(storageRemote, strNew("test.txt")), "new file");
         TEST_RESULT_BOOL(bufEq(storageGetNP(fileRead), contentBuf), true, "get file");
-        TEST_RESULT_BOOL(storageFileReadIgnoreMissing(fileRead), false, "check ignore missing");
-        TEST_RESULT_STR(strPtr(storageFileReadName(fileRead)), "test.txt", "check name");
+        TEST_RESULT_BOOL(storageReadIgnoreMissing(fileRead), false, "check ignore missing");
+        TEST_RESULT_STR(strPtr(storageReadName(fileRead)), "test.txt", "check name");
         TEST_RESULT_SIZE(
-            storageFileReadDriverRemote(storageFileReadDriver(fileRead), bufNew(32), false), 0,
+            storageReadRemote(storageRead(fileRead), bufNew(32), false), 0,
             "nothing more to read");
 
         TEST_RESULT_BOOL(
             bufEq(storageGetNP(storageNewReadNP(storageRemote, strNew("test.txt"))), contentBuf), true, "get file again");
 
         TEST_ERROR(
-            storageDriverRemoteProtocolBlockSize(strNew("bogus")), ProtocolError, "'bogus' is not a valid block size message");
+            storageRemoteProtocolBlockSize(strNew("bogus")), ProtocolError, "'bogus' is not a valid block size message");
 
         // Check protocol function directly (file missing)
         // -------------------------------------------------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(true));
 
         TEST_RESULT_BOOL(
-            storageDriverRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true,
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true,
             "protocol open read (missing)");
         TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":false}\n", "check result");
 
@@ -165,7 +165,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(
-            storageDriverRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true, "protocol open read");
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true, "protocol open read");
         TEST_RESULT_STR(
             strPtr(strNewBuf(serverWrite)),
             "{\"out\":true}\n"
@@ -199,23 +199,23 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(9999);
 
-        StorageFileWrite *write = NULL;
+        StorageWrite *write = NULL;
         TEST_ASSIGN(write, storageNewWriteNP(storageRemote, strNew("test.txt")), "new write file");
 
-        TEST_RESULT_BOOL(storageFileWriteAtomic(write), true, "write is atomic");
-        TEST_RESULT_BOOL(storageFileWriteCreatePath(write), true, "path will be created");
-        TEST_RESULT_UINT(storageFileWriteModeFile(write), STORAGE_MODE_FILE_DEFAULT, "file mode is default");
-        TEST_RESULT_UINT(storageFileWriteModePath(write), STORAGE_MODE_PATH_DEFAULT, "path mode is default");
-        TEST_RESULT_STR(strPtr(storageFileWriteName(write)), "test.txt", "check file name");
-        TEST_RESULT_BOOL(storageFileWriteSyncFile(write), true, "file is synced");
-        TEST_RESULT_BOOL(storageFileWriteSyncPath(write), true, "path is synced");
+        TEST_RESULT_BOOL(storageWriteAtomic(write), true, "write is atomic");
+        TEST_RESULT_BOOL(storageWriteCreatePath(write), true, "path will be created");
+        TEST_RESULT_UINT(storageWriteModeFile(write), STORAGE_MODE_FILE_DEFAULT, "file mode is default");
+        TEST_RESULT_UINT(storageWriteModePath(write), STORAGE_MODE_PATH_DEFAULT, "path mode is default");
+        TEST_RESULT_STR(strPtr(storageWriteName(write)), "test.txt", "check file name");
+        TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
+        TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
 
         TEST_RESULT_VOID(storagePutNP(write, contentBuf), "write file");
         TEST_RESULT_VOID(
-            storageFileWriteDriverRemoteClose((StorageFileWriteDriverRemote *)storageFileWriteFileDriver(write)),
+            storageWriteRemoteClose((StorageWriteRemote *)storageWriteDriver(write)),
             "close file again");
         TEST_RESULT_VOID(
-            storageFileWriteDriverRemoteFree((StorageFileWriteDriverRemote *)storageFileWriteFileDriver(write)),
+            storageWriteRemoteFree((StorageWriteRemote *)storageWriteDriver(write)),
             "free file");
 
         // Make sure the file was written correctly
@@ -226,13 +226,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(write, storageNewWriteNP(storageRemote, strNew("test2.txt")), "new write file");
 
-        TEST_RESULT_VOID(ioWriteOpen(storageFileWriteIo(write)), "open file");
-        TEST_RESULT_VOID(ioWrite(storageFileWriteIo(write), contentBuf), "write bytes");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(write)), "open file");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(write), contentBuf), "write bytes");
 
         TEST_RESULT_VOID(
-            storageFileWriteDriverRemoteFree((StorageFileWriteDriverRemote *)storageFileWriteFileDriver(write)),
+            storageWriteRemoteFree((StorageWriteRemote *)storageWriteDriver(write)),
             "free file");
-        TEST_RESULT_VOID(storageFileWriteDriverRemoteFree(NULL), "free null file");
+        TEST_RESULT_VOID(storageWriteRemoteFree(NULL), "free null file");
 
         TEST_RESULT_UINT(
             storageInfoNP(storageTest, strNew("repo/test2.txt.pgbackrest.tmp")).size, 16384, "file exists and is partial");
@@ -264,7 +264,7 @@ testRun(void)
                 "ABCBRBLOCK-1\n"));
 
         TEST_RESULT_BOOL(
-            storageDriverRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");
         TEST_RESULT_STR(
             strPtr(strNewBuf(serverWrite)),
             "{}\n"
@@ -294,7 +294,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(true));
 
         TEST_RESULT_BOOL(
-            storageDriverRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");
         TEST_RESULT_STR(
             strPtr(strNewBuf(serverWrite)),
             "{}\n"

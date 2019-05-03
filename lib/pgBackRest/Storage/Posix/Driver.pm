@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# Posix Storage Driver
+# Posix Storage
 #
 # Implements storage functions for Posix-compliant file systems.
 ####################################################################################################################################
@@ -923,7 +923,7 @@ sub remove
         require pgBackRest::LibC;
         pgBackRest::LibC->import(qw(:storage));
 
-        storageDriverPosixPathRemove($strPathFile, !$bIgnoreMissing, $bRecurse)
+        storagePosixPathRemove($strPathFile, !$bIgnoreMissing, $bRecurse)
     }
     # Only remove the specified file
     else

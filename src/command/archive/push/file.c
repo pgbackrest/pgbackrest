@@ -73,7 +73,7 @@ archivePushFile(
         if (isSegment)
         {
             // Generate a sha1 checksum for the wal segment.  ??? Probably need a function in storage for this.
-            IoRead *read = storageFileReadIo(storageNewReadNP(storageLocal(), walSource));
+            IoRead *read = storageReadIo(storageNewReadNP(storageLocal(), walSource));
             IoFilterGroup *filterGroup = ioFilterGroupAdd(ioFilterGroupNew(), cryptoHashNew(HASH_TYPE_SHA1_STR));
             ioReadFilterGroupSet(read, filterGroup);
 
@@ -117,7 +117,7 @@ archivePushFile(
         // Only copy if the file was not found in the archive
         if (walSegmentFile == NULL)
         {
-            StorageFileRead *source = storageNewReadNP(storageLocal(), walSource);
+            StorageRead *source = storageNewReadNP(storageLocal(), walSource);
 
             // Add filters
             IoFilterGroup *filterGroup = ioFilterGroupNew();
@@ -133,7 +133,7 @@ archivePushFile(
             if (cipherType != cipherTypeNone)
                 ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
 
-            ioReadFilterGroupSet(storageFileReadIo(source), filterGroup);
+            ioReadFilterGroupSet(storageReadIo(source), filterGroup);
 
             // Copy the file
             storageCopyNP(

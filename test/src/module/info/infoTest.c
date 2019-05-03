@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Test Info Handler
 ***********************************************************************************************************************************/
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -10,7 +10,7 @@ void
 testRun(void)
 {
     // Create default storage object for testing
-    Storage *storageTest = storageDriverPosixNew(
+    Storage *storageTest = storagePosixNew(
         strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // *****************************************************************************************************************************
@@ -61,10 +61,10 @@ testRun(void)
 
         // Remove the copy and store only the main info file and encrypt it. One is required.
         //--------------------------------------------------------------------------------------------------------------------------
-        StorageFileWrite *infoWrite = storageNewWriteNP(storageLocalWrite(), fileName);
+        StorageWrite *infoWrite = storageNewWriteNP(storageLocalWrite(), fileName);
 
         ioWriteFilterGroupSet(
-            storageFileWriteIo(infoWrite),
+            storageWriteIo(infoWrite),
             ioFilterGroupAdd(
                 ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL)));
 

@@ -15,9 +15,9 @@ typedef struct Storage Storage;
 #include "common/type/stringList.h"
 #include "common/io/filter/group.h"
 #include "common/time.h"
-#include "storage/fileRead.h"
-#include "storage/fileWrite.h"
 #include "storage/info.h"
+#include "storage/read.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 storageCopy
@@ -25,7 +25,7 @@ storageCopy
 #define storageCopyNP(source, destination)                                                                                         \
     storageCopy(source, destination)
 
-bool storageCopy(StorageFileRead *source, StorageFileWrite *destination);
+bool storageCopy(StorageRead *source, StorageWrite *destination);
 
 /***********************************************************************************************************************************
 storageExists
@@ -55,7 +55,7 @@ typedef struct StorageGetParam
 #define storageGetNP(file)                                                                                                         \
     storageGet(file, (StorageGetParam){0})
 
-Buffer *storageGet(StorageFileRead *file, StorageGetParam param);
+Buffer *storageGet(StorageRead *file, StorageGetParam param);
 
 /***********************************************************************************************************************************
 storageInfo
@@ -113,7 +113,7 @@ storageMove
 #define storageMoveNP(this, source, destination)                                                                                   \
     storageMove(this, source, destination)
 
-void storageMove(const Storage *this, StorageFileRead *source, StorageFileWrite *destination);
+void storageMove(const Storage *this, StorageRead *source, StorageWrite *destination);
 
 /***********************************************************************************************************************************
 storageNewRead
@@ -129,7 +129,7 @@ typedef struct StorageNewReadParam
 #define storageNewReadNP(this, pathExp)                                                                                            \
     storageNewRead(this, pathExp, (StorageNewReadParam){0})
 
-StorageFileRead *storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param);
+StorageRead *storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param);
 
 /***********************************************************************************************************************************
 storageNewWrite
@@ -153,7 +153,7 @@ typedef struct StorageNewWriteParam
 #define storageNewWriteNP(this, pathExp)                                                                                           \
     storageNewWrite(this, pathExp, (StorageNewWriteParam){0})
 
-StorageFileWrite *storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param);
+StorageWrite *storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param);
 
 /***********************************************************************************************************************************
 storagePath
@@ -217,7 +217,7 @@ storagePut
 #define storagePutNP(file, buffer)                                                                                                 \
     storagePut(file, buffer)
 
-void storagePut(StorageFileWrite *file, const Buffer *buffer);
+void storagePut(StorageWrite *file, const Buffer *buffer);
 
 /***********************************************************************************************************************************
 storageRemove

@@ -65,7 +65,7 @@ These includes are from the src directory.  There is no Perl-specific code in th
 #include "config/parse.h"
 #include "perl/config.h"
 #include "postgres/pageChecksum.h"
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Helper macros
@@ -274,8 +274,8 @@ XS_EUPXS(XS_pgBackRest__LibC_libcUvSize)
 /* INCLUDE:  Including 'xs/storage/storage.xs' from 'xs/postgres/pageChecksum.xs' */
 
 
-XS_EUPXS(XS_pgBackRest__LibC_storageDriverPosixPathRemove); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC_storageDriverPosixPathRemove)
+XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove)
 {
     dVAR; dXSARGS;
     if (items != 3)
@@ -290,7 +290,7 @@ XS_EUPXS(XS_pgBackRest__LibC_storageDriverPosixPathRemove)
     MEM_CONTEXT_XS_TEMP_BEGIN()
     {
         storagePathRemoveP(
-            storageDriverPosixNew(strNew("/"), 0640, 750, true, NULL), strNew(path), .errorOnMissing = errorOnMissing,
+            storagePosixNew(strNew("/"), 0640, 750, true, NULL), strNew(path), .errorOnMissing = errorOnMissing,
             .recurse = recurse);
     }
     MEM_CONTEXT_XS_TEMP_END();
@@ -1250,7 +1250,7 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
 #endif
 
         newXS_deffile("pgBackRest::LibC::libcUvSize", XS_pgBackRest__LibC_libcUvSize);
-        newXS_deffile("pgBackRest::LibC::storageDriverPosixPathRemove", XS_pgBackRest__LibC_storageDriverPosixPathRemove);
+        newXS_deffile("pgBackRest::LibC::storagePosixPathRemove", XS_pgBackRest__LibC_storagePosixPathRemove);
         newXS_deffile("pgBackRest::LibC::pageChecksum", XS_pgBackRest__LibC_pageChecksum);
         newXS_deffile("pgBackRest::LibC::pageChecksumTest", XS_pgBackRest__LibC_pageChecksumTest);
         newXS_deffile("pgBackRest::LibC::pageChecksumBufferTest", XS_pgBackRest__LibC_pageChecksumBufferTest);

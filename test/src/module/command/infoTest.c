@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Test Info Command
 ***********************************************************************************************************************************/
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
@@ -824,7 +824,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storageDriverPosixNew(
+        Storage *storage = storagePosixNew(
             strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
         TEST_RESULT_STR(
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))), "No stanzas exist in the repository.\n",

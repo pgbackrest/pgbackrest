@@ -8,7 +8,7 @@ Test Archive Get Command
 #include "common/io/bufferWrite.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessInfo.h"
 
@@ -20,7 +20,7 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storageDriverPosixNew(
+    Storage *storageTest = storagePosixNew(
         strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // Start a protocol server to test the protocol directly
@@ -184,10 +184,10 @@ testRun(void)
 
         // Create a compressed WAL segment to copy
         // -------------------------------------------------------------------------------------------------------------------------
-        StorageFileWrite *infoWrite = storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info"));
+        StorageWrite *infoWrite = storageNewWriteNP(storageTest, strNew("repo/archive/test1/archive.info"));
 
         ioWriteFilterGroupSet(
-            storageFileWriteIo(infoWrite),
+            storageWriteIo(infoWrite),
             ioFilterGroupAdd(
                 ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("12345678"), NULL)));
 
@@ -203,7 +203,7 @@ testRun(void)
                 "[db:history]\n"
                 "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
 
-        StorageFileWrite *destination = storageNewWriteNP(
+        StorageWrite *destination = storageNewWriteNP(
             storageTest,
             strNew(
                 "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
@@ -212,7 +212,7 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, gzipCompressNew(3, false));
         ioFilterGroupAdd(
             filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("worstpassphraseever"), NULL));
-        ioWriteFilterGroupSet(storageFileWriteIo(destination), filterGroup);
+        ioWriteFilterGroupSet(storageWriteIo(destination), filterGroup);
         storagePutNP(destination, buffer);
 
         TEST_RESULT_INT(

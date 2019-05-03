@@ -343,7 +343,7 @@ sub libcAutoExportTag
 
         storage =>
         [
-            'storageDriverPosixPathRemove',
+            'storagePosixPathRemove',
         ],
 
         test =>

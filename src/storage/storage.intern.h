@@ -4,9 +4,9 @@ Storage Interface Internal
 #ifndef STORAGE_STORAGE_INTERN_H
 #define STORAGE_STORAGE_INTERN_H
 
-#include "storage/fileRead.intern.h"
-#include "storage/fileWrite.intern.h"
+#include "storage/read.intern.h"
 #include "storage/storage.h"
+#include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
 Default file and path modes
@@ -28,9 +28,9 @@ typedef struct StorageInterface
     StorageInfo (*info)(void *driver, const String *path, bool ignoreMissing, bool followLink);
     bool (*infoList)(void *driver, const String *file, bool ignoreMissing, StorageInfoListCallback callback, void *callbackData);
     StringList *(*list)(void *driver, const String *path, bool errorOnMissing, const String *expression);
-    bool (*move)(void *driver, StorageFileRead *source, StorageFileWrite *destination);
-    StorageFileRead *(*newRead)(void *driver, const String *file, bool ignoreMissing);
-    StorageFileWrite *(*newWrite)(
+    bool (*move)(void *driver, StorageRead *source, StorageWrite *destination);
+    StorageRead *(*newRead)(void *driver, const String *file, bool ignoreMissing);
+    StorageWrite *(*newWrite)(
         void *driver, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
         time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic);
     void (*pathCreate)(void *driver, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);

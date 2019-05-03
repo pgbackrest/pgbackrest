@@ -10,10 +10,10 @@ Storage Helper
 #include "common/regExp.h"
 #include "config/config.h"
 #include "protocol/helper.h"
-#include "storage/driver/cifs/storage.h"
-#include "storage/driver/posix/storage.h"
-#include "storage/driver/remote/storage.h"
-#include "storage/driver/s3/storage.h"
+#include "storage/cifs/storage.h"
+#include "storage/posix/storage.h"
+#include "storage/remote/storage.h"
+#include "storage/s3/storage.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -105,7 +105,7 @@ storageLocal(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storageLocal =  storageDriverPosixNew(
+            storageHelper.storageLocal =  storagePosixNew(
                 FSLASH_STR, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
         }
         MEM_CONTEXT_END();
@@ -130,7 +130,7 @@ storageLocalWrite(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storageLocalWrite = storageDriverPosixNew(
+            storageHelper.storageLocalWrite = storagePosixNew(
                 FSLASH_STR, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
         }
         MEM_CONTEXT_END();
@@ -153,7 +153,7 @@ storagePg(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storagePg = storageDriverPosixNew(
+            storageHelper.storagePg = storagePosixNew(
                 cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
         }
         MEM_CONTEXT_END();
@@ -176,7 +176,7 @@ storagePgWrite(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storagePgWrite = storageDriverPosixNew(
+            storageHelper.storagePgWrite = storagePosixNew(
                 cfgOptionStr(cfgOptPgPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
         }
         MEM_CONTEXT_END();
@@ -276,37 +276,37 @@ storageRepoGet(const String *type, bool write)
     // Use remote storage
     if (!repoIsLocal())
     {
-        result = storageDriverRemoteNew(
+        result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
             protocolRemoteGet(protocolStorageTypeRepo));
     }
-    // Use the CIFS driver
+    // Use CIFS storage
     else if (strEqZ(type, STORAGE_TYPE_CIFS))
     {
-        result = storageDriverCifsNew(
+        result = storageCifsNew(
             cfgOptionStr(cfgOptRepoPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression);
     }
-    // Use the Posix driver
+    // Use Posix storage
     else if (strEqZ(type, STORAGE_TYPE_POSIX))
     {
-        result = storageDriverPosixNew(
+        result = storagePosixNew(
             cfgOptionStr(cfgOptRepoPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression);
     }
-    // Use the S3 driver
+    // Use S3 storage
     else if (strEqZ(type, STORAGE_TYPE_S3))
     {
         // Set the default port
-        unsigned int port = STORAGE_DRIVER_S3_PORT_DEFAULT;
+        unsigned int port = STORAGE_S3_PORT_DEFAULT;
 
         // Extract port from the endpoint and host if it is present
         const String *endPoint = cfgOptionHostPort(cfgOptRepoS3Endpoint, &port);
         const String *host = cfgOptionHostPort(cfgOptRepoS3Host, &port);
 
-        result = storageDriverS3New(
+        result = storageS3New(
             cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket), endPoint,
             cfgOptionStr(cfgOptRepoS3Region), cfgOptionStr(cfgOptRepoS3Key), cfgOptionStr(cfgOptRepoS3KeySecret),
-            cfgOptionTest(cfgOptRepoS3Token) ? cfgOptionStr(cfgOptRepoS3Token) : NULL, STORAGE_DRIVER_S3_PARTSIZE_MIN, host, port,
-            STORAGE_DRIVER_S3_TIMEOUT_DEFAULT, cfgOptionBool(cfgOptRepoS3VerifySsl),
+            cfgOptionTest(cfgOptRepoS3Token) ? cfgOptionStr(cfgOptRepoS3Token) : NULL, STORAGE_S3_PARTSIZE_MIN, host, port,
+            STORAGE_S3_TIMEOUT_DEFAULT, cfgOptionBool(cfgOptRepoS3VerifySsl),
             cfgOptionTest(cfgOptRepoS3CaFile) ? cfgOptionStr(cfgOptRepoS3CaFile) : NULL,
             cfgOptionTest(cfgOptRepoS3CaPath) ? cfgOptionStr(cfgOptRepoS3CaPath) : NULL);
     }
@@ -415,7 +415,7 @@ storageSpool(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storageSpool = storageDriverPosixNew(
+            storageHelper.storageSpool = storagePosixNew(
                 cfgOptionStr(cfgOptSpoolPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false,
                 storageSpoolPathExpression);
         }
@@ -440,7 +440,7 @@ storageSpoolWrite(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storageSpoolWrite = storageDriverPosixNew(
+            storageHelper.storageSpoolWrite = storagePosixNew(
                 cfgOptionStr(cfgOptSpoolPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true,
                 storageSpoolPathExpression);
         }

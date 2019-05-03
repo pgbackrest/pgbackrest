@@ -16,7 +16,7 @@ Object type
 ***********************************************************************************************************************************/
 struct IoRead
 {
-    MemContext *memContext;                                         // Mem context of driver
+    MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     IoReadInterface interface;                                      // Driver interface
     IoFilterGroup *filterGroup;                                     // IO filters

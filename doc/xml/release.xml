@@ -68,6 +68,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Simplify storage object names.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>ioWriteStr()</code> and <code>ioWriteStrLine()</code>.</p>
                     </release-item>
 

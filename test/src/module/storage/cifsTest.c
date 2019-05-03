@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test CIFS Storage Driver
+Test CIFS Storage
 ***********************************************************************************************************************************/
 #include "common/harnessConfig.h"
 
@@ -29,10 +29,10 @@ testRun(void)
 
         // Create a FileWrite object with path sync enabled and ensure that path sync is false in the write object
         // -------------------------------------------------------------------------------------------------------------------------
-        StorageFileWrite *file = NULL;
+        StorageWrite *file = NULL;
         TEST_ASSIGN(file, storageNewWriteP(storage, strNew("somefile"), .noSyncPath = false), "new file write");
 
-        TEST_RESULT_BOOL(storageFileWriteSyncPath(file), false, "path sync is disabled");
+        TEST_RESULT_BOOL(storageWriteSyncPath(file), false, "path sync is disabled");
 
         // Test the path sync function -- pass a bogus path to ensure that this is a noop
         // -------------------------------------------------------------------------------------------------------------------------

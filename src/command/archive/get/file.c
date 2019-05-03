@@ -142,7 +142,7 @@ archiveGetFile(
 
         if (archiveGetCheckResult.archiveFileActual != NULL)
         {
-            StorageFileWrite *destination = storageNewWriteP(
+            StorageWrite *destination = storageNewWriteP(
                 storage, walDestination, .noCreatePath = true, .noSyncFile = !durable, .noSyncPath = !durable,
                 .noAtomic = !durable);
 
@@ -160,7 +160,7 @@ archiveGetFile(
             if (strEndsWithZ(archiveGetCheckResult.archiveFileActual, "." GZIP_EXT))
                 ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
 
-            ioWriteFilterGroupSet(storageFileWriteIo(destination), filterGroup);
+            ioWriteFilterGroupSet(storageWriteIo(destination), filterGroup);
 
             // Copy the file
             storageCopyNP(

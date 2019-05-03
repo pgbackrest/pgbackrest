@@ -149,7 +149,7 @@ my $rhExport =
     'storage' =>
     {
         &BLD_EXPORTTYPE_SUB => [qw(
-            storageDriverPosixPathRemove
+            storagePosixPathRemove
         )],
     },
 

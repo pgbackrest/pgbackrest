@@ -142,12 +142,12 @@ infoLoad(Info *this, const Storage *storage, const String *fileName, bool copyFi
         const String *fileNameExt = copyFile ? strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName)) : fileName;
 
         // Attempt to load the file
-        StorageFileRead *infoRead = storageNewReadNP(storage, fileNameExt);
+        StorageRead *infoRead = storageNewReadNP(storage, fileNameExt);
 
         if (cipherType != cipherTypeNone)
         {
             ioReadFilterGroupSet(
-                storageFileReadIo(infoRead),
+                storageReadIo(infoRead),
                 ioFilterGroupAdd(ioFilterGroupNew(), cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL)));
         }
 
@@ -328,7 +328,7 @@ infoSave(
         iniSet(ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR, jsonFromStr(infoHash(ini)));
 
         // Save info file
-        IoWrite *infoWrite = storageFileWriteIo(storageNewWriteNP(storage, fileName));
+        IoWrite *infoWrite = storageWriteIo(storageNewWriteNP(storage, fileName));
 
         if (cipherType != cipherTypeNone)
         {

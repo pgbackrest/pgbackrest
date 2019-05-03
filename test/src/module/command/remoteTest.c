@@ -5,7 +5,7 @@ Test Remote Command
 #include "common/io/handleWrite.h"
 #include "protocol/client.h"
 #include "protocol/server.h"
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
@@ -22,7 +22,7 @@ testRun(void)
     if (testBegin("cmdRemote()"))
     {
         // Create default storage object for testing
-        Storage *storageTest = storageDriverPosixNew(
+        Storage *storageTest = storagePosixNew(
             strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
         // No remote lock required

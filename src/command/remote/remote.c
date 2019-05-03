@@ -13,7 +13,7 @@ Remote Command
 #include "config/protocol.h"
 #include "protocol/helper.h"
 #include "protocol/server.h"
-#include "storage/driver/remote/protocol.h"
+#include "storage/remote/protocol.h"
 
 /***********************************************************************************************************************************
 Remote command
@@ -32,7 +32,7 @@ cmdRemote(int handleRead, int handleWrite)
         ioWriteOpen(write);
 
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_REMOTE_STR, read, write);
-        protocolServerHandlerAdd(server, storageDriverRemoteProtocol);
+        protocolServerHandlerAdd(server, storageRemoteProtocol);
         protocolServerHandlerAdd(server, configProtocol);
 
         // Acquire a lock if this command needs one.  We'll use the noop that is always sent from the client right after the
