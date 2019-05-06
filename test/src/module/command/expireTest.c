@@ -6,10 +6,10 @@ Test Command Control
 #include "storage/driver/posix/storage.h"
 
 /***********************************************************************************************************************************
-Helper function
+Helper functions
 ***********************************************************************************************************************************/
 void
-generateArchive(
+archiveGenerate(
     Storage *storageTest, String *archiveStanzaPath, const unsigned int start, unsigned int end, const char *archiveId,
     const char *majorWal)
 {
@@ -30,6 +30,33 @@ generateArchive(
             storageNewWriteNP(storageTest, strNewFmt("%s/%s/%s/%s", strPtr(archiveStanzaPath), archiveId, majorWal, strPtr(wal))),
             BUFSTRDEF(BOGUS_STR));
     }
+}
+
+String *
+archiveExpectList(const unsigned int start, unsigned int end, const char *majorWal)
+{
+    String *result = strNew("");
+
+    // For simplicity, only allow 2 digits
+    if (end > 99)
+        end = 99;
+
+    String *wal = NULL;
+
+    for (unsigned int i = start; i <= end; i++)
+    {
+        if (i < 10)
+            wal = strNewFmt("%s0000000%u-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
+        else
+            wal = strNewFmt("%s000000%u-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
+
+        if (strSize(result) == 0)
+            strCat(result, strPtr(wal));
+        else
+            strCatFmt(result, ", %s", strPtr(wal));
+    }
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -589,12 +616,23 @@ testRun(void)
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "no archive on disk");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        generateArchive(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000100000000");
-        generateArchive(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000200000000");
-        generateArchive(storageTest, archiveStanzaPath, 1, 10, "10-2", "0000000100000000");
+        archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000100000000");
+        archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000200000000");
+        archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "10-2", "0000000100000000");
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention type = full (default)");
-// CSHANG This test should demostrate that only F1, archive 01 will be removed - what is best way to do this? Wrie a function?
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention type = full (default), repo1-retention-archive=3");
+
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(2, 10, "0000000100000000")),
+            "  only 9.4-1/0000000100000000/000000010000000000000002 removed");
+// CSHANG Test all others still exist
+        // TEST_RESULT_STR(
+        //     strPtr(strLstJoin(strLstSort(storageListNP(
+        //         storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc), ", ")),
+        //     strPtr(archiveExpectList(1, 10, "0000000200000000")),
+        //     "  only 9.4-1/0000000100000000/000000010000000000000002 removed");
     }
 
     // *****************************************************************************************************************************
@@ -607,7 +645,8 @@ testRun(void)
         strLstAddZ(list, "9.6-1");
 
         TEST_RESULT_STR(strPtr(strLstJoin(sortArchiveId(list, sortOrderAsc), ", ")), "9.6-1, 10-4, 11-10", "sort ascending");
-                strLstAddZ(list, "9.4-2");
+
+        strLstAddZ(list, "9.4-2");
         TEST_RESULT_STR(
             strPtr(strLstJoin(sortArchiveId(list, sortOrderDesc), ", ")), "11-10, 10-4, 9.4-2, 9.6-1", "sort descending");
     }
