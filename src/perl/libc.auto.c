@@ -80,6 +80,7 @@ These includes define data structures that are required for the C to Perl interf
 #include "xs/crypto/cipherBlock.xsh"
 #include "xs/crypto/hash.xsh"
 #include "xs/common/encode.xsh"
+#include "xs/storage/storage.xsh"
 
 /***********************************************************************************************************************************
 Module definition
@@ -274,8 +275,70 @@ XS_EUPXS(XS_pgBackRest__LibC_libcUvSize)
 /* INCLUDE:  Including 'xs/storage/storage.xs' from 'xs/postgres/pageChecksum.xs' */
 
 
-XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove); /* prototype to pass -Wmissing-prototypes */
-XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove)
+XS_EUPXS(XS_pgBackRest__LibC__Storage_new); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Storage_new)
+{
+    dVAR; dXSARGS;
+    if (items != 2)
+       croak_xs_usage(cv,  "class, type");
+    {
+	const char *	class = (const char *)SvPV_nolen(ST(0))
+;
+	const char *	type = (const char *)SvPV_nolen(ST(1))
+;
+	pgBackRest__LibC__Storage	RETVAL;
+    CHECK(strcmp(class, PACKAGE_NAME_LIBC "::Storage") != 0);
+
+    RETVAL = NULL;
+
+    MEM_CONTEXT_XS_NEW_BEGIN("StorageXs")
+    {
+        RETVAL = memNew(sizeof(StorageXs));
+        RETVAL->memContext = MEM_COMTEXT_XS();
+
+        if (strcmp(type, "<LOCAL>") == 0)
+            RETVAL->pxPayload = storageLocalWrite();
+        else
+            croak("unexpected storage type '%s'", type);
+    }
+    MEM_CONTEXT_XS_NEW_END();
+	{
+	    SV * RETVALSV;
+	    RETVALSV = sv_newmortal();
+	    sv_setref_pv(RETVALSV, "pgBackRest::LibC::Storage", (void*)RETVAL);
+	    ST(0) = RETVALSV;
+	}
+    }
+    XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__Storage_DESTROY); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Storage_DESTROY)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+	pgBackRest__LibC__Storage	self;
+
+	if (SvROK(ST(0))) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__Storage,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not a reference",
+			"pgBackRest::LibC::Storage::DESTROY",
+			"self")
+;
+    MEM_CONTEXT_XS_DESTROY(self->memContext);
+    }
+    XSRETURN_EMPTY;
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__Storage_storagePosixPathRemove); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Storage_storagePosixPathRemove)
 {
     dVAR; dXSARGS;
     if (items != 3)
@@ -1250,7 +1313,9 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
 #endif
 
         newXS_deffile("pgBackRest::LibC::libcUvSize", XS_pgBackRest__LibC_libcUvSize);
-        newXS_deffile("pgBackRest::LibC::storagePosixPathRemove", XS_pgBackRest__LibC_storagePosixPathRemove);
+        newXS_deffile("pgBackRest::LibC::Storage::new", XS_pgBackRest__LibC__Storage_new);
+        newXS_deffile("pgBackRest::LibC::Storage::DESTROY", XS_pgBackRest__LibC__Storage_DESTROY);
+        newXS_deffile("pgBackRest::LibC::Storage::storagePosixPathRemove", XS_pgBackRest__LibC__Storage_storagePosixPathRemove);
         newXS_deffile("pgBackRest::LibC::pageChecksum", XS_pgBackRest__LibC_pageChecksum);
         newXS_deffile("pgBackRest::LibC::pageChecksumTest", XS_pgBackRest__LibC_pageChecksumTest);
         newXS_deffile("pgBackRest::LibC::pageChecksumBufferTest", XS_pgBackRest__LibC_pageChecksumBufferTest);

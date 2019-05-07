@@ -59,29 +59,23 @@ sub storageLocal
     my
     (
         $strOperation,
-        $strPath,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::storageLocal', \@_,
-            {name => 'strPath', default => '/', trace => true},
         );
 
     # Create storage if not defined
-    if (!defined($hStorage->{&STORAGE_LOCAL}{$strPath}))
+    if (!defined($hStorage->{&STORAGE_LOCAL})) =
     {
-        # Create local storage
-        $hStorage->{&STORAGE_LOCAL}{$strPath} = new pgBackRest::Storage::Local(
-            $strPath, new pgBackRest::Storage::Posix::Driver(),
-            {strTempExtension => STORAGE_TEMP_EXT,
-                lBufferMax => cfgOptionValid(CFGOPT_BUFFER_SIZE, false) ? cfgOption(CFGOPT_BUFFER_SIZE, false) : undef});
+        $hStorage->{&STORAGE_LOCAL} = new pgBackRest::Storage(STORAGE_LOCAL);
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oStorageLocal', value => $hStorage->{&STORAGE_LOCAL}{$strPath}, trace => true},
+        {name => 'oStorageLocal', value => $hStorage->{&STORAGE_LOCAL}, trace => true},
     );
 }
 

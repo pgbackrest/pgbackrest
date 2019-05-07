@@ -72,6 +72,7 @@ These includes define data structures that are required for the C to Perl interf
 #include "xs/crypto/cipherBlock.xsh"
 #include "xs/crypto/hash.xsh"
 #include "xs/common/encode.xsh"
+#include "xs/storage/storage.xsh"
 
 /***********************************************************************************************************************************
 Module definition

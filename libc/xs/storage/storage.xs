@@ -2,7 +2,38 @@
 # Storage Exports
 # ----------------------------------------------------------------------------------------------------------------------------------
 
-MODULE = pgBackRest::LibC PACKAGE = pgBackRest::LibC
+MODULE = pgBackRest::LibC PACKAGE = pgBackRest::LibC::Storage
+
+####################################################################################################################################
+pgBackRest::LibC::Storage
+new(class, type)
+    const char *class
+    const char *type
+CODE:
+    CHECK(strcmp(class, PACKAGE_NAME_LIBC "::Storage") != 0);
+
+    RETVAL = NULL;
+
+    MEM_CONTEXT_XS_NEW_BEGIN("StorageXs")
+    {
+        RETVAL = memNew(sizeof(StorageXs));
+        RETVAL->memContext = MEM_COMTEXT_XS();
+
+        if (strcmp(type, "<LOCAL>") == 0)
+            RETVAL->pxPayload = storageLocalWrite();
+        else
+            croak("unexpected storage type '%s'", type);
+    }
+    MEM_CONTEXT_XS_NEW_END();
+OUTPUT:
+    RETVAL
+
+####################################################################################################################################
+void
+DESTROY(self)
+    pgBackRest::LibC::Storage self
+CODE:
+    MEM_CONTEXT_XS_DESTROY(self->memContext);
 
 ####################################################################################################################################
 void
