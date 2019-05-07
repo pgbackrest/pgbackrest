@@ -920,7 +920,7 @@ sub remove
     if ($bRecurse)
     {
         # Dynamically load the driver
-        require pgBackRest::LibC;
+        require pgBackRest::LibC::Storage;
         pgBackRest::LibC->import(qw(:storage));
 
         storagePosixPathRemove($strPathFile, !$bIgnoreMissing, $bRecurse)
