@@ -10,7 +10,7 @@ new(class, type)
     const char *class
     const char *type
 CODE:
-    CHECK(strcmp(class, PACKAGE_NAME_LIBC "::Storage") != 0);
+    CHECK(strcmp(class, PACKAGE_NAME_LIBC "::Storage") == 0);
 
     RETVAL = NULL;
 
@@ -27,6 +27,23 @@ CODE:
     MEM_CONTEXT_XS_NEW_END();
 OUTPUT:
     RETVAL
+
+####################################################################################################################################
+void
+pathCreate(self, pathExp, mode, ignoreExists, createParent)
+    pgBackRest::LibC::Storage self
+    const char *pathExp
+    const char *mode
+    bool ignoreExists
+    bool createParent
+CODE:
+    MEM_CONTEXT_XS_BEGIN(self->memContext)
+    {
+        storagePathCreateP(
+            self->pxPayload, STR(pathExp), .mode = cvtZToIntBase(mode, 8), .errorOnExists = !ignoreExists,
+            .noParentCreate = !createParent);
+    }
+    MEM_CONTEXT_XS_END();
 
 ####################################################################################################################################
 void

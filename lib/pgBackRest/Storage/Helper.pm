@@ -15,6 +15,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Storage::Local;
+use pgBackRest::Storage::Storage;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -56,19 +57,12 @@ my $hStorage;
 sub storageLocal
 {
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::storageLocal', \@_,
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '::storageLocal');
 
     # Create storage if not defined
-    if (!defined($hStorage->{&STORAGE_LOCAL})) =
+    if (!defined($hStorage->{&STORAGE_LOCAL}))
     {
-        $hStorage->{&STORAGE_LOCAL} = new pgBackRest::Storage(STORAGE_LOCAL);
+        $hStorage->{&STORAGE_LOCAL} = new pgBackRest::Storage::Storage(STORAGE_LOCAL);
     }
 
     # Return from function and log return values if any

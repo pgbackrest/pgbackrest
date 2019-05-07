@@ -287,7 +287,7 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_new)
 	const char *	type = (const char *)SvPV_nolen(ST(1))
 ;
 	pgBackRest__LibC__Storage	RETVAL;
-    CHECK(strcmp(class, PACKAGE_NAME_LIBC "::Storage") != 0);
+    CHECK(strcmp(class, PACKAGE_NAME_LIBC "::Storage") == 0);
 
     RETVAL = NULL;
 
@@ -310,6 +310,44 @@ XS_EUPXS(XS_pgBackRest__LibC__Storage_new)
 	}
     }
     XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__Storage_pathCreate); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__Storage_pathCreate)
+{
+    dVAR; dXSARGS;
+    if (items != 5)
+       croak_xs_usage(cv,  "self, pathExp, mode, ignoreExists, createParent");
+    {
+	pgBackRest__LibC__Storage	self;
+	const char *	pathExp = (const char *)SvPV_nolen(ST(1))
+;
+	const char *	mode = (const char *)SvPV_nolen(ST(2))
+;
+	bool	ignoreExists = (bool)SvTRUE(ST(3))
+;
+	bool	createParent = (bool)SvTRUE(ST(4))
+;
+
+	if (SvROK(ST(0)) && sv_derived_from(ST(0), "pgBackRest::LibC::Storage")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__Storage,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::Storage::pathCreate",
+			"self", "pgBackRest::LibC::Storage")
+;
+    MEM_CONTEXT_XS_BEGIN(self->memContext)
+    {
+        storagePathCreateP(
+            self->pxPayload, STR(pathExp), .mode = cvtZToIntBase(mode, 8), .errorOnExists = !ignoreExists,
+            .noParentCreate = !createParent);
+    }
+    MEM_CONTEXT_XS_END();
+    }
+    XSRETURN_EMPTY;
 }
 
 
@@ -1314,6 +1352,7 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
 
         newXS_deffile("pgBackRest::LibC::libcUvSize", XS_pgBackRest__LibC_libcUvSize);
         newXS_deffile("pgBackRest::LibC::Storage::new", XS_pgBackRest__LibC__Storage_new);
+        newXS_deffile("pgBackRest::LibC::Storage::pathCreate", XS_pgBackRest__LibC__Storage_pathCreate);
         newXS_deffile("pgBackRest::LibC::Storage::DESTROY", XS_pgBackRest__LibC__Storage_DESTROY);
         newXS_deffile("pgBackRest::LibC::Storage::storagePosixPathRemove", XS_pgBackRest__LibC__Storage_storagePosixPathRemove);
         newXS_deffile("pgBackRest::LibC::pageChecksum", XS_pgBackRest__LibC_pageChecksum);
