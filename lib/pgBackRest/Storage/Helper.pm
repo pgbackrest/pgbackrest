@@ -24,13 +24,6 @@ use pgBackRest::Version;
 use constant STORAGE_LOCAL                                          => '<LOCAL>';
     push @EXPORT, qw(STORAGE_LOCAL);
 
-use constant STORAGE_SPOOL                                          => '<SPOOL>';
-    push @EXPORT, qw(STORAGE_SPOOL);
-use constant STORAGE_SPOOL_ARCHIVE_IN                               => '<SPOOL:ARCHIVE:IN>';
-    push @EXPORT, qw(STORAGE_SPOOL_ARCHIVE_IN);
-use constant STORAGE_SPOOL_ARCHIVE_OUT                              => '<SPOOL:ARCHIVE:OUT>';
-    push @EXPORT, qw(STORAGE_SPOOL_ARCHIVE_OUT);
-
 ####################################################################################################################################
 # Compression extension
 ####################################################################################################################################
@@ -74,48 +67,5 @@ sub storageLocal
 }
 
 push @EXPORT, qw(storageLocal);
-
-####################################################################################################################################
-# storageSpool - get spool storage
-####################################################################################################################################
-sub storageSpool
-{
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strStanza,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::storageSpool', \@_,
-            {name => 'strStanza', default => cfgOption(CFGOPT_STANZA), trace => true},
-        );
-
-    # Create storage if not defined
-    if (!defined($hStorage->{&STORAGE_SPOOL}{$strStanza}))
-    {
-        # Path rules
-        my $hRule =
-        {
-            &STORAGE_SPOOL_ARCHIVE_IN => "archive/${strStanza}/in",
-            &STORAGE_SPOOL_ARCHIVE_OUT => "archive/${strStanza}/out",
-        };
-
-        # Create local storage
-        $hStorage->{&STORAGE_SPOOL}{$strStanza} = new pgBackRest::Storage::Local(
-            cfgOption(CFGOPT_SPOOL_PATH), new pgBackRest::Storage::Posix::Driver(),
-            {hRule => $hRule, strTempExtension => STORAGE_TEMP_EXT, lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'oStorageSpool', value => $hStorage->{&STORAGE_SPOOL}{$strStanza}, trace => true},
-    );
-}
-
-push @EXPORT, qw(storageSpool);
 
 1;

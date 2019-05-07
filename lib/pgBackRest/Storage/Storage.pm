@@ -954,7 +954,7 @@ sub pathCreate
 ####################################################################################################################################
 # sub pathBase {shift->{strPathBase}}
 # sub driver {shift->{oDriver}}
-# sub cipherType {shift->{strCipherType}}
-# sub cipherPassUser {shift->{strCipherPassUser}}
+sub cipherType {shift->{strCipherType}}
+sub cipherPassUser {shift->{strCipherPassUser}}
 
 1;

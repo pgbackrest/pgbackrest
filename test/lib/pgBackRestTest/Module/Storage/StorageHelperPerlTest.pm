@@ -121,49 +121,34 @@ sub run
     }
 
     #-------------------------------------------------------------------------------------------------------------------------------
-    if ($self->begin("storageSpool()"))
-    {
-        $self->testResult(sub {storageSpool()->put($strFile, $strFileContent)}, $iFileSize, 'put');
-        $self->testResult(sub {${storageTest()->get("spool/${strFile}")}}, $strFileContent, '    check put');
-
-        $self->testResult(sub {storageSpool()->put($strFileCopy, $strFileContent)}, $iFileSize, 'put cached storage');
-        $self->testResult(sub {${storageTest()->get("spool/${strFileCopy}")}}, $strFileContent, '    check put');
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(
-            sub {storageSpool()->pathGet(STORAGE_SPOOL_ARCHIVE_OUT)}, $self->testPath() . '/spool/archive/db/out',
-            'check archive out path');
-    }
-
-    #-------------------------------------------------------------------------------------------------------------------------------
     if ($self->begin("storageRepo() encryption"))
     {
-        my $strStanzaEncrypt = 'test-encrypt';
-        $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
-        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
-
-        # Encryption passphrase required when encryption type not 'none' (default)
-        $self->testException(sub {storageRepo({strStanza => $strStanzaEncrypt})}, ERROR_ASSERT, 'option ' .
-            cfgOptionName(CFGOPT_REPO_CIPHER_PASS) . ' is required');
-
-        # Set the encryption passphrase and confirm passphrase and type have been set in the storage object
-        $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
-        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
-
-        $self->testResult(sub {storageRepo({strStanza => $strStanzaEncrypt})->cipherType() eq
-            CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC}, true, 'encryption type set');
-        $self->testResult(sub {storageRepo({strStanza => $strStanzaEncrypt})->cipherPassUser() eq 'x'}, true,
-            'encryption passphrase set');
-
-        # Cannot change encryption after it has been set (cached values not reset)
-        $self->optionTestClear(CFGOPT_REPO_CIPHER_TYPE);
-        $self->optionTestClear(CFGOPT_REPO_CIPHER_PASS);
-        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
-
-        $self->testResult(sub {storageRepo({strStanza => $strStanzaEncrypt})->cipherType() eq
-            CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC}, true, 'encryption type not reset');
-        $self->testResult(sub {storageRepo({strStanza => $strStanzaEncrypt})->cipherPassUser() eq 'x'}, true,
-            'encryption passphrase not reset');
+        # my $strStanzaEncrypt = 'test-encrypt';
+        # $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
+        # $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
+        #
+        # # Encryption passphrase required when encryption type not 'none' (default)
+        # $self->testException(sub {storageRepo({strStanza => $strStanzaEncrypt})}, ERROR_ASSERT, 'option ' .
+        #     cfgOptionName(CFGOPT_REPO_CIPHER_PASS) . ' is required');
+        #
+        # # Set the encryption passphrase and confirm passphrase and type have been set in the storage object
+        # $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
+        # $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
+        #
+        # $self->testResult(sub {storageRepo({strStanza => $strStanzaEncrypt})->cipherType() eq
+        #     CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC}, true, 'encryption type set');
+        # $self->testResult(sub {storageRepo({strStanza => $strStanzaEncrypt})->cipherPassUser() eq 'x'}, true,
+        #     'encryption passphrase set');
+        #
+        # # Cannot change encryption after it has been set (cached values not reset)
+        # $self->optionTestClear(CFGOPT_REPO_CIPHER_TYPE);
+        # $self->optionTestClear(CFGOPT_REPO_CIPHER_PASS);
+        # $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
+        #
+        # $self->testResult(sub {storageRepo({strStanza => $strStanzaEncrypt})->cipherType() eq
+        #     CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC}, true, 'encryption type not reset');
+        # $self->testResult(sub {storageRepo({strStanza => $strStanzaEncrypt})->cipherPassUser() eq 'x'}, true,
+        #     'encryption passphrase not reset');
     }
 }
 

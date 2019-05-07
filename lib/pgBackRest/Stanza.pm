@@ -294,8 +294,7 @@ sub stanzaDelete
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanzaDelete');
 
-    my $strStanza = cfgOption(CFGOPT_STANZA);
-    my $oStorageRepo = storageRepo({strStanza => $strStanza});
+    my $oStorageRepo = storageRepo();
 
     # If at least an archive or backup directory exists for the stanza, then continue, else nothing to do
     if ($oStorageRepo->pathExists(STORAGE_REPO_ARCHIVE) || $oStorageRepo->pathExists(STORAGE_REPO_BACKUP))
