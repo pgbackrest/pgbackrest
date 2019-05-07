@@ -275,6 +275,37 @@ XS_EUPXS(XS_pgBackRest__LibC_libcUvSize)
 /* INCLUDE:  Including 'xs/storage/storage.xs' from 'xs/postgres/pageChecksum.xs' */
 
 
+/* INCLUDE:  Including 'xs/storage/storageOld.xs' from 'xs/storage/storage.xs' */
+
+
+XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove)
+{
+    dVAR; dXSARGS;
+    if (items != 3)
+       croak_xs_usage(cv,  "path, errorOnMissing, recurse");
+    {
+	const char *	path = (const char *)SvPV_nolen(ST(0))
+;
+	bool	errorOnMissing = (bool)SvTRUE(ST(1))
+;
+	bool	recurse = (bool)SvTRUE(ST(2))
+;
+    MEM_CONTEXT_XS_TEMP_BEGIN()
+    {
+        storagePathRemoveP(
+            storagePosixNew(strNew("/"), 0640, 750, true, NULL), strNew(path), .errorOnMissing = errorOnMissing,
+            .recurse = recurse);
+    }
+    MEM_CONTEXT_XS_TEMP_END();
+    }
+    XSRETURN_EMPTY;
+}
+
+
+/* INCLUDE: Returning to 'xs/storage/storage.xs' from 'xs/storage/storageOld.xs' */
+
+
 XS_EUPXS(XS_pgBackRest__LibC__Storage_new); /* prototype to pass -Wmissing-prototypes */
 XS_EUPXS(XS_pgBackRest__LibC__Storage_new)
 {
@@ -1351,6 +1382,7 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
 #endif
 
         newXS_deffile("pgBackRest::LibC::libcUvSize", XS_pgBackRest__LibC_libcUvSize);
+        newXS_deffile("pgBackRest::LibC::storagePosixPathRemove", XS_pgBackRest__LibC_storagePosixPathRemove);
         newXS_deffile("pgBackRest::LibC::Storage::new", XS_pgBackRest__LibC__Storage_new);
         newXS_deffile("pgBackRest::LibC::Storage::pathCreate", XS_pgBackRest__LibC__Storage_pathCreate);
         newXS_deffile("pgBackRest::LibC::Storage::DESTROY", XS_pgBackRest__LibC__Storage_DESTROY);
