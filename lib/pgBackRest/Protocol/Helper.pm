@@ -74,7 +74,7 @@ my $hProtocol = {};         # Global remote hash that is created on first reques
 ####################################################################################################################################
 # isRepoLocal
 #
-# Is the backup/archive repository local?  This does not take into account the spool path.
+# Is the backup/archive repository local?
 ####################################################################################################################################
 sub isRepoLocal
 {
