@@ -150,6 +150,7 @@ my $rhExport =
     {
         &BLD_EXPORTTYPE_SUB => [qw(
             storagePosixPathRemove
+            storageRepoFree
         )],
     },
 

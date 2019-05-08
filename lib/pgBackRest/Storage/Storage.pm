@@ -9,6 +9,7 @@ use Carp qw(confess);
 use English '-no_match_vars';
 
 use File::Basename qw(dirname);
+use JSON::PP;
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
@@ -20,11 +21,14 @@ sub new
 {
     my $class = shift;
 
+    # Create the class hash
+    my $self = {};
+    bless $self, $class;
+
     # Assign function parameters, defaults, and log debug info
-    my
     (
-        $strOperation,
-        $strType,
+        my $strOperation,
+        $self->{strType},
     ) =
         logDebugParam
         (
@@ -32,13 +36,11 @@ sub new
             {name => 'strType'},
         );
 
+    # Create C storage object
+    $self->{oStorageC} = new pgBackRest::LibC::Storage($self->{strType});
 
-    # Create the class hash
-    my $self = {};
-    bless $self, $class;
-
-    $self->{strType} = $strType;
-    $self->{oStorageC} = new pgBackRest::LibC::Storage($strType);
+    # Create JSON object
+    $self->{oJSON} = JSON::PP->new()->allow_nonref();
 
     # $self->{strCipherType} = $strCipherType;
     # $self->{strCipherPassUser} = $strCipherPassUser;
@@ -255,56 +257,55 @@ sub new
 ####################################################################################################################################
 # list - list all files/paths in path
 ####################################################################################################################################
-# sub list
-# {
-#     my $self = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my
-#     (
-#         $strOperation,
-#         $strPathExp,
-#         $strExpression,
-#         $strSortOrder,
-#         $bIgnoreMissing,
-#     ) =
-#         logDebugParam
-#         (
-#             __PACKAGE__ . '->list', \@_,
-#             {name => 'strPathExp', required => false},
-#             {name => 'strExpression', optional => true},
-#             {name => 'strSortOrder', optional => true, default => 'forward'},
-#             {name => 'bIgnoreMissing', optional => true, default => false},
-#         );
-#
-#     # Get file list
-#     my $rstryFileList = $self->driver()->list(
-#         $self->pathGet($strPathExp), {strExpression => $strExpression, bIgnoreMissing => $bIgnoreMissing});
-#
-#     # Apply expression if defined
-#     if (defined($strExpression))
-#     {
-#         @{$rstryFileList} = grep(/$strExpression/i, @{$rstryFileList});
-#     }
-#
-#     # Reverse sort
-#     if ($strSortOrder eq 'reverse')
-#     {
-#         @{$rstryFileList} = sort {$b cmp $a} @{$rstryFileList};
-#     }
-#     # Normal sort
-#     else
-#     {
-#         @{$rstryFileList} = sort @{$rstryFileList};
-#     }
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn
-#     (
-#         $strOperation,
-#         {name => 'stryFileList', value => $rstryFileList}
-#     );
-# }
+sub list
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathExp,
+        $strExpression,
+        $strSortOrder,
+        $bIgnoreMissing,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->list', \@_,
+            {name => 'strPathExp', required => false},
+            {name => 'strExpression', optional => true},
+            {name => 'strSortOrder', optional => true, default => 'forward'},
+            {name => 'bIgnoreMissing', optional => true, default => false},
+        );
+
+    # Get file list
+    my @stryFileList;
+    my $strFileList = $self->{oStorageC}->list($strPathExp, $bIgnoreMissing, defined($strExpression) ? $strExpression : '');
+
+    if (defined($strFileList) && $strFileList ne '[]')
+    {
+        @stryFileList = $self->{oJSON}->decode($strFileList);
+
+        # Reverse sort
+        if ($strSortOrder eq 'reverse')
+        {
+            @stryFileList = sort {$b cmp $a} @stryFileList;
+        }
+        # Normal sort
+        else
+        {
+            @stryFileList = sort @stryFileList;
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'stryFileList', value => \@stryFileList}
+    );
+}
 
 ####################################################################################################################################
 # manifest - build path/file/link manifest starting with base path and including all subpaths
@@ -613,13 +614,13 @@ sub pathCreate
         (
             __PACKAGE__ . '->pathCreate', \@_,
             {name => 'strPathExp'},
-            {name => 'strMode', optional => true, default => $self->{strDefaultPathMode}},
+            {name => 'strMode', optional => true},
             {name => 'bIgnoreExists', optional => true, default => false},
             {name => 'bCreateParent', optional => true, default => false},
         );
 
     # Create path
-    $self->{oStorageC}->pathCreate($strPathExp, $strMode, $bIgnoreExists, $bCreateParent);
+    $self->{oStorageC}->pathCreate($strPathExp, defined($strMode) ? $strMode : '', $bIgnoreExists, $bCreateParent);
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -631,145 +632,62 @@ sub pathCreate
 ####################################################################################################################################
 # pathExists - check if path exists
 ####################################################################################################################################
-# sub pathExists
-# {
-#     my $self = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my
-#     (
-#         $strOperation,
-#         $strPathExp,
-#     ) =
-#         logDebugParam
-#         (
-#             __PACKAGE__ . '->pathExists', \@_,
-#             {name => 'strPathExp'},
-#         );
-#
-#     # Check exists
-#     my $bExists = $self->driver()->pathExists($self->pathGet($strPathExp));
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn
-#     (
-#         $strOperation,
-#         {name => 'bExists', value => $bExists}
-#     );
-# }
+sub pathExists
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathExp,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->pathExists', \@_,
+            {name => 'strPathExp'},
+        );
+
+    # Check exists
+    my $bExists = $self->{oStorageC}->pathExists($strPathExp);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bExists', value => $bExists}
+    );
+}
 
 ####################################################################################################################################
 # pathGet - resolve a path expression into an absolute path
 ####################################################################################################################################
-# sub pathGet
-# {
-#     my $self = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my
-#     (
-#         $strOperation,
-#         $strPathExp,                                               # File that that needs to be translated to a path
-#         $bTemp,                                                    # Return the temp file name
-#     ) =
-#         logDebugParam
-#     (
-#         __PACKAGE__ . '->pathGet', \@_,
-#         {name => 'strPathExp', required => false, trace => true},
-#         {name => 'bTemp', optional => true, default => false, trace => true},
-#     );
-#
-#     # Path and file to be returned
-#     my $strPath;
-#     my $strFile;
-#
-#     # Is this an absolute path type?
-#     my $bAbsolute = false;
-#
-#     if (defined($strPathExp) && index($strPathExp, qw(/)) == 0)
-#     {
-#         $bAbsolute = true;
-#         $strPath = $strPathExp;
-#     }
-#     else
-#     {
-#         # Is it a rule type
-#         if (defined($strPathExp) && index($strPathExp, qw(<)) == 0)
-#         {
-#             # Extract the rule type
-#             my $iPos = index($strPathExp, qw(>));
-#
-#             if ($iPos == -1)
-#             {
-#                 confess &log(ASSERT, "found < but not > in '${strPathExp}'");
-#             }
-#
-#             my $strType = substr($strPathExp, 0, $iPos + 1);
-#
-#             # Extract the filename
-#             if ($iPos < length($strPathExp) - 1)
-#             {
-#                 $strFile = substr($strPathExp, $iPos + 2);
-#             }
-#
-#             # Lookup the rule
-#             if (!defined($self->{hRule}->{$strType}))
-#             {
-#                 confess &log(ASSERT, "storage rule '${strType}' does not exist");
-#             }
-#
-#             # If rule is a ref then call the function
-#             if (ref($self->{hRule}->{$strType}))
-#             {
-#                 $strPath = $self->pathBase();
-#                 $strFile = $self->{hRule}{$strType}{fnRule}->($strType, $strFile, $self->{hRule}{$strType}{xData});
-#             }
-#             # Else get the path
-#             else
-#             {
-#                 $strPath = $self->pathBase() . ($self->pathBase() =~ /\/$/ ? '' : qw{/}) . $self->{hRule}->{$strType};
-#             }
-#         }
-#         # Else it must be relative
-#         else
-#         {
-#             $strPath = $self->pathBase();
-#             $strFile = $strPathExp;
-#         }
-#     }
-#
-#     # Make sure a temp file is valid for this type and file
-#     if ($bTemp)
-#     {
-#         # Error when temp files are not allowed
-#         if (!$self->{bAllowTemp})
-#         {
-#             confess &log(ASSERT, "temp file not supported for storage '" . $self->pathBase() . "'");
-#         }
-#
-#         # The file must be defined
-#         if (!$bAbsolute)
-#         {
-#             if (!defined($strFile))
-#             {
-#                 confess &log(ASSERT, 'file part must be defined when temp file specified');
-#             }
-#         }
-#     }
-#
-#     # Combine path and file
-#     $strPath .= defined($strFile) ? ($strPath =~ /\/$/ ? '' : qw{/}) . "${strFile}" : '';
-#
-#     # Add temp extension
-#     $strPath .= $bTemp ? ".$self->{strTempExtension}" : '';
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn
-#     (
-#         $strOperation,
-#         {name => 'strPath', value => $strPath, trace => true}
-#     );
-# }
+sub pathGet
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathExp,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->pathGet', \@_,
+            {name => 'strPathExp'},
+        );
+
+    # Check exists
+    my $strPath = $self->{oStorageC}->pathGet($strPathExp);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strPath', value => $strPath, trace => true}
+    );
+}
 
 ####################################################################################################################################
 # Sync path so newly added file entries are not lost

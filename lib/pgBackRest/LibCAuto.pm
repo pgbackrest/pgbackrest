@@ -344,6 +344,7 @@ sub libcAutoExportTag
         storage =>
         [
             'storagePosixPathRemove',
+            'storageRepoFree',
         ],
 
         test =>

@@ -584,6 +584,31 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
 }
 
 /***********************************************************************************************************************************
+Does a path exist? This function is only for paths, not file.
+***********************************************************************************************************************************/
+bool
+storagePathExists(const Storage *this, const String *pathExp)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, pathExp);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->interface.pathExists != NULL);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = this->interface.pathExists(this->driver, storagePathNP(this, pathExp));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
 Remove a path
 ***********************************************************************************************************************************/
 void

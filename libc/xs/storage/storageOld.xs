@@ -18,3 +18,9 @@ CODE:
             .recurse = recurse);
     }
     MEM_CONTEXT_XS_TEMP_END();
+
+####################################################################################################################################
+void
+storageRepoFree()
+CODE:
+    storageHelperFree();

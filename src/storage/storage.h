@@ -184,6 +184,14 @@ typedef struct StoragePathCreateParam
 void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
 
 /***********************************************************************************************************************************
+storagePathExists
+***********************************************************************************************************************************/
+#define storagePathExistsNP(this, pathExp)                                                                                         \
+    storagePathExists(this, pathExp)
+
+bool storagePathExists(const Storage *this, const String *pathExp);
+
+/***********************************************************************************************************************************
 storagePathRemove
 ***********************************************************************************************************************************/
 typedef struct StoragePathRemoveParam

@@ -778,7 +778,7 @@ sub stanzaCreate
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
         ' --stanza=' . $self->stanza() .
-        ' --log-level-console=detail' .
+        ' --log-level-console=debug' .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' stanza-create',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
