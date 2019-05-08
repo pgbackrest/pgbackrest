@@ -81,6 +81,9 @@ testRun(void)
     strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
     strLstAddZ(argListBase, "expire");
 
+    StringList *argListAvoidWarn = strLstDup(argListBase);
+    strLstAddZ(argListAvoidWarn, "--repo1-retention-full=1");  // avoid warning
+
     String *backupInfoBase = strNew(
              "[backup:current]\n"
             "20181119-152138F={"
@@ -232,8 +235,7 @@ testRun(void)
     if (testBegin("expireBackup()"))
     {
         // Load Parameters
-        StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=1");  // avoid warning
+        StringList *argList = strLstDup(argListAvoidWarn);
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // Create backup.info
@@ -283,6 +285,7 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-retention-full=2");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // Create backup.info
@@ -293,18 +296,6 @@ testRun(void)
             infoBackup,
             infoBackupNew(storageTest, backupInfoFileName, false, cipherTypeNone, NULL),
             "get backup.info");
-
-        TEST_RESULT_UINT(expireFullBackup(infoBackup), 0, "retention-full not set - nothing expired");
-        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 6, "  current backups not expired");
-        harnessLogResult(
-            "P00   WARN: option repo1-retention-full is not set, the repository may run out of space\n"
-            "            HINT: to retain full backups indefinitely (without warning), "
-            "set option 'repo1-retention-full' to the maximum.");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        // Add retention-full
-        strLstAddZ(argList, "--repo1-retention-full=2");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_UINT(expireFullBackup(infoBackup), 1, "retention-full=2 - one full backup expired");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 5, "  current backups reduced by 1 full - no dependencies");
@@ -339,8 +330,7 @@ testRun(void)
     if (testBegin("expireDiffBackup()"))
     {
         // Load Parameters
-        StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=1");  // avoid warning
+        StringList *argList = strLstDup(argListAvoidWarn);
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // Create backup.info
@@ -514,7 +504,7 @@ testRun(void)
             "P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        // Set archive retention, archive retention type default but no current backups
+        // Set archive retention, archive retention type default but no current backups - code path test
         strLstAddZ(argList, "--repo1-retention-archive=3");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
@@ -524,10 +514,7 @@ testRun(void)
             "            HINT: to retain full backups indefinitely (without warning), "
             "set option 'repo1-retention-full' to the maximum.");
 
-
         //--------------------------------------------------------------------------------------------------------------------------
-        strLstAddZ(argList, "--repo1-retention-full=1"); // avoid warning
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         // Create backup.info with current backups
         storagePutNP(storageNewWriteNP(storageTest, backupInfoFileName),
@@ -566,19 +553,27 @@ testRun(void)
                 "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"incr\","
                 "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
                 "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152800F_20181119-152252D={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000020000000000000009\","
+                "\"backup-archive-stop\":\"000000020000000000000009\",\"backup-info-repo-size\":2369186,"
+                "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+                "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
+                "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
                 "20181119-152900F={"
                 "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000001\",\"backup-archive-stop\":\"000000010000000000000003\","
+                "\"backup-archive-start\":\"000000010000000000000003\",\"backup-archive-stop\":\"000000010000000000000004\","
                 "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
                 "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
                 "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
                 "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
                 "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152900F_20181119-152600D={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000005\","
-                "\"backup-archive-stop\":\"000000010000000000000005\",\"backup-info-repo-size\":2369186,"
+                "20181119-152900F_20181119-152500I={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000006\","
+                "\"backup-archive-stop\":\"000000010000000000000006\",\"backup-info-repo-size\":2369186,"
                 "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-                "\"backup-prior\":\"20181119-152138F\",\"backup-reference\":[\"20181119-152900F\"],"
+                "\"backup-prior\":\"20181119-152900F\",\"backup-reference\":[\"20181119-152900F\"],"
                 "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
                 "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
                 "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
@@ -626,13 +621,119 @@ testRun(void)
             strPtr(strLstJoin(strLstSort(storageListNP(
                 storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", ")),
             strPtr(archiveExpectList(2, 10, "0000000100000000")),
-            "  only 9.4-1/0000000100000000/000000010000000000000002 removed");
-// CSHANG Test all others still exist
+            "  only 9.4-1/0000000100000000/000000010000000000000001 removed");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(1, 10, "0000000200000000")),
+            "  none removed from 9.4-1/0000000200000000 - crossing timelines to play through PITR");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(3, 10, "0000000100000000")),
+            "  000000010000000000000001 and 000000010000000000000002 removed from 10-2/0000000100000000");
+
+// CSHANG
+// type=full, retention=2 - only 000000010000000000000002 exists
+// type=incr
+// type = diff  (when this is set, Full are considered in the count)
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--repo1-retention-archive=2");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention type = full (default), repo1-retention-archive=2");
+
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(2, 2, "0000000100000000")),
+            "  only 9.4-1/0000000100000000/000000010000000000000002 remains");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(2, 10, "0000000200000000")),
+            "  only 9.4-1/0000000200000000/000000010000000000000001 removed");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(3, 10, "0000000100000000")),
+            "  none removed from 10-2/0000000100000000");
+
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--repo1-retention-archive=1");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention type = full (default), repo1-retention-archive=1");
+
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(2, 2, "0000000100000000")),
+            "  only 9.4-1/0000000100000000/000000010000000000000002 remains");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(2, 10, "0000000200000000")),
+            "  nothing removed from 9.4-1/0000000200000000 - each archiveId must have one backup to play through PITR");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(3, 10, "0000000100000000")),
+            "  none removed from 10-2/0000000100000000");
+// A differential or full should count as an incremental in the same way a full counts as a differential.
+
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--repo1-retention-archive=2");
+        strLstAddZ(argList, "--repo1-retention-archive-type=diff");
+        strLstAddZ(argList, "--repo1-retention-diff=2");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(
+            removeExpiredArchive(infoBackup),
+            "full counts as differential and incremental associated with differential expires");
+
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(2, 2, "0000000100000000")),
+            "  only 9.4-1/0000000100000000/000000010000000000000002 remains");
+
+        String *result = strNew("");
+        strCatFmt(
+            result,
+            "%s, %s, %s, %s",
+            strPtr(archiveExpectList(2, 2, "0000000200000000")),
+            strPtr(archiveExpectList(4, 5, "0000000200000000")),
+            strPtr(archiveExpectList(7, 7, "0000000200000000")),
+            strPtr(archiveExpectList(9, 10, "0000000200000000")));
+
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc), ", ")),
+            strPtr(result),
+            "  all in-between removed from 9.4-1/0000000200000000 - last backup to play through PITR");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(storageListNP(
+                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", ")),
+            strPtr(archiveExpectList(3, 10, "0000000100000000")),
+            "  none removed from 10-2/0000000100000000");
+        // argList = strLstDup(argListBase);
+        // strLstAddZ(argList, "--repo1-retention-full=1"); // avoid warning
+        // strLstAddZ(argList, "--repo1-retention-archive=4");
+        // strLstAddZ(argList, "--repo1-retention-archive-type=incr");
+        // harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        //
+        // TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "archive retention type = incr, repo1-retention-archive=4");
+        //
         // TEST_RESULT_STR(
         //     strPtr(strLstJoin(strLstSort(storageListNP(
-        //         storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc), ", ")),
-        //     strPtr(archiveExpectList(1, 10, "0000000200000000")),
-        //     "  only 9.4-1/0000000100000000/000000010000000000000002 removed");
+        //         storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", ")),
+        //     strPtr(archiveExpectList(2, 2, "0000000100000000")),
+        //     "  only 9.4-1/0000000100000000/000000010000000000000002 remains");
+
+        // TEST_RESULT_STR(
+        //     strPtr(strLstJoin(strLstSort(storageListNP(storageTest, backupStanzaPath), sortOrderAsc), ", ")),
+        //     "20181118-152100F_20181119-152152D.save, backup.info, bogus", "  full, differential count as incremental - and last backup in each archiveId can play through PITR");
     }
 
     // *****************************************************************************************************************************
