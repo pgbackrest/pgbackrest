@@ -372,14 +372,15 @@ httpClientRequest(
                         HTTP_HEADER_CONTENT_LENGTH);
                 }
 
-                // If content chunked or content length > 0 then there is content to read
-                if (this->contentChunked || this->contentSize > 0)
-                {
-                    this->contentEof = false;
+                // Was content returned in the response?
+                bool contentExists = this->contentChunked || this->contentSize > 0;
+                this->contentEof = !contentExists;
 
-                    // If all content should be returned from this function then read the buffer.  Also read the reponse if there
-                    // has been an error.
-                    if (returnContent || httpClientResponseCode(this) != 200)
+                // If all content should be returned from this function then read the buffer.  Also read the reponse if there has
+                // been an error.
+                if (returnContent || httpClientResponseCode(this) != HTTP_RESPONSE_CODE_OK)
+                {
+                    if (contentExists)
                     {
                         result = bufNew(0);
 
@@ -390,19 +391,21 @@ httpClientRequest(
                         }
                         while (!httpClientEof(this));
                     }
-                    // Else create the read interface
-                    else
-                    {
-                        MEM_CONTEXT_BEGIN(this->memContext)
-                        {
-                            this->ioRead = ioReadNewP(this, .eof = httpClientEof, .read = httpClientRead);
-                            ioReadOpen(this->ioRead);
-                        }
-                        MEM_CONTEXT_END();
-                    }
                 }
-                // If the server notified that it would close the connection after sending content then close the client side
-                else if (this->closeOnContentEof)
+                // Else create an io object, even if there is no content.  This makes the logic for readers easier -- they can just
+                // check eof rather than also checking if the io object exists.
+                else
+                {
+                    MEM_CONTEXT_BEGIN(this->memContext)
+                    {
+                        this->ioRead = ioReadNewP(this, .eof = httpClientEof, .read = httpClientRead);
+                        ioReadOpen(this->ioRead);
+                    }
+                    MEM_CONTEXT_END();
+                }
+
+                // If the server notified that it would close the connection and there is no content then close the client side
+                if (this->closeOnContentEof && !contentExists)
                     tlsClientClose(this->tls);
 
                 // Retry when reponse code is 5xx.  These errors generally represent a server error for a request that looks valid.

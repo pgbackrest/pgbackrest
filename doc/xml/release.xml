@@ -56,6 +56,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve zero-length content handling in <code>HttpClient</code> object.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Don't append <code>strerror()</code> to error message when <code>errno</code> is 0.</p>
                     </release-item>
 
