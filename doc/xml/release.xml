@@ -36,7 +36,7 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Only process next filter in <code>IoFilterGroup</code> when input buffer is full or flushing.</p>
+                        <p>Filter improvements.  Only process next filter in <code>IoFilterGroup</code> when input buffer is full or flushing.  Improve filter's notion of <quote>done</quote> to optimize filter processing.</p>
                     </release-item>
 
                     <release-item>

@@ -36,9 +36,11 @@ void ioFilterFree(IoFilter *this);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+String *ioFilterToLog(const IoFilter *this);
+
 #define FUNCTION_LOG_IO_FILTER_TYPE                                                                                                \
     IoFilter *
 #define FUNCTION_LOG_IO_FILTER_FORMAT(value, buffer, bufferSize)                                                                   \
-    objToLog(value, "IoFilter", buffer, bufferSize)
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioFilterToLog, buffer, bufferSize)
 
 #endif
