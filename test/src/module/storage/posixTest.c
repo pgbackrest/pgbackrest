@@ -149,7 +149,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageExists()"))
+    if (testBegin("storageExists() and storagePathExists()"))
     {
         TEST_CREATE_NOPERM();
 
@@ -158,8 +158,15 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsP(storageTest, strNew("missing"), .timeout = 100), false, "file does not exist");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_BOOL(storagePathExistsNP(storageTest, strNew("missing")), false, "path does not exist");
+        TEST_RESULT_BOOL(storagePathExistsNP(storageTest, NULL), true, "test path exists");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             storageExistsNP(storageTest, fileNoPerm), FileOpenError,
+            "unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm));
+        TEST_ERROR_FMT(
+            storagePathExistsNP(storageTest, fileNoPerm), PathOpenError,
             "unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -167,6 +174,7 @@ testRun(void)
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileExists)))), 0, "create exists file");
 
         TEST_RESULT_BOOL(storageExistsNP(storageTest, fileExists), true, "file exists");
+        TEST_RESULT_BOOL(storagePathExistsNP(storageTest, fileExists), false, "not a path");
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm %s", strPtr(fileExists)))), 0, "remove exists file");
 
         // -------------------------------------------------------------------------------------------------------------------------

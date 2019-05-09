@@ -21,6 +21,8 @@ Constants
     STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
 #define PROTOCOL_COMMAND_STORAGE_OPEN_WRITE                         "storageOpenWrite"
     STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR);
+#define PROTOCOL_COMMAND_STORAGE_PATH_EXISTS                        "storagePathExists"
+    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR);
 
 /***********************************************************************************************************************************
 Functions
