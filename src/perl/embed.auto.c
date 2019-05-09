@@ -9438,6 +9438,7 @@ static const EmbeddedModule embeddedModule[] =
             "'CFGOPT_ARCHIVE_TIMEOUT',\n"
             "'CFGOPT_BACKUP_STANDBY',\n"
             "'CFGOPT_BUFFER_SIZE',\n"
+            "'CFGOPT_C',\n"
             "'CFGOPT_CHECKSUM_PAGE',\n"
             "'CFGOPT_CMD_SSH',\n"
             "'CFGOPT_COMMAND',\n"

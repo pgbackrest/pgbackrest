@@ -137,8 +137,8 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|repo-host-user@repo-host"
-                        "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=0 --stanza=test1"
-                        " --type=backup remote")),
+                        "|pgbackrest --c --command=archive-get --log-level-file=off --log-level-stderr=error --process=0"
+                        " --stanza=test1 --type=backup remote")),
             "remote protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -160,7 +160,7 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|-p|444|repo-host-user@repo-host"
-                        "|pgbackrest --command=archive-get --config=/path/pgbackrest.conf --config-include-path=/path/include"
+                        "|pgbackrest --c --command=archive-get --config=/path/pgbackrest.conf --config-include-path=/path/include"
                         " --config-path=/path/config --log-level-file=info --log-level-stderr=error --log-subprocess --process=1"
                         " --stanza=test1 --type=backup remote")),
             "remote protocol params with replacements");
@@ -182,8 +182,8 @@ testRun(void)
             strPtr(
                 strNew(
                     "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|pgbackrest@repo-host"
-                        "|pgbackrest --command=archive-get --log-level-file=off --log-level-stderr=error --process=3 --stanza=test1"
-                        " --type=backup remote")),
+                        "|pgbackrest --c --command=archive-get --log-level-file=off --log-level-stderr=error --process=3"
+                        " --stanza=test1 --type=backup remote")),
             "remote protocol params for local");
     }
 

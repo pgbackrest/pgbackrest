@@ -68,6 +68,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <br-option>--c</br-option> option to request a C remote.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <file>common/macro.h</file> for general-purpose macros.</p>
                     </release-item>
 
