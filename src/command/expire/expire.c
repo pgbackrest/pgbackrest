@@ -267,7 +267,7 @@ Process archive retention
 static void
 removeExpiredArchive(InfoBackup *infoBackup)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug); // cshang make these all debug level
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
     FUNCTION_LOG_END();
 

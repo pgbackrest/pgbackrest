@@ -500,7 +500,6 @@ sub run
     ################################################################################################################################
     if ($self->begin("Stanza::stanzaUpgrade()"))
     {
-# CSHANG Add a test where archive.info has db-id=1 and history 1=10, 2=9.6 and backup.info has db-id=2 and history 1=9.6, 2=10 then perform an upgrade - what happens?
         $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
 
 

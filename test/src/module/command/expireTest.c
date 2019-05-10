@@ -671,7 +671,7 @@ testRun(void)
             strPtr(strLstJoin(strLstSort(storageListNP(
                 storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc), ", ")),
             strPtr(result),
-            "   incremental and after remain in 9.4-1/0000000200000000");
+            "  incremental and after remain in 9.4-1/0000000200000000");
         TEST_RESULT_STR(
             strPtr(strLstJoin(strLstSort(storageListNP(
                 storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", ")),
@@ -689,7 +689,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
             storagePathExistsNP(storageTest, strNewFmt("%s/%s", strPtr(archiveStanzaPath), "9.4-1/0000000100000000")),
-            false, "archive sub path removed");
+            false, "  archive sub path removed");
         harnessLogResult("P00   INFO: expire full backup 20181119-152138F");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -700,12 +700,21 @@ testRun(void)
         TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive path and remove path");
         TEST_RESULT_BOOL(
             storagePathExistsNP(storageTest, strNewFmt("%s/%s", strPtr(archiveStanzaPath), "9.4-1")),
-            false, "archive path removed");
+            false, "  archive path removed");
 
         harnessLogResult(
             "P00   INFO: expire full backup set: 20181119-152800F, 20181119-152800F_20181119-152152D, "
             "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
             "P00   INFO: remove archive path: /home/vagrant/test/test-0/repo/archive/db/9.4-1");
+
+        TEST_ASSIGN(
+            infoBackup,
+            infoBackupNew(storageTest, backupInfoFileName, false, cipherTypeNone, NULL),
+            "  get backup.info");
+        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "  backup.info updated on disk");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstSort(infoBackupDataLabelListNP(infoBackup), sortOrderAsc), ", ")),
+            "20181119-152900F, 20181119-152900F_20181119-152500I", "  remaining current backups correct");
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListAvoidWarn);

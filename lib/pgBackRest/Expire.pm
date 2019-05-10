@@ -100,9 +100,9 @@ sub process
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
     my @stryPath;
-# CSHANG Although not apparent here, the expire command requires the stanza option cfgOptionStr(cfgOptStanza)
+
     my $oStorageRepo = storageRepo();
-    my $strBackupClusterPath = $oStorageRepo->pathGet(STORAGE_REPO_BACKUP); # CSHANG this is never used
+    my $strBackupClusterPath = $oStorageRepo->pathGet(STORAGE_REPO_BACKUP);
     my $iFullRetention = cfgOption(CFGOPT_REPO_RETENTION_FULL, false);
     my $iDifferentialRetention = cfgOption(CFGOPT_REPO_RETENTION_DIFF, false);
     my $strArchiveRetentionType = cfgOption(CFGOPT_REPO_RETENTION_ARCHIVE_TYPE, false);
@@ -110,11 +110,6 @@ sub process
 
     # Load the backup.info
     my $oBackupInfo = new pgBackRest::Backup::Info($oStorageRepo->pathGet(STORAGE_REPO_BACKUP));
-# CSHANG
-# String *stanzaBackupPath = strNewFmt(STORAGE_PATH_BACKUP "/%s", strPtr(cfgOptionStr(cfgOptStanza)));
-# info = infoBackupNew(
-#     storageRepo(), strNewFmt("/%s/%s", strPtr(stanzaBackupPath), INFO_BACKUP_FILE), false,
-#     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStr(cfgOptRepoCipherPass));
 
     # Find all the expired full backups
     if (defined($iFullRetention))
@@ -124,8 +119,7 @@ sub process
         {
             confess &log(ERROR, cfgOptionName(CFGOPT_REPO_RETENTION_FULL) . ' must be a number >= 1');
         }
-# CSHANG backupRegExpGet returns a regex and list looks in the CURRENT section for backupinfo and returns a list matching that
-# StringList *backupFullList = storageListP(storageRepo(), stanzaBackupPath, .errorOnMissing = false);
+
         @stryPath = $oBackupInfo->list(backupRegExpGet(true));
 
         if (@stryPath > $iFullRetention)
@@ -134,14 +128,11 @@ sub process
             for (my $iFullIdx = 0; $iFullIdx < @stryPath - $iFullRetention; $iFullIdx++)
             {
                 my @stryRemoveList;
-# CSHANG list here gets all the backups in the CURRENT section that start with the name of the full backup
-# CSHANG fill=20190405-150606F  incr=20190405-150606F_20190408-140449I
+
                 foreach my $strPath ($oBackupInfo->list('^' . $stryPath[$iFullIdx] . '.*'))
                 {
-# CSHANG we'll need the storageRemove (I think NP) for removing files
                     $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strPath}/" . FILE_MANIFEST . INI_COPY_EXT);
                     $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strPath}/" . FILE_MANIFEST);
-# CSHANG this delete removes the backup from the CURRENT section of the info file, not the path from the disk (that is done later)
                     $oBackupInfo->delete($strPath);
 
                     if ($strPath ne $stryPath[$iFullIdx])
@@ -160,7 +151,6 @@ sub process
     if (defined($iDifferentialRetention))
     {
         # Make sure iDifferentialRetention is valid
-# CSHANG Do we need this check or does the parser enforce this?
         if (!looks_like_number($iDifferentialRetention) || $iDifferentialRetention < 1)
         {
             confess &log(ERROR, cfgOptionName(CFGOPT_REPO_RETENTION_DIFF) . ' must be a number >= 1');
@@ -169,11 +159,6 @@ sub process
         # Get a list of full and differential backups. Full are considered differential for the purpose of retention.
         # Example: F1, D1, D2, F2 and repo-retention-diff=2, then F1,D2,F2 will be retained, not D2 and D1 as might be expected.
         @stryPath = $oBackupInfo->list(backupRegExpGet(true, true));
-# CSHANG so we must know that 20190405-150606F_20190408-140449I does not depend on the DIFF backup because the number is less?
-# drwxr-x--- 3 postgres postgres 4096 Apr  5 15:06 20190405-150606F
-# drwxr-x--- 3 postgres postgres 4096 Apr  8 14:04 20190405-150606F_20190408-140449D
-# drwxr-x--- 3 postgres postgres 4096 Apr  8 14:17 20190405-150606F_20190408-141709D
-# drwxr-x--- 3 postgres postgres 4096 Apr  8 14:17 20190405-156666F
 
         if (@stryPath > $iDifferentialRetention)
         {
@@ -193,7 +178,6 @@ sub process
                     # Remove all differential and incremental backups before the oldest valid differential
                     if ($strPath lt $stryPath[$iDiffIdx + 1])
                     {
-# CSHANG Wait?! Where is the removal of the COPY? AND, is this path even correct? Shouldn't there be a slash after /${strPath}
                         $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strPath}" . FILE_MANIFEST);
                         $oBackupInfo->delete($strPath);
 
@@ -223,7 +207,7 @@ sub process
             $oStorageRepo->remove("${strBackupClusterPath}/${strBackup}", {bRecurse => true});
         }
     }
-# CSHANG why is the word "still" here?  The real comment should be "keep archive logs for the number of backups defined by repo-retention-archive"
+
     # If archive retention is still undefined, then ignore archiving
     if  (!defined($iArchiveRetention))
     {
@@ -235,7 +219,6 @@ sub process
 
         # Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
         # remaining non-expired backups based on the type.
-# CSHANG Maybe enhance this comment to "get the list of the remaining backups, from newest to oldest" - the CURRENT section has the backups from oldest to newest so we're asking for them in reverse
         if ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_FULL)
         {
             @stryGlobalBackupRetention = $oBackupInfo->list(backupRegExpGet(true), 'reverse');
@@ -255,10 +238,9 @@ sub process
         if ($iBackupTotal > 0)
         {
             my $oArchiveInfo = new pgBackRest::Archive::Info($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), true);
-# CSHANG Here we sort the list from oldest history to newest since we assume the history is always incrementing
             my @stryListArchiveDisk = sort {((split('-', $a))[1] + 0) cmp ((split('-', $b))[1] + 0)} $oStorageRepo->list(
                 STORAGE_REPO_ARCHIVE, {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});
-# CSHANG I think the HINT here doesn't make any sense. If an upgrade was performed, then both the archive and backup info would have been updated and if only one is updated, then there is some corruption so what does the hint really mean here?
+
             # Make sure the current database versions match between the two files
             if (!($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
                     ($oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION)))) ||
@@ -268,17 +250,16 @@ sub process
                 confess &log(ERROR, "archive and backup database versions do not match\n" .
                     "HINT: has a stanza-upgrade been performed?", ERROR_FILE_INVALID);
             }
-# CSHANG Since the list should be ordered from newest to oldest, then get only the backups from the array for the count of the retention. The globalBackupRetention will have, say 4F, 3F, 2F, 1F and if we're retaining 2, then 4F and 3F will be in the globalBackupArchiveRetention
+
             # Get the list of backups that are part of archive retention
-            my @stryTmp = @stryGlobalBackupRetention; # CSHANG copied to tmp becase splice removes the elements 0 to length from the array
-            my @stryGlobalBackupArchiveRetention = splice(@stryTmp, 0, $iArchiveRetention); # CSHANG splice returns an array
+            my @stryTmp = @stryGlobalBackupRetention;
+            my @stryGlobalBackupArchiveRetention = splice(@stryTmp, 0, $iArchiveRetention);
 
             # For each archiveId, remove WAL that are not part of retention
             foreach my $strArchiveId (@stryListArchiveDisk)
             {
                 # From the global list of backups to retain, create a list of backups, oldest to newest, associated with this
                 # archiveId (e.g. 9.4-1)
-# CSHANG If globalBackupRetention has 4F, 3F, 2F, 1F then I'm returning 1F, 2F, 3F, 4F (assuming they all have same history id)
                 my @stryLocalBackupRetention = $oBackupInfo->listByArchiveId($strArchiveId,
                     $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), \@stryGlobalBackupRetention, 'reverse');
 
@@ -359,10 +340,9 @@ sub process
                         # cannot be played any further forward with PITR.
                         my $strArchiveExpireMax;
                         my @oyArchiveRange;
-                        my @stryBackupList = $oBackupInfo->list(); # CSHANG oldest to newest
+                        my @stryBackupList = $oBackupInfo->list();
 
                         # With the full list of backups, loop through only those associated with this archiveId
-        # CSHANG this loop is also oldest to newest
                         foreach my $strBackup (
                             $oBackupInfo->listByArchiveId(
                                 $strArchiveId, $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), \@stryBackupList))
@@ -420,7 +400,6 @@ sub process
 
                                 # Log expire info
                                 logDebugMisc($strOperation, "remove major WAL path: ${strFullPath}");
-# CSHANG ??? But this will not log that this was expired because strPath is defined but it will set the ExpireStart and Stop if Start is not yet defined. The problem is if this is the only thing that happens during expire, then the info in the logExpire will not be logged.
                                 $self->logExpire($strArchiveId, $strPath);
                             }
                             # Else delete individual files instead if the major path is less than or equal to the most recent
@@ -448,10 +427,10 @@ sub process
                                     # Remove archive log if it is not used in a backup
                                     if ($bRemove)
                                     {
-# CSHANG ??? How is this even right? What is "strSubPath" here?
                                         $oStorageRepo->remove(STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strSubPath}");
 
                                         logDebugMisc($strOperation, "remove WAL segment: ${strArchiveId}/${strSubPath}");
+
                                         # Log expire info
                                         $self->logExpire($strArchiveId, substr($strSubPath, 0, 24));
                                     }

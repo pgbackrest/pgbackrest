@@ -314,7 +314,7 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 }
 
 /***********************************************************************************************************************************
-Delete a backup from the current backup
+Delete a backup from the current backup list
 ***********************************************************************************************************************************/
 void
 infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
@@ -332,7 +332,6 @@ infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
         if (strCmp(backupData.backupLabel, backupDeleteLabel) == 0)
         {
             lstRemove(this->backup, idx);
-            // CSHANG Here we need to remove it from the ini
         }
     }
 
@@ -340,14 +339,13 @@ infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
 }
 
 /***********************************************************************************************************************************
-Return a list of current backup labels, applying a regex filter if provided and sorting in reverse if requested
+Return a list of current backup labels, applying a regex filter if provided
 ***********************************************************************************************************************************/
 StringList *
 infoBackupDataLabelList(const InfoBackup *this, InfoBackupDataLabelListParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
-        FUNCTION_LOG_PARAM(BOOL, param.reverse);
         FUNCTION_LOG_PARAM(STRING, param.filter);
     FUNCTION_LOG_END();
 
@@ -364,10 +362,7 @@ infoBackupDataLabelList(const InfoBackup *this, InfoBackupDataLabelListParam par
             InfoBackupData backupData = infoBackupData(this, backupLabelIdx);
             if (param.filter == NULL || regExpMatchOne(param.filter, backupData.backupLabel))
             {
-                if (!param.reverse)
-                    strLstAdd(result, backupData.backupLabel);
-                else
-                    strLstInsert(result, 0, backupData.backupLabel);
+                strLstAdd(result, backupData.backupLabel);
             }
         }
     }
