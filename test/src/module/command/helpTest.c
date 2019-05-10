@@ -2,7 +2,7 @@
 Test Help Command
 ***********************************************************************************************************************************/
 #include "config/parse.h"
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 #include "storage/storage.h"
 #include "version.h"
 
@@ -378,8 +378,7 @@ testRun(void)
         int stdoutSave = dup(STDOUT_FILENO);
         String *stdoutFile = strNewFmt("%s/stdout.help", testPath());
 
-        if (freopen(strPtr(stdoutFile), "w", stdout) == NULL)                                       // {uncoverable - does not fail}
-            THROW_SYS_ERROR(FileWriteError, "unable to reopen stdout");                             // {uncoverable+}
+        THROW_ON_SYS_ERROR(freopen(strPtr(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
         // Not in a test wrapper to avoid writing to stdout
         cmdHelp();
@@ -387,8 +386,8 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storageDriverPosixInterface(
-            storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL));
+        Storage *storage = storagePosixNew(
+            strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL);
         TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(storage, stdoutFile)))), generalHelp, "    check text");
     }
 

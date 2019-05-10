@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Handle IO Write
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <unistd.h>
 
 #include "common/debug.h"
@@ -8,49 +10,34 @@ Handle IO Write
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-struct IoHandleWrite
+typedef struct IoHandleWrite
 {
     MemContext *memContext;                                         // Object memory context
-    IoWrite *io;                                                    // IoWrite interface
     const String *name;                                             // Handle name for error messages
     int handle;                                                     // Handle to write to
-};
+} IoHandleWrite;
 
 /***********************************************************************************************************************************
-New object
+Macros for function logging
 ***********************************************************************************************************************************/
-IoHandleWrite *
-ioHandleWriteNew(const String *name, int handle)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, handle);
-    FUNCTION_LOG_END();
-
-    IoHandleWrite *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("IoHandleWrite")
-    {
-        this = memNew(sizeof(IoHandleWrite));
-        this->memContext = memContextCurrent();
-        this->io = ioWriteNewP(this, .write = (IoWriteInterfaceWrite)ioHandleWrite);
-        this->name = strDup(name);
-        this->handle = handle;
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(IO_HANDLE_WRITE, this);
-}
+#define FUNCTION_LOG_IO_HANDLE_WRITE_TYPE                                                                                          \
+    IoHandleWrite *
+#define FUNCTION_LOG_IO_HANDLE_WRITE_FORMAT(value, buffer, bufferSize)                                                             \
+    objToLog(value, "IoHandleWrite", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Write to the handle
 ***********************************************************************************************************************************/
-void
-ioHandleWrite(IoHandleWrite *this, Buffer *buffer)
+static void
+ioHandleWrite(THIS_VOID, const Buffer *buffer)
 {
+    THIS(IoHandleWrite);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_HANDLE_WRITE, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
@@ -66,53 +53,46 @@ ioHandleWrite(IoHandleWrite *this, Buffer *buffer)
 }
 
 /***********************************************************************************************************************************
-Move the object to a new context
+Get handle (file descriptor)
 ***********************************************************************************************************************************/
-IoHandleWrite *
-ioHandleWriteMove(IoHandleWrite *this, MemContext *parentNew)
+static int
+ioHandleWriteHandle(const THIS_VOID)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_HANDLE_WRITE, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
+    THIS(const IoHandleWrite);
 
-    ASSERT(parentNew != NULL);
-
-    if (this != NULL)
-        memContextMove(this->memContext, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
-Get io interface
-***********************************************************************************************************************************/
-IoWrite *
-ioHandleWriteIo(const IoHandleWrite *this)
-{
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_HANDLE_WRITE, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->io);
+    FUNCTION_TEST_RETURN(this->handle);
 }
 
 /***********************************************************************************************************************************
-Free the object
+New object
 ***********************************************************************************************************************************/
-void
-ioHandleWriteFree(IoHandleWrite *this)
+IoWrite *
+ioHandleWriteNew(const String *name, int handle)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_HANDLE_WRITE, this);
+        FUNCTION_LOG_PARAM(INT, handle);
     FUNCTION_LOG_END();
 
-    if (this != NULL)
-        memContextFree(this->memContext);
+    IoWrite *this = NULL;
 
-    FUNCTION_LOG_RETURN_VOID();
+    MEM_CONTEXT_NEW_BEGIN("IoHandleWrite")
+    {
+        IoHandleWrite *driver = memNew(sizeof(IoHandleWrite));
+        driver->memContext = memContextCurrent();
+        driver->name = strDup(name);
+        driver->handle = handle;
+
+        this = ioWriteNewP(driver, .handle = ioHandleWriteHandle, .write = ioHandleWrite);
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(IO_WRITE, this);
 }
 
 /***********************************************************************************************************************************

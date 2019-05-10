@@ -1,10 +1,13 @@
 /***********************************************************************************************************************************
 Key Value Handler
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <limits.h>
 
 #include "common/debug.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
 #include "common/type/variantList.h"
@@ -23,6 +26,8 @@ struct KeyValue
     List *list;                                                     // List of keys/values
     VariantList *keyList;                                           // List of keys
 };
+
+OBJECT_DEFINE_FREE(KEY_VALUE);
 
 /***********************************************************************************************************************************
 Contains information about an individual key/value pair
@@ -371,20 +376,4 @@ kvMove(KeyValue *this, MemContext *parentNew)
         memContextMove(this->memContext, parentNew);
 
     FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
-Free the string
-***********************************************************************************************************************************/
-void
-kvFree(KeyValue *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(KEY_VALUE, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_TEST_RETURN_VOID();
 }

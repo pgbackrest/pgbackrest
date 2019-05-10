@@ -130,6 +130,7 @@ sub libcAutoExportTag
             'CFGOPT_ARCHIVE_TIMEOUT',
             'CFGOPT_BACKUP_STANDBY',
             'CFGOPT_BUFFER_SIZE',
+            'CFGOPT_C',
             'CFGOPT_CHECKSUM_PAGE',
             'CFGOPT_CMD_SSH',
             'CFGOPT_COMMAND',
@@ -343,7 +344,7 @@ sub libcAutoExportTag
 
         storage =>
         [
-            'storageDriverPosixPathRemove',
+            'storagePosixPathRemove',
         ],
 
         test =>

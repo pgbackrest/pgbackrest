@@ -7,6 +7,9 @@ Backup Info Handler
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define INFO_BACKUP_TYPE                                            InfoBackup
+#define INFO_BACKUP_PREFIX                                          infoBackup
+
 typedef struct InfoBackup InfoBackup;
 
 #include "common/type/string.h"

@@ -272,6 +272,20 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TRY_BEGIN()
         {
+            errno = 0;
+            THROW_SYS_ERROR(AssertError, "message");
+        }
+        CATCH_ANY()
+        {
+            printf("%s\n", errorMessage());
+            assert(errorCode() == AssertError.code);
+            assert(strcmp(errorMessage(), "message") == 0);
+        }
+        TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TRY_BEGIN()
+        {
             errno = EIO;
             THROW_SYS_ERROR_FMT(AssertError, "message %d", 1);
         }
@@ -280,6 +294,20 @@ testRun(void)
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
             assert(strcmp(errorMessage(), "message 1: [5] Input/output error") == 0);
+        }
+        TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TRY_BEGIN()
+        {
+            errno = 0;
+            THROW_SYS_ERROR_FMT(AssertError, "message %d", 1);
+        }
+        CATCH_ANY()
+        {
+            printf("%s\n", errorMessage());
+            assert(errorCode() == AssertError.code);
+            assert(strcmp(errorMessage(), "message 1") == 0);
         }
         TRY_END();
     }

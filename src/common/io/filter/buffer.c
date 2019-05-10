@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 IO Buffer Filter
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <stdio.h>
 
 #include "common/debug.h"
@@ -8,6 +10,7 @@ IO Buffer Filter
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -18,46 +21,36 @@ Filter type constant
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-struct IoBuffer
+typedef struct IoBuffer
 {
     MemContext *memContext;                                         // Mem context of filter
-    IoFilter *filter;                                               // Filter interface
 
     size_t inputPos;                                                // Position in input buffer
     bool inputSame;                                                 // Is the same input required again?
-};
+} IoBuffer;
 
 /***********************************************************************************************************************************
-New object
+Macros for function logging
 ***********************************************************************************************************************************/
-IoBuffer *
-ioBufferNew(void)
+String *
+ioBufferToLog(const IoBuffer *this)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
-
-    IoBuffer *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("IoBuffer")
-    {
-        this = memNew(sizeof(IoBuffer));
-        this->memContext = memContextCurrent();
-
-        // Create filter interface
-        this->filter = ioFilterNewP(
-            BUFFER_FILTER_TYPE_STR, this, .inOut = (IoFilterInterfaceProcessInOut)ioBufferProcess,
-            .inputSame = (IoFilterInterfaceInputSame)ioBufferInputSame);
-    }
-    MEM_CONTEXT_NEW_END();
-
-    FUNCTION_LOG_RETURN(IO_BUFFER, this);
+    return strNewFmt("{inputSame: %s, inputPos: %zu}", cvtBoolToConstZ(this->inputSame), this->inputPos);
 }
+
+#define FUNCTION_LOG_IO_BUFFER_TYPE                                                                                                \
+    IoBuffer *
+#define FUNCTION_LOG_IO_BUFFER_FORMAT(value, buffer, bufferSize)                                                                   \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioBufferToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Move data from the input buffer to the output buffer
 ***********************************************************************************************************************************/
-void
-ioBufferProcess(IoBuffer *this, const Buffer *input, Buffer *output)
+static void
+ioBufferProcess(THIS_VOID, const Buffer *input, Buffer *output)
 {
+    THIS(IoBuffer);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_BUFFER, this);
         FUNCTION_LOG_PARAM(BUFFER, input);
@@ -99,9 +92,11 @@ Is the same input required again?
 If the remaining space in the output buffer is smaller than the used space in the input buffer then the same input must be provided
 again.
 ***********************************************************************************************************************************/
-bool
-ioBufferInputSame(const IoBuffer *this)
+static bool
+ioBufferInputSame(const THIS_VOID)
 {
+    THIS(const IoBuffer);
+
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_BUFFER, this);
     FUNCTION_TEST_END();
@@ -112,41 +107,23 @@ ioBufferInputSame(const IoBuffer *this)
 }
 
 /***********************************************************************************************************************************
-Get filter interface
+New object
 ***********************************************************************************************************************************/
 IoFilter *
-ioBufferFilter(const IoBuffer *this)
+ioBufferNew(void)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_BUFFER, this);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_VOID(logLevelTrace);
 
-    ASSERT(this != NULL);
+    IoFilter *this = NULL;
 
-    FUNCTION_TEST_RETURN(this->filter);
-}
+    MEM_CONTEXT_NEW_BEGIN("IoBuffer")
+    {
+        IoBuffer *driver = memNew(sizeof(IoBuffer));
+        driver->memContext = memContextCurrent();
 
-/***********************************************************************************************************************************
-Render as string for logging
-***********************************************************************************************************************************/
-String *
-ioBufferToLog(const IoBuffer *this)
-{
-    return strNewFmt("{inputSame: %s, inputPos: %zu}", cvtBoolToConstZ(this->inputSame), this->inputPos);
-}
+        this = ioFilterNewP(BUFFER_FILTER_TYPE_STR, driver, .inOut = ioBufferProcess, .inputSame = ioBufferInputSame);
+    }
+    MEM_CONTEXT_NEW_END();
 
-/***********************************************************************************************************************************
-Free the filter group
-***********************************************************************************************************************************/
-void
-ioBufferFree(IoBuffer *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_BUFFER, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

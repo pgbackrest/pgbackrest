@@ -11,7 +11,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("bufNew(), bugNewC, bufMove(), bufSize(), bufPtr(), and bufFree()"))
+    if (testBegin("bufNew(), bufNewC, bufNewUseC, bufMove(), bufSize(), bufPtr(), and bufFree()"))
     {
         Buffer *buffer = NULL;
 
@@ -25,19 +25,23 @@ testRun(void)
         TEST_RESULT_PTR(bufPtr(buffer), buffer->buffer, "buffer pointer");
         TEST_RESULT_INT(bufSize(buffer), 256, "buffer size");
 
-        TEST_ASSIGN(buffer, bufNewC(sizeof("TEST-STR") - 1, "TEST-STR"), "new buffer from string");
+        TEST_ASSIGN(buffer, bufNewC("TEST-STR", sizeof("TEST-STR") - 1), "new buffer from string");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TEST-STR", 8) == 0, true, "check buffer");
+
+
+        TEST_ASSIGN(buffer, bufNewUseC((void *)"FIXED-BUFFER", sizeof("FIXED-BUFFER")), "new fixed buffer from string");
+        TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "FIXED-BUFFER", 12) == 0, true, "check buffer");
+        TEST_ERROR(bufResize(buffer, 999), AssertError, "fixed size buffer cannot be resized");
 
         TEST_RESULT_VOID(bufFree(buffer), "free buffer");
         TEST_RESULT_VOID(bufFree(bufNew(0)), "free empty buffer");
-        TEST_RESULT_VOID(bufFree(NULL), "free null buffer");
 
         TEST_RESULT_VOID(bufMove(NULL, memContextTop()), "move null buffer");
 
         // -------------------------------------------------------------------------------------------------------------------------
         char cBuffer[] = "ABCD";
 
-        TEST_ASSIGN(buffer, bufNewC(sizeof(cBuffer), cBuffer), "create from c buffer");
+        TEST_ASSIGN(buffer, bufNewC(cBuffer, sizeof(cBuffer)), "create from c buffer");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), cBuffer, sizeof(cBuffer)) == 0, true, "check buffer");
     }
 
@@ -112,11 +116,11 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("bufEq()"))
+    if (testBegin("bufDup() and bufEq()"))
     {
-        TEST_RESULT_BOOL(bufEq(BUFSTRDEF("123"), BUFSTRDEF("1234")), false, "buffer sizes not equal");
+        TEST_RESULT_BOOL(bufEq(BUFSTRDEF("123"), bufDup(BUFSTRDEF("1234"))), false, "buffer sizes not equal");
         TEST_RESULT_BOOL(bufEq(BUFSTR(STRDEF("321")), BUFSTRDEF("123")), false, "buffer sizes equal");
-        TEST_RESULT_BOOL(bufEq(BUFSTRZ("123"), BUFSTRDEF("123")), true, "buffers equal");
+        TEST_RESULT_BOOL(bufEq(bufDup(BUFSTRZ("123")), BUF("123", 3)), true, "buffers equal");
     }
 
     // *****************************************************************************************************************************
@@ -128,13 +132,13 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("bufCat*()"))
     {
-        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewC(3, "123"), NULL))), "123", "cat null buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewC(3, "123"), bufNew(0)))), "123", "cat empty buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewC(3, "123"), BUFSTRDEF("ABC")))), "123ABC", "cat buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewC("123", 3), NULL))), "123", "cat null buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewC("123", 3), bufNew(0)))), "123", "cat empty buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(bufCat(bufNewC("123", 3), BUFSTRDEF("ABC")))), "123ABC", "cat buffer");
 
-        TEST_RESULT_STR(strPtr(strNewBuf(bufCatSub(bufNewC(3, "123"), NULL, 0, 0))), "123", "cat sub null buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(bufCatSub(bufNewC(3, "123"), bufNew(0), 0, 0))), "123", "cat sub empty buffer");
-        TEST_RESULT_STR(strPtr(strNewBuf(bufCatSub(bufNewC(3, "123"), BUFSTRDEF("ABC"), 1, 2))), "123BC", "cat sub buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(bufCatSub(bufNewC("123", 3), NULL, 0, 0))), "123", "cat sub null buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(bufCatSub(bufNewC("123", 3), bufNew(0), 0, 0))), "123", "cat sub empty buffer");
+        TEST_RESULT_STR(strPtr(strNewBuf(bufCatSub(bufNewC("123", 3), BUFSTRDEF("ABC"), 1, 2))), "123BC", "cat sub buffer");
 
         Buffer *buffer = NULL;
         TEST_ASSIGN(buffer, bufNew(2), "new buffer with space");

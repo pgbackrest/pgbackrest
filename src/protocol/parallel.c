@@ -1,12 +1,15 @@
 /***********************************************************************************************************************************
 Protocol Parallel Executor
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <string.h>
 #include <sys/select.h>
 
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
@@ -28,6 +31,8 @@ struct ProtocolParallel
 
     ProtocolParallelJobState state;                                 // Overall state of job processing
 };
+
+OBJECT_DEFINE_FREE(PROTOCOL_PARALLEL);
 
 /***********************************************************************************************************************************
 Create object
@@ -283,20 +288,4 @@ protocolParallelToLog(const ProtocolParallel *this)
     return strNewFmt(
         "{state: %s, clientTotal: %u, jobTotal: %u}", protocolParallelJobToConstZ(this->state), lstSize(this->clientList),
         lstSize(this->jobList));
-}
-
-/***********************************************************************************************************************************
-Free object
-***********************************************************************************************************************************/
-void
-protocolParallelFree(ProtocolParallel *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

@@ -1,11 +1,14 @@
 /***********************************************************************************************************************************
 Protocol Server
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <string.h>
 
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/time.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
@@ -26,6 +29,8 @@ struct ProtocolServer
 
     List *handlerList;
 };
+
+OBJECT_DEFINE_FREE(PROTOCOL_SERVER);
 
 /***********************************************************************************************************************************
 Create object
@@ -262,20 +267,4 @@ String *
 protocolServerToLog(const ProtocolServer *this)
 {
     return strNewFmt("{name: %s}", strPtr(this->name));
-}
-
-/***********************************************************************************************************************************
-Free object
-***********************************************************************************************************************************/
-void
-protocolServerFree(ProtocolServer *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

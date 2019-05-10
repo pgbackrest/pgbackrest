@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Exit Routines
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -13,7 +15,7 @@ Exit Routines
 #include "config/config.h"
 #include "protocol/helper.h"
 
-#ifdef WITH_PERL
+#ifdef HAVE_LIBPERL
     #include "perl/exec.h"
 #endif
 
@@ -105,7 +107,7 @@ exitSafe(int result, bool error, SignalType signalType)
     if (error)
     {
         // Don't log the error if it has already been logged by Perl
-#ifdef WITH_PERL
+#ifdef HAVE_LIBPERL
         if (strcmp(errorMessage(), PERL_EMBED_ERROR) != 0)
         {
 #endif
@@ -127,7 +129,7 @@ exitSafe(int result, bool error, SignalType signalType)
                         errorStackTrace());
                 }
             }
-#ifdef WITH_PERL
+#ifdef HAVE_LIBPERL
         }
 #endif
 
@@ -142,7 +144,7 @@ exitSafe(int result, bool error, SignalType signalType)
     TRY_END();
 
     // Free Perl but ignore errors
-#ifdef WITH_PERL
+#ifdef HAVE_LIBPERL
     TRY_BEGIN()
     {
         perlFree(result);

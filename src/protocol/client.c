@@ -1,9 +1,12 @@
 /***********************************************************************************************************************************
 Protocol Client
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/time.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
@@ -37,6 +40,22 @@ struct ProtocolClient
     IoWrite *write;
     TimeMSec keepAliveTime;
 };
+
+OBJECT_DEFINE_FREE(PROTOCOL_CLIENT);
+
+/***********************************************************************************************************************************
+Close protocol connection
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(PROTOCOL_CLIENT, LOG, logLevelTrace)
+{
+    // Send an exit command but don't wait to see if it succeeds
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        protocolClientWriteCommand(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT_STR));
+    }
+    MEM_CONTEXT_TEMP_END();
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Create object
@@ -108,7 +127,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         protocolClientNoOp(this);
 
         // Set a callback to shutdown the protocol
-        memContextCallback(this->memContext, (MemContextCallback)protocolClientFree, this);
+        memContextCallbackSet(this->memContext, protocolClientFreeResource, this);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -292,31 +311,4 @@ String *
 protocolClientToLog(const ProtocolClient *this)
 {
     return strNewFmt("{name: %s}", strPtr(this->name));
-}
-
-/***********************************************************************************************************************************
-Free object
-***********************************************************************************************************************************/
-void
-protocolClientFree(ProtocolClient *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-    {
-        memContextCallbackClear(this->memContext);
-
-        // Send an exit command but don't wait to see if it succeeds
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            protocolClientWriteCommand(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT_STR));
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        memContextFree(this->memContext);
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
 }

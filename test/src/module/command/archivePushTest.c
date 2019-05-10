@@ -7,7 +7,7 @@ Test Archive Push Command
 #include "common/io/handleWrite.h"
 #include "common/time.h"
 #include "postgres/version.h"
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
@@ -22,16 +22,16 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    Storage *storageTest = storagePosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     // Start a protocol server to test the protocol directly
     Buffer *serverWrite = bufNew(8192);
-    IoWrite *serverWriteIo = ioBufferWriteIo(ioBufferWriteNew(serverWrite));
+    IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
     ioWriteOpen(serverWriteIo);
 
     ProtocolServer *server = protocolServerNew(
-        strNew("test"), strNew("test"), ioBufferReadIo(ioBufferReadNew(bufNew(0))), serverWriteIo);
+        strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
 
     bufUsedSet(serverWrite, 0);
 
@@ -371,14 +371,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathRemoveP(storageTest, strNew("repo"), .errorOnMissing = true, .recurse = true);
 
-        StorageFileWrite *infoWrite = storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info"));
+        StorageWrite *infoWrite = storageNewWriteNP(storageTest, strNew("repo/archive/test/archive.info"));
 
         ioWriteFilterGroupSet(
-            storageFileWriteIo(infoWrite),
+            storageWriteIo(infoWrite),
             ioFilterGroupAdd(
-                ioFilterGroupNew(),
-                cipherBlockFilter(
-                    cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("badpassphrase"), NULL))));
+                ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("badpassphrase"), NULL)));
 
         storagePutNP(
             infoWrite,
@@ -492,9 +490,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000));
+                IoRead *read = ioHandleReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE()));
+                IoWrite *write = ioHandleWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
                 lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30000, true);
@@ -510,9 +508,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000));
+                IoRead *read = ioHandleReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                IoWrite *write = ioHandleWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock

@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Protocol Helper
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <string.h>
 
 #include "common/crypto/common.h"
@@ -212,6 +214,9 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     if (cfgOptionSource(cfgOptRepoHostConfigPath) != cfgSourceDefault)
         kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR), cfgOption(cfgOptRepoHostConfigPath));
 
+    // Use a C remote
+    kvPut(optionReplace, VARSTR(CFGOPT_C_STR), VARBOOL(true));
+
     // Add the command option (or use the current command option if it is valid)
     if (!cfgOptionTest(cfgOptCommand))
         kvPut(optionReplace, VARSTR(CFGOPT_COMMAND_STR), VARSTRZ(cfgCommandName(cfgCommand())));
@@ -264,7 +269,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType)
             // that pg remotes will always be greater but we'll protect that assumption with an assertion.
             ASSERT(cfgDefOptionIndexTotal(cfgDefOptPgPath) >= cfgDefOptionIndexTotal(cfgDefOptRepoPath));
 
-            protocolHelper.clientRemoteSize = cfgDefOptionIndexTotal(cfgDefOptPgPath) +1;
+            protocolHelper.clientRemoteSize = cfgDefOptionIndexTotal(cfgDefOptPgPath) + 1;
             protocolHelper.clientRemote = (ProtocolHelperClient *)memNew(
                 protocolHelper.clientRemoteSize * sizeof(ProtocolHelperClient));
         }
@@ -272,16 +277,18 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType)
     }
 
     // Determine protocol id for the remote.  If the process option is set then use that since we want to remote protocol id to
-    // match the local protocol id.  Otherwise set to 0 since the remote is being started from a main process.
+    // match the local protocol id (but we'll still save it in position 0 or we'd need to allocated up to process-max slots).
+    // Otherwise set to 0 since the remote is being started from a main process.
     unsigned int protocolId = 0;
+    unsigned int protocolIdx = 0;
 
     if (cfgOptionTest(cfgOptProcess))
         protocolId = cfgOptionUInt(cfgOptProcess);
 
-    ASSERT(protocolId < protocolHelper.clientRemoteSize);
+    CHECK(protocolIdx < protocolHelper.clientRemoteSize);
 
     // Create protocol object
-    ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[protocolId];
+    ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[protocolIdx];
 
     if (protocolHelperClient->client == NULL)
     {

@@ -61,7 +61,7 @@ Vagrant.configure(2) do |config|
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Build Tools' && date
         apt-get install -y devscripts build-essential lintian git lcov cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev \
-             libxml2-dev
+             libxml2-dev liblz4-dev
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install AWS CLI' && date
@@ -115,6 +115,8 @@ Vagrant.configure(2) do |config|
         #---------------------------------------------------------------------------------------------------------------------------
         # Force remove all containers:
         # docker rm -f $(docker ps -a -q)
+        # Force remove all images:
+        # docker rmi -f $(docker images -q)
     SHELL
 
   # Don't share the default vagrant folder

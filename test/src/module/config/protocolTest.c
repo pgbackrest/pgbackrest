@@ -24,9 +24,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("client read"), HARNESS_FORK_CHILD_READ(), 2000));
+                IoRead *read = ioHandleReadNew(strNew("client read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("client write"), HARNESS_FORK_CHILD_WRITE()));
+                IoWrite *write = ioHandleWriteNew(strNew("client write"), HARNESS_FORK_CHILD_WRITE());
                 ioWriteOpen(write);
 
                 StringList *argList = strLstNew();
@@ -45,9 +45,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioHandleReadIo(ioHandleReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000));
+                IoRead *read = ioHandleReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0)));
+                IoWrite *write = ioHandleWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0));
                 ioWriteOpen(write);
 
                 ProtocolClient *client = protocolClientNew(strNew("test"), strNew("config"), read, write);

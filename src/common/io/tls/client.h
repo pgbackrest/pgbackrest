@@ -19,6 +19,9 @@ be called directly.  Instead use the read/write interfaces available from tlsCli
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define TLS_CLIENT_TYPE                                             TlsClient
+#define TLS_CLIENT_PREFIX                                           tlsClient
+
 typedef struct TlsClient TlsClient;
 
 #include "common/io/read.h"
@@ -36,14 +39,11 @@ TlsClient *tlsClientNew(
 Functions
 ***********************************************************************************************************************************/
 void tlsClientOpen(TlsClient *this);
-size_t tlsClientRead(TlsClient *this, Buffer *buffer, bool block);
-void tlsClientWrite(TlsClient *this, const Buffer *buffer);
 void tlsClientClose(TlsClient *this);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
-bool tlsClientEof(const TlsClient *this);
 IoRead *tlsClientIoRead(const TlsClient *this);
 IoWrite *tlsClientIoWrite(const TlsClient *this);
 

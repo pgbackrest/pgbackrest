@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Archive Info Handler
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,8 +10,9 @@ Archive Info Handler
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/ini.h"
+#include "common/memContext.h"
+#include "common/object.h"
 #include "info/infoArchive.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
@@ -24,6 +27,8 @@ struct InfoArchive
     InfoPg *infoPg;                                                 // Contents of the DB data
     String *archiveId;                                              // Archive id for the current PG version
 };
+
+OBJECT_DEFINE_FREE(INFO_ARCHIVE);
 
 /***********************************************************************************************************************************
 Create new object and load contents from a file
@@ -179,20 +184,4 @@ infoArchivePg(const InfoArchive *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->infoPg);
-}
-
-/***********************************************************************************************************************************
-Free the info
-***********************************************************************************************************************************/
-void
-infoArchiveFree(InfoArchive *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

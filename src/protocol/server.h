@@ -7,6 +7,9 @@ Protocol Server
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define PROTOCOL_SERVER_TYPE                                        ProtocolServer
+#define PROTOCOL_SERVER_PREFIX                                      protocolServer
+
 typedef struct ProtocolServer ProtocolServer;
 
 #include "common/io/read.h"

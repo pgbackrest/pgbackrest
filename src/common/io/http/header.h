@@ -9,6 +9,9 @@ Object to track HTTP headers.  Headers can be marked as redacted so they are not
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define HTTP_HEADER_TYPE                                            HttpHeader
+#define HTTP_HEADER_PREFIX                                          httpHeader
+
 typedef struct HttpHeader HttpHeader;
 
 #include "common/type/stringList.h"

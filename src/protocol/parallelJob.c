@@ -1,9 +1,12 @@
 /***********************************************************************************************************************************
 Protocol Parallel Job
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "protocol/command.h"
 #include "protocol/parallelJob.h"
 
@@ -23,6 +26,8 @@ struct ProtocolParallelJob
     String *message;                                                // Message if there was a error
     const Variant *result;                                          // Result if job was successful
 };
+
+OBJECT_DEFINE_FREE(PROTOCOL_PARALLEL_JOB);
 
 /***********************************************************************************************************************************
 Create object
@@ -294,20 +299,4 @@ protocolParallelJobToLog(const ProtocolParallelJob *this)
         "{state: %s, key: %s, command: %s, code: %d, message: %s, result: %s}", protocolParallelJobToConstZ(this->state),
         strPtr(varToLog(this->key)), strPtr(protocolCommandToLog(this->command)), this->code, strPtr(strToLog(this->message)),
         strPtr(varToLog(this->result)));
-}
-
-/***********************************************************************************************************************************
-Free object
-***********************************************************************************************************************************/
-void
-protocolParallelJobFree(ProtocolParallelJob *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

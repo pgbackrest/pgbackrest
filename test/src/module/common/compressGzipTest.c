@@ -10,15 +10,15 @@ Test Gzip
 Compress data
 ***********************************************************************************************************************************/
 static Buffer *
-testCompress(GzipCompress *compress, Buffer *decompressed, size_t inputSize, size_t outputSize)
+testCompress(IoFilter *compress, Buffer *decompressed, size_t inputSize, size_t outputSize)
 {
     Buffer *compressed = bufNew(1024 * 1024);
     size_t inputTotal = 0;
     ioBufferSizeSet(outputSize);
 
     IoFilterGroup *filterGroup = ioFilterGroupNew();
-    ioFilterGroupAdd(filterGroup, gzipCompressFilter(compress));
-    IoWrite *write = ioBufferWriteIo(ioBufferWriteNew(compressed));
+    ioFilterGroupAdd(filterGroup, compress);
+    IoWrite *write = ioBufferWriteNew(compressed);
     ioWriteFilterGroupSet(write, filterGroup);
     ioWriteOpen(write);
 
@@ -27,8 +27,8 @@ testCompress(GzipCompress *compress, Buffer *decompressed, size_t inputSize, siz
     {
         // Generate the input buffer based on input size.  This breaks the data up into chunks as it would be in a real scenario.
         Buffer *input = bufNewC(
-            inputSize > bufSize(decompressed) - inputTotal ? bufSize(decompressed) - inputTotal : inputSize,
-            bufPtr(decompressed) + inputTotal);
+            bufPtr(decompressed) + inputTotal,
+            inputSize > bufSize(decompressed) - inputTotal ? bufSize(decompressed) - inputTotal : inputSize);
 
         ioWrite(write, input);
 
@@ -37,7 +37,7 @@ testCompress(GzipCompress *compress, Buffer *decompressed, size_t inputSize, siz
     }
 
     ioWriteClose(write);
-    gzipCompressFree(compress);
+    memContextFree(((GzipCompress *)ioFilterDriver(compress))->memContext);
 
     return compressed;
 }
@@ -46,15 +46,15 @@ testCompress(GzipCompress *compress, Buffer *decompressed, size_t inputSize, siz
 Decompress data
 ***********************************************************************************************************************************/
 static Buffer *
-testDecompress(GzipDecompress *decompress, Buffer *compressed, size_t inputSize, size_t outputSize)
+testDecompress(IoFilter *decompress, Buffer *compressed, size_t inputSize, size_t outputSize)
 {
     Buffer *decompressed = bufNew(1024 * 1024);
     Buffer *output = bufNew(outputSize);
     ioBufferSizeSet(inputSize);
 
     IoFilterGroup *filterGroup = ioFilterGroupNew();
-    ioFilterGroupAdd(filterGroup, gzipDecompressFilter(decompress));
-    IoRead *read = ioBufferReadIo(ioBufferReadNew(compressed));
+    ioFilterGroupAdd(filterGroup, decompress);
+    IoRead *read = ioBufferReadNew(compressed);
     ioReadFilterGroupSet(read, filterGroup);
     ioReadOpen(read);
 
@@ -67,7 +67,7 @@ testDecompress(GzipDecompress *decompress, Buffer *compressed, size_t inputSize,
 
     ioReadClose(read);
     bufFree(output);
-    gzipDecompressFree(decompress);
+    memContextFree(((GzipDecompress *)ioFilterDriver(decompress))->memContext);
 
     return decompressed;
 }
@@ -108,7 +108,7 @@ testRun(void)
     {
         const char *simpleData = "A simple string";
         Buffer *compressed = NULL;
-        Buffer *decompressed = bufNewC(strlen(simpleData), simpleData);
+        Buffer *decompressed = bufNewC(simpleData, strlen(simpleData));
 
         TEST_ASSIGN(
             compressed, testCompress(gzipCompressNew(3, false), decompressed, 1024, 1024),
@@ -155,16 +155,12 @@ testRun(void)
         TEST_RESULT_BOOL(
             bufEq(decompressed, testDecompress(gzipDecompressNew(true), compressed, bufSize(compressed), 1024 * 256)), true,
             "zero data - decompress large in/small out buffer");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(gzipCompressFree(NULL), "free null decompress object");
-        TEST_RESULT_VOID(gzipDecompressFree(NULL), "free null decompress object");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("gzipDecompressToLog() and gzipCompressToLog()"))
     {
-        GzipDecompress *decompress = gzipDecompressNew(false);
+        GzipDecompress *decompress = (GzipDecompress *)ioFilterDriver(gzipDecompressNew(false));
 
         TEST_RESULT_STR(strPtr(gzipDecompressToLog(decompress)), "{inputSame: false, done: false, availIn: 0}", "format object");
 

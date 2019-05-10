@@ -1,9 +1,12 @@
 /***********************************************************************************************************************************
 Protocol Command
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "protocol/command.h"
@@ -23,6 +26,8 @@ struct ProtocolCommand
     const String *command;
     Variant *parameterList;
 };
+
+OBJECT_DEFINE_FREE(PROTOCOL_COMMAND);
 
 /***********************************************************************************************************************************
 Create object
@@ -133,20 +138,4 @@ String *
 protocolCommandToLog(const ProtocolCommand *this)
 {
     return strNewFmt("{command: %s}", strPtr(this->command));
-}
-
-/***********************************************************************************************************************************
-Free object
-***********************************************************************************************************************************/
-void
-protocolCommandFree(ProtocolCommand *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_COMMAND, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_TEST_RETURN_VOID();
 }

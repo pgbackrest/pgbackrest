@@ -221,7 +221,6 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadEof(tlsClientIoRead(client)), true, "    check eof = true");
 
         TEST_RESULT_VOID(tlsClientFree(client), "free client");
-        TEST_RESULT_VOID(tlsClientFree(NULL), "free null client");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

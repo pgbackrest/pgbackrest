@@ -46,3 +46,23 @@
     ...
     obj:*/libz.so*
 }
+
+# This only seems to be an issue on Ubuntu 12.04 -- probably due to the old version of Valgrind
+{
+   ignore_getgrgid_leak
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:getgrgid
+   ...
+}
+
+# This only seems to be an issue on Ubuntu 12.04 -- probably due to the old version of Valgrind
+{
+   ignore_getpwuid_leak
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:getpwuid
+   ...
+}

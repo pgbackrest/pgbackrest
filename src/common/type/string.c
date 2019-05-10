@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 String Handler
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -8,6 +10,7 @@ String Handler
 #include <string.h>
 
 #include "common/debug.h"
+#include "common/macro.h"
 #include "common/memContext.h"
 #include "common/type/string.h"
 
@@ -37,7 +40,7 @@ Maximum size of a string
     do                                                                                                                             \
     {                                                                                                                              \
         if ((size) > STRING_SIZE_MAX)                                                                                              \
-            THROW(AssertError, "string size must be <= " MACRO_TO_STR(STRING_SIZE_MAX) " bytes");                                  \
+            THROW(AssertError, "string size must be <= " STRINGIFY(STRING_SIZE_MAX) " bytes");                                     \
     }                                                                                                                              \
     while(0)
 

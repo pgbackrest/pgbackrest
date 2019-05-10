@@ -89,7 +89,7 @@ testRun(void)
         TEST_ASSIGN(exec, execNew(strNew("sleep"), strLstAddZ(strLstNew(), "2"), strNew("sleep"), 1000), "new sleep exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
-        TEST_ERROR(execFree(exec), ExecuteError, "sleep did not exit when expected");
+        TEST_ERROR(execFreeResource(exec), ExecuteError, "sleep did not exit when expected");
 
         TEST_ERROR(ioReadLine(execIoRead(exec)), FileReadError, "unable to select from sleep read: [9] Bad file descriptor");
         ioWriteStrLine(execIoWrite(exec), strNew(""));
@@ -97,7 +97,6 @@ testRun(void)
 
         sleepMSec(500);
         TEST_RESULT_VOID(execFree(exec), "sleep exited as expected");
-        TEST_RESULT_VOID(execFree(NULL), "free null exec");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

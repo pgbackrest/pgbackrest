@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Error Handler
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -426,7 +428,13 @@ errorInternalThrowSys(
     int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
 {
     // Format message with system message appended
-    snprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, "%s: [%d] %s", message, errNo, strerror(errNo));
+    if (errNo == 0)
+    {
+        strncpy(messageBufferTemp, message, ERROR_MESSAGE_BUFFER_SIZE - 1);
+        messageBufferTemp[sizeof(messageBuffer) - 1] = 0;
+    }
+    else
+        snprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, "%s: [%d] %s", message, errNo, strerror(errNo));
 
     errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp);
 }
@@ -442,7 +450,8 @@ errorInternalThrowSysFmt(
     va_end(argument);
 
     // Append the system message
-    snprintf(messageBufferTemp + messageSize, ERROR_MESSAGE_BUFFER_SIZE - 1 - messageSize, ": [%d] %s", errNo, strerror(errNo));
+    if (errNo != 0)
+        snprintf(messageBufferTemp + messageSize, ERROR_MESSAGE_BUFFER_SIZE - 1 - messageSize, ": [%d] %s", errNo, strerror(errNo));
 
     errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp);
 }

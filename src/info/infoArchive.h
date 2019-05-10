@@ -7,6 +7,9 @@ Archive Info Handler
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define INFO_ARCHIVE_TYPE                                           InfoArchive
+#define INFO_ARCHIVE_PREFIX                                         infoArchive
+
 typedef struct InfoArchive InfoArchive;
 
 #include "common/crypto/common.h"

@@ -14,6 +14,9 @@ Only the HTTPS protocol is currently supported.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+#define HTTP_CLIENT_TYPE                                            HttpClient
+#define HTTP_CLIENT_PREFIX                                          httpClient
+
 typedef struct HttpClient HttpClient;
 
 #include "common/io/http/header.h"

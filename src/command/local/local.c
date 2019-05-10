@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Local Command
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include "command/archive/get/protocol.h"
 #include "command/archive/push/protocol.h"
 #include "common/debug.h"
@@ -23,9 +25,9 @@ cmdLocal(int handleRead, int handleWrite)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u", cfgOptionUInt(cfgOptProcess));
-        IoRead *read = ioHandleReadIo(ioHandleReadNew(name, handleRead, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000)));
+        IoRead *read = ioHandleReadNew(name, handleRead, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
         ioReadOpen(read);
-        IoWrite *write = ioHandleWriteIo(ioHandleWriteNew(name, handleWrite));
+        IoWrite *write = ioHandleWriteNew(name, handleWrite);
         ioWriteOpen(write);
 
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_LOCAL_STR, read, write);

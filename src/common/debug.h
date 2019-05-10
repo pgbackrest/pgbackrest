@@ -26,14 +26,6 @@ Extern variables that are needed for unit testing
 #endif
 
 /***********************************************************************************************************************************
-Convert a macro to a string
-***********************************************************************************************************************************/
-#define MACRO_TO_STR_INNER(macro)                                                                                                  \
-    #macro
-#define MACRO_TO_STR(macro)                                                                                                        \
-    MACRO_TO_STR_INNER(macro)
-
-/***********************************************************************************************************************************
 Base function debugging macros
 
 In debug mode parameters will always be recorded in the stack trace while in production mode they will only be recorded when the log

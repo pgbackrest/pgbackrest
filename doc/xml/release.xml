@@ -14,15 +14,85 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.14dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="jens.wilke"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix segfault when <br-option>process-max</br-option> > 8 for <cmd>archive-push</cmd>/<cmd>archive-get</cmd>.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p>Improve performance of non-blocking reads by using maximum buffer size.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <file>configure</file> script for improved multi-platform support.</p>
                     </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
                     <release-item>
-                        <p>Only process next filter in <code>IoFilterGroup</code> when input buffer is full or flushing.</p>
+                        <p>Filter improvements.  Only process next filter in <code>IoFilterGroup</code> when input buffer is full or flushing.  Improve filter's notion of <quote>done</quote> to optimize filter processing.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>storageInfoList()</code> to get detailed info about all entries in a path.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Allow <code>storageInfo()</code> to follow links.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Allow <code>StorageFileWrite</code> to set user, group, and modification time.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>pathExists()</code> to <code>Storage</code> object.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improve zero-length content handling in <code>HttpClient</code> object.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Don't append <code>strerror()</code> to error message when <code>errno</code> is 0.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve type safety of interfaces and drivers.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <br-option>--c</br-option> option to request a C remote.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <file>common/macro.h</file> for general-purpose macros.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add macros for object free functions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Various <code>MemContext</code> callback improvements.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Various <code>Buffer</code> improvements.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Simplify storage object names.</p>
                     </release-item>
 
                     <release-item>
@@ -38,7 +108,15 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add missing <code>httpUriEncode()</code> in S3 request.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>unsigned int</code> <code>Variant</code> type and update code to use it.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Expose handle (file descriptor) from <code>IoWrite</code> when applicable.</p>
                     </release-item>
 
                     <release-item>
@@ -76,6 +154,10 @@
                     <release-item>
                         <p>Add <code>cfgOptionUInt()</code> and <code>cfgOptionUInt64()</code> and update code to use them.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Use <code>THROW_ON_SYS_ERROR*()</code> to improve code coverage.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
@@ -83,6 +165,18 @@
                 <release-development-list>
                     <release-item>
                         <p>Add <code>harnessInfoChecksum/Z()</code> to ease creation of test info files.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Update containers with <postgres/> minor releases and <id>liblz4</id>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <id>build-max</id> option to set max build processes.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Reduce <proper>ScalityS3</proper> processes since only two are needed.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
@@ -94,7 +188,7 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="brunre01"/>
-                            <release-item-ideator id="jwpit"/>
+                            <release-item-ideator id="jens.wilke"/>
                             <release-item-ideator id="tomasz.kontusz"/>
                             <release-item-ideator id="guruguruguru"/>
                         </release-item-contributor-list>
@@ -6943,6 +7037,7 @@
 
         <contributor id="jens.wilke">
             <contributor-name-display>Jens Wilke</contributor-name-display>
+            <contributor-id type="github">jwpit</contributor-id>
         </contributor>
 
         <contributor id="jesper.st.john">
@@ -6962,11 +7057,6 @@
         <contributor id="jungle-boogie">
             <contributor-name-display>jungle-boogie</contributor-name-display>
             <contributor-id type="github">jungle-boogie</contributor-id>
-        </contributor>
-
-        <contributor id="jwpit">
-            <contributor-name-display>jwpit</contributor-name-display>
-            <contributor-id type="github">jwpit</contributor-id>
         </contributor>
 
         <contributor id="keith.fiske">

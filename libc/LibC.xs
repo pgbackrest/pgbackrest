@@ -9,6 +9,8 @@ The following C types are mapped by the current typemap:
 'ssize_t', 'time_t', 'unsigned', 'unsigned char', 'unsigned char *', 'unsigned int', 'unsigned long', 'unsigned long *',
 'unsigned short', 'void *', 'wchar_t', 'wchar_t *'
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #define PERL_NO_GET_CONTEXT
 
 /***********************************************************************************************************************************
@@ -55,7 +57,7 @@ These includes are from the src directory.  There is no Perl-specific code in th
 #include "config/parse.h"
 #include "perl/config.h"
 #include "postgres/pageChecksum.h"
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Helper macros

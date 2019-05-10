@@ -319,7 +319,6 @@ testRun(void)
         TEST_RESULT_STR(strPtr(httpHeaderToLog(header)), "{key1: 'value1', key2: 'value2a'}", "log output");
 
         TEST_RESULT_VOID(httpHeaderFree(header), "free header");
-        TEST_RESULT_VOID(httpHeaderFree(NULL), "free null header");
 
         // Redacted headers
         // -------------------------------------------------------------------------------------------------------------------------
@@ -373,7 +372,6 @@ testRun(void)
         TEST_RESULT_STR(strPtr(httpQueryToLog(query)), "{key1: 'value 1?', key2: 'value2a'}", "log output");
 
         TEST_RESULT_VOID(httpQueryFree(query), "free query");
-        TEST_RESULT_VOID(httpQueryFree(NULL), "free null query");
     }
 
     // *****************************************************************************************************************************
@@ -446,6 +444,7 @@ testRun(void)
             httpClientRequest(client, strNew("GET"), strNew("/"), query, headerRequest, NULL, false), "request with no content");
         TEST_RESULT_UINT(httpClientResponseCode(client), 200, "    check response code");
         TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "OK", "    check response message");
+        TEST_RESULT_UINT(httpClientEof(client), true, "    io is eof");
         TEST_RESULT_STR(
             strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{connection: 'ack', key1: '0', key2: 'value2'}",
             "    check response headers");
@@ -512,7 +511,6 @@ testRun(void)
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)),  "01234567890123456789012345678901012", "    check response");
 
         TEST_RESULT_VOID(httpClientFree(client), "free client");
-        TEST_RESULT_VOID(httpClientFree(NULL), "free null client");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

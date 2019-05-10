@@ -11,6 +11,9 @@ There are many capabilities of libxml2 that are not exposed here and may need to
 /***********************************************************************************************************************************
 Objects
 ***********************************************************************************************************************************/
+#define XML_DOCUMENT_TYPE                                           XmlDocument
+#define XML_DOCUMENT_PREFIX                                         xmlDocument
+
 typedef struct XmlDocument XmlDocument;
 typedef struct XmlNode XmlNode;
 typedef struct XmlNodeList XmlNodeList;

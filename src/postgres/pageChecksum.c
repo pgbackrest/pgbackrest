@@ -62,6 +62,8 @@ calculate a subset of the columns at a time and perform multiple passes to avoid
 is not used. Current coding also assumes that the compiler has the ability to unroll the inner loop to avoid loop overhead and
 minimize register spilling. For less sophisticated compilers it might be beneficial to manually unroll the inner loop.
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <string.h>
 
 #include "common/debug.h"

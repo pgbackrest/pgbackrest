@@ -75,6 +75,7 @@ sub new
         $self->{bProfile},
         $self->{bDebug},
         $self->{bDebugTestTrace},
+        $self->{iBuildMax},
     ) =
         logDebugParam
         (
@@ -103,6 +104,7 @@ sub new
             {name => 'bProfile'},
             {name => 'bDebug'},
             {name => 'bDebugTestTrace'},
+            {name => 'iBuildMax'},
         );
 
     # Set try to 0
@@ -246,7 +248,7 @@ sub run
             $strCommand =
                 'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
                 "cd $self->{strGCovPath} && " .
-                "make -s 2>&1 &&" .
+                "make -j $self->{iBuildMax} -s 2>&1 &&" .
                 ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{bValgrindUnit}?
                     " valgrind -q --gen-suppressions=all --suppressions=$self->{strGCovPath}/test/valgrind.suppress" .
                     " --leak-check=full --leak-resolution=high --error-exitcode=25" : '') .
@@ -344,7 +346,7 @@ sub run
                 # Build dependencies for the test file
                 my $rhDependencyTree = {};
                 buildDependencyTreeSub(
-                    $self->{oStorageTest}, $rhDependencyTree, $strTestFile, $self->{strGCovPath}, ['', 'test']);
+                    $self->{oStorageTest}, $rhDependencyTree, $strTestFile, false, $self->{strGCovPath}, ['', 'test']);
 
                 foreach my $strDepend (@{$rhDependencyTree->{$strTestFile}{include}})
                 {
@@ -383,6 +385,12 @@ sub run
                 $strTestC =~ s/\{\[C\_TEST\_LIST\]\}/$strTestInit/g;
                 buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/test.c", $strTestC);
 
+                # Create build.auto.h
+                my $strBuildAutoH =
+                    "#define HAVE_LIBPERL\n";
+
+                buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/" . BUILD_AUTO_H, $strBuildAutoH);
+
                 # Determine which warnings are available
                 my $strWarningFlags =
                     '-Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2' .
@@ -398,7 +406,7 @@ sub run
                 # Flags that are common to all builds
                 my $strCommonFlags =
                     '-I. -Itest -std=c99 -fPIC -g -Wno-clobbered -D_POSIX_C_SOURCE=200112L' .
-                        ' `perl -MExtUtils::Embed -e ccopts` -DWITH_PERL' .
+                        ' `perl -MExtUtils::Embed -e ccopts`' .
                         ' `xml2-config --cflags`' . ($self->{bProfile} ? " -pg" : '') .
                     ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : " -DDEBUG_UNIT") .
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
@@ -458,17 +466,20 @@ sub run
                 # Build C file dependencies
                 foreach my $strCFile (@stryCFile)
                 {
+                    my $bHarnessFile = $strCFile =~ /^test\// ? true : false;
+
                     buildDependencyTreeSub(
-                        $self->{oStorageTest}, $rhDependencyTree, $strCFile, $self->{strGCovPath}, ['', 'test']);
+                        $self->{oStorageTest}, $rhDependencyTree, $strCFile, !$bHarnessFile, $self->{strGCovPath}, ['', 'test']);
 
                     $strMakefile .=
                         "\n" . substr($strCFile, 0, length($strCFile) - 2) . ".o:" .
-                        ($strCFile =~ /^test\// ? " harnessflags" : " buildflags") . " $strCFile";
+                        ($bHarnessFile ? " harnessflags" : " buildflags") . " $strCFile";
 
                     foreach my $strDepend (@{$rhDependencyTree->{$strCFile}{include}})
                     {
                         $strMakefile .=
-                            ' ' . ($rhDependencyTree->{$strDepend}{path} ne '' ? $rhDependencyTree->{$strDepend}{path} . '/' : '') .
+                            ' ' .
+                            ($rhDependencyTree->{$strDepend}{path} ne '' ? $rhDependencyTree->{$strDepend}{path} . '/' : '') .
                             $strDepend;
                     }
 

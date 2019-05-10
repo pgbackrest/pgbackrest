@@ -103,7 +103,7 @@ sub process
         "  - sudo apt-get -qq update && sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl" .
             " libtemplate-perl libpod-coverage-perl libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man" .
             " devscripts libjson-perl libio-socket-ssl-perl libxml-libxml-perl libyaml-libyaml-perl python-pip lcov" .
-            " libjson-maybexs-perl\n" .
+            " libjson-maybexs-perl libperl-dev\n" .
         "  - |\n" .
         "    # Install & Configure AWS CLI\n" .
         "    pip install --upgrade --user awscli\n" .

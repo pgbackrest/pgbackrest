@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Archive Push File
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include "command/archive/push/file.h"
 #include "command/archive/common.h"
 #include "command/control/control.h"
@@ -71,8 +73,8 @@ archivePushFile(
         if (isSegment)
         {
             // Generate a sha1 checksum for the wal segment.  ??? Probably need a function in storage for this.
-            IoRead *read = storageFileReadIo(storageNewReadNP(storageLocal(), walSource));
-            IoFilterGroup *filterGroup = ioFilterGroupAdd(ioFilterGroupNew(), cryptoHashFilter(cryptoHashNew(HASH_TYPE_SHA1_STR)));
+            IoRead *read = storageReadIo(storageNewReadNP(storageLocal(), walSource));
+            IoFilterGroup *filterGroup = ioFilterGroupAdd(ioFilterGroupNew(), cryptoHashNew(HASH_TYPE_SHA1_STR));
             ioReadFilterGroupSet(read, filterGroup);
 
             Buffer *buffer = bufNew(ioBufferSize());
@@ -115,7 +117,7 @@ archivePushFile(
         // Only copy if the file was not found in the archive
         if (walSegmentFile == NULL)
         {
-            StorageFileRead *source = storageNewReadNP(storageLocal(), walSource);
+            StorageRead *source = storageNewReadNP(storageLocal(), walSource);
 
             // Add filters
             IoFilterGroup *filterGroup = ioFilterGroupNew();
@@ -124,17 +126,14 @@ archivePushFile(
             if (isSegment && compress)
             {
                 strCat(archiveDestination, "." GZIP_EXT);
-                ioFilterGroupAdd(filterGroup, gzipCompressFilter(gzipCompressNew(compressLevel, false)));
+                ioFilterGroupAdd(filterGroup, gzipCompressNew(compressLevel, false));
             }
 
             // If there is a cipher then add the encrypt filter
             if (cipherType != cipherTypeNone)
-            {
-                ioFilterGroupAdd(
-                    filterGroup, cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL)));
-            }
+                ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
 
-            ioReadFilterGroupSet(storageFileReadIo(source), filterGroup);
+            ioReadFilterGroupSet(storageReadIo(source), filterGroup);
 
             // Copy the file
             storageCopyNP(

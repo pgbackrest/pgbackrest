@@ -23,35 +23,29 @@ Each filter has a type that allows it to be identified in the filter list.
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-typedef bool (*IoFilterInterfaceDone)(const void *driver);
-typedef void (*IoFilterInterfaceProcessIn)(void *driver, const Buffer *);
-typedef void (*IoFilterInterfaceProcessInOut)(void *driver, const Buffer *, Buffer *);
-typedef bool (*IoFilterInterfaceInputSame)(const void *driver);
-typedef Variant *(*IoFilterInterfaceResult)(const void *driver);
-
 typedef struct IoFilterInterface
 {
     // Indicates that filter processing is done.  This is used for filters that have additional data to be flushed even after all
     // input has been processed.  Compression and encryption filters will usually need to implement done.  If done is not
     // implemented then it will always return true if all input has been consumed, i.e. if inputSame returns false.
-    IoFilterInterfaceDone done;
+    bool (*done)(const void *driver);
 
     // Processing function for filters that do not produce output.  Note that result must be implemented in this case (or else what
     // would be the point.
-    IoFilterInterfaceProcessIn in;
+    void (*in)(void *driver, const Buffer *);
 
     // Processing function for filters that produce output.  InOut filters will typically implement inputSame and may also implement
     // done.
-    IoFilterInterfaceProcessInOut inOut;
+    void (*inOut)(void *driver, const Buffer *, Buffer *);
 
     // InOut filters must be prepared for an output buffer that is too small to accept all the processed output.  In this case the
     // filter must implement inputSame and set it to true when there is more output to be produced for a given input.  On the next
     // call to inOut the same input will be passed along with a fresh output buffer with space for more processed output.
-    IoFilterInterfaceInputSame inputSame;
+    bool (*inputSame)(const void *driver);
 
     // If the filter produces a result then this function must be implemented to return the result.  A result can be anything that
     // is not processed output, e.g. a count of total bytes or a cryptographic hash.
-    IoFilterInterfaceResult result;
+    Variant *(*result)(void *driver);
 } IoFilterInterface;
 
 #define ioFilterNewP(type, driver, ...)                                                                                            \
@@ -70,7 +64,9 @@ IoFilter *ioFilterMove(IoFilter *this, MemContext *parentNew);
 Getters
 ***********************************************************************************************************************************/
 bool ioFilterDone(const IoFilter *this);
+void *ioFilterDriver(IoFilter *this);
 bool ioFilterInputSame(const IoFilter *this);
+const IoFilterInterface *ioFilterInterface(const IoFilter *this);
 bool ioFilterOutput(const IoFilter *this);
 
 /***********************************************************************************************************************************

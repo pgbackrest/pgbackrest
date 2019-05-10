@@ -13,7 +13,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("xml*()"))
     {
-        TEST_ERROR(xmlDocumentNewBuf(bufNewC(strlen(BOGUS_STR), BOGUS_STR)), FormatError, "invalid xml");
+        TEST_ERROR(xmlDocumentNewBuf(bufNewC(BOGUS_STR, strlen(BOGUS_STR))), FormatError, "invalid xml");
 
         XmlDocument *xmlDocument = NULL;
         TEST_ASSIGN(
@@ -84,7 +84,6 @@ testRun(void)
             strPtr(xmlNodeAttribute(xmlNodeChild(rootNode, strNew("Name"), true), strNew("id"))), "test", "get attribute");
 
         TEST_RESULT_VOID(xmlDocumentFree(xmlDocument), "free xmldoc");
-        TEST_RESULT_VOID(xmlDocumentFree(NULL), "free null xmldoc");
 
         // Create an empty document, add data to it, and output xml
         // -------------------------------------------------------------------------------------------------------------------------

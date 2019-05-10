@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 IO Read Interface
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <string.h>
 
 #include "common/debug.h"
@@ -8,13 +10,14 @@ IO Read Interface
 #include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct IoRead
 {
-    MemContext *memContext;                                         // Mem context of driver
+    MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     IoReadInterface interface;                                      // Driver interface
     IoFilterGroup *filterGroup;                                     // IO filters
@@ -28,6 +31,8 @@ struct IoRead
     bool closed;                                                    // Has the io been closed?
 #endif
 };
+
+OBJECT_DEFINE_FREE(IO_READ);
 
 /***********************************************************************************************************************************
 New object
@@ -321,6 +326,21 @@ ioReadBlock(const IoRead *this)
 }
 
 /***********************************************************************************************************************************
+Driver for the read object
+***********************************************************************************************************************************/
+void *
+ioReadDriver(IoRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->driver);
+}
+
+/***********************************************************************************************************************************
 Is IO at EOF?
 
 All driver reads are complete and all data has been flushed from the filters (if any).
@@ -392,17 +412,16 @@ ioReadHandle(const IoRead *this)
 }
 
 /***********************************************************************************************************************************
-Free the object
+Interface for the read object
 ***********************************************************************************************************************************/
-void
-ioReadFree(IoRead *this)
+const IoReadInterface *
+ioReadInterface(const IoRead *this)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_READ, this);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, this);
+    FUNCTION_TEST_END();
 
-    if (this != NULL)
-        memContextFree(this->memContext);
+    ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_TEST_RETURN(&this->interface);
 }

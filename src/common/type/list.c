@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 List Handler
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,9 +10,10 @@ List Handler
 
 #include "common/debug.h"
 #include "common/type/list.h"
+#include "common/object.h"
 
 /***********************************************************************************************************************************
-Contains information about the list
+Object type
 ***********************************************************************************************************************************/
 struct List
 {
@@ -20,6 +23,8 @@ struct List
     unsigned int listSizeMax;
     unsigned char *list;
 };
+
+OBJECT_DEFINE_FREE(LIST);
 
 /***********************************************************************************************************************************
 Create a new list
@@ -232,20 +237,4 @@ String *
 lstToLog(const List *this)
 {
     return strNewFmt("{size: %u}", this->listSize);
-}
-
-/***********************************************************************************************************************************
-Free the string
-***********************************************************************************************************************************/
-void
-lstFree(List *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_TEST_RETURN_VOID();
 }

@@ -6,22 +6,26 @@ Test Memory Contexts
 testFree - test callback function
 ***********************************************************************************************************************************/
 MemContext *memContextCallbackArgument = NULL;
+bool testFreeThrow = false;
 
 void
-testFree(MemContext *this)
+testFree(void *thisVoid)
 {
+    MemContext *this = thisVoid;
+
     TEST_RESULT_INT(this->state, memContextStateFreeing, "state should be freeing before memContextFree() in callback");
     memContextFree(this);
     TEST_RESULT_INT(this->state, memContextStateFreeing, "state should still be freeing after memContextFree() in callback");
 
-    TEST_ERROR(
-        memContextCallback(this, (MemContextCallback)testFree, this),
-        AssertError, "cannot assign callback to inactive context");
+    TEST_ERROR(memContextCallbackSet(this, testFree, this), AssertError, "cannot assign callback to inactive context");
 
     TEST_ERROR(memContextSwitch(this), AssertError, "cannot switch to inactive context");
     TEST_ERROR(memContextName(this), AssertError, "cannot get name for inactive context");
 
     memContextCallbackArgument = this;
+
+    if (testFreeThrow)
+        THROW(AssertError, "error in callback");
 }
 
 /***********************************************************************************************************************************
@@ -236,24 +240,31 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("memContextCallback()"))
+    if (testBegin("memContextCallbackSet()"))
     {
         TEST_ERROR(
-            memContextCallback(memContextTop(), (MemContextCallback)testFree, NULL), AssertError,
-            "top context may not have a callback");
+            memContextCallbackSet(memContextTop(), testFree, NULL), AssertError, "top context may not have a callback");
 
         MemContext *memContext = memContextNew("test-callback");
-        memContextCallback(memContext, (MemContextCallback)testFree, memContext);
+        memContextCallbackSet(memContext, testFree, memContext);
         TEST_ERROR(
-            memContextCallback(memContext, (MemContextCallback)testFree, memContext),
-            AssertError, "callback is already set for context 'test-callback'");
+            memContextCallbackSet(memContext, testFree, memContext), AssertError,
+            "callback is already set for context 'test-callback'");
 
         // Clear and reset it
         memContextCallbackClear(memContext);
-        memContextCallback(memContext, (MemContextCallback)testFree, memContext);
+        memContextCallbackSet(memContext, testFree, memContext);
 
         memContextFree(memContext);
         TEST_RESULT_PTR(memContextCallbackArgument, memContext, "callback argument is context");
+
+        // Now test with an error
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ASSIGN(memContext, memContextNew("test-callback-error"), "new mem context");
+        testFreeThrow = true;
+        TEST_RESULT_VOID(memContextCallbackSet(memContext, testFree, memContext), "    set callback");
+        TEST_ERROR(memContextFree(memContext), AssertError, "error in callback");
+        TEST_RESULT_UINT(memContext->state, memContextStateFree, "    check that mem context was completely freed");
     }
 
     // *****************************************************************************************************************************
@@ -327,7 +338,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(bCatch, true, "new context error was caught");
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
-        TEST_RESULT_BOOL(memContext->state == memContextStateFree, true, "new mem context is not active");
+        TEST_RESULT_UINT(memContext->state == memContextStateFree, true, "new mem context is not active");
     }
 
     // *****************************************************************************************************************************

@@ -146,8 +146,10 @@ use constant CFGOPT_TYPE                                            => 'type';
 use constant CFGOPT_OUTPUT                                          => 'output';
     push @EXPORT, qw(CFGOPT_OUTPUT);
 
-# Command-line only local/remote optiosn
+# Command-line only local/remote options
 #-----------------------------------------------------------------------------------------------------------------------------------
+use constant CFGOPT_C                                               => 'c';
+    push @EXPORT, qw(CFGOPT_C);
 use constant CFGOPT_COMMAND                                         => 'command';
     push @EXPORT, qw(CFGOPT_COMMAND);
 use constant CFGOPT_PROCESS                                         => 'process';
@@ -999,6 +1001,17 @@ my %hConfigDefine =
 
     # Command-line only local/remote options
     #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_C =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_REMOTE => {},
+        }
+    },
+
     &CFGOPT_COMMAND =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,

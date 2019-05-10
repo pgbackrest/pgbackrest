@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Archive Get File
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include "command/archive/get/file.h"
 #include "command/archive/common.h"
 #include "command/control/control.h"
@@ -140,7 +142,7 @@ archiveGetFile(
 
         if (archiveGetCheckResult.archiveFileActual != NULL)
         {
-            StorageFileWrite *destination = storageNewWriteP(
+            StorageWrite *destination = storageNewWriteP(
                 storage, walDestination, .noCreatePath = true, .noSyncFile = !durable, .noSyncPath = !durable,
                 .noAtomic = !durable);
 
@@ -151,16 +153,14 @@ archiveGetFile(
             if (cipherType != cipherTypeNone)
             {
                 ioFilterGroupAdd(
-                    filterGroup,
-                    cipherBlockFilter(
-                        cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(archiveGetCheckResult.cipherPass), NULL)));
+                    filterGroup, cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(archiveGetCheckResult.cipherPass), NULL));
             }
 
             // If file is compressed then add the decompression filter
             if (strEndsWithZ(archiveGetCheckResult.archiveFileActual, "." GZIP_EXT))
-                ioFilterGroupAdd(filterGroup, gzipDecompressFilter(gzipDecompressNew(false)));
+                ioFilterGroupAdd(filterGroup, gzipDecompressNew(false));
 
-            ioWriteFilterGroupSet(storageFileWriteIo(destination), filterGroup);
+            ioWriteFilterGroupSet(storageWriteIo(destination), filterGroup);
 
             // Copy the file
             storageCopyNP(

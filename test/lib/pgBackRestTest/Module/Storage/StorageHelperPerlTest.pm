@@ -121,21 +121,6 @@ sub run
     }
 
     #-------------------------------------------------------------------------------------------------------------------------------
-    if ($self->begin("storageSpool()"))
-    {
-        $self->testResult(sub {storageSpool()->put($strFile, $strFileContent)}, $iFileSize, 'put');
-        $self->testResult(sub {${storageTest()->get("spool/${strFile}")}}, $strFileContent, '    check put');
-
-        $self->testResult(sub {storageSpool()->put($strFileCopy, $strFileContent)}, $iFileSize, 'put cached storage');
-        $self->testResult(sub {${storageTest()->get("spool/${strFileCopy}")}}, $strFileContent, '    check put');
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(
-            sub {storageSpool()->pathGet(STORAGE_SPOOL_ARCHIVE_OUT)}, $self->testPath() . '/spool/archive/db/out',
-            'check archive out path');
-    }
-
-    #-------------------------------------------------------------------------------------------------------------------------------
     if ($self->begin("storageRepo() encryption"))
     {
         my $strStanzaEncrypt = 'test-encrypt';

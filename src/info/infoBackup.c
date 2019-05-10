@@ -1,15 +1,19 @@
 /***********************************************************************************************************************************
 Backup Info Handler
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 
 #include "common/debug.h"
+#include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/ini.h"
+#include "common/object.h"
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
@@ -42,6 +46,8 @@ struct InfoBackup
     InfoPg *infoPg;                                                 // Contents of the DB data
     List *backup;                                                   // List of current backups and their associated data
 };
+
+OBJECT_DEFINE_FREE(INFO_BACKUP);
 
 /***********************************************************************************************************************************
 Create new object and load contents from a file
@@ -377,20 +383,4 @@ String *
 infoBackupDataToLog(const InfoBackupData *this)
 {
     return strNewFmt("{label: %s, pgId: %u}", strPtr(this->backupLabel), this->backupPgId);
-}
-
-/***********************************************************************************************************************************
-Free the info
-***********************************************************************************************************************************/
-void
-infoBackupFree(InfoBackup *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

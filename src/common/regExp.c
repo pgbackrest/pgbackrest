@@ -1,11 +1,14 @@
 /***********************************************************************************************************************************
 Regular Expression Handler
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <regex.h>
 #include <sys/types.h>
 
 #include "common/debug.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/regExp.h"
 
 /***********************************************************************************************************************************
@@ -16,6 +19,17 @@ struct RegExp
     MemContext *memContext;
     regex_t regExp;
 };
+
+OBJECT_DEFINE_FREE(REGEXP);
+
+/***********************************************************************************************************************************
+Free regular expression
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(REGEXP, TEST, )
+{
+    regfree(&this->regExp);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(TEST);
 
 /***********************************************************************************************************************************
 Handle errors
@@ -63,7 +77,7 @@ regExpNew(const String *expression)
         }
 
         // Set free callback to ensure cipher context is freed
-        memContextCallback(this->memContext, (MemContextCallback)regExpFree, this);
+        memContextCallbackSet(this->memContext, regExpFreeResource, this);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -92,27 +106,6 @@ regExpMatch(RegExp *this, const String *string)
         regExpError(result);                                                    // {+uncoverable}
 
     FUNCTION_TEST_RETURN(result == 0);
-}
-
-/***********************************************************************************************************************************
-Free regular expression
-***********************************************************************************************************************************/
-void
-regExpFree(RegExp *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(REGEXP, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-    {
-        regfree(&this->regExp);
-
-        memContextCallbackClear(this->memContext);
-        memContextFree(this->memContext);
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

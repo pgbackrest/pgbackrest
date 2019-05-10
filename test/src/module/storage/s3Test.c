@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test S3 Storage Driver
+Test S3 Storage
 ***********************************************************************************************************************************/
 #include <unistd.h>
 
@@ -35,7 +35,7 @@ testS3ServerRequest(const char *verb, const char *uri, const char *content)
     if (content != NULL)
     {
         char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-        encodeToStr(encodeBase64, bufPtr(cryptoHashOneStr(HASH_TYPE_MD5_STR, strNew(content))), HASH_TYPE_M5_SIZE, md5Hash);
+        encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRZ(content))), HASH_TYPE_M5_SIZE, md5Hash);
         strCatFmt(request, "content-md5:%s\r\n", md5Hash);
     }
 
@@ -47,7 +47,7 @@ testS3ServerRequest(const char *verb, const char *uri, const char *content)
         "\r\n",
         content == NULL ?
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" :
-            strPtr(bufHex(cryptoHashOneStr(HASH_TYPE_SHA256_STR, strNew(content)))));
+            strPtr(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTRZ(content)))));
 
     if (content != NULL)
         strCat(request, content);
@@ -86,10 +86,10 @@ testS3Server(void)
         harnessTlsServerInit(TLS_TEST_PORT, TLS_CERT_TEST_CERT, TLS_CERT_TEST_KEY);
         harnessTlsServerAccept();
 
-        // storageDriverS3NewRead() and StorageDriverS3FileRead
+        // storageS3NewRead() and StorageS3FileRead
         // -------------------------------------------------------------------------------------------------------------------------
         // Ignore missing file
-        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL));
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/fi%26le.txt", NULL));
         harnessTlsServerReply(testS3ServerResponse(404, "Not Found", NULL, NULL));
 
         // Error on missing file
@@ -100,11 +100,15 @@ testS3Server(void)
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, "this is a sample file"));
 
+        // Get zero-length file
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file0.txt", NULL));
+        harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
+
         // Throw non-404 error
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL));
         harnessTlsServerReply(testS3ServerResponse(303, "Some bad status", NULL, "CONTENT"));
 
-        // storageDriverS3NewWrite() and StorageDriverS3FileWrite
+        // storageS3NewWrite() and StorageWriteS3
         // -------------------------------------------------------------------------------------------------------------------------
         // File is written all at once
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_PUT, "/file.txt", "ABCD"));
@@ -331,7 +335,7 @@ testRun(void)
         "qr7ZD0u0iPPkUL64lIZbqBAz+scqKmlzm8FDrypNC9Yjc8fPOLn9FX9KSYvKTr4rvx3iSIlTJabIQwj2ICCR/oLxBA==");
 
     // *****************************************************************************************************************************
-    if (testBegin("storageDriverS3New() and storageRepoGet()"))
+    if (testBegin("storageS3New() and storageRepoGet()"))
     {
         // Only required options
         // -------------------------------------------------------------------------------------------------------------------------
@@ -351,15 +355,15 @@ testRun(void)
         Storage *storage = NULL;
         TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage");
         TEST_RESULT_STR(strPtr(storage->path), strPtr(path), "    check path");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->region), strPtr(region), "    check region");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->region), strPtr(region), "    check region");
         TEST_RESULT_STR(
-            strPtr(((StorageDriverS3 *)storage->driver)->host), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))),
+            strPtr(((StorageS3 *)storage->driver)->host), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))),
             "    check host");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
         TEST_RESULT_STR(
-            strPtr(((StorageDriverS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");
-        TEST_RESULT_PTR(((StorageDriverS3 *)storage->driver)->securityToken, NULL, "    check security token");
+            strPtr(((StorageS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");
+        TEST_RESULT_PTR(((StorageS3 *)storage->driver)->securityToken, NULL, "    check security token");
 
         // Add default options
         // -------------------------------------------------------------------------------------------------------------------------
@@ -381,15 +385,15 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->region), strPtr(region), "    check region");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->host), strPtr(host), "    check host");
-        TEST_RESULT_UINT(((StorageDriverS3 *)storage->driver)->port, 443, "    check port");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->region), strPtr(region), "    check region");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->host), strPtr(host), "    check host");
+        TEST_RESULT_UINT(((StorageS3 *)storage->driver)->port, 443, "    check port");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
         TEST_RESULT_STR(
-            strPtr(((StorageDriverS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");
+            strPtr(((StorageS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");
         TEST_RESULT_STR(
-            strPtr(((StorageDriverS3 *)storage->driver)->securityToken), strPtr(securityToken), "    check security token");
+            strPtr(((StorageS3 *)storage->driver)->securityToken), strPtr(securityToken), "    check security token");
 
         // Add a port to the endpoint
         // -------------------------------------------------------------------------------------------------------------------------
@@ -410,15 +414,15 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->region), strPtr(region), "    check region");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->host), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))), "    check host");
-        TEST_RESULT_UINT(((StorageDriverS3 *)storage->driver)->port, 999, "    check port");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->region), strPtr(region), "    check region");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->host), strPtr(strNewFmt("%s.%s", strPtr(bucket), strPtr(endPoint))), "    check host");
+        TEST_RESULT_UINT(((StorageS3 *)storage->driver)->port, 999, "    check port");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
         TEST_RESULT_STR(
-            strPtr(((StorageDriverS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");
+            strPtr(((StorageS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");
         TEST_RESULT_STR(
-            strPtr(((StorageDriverS3 *)storage->driver)->securityToken), strPtr(securityToken), "    check security token");
+            strPtr(((StorageS3 *)storage->driver)->securityToken), strPtr(securityToken), "    check security token");
 
         // Also add port to the host
         // -------------------------------------------------------------------------------------------------------------------------
@@ -440,25 +444,26 @@ testRun(void)
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_TYPE_S3), false), "get S3 repo storage with options");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->region), strPtr(region), "    check region");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->host), strPtr(host), "    check host");
-        TEST_RESULT_UINT(((StorageDriverS3 *)storage->driver)->port, 7777, "    check port");
-        TEST_RESULT_STR(strPtr(((StorageDriverS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->bucket), strPtr(bucket), "    check bucket");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->region), strPtr(region), "    check region");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->host), strPtr(host), "    check host");
+        TEST_RESULT_UINT(((StorageS3 *)storage->driver)->port, 7777, "    check port");
+        TEST_RESULT_STR(strPtr(((StorageS3 *)storage->driver)->accessKey), strPtr(accessKey), "    check access key");
         TEST_RESULT_STR(
-            strPtr(((StorageDriverS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");
+            strPtr(((StorageS3 *)storage->driver)->secretAccessKey), strPtr(secretAccessKey), "    check secret access key");
         TEST_RESULT_STR(
-            strPtr(((StorageDriverS3 *)storage->driver)->securityToken), strPtr(securityToken), "    check security token");
+            strPtr(((StorageS3 *)storage->driver)->securityToken), strPtr(securityToken), "    check security token");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageDriverS3DateTime() and storageDriverS3Auth()"))
+    if (testBegin("storageS3DateTime() and storageS3Auth()"))
     {
-        TEST_RESULT_STR(strPtr(storageDriverS3DateTime(1491267845)), "20170404T010405Z", "static date");
+        TEST_RESULT_STR(strPtr(storageS3DateTime(1491267845)), "20170404T010405Z", "static date");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        StorageDriverS3 *driver = storageDriverS3New(
-            path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, NULL, 0, 0, true, NULL, NULL);
+        StorageS3 *driver = (StorageS3 *)storageDriver(
+            storageS3New(
+                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, NULL, 0, 0, true, NULL, NULL));
 
         HttpHeader *header = httpHeaderNew(NULL);
 
@@ -466,7 +471,7 @@ testRun(void)
         httpQueryAdd(query, strNew("list-type"), strNew("2"));
 
         TEST_RESULT_VOID(
-            storageDriverS3Auth(
+            storageS3Auth(
                 driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header,
                 strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")),
             "generate authorization");
@@ -481,7 +486,7 @@ testRun(void)
         const Buffer *lastSigningKey = driver->signingKey;
 
         TEST_RESULT_VOID(
-            storageDriverS3Auth(
+            storageS3Auth(
                 driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header,
                 strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")),
             "generate authorization");
@@ -495,7 +500,7 @@ testRun(void)
 
         // Change the date to generate a new signing key
         TEST_RESULT_VOID(
-            storageDriverS3Auth(
+            storageS3Auth(
                 driver, strNew("GET"), strNew("/"), query, strNew("20180814T080808Z"), header,
                 strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")),
             "    generate authorization");
@@ -509,12 +514,13 @@ testRun(void)
 
         // Test with security token
         // -------------------------------------------------------------------------------------------------------------------------
-        driver = storageDriverS3New(
-            path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, securityToken, 16, NULL, 0, 0, true, NULL,
-            NULL);
+        driver = (StorageS3 *)storageDriver(
+            storageS3New(
+                path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, securityToken, 16, NULL, 0, 0, true, NULL,
+                NULL));
 
         TEST_RESULT_VOID(
-            storageDriverS3Auth(
+            storageS3Auth(
                 driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header,
                 strNew("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")),
             "generate authorization");
@@ -527,37 +533,37 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageDriverS3*(), StorageDriverS3FileRead, and StorageDriverS3FileWrite"))
+    if (testBegin("storageS3*(), StorageReadS3, and StorageWriteS3"))
     {
         testS3Server();
 
-        StorageDriverS3 *s3Driver = storageDriverS3New(
+        Storage *s3 = storageS3New(
             path, true, NULL, bucket, endPoint, region, accessKey, secretAccessKey, NULL, 16, host, port, 1000, true, NULL, NULL);
-        Storage *s3 = storageDriverS3Interface(s3Driver);
 
         // Coverage for noop functions
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storagePathCreateNP(s3, strNew("path")), "path create is a noop");
         TEST_RESULT_VOID(storagePathSyncNP(s3, strNew("path")), "path sync is a noop");
 
-        // storageDriverS3NewRead() and StorageDriverS3FileRead
+        // storageS3NewRead() and StorageS3FileRead
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(
-            storageGetNP(storageNewReadP(s3, strNew("file.txt"), .ignoreMissing = true)), NULL, "ignore missing file");
+            storageGetNP(storageNewReadP(s3, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "ignore missing file");
         TEST_ERROR(
             storageGetNP(storageNewReadNP(s3, strNew("file.txt"))), FileMissingError,
             "unable to open '/file.txt': No such file or directory");
         TEST_RESULT_STR(
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(s3, strNew("file.txt"))))), "this is a sample file",
             "get file");
+        TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(s3, strNew("file0.txt"))))), "", "get zero-length file");
 
-        StorageFileRead *read = NULL;
+        StorageRead *read = NULL;
         TEST_ASSIGN(read, storageNewReadP(s3, strNew("file.txt"), .ignoreMissing = true), "new read file");
-        TEST_RESULT_BOOL(storageFileReadIgnoreMissing(read), true, "    check ignore missing");
-        TEST_RESULT_STR(strPtr(storageFileReadName(read)), "/file.txt", "    check name");
+        TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "    check ignore missing");
+        TEST_RESULT_STR(strPtr(storageReadName(read)), "/file.txt", "    check name");
 
         TEST_ERROR(
-            ioReadOpen(storageFileReadIo(read)), ProtocolError,
+            ioReadOpen(storageReadIo(read)), ProtocolError,
             "S3 request failed with 303: Some bad status\n"
             "*** URI/Query ***:\n"
             "/file.txt\n"
@@ -572,28 +578,22 @@ testRun(void)
             "*** Response Content ***:\n"
             "CONTENT")
 
-        // storageDriverS3NewWrite() and StorageDriverS3FileWrite
+        // storageS3NewWrite() and StorageWriteS3
         // -------------------------------------------------------------------------------------------------------------------------
         // File is written all at once
-        StorageFileWrite *write = NULL;
+        StorageWrite *write = NULL;
         TEST_ASSIGN(write, storageNewWriteNP(s3, strNew("file.txt")), "new write file");
         TEST_RESULT_VOID(storagePutNP(write, BUFSTRDEF("ABCD")), "put file all at once");
 
-        TEST_RESULT_BOOL(storageFileWriteAtomic(write), true, "write is atomic");
-        TEST_RESULT_BOOL(storageFileWriteCreatePath(write), true, "path will be created");
-        TEST_RESULT_UINT(storageFileWriteModeFile(write), 0, "file mode is 0");
-        TEST_RESULT_UINT(storageFileWriteModePath(write), 0, "path mode is 0");
-        TEST_RESULT_STR(strPtr(storageFileWriteName(write)), "/file.txt", "check file name");
-        TEST_RESULT_BOOL(storageFileWriteSyncFile(write), true, "file is synced");
-        TEST_RESULT_BOOL(storageFileWriteSyncPath(write), true, "path is synced");
+        TEST_RESULT_BOOL(storageWriteAtomic(write), true, "write is atomic");
+        TEST_RESULT_BOOL(storageWriteCreatePath(write), true, "path will be created");
+        TEST_RESULT_UINT(storageWriteModeFile(write), 0, "file mode is 0");
+        TEST_RESULT_UINT(storageWriteModePath(write), 0, "path mode is 0");
+        TEST_RESULT_STR(strPtr(storageWriteName(write)), "/file.txt", "check file name");
+        TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
+        TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
 
-        TEST_RESULT_VOID(
-            storageDriverS3FileWriteClose((StorageDriverS3FileWrite *)storageFileWriteFileDriver(write)),
-            "close file again");
-        TEST_RESULT_VOID(
-            storageDriverS3FileWriteFree((StorageDriverS3FileWrite *)storageFileWriteFileDriver(write)),
-            "free file");
-        TEST_RESULT_VOID(storageDriverS3FileWriteFree(NULL), "free null file");
+        TEST_RESULT_VOID(storageWriteS3Close((StorageWriteS3 *)storageWriteDriver(write)), "close file again");
 
         // Zero-length file
         TEST_ASSIGN(write, storageNewWriteNP(s3, strNew("file.txt")), "new write file");

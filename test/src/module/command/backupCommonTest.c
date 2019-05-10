@@ -2,7 +2,7 @@
 Test Common Functions and Definitions for Backup and Expire Commands
 ***********************************************************************************************************************************/
 #include "common/harnessConfig.h"
-#include "storage/driver/posix/storage.h"
+#include "storage/posix/storage.h"
 
 #include <common/regExp.h>
 

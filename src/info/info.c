@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Info Handler
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,9 +10,11 @@ Info Handler
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/io/filter/filter.intern.h"
 #include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/type/json.h"
 #include "info/info.h"
 #include "storage/helper.h"
@@ -36,6 +40,8 @@ struct Info
     const String *cipherPass;                                       // Cipher passphrase if set
 };
 
+OBJECT_DEFINE_FREE(INFO);
+
 /***********************************************************************************************************************************
 Generate hash for the contents of an ini file
 ***********************************************************************************************************************************/
@@ -52,11 +58,11 @@ infoHash(const Ini *ini)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        CryptoHash *hash = cryptoHashNew(HASH_TYPE_SHA1_STR);
+        IoFilter *hash = cryptoHashNew(HASH_TYPE_SHA1_STR);
         StringList *sectionList = strLstSort(iniSectionList(ini), sortOrderAsc);
 
         // Initial JSON opening bracket
-        cryptoHashProcessC(hash, (const unsigned char *)"{", 1);
+        ioFilterProcessIn(hash, BUFSTRDEF("{"));
 
         // Loop through sections and create hash for checking checksum
         for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
@@ -65,12 +71,12 @@ infoHash(const Ini *ini)
 
             // Add a comma before additional sections
             if (sectionIdx != 0)
-                cryptoHashProcessC(hash, (const unsigned char *)",", 1);
+                ioFilterProcessIn(hash, BUFSTRDEF(","));
 
             // Create the section header
-            cryptoHashProcessC(hash, (const unsigned char *)"\"", 1);
-            cryptoHashProcessStr(hash, section);
-            cryptoHashProcessC(hash, (const unsigned char *)"\":{", 3);
+            ioFilterProcessIn(hash, BUFSTRDEF("\""));
+            ioFilterProcessIn(hash, BUFSTR(section));
+            ioFilterProcessIn(hash, BUFSTRDEF("\":{"));
 
             StringList *keyList = strLstSort(iniSectionKeyList(ini, section), sortOrderAsc);
             unsigned int keyListSize = strLstSize(keyList);
@@ -84,25 +90,27 @@ infoHash(const Ini *ini)
                 if ((strEq(section, INFO_SECTION_BACKREST_STR) && !strEq(key, INFO_KEY_CHECKSUM_STR)) ||
                     !strEq(section, INFO_SECTION_BACKREST_STR))
                 {
-                    cryptoHashProcessC(hash, (const unsigned char *)"\"", 1);
-                    cryptoHashProcessStr(hash, key);
-                    cryptoHashProcessC(hash, (const unsigned char *)"\":", 2);
-                    cryptoHashProcessStr(hash, iniGet(ini, section, strLstGet(keyList, keyIdx)));
+                    ioFilterProcessIn(hash, BUFSTRDEF("\""));
+                    ioFilterProcessIn(hash, BUFSTR(key));
+                    ioFilterProcessIn(hash, BUFSTRDEF("\":"));
+                    ioFilterProcessIn(hash, BUFSTR(iniGet(ini, section, strLstGet(keyList, keyIdx))));
 
                     if ((keyListSize > 1) && (keyIdx < keyListSize - 1))
-                        cryptoHashProcessC(hash, (const unsigned char *)",", 1);
+                        ioFilterProcessIn(hash, BUFSTRDEF(","));
                 }
             }
 
             // Close the key/value list
-            cryptoHashProcessC(hash, (const unsigned char *)"}", 1);
+            ioFilterProcessIn(hash, BUFSTRDEF("}"));
         }
 
         // JSON closing bracket
-        cryptoHashProcessC(hash, (const unsigned char *)"}", 1);
+        ioFilterProcessIn(hash, BUFSTRDEF("}"));
+
+        Variant *resultVar = ioFilterResult(hash);
 
         memContextSwitch(MEM_CONTEXT_OLD());
-        result = bufHex(cryptoHash(hash));
+        result = strDup(varStr(resultVar));
         memContextSwitch(MEM_CONTEXT_TEMP());
     }
     MEM_CONTEXT_TEMP_END();
@@ -135,15 +143,13 @@ infoLoad(Info *this, const Storage *storage, const String *fileName, bool copyFi
         const String *fileNameExt = copyFile ? strNewFmt("%s" INFO_COPY_EXT, strPtr(fileName)) : fileName;
 
         // Attempt to load the file
-        StorageFileRead *infoRead = storageNewReadNP(storage, fileNameExt);
+        StorageRead *infoRead = storageNewReadNP(storage, fileNameExt);
 
         if (cipherType != cipherTypeNone)
         {
             ioReadFilterGroupSet(
-                storageFileReadIo(infoRead),
-                ioFilterGroupAdd(
-                    ioFilterGroupNew(), cipherBlockFilter(cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass),
-                    NULL))));
+                storageReadIo(infoRead),
+                ioFilterGroupAdd(ioFilterGroupNew(), cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL)));
         }
 
         // Load and parse the info file
@@ -323,15 +329,13 @@ infoSave(
         iniSet(ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR, jsonFromStr(infoHash(ini)));
 
         // Save info file
-        IoWrite *infoWrite = storageFileWriteIo(storageNewWriteNP(storage, fileName));
+        IoWrite *infoWrite = storageWriteIo(storageNewWriteNP(storage, fileName));
 
         if (cipherType != cipherTypeNone)
         {
             ioWriteFilterGroupSet(
                 infoWrite,
-                ioFilterGroupAdd(
-                    ioFilterGroupNew(), cipherBlockFilter(cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass),
-                    NULL))));
+                ioFilterGroupAdd(ioFilterGroupNew(), cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL)));
         }
 
         iniSave(ini, infoWrite);
@@ -358,20 +362,4 @@ infoCipherPass(const Info *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->cipherPass);
-}
-
-/***********************************************************************************************************************************
-Free the object
-***********************************************************************************************************************************/
-void
-infoFree(Info *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INFO, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

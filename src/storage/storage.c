@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Storage Interface
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -8,6 +10,7 @@ Storage Interface
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/object.h"
 #include "common/wait.h"
 #include "storage/storage.intern.h"
 
@@ -28,6 +31,8 @@ struct Storage
     bool pathResolve;
     StoragePathExpressionCallback pathExpressionFunction;
 };
+
+OBJECT_DEFINE_FREE(STORAGE);
 
 /***********************************************************************************************************************************
 New storage object
@@ -81,11 +86,11 @@ storageNew(
 Copy a file
 ***********************************************************************************************************************************/
 bool
-storageCopy(StorageFileRead *source, StorageFileWrite *destination)
+storageCopy(StorageRead *source, StorageWrite *destination)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_FILE_READ, source);
-        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE, destination);
+        FUNCTION_LOG_PARAM(STORAGE_READ, source);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE, destination);
     FUNCTION_LOG_END();
 
     ASSERT(source != NULL);
@@ -96,25 +101,25 @@ storageCopy(StorageFileRead *source, StorageFileWrite *destination)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Open source file
-        if (ioReadOpen(storageFileReadIo(source)))
+        if (ioReadOpen(storageReadIo(source)))
         {
             // Open the destination file now that we know the source file exists and is readable
-            ioWriteOpen(storageFileWriteIo(destination));
+            ioWriteOpen(storageWriteIo(destination));
 
             // Copy data from source to destination
             Buffer *read = bufNew(ioBufferSize());
 
             do
             {
-                ioRead(storageFileReadIo(source), read);
-                ioWrite(storageFileWriteIo(destination), read);
+                ioRead(storageReadIo(source), read);
+                ioWrite(storageWriteIo(destination), read);
                 bufUsedZero(read);
             }
-            while (!ioReadEof(storageFileReadIo(source)));
+            while (!ioReadEof(storageReadIo(source)));
 
             // Close the source and destination files
-            ioReadClose(storageFileReadIo(source));
-            ioWriteClose(storageFileWriteIo(destination));
+            ioReadClose(storageReadIo(source));
+            ioWriteClose(storageWriteIo(destination));
 
             // Set result to indicate that the file was copied
             result = true;
@@ -126,7 +131,7 @@ storageCopy(StorageFileRead *source, StorageFileWrite *destination)
 }
 
 /***********************************************************************************************************************************
-Does a file exist? This function is only for files, not directories.
+Does a file exist? This function is only for files, not paths.
 ***********************************************************************************************************************************/
 bool
 storageExists(const Storage *this, const String *pathExp, StorageExistsParam param)
@@ -166,10 +171,10 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
 Read from storage into a buffer
 ***********************************************************************************************************************************/
 Buffer *
-storageGet(StorageFileRead *file, StorageGetParam param)
+storageGet(StorageRead *file, StorageGetParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_FILE_READ, file);
+        FUNCTION_LOG_PARAM(STORAGE_READ, file);
         FUNCTION_LOG_PARAM(SIZE, param.exactSize);
     FUNCTION_LOG_END();
 
@@ -178,7 +183,7 @@ storageGet(StorageFileRead *file, StorageGetParam param)
     Buffer *result = NULL;
 
     // If the file exists
-    if (ioReadOpen(storageFileReadIo(file)))
+    if (ioReadOpen(storageReadIo(file)))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -186,13 +191,13 @@ storageGet(StorageFileRead *file, StorageGetParam param)
             if (param.exactSize > 0)
             {
                 result = bufNew(param.exactSize);
-                ioRead(storageFileReadIo(file), result);
+                ioRead(storageReadIo(file), result);
 
                 // If an exact read make sure the size is as expected
                 if (bufUsed(result) != param.exactSize)
                 {
                     THROW_FMT(
-                        FileReadError, "unable to read %zu byte(s) from '%s'", param.exactSize, strPtr(storageFileReadName(file)));
+                        FileReadError, "unable to read %zu byte(s) from '%s'", param.exactSize, strPtr(storageReadName(file)));
                 }
             }
             // Else read entire file
@@ -204,13 +209,13 @@ storageGet(StorageFileRead *file, StorageGetParam param)
                 do
                 {
                     // Read data
-                    ioRead(storageFileReadIo(file), read);
+                    ioRead(storageReadIo(file), read);
 
                     // Add to result and free read buffer
                     bufCat(result, read);
                     bufUsedZero(read);
                 }
-                while (!ioReadEof(storageFileReadIo(file)));
+                while (!ioReadEof(storageReadIo(file)));
             }
 
             // Move buffer to parent context on success
@@ -218,7 +223,7 @@ storageGet(StorageFileRead *file, StorageGetParam param)
         }
         MEM_CONTEXT_TEMP_END();
 
-        ioReadClose(storageFileReadIo(file));
+        ioReadClose(storageReadIo(file));
     }
 
     FUNCTION_LOG_RETURN(BUFFER, result);
@@ -234,6 +239,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, fileExp);
         FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -246,11 +252,52 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         String *file = storagePathNP(this, fileExp);
 
         // Call driver function
-        result = this->interface.info(this->driver, file, param.ignoreMissing);
+        result = this->interface.info(this->driver, file, param.ignoreMissing, param.followLink);
+
+        // Dup the strings into the calling context
+        memContextSwitch(MEM_CONTEXT_OLD());
+        result.linkDestination = strDup(result.linkDestination);
+        result.user = strDup(result.user);
+        result.group = strDup(result.group);
+        memContextSwitch(MEM_CONTEXT_TEMP());
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
+}
+
+/***********************************************************************************************************************************
+Info for all files/paths in a path
+***********************************************************************************************************************************/
+bool
+storageInfoList(
+    const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, pathExp);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
+        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(callback != NULL);
+    ASSERT(this->interface.infoList != NULL);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Build the path
+        String *path = storagePathNP(this, pathExp);
+
+        // Call driver function
+        result = this->interface.infoList(this->driver, path, param.errorOnMissing, callback, callbackData);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -287,36 +334,36 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
 Move a file
 ***********************************************************************************************************************************/
 void
-storageMove(const Storage *this, StorageFileRead *source, StorageFileWrite *destination)
+storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_FILE_READ, source);
-        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE, destination);
+        FUNCTION_LOG_PARAM(STORAGE_READ, source);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE, destination);
     FUNCTION_LOG_END();
 
     ASSERT(this->interface.move != NULL);
     ASSERT(source != NULL);
     ASSERT(destination != NULL);
-    ASSERT(!storageFileReadIgnoreMissing(source));
-    ASSERT(strEq(this->type, storageFileReadType(source)));
-    ASSERT(strEq(storageFileReadType(source), storageFileWriteType(destination)));
+    ASSERT(!storageReadIgnoreMissing(source));
+    ASSERT(strEq(this->type, storageReadType(source)));
+    ASSERT(strEq(storageReadType(source), storageWriteType(destination)));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If the file can't be moved it will need to be copied
-        if (!this->interface.move(this->driver, storageFileReadDriver(source), storageFileWriteFileDriver(destination)))
+        if (!this->interface.move(this->driver, source, destination))
         {
             // Perform the copy
             storageCopyNP(source, destination);
 
             // Remove the source file
-            this->interface.remove(this->driver, storageFileReadName(source), false);
+            this->interface.remove(this->driver, storageReadName(source), false);
 
             // Sync source path if the destination path was synced.  We know the source and destination paths are different because
             // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented becaue there's
             // no way to get coverage on it now.
-            if (storageFileWriteSyncPath(destination))
-                this->interface.pathSync(this->driver, strPath(storageFileReadName(source)), false);
+            if (storageWriteSyncPath(destination))
+                this->interface.pathSync(this->driver, strPath(storageReadName(source)), false);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -327,7 +374,7 @@ storageMove(const Storage *this, StorageFileRead *source, StorageFileWrite *dest
 /***********************************************************************************************************************************
 Open a file for reading
 ***********************************************************************************************************************************/
-StorageFileRead *
+StorageRead *
 storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -339,26 +386,26 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
 
     ASSERT(this != NULL);
 
-    StorageFileRead *result = NULL;
+    StorageRead *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         result = this->interface.newRead(this->driver, storagePathNP(this, fileExp), param.ignoreMissing);
 
         if (param.filterGroup != NULL)
-            ioReadFilterGroupSet(storageFileReadIo(result), param.filterGroup);
+            ioReadFilterGroupSet(storageReadIo(result), param.filterGroup);
 
-        storageFileReadMove(result, MEM_CONTEXT_OLD());
+        storageReadMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_FILE_READ, result);
+    FUNCTION_LOG_RETURN(STORAGE_READ, result);
 }
 
 /***********************************************************************************************************************************
 Open a file for writing
 ***********************************************************************************************************************************/
-StorageFileWrite *
+StorageWrite *
 storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -366,6 +413,9 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
         FUNCTION_LOG_PARAM(STRING, fileExp);
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
+        FUNCTION_LOG_PARAM(STRING, param.user);
+        FUNCTION_LOG_PARAM(STRING, param.group);
+        FUNCTION_LOG_PARAM(INT64, param.timeModified);
         FUNCTION_LOG_PARAM(BOOL, param.noCreatePath);
         FUNCTION_LOG_PARAM(BOOL, param.noSyncFile);
         FUNCTION_LOG_PARAM(BOOL, param.noSyncPath);
@@ -376,23 +426,23 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
     ASSERT(this != NULL);
     ASSERT(this->write);
 
-    StorageFileWrite *result = NULL;
+    StorageWrite *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         result = this->interface.newWrite(
             this->driver, storagePathNP(this, fileExp), param.modeFile != 0 ? param.modeFile : this->modeFile,
-            param.modePath != 0 ? param.modePath : this->modePath, !param.noCreatePath, !param.noSyncFile, !param.noSyncPath,
-            !param.noAtomic);
+            param.modePath != 0 ? param.modePath : this->modePath, param.user, param.group, param.timeModified, !param.noCreatePath,
+            !param.noSyncFile, !param.noSyncPath, !param.noAtomic);
 
         if (param.filterGroup != NULL)
-            ioWriteFilterGroupSet(storageFileWriteIo(result), param.filterGroup);
+            ioWriteFilterGroupSet(storageWriteIo(result), param.filterGroup);
 
-        storageFileWriteMove(result, MEM_CONTEXT_OLD());
+        storageWriteMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_FILE_WRITE, result);
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, result);
 }
 
 /***********************************************************************************************************************************
@@ -534,6 +584,31 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
 }
 
 /***********************************************************************************************************************************
+Does a path exist?
+***********************************************************************************************************************************/
+bool
+storagePathExists(const Storage *this, const String *pathExp)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, pathExp);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->interface.pathExists != NULL);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = this->interface.pathExists(this->driver, storagePathNP(this, pathExp));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
 Remove a path
 ***********************************************************************************************************************************/
 void
@@ -593,18 +668,18 @@ void storagePathSync(const Storage *this, const String *pathExp, StoragePathSync
 Write a buffer to storage
 ***********************************************************************************************************************************/
 void
-storagePut(StorageFileWrite *file, const Buffer *buffer)
+storagePut(StorageWrite *file, const Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_FILE_WRITE, file);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE, file);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
     FUNCTION_LOG_END();
 
     ASSERT(file != NULL);
 
-    ioWriteOpen(storageFileWriteIo(file));
-    ioWrite(storageFileWriteIo(file), buffer);
-    ioWriteClose(storageFileWriteIo(file));
+    ioWriteOpen(storageWriteIo(file));
+    ioWrite(storageWriteIo(file), buffer);
+    ioWriteClose(storageWriteIo(file));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -675,20 +750,4 @@ storageToLog(const Storage *this)
 {
     return strNewFmt(
         "{type: %s, path: %s, write: %s}", strPtr(this->type), strPtr(strToLog(this->path)), cvtBoolToConstZ(this->write));
-}
-
-/***********************************************************************************************************************************
-Free storage
-***********************************************************************************************************************************/
-void
-storageFree(const Storage *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, this);
-    FUNCTION_LOG_END();
-
-    if (this != NULL)
-        memContextFree(this->memContext);
-
-    FUNCTION_LOG_RETURN_VOID();
 }

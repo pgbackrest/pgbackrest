@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Memory Context Manager
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -42,7 +44,7 @@ struct MemContext
     unsigned int allocListSize;                                     // Size of alloc list (not the actual count of allocations)
     unsigned int allocFreeIdx;                                      // Index of first free space in the alloc list
 
-    MemContextCallback callbackFunction;                            // Function to call before the context is freed
+    void (*callbackFunction)(void *);                               // Function to call before the context is freed
     void *callbackArgument;                                         // Argument to pass to callback function
 };
 
@@ -238,7 +240,7 @@ memContextNew(const char *name)
 Register a callback to be called just before the context is freed
 ***********************************************************************************************************************************/
 void
-memContextCallback(MemContext *this, void (*callbackFunction)(void *), void *callbackArgument)
+memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *callbackArgument)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
@@ -593,8 +595,20 @@ memContextFree(MemContext *this)
         this->state = memContextStateFreeing;
 
         // Execute callback if defined
+        bool rethrow = false;
+
         if (this->callbackFunction)
-            this->callbackFunction(this->callbackArgument);
+        {
+            TRY_BEGIN()
+            {
+                this->callbackFunction(this->callbackArgument);
+            }
+            CATCH_ANY()
+            {
+                rethrow = true;
+            }
+            TRY_END();
+        }
 
         // Free child context allocations
         if (this->contextChildListSize > 0)
@@ -632,6 +646,10 @@ memContextFree(MemContext *this)
         // Else reset the memory context so it can be reused
         else
             memset(this, 0, sizeof(MemContext));
+
+        // Rethrow the error that was caught in the callback
+        if (rethrow)
+            RETHROW();
     }
 
     FUNCTION_TEST_RETURN_VOID();

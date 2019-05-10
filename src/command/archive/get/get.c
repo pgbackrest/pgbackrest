@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Archive Get Command
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -161,7 +163,7 @@ cmdArchiveGet(void)
                 if (found)
                 {
                     // Source is the WAL segment in the spool queue
-                    StorageFileRead *source = storageNewReadNP(
+                    StorageRead *source = storageNewReadNP(
                         storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strPtr(walSegment)));
 
                     // A move will be attempted but if the spool queue and the WAL path are on different file systems then a copy
@@ -171,7 +173,7 @@ cmdArchiveGet(void)
                     // is safe because if the system crashes Postgres will not try to reuse a restored WAL segment but will instead
                     // request it again using the restore_command. In the case of a move this hardly matters since path syncs are
                     // cheap but if a copy is required we could save a lot of writes.
-                    StorageFileWrite *destination = storageNewWriteP(
+                    StorageWrite *destination = storageNewWriteP(
                         storageLocalWrite(), walDestination, .noCreatePath = true, .noSyncFile = true, .noSyncPath = true,
                         .noAtomic = true);
 
@@ -188,11 +190,10 @@ cmdArchiveGet(void)
                     if (strLstSize(queue) > 0)
                     {
                         // Get size of the WAL segment
-                        size_t walSegmentSize = storageInfoNP(storageLocal(), walDestination).size;
+                        uint64_t walSegmentSize = storageInfoNP(storageLocal(), walDestination).size;
 
                         // Use WAL segment size to estimate queue size and determine if the async process should be launched
-                        queueFull =
-                            strLstSize(queue) * walSegmentSize > cfgOptionUInt64(cfgOptArchiveGetQueueMax) / 2;
+                        queueFull = strLstSize(queue) * walSegmentSize > cfgOptionUInt64(cfgOptArchiveGetQueueMax) / 2;
                     }
                 }
 
