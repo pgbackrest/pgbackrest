@@ -330,8 +330,13 @@ removeExpiredArchive(InfoBackup *infoBackup)
 
                 // globalBackupRetentionList is ordered newest to oldest backup, so create globalBackupArchiveRetentionList of the
                 // newest backups whose archives will be retained
-                for (unsigned int idx = 0; idx < archiveRetention; idx++)
+                for (unsigned int idx = 0;
+                    idx < (archiveRetention < strLstSize(globalBackupRetentionList) ? archiveRetention
+                        : strLstSize(globalBackupRetentionList));
+                    idx++)
+                {
                     strLstAdd(globalBackupArchiveRetentionList, strLstGet(globalBackupRetentionList, idx));
+                }
 
                 // Loop through the archive.info history from oldest to newest and if there is a corresponding directory on disk
                 // then remove WAL that are not part of retention
@@ -345,6 +350,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
 
                     for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(listArchiveDisk); archiveIdx++)
                     {
+                        // Is there an archive directory for this archvieId?
                         if (strCmp(archiveId, strLstGet(listArchiveDisk, archiveIdx)) != 0)
                             continue;
 
