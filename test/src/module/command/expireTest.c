@@ -1,9 +1,10 @@
 /***********************************************************************************************************************************
 Test Command Control
 ***********************************************************************************************************************************/
+#include "storage/posix/storage.h"
+
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
-#include "storage/driver/posix/storage.h"
 
 /***********************************************************************************************************************************
 Helper functions
@@ -67,8 +68,8 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storageDriverPosixInterface(
-        storageDriverPosixNew(strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL));
+    Storage *storageTest = storagePosixNew(
+        strNew(testPath()), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
 
     String *backupStanzaPath = strNew("repo/backup/db");
     String *backupInfoFileName = strNewFmt("%s/backup.info", strPtr(backupStanzaPath));
@@ -769,12 +770,87 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
         harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
-        // Regenerate archive
-        archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000200000000");
-
-        TEST_RESULT_VOID(cmdExpire(), "expire last backup in dir and retain archive for last diff and full (count full as diff)");
-
+        TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive sub path and remove sub path");
+        TEST_RESULT_BOOL(
+            storagePathExistsNP(storageTest, strNewFmt("%s/%s", strPtr(archiveStanzaPath), "9.4-1/0000000100000000")),
+            false, "archive sub path removed");
         harnessLogResult("P00   INFO: expire full backup 20181119-152138F");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--repo1-retention-archive=1");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive path and remove path");
+        TEST_RESULT_BOOL(
+            storagePathExistsNP(storageTest, strNewFmt("%s/%s", strPtr(archiveStanzaPath), "9.4-1")),
+            false, "archive path removed");
+
+        harnessLogResult(
+            "P00   INFO: expire full backup set: 20181119-152800F, 20181119-152800F_20181119-152152D, "
+            "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: remove archive path: /home/vagrant/test/test-0/repo/archive/db/9.4-1");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--repo1-retention-archive=2");
+        strLstAddZ(argList, "--repo1-retention-archive-type=full");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        storagePutNP(storageNewWriteNP(storageTest, backupInfoFileName),
+            harnessInfoChecksumZ(
+                "[backup:current]\n"
+                "20181119-152138F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152800F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "20181119-152900F={"
+                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+                "\"backup-archive-start\":\"000000010000000000000003\",\"backup-archive-stop\":\"000000010000000000000004\","
+                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+                "\n"
+                "[db]\n"
+                "db-catalog-version=201707211\n"
+                "db-control-version=1002\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"10\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+                    "\"db-version\":\"9.4\"}\n"
+                "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
+                    "\"db-version\":\"10\"}\n"));
+
+        TEST_ASSIGN(
+            infoBackup,
+            infoBackupNew(storageTest, backupInfoFileName, false, cipherTypeNone, NULL),
+            "get backup.info");
+        storagePathCreateNP(storageTest, strNewFmt("%s/9.4-1", strPtr(archiveStanzaPath)));
+
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "backup selected for retention does not have archive info");
+
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--repo1-retention-archive=1");
+        strLstAddZ(argList, "--repo1-retention-archive-type=full");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "backup earlier than selected for retention does not have archive info");
     }
 
     // *****************************************************************************************************************************

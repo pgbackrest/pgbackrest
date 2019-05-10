@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Expire Command
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include "command/archive/common.h"
 #include "command/backup/common.h"
 #include "common/type/list.h"
@@ -397,8 +399,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
 
                         // If the archive retention is less than or equal to the number of all backups, then perform selective
                         // expiration
-                        if ((strLstSize(globalBackupArchiveRetentionList) > 0) &&
-                            (archiveRetention <= strLstSize(globalBackupRetentionList)))
+                        if (archiveRetention <= strLstSize(globalBackupRetentionList))
                         {
                             // From the full list of backups in archive retention, find the intersection of local backups to retain
                             // from oldest to newest
