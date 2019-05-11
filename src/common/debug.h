@@ -34,36 +34,29 @@ level is set to debug or trace.
 #define FUNCTION_LOG_LEVEL()                                                                                                       \
     FUNCTION_LOG_logLevel
 
-#ifdef DEBUG
+#ifdef DEBUG_TEST_TRACE
     #define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                      \
         LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                \
                                                                                                                                    \
         {                                                                                                                          \
-            stackTraceParamLog();
+            stackTraceParamLog();                                                                                                  \
+            stackTraceTestStop();
 
     #define FUNCTION_LOG_END_BASE()                                                                                                \
+            stackTraceTestStart();                                                                                                 \
             LOG_WILL(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                          \
         }
-
-    #define FUNCTION_LOG_PARAM_BASE_BEGIN()                                                                                        \
-        stackTraceTestStop()                                                                                                       \
-
-    #define FUNCTION_LOG_PARAM_BASE_END()                                                                                          \
-        stackTraceTestStart()
 #else
     #define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                      \
         LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                \
                                                                                                                                    \
         if (logWill(FUNCTION_LOG_LEVEL()))                                                                                         \
         {                                                                                                                          \
-            stackTraceParamLog()
+            stackTraceParamLog();
 
     #define FUNCTION_LOG_END_BASE()                                                                                                \
             LOG(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                               \
         }
-
-    #define FUNCTION_LOG_PARAM_BASE_BEGIN()
-    #define FUNCTION_LOG_PARAM_BASE_END()
 #endif
 
 /***********************************************************************************************************************************
@@ -82,15 +75,11 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
     FUNCTION_LOG_END_BASE()
 
 #define FUNCTION_LOG_PARAM(typeMacroPrefix, param)                                                                                 \
-    FUNCTION_LOG_PARAM_BASE_BEGIN();                                                                                               \
-    stackTraceParamAdd(FUNCTION_LOG_##typeMacroPrefix##_FORMAT(param, stackTraceParamBuffer(#param), STACK_TRACE_PARAM_MAX));      \
-    FUNCTION_LOG_PARAM_BASE_END()
+    stackTraceParamAdd(FUNCTION_LOG_##typeMacroPrefix##_FORMAT(param, stackTraceParamBuffer(#param), STACK_TRACE_PARAM_MAX))
 
 #define FUNCTION_LOG_PARAM_P(typeMacroPrefix, param)                                                                               \
     do                                                                                                                             \
     {                                                                                                                              \
-        FUNCTION_LOG_PARAM_BASE_BEGIN();                                                                                           \
-                                                                                                                                   \
         char *buffer = stackTraceParamBuffer(#param);                                                                              \
                                                                                                                                    \
         if (param == NULL)                                                                                                         \
@@ -100,16 +89,12 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
             buffer[0] = '*';                                                                                                       \
             stackTraceParamAdd(FUNCTION_LOG_##typeMacroPrefix##_FORMAT(*param, buffer + 1, STACK_TRACE_PARAM_MAX - 1) + 1);        \
         }                                                                                                                          \
-                                                                                                                                   \
-        FUNCTION_LOG_PARAM_BASE_END();                                                                                             \
     }                                                                                                                              \
     while(0)
 
 #define FUNCTION_LOG_PARAM_PP(typeMacroPrefix, param)                                                                              \
     do                                                                                                                             \
     {                                                                                                                              \
-        FUNCTION_LOG_PARAM_BASE_BEGIN();                                                                                           \
-                                                                                                                                   \
         char *buffer = stackTraceParamBuffer(#param);                                                                              \
                                                                                                                                    \
         if (param == NULL)                                                                                                         \
@@ -122,8 +107,6 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
             buffer[1] = '*';                                                                                                       \
             stackTraceParamAdd(FUNCTION_LOG_##typeMacroPrefix##_FORMAT(**param, buffer + 2, STACK_TRACE_PARAM_MAX - 2) + 2);       \
         }                                                                                                                          \
-                                                                                                                                   \
-        FUNCTION_LOG_PARAM_BASE_END();                                                                                             \
     }                                                                                                                              \
     while(0)
 
@@ -293,7 +276,8 @@ test macros are compiled out.
         if (stackTraceTest())                                                                                                      \
         {                                                                                                                          \
             STACK_TRACE_PUSH(logLevelDebug);                                                                                       \
-            stackTraceParamLog()
+            stackTraceParamLog();                                                                                                  \
+            stackTraceTestStop()
 
     #define FUNCTION_TEST_PARAM(typeMacroPrefix, param)                                                                            \
         FUNCTION_LOG_PARAM(typeMacroPrefix, param)
@@ -305,6 +289,7 @@ test macros are compiled out.
         FUNCTION_LOG_PARAM_PP(typeName, param)
 
     #define FUNCTION_TEST_END()                                                                                                    \
+            stackTraceTestStart();                                                                                                 \
         }
 
     #define FUNCTION_TEST_VOID()                                                                                                   \
