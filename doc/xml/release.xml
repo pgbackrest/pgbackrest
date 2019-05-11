@@ -156,6 +156,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve log performance, simplify macros, rename <code>logWill()</code> to <code>logAny()</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Use <code>THROW_ON_SYS_ERROR*()</code> to improve code coverage.</p>
                     </release-item>
 

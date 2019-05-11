@@ -168,7 +168,7 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
                 "%s: %s", strPtr(this->errorPrefix), message == NULL ? "no details available" : strPtr(message));
 
             // Add stack trace if the error is an assertion or debug-level logging is enabled
-            if (type == &AssertError || logWill(logLevelDebug))
+            if (type == &AssertError || logAny(logLevelDebug))
             {
                 const String *stack = varStr(kvGet(responseKv, VARSTR(PROTOCOL_ERROR_STACK_STR)));
 

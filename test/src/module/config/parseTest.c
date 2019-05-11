@@ -14,7 +14,6 @@ Expose log internal data for unit testing/debugging
 ***********************************************************************************************************************************/
 extern LogLevel logLevelStdOut;
 extern LogLevel logLevelStdErr;
-extern LogLevel logLevelFile;
 
 /***********************************************************************************************************************************
 Option find test -- this is done a lot in the deprecated tests

@@ -44,13 +44,13 @@ level is set to debug or trace.
 
     #define FUNCTION_LOG_END_BASE()                                                                                                \
             stackTraceTestStart();                                                                                                 \
-            LOG_WILL(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                          \
+            LOG(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                               \
         }
 #else
     #define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                      \
         LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                \
                                                                                                                                    \
-        if (logWill(FUNCTION_LOG_LEVEL()))                                                                                         \
+        if (logAny(FUNCTION_LOG_LEVEL()))                                                                                          \
         {                                                                                                                          \
             stackTraceParamLog();
 
@@ -226,7 +226,7 @@ Macros to return function results (or void)
                                                                                                                                    \
         STACK_TRACE_POP(false);                                                                                                    \
                                                                                                                                    \
-        IF_LOG_WILL(FUNCTION_LOG_LEVEL())                                                                                          \
+        IF_LOG_ANY(FUNCTION_LOG_LEVEL())                                                                                           \
         {                                                                                                                          \
             char buffer[STACK_TRACE_PARAM_MAX];                                                                                    \
                                                                                                                                    \
@@ -261,7 +261,7 @@ Macros to return function results (or void)
     {                                                                                                                              \
         STACK_TRACE_POP(false);                                                                                                    \
                                                                                                                                    \
-        LOG_WILL(FUNCTION_LOG_LEVEL(), 0, "=> void");                                                                              \
+        LOG(FUNCTION_LOG_LEVEL(), 0, "=> void");                                                                                   \
     }                                                                                                                              \
     while(0)
 

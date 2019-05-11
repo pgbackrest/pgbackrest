@@ -24,7 +24,7 @@ void logInit(
 void logClose(void);
 bool logFileSet(const char *logFile);
 
-bool logWill(LogLevel logLevel);
+bool logAny(LogLevel logLevel);
 
 LogLevel logLevelEnum(const char *logLevel);
 const char *logLevelStr(LogLevel logLevel);
@@ -38,66 +38,59 @@ commonly-used values.
 Note that it's possible that that not all the macros below will appear in the code.  They are included for completeness and future
 usage.
 ***********************************************************************************************************************************/
+// Define a macro to test logAny() that can be removed when performing coverage testing.  Checking logAny() saves a function call
+// for logging calls that won't be output anywhere, but since the macro then contains a branch it causes coverage problems.
+#ifdef DEBUG_COVERAGE
+    #define IF_LOG_ANY(logLevel)
+#else
+    #define IF_LOG_ANY(logLevel)                                                                                                   \
+        if (logAny(logLevel))
+#endif
+
 #define LOG_INTERNAL(logLevel, logRangeMin, logRangeMax, processId, code, ...)                                                     \
-    logInternal(logLevel, logRangeMin, logRangeMax, processId, __FILE__, __func__, code, __VA_ARGS__)
+do                                                                                                                                 \
+{                                                                                                                                  \
+    IF_LOG_ANY(logLevel)                                                                                                           \
+    {                                                                                                                              \
+        logInternal(logLevel, logRangeMin, logRangeMax, processId, __FILE__, __func__, code, __VA_ARGS__);                         \
+    }                                                                                                                              \
+} while (0)
 
 #define LOG_PID(logLevel, processId, code, ...)                                                                                    \
     LOG_INTERNAL(logLevel, LOG_LEVEL_MIN, LOG_LEVEL_MAX, processId, code, __VA_ARGS__)
+
+#define LOG_ASSERT_PID(processId, ...)                                                                                             \
+    LOG_PID(logLevelAssert, processId, errorTypeCode(&AssertError), __VA_ARGS__)
+#define LOG_ERROR_PID(processId, code, ...)                                                                                        \
+    LOG_PID(logLevelError, processId, code, __VA_ARGS__)
+#define LOG_WARN_PID(processId, ...)                                                                                               \
+    LOG_PID(logLevelWarn, processId, 0, __VA_ARGS__)
+#define LOG_INFO_PID(processId, ...)                                                                                               \
+    LOG_PID(logLevelInfo, processId, 0, __VA_ARGS__)
+#define LOG_DETAIL_PID(processId, ...)                                                                                             \
+    LOG_PID(logLevelDetail, processId, 0, __VA_ARGS__)
+#define LOG_DEBUG_PID(processId, ...)                                                                                              \
+    LOG_PID(logLevelDebug, processId, 0, __VA_ARGS__)
+#define LOG_TRACE_PID(processId, ...)                                                                                              \
+    LOG_PID(logLevelTrace, processId, 0, __VA_ARGS__)
+
 #define LOG(logLevel, code, ...)                                                                                                   \
     LOG_PID(logLevel, 0, code, __VA_ARGS__)
 
-// Define a macro to test logWill() that can be removed when performing coverage testing.  Checking logWill() saves a function call
-// for logging calls that won't be output anywhere, but since the macro then contains a branch it causes coverage problems.
-#ifdef DEBUG_COVERAGE
-    #define IF_LOG_WILL(logLevel)
-#else
-    #define IF_LOG_WILL(logLevel)                                                                                                  \
-        if (logWill(logLevel))
-#endif
-
-#define LOG_WILL(logLevel, code, ...)                                                                                              \
-do                                                                                                                                 \
-{                                                                                                                                  \
-    IF_LOG_WILL(logLevel)                                                                                                          \
-        LOG(logLevel, code, __VA_ARGS__);                                                                                          \
-} while(0)
-
-#define LOG_WILL_PID(logLevel, processId, code, ...)                                                                               \
-do                                                                                                                                 \
-{                                                                                                                                  \
-    IF_LOG_WILL(logLevel)                                                                                                          \
-        LOG_PID(logLevel, processId, code, __VA_ARGS__);                                                                           \
-} while(0)
-
 #define LOG_ASSERT(...)                                                                                                            \
-    LOG_WILL(logLevelAssert, errorTypeCode(&AssertError), __VA_ARGS__)
+    LOG(logLevelAssert, errorTypeCode(&AssertError), __VA_ARGS__)
 #define LOG_ERROR(code, ...)                                                                                                       \
-    LOG_WILL(logLevelError, code, __VA_ARGS__)
+    LOG(logLevelError, code, __VA_ARGS__)
 #define LOG_WARN(...)                                                                                                              \
-    LOG_WILL(logLevelWarn, 0, __VA_ARGS__)
+    LOG(logLevelWarn, 0, __VA_ARGS__)
 #define LOG_INFO(...)                                                                                                              \
-    LOG_WILL(logLevelInfo, 0, __VA_ARGS__)
+    LOG(logLevelInfo, 0, __VA_ARGS__)
 #define LOG_DETAIL(...)                                                                                                            \
-    LOG_WILL(logLevelDetail, 0, __VA_ARGS__)
+    LOG(logLevelDetail, 0, __VA_ARGS__)
 #define LOG_DEBUG(...)                                                                                                             \
-    LOG_WILL(logLevelDebug, 0, __VA_ARGS__)
+    LOG(logLevelDebug, 0, __VA_ARGS__)
 #define LOG_TRACE(...)                                                                                                             \
-    LOG_WILL(logLevelTrace, 0, __VA_ARGS__)
-
-#define LOG_ASSERT_PID(processId, ...)                                                                                             \
-    LOG_WILL_PID(logLevelAssert, processId, errorTypeCode(&AssertError), __VA_ARGS__)
-#define LOG_ERROR_PID(processId, code, ...)                                                                                        \
-    LOG_WILL_PID(logLevelError, processId, code, __VA_ARGS__)
-#define LOG_WARN_PID(processId, ...)                                                                                               \
-    LOG_WILL_PID(logLevelWarn, processId, 0, __VA_ARGS__)
-#define LOG_INFO_PID(processId, ...)                                                                                               \
-    LOG_WILL_PID(logLevelInfo, processId, 0, __VA_ARGS__)
-#define LOG_DETAIL_PID(processId, ...)                                                                                             \
-    LOG_WILL_PID(logLevelDetail, processId, 0, __VA_ARGS__)
-#define LOG_DEBUG_PID(processId, ...)                                                                                              \
-    LOG_WILL_PID(logLevelDebug, processId, 0, __VA_ARGS__)
-#define LOG_TRACE_PID(processId, ...)                                                                                              \
-    LOG_WILL_PID(logLevelTrace, processId, 0, __VA_ARGS__)
+    LOG(logLevelTrace, 0, __VA_ARGS__)
 
 /***********************************************************************************************************************************
 Internal Functions
