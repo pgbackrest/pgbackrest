@@ -298,6 +298,7 @@ testRun(void)
         TEST_RESULT_PTR(ioFilterMove(NULL, memContextTop()), NULL, "    move NULL filter to top context");
 
         TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
+        TEST_RESULT_INT(ioReadHandle(bufferRead), -1, "    handle invalid");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
         TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
         TEST_RESULT_SIZE(ioRead(bufferRead, buffer), 0, "    read 0 bytes (full buffer)");
@@ -433,6 +434,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteFilterGroupSet(bufferWrite, filterGroup), "    add filter group to write io");
 
         TEST_RESULT_VOID(ioWriteOpen(bufferWrite), "    open buffer write object");
+        TEST_RESULT_INT(ioWriteHandle(bufferWrite), -1, "    handle invalid");
         TEST_RESULT_VOID(ioWriteLine(bufferWrite, BUFSTRDEF("AB")), "    write line");
         TEST_RESULT_VOID(ioWrite(bufferWrite, bufNew(0)), "    write 0 bytes");
         TEST_RESULT_VOID(ioWrite(bufferWrite, NULL), "    write 0 bytes");

@@ -173,7 +173,7 @@ By convention all variant constant identifiers are appended with _VAR.
 ***********************************************************************************************************************************/
 // Create a Bool Variant constant inline from a bool
 #define VARBOOL(dataParam)                                                                                                         \
-    (dataParam ? BOOL_TRUE_VAR : BOOL_FALSE_VAR)
+    ((const Variant *)&(const VariantBoolConst){.type = varTypeBool, .data = dataParam})
 
 // Create a Double Variant constant inline from a double
 #define VARDBL(dataParam)                                                                                                          \

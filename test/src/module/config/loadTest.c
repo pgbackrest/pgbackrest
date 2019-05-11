@@ -250,6 +250,18 @@ testRun(void)
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
                 " to the maximum.");
 
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--no-log-timestamp"));
+        strLstAdd(argList, strNew("--repo1-retention-archive-type=diff"));
+        strLstAdd(argList, strNew("--repo1-retention-archive=3"));
+        strLstAdd(argList, strNew("--repo1-retention-diff=2"));
+        strLstAdd(argList, strNew("--repo1-retention-full=1"));
+        strLstAdd(argList, strNew("expire"));
+
+        TEST_RESULT_VOID(harnessCfgLoad(strLstSize(argList), strLstPtr(argList)), "load config with success");
+
         // -------------------------------------------------------------------------------------------------------------------------
         setenv("PGBACKREST_REPO1_S3_KEY", "mykey", true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", "mysecretkey", true);

@@ -46,17 +46,26 @@ usage.
 #define LOG(logLevel, code, ...)                                                                                                   \
     LOG_PID(logLevel, 0, code, __VA_ARGS__)
 
+// Define a macro to test logWill() that can be removed when performing coverage testing.  Checking logWill() saves a function call
+// for logging calls that won't be output anywhere, but since the macro then contains a branch it causes coverage problems.
+#ifdef DEBUG_COVERAGE
+    #define IF_LOG_WILL(logLevel)
+#else
+    #define IF_LOG_WILL(logLevel)                                                                                                  \
+        if (logWill(logLevel))
+#endif
+
 #define LOG_WILL(logLevel, code, ...)                                                                                              \
 do                                                                                                                                 \
 {                                                                                                                                  \
-    if (logWill(logLevel))                                                                                                         \
+    IF_LOG_WILL(logLevel)                                                                                                          \
         LOG(logLevel, code, __VA_ARGS__);                                                                                          \
 } while(0)
 
 #define LOG_WILL_PID(logLevel, processId, code, ...)                                                                               \
 do                                                                                                                                 \
 {                                                                                                                                  \
-    if (logWill(logLevel))                                                                                                         \
+    IF_LOG_WILL(logLevel)                                                                                                          \
         LOG_PID(logLevel, processId, code, __VA_ARGS__);                                                                           \
 } while(0)
 

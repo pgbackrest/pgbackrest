@@ -160,6 +160,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve macros and coverage rules that were hiding missing coverage.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improve efficiency of <code>FUNCTION_LOG*()</code> macros.</p>
                     </release-item>
                 </release-development-list>

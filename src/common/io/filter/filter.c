@@ -144,8 +144,12 @@ ioFilterDone(const IoFilter *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(
-        this->flushing && (this->interface.done != NULL ? this->interface.done(this->driver) : !ioFilterInputSame(this)));
+    bool result = false;
+
+    if (this->flushing)
+        result = this->interface.done != NULL ? this->interface.done(this->driver) : !ioFilterInputSame(this);
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************

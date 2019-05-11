@@ -361,14 +361,14 @@ helpRender(void)
                 {
                     strCat(result, "\ndeprecated name");
 
-                    if (cfgDefOptionHelpNameAltValueTotal(optionDefId) > 1) // {uncovered - no option has more than one alt name}
+                    if (cfgDefOptionHelpNameAltValueTotal(optionDefId) > 1) // {uncovered_branch - no option with more than one}
                         strCat(result, "s");                                // {+uncovered}
 
                     strCat(result, ": ");
 
                     for (unsigned int nameAltIdx = 0; nameAltIdx < cfgDefOptionHelpNameAltValueTotal(optionDefId); nameAltIdx++)
                     {
-                        if (nameAltIdx != 0)                                // {uncovered - no option has more than one alt name}
+                        if (nameAltIdx != 0)                                // {uncovered_branch - no option with more than one}
                             strCat(result, ", ");                           // {+uncovered}
 
                         strCat(result, cfgDefOptionHelpNameAltValue(optionDefId, nameAltIdx));

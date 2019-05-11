@@ -84,7 +84,7 @@ testLogResult(const char *logFile, const char *expected)
     char actual[32768];
     testLogLoad(logFile, actual, sizeof(actual));
 
-    if (strcmp(actual, expected) != 0)                                                          // {uncovered - no errors in test}
+    if (strcmp(actual, expected) != 0)                                                          // {uncoverable_branch}
         THROW_FMT(                                                                              // {+uncovered}
             AssertError, "\n\nexpected log:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expected, actual);
 

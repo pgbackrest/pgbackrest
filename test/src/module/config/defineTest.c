@@ -91,6 +91,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefCmdRestore, cfgDefOptTest), true, "option test is internal");
 
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgDefOptRecoveryOption), true, "recovery-option is multi");
+        TEST_RESULT_BOOL(cfgDefOptionMulti(cfgDefOptDbInclude), true, "db-include is multi");
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgDefOptStartFast), false, "start-fast is not multi");
 
         TEST_RESULT_STR(cfgDefOptionPrefix(cfgDefOptPgHost), "pg", "option prefix");

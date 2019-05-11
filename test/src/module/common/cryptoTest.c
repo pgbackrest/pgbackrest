@@ -65,7 +65,7 @@ testRun(void)
         int nonZeroTotal = 0;
 
         for (unsigned int charIdx = 0; charIdx < bufferSize; charIdx++)
-            if (buffer[charIdx] != 0)                               // {uncovered - ok if there are no zeros}
+            if (buffer[charIdx] != 0)                               // {uncoverable_branch - ok if there are no zeros}
                 nonZeroTotal++;
 
         TEST_RESULT_INT_NE(nonZeroTotal, 0, "check that there are non-zero values in the buffer");

@@ -7,12 +7,14 @@ These instructions are temporary until a fully automated report is implemented.
 - In `test/src/lcov.conf` remove:
 ```
  # Specify the regular expression of lines to exclude
- lcov_excl_line=\{\+*uncovered|\{\+*uncoverable
+ lcov_excl_line=lcov_excl_line=\{\+{0,1}uncovered[^_]|\{\+{0,1}uncoverable[^_]
 
  # Coverage rate limits
  genhtml_hi_limit = 100
  genhtml_med_limit = 90
 ```
+
+And change `uncover(ed|able)_branch` to `uncoverable_branch`.
 
 - In `test/lib/pgBackRestTest/Common/JobTest.pm` modify:
 ```

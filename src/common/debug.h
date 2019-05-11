@@ -224,9 +224,9 @@ Macros to return function results (or void)
     {                                                                                                                              \
         typePre FUNCTION_LOG_##typeMacroPrefix##_TYPE typePost FUNCTION_LOG_RETURN_result = result;                                \
                                                                                                                                    \
-        STACK_TRACE_POP();                                                                                                         \
+        STACK_TRACE_POP(false);                                                                                                    \
                                                                                                                                    \
-        if (logWill(FUNCTION_LOG_LEVEL()))                                                                                         \
+        IF_LOG_WILL(FUNCTION_LOG_LEVEL())                                                                                          \
         {                                                                                                                          \
             char buffer[STACK_TRACE_PARAM_MAX];                                                                                    \
                                                                                                                                    \
@@ -259,7 +259,7 @@ Macros to return function results (or void)
 #define FUNCTION_LOG_RETURN_VOID()                                                                                                 \
     do                                                                                                                             \
     {                                                                                                                              \
-        STACK_TRACE_POP();                                                                                                         \
+        STACK_TRACE_POP(false);                                                                                                    \
                                                                                                                                    \
         LOG_WILL(FUNCTION_LOG_LEVEL(), 0, "=> void");                                                                              \
     }                                                                                                                              \
@@ -299,20 +299,13 @@ test macros are compiled out.
     #define FUNCTION_TEST_RETURN(result)                                                                                           \
         do                                                                                                                         \
         {                                                                                                                          \
-            if (stackTraceTest())                                                                                                  \
-                STACK_TRACE_POP();                                                                                                 \
-                                                                                                                                   \
+            STACK_TRACE_POP(true);                                                                                                 \
             return result;                                                                                                         \
         }                                                                                                                          \
         while(0);
 
     #define FUNCTION_TEST_RETURN_VOID()                                                                                            \
-        do                                                                                                                         \
-        {                                                                                                                          \
-            if (stackTraceTest())                                                                                                  \
-                STACK_TRACE_POP();                                                                                                 \
-        }                                                                                                                          \
-        while(0);
+        STACK_TRACE_POP(true);
 #else
     #define FUNCTION_TEST_BEGIN()
     #define FUNCTION_TEST_PARAM(typeMacroPrefix, param)

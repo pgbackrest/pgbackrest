@@ -116,6 +116,9 @@ testRun(void)
         TEST_ERROR_FMT(
             storagePosixFileClose(-99, fileName, true), FileCloseError,
             "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
+        TEST_ERROR_FMT(
+            storagePosixFileClose(-99, fileName, false), PathCloseError,
+            "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
 
         TEST_RESULT_VOID(storagePosixFileClose(handle, fileName, true), "close file");
 
@@ -709,7 +712,10 @@ testRun(void)
         fileName = strNewFmt("%s/sub2/testfile", testPath());
 
         TEST_ASSIGN(
-            file, storageNewWriteP(storageTest, fileName, .modePath = 0700, .modeFile = 0600), "new write file (set mode)");
+            file,
+            storageNewWriteP(
+                storageTest, fileName, .modePath = 0700, .modeFile = 0600, .group = strNew(getgrgid(getgid())->gr_name)),
+            "new write file (set mode)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
         TEST_RESULT_VOID(storageWritePosixClose(storageWriteDriver(file)), "   close file again");

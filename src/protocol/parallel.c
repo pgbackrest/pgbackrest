@@ -148,7 +148,7 @@ protocolParallelProcess(ProtocolParallel *this)
             FD_SET((unsigned int)handle, &selectSet);
 
             // Set the max handle
-            if (handle > handleMax)                                         // {+uncovered - handles are often in ascending order}
+            if (handle > handleMax)                                         // {+uncovered_branch - often in ascending order}
                 handleMax = handle;
 
             clientRunningTotal++;

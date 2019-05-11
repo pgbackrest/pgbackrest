@@ -253,17 +253,13 @@ tlsClientHostVerify(const String *host, X509 *certificate)
         if (!altNameFound)
         {
             X509_NAME *subjectName = X509_get_subject_name(certificate);
+            CHECK(subjectName != NULL);
 
-            if (subjectName != NULL)                            // {uncovered - not sure how to create cert with null common name}
-            {
-                int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);
+            int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);
+            CHECK(commonNameIndex >= 0);
 
-                if (commonNameIndex >= 0)                       // {uncovered - it seems this must be >= 0 if CN is not null}
-                {
-                    result = tlsClientHostVerifyName(
-                        host, asn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex))));
-                }
-            }
+            result = tlsClientHostVerifyName(
+                host, asn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex))));
         }
     }
     MEM_CONTEXT_TEMP_END();
