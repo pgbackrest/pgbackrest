@@ -190,6 +190,35 @@ storageRemotePathCreate(THIS_VOID, const String *path, bool errorOnExists, bool 
 }
 
 /***********************************************************************************************************************************
+Does a path exist?
+***********************************************************************************************************************************/
+static bool
+storageRemotePathExists(THIS_VOID, const String *path)
+{
+    THIS(StorageRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR);
+        protocolCommandParamAdd(command, VARSTR(path));
+
+        result = varBool(protocolClientExecute(this->client, command, true));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
 Remove a path
 ***********************************************************************************************************************************/
 static void
@@ -286,8 +315,8 @@ storageRemoteNew(
         this = storageNewP(
             STORAGE_REMOTE_TYPE_STR, NULL, modeFile, modePath, write, pathExpressionFunction, driver,
             .exists = storageRemoteExists, .info = storageRemoteInfo, .list = storageRemoteList, .newRead = storageRemoteNewRead,
-            .newWrite = storageRemoteNewWrite, .pathCreate = storageRemotePathCreate, .pathRemove = storageRemotePathRemove,
-            .pathSync = storageRemotePathSync, .remove = storageRemoteRemove);
+            .newWrite = storageRemoteNewWrite, .pathCreate = storageRemotePathCreate, .pathExists = storageRemotePathExists,
+            .pathRemove = storageRemotePathRemove, .pathSync = storageRemotePathSync, .remove = storageRemoteRemove);
     }
     MEM_CONTEXT_NEW_END();
 

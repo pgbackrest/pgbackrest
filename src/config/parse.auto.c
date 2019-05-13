@@ -126,6 +126,13 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptBufferSize,
     },
 
+    // c option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_C,
+        .val = PARSE_OPTION_FLAG | cfgOptC,
+    },
+
     // checksum-page option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2238,6 +2245,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
     cfgOptBufferSize,
+    cfgOptC,
     cfgOptChecksumPage,
     cfgOptCmdSsh,
     cfgOptCommand,

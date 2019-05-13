@@ -303,6 +303,28 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("storagePathExists()"))
+    {
+        Storage *storageRemote = NULL;
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
+        storagePathCreateNP(storageTest, strNew("repo"));
+
+        TEST_RESULT_BOOL(storagePathExistsNP(storageRemote, strNew("missing")), false, "path does not exist");
+        TEST_RESULT_BOOL(storagePathExistsNP(storageRemote, NULL), true, "path exists");
+
+        // Check protocol function directly
+        // -------------------------------------------------------------------------------------------------------------------------
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewStr(strNew("test")));
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR, paramList, server), true, "protocol path exists");
+        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":false}\n", "check result");
+
+        bufUsedSet(serverWrite, 0);
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("UNIMPLEMENTED"))
     {
         Storage *storageRemote = NULL;

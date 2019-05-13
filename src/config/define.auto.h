@@ -59,6 +59,7 @@ typedef enum
     cfgDefOptArchiveTimeout,
     cfgDefOptBackupStandby,
     cfgDefOptBufferSize,
+    cfgDefOptC,
     cfgDefOptChecksumPage,
     cfgDefOptCmdSsh,
     cfgDefOptCommand,

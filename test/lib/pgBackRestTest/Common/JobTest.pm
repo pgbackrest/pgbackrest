@@ -411,6 +411,7 @@ sub run
                     ($self->{oTest}->{&TEST_DEBUG_UNIT_SUPPRESS} ? '' : " -DDEBUG_UNIT") .
                     (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? ' -DWITH_BACKTRACE' : '') .
                     ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
+                    (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -DDEBUG_COVERAGE' : '') .
                     ($self->{bDebug} ? '' : ' -DNDEBUG') . ($self->{bDebugTestTrace} ? ' -DDEBUG_TEST_TRACE' : '');
 
                 # Flags used to buid harness files

@@ -883,8 +883,8 @@ jsonFromKv(const KeyValue *kv, unsigned int indent)
         strCat(indentDepth, strPtr(indentSpace));
         strCat(jsonStr, strPtr(jsonFromKvInternal(kv, indentSpace, indentDepth)));
 
-        // Add terminating linefeed for pretty print if it is not already added
-        if (indent > 0 && !strEndsWithZ(jsonStr, "\n"))
+        // Add terminating linefeed for pretty print
+        if (indent > 0)
             strCat(jsonStr, "\n");
 
         // Duplicate the string into the calling context
@@ -973,8 +973,8 @@ jsonFromVar(const Variant *var, unsigned int indent)
         else
             strCat(jsonStr, strPtr(jsonFromKvInternal(varKv(var), indentSpace, indentDepth)));
 
-        // Add terminating linefeed for pretty print if it is not already added
-        if (indent > 0 && !strEndsWithZ(jsonStr, "\n"))
+        // Add terminating linefeed for pretty print
+        if (indent > 0)
             strCat(jsonStr, "\n");
 
         // Duplicate the string into the calling context

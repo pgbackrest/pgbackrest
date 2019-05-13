@@ -214,6 +214,9 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     if (cfgOptionSource(cfgOptRepoHostConfigPath) != cfgSourceDefault)
         kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR), cfgOption(cfgOptRepoHostConfigPath));
 
+    // Use a C remote
+    kvPut(optionReplace, VARSTR(CFGOPT_C_STR), VARBOOL(true));
+
     // Add the command option (or use the current command option if it is valid)
     if (!cfgOptionTest(cfgOptCommand))
         kvPut(optionReplace, VARSTR(CFGOPT_COMMAND_STR), VARSTRZ(cfgCommandName(cfgCommand())));

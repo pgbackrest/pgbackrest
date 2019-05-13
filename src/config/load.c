@@ -192,8 +192,10 @@ cfgLoadUpdateOption(void)
                             cfgOptionName(cfgOptRepoRetentionDiff + optionIdx));
                     }
                 }
-                else if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR))
+                else
                 {
+                    CHECK(strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR));
+
                     LOG_WARN("%s option '%s' is not set", strPtr(msgArchiveOff),
                         cfgOptionName(cfgOptRepoRetentionArchive + optionIdx));
                 }

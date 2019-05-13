@@ -130,7 +130,7 @@ testRun(void)
         // Certificate location and validation errors
         // -------------------------------------------------------------------------------------------------------------------------
         // Add test hosts
-        if (system(                                                                                 // {uncovered - test code}
+        if (system(                                                                                 // {uncoverable_branch}
                 "echo \"127.0.0.1 test.pgbackrest.org host.test2.pgbackrest.org test3.pgbackrest.org\" |"
                     " sudo tee -a /etc/hosts > /dev/null") != 0)
         {

@@ -34,6 +34,7 @@ typedef struct StorageInterface
         void *driver, const String *file, mode_t modeFile, mode_t modePath, const String *user, const String *group,
         time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic);
     void (*pathCreate)(void *driver, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode);
+    bool (*pathExists)(void *driver, const String *path);
     void (*pathRemove)(void *driver, const String *path, bool errorOnMissing, bool recurse);
     void (*pathSync)(void *driver, const String *path, bool ignoreMissing);
     void (*remove)(void *driver, const String *file, bool errorOnMissing);

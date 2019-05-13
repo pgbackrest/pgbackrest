@@ -24,6 +24,7 @@ Module variables
 DEBUG_UNIT_EXTERN LogLevel logLevelStdOut = logLevelError;
 DEBUG_UNIT_EXTERN LogLevel logLevelStdErr = logLevelError;
 DEBUG_UNIT_EXTERN LogLevel logLevelFile = logLevelOff;
+DEBUG_UNIT_EXTERN LogLevel logLevelAny = logLevelError;
 
 // Log file handles
 DEBUG_UNIT_EXTERN int logHandleStdOut = STDOUT_FILENO;
@@ -104,6 +105,39 @@ logLevelStr(LogLevel logLevel)
 }
 
 /***********************************************************************************************************************************
+Check if a log level will be logged to any output
+
+This is useful for log messages that are expensive to generate and should be skipped if they will be discarded.
+***********************************************************************************************************************************/
+DEBUG_UNIT_EXTERN void
+logAnySet(void)
+{
+    FUNCTION_TEST_VOID();
+
+    logLevelAny = logLevelStdOut;
+
+    if (logLevelStdErr > logLevelAny)
+        logLevelAny = logLevelStdErr;
+
+    if (logLevelFile > logLevelAny && logHandleFile != -1)
+        logLevelAny = logLevelFile;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+bool
+logAny(LogLevel logLevel)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
+    FUNCTION_TEST_END();
+
+    ASSERT_LOG_LEVEL(logLevel);
+
+    FUNCTION_TEST_RETURN(logLevel <= logLevelAny);
+}
+
+/***********************************************************************************************************************************
 Initialize the log system
 ***********************************************************************************************************************************/
 void
@@ -129,6 +163,8 @@ logInit(
     logTimestamp = logTimestampParam;
     logProcessSize = logProcessMax > 99 ? 3 : 2;
 
+    logAnySet();
+
     FUNCTION_TEST_RETURN_VOID();
 }
 
@@ -146,6 +182,8 @@ logFileClose(void)
         close(logHandleFile);
         logHandleFile = -1;
     }
+
+    logAnySet();
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -184,7 +222,11 @@ logFileSet(const char *logFile)
 
         // Output the banner on first log message
         logFileBanner = false;
+
+        logAnySet();
     }
+
+    logAnySet();
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -204,59 +246,6 @@ logClose(void)
     logFileClose();
 
     FUNCTION_TEST_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Check if a log level will be logged to any output
-
-This is useful for log messages that are expensive to generate and should be skipped if they will be discarded.
-***********************************************************************************************************************************/
-static bool
-logWillFile(LogLevel logLevel)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, logLevel);
-    FUNCTION_TEST_END();
-
-    ASSERT_LOG_LEVEL(logLevel);
-
-    FUNCTION_TEST_RETURN(logLevel <= logLevelFile && logHandleFile != -1);
-}
-
-static bool
-logWillStdErr(LogLevel logLevel)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, logLevel);
-    FUNCTION_TEST_END();
-
-    ASSERT_LOG_LEVEL(logLevel);
-
-    FUNCTION_TEST_RETURN(logLevel <= logLevelStdErr);
-}
-
-static bool
-logWillStdOut(LogLevel logLevel)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, logLevel);
-    FUNCTION_TEST_END();
-
-    ASSERT_LOG_LEVEL(logLevel);
-
-    FUNCTION_TEST_RETURN(logLevel <= logLevelStdOut);
-}
-
-bool
-logWill(LogLevel logLevel)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, logLevel);
-    FUNCTION_TEST_END();
-
-    ASSERT_LOG_LEVEL(logLevel);
-
-    FUNCTION_TEST_RETURN(logWillStdOut(logLevel) || logWillStdErr(logLevel) || logWillFile(logLevel));
 }
 
 /***********************************************************************************************************************************
@@ -426,16 +415,16 @@ logInternal(
     logBuffer[bufferPos] = 0;
 
     // Determine where to log the message based on log-level-stderr
-    if (logWillStdErr(logLevel))
+    if (logLevel <= logLevelStdErr)
     {
         if (logRange(logLevelStdErr, logRangeMin, logRangeMax))
             logWriteIndent(logHandleStdErr, logBufferStdErr, indentSize - (size_t)(logBufferStdErr - logBuffer), "log to stderr");
     }
-    else if (logWillStdOut(logLevel) && logRange(logLevelStdOut, logRangeMin, logRangeMax))
+    else if (logLevel <= logLevelStdOut && logRange(logLevelStdOut, logRangeMin, logRangeMax))
         logWriteIndent(logHandleStdOut, logBuffer, indentSize, "log to stdout");
 
     // Log to file
-    if (logWillFile(logLevel) && logRange(logLevelFile, logRangeMin, logRangeMax))
+    if (logLevel <= logLevelFile && logHandleFile != -1 && logRange(logLevelFile, logRangeMin, logRangeMax))
     {
         // If the banner has not been written
         if (!logFileBanner)

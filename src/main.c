@@ -169,11 +169,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRemote:
                 {
-                    if (strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_STR) ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_GET_ASYNC_STR) ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_STR) ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_ARCHIVE_PUSH_ASYNC_STR) ||
-                        strEq(cfgOptionStr(cfgOptCommand), CFGCMD_INFO_STR))
+                    if (cfgOptionBool(cfgOptC))
                     {
                         cmdRemote(STDIN_FILENO, STDOUT_FILENO);
                     }

@@ -83,12 +83,12 @@ XS_EUPXS(embeddedModuleGet)
     // Ensure all parameters were passed
     dVAR; dXSARGS;
 
-    if (items != 1)                                                 // {uncovered - no invalid calls}
+    if (items != 1)                                                 // {uncovered_branch - no invalid calls}
        croak_xs_usage(cv, "moduleName");                            // {+uncovered}
 
     // Get module name
-    const char *moduleName = (const char *)SvPV_nolen(ST(0));
-    dXSTARG;                                                        // {uncovered - internal Perl macro branch}
+    const char *moduleName = (const char *)SvPV_nolen(ST(0));       // {uncoverable_branch - Perl macro}
+    dXSTARG;                                                        // {uncoverable_branch - Perl macro}
 
     // Find module
     const char *result = NULL;
@@ -104,13 +104,13 @@ XS_EUPXS(embeddedModuleGet)
     }
 
     // Error if the module was not found
-    if (result == NULL)                                             // {uncovered - no invalid modules in embedded Perl}
+    if (result == NULL)                                             // {uncovered_branch - no invalid modules in embedded Perl}
         croak("unable to load embedded module '%s'", moduleName);   // {+uncovered}
 
     // Return module data
     sv_setpv(TARG, result);
     XSprePUSH;
-    PUSHTARG;                                                       // {uncovered - internal Perl macro branch}
+    PUSHTARG;                                                       // {uncoverable_branch - Perl macro}
 
     XSRETURN(1);
 }
@@ -222,11 +222,11 @@ perlExec(void)
     perlEval(perlMain());
 
     // Return result code
-    int code = (int)SvIV(get_sv("iResult", 0));
-    bool errorC = (int)SvIV(get_sv("bErrorC", 0));
-    char *message = SvPV_nolen(get_sv("strMessage", 0));                            // {uncovered - internal Perl macro branch}
+    int code = (int)SvIV(get_sv("iResult", 0));                                     // {uncoverable_branch - Perl macro}
+    bool errorC = (int)SvIV(get_sv("bErrorC", 0));                                  // {uncoverable_branch - Perl macro}
+    char *message = SvPV_nolen(get_sv("strMessage", 0));                            // {uncoverable_branch - Perl macro}
 
-    if (code >= errorTypeCode(&AssertError))                                        // {uncovered - success tested in integration}
+    if (code >= errorTypeCode(&AssertError))                                        // {uncovered_branch - tested in integration}
     {
         if (errorC)                                                                 // {+uncovered}
             RETHROW();                                                              // {+uncovered}
@@ -234,7 +234,7 @@ perlExec(void)
             THROW_CODE(code, strlen(message) == 0 ? PERL_EMBED_ERROR : message);    // {+uncovered}
     }
 
-    FUNCTION_LOG_RETURN(INT, code);                                               // {+uncovered}
+    FUNCTION_LOG_RETURN(INT, code);                                                 // {+uncovered}
 }
 
 /***********************************************************************************************************************************

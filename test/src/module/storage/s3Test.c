@@ -100,6 +100,10 @@ testS3Server(void)
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL));
         harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, "this is a sample file"));
 
+        // Get zero-length file
+        harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file0.txt", NULL));
+        harnessTlsServerReply(testS3ServerResponse(200, "OK", NULL, NULL));
+
         // Throw non-404 error
         harnessTlsServerExpect(testS3ServerRequest(HTTP_VERB_GET, "/file.txt", NULL));
         harnessTlsServerReply(testS3ServerResponse(303, "Some bad status", NULL, "CONTENT"));
@@ -529,7 +533,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageS3*(), StorageS3FileRead, and StorageWriteS3"))
+    if (testBegin("storageS3*(), StorageReadS3, and StorageWriteS3"))
     {
         testS3Server();
 
@@ -551,6 +555,7 @@ testRun(void)
         TEST_RESULT_STR(
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(s3, strNew("file.txt"))))), "this is a sample file",
             "get file");
+        TEST_RESULT_STR(strPtr(strNewBuf(storageGetNP(storageNewReadNP(s3, strNew("file0.txt"))))), "", "get zero-length file");
 
         StorageRead *read = NULL;
         TEST_ASSIGN(read, storageNewReadP(s3, strNew("file.txt"), .ignoreMissing = true), "new read file");

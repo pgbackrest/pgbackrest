@@ -64,19 +64,19 @@ testRun(void)
         stackTraceInit(testExe());
 #endif
 
-        TEST_ERROR(stackTracePop("file1", "function1"), AssertError, "assertion 'stackSize > 0' failed");
+        TEST_ERROR(stackTracePop("file1", "function1", false), AssertError, "assertion 'stackSize > 0' failed");
 
         assert(stackTracePush("file1", "function1", logLevelDebug) == logLevelDebug);
         assert(stackSize == 1);
 
         TEST_ERROR(
-            stackTracePop("file2", "function2"), AssertError,
+            stackTracePop("file2", "function2", false), AssertError,
             "popping file2:function2 but expected file1:function1");
 
         assert(stackTracePush("file1", "function1", logLevelDebug) == logLevelDebug);
 
         TEST_ERROR(
-            stackTracePop("file1", "function2"), AssertError,
+            stackTracePop("file1", "function2", false), AssertError,
             "popping file1:function2 but expected file1:function1");
 
         TRY_BEGIN()
@@ -172,8 +172,17 @@ testRun(void)
                     "stack trace");
 #endif
 
-                stackTracePop("file4.c", "function4");
+                stackTracePop("file4.c", "function4", false);
                 assert(stackSize == 4);
+
+                // Check that stackTracePop() works with test tracing
+                stackTracePush("file_test.c", "function_test", logLevelDebug);
+                stackTracePop("file_test.c", "function_test", true);
+
+                // Check that stackTracePop() does nothing when test tracing is disabled
+                stackTraceTestStop();
+                stackTracePop("bogus.c", "bogus", true);
+                stackTraceTestStart();
 
                 THROW(ConfigError, "test");
             }

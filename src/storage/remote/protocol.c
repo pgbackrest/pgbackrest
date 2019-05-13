@@ -19,6 +19,7 @@ STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_EXISTS_STR,                  PROTOCOL_COM
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_LIST_STR,                    PROTOCOL_COMMAND_STORAGE_LIST);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR,               PROTOCOL_COMMAND_STORAGE_OPEN_READ);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR,              PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
+STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR,             PROTOCOL_COMMAND_STORAGE_PATH_EXISTS);
 
 /***********************************************************************************************************************************
 Regular expressions
@@ -163,6 +164,14 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             while (remaining > 0);
 
             protocolServerResponse(server, NULL);
+        }
+        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR))
+        {
+            // Not all drivers implement pathExists()
+            CHECK(interface.pathExists != NULL);
+
+            protocolServerResponse(server, VARBOOL(             // The unusual line break is to make coverage happy -- not sure why
+                interface.pathExists(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))))));
         }
         else
             found = false;

@@ -116,6 +116,9 @@ testRun(void)
         TEST_ERROR_FMT(
             storagePosixFileClose(-99, fileName, true), FileCloseError,
             "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
+        TEST_ERROR_FMT(
+            storagePosixFileClose(-99, fileName, false), PathCloseError,
+            "unable to close '%s': [9] Bad file descriptor", strPtr(fileName));
 
         TEST_RESULT_VOID(storagePosixFileClose(handle, fileName, true), "close file");
 
@@ -149,7 +152,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageExists()"))
+    if (testBegin("storageExists() and storagePathExists()"))
     {
         TEST_CREATE_NOPERM();
 
@@ -158,8 +161,15 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsP(storageTest, strNew("missing"), .timeout = 100), false, "file does not exist");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_BOOL(storagePathExistsNP(storageTest, strNew("missing")), false, "path does not exist");
+        TEST_RESULT_BOOL(storagePathExistsNP(storageTest, NULL), true, "test path exists");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             storageExistsNP(storageTest, fileNoPerm), FileOpenError,
+            "unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm));
+        TEST_ERROR_FMT(
+            storagePathExistsNP(storageTest, fileNoPerm), PathOpenError,
             "unable to stat '%s': [13] Permission denied", strPtr(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -167,6 +177,7 @@ testRun(void)
         TEST_RESULT_INT(system(strPtr(strNewFmt("touch %s", strPtr(fileExists)))), 0, "create exists file");
 
         TEST_RESULT_BOOL(storageExistsNP(storageTest, fileExists), true, "file exists");
+        TEST_RESULT_BOOL(storagePathExistsNP(storageTest, fileExists), false, "not a path");
         TEST_RESULT_INT(system(strPtr(strNewFmt("sudo rm %s", strPtr(fileExists)))), 0, "remove exists file");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -701,7 +712,10 @@ testRun(void)
         fileName = strNewFmt("%s/sub2/testfile", testPath());
 
         TEST_ASSIGN(
-            file, storageNewWriteP(storageTest, fileName, .modePath = 0700, .modeFile = 0600), "new write file (set mode)");
+            file,
+            storageNewWriteP(
+                storageTest, fileName, .modePath = 0700, .modeFile = 0600, .group = strNew(getgrgid(getgid())->gr_name)),
+            "new write file (set mode)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
         TEST_RESULT_VOID(storageWritePosixClose(storageWriteDriver(file)), "   close file again");

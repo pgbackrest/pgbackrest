@@ -480,6 +480,40 @@ storagePosixPathCreate(THIS_VOID, const String *path, bool errorOnExists, bool n
 }
 
 /***********************************************************************************************************************************
+Does a path exist?
+***********************************************************************************************************************************/
+static bool
+storagePosixPathExists(THIS_VOID,  const String *path)
+{
+    THIS(StoragePosix);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
+
+    bool result = false;
+
+    // Attempt to stat the file to determine if it exists
+    struct stat statPath;
+
+    // Any error other than entry not found should be reported
+    if (stat(strPtr(path), &statPath) == -1)
+    {
+        if (errno != ENOENT)
+            THROW_SYS_ERROR_FMT(PathOpenError, "unable to stat '%s'", strPtr(path));
+    }
+    // Else found
+    else
+        result = S_ISDIR(statPath.st_mode);
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
 Remove a path
 ***********************************************************************************************************************************/
 static void
@@ -517,7 +551,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool errorOnMissing, bool 
                     if (unlink(strPtr(file)) == -1)
                     {
                         // These errors indicate that the entry is actually a path so we'll try to delete it that way
-                        if (errno == EPERM || errno == EISDIR)              // {uncovered - EPERM is not returned on tested systems}
+                        if (errno == EPERM || errno == EISDIR)              // {uncovered_branch - no EPERM on tested systems}
                             storagePosixPathRemove(this, file, false, true);
                         // Else error
                         else
@@ -638,7 +672,8 @@ storagePosixNewInternal(
             type, path, modeFile, modePath, write, pathExpressionFunction, driver, .exists = storagePosixExists,
             .info = storagePosixInfo, .infoList = storagePosixInfoList, .list = storagePosixList, .move = storagePosixMove,
             .newRead = storagePosixNewRead, .newWrite = storagePosixNewWrite, .pathCreate = storagePosixPathCreate,
-            .pathRemove = storagePosixPathRemove, .pathSync = storagePosixPathSync, .remove = storagePosixRemove);
+            .pathExists = storagePosixPathExists, .pathRemove = storagePosixPathRemove, .pathSync = storagePosixPathSync,
+            .remove = storagePosixRemove);
     }
     MEM_CONTEXT_NEW_END();
 

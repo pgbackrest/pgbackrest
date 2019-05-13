@@ -335,7 +335,7 @@ cfgFileLoad(                                                        // NOTE: Pas
                         storageLocal(), strNewFmt("%s/%s", strPtr(configIncludePath), strPtr(strLstGet(list, listIdx))),
                         .ignoreMissing = true));
 
-                if (fileBuffer != NULL) // {uncovered - NULL can only occur if file is missing after file list is retrieved}
+                if (fileBuffer != NULL) // {uncovered_branch - NULL can only occur if file is missing after file list is retrieved}
                 {
                     // Convert the contents of the file buffer to a string object
                     String *configPart = strNewBuf(fileBuffer);

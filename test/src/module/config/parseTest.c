@@ -14,7 +14,6 @@ Expose log internal data for unit testing/debugging
 ***********************************************************************************************************************************/
 extern LogLevel logLevelStdOut;
 extern LogLevel logLevelStdErr;
-extern LogLevel logLevelFile;
 
 /***********************************************************************************************************************************
 Option find test -- this is done a lot in the deprecated tests
@@ -1146,6 +1145,7 @@ testRun(void)
         setenv("PGBACKREST_RESET_REPO1_HOST", "", true);
         setenv("PGBACKREST_TARGET", "xxx", true);
         setenv("PGBACKREST_ONLINE", "y", true);
+        setenv("PGBACKREST_DELTA", "y", true);
         setenv("PGBACKREST_START_FAST", "n", true);
         setenv("PGBACKREST_PG1_SOCKET_PATH", "/path/to/socket", true);
 
@@ -1155,6 +1155,7 @@ testRun(void)
                 "[global]\n"
                 "compress-level=3\n"
                 "spool-path=/path/to/spool\n"
+                "lock-path=/\n"
                 "\n"
                 "[global:backup]\n"
                 "repo1-hardlink=y\n"
@@ -1194,6 +1195,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptLockPath)), "/", "    lock-path is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptLockPath), cfgSourceConfig, "    lock-path is source config");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgSocketPath)), "/path/to/socket", "    pg1-socket-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgSocketPath), cfgSourceConfig, "    pg1-socket-path is config param");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online not is set");
@@ -1210,6 +1213,8 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "    compress-level is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "    backup-standby not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "    backup-standby is source default");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), true, "    delta is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "    delta is source config");
         TEST_RESULT_BOOL(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
 

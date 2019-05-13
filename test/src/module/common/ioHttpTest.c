@@ -444,6 +444,7 @@ testRun(void)
             httpClientRequest(client, strNew("GET"), strNew("/"), query, headerRequest, NULL, false), "request with no content");
         TEST_RESULT_UINT(httpClientResponseCode(client), 200, "    check response code");
         TEST_RESULT_STR(strPtr(httpClientResponseMessage(client)), "OK", "    check response message");
+        TEST_RESULT_UINT(httpClientEof(client), true, "    io is eof");
         TEST_RESULT_STR(
             strPtr(httpHeaderToLog(httpClientReponseHeader(client))),  "{connection: 'ack', key1: '0', key2: 'value2'}",
             "    check response headers");

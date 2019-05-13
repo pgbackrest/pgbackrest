@@ -21,11 +21,11 @@ Macros to access internal functions
     stackTracePush(__FILE__, __func__, logLevel)
 
 #ifdef NDEBUG
-    #define STACK_TRACE_POP()                                                                                                      \
+    #define STACK_TRACE_POP(test)                                                                                                  \
         stackTracePop();
 #else
-    #define STACK_TRACE_POP()                                                                                                      \
-        stackTracePop(__FILE__, __func__);
+    #define STACK_TRACE_POP(test)                                                                                                  \
+        stackTracePop(__FILE__, __func__, test);
 #endif
 
 /***********************************************************************************************************************************
@@ -46,7 +46,7 @@ LogLevel stackTracePush(const char *fileName, const char *functionName, LogLevel
 #ifdef NDEBUG
     void stackTracePop(void);
 #else
-    void stackTracePop(const char *fileName, const char *functionName);
+    void stackTracePop(const char *fileName, const char *functionName, bool test);
 #endif
 
 size_t stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char *functionName, unsigned int fileLine);

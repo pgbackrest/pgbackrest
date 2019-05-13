@@ -63,6 +63,7 @@ testRun(void)
         TEST_RESULT_VOID(iniSet(ini, strNew("section2"), strNew("key2"), strNew("7")), "set section2, key");
         TEST_RESULT_BOOL(iniSectionKeyIsList(ini, strNew("section2"), strNew("key2")), true, "section2, key2 is a list");
         TEST_RESULT_STR(strPtr(strLstJoin(iniGetList(ini, strNew("section2"), strNew("key2")), "|")), "2|7", "get list");
+        TEST_RESULT_STR(iniGetList(ini, strNew("section2"), strNew("key-missing")), NULL, "get missing list");
 
         TEST_RESULT_VOID(iniFree(ini), "free ini");
     }

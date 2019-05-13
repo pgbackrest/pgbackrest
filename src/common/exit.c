@@ -122,7 +122,7 @@ exitSafe(int result, bool error, SignalType signalType)
                 LOG_INTERNAL(logLevel, LOG_LEVEL_MIN, logLevelDetail, 0, errorCode(), errorMessage());
 
                 // Log the stack trace debug levels
-                if (logWill(logLevelDebug))
+                if (logAny(logLevelDebug))
                 {
                     LOG_INTERNAL(
                         logLevel, logLevelDebug, LOG_LEVEL_MAX, 0, errorCode(), "%s\nSTACK TRACE:\n%s", errorMessage(),
