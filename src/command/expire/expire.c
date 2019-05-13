@@ -626,7 +626,7 @@ removeExpiredBackup(InfoBackup *infoBackup)
     ASSERT(infoBackup != NULL);
 
     // Get all the current backups in backup.info
-    StringList *currentBackupList = strLstSort(infoBackupDataLabelListP(infoBackup), sortOrderDesc);
+    StringList *currentBackupList = strLstSort(infoBackupDataLabelListNP(infoBackup), sortOrderDesc);
     StringList *backupList = strLstSort(
         storageListP(
             storageRepo(), STRDEF(STORAGE_REPO_BACKUP), .errorOnMissing = false,
