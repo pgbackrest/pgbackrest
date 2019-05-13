@@ -356,26 +356,9 @@ helpRender(void)
                         strCatFmt(result, "default: %s\n", strPtr(defaultValue));
                 }
 
-                // Output alternate names (call them deprecated so the user will know not to use them)
+                // Output alternate name (call it deprecated so the user will know not to use it)
                 if (cfgDefOptionHelpNameAlt(optionDefId))
-                {
-                    strCat(result, "\ndeprecated name");
-
-                    if (cfgDefOptionHelpNameAltValueTotal(optionDefId) > 1) // {uncovered_branch - no option with more than one}
-                        strCat(result, "s");                                // {+uncovered}
-
-                    strCat(result, ": ");
-
-                    for (unsigned int nameAltIdx = 0; nameAltIdx < cfgDefOptionHelpNameAltValueTotal(optionDefId); nameAltIdx++)
-                    {
-                        if (nameAltIdx != 0)                                // {uncovered_branch - no option with more than one}
-                            strCat(result, ", ");                           // {+uncovered}
-
-                        strCat(result, cfgDefOptionHelpNameAltValue(optionDefId, nameAltIdx));
-                    }
-
-                    strCat(result, "\n");
-                }
+                    strCatFmt(result, "\ndeprecated name: %s\n", cfgDefOptionHelpNameAltValue(optionDefId, 0));
             }
         }
 

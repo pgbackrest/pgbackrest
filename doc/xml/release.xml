@@ -164,6 +164,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Error on multiple option alternate names and simplify help command.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Use <code>THROW_ON_SYS_ERROR*()</code> to improve code coverage.</p>
                     </release-item>
 
