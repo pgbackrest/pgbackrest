@@ -705,7 +705,7 @@ testRun(void)
         harnessLogResult(strPtr(strNewFmt(
             "P00   INFO: expire full backup set: 20181119-152800F, 20181119-152800F_20181119-152152D, "
             "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
-            "P00   INFO: remove archive path: %s/9.4-1",  strPtr(archiveStanzaPath))));
+            "P00   INFO: remove archive path: %s/%s/9.4-1", testPath(), strPtr(archiveStanzaPath))));
 
         TEST_ASSIGN(
             infoBackup,
