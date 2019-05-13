@@ -162,12 +162,21 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
         {
             const ErrorType *type = errorTypeFromCode(varIntForce(error));
             const String *message = varStr(kvGet(responseKv, VARSTR(PROTOCOL_OUTPUT_STR)));
-            const String *stack = varStr(kvGet(responseKv, VARSTR(PROTOCOL_ERROR_STACK_STR)));
 
-            THROWP_FMT(
-                type, "%s: %s%s", strPtr(this->errorPrefix), message == NULL ? "no details available" : strPtr(message),
-                type == &AssertError || logWill(logLevelDebug) ?
-                    (stack == NULL ? "\nno stack trace available" : strPtr(strNewFmt("\n%s", strPtr(stack)))) : "");
+            // Required part of the message
+            String *throwMessage = strNewFmt(
+                "%s: %s", strPtr(this->errorPrefix), message == NULL ? "no details available" : strPtr(message));
+
+            // Add stack trace if the error is an assertion or debug-level logging is enabled
+            if (type == &AssertError || logAny(logLevelDebug))
+            {
+                const String *stack = varStr(kvGet(responseKv, VARSTR(PROTOCOL_ERROR_STACK_STR)));
+
+                strCat(throwMessage, "\n");
+                strCat(throwMessage, stack == NULL ? "no stack trace available" : strPtr(stack));
+            }
+
+            THROWP(type, strPtr(throwMessage));
         }
 
         // Get output

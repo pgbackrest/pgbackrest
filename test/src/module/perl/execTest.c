@@ -38,6 +38,28 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("embeddedModuleGetInternal()"))
+    {
+        TEST_ERROR(embeddedModuleGetInternal(BOGUS_STR), AssertError, "unable to load embedded module 'BOGUS'");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("perlExecResult()"))
+    {
+        TRY_BEGIN()
+        {
+            THROW(PathMissingError, "test message");
+        }
+        CATCH_ANY()
+        {
+            TEST_ERROR(perlExecResult(errorTypeCode(&PathMissingError), true, NULL), PathMissingError, "test message");
+        }
+        TRY_END();
+
+        TEST_RESULT_INT(perlExecResult(0, false, NULL), 0, "test success");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("perlInit(), perlExec(), and perlFree()"))
     {
         StringList *argList = strLstNew();

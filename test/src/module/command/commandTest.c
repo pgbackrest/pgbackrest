@@ -31,6 +31,8 @@ testRun(void)
         strLstAddZ(commandParamList, "param1");
         cfgCommandParamSet(commandParamList);
 
+        harnessLogLevelSet(logLevelInfo);
+
         TEST_RESULT_VOID(cmdBegin(true), "command begin with command parameter");
         harnessLogResult(
             "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --compress");

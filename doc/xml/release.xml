@@ -156,15 +156,23 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve log performance, simplify macros, rename <code>logWill()</code> to <code>logAny()</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improve coverage in <file>perl/exec</file> module.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Use <code>THROW_ON_SYS_ERROR*()</code> to improve code coverage.</p>
                     </release-item>
 
                     <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="cynthia.shang"/>
-                        </release-item-contributor-list>
+                        <p>Improve macros and coverage rules that were hiding missing coverage.</p>
+                    </release-item>
 
-                        <p>Convert main functionality of expire command to c with caveat that S3 removal functions and remote functionality, and ensuring archive and backup info history list always match still need to be implemented.</p>
+                    <release-item>
+                        <p>Improve efficiency of <code>FUNCTION_LOG*()</code> macros.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -177,6 +185,10 @@
 
                     <release-item>
                         <p>Update containers with <postgres/> minor releases and <id>liblz4</id>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>testUser()</code> and <code>testGroup()</code>.</p>
                     </release-item>
 
                     <release-item>

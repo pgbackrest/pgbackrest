@@ -551,7 +551,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool errorOnMissing, bool 
                     if (unlink(strPtr(file)) == -1)
                     {
                         // These errors indicate that the entry is actually a path so we'll try to delete it that way
-                        if (errno == EPERM || errno == EISDIR)              // {uncovered - EPERM is not returned on tested systems}
+                        if (errno == EPERM || errno == EISDIR)              // {uncovered_branch - no EPERM on tested systems}
                             storagePosixPathRemove(this, file, false, true);
                         // Else error
                         else

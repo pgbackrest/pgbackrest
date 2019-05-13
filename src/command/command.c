@@ -44,7 +44,7 @@ cmdBegin(bool logOption)
     ASSERT(cfgCommand() != cfgCmdNone);
 
     // This is fairly expensive log message to generate so skip it if it won't be output
-    if (logWill(cfgLogLevelDefault()))
+    if (logAny(cfgLogLevelDefault()))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -175,7 +175,7 @@ cmdEnd(int code, const String *errorMessage)
     ASSERT(cfgCommand() != cfgCmdNone);
 
     // Skip this log message if it won't be output.  It's not too expensive but since we skipped cmdBegin(), may as well.
-    if (logWill(cfgLogLevelDefault()))
+    if (logAny(cfgLogLevelDefault()))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {

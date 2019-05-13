@@ -252,7 +252,7 @@ testRun(void)
 
                 // Throw errors
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop with error text");
-                ioWriteStrLine(write, strNew("{\"err\":25,\"out\":\"sample error message\"}"));
+                ioWriteStrLine(write, strNew("{\"err\":25,\"out\":\"sample error message\",\"errStack\":\"stack data\"}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR(strPtr(ioReadLine(read)), "{\"cmd\":\"noop\"}", "noop with no error text");
@@ -321,8 +321,15 @@ testRun(void)
                 // Throw errors
                 TEST_ERROR(
                     protocolClientNoOp(client), AssertError,
-                    "raised from test client: sample error message\nno stack trace available");
-                TEST_ERROR(protocolClientNoOp(client), UnknownError, "raised from test client: no details available");
+                    "raised from test client: sample error message\nstack data");
+
+                harnessLogLevelSet(logLevelDebug);
+                TEST_ERROR(
+                    protocolClientNoOp(client), UnknownError,
+                    "raised from test client: no details available\nno stack trace available");
+                harnessLogLevelReset();
+
+                // No output expected
                 TEST_ERROR(protocolClientNoOp(client), AssertError, "no output required by command");
 
                 // Get command output
