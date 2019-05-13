@@ -79,9 +79,9 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, s3 => false, encrypt => false},
+        {vm => VM1, s3 =>  true, encrypt =>  true},
         {vm => VM2, s3 =>  true, encrypt => false},
-        {vm => VM3, s3 =>  true, encrypt =>  true},
+        {vm => VM3, s3 => false, encrypt => false},
         {vm => VM4, s3 => false, encrypt =>  true},
     )
     {
@@ -91,6 +91,11 @@ sub run
         # Increment the run, log, and decide whether this unit test should be run
         my $bS3 = $rhRun->{s3};
         my $bEncrypt = $rhRun->{encrypt};
+
+        if ($bS3 && ($self->vm() eq VM3))
+        {
+            confess &log("Cannot configure s3 for expect log tests!");
+        }
 
         ############################################################################################################################
         # Pass !$bEncrypt so expect logs are not generated for encryption tests
