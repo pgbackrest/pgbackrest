@@ -160,6 +160,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve coverage in <file>perl/exec</file> module.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Use <code>THROW_ON_SYS_ERROR*()</code> to improve code coverage.</p>
                     </release-item>
 

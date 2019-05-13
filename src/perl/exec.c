@@ -77,24 +77,17 @@ perlMain(void)
 /***********************************************************************************************************************************
 Dynamic module loader
 ***********************************************************************************************************************************/
-XS_EUPXS(embeddedModuleGet);
-XS_EUPXS(embeddedModuleGet)
+static const char *
+embeddedModuleGetInternal(const char *moduleName)
 {
-    // Ensure all parameters were passed
-    dVAR; dXSARGS;
-
-    if (items != 1)                                                 // {uncovered_branch - no invalid calls}
-       croak_xs_usage(cv, "moduleName");                            // {+uncovered}
-
-    // Get module name
-    const char *moduleName = (const char *)SvPV_nolen(ST(0));       // {uncoverable_branch - Perl macro}
-    dXSTARG;                                                        // {uncoverable_branch - Perl macro}
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, moduleName);
+    FUNCTION_TEST_END();
 
     // Find module
     const char *result = NULL;
 
-    for (unsigned int moduleIdx = 0;                                // {uncovered - no invalid modules in embedded Perl}
-         moduleIdx < sizeof(embeddedModule) / sizeof(EmbeddedModule); moduleIdx++)
+    for (unsigned int moduleIdx = 0; moduleIdx < sizeof(embeddedModule) / sizeof(EmbeddedModule); moduleIdx++)
     {
         if (strcmp(embeddedModule[moduleIdx].name, moduleName) == 0)
         {
@@ -104,11 +97,25 @@ XS_EUPXS(embeddedModuleGet)
     }
 
     // Error if the module was not found
-    if (result == NULL)                                             // {uncovered_branch - no invalid modules in embedded Perl}
-        croak("unable to load embedded module '%s'", moduleName);   // {+uncovered}
+    if (result == NULL)
+        THROW_FMT(AssertError, "unable to load embedded module '%s'", moduleName);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+XS_EUPXS(embeddedModuleGet);
+XS_EUPXS(embeddedModuleGet)
+{
+    dVAR; dXSARGS;
+    (void)cv;
+
+    // Get module name
+    CHECK(items == 1);
+    const char *moduleName = (const char *)SvPV_nolen(ST(0));       // {uncoverable_branch - Perl macro}
+    dXSTARG;                                                        // {uncoverable_branch - Perl macro}
 
     // Return module data
-    sv_setpv(TARG, result);
+    sv_setpv(TARG, embeddedModuleGetInternal(moduleName));
     XSprePUSH;
     PUSHTARG;                                                       // {uncoverable_branch - Perl macro}
 
@@ -210,6 +217,27 @@ perlInit(void)
 /***********************************************************************************************************************************
 Execute main function in Perl
 ***********************************************************************************************************************************/
+static int perlExecResult(int code, bool errorC, const char *message)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, code);
+        FUNCTION_TEST_PARAM(BOOL, errorC);
+        FUNCTION_TEST_PARAM(STRINGZ, message);
+    FUNCTION_TEST_END();
+
+    int result = code;
+
+    if (code >= errorTypeCode(&AssertError))
+    {
+        if (errorC)
+            RETHROW();
+        else
+            THROW_CODE(code, strlen(message) == 0 ? PERL_EMBED_ERROR : message);
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 int
 perlExec(void)
 {
@@ -226,15 +254,7 @@ perlExec(void)
     bool errorC = (int)SvIV(get_sv("bErrorC", 0));                                  // {uncoverable_branch - Perl macro}
     char *message = SvPV_nolen(get_sv("strMessage", 0));                            // {uncoverable_branch - Perl macro}
 
-    if (code >= errorTypeCode(&AssertError))                                        // {uncovered_branch - tested in integration}
-    {
-        if (errorC)                                                                 // {+uncovered}
-            RETHROW();                                                              // {+uncovered}
-        else
-            THROW_CODE(code, strlen(message) == 0 ? PERL_EMBED_ERROR : message);    // {+uncovered}
-    }
-
-    FUNCTION_LOG_RETURN(INT, code);                                                 // {+uncovered}
+    FUNCTION_LOG_RETURN(INT, perlExecResult(code, errorC, message));
 }
 
 /***********************************************************************************************************************************
