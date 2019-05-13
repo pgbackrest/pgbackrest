@@ -72,7 +72,6 @@ infoBackupDataLabelList - get a list of current backup labels
 ***********************************************************************************************************************************/
 typedef struct InfoBackupDataLabelListParam
 {
-    bool reverse;
     const String *filter;
 } InfoBackupDataLabelListParam;
 

@@ -164,7 +164,7 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Convert expire command to c with caveat that archive and backup info history list matching must be ensured before implementing in main.</p>
+                        <p>Convert main functionality of expire command to c with caveat that S3 removal functions and remote functionality, and ensuring archive and backup info history list always match still need to be implemented.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>

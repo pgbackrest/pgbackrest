@@ -702,10 +702,10 @@ testRun(void)
             storagePathExistsNP(storageTest, strNewFmt("%s/%s", strPtr(archiveStanzaPath), "9.4-1")),
             false, "  archive path removed");
 
-        harnessLogResult(
+        harnessLogResult(strPtr(strNewFmt(
             "P00   INFO: expire full backup set: 20181119-152800F, 20181119-152800F_20181119-152152D, "
             "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
-            "P00   INFO: remove archive path: /home/vagrant/test/test-0/repo/archive/db/9.4-1");
+            "P00   INFO: remove archive path: %s/9.4-1",  strPtr(archiveStanzaPath))));
 
         TEST_ASSIGN(
             infoBackup,
