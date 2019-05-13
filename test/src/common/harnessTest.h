@@ -34,6 +34,9 @@ void testExpectPathSet(const char *testExpectPath);
 const char *testRepoPath(void);
 void testRepoPathSet(const char *testRepoPath);
 
+const char *testUser(void);
+const char *testGroup(void);
+
 /***********************************************************************************************************************************
 Maximum size of a formatted result in the TEST_RESULT macro.  Strings don't count as they are output directly, so this only applies
 to the formatting of bools, ints, floats, etc.  This should be plenty of room for any of those types.

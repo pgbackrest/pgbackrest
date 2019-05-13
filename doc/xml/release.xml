@@ -184,6 +184,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <code>testUser()</code> and <code>testGroup()</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <id>build-max</id> option to set max build processes.</p>
                     </release-item>
 

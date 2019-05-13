@@ -234,8 +234,8 @@ testRun(void)
         TEST_RESULT_INT(info.mode, 0770, "    check mode");
         TEST_RESULT_UINT(info.timeModified, 1555160000, "    check mod time");
         TEST_RESULT_PTR(info.linkDestination, NULL, "    no link destination");
-        TEST_RESULT_STR(strPtr(info.user), getpwuid(getuid())->pw_name, "    check user");
-        TEST_RESULT_STR(strPtr(info.group), getgrgid(getgid())->gr_name, "    check group");
+        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *buffer = BUFSTRDEF("TESTFILE");
@@ -270,8 +270,8 @@ testRun(void)
         TEST_RESULT_INT(info.size, 0, "    check size");
         TEST_RESULT_INT(info.mode, 0777, "    check mode");
         TEST_RESULT_STR(strPtr(info.linkDestination), "/tmp", "    check link destination");
-        TEST_RESULT_STR(strPtr(info.user), getpwuid(getuid())->pw_name, "    check user");
-        TEST_RESULT_STR(strPtr(info.group), getgrgid(getgid())->gr_name, "    check group");
+        TEST_RESULT_STR(strPtr(info.user), testUser(), "    check user");
+        TEST_RESULT_STR(strPtr(info.group), testGroup(), "    check group");
 
         TEST_ASSIGN(info, storageInfoP(storageTest, linkName, .followLink = true), "get info from path pointed to by link");
         TEST_RESULT_PTR(info.name, NULL, "    name is not set");
@@ -679,9 +679,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
             file,
-            storageNewWriteP(
-                storageTest, fileName, .user = strNew(getpwuid(getuid())->pw_name), .group = strNew(getgrgid(getgid())->gr_name),
-                .timeModified = 1),
+            storageNewWriteP(storageTest, fileName, .user = strNew(testUser()), .group = strNew(testGroup()), .timeModified = 1),
             "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
         TEST_RESULT_INT(
@@ -697,8 +695,7 @@ testRun(void)
         String *fileNameTmp = strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strPtr(fileName));
 
         TEST_ASSIGN(
-            file, storageNewWriteP(storageTest, fileName, .user = strNew(getpwuid(getuid())->pw_name)),
-            "new write file (defaults)");
+            file, storageNewWriteP(storageTest, fileName, .user = strNew(testUser())), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
         TEST_RESULT_VOID(ioWrite(storageWriteIo(file), BUFSTRDEF("TESTDATA")), "write data");
         TEST_RESULT_VOID(ioWriteFlush(storageWriteIo(file)), "flush data");
@@ -712,9 +709,7 @@ testRun(void)
         fileName = strNewFmt("%s/sub2/testfile", testPath());
 
         TEST_ASSIGN(
-            file,
-            storageNewWriteP(
-                storageTest, fileName, .modePath = 0700, .modeFile = 0600, .group = strNew(getgrgid(getgid())->gr_name)),
+            file, storageNewWriteP(storageTest, fileName, .modePath = 0700, .modeFile = 0600, .group = strNew(testGroup())),
             "new write file (set mode)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
