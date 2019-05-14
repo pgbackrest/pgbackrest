@@ -422,13 +422,10 @@ removeExpiredArchive(InfoBackup *infoBackup)
                         // forever.
                         else
                         {
-                            if (strLstSize(localBackupRetentionList) > 0)
-                            {
-                                LOG_INFO(
-                                    "full backup total < %u - using oldest full backup for %s archive retention",
-                                    archiveRetention, strPtr(archiveId));
-                                strLstAdd(localBackupArchiveRententionList, strLstGet(localBackupRetentionList, 0));
-                            }
+                            LOG_INFO(
+                                "full backup total < %u - using oldest full backup for %s archive retention",
+                                archiveRetention, strPtr(archiveId));
+                            strLstAdd(localBackupArchiveRententionList, strLstGet(localBackupRetentionList, 0));
                         }
 
                         // If no local backups were found as part of retention then set the backup archive retention to the newest

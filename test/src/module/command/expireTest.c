@@ -97,23 +97,23 @@ testRun(void)
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "20181119-152800F={"
             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
+            "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
             "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
             "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
             "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "20181119-152800F_20181119-152152D={"
-            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000003\","
-            "\"backup-archive-stop\":\"000000010000000000000003\",\"backup-info-repo-size\":2369186,"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000005\","
+            "\"backup-archive-stop\":\"000000010000000000000005\",\"backup-info-repo-size\":2369186,"
             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
             "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
             "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "20181119-152800F_20181119-152155I={"
-            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000004\","
-            "\"backup-archive-stop\":\"000000010000000000000004\",\"backup-info-repo-size\":2369186,"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000006\","
+            "\"backup-archive-stop\":\"000000010000000000000006\",\"backup-info-repo-size\":2369186,"
             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
             "\"backup-prior\":\"20181119-152800F_20181119-152152D\","
             "\"backup-reference\":[\"20181119-152800F\",\"20181119-152800F_20181119-152152D\"],"
@@ -501,7 +501,7 @@ testRun(void)
             "set option 'repo1-retention-full' to the maximum.");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        // Create backup.info with current backups
+        // Create backup.info with current backups spread over different timelines
         storagePutNP(storageNewWriteNP(storageTest, backupInfoFileName),
             harnessInfoChecksumZ(
                 "[backup:current]\n"
@@ -807,13 +807,15 @@ testRun(void)
                 "[db]\n"
                 "db-catalog-version=201707211\n"
                 "db-control-version=1002\n"
-                "db-id=1\n"
-                "db-system-id=6625592122879095702\n"
-                "db-version=\"9.4\"\n"
+                "db-id=2\n"
+                "db-system-id=6626363367545678089\n"
+                "db-version=\"10\"\n"
                 "\n"
                 "[db:history]\n"
                 "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                    "\"db-version\":\"9.4\"}"));
+                    "\"db-version\":\"9.4\"}\n"
+                "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
+                    "\"db-version\":\"10\"}\n"));
 
         TEST_ASSIGN(
             infoBackup,
