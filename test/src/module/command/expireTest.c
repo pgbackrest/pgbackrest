@@ -777,11 +777,6 @@ testRun(void)
         //     "20181119-152900F, 20181119-152900F_20181119-152500I", "  remaining current backups correct");
         //
         // //--------------------------------------------------------------------------------------------------------------------------
-        argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--repo1-retention-archive=2");
-        strLstAddZ(argList, "--repo1-retention-archive-type=full");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
-
         storagePutNP(storageNewWriteNP(storageTest, backupInfoFileName),
             harnessInfoChecksumZ(
                 "[backup:current]\n"
@@ -824,16 +819,24 @@ testRun(void)
             infoBackup,
             infoBackupNew(storageTest, backupInfoFileName, false, cipherTypeNone, NULL),
             "get backup.info");
-        archiveGenerate(storageTest, archiveStanzaPath, 1, 5, "9.4-1", "0000000100000000");
-        harnessLogLevelSet(logLevelDetail);
+
+        TEST_RESULT_VOID(storagePathCreateNP(storageTest, strNewFmt("%s/9.4-1", strPtr(archiveStanzaPath))), "create empty archive path");
+        // archiveGenerate(storageTest, archiveStanzaPath, 1, 5, "9.4-1", "0000000100000000");
+        // // harnessLogLevelSet(logLevelDetail);
+        //
+
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--repo1-retention-archive=2");
+        strLstAddZ(argList, "--repo1-retention-archive-type=full");
+        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup), "backup selected for retention does not have archive-start");
-        TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(storageListNP(
-                storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", ")),
-            strPtr(archiveExpectList(1, 5, "0000000100000000")),
-            "  nothing removed from 9.4-1/0000000100000000");
-        //
+        // TEST_RESULT_STR(
+        //     strPtr(strLstJoin(strLstSort(storageListNP(
+        //         storageTest, strNewFmt("%s/%s/%s", strPtr(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", ")),
+        //     strPtr(archiveExpectList(1, 5, "0000000100000000")),
+        //     "  nothing removed from 9.4-1/0000000100000000");
+
         // argList = strLstDup(argListAvoidWarn);
         // strLstAddZ(argList, "--repo1-retention-archive=1");
         // strLstAddZ(argList, "--repo1-retention-archive-type=full");
@@ -843,13 +846,13 @@ testRun(void)
         //     removeExpiredArchive(infoBackup), "backup earlier than selected for retention does not have archive-start");
 
 
-        argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--repo1-retention-archive=4");
-        strLstAddZ(argList, "--repo1-retention-archive-type=incr");
-        harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
-        // Code coverage
-        TEST_RESULT_VOID(
-            removeExpiredArchive(infoBackup), "TEST");
+        // argList = strLstDup(argListAvoidWarn);
+        // strLstAddZ(argList, "--repo1-retention-archive=4");
+        // strLstAddZ(argList, "--repo1-retention-archive-type=incr");
+        // harnessCfgLoad(strLstSize(argList), strLstPtr(argList));
+        // // Code coverage
+        // TEST_RESULT_VOID(
+        //     removeExpiredArchive(infoBackup), "TEST");
     }
 
     // *****************************************************************************************************************************
