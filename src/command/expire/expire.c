@@ -255,7 +255,7 @@ logExpire(ArchiveExpired *archiveExpire, String *archiveId)
         // Force out any remaining message
         LOG_DETAIL(
             "remove archive: archiveId = %s, start = %s, stop = %s",
-            archiveId, strPtr(archiveExpire->start), strPtr(archiveExpire->stop));
+            strPtr(archiveId), strPtr(archiveExpire->start), strPtr(archiveExpire->stop));
 
         archiveExpire->start = NULL;
     }
@@ -422,8 +422,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                         // forever.
                         else
                         {
-                            if ((strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL)) == 0) &&
-                                (strLstSize(localBackupRetentionList) > 0))
+                            if (strLstSize(localBackupRetentionList) > 0)
                             {
                                 LOG_INFO(
                                     "full backup total < %u - using oldest full backup for %s archive retention",
@@ -458,8 +457,8 @@ removeExpiredArchive(InfoBackup *infoBackup)
                         }
 
                         bool removeArchive = false;
-                        // Only expire if the selected backup has archive info - backups performed with --no-online will
-                        // not have archive info and cannot be used for expiration.
+                        // Only expire if the selected backup has archive data - backups performed with --no-online will
+                        // not have archive data and cannot be used for expiration.
                         if (archiveRetentionBackup.backupArchiveStart != NULL)
                         {
                             // Get archive ranges to preserve.  Because archive retention can be less than total retention it is
@@ -491,7 +490,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                     else
                                         archiveExpireMax = strDup(archiveRange.start);
 
-                                    LOG_DETAIL("archive retention on backup %s, archiveId = %s, start = %s",
+                                    LOG_DETAIL("archive retention on backup %s, archiveId = %s, start = %s%s",
                                         strPtr(backupData->backupLabel),  strPtr(archiveId), strPtr(archiveRange.start),
                                         (archiveRange.stop != NULL ?
                                             strPtr(strNewFmt(", stop = %s", strPtr(archiveRange.stop))) : ""));
