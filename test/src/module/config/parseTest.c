@@ -153,6 +153,8 @@ testRun(void)
         parseOptionList[cfgOptConfigIncludePath].source = cfgSourceParam;
         parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
 
+        TEST_RESULT_VOID(cfgFileLoadPart(NULL, NULL), "check null part");
+
         TEST_RESULT_STR(strPtr(cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
             backupCmdDefConfigInclPathValue, oldConfigDefault)),
             "[global]\n"
@@ -467,6 +469,7 @@ testRun(void)
         double valueDbl = 0;
         String *value = strNew("10.0");
 
+        TEST_ERROR(sizeQualifierToMultiplier('w'), AssertError, "'w' is not a valid size qualifier");
         TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value '10.0' is not valid");
         strTrunc(value, strChr(value, '.'));
         strCat(value, "K2");
@@ -541,7 +544,6 @@ testRun(void)
         strCat(value, "99999999999999999999p");
         convertToByte(&value, &valueDbl);
         TEST_RESULT_STR(strPtr(value), "225179981368524800000000000000000000", "value really large  to bytes");
-
     }
 
     // *****************************************************************************************************************************

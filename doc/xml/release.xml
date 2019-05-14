@@ -160,7 +160,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve coverage in <file>perl/exec</file> and <file>config/config</file> modules.</p>
+                        <p>Improve coverage in <file>perl/exec</file>, <file>config/config</file>, and <file>config/parse</file> modules.</p>
                     </release-item>
 
                     <release-item>
