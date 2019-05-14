@@ -140,7 +140,7 @@ expireDiffBackup(InfoBackup *infoBackup)
             StringList *currentBackupList = infoBackupDataLabelListP(
                 infoBackup, .filter = backupRegExpP(.full = true, .differential = true));
 
-            // If there are more full backups then the number to retain, then expire the oldest ones
+            // If there are more backups then the number to retain, then expire the oldest ones
             if (strLstSize(currentBackupList) > differentialRetention)
             {
                 for (unsigned int diffIdx = 0; diffIdx < strLstSize(currentBackupList) - differentialRetention; diffIdx++)
@@ -303,8 +303,8 @@ removeExpiredArchive(InfoBackup *infoBackup)
                     infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true, .differential = true)),
                     sortOrderDesc);
             }
-            else if (strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR)) == 0)
-            {
+            else
+            {   // Incrementals can depend on Full or Diff so get a list of all incrementals
                 globalBackupRetentionList = strLstSort(
                     infoBackupDataLabelListP(
                         infoBackup, .filter = backupRegExpP(.full = true, .differential = true, .incremental = true)),
@@ -432,8 +432,8 @@ removeExpiredArchive(InfoBackup *infoBackup)
                             }
                         }
 
-                        // If no local backups were found as part of retention then set the backup archive retention to the newest backup
-                        // so that the database is fully recoverable (can be recovered from the last backup through pitr)
+                        // If no local backups were found as part of retention then set the backup archive retention to the newest
+                        // backup so that the database is fully recoverable (can be recovered from the last backup through pitr)
                         if (strLstSize(localBackupArchiveRententionList) == 0)
                         {
                             strLstAdd(
