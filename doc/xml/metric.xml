@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc SYSTEM "doc.dtd" [<!ENTITY metricCoverageReport SYSTEM "auto/metric-coverage-report.auto.xml">]>
+<doc title="{[project]}" subtitle="Metrics">
+    <description>!!!</description>
+
+    <section id="code-coverage">
+        <title>Code Coverage</title>
+
+        <p><backrest/> aims to have complete function/branch/line coverage for the core C code in <path>/src</path>.</p>
+
+        <p>Function/line coverage is complete with no exceptions.</p>
+
+        <p>Branch coverage excludes branches inside macros and <code>assert()</code> calls.  Macros have their own unit tests so they do not need to be tested everywhere they appear.  Asserts are not expected to have complete branch coverage since they test cases that should always be true.</p>
+
+        <table>
+            <table-header>
+                <table-column fill="y">Directory</table-column>
+                <table-column align="right">Functions</table-column>
+                <table-column align="right">Branches</table-column>
+                <table-column align="right">Lines</table-column>
+            </table-header>
+
+            <table-data>
+                &metricCoverageReport;
+            </table-data>
+        </table>
+
+        <p>The C unit test modules in <path>/test/src/module</path> also have complete function/line coverage but are not included in the report.</p>
+    </section>
+</doc>

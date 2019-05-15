@@ -84,6 +84,7 @@
         <source key="user-guide"/>
         <source key="reference" type="custom"/>
         <source key="release" type="custom"/>
+        <source key="metric"/>
         <source key="coding"/>
         <source key="documentation"/>
         <source key="test"/>
@@ -96,6 +97,7 @@
             <render-source key="release" menu="Releases"/>
             <render-source key="configuration" source="reference" menu="Configuration"/>
             <render-source key="command" source="reference" menu="Commands"/>
+            <render-source key="metric" menu="Metrics"/>
         </render>
 
         <render type="pdf" file="{[pdf-file]}">

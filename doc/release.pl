@@ -62,6 +62,7 @@ release.pl [options]
  Release Options:
    --build          Build the cache before release (should be included in the release commit)
    --deploy         Deploy documentation to website (can be done as docs are updated)
+   --no-coverage    Don't generate the coverage report
 =cut
 
 ####################################################################################################################################
@@ -73,13 +74,15 @@ my $bQuiet = false;
 my $strLogLevel = 'info';
 my $bBuild = false;
 my $bDeploy = false;
+my $bNoCoverage = false;
 
 GetOptions ('help' => \$bHelp,
             'version' => \$bVersion,
             'quiet' => \$bQuiet,
             'log-level=s' => \$strLogLevel,
             'build' => \$bBuild,
-            'deploy' => \$bDeploy)
+            'deploy' => \$bDeploy,
+            'no-coverage' => \$bNoCoverage)
     or pod2usage(2);
 
 ####################################################################################################################################
@@ -119,6 +122,7 @@ eval
     my $strDocPath = dirname(abs_path($0));
     my $strDocHtml = "${strDocPath}/output/html";
     my $strDocExe = "${strDocPath}/doc.pl";
+    my $strTestExe = dirname($strDocPath) . "/test/test.pl";
 
     my $oStorageDoc = new pgBackRest::Storage::Local(
         $strDocPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
@@ -134,6 +138,15 @@ eval
 
         # Remove all docker containers to get consistent IP address assignments
         executeTest('docker rm -f $(docker ps -a -q)', {bSuppressError => true});
+
+        # Generate coverage summmary
+        if (!$bNoCoverage)
+        {
+            &log(INFO, "Generate Coverage Summary");
+            executeTest(
+                "${strTestExe} --no-lint --no-package --no-valgrind --no-optimize --vm-max=3 --coverage-summary",
+                {bShowOutputAsync => true});
+        }
 
         # Generate deployment docs for RHEL/Centos 7
         &log(INFO, "Generate RHEL/CentOS 7 documentation");

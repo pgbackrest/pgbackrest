@@ -185,6 +185,14 @@
                 </release-development-list>
             </release-core-list>
 
+            <release-doc-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Automate coverage summary report generation.</p>
+                    </release-item>
+                </release-development-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-development-list>
                     <release-item>

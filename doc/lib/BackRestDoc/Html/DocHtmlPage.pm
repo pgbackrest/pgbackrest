@@ -433,7 +433,7 @@ sub sectionProcess
 
                     $oHeaderRowElement->addNew(
                         HTML_TH,
-                        "table-header-${strAlign}" . ($bFill ? ",table-header-fill" : ""),
+                        "table-header-${strAlign}" . ($bFill ? " table-header-fill" : ""),
                         {strContent => $self->processText($oColumn->textGet())});
                 }
             }
