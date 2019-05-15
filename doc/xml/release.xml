@@ -164,6 +164,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Remove <id>-Wswitch-enum</id> compiler option.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Error on multiple option alternate names and simplify help command.</p>
                     </release-item>
 

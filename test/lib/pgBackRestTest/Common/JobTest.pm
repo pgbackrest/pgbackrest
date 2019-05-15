@@ -393,7 +393,7 @@ sub run
 
                 # Determine which warnings are available
                 my $strWarningFlags =
-                    '-Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2' .
+                    '-Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wconversion -Wformat=2' .
                     ' -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla' .
                     ($self->{oTest}->{&TEST_VM} eq VM_U16 || $self->{oTest}->{&TEST_VM} eq VM_U18 ?
                         ' -Wformat-signedness' : '') .

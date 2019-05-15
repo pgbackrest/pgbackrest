@@ -27,7 +27,7 @@ then
 
     AC_SUBST(CWARNING, $warning)
 else
-    AC_SUBST(CWARNING, "$warning -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla")
+    AC_SUBST(CWARNING, "$warning -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla")
 fi
 
 # Set includes
