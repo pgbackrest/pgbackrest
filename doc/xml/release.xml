@@ -26,6 +26,15 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="hatifnatt"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Bypass database checks when <cmd>stanza-delete</cmd> issued with <br-option>force</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improve performance of non-blocking reads by using maximum buffer size.</p>
                     </release-item>
 
@@ -7020,6 +7029,11 @@
         <contributor id="guruguruguru">
             <contributor-name-display>guruguruguru</contributor-name-display>
             <contributor-id type="github">guruguruguru</contributor-id>
+        </contributor>
+
+        <contributor id="hatifnatt">
+            <contributor-name-display>Roman</contributor-name-display>
+            <contributor-id type="github">hatifnatt</contributor-id>
         </contributor>
 
         <contributor id="hans.jurgen.schonig">

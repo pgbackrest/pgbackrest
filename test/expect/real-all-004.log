@@ -312,3 +312,23 @@ repo1-path=[TEST_PATH]/backup/repo
 [global:backup]
 archive-copy=y
 start-fast=y
+
+stop all stanzas (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf stop
+------------------------------------------------------------------------------------------------------------------------------------
+
+stop db stanza (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stop
+------------------------------------------------------------------------------------------------------------------------------------
+
+stanza-delete db - delete stanza with --force when pgbackrest on pg host not accessible (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail  --force stanza-delete
+------------------------------------------------------------------------------------------------------------------------------------
+
+start all stanzas (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf start
+------------------------------------------------------------------------------------------------------------------------------------
+
+start all stanzas (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf start
+------------------------------------------------------------------------------------------------------------------------------------
