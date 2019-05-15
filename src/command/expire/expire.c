@@ -17,6 +17,9 @@ Expire Command
 
 #include <stdlib.h>
 
+/***********************************************************************************************************************************
+Helper functions and structures
+***********************************************************************************************************************************/
 typedef struct ArchiveExpired
 {
     uint64_t total;
@@ -80,6 +83,9 @@ typedef struct ArchiveRange
     const String *stop;
 } ArchiveRange;
 
+/***********************************************************************************************************************************
+Common function for expiring any backup
+***********************************************************************************************************************************/
 static void
 expireBackup(InfoBackup *infoBackup, String *removeBackupLabel, String *backupExpired)
 {
@@ -245,7 +251,7 @@ expireFullBackup(InfoBackup *infoBackup)
 }
 
 /***********************************************************************************************************************************
-logExpire
+Log detailed information about archive logs removed
 ***********************************************************************************************************************************/
 void
 logExpire(ArchiveExpired *archiveExpire, String *archiveId)
