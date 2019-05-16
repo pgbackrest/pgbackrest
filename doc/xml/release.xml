@@ -237,6 +237,14 @@
                     <release-item>
                         <p>Reduce <proper>ScalityS3</proper> processes since only two are needed.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Update <id>mock/expire</id> module test matrix so expect tests output.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
