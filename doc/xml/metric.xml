@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd" [<!ENTITY metricCoverageReport SYSTEM "auto/metric-coverage-report.auto.xml">]>
 <doc title="{[project]}" subtitle="Metrics">
-    <description>!!!</description>
+    <description>{[project]} project metrics.</description>
 
     <section id="code-coverage">
         <title>Code Coverage</title>
