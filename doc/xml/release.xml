@@ -199,6 +199,10 @@
                     <release-item>
                         <p>Automate coverage summary report generation.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <setting>--out-preserve</setting> to preserve contents of output path.</p>
+                    </release-item>
                 </release-development-list>
             </release-doc-list>
 
