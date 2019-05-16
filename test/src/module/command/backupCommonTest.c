@@ -35,6 +35,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.full = true, .incremental = true);
+
         TEST_RESULT_STR(
             strPtr(filter),
             "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}I){0,1}$", "full and optional incr backup regex with anchors");
@@ -50,6 +51,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.full = true, .differential = true);
+
         TEST_RESULT_STR(
             strPtr(filter),
             "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}D){0,1}$", "full and optional diff backup regex with anchors");
@@ -59,6 +61,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.full = true,  .incremental = true, .differential = true);
+
         TEST_RESULT_STR(
             strPtr(filter),
             "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}(D|I)){0,1}$", "full, optional diff and incr backup regex with anchors");
@@ -68,6 +71,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.incremental = true, .differential = true);
+
         TEST_RESULT_STR(
             strPtr(filter),
             "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}(D|I)$", "diff and incr backup regex with anchors");
@@ -83,6 +87,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.incremental = true);
+
         TEST_RESULT_STR(
             strPtr(filter),
             "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}I$", "incr backup regex with anchors");
@@ -92,6 +97,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.differential = true);
+
         TEST_RESULT_STR(
             strPtr(filter),
             "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}D$", "diff backup regex with anchors");
