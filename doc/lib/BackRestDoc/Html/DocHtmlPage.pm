@@ -135,9 +135,13 @@ sub process
             {
                 my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, $strRenderOutKey);
 
-                $oMenuBody->
-                    addNew(HTML_DIV, 'menu')->
-                        addNew(HTML_A, 'menu-link', {strContent => $$oRenderOut{menu}, strRef => "${strRenderOutKey}.html"});
+                if (defined($$oRenderOut{menu}))
+                {
+                    $oMenuBody->addNew(HTML_DIV, 'menu')->addNew(
+                        HTML_A, 'menu-link',
+                        {strContent => $$oRenderOut{menu},
+                            strRef => $strRenderOutKey eq 'index' ? '{[project-url-root]}' : "${strRenderOutKey}.html"});
+                }
             }
         }
     }

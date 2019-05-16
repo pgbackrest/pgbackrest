@@ -203,6 +203,10 @@
                     <release-item>
                         <p>Add <setting>--out-preserve</setting> to preserve contents of output path.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Restore index menu url default lost in b85e51d6.</p>
+                    </release-item>
                 </release-development-list>
             </release-doc-list>
 
