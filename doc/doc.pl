@@ -64,7 +64,7 @@ doc.pl [options]
    --cache-only     Only use the execution cache - don't attempt to generate it
    --pre            Pre-build containers for execute elements marked pre
    --var            Override defined variable
-   --var-key        Override defined variable and use in cache key
+   --key-var        Override defined variable and use in cache key
    --doc-path       Document path to render (manifest.xml should be located here)
    --out            Output types (html, pdf, markdown)
    --require        Require only certain sections of the document (to speed testing)
