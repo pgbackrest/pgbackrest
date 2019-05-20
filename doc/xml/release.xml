@@ -12,7 +12,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.14dev" title="UNDER DEVELOPMENT">
+        <release date="2019-05-20" version="2.14" title="Bug Fix and Improvements">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -35,10 +35,6 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve performance of non-blocking reads by using maximum buffer size.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Add <file>configure</file> script for improved multi-platform support.</p>
                     </release-item>
                 </release-improvement-list>
@@ -46,6 +42,10 @@
                 <release-development-list>
                     <release-item>
                         <p>Filter improvements.  Only process next filter in <code>IoFilterGroup</code> when input buffer is full or flushing.  Improve filter's notion of <quote>done</quote> to optimize filter processing.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improve performance of non-blocking reads by using maximum buffer size.</p>
                     </release-item>
 
                     <release-item>

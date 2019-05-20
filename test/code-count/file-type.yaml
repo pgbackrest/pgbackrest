@@ -115,6 +115,10 @@ doc/resource/latex/preamble.tex:
   class: doc/core
   type: latex
 
+doc/xml/auto/metric-coverage-report.auto.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/coding.xml:
   class: doc/source
   type: xml
@@ -135,6 +139,10 @@ doc/xml/index.xml:
   class: doc/source
   type: xml
 
+doc/xml/metric.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/reference.xml:
   class: doc/source
   type: xml
@@ -144,6 +152,10 @@ doc/xml/release.xml:
   type: xml
 
 doc/xml/test.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/user-guide-index.xml:
   class: doc/source
   type: xml
 
@@ -888,6 +900,10 @@ src/common/log.h:
   type: c/h
 
 src/common/logLevel.h:
+  class: core
+  type: c/h
+
+src/common/macro.h:
   class: core
   type: c/h
 
@@ -1848,6 +1864,10 @@ test/src/module/common/logTest.c:
   type: c
 
 test/src/module/common/memContextTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/objectTest.c:
   class: test/module
   type: c
 
