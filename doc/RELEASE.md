@@ -113,3 +113,29 @@ Deploy the documentation on `pgbackrest.org`.
 ## Notify packagers of new release
 
 ## Announce release on Twitter
+
+## Prepare for the next release
+
+Add new release in `doc/xml/release.xml`, e.g.:
+```
+        <release date="XXXX-XX-XX" version="2.15dev" title="UNDER DEVELOPMENT">
+```
+
+Edit version in `lib/pgBackRest/Version.pm`, e.g.:
+```
+use constant PROJECT_VERSION                                        => '2.14';
+```
+to:
+```
+use constant PROJECT_VERSION                                        => '2.15dev';
+
+Build to generate files:
+```
+test/test.pl --no-lint --vm=u18 --no-package --build-only
+```
+
+Commit and push to integration:
+```
+git commit -m "Begin v2.15 development."
+git push origin master
+```
