@@ -99,6 +99,60 @@ optionFind(const String *option)
 /***********************************************************************************************************************************
 Convert the value passed into bytes and update valueDbl for range checking
 ***********************************************************************************************************************************/
+static double
+sizeQualifierToMultiplier(char qualifier)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CHAR, qualifier);
+    FUNCTION_TEST_END();
+
+    double result;
+
+    switch (qualifier)
+    {
+        case 'b':
+        {
+            result = 1;
+            break;
+        }
+
+        case 'k':
+        {
+            result = 1024;
+            break;
+        }
+
+        case 'm':
+        {
+            result = 1024 * 1024;
+            break;
+        }
+
+        case 'g':
+        {
+            result = 1024 * 1024 * 1024;
+            break;
+        }
+
+        case 't':
+        {
+            result = 1024LL * 1024LL * 1024LL * 1024LL;
+            break;
+        }
+
+        case 'p':
+        {
+            result = 1024LL * 1024LL * 1024LL * 1024LL * 1024LL;
+            break;
+        }
+
+        default:
+            THROW_FMT(AssertError, "'%c' is not a valid size qualifier", qualifier);
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 void
 convertToByte(String **value, double *valueDbl)
 {
@@ -137,38 +191,10 @@ convertToByte(String **value, double *valueDbl)
 
         double multiplier = 1;
 
-        // If a letter was found, then truncate, else do nothing since assumed value is already in bytes
+        // If a letter was found calculate multiplier, else do nothing since assumed value is already in bytes
         if (chrPos != -1)
         {
-            if (strArray[chrPos] != 'b')
-            {
-                switch (strArray[chrPos])
-                {
-                    case 'k':
-                        multiplier = 1024;
-                        break;
-
-                    case 'm':
-                        multiplier = 1024 * 1024;
-                        break;
-
-                    case 'g':
-                        multiplier = 1024 * 1024 * 1024;
-                        break;
-
-                    case 't':
-                        multiplier = 1024LL * 1024LL * 1024LL * 1024LL;
-                        break;
-
-                    case 'p':
-                        multiplier = 1024LL * 1024LL * 1024LL * 1024LL * 1024LL;
-                        break;
-
-                    default:                                        // {uncoverable - regex covers all cases but default required}
-                        THROW_FMT(                                  // {+uncoverable}
-                            AssertError, "character %c is not a valid type", strArray[chrPos]);
-                }
-            }
+            multiplier = sizeQualifierToMultiplier(strArray[chrPos]);
 
             // Remove any letters
             strTrunc(result, chrPos);
@@ -216,6 +242,39 @@ Rules:
 - If --config-path only, the defaults for config and config-include-path will be changed to use that as a base path but the files
   will not be required to exist since this is a default override.
 ***********************************************************************************************************************************/
+static void
+cfgFileLoadPart(String **config, const Buffer *configPart)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(STRING, config);
+        FUNCTION_LOG_PARAM(BUFFER, configPart);
+    FUNCTION_LOG_END();
+
+    if (configPart != NULL)
+    {
+        String *configPartStr = strNewBuf(configPart);
+
+        // Validate the file by parsing it as an Ini object. If the file is not properly formed, an error will occur.
+        if (strSize(configPartStr) > 0)
+        {
+            Ini *configPartIni = iniNew();
+            iniParse(configPartIni, configPartStr);
+
+            // Create the result config file
+            if (*config == NULL)
+                *config = strNew("");
+            // Else add an LF in case the previous file did not end with one
+            else
+
+            // Add the config part to the result config file
+            strCat(*config, "\n");
+            strCat(*config, strPtr(configPartStr));
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 static String *
 cfgFileLoad(                                                        // NOTE: Passing defaults to enable more complete test coverage
     const ParseOption *optionList,                                  // All options and their current settings
@@ -330,33 +389,12 @@ cfgFileLoad(                                                        // NOTE: Pas
 
             for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
             {
-                Buffer *fileBuffer = storageGetNP(
-                    storageNewReadP(
-                        storageLocal(), strNewFmt("%s/%s", strPtr(configIncludePath), strPtr(strLstGet(list, listIdx))),
-                        .ignoreMissing = true));
-
-                if (fileBuffer != NULL) // {uncovered_branch - NULL can only occur if file is missing after file list is retrieved}
-                {
-                    // Convert the contents of the file buffer to a string object
-                    String *configPart = strNewBuf(fileBuffer);
-
-                    // Validate the file by parsing it as an Ini object. If the file is not properly formed, an error will occur.
-                    if (strSize(configPart) > 0)
-                    {
-                        Ini *configPartIni = iniNew();
-                        iniParse(configPartIni, configPart);
-
-                        // Create the result config file
-                        if (result == NULL)
-                            result = strNew("");
-                        // Else add an LF in case the previous file did not end with one
-                        else
-                            strCat(result, "\n");
-
-                        // Add the config part to the result config file
-                        strCat(result, strPtr(configPart));
-                    }
-                }
+                cfgFileLoadPart(
+                    &result,
+                    storageGetNP(
+                        storageNewReadP(
+                            storageLocal(), strNewFmt("%s/%s", strPtr(configIncludePath), strPtr(strLstGet(list, listIdx))),
+                            .ignoreMissing = true)));
             }
         }
     }
@@ -903,35 +941,16 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                 const char *dependValue = cfgDefOptionDependValue(commandDefId, optionDefId, listIdx);
 
                                 // Build list based on depend option type
-                                switch (dependOptionDefType)
+                                if (dependOptionDefType == cfgDefOptTypeBoolean)
                                 {
                                     // Boolean outputs depend option name as no-* when false
-                                    case cfgDefOptTypeBoolean:
-                                    {
-                                        if (strcmp(dependValue, "0") == 0)
-                                            dependOptionName = strNewFmt("no-%s", cfgOptionName(dependOptionId));
-
-                                        break;
-                                    }
-
-                                    // String is output with quotes
-                                    case cfgDefOptTypePath:
-                                    case cfgDefOptTypeString:
-                                    {
-                                        strLstAdd(dependValueList, strNewFmt("'%s'", dependValue));
-                                        break;
-                                    }
-
-                                    // Other types are output plain
-                                    case cfgDefOptTypeFloat:                        // {uncovered - no depends of other types}
-                                    case cfgDefOptTypeHash:
-                                    case cfgDefOptTypeInteger:
-                                    case cfgDefOptTypeList:
-                                    case cfgDefOptTypeSize:
-                                    {
-                                        strLstAddZ(dependValueList, dependValue);   // {+uncovered}
-                                        break;                                      // {+uncovered}
-                                    }
+                                    if (strcmp(dependValue, "0") == 0)
+                                        dependOptionName = strNewFmt("no-%s", cfgOptionName(dependOptionId));
+                                }
+                                else
+                                {
+                                    ASSERT(dependOptionDefType == cfgDefOptTypePath || dependOptionDefType == cfgDefOptTypeString);
+                                    strLstAdd(dependValueList, strNewFmt("'%s'", dependValue));
                                 }
                             }
 
@@ -1003,7 +1022,6 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                 // Check that the value can be converted
                                 TRY_BEGIN()
                                 {
-
                                     if (optionDefType == cfgDefOptTypeInteger)
                                     {
                                         valueDbl = (double)varInt64Force(VARSTR(value));
@@ -1014,10 +1032,6 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     }
                                     else
                                         valueDbl = varDblForce(VARSTR(value));
-                                }
-                                CATCH(AssertError)
-                                {
-                                    RETHROW();                      // {uncovered - asserts can't currently happen here this is JIC}
                                 }
                                 CATCH_ANY()
                                 {

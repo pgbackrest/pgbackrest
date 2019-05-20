@@ -26,6 +26,15 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="hatifnatt"/>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Bypass database checks when <cmd>stanza-delete</cmd> issued with <br-option>force</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improve performance of non-blocking reads by using maximum buffer size.</p>
                     </release-item>
 
@@ -160,7 +169,15 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve coverage in <file>perl/exec</file> module.</p>
+                        <p>Improve coverage in <file>perl/exec</file>, <file>config/config</file>, and <file>config/parse</file> modules.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove <id>-Wswitch-enum</id> compiler option.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Error on multiple option alternate names and simplify help command.</p>
                     </release-item>
 
                     <release-item>
@@ -182,8 +199,38 @@
 
                         <p>Convert expire command to c with caveat that S3 removal functions, remote functionality, and ensuring archive and backup info history list always match still need to be implemented.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Implement remote functionality for file remove, path remove, path create and path sync.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Add user guides for <proper>CentOS</proper>/<proper>RHEL</proper> <proper>6</proper>/<proper>7</proper>.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Automate coverage summary report generation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <setting>--out-preserve</setting> to preserve contents of output path.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Restore index menu url default lost in b85e51d6.</p>
+                    </release-item>
+                </release-development-list>
+            </release-doc-list>
 
             <release-test-list>
                 <release-development-list>
@@ -205,6 +252,14 @@
 
                     <release-item>
                         <p>Reduce <proper>ScalityS3</proper> processes since only two are needed.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Update <id>mock/expire</id> module test matrix so expect tests output.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
@@ -7012,6 +7067,11 @@
         <contributor id="guruguruguru">
             <contributor-name-display>guruguruguru</contributor-name-display>
             <contributor-id type="github">guruguruguru</contributor-id>
+        </contributor>
+
+        <contributor id="hatifnatt">
+            <contributor-name-display>hatifnatt</contributor-name-display>
+            <contributor-id type="github">hatifnatt</contributor-id>
         </contributor>
 
         <contributor id="hans.jurgen.schonig">

@@ -2799,7 +2799,7 @@ fi
     CWARNING=$warning
 
 else
-    CWARNING="$warning -Wwrite-strings -Wswitch-enum -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla"
+    CWARNING="$warning -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith -Wvla"
 
 fi
 

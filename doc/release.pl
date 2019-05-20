@@ -62,6 +62,7 @@ release.pl [options]
  Release Options:
    --build          Build the cache before release (should be included in the release commit)
    --deploy         Deploy documentation to website (can be done as docs are updated)
+   --no-coverage    Don't generate the coverage report
 =cut
 
 ####################################################################################################################################
@@ -73,13 +74,15 @@ my $bQuiet = false;
 my $strLogLevel = 'info';
 my $bBuild = false;
 my $bDeploy = false;
+my $bNoCoverage = false;
 
 GetOptions ('help' => \$bHelp,
             'version' => \$bVersion,
             'quiet' => \$bQuiet,
             'log-level=s' => \$strLogLevel,
             'build' => \$bBuild,
-            'deploy' => \$bDeploy)
+            'deploy' => \$bDeploy,
+            'no-coverage' => \$bNoCoverage)
     or pod2usage(2);
 
 ####################################################################################################################################
@@ -119,6 +122,7 @@ eval
     my $strDocPath = dirname(abs_path($0));
     my $strDocHtml = "${strDocPath}/output/html";
     my $strDocExe = "${strDocPath}/doc.pl";
+    my $strTestExe = dirname($strDocPath) . "/test/test.pl";
 
     my $oStorageDoc = new pgBackRest::Storage::Local(
         $strDocPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
@@ -134,6 +138,15 @@ eval
 
         # Remove all docker containers to get consistent IP address assignments
         executeTest('docker rm -f $(docker ps -a -q)', {bSuppressError => true});
+
+        # Generate coverage summmary
+        if (!$bNoCoverage)
+        {
+            &log(INFO, "Generate Coverage Summary");
+            executeTest(
+                "${strTestExe} --no-lint --no-package --no-valgrind --no-optimize --vm-max=3 --coverage-summary",
+                {bShowOutputAsync => true});
+        }
 
         # Generate deployment docs for RHEL/Centos 7
         &log(INFO, "Generate RHEL/CentOS 7 documentation");
@@ -151,7 +164,20 @@ eval
         &log(INFO, "Generate Debian/Ubuntu documentation");
 
         executeTest("${strDocExe} --deploy", {bShowOutputAsync => true});
-        executeTest("${strDocExe} --deploy --cache-only --out=man --out=html --var=project-url-root=index.html");
+
+        # Generate a full copy of the docs for review
+        &log(INFO, "Generate full documentation for review");
+
+        executeTest(
+            "${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --include=user-guide --out=html" .
+                " --var=project-url-root=index.html");
+        $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
+        executeTest(
+            "${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos6 --out=html --include=user-guide" .
+                " --var=project-url-root=index.html");
+        $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos6.html");
+
+        executeTest("${strDocExe} --deploy --out-preserve --cache-only --out=man --out=html --var=project-url-root=index.html");
     }
 
     if ($bDeploy)
@@ -161,9 +187,16 @@ eval
         # Generate docs for the website history
         &log(INFO, 'Generate website ' . ($bDev ? 'dev' : 'history') . ' documentation');
 
-        executeTest(
-            $strDocExe . ($bDev ? '' : ' --deploy --cache-only') . ' --out=html --var=project-url-root=index.html' .
-            ($bDev ? ' --dev --no-exe' :  ' --exclude=release'));
+        my $strDocExeVersion =
+            ${strDocExe} . ($bDev ? ' --dev' : ' --deploy --cache-only') . ' --var=project-url-root=index.html --out=html';
+
+        executeTest("${strDocExeVersion} --key-var=os-type=centos7 --include=user-guide");
+        $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
+        executeTest("${strDocExeVersion} --out-preserve --key-var=os-type=centos6 --include=user-guide");
+        $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos6.html");
+
+        $oStorageDoc->remove("$strDocHtml/release.html");
+        executeTest("${strDocExeVersion} --out-preserve --exclude=release");
 
         # Deploy to repository
         &log(INFO, '...Deploy to repository');
@@ -176,7 +209,12 @@ eval
         {
             &log(INFO, "Generate website documentation");
 
-            executeTest("${strDocExe} --deploy --cache-only --out=html");
+            executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --include=user-guide --out=html");
+            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
+            executeTest(
+                "${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos6 --include=user-guide --out=html");
+            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos6.html");
+            executeTest("${strDocExe} --deploy --out-preserve --cache-only --out=html");
 
             # Deploy to repository
             &log(INFO, '...Deploy to repository');

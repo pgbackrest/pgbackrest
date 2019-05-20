@@ -10,6 +10,16 @@
         <variable key="os-centos6">centos6</variable>
         <variable key="os-centos7">centos7</variable>
 
+        <!-- OS titles -->
+        <variable key="os-debian-title">Debian &amp; Ubuntu</variable>
+        <variable key="os-centos6-title">RHEL &amp; CentOS 6</variable>
+        <variable key="os-centos7-title">RHEL &amp; CentOS 7</variable>
+
+        <!-- Base PostgreSQL versions -->
+        <variable key="os-debian-pg-version">10</variable>
+        <variable key="os-centos6-pg-version">9.5</variable>
+        <variable key="os-centos7-pg-version">9.6</variable>
+
         <!-- User-defined package to use in documentation (use "apt" to install the current pgpd apt package) -->
         <variable key="package">none</variable>
 
@@ -27,9 +37,9 @@
         <variable key="os-image" if="{[os-type-is-centos6]}">centos:6</variable>
         <variable key="os-image" if="{[os-type-is-centos7]}">centos:7</variable>
 
-        <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">Debian &amp; Ubuntu</variable>
-        <variable key="user-guide-subtitle" if="{[os-type-is-centos6]}">RHEL &amp; CentOS 6</variable>
-        <variable key="user-guide-subtitle" if="{[os-type-is-centos7]}">RHEL &amp; CentOS 7</variable>
+        <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
+        <variable key="user-guide-subtitle" if="{[os-type-is-centos6]}">{[os-centos6-title]}</variable>
+        <variable key="user-guide-subtitle" if="{[os-type-is-centos7]}">{[os-centos7-title]}</variable>
 
         <variable key="user-guide-os" if="{[os-type-is-debian]}">Debian/Ubuntu</variable>
         <variable key="user-guide-os" if="{[os-type-is-centos6]}">RHEL/CentOS 6</variable>
@@ -44,9 +54,9 @@
 
         <variable key="pgbackrest-repo-path">/pgbackrest</variable>
 
-        <variable key="pg-version" if="{[os-type-is-debian]}">10</variable>
-        <variable key="pg-version" if="{[os-type-is-centos6]}">9.5</variable>
-        <variable key="pg-version" if="{[os-type-is-centos7]}">9.6</variable>
+        <variable key="pg-version" if="{[os-type-is-debian]}">{[os-debian-pg-version]}</variable>
+        <variable key="pg-version" if="{[os-type-is-centos6]}">{[os-centos6-pg-version]}</variable>
+        <variable key="pg-version" if="{[os-type-is-centos7]}">{[os-centos7-pg-version]}</variable>
         <variable key="pg-version-nodot" eval="y">my $version = '{[pg-version]}'; $version =~ s/\.//g; return $version;</variable>
 
         <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">11</variable>
@@ -1130,7 +1140,7 @@
 
                 <execute if="{[os-type-is-centos7]}" user="root" output="y" err-expect="3">
                     <exe-cmd>{[pg-cluster-check]}</exe-cmd>
-                    <exe-highlight>could not find the database system</exe-highlight>
+                    <exe-highlight>Failed to start PostgreSQL</exe-highlight>
                 </execute>
             </execute-list>
 

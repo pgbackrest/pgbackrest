@@ -147,9 +147,8 @@ protocolParallelProcess(ProtocolParallel *this)
             int handle = ioReadHandle(protocolClientIoRead(*(ProtocolClient **)lstGet(this->clientList, clientIdx)));
             FD_SET((unsigned int)handle, &selectSet);
 
-            // Set the max handle
-            if (handle > handleMax)                                         // {+uncovered_branch - often in ascending order}
-                handleMax = handle;
+            // Find the max file handle needed for select()
+            MAX_ASSIGN(handleMax, handle);
 
             clientRunningTotal++;
         }

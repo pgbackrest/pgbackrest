@@ -256,8 +256,7 @@ varEq(const Variant *this1, const Variant *this2)
                     break;
                 }
 
-                case varTypeKeyValue:
-                case varTypeVariantList:
+                default:
                     THROW_FMT(AssertError, "unable to test equality for %s", variantTypeName[this1->type]);
             }
         }
@@ -382,9 +381,7 @@ varBoolForce(const Variant *this)
             result = varUInt64(this) != 0;
             break;
 
-        case varTypeDouble:
-        case varTypeKeyValue:
-        case varTypeVariantList:
+        default:
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeBool]);
     }
 
@@ -484,8 +481,7 @@ varDblForce(const Variant *this)
             break;
         }
 
-        case varTypeKeyValue:
-        case varTypeVariantList:
+        default:
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeDouble]);
     }
 
@@ -603,9 +599,7 @@ varIntForce(const Variant *this)
             break;
         }
 
-        case varTypeDouble:
-        case varTypeKeyValue:
-        case varTypeVariantList:
+        default:
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt]);
     }
 
@@ -711,9 +705,7 @@ varInt64Force(const Variant *this)
             break;
         }
 
-        case varTypeDouble:
-        case varTypeKeyValue:
-        case varTypeVariantList:
+        default:
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt64]);
     }
 
@@ -840,9 +832,7 @@ varUIntForce(const Variant *this)
             break;
         }
 
-        case varTypeDouble:
-        case varTypeKeyValue:
-        case varTypeVariantList:
+        default:
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUInt]);
     }
 
@@ -958,9 +948,7 @@ varUInt64Force(const Variant *this)
             break;
         }
 
-        case varTypeDouble:
-        case varTypeKeyValue:
-        case varTypeVariantList:
+        default:
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUInt64]);
     }
 
@@ -1137,8 +1125,7 @@ varStrForce(const Variant *this)
             break;
         }
 
-        case varTypeKeyValue:
-        case varTypeVariantList:
+        default:
             THROW_FMT(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeString]);
     }
 

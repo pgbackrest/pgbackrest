@@ -184,7 +184,17 @@ storageRemotePathCreate(THIS_VOID, const String *path, bool errorOnExists, bool 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR);
+        protocolCommandParamAdd(command, VARSTR(path));
+        protocolCommandParamAdd(command, VARBOOL(errorOnExists));
+        protocolCommandParamAdd(command, VARBOOL(noParentCreate));
+        protocolCommandParamAdd(command, VARUINT64(mode));
+
+        protocolClientExecute(this->client, command, false);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -236,7 +246,16 @@ storageRemotePathRemove(THIS_VOID, const String *path, bool errorOnMissing, bool
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR);
+        protocolCommandParamAdd(command, VARSTR(path));
+        protocolCommandParamAdd(command, VARBOOL(errorOnMissing));
+        protocolCommandParamAdd(command, VARBOOL(recurse));
+
+        protocolClientExecute(this->client, command, false);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -258,7 +277,15 @@ storageRemotePathSync(THIS_VOID, const String *path, bool ignoreMissing)
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR);
+        protocolCommandParamAdd(command, VARSTR(path));
+        protocolCommandParamAdd(command, VARBOOL(ignoreMissing));
+
+        protocolClientExecute(this->client, command, false);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -280,7 +307,15 @@ storageRemoteRemove(THIS_VOID, const String *file, bool errorOnMissing)
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_REMOVE_STR);
+        protocolCommandParamAdd(command, VARSTR(file));
+        protocolCommandParamAdd(command, VARBOOL(errorOnMissing));
+
+        protocolClientExecute(this->client, command, false);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }

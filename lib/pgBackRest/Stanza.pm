@@ -307,18 +307,22 @@ sub stanzaDelete
                 "\nHINT: has the pgbackrest stop command been run on this server?", ERROR_FILE_MISSING);
         }
 
-        # Get the master database object and index
-        my ($oDbMaster, $iMasterRemoteIdx) = dbObjectGet({bMasterOnly => true});
-
-        # Initialize the master file object and path
-        my $oStorageDbMaster = storageDb({iRemoteIdx => $iMasterRemoteIdx});
-
-        # Check if Postgres is running and if so only continue when forced
-        if ($oStorageDbMaster->exists(DB_FILE_POSTMASTERPID) && !cfgOption(CFGOPT_FORCE))
+        # If a force has not been issued, then check the database
+        if (!cfgOption(CFGOPT_FORCE))
         {
-            confess &log(ERROR, DB_FILE_POSTMASTERPID . " exists - looks like the postmaster is running. " .
-                "To delete stanza '${strStanza}', shutdown the postmaster for stanza '${strStanza}' and try again, " .
-                "or use --force.", ERROR_POSTMASTER_RUNNING);
+            # Get the master database object and index
+            my ($oDbMaster, $iMasterRemoteIdx) = dbObjectGet({bMasterOnly => true});
+
+            # Initialize the master file object and path
+            my $oStorageDbMaster = storageDb({iRemoteIdx => $iMasterRemoteIdx});
+
+            # Check if Postgres is running and if so only continue when forced
+            if ($oStorageDbMaster->exists(DB_FILE_POSTMASTERPID))
+            {
+                confess &log(ERROR, DB_FILE_POSTMASTERPID . " exists - looks like the postmaster is running. " .
+                    "To delete stanza '${strStanza}', shutdown the postmaster for stanza '${strStanza}' and try again, " .
+                    "or use --force.", ERROR_POSTMASTER_RUNNING);
+            }
         }
 
         # Delete the archive info files

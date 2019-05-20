@@ -79,10 +79,10 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, s3 =>  true, encrypt =>  true},
-        {vm => VM2, s3 =>  true, encrypt => false},
+        {vm => VM1, s3 =>  true, encrypt => false},
+        {vm => VM2, s3 => false, encrypt =>  true},
         {vm => VM3, s3 => false, encrypt => false},
-        {vm => VM4, s3 => false, encrypt =>  true},
+        {vm => VM4, s3 =>  true, encrypt =>  true},
     )
     {
         # Only run tests for this vm
@@ -94,12 +94,11 @@ sub run
 
         if ($bS3 && ($self->vm() eq VM3))
         {
-            confess &log("Cannot configure s3 for expect log tests!");
+            confess &log("cannot configure s3 for expect log tests");
         }
 
         ############################################################################################################################
-        # Pass !$bEncrypt so expect logs are not generated for encryption tests
-        if ($self->begin("local, enc ${bEncrypt}, s3 ${bS3}", !$bEncrypt))
+        if ($self->begin("simple, enc ${bEncrypt}, s3 ${bS3}"))
         {
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
@@ -198,8 +197,7 @@ sub run
         }
 
         ############################################################################################################################
-        # Pass !$bEncrypt so expect logs are not generated for encryption tests
-        if ($self->begin("Expire::stanzaUpgrade, enc ${bEncrypt}, s3 ${bS3}", !$bEncrypt))
+        if ($self->begin("stanzaUpgrade, enc ${bEncrypt}, s3 ${bS3}"))
         {
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
