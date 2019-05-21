@@ -171,8 +171,10 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR))
         {
-            interface.pathCreate(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)),
+            interface.pathCreate(
+                driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)),
                 varBool(varLstGet(paramList, 2)), varUIntForce(varLstGet(paramList, 3)));
+
             protocolServerResponse(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_EXISTS_STR))
@@ -185,18 +187,22 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR))
         {
-            interface.pathRemove(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)),
+            interface.pathRemove
+                (driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)),
                 varBool(varLstGet(paramList, 2)));
+
             protocolServerResponse(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR))
         {
             interface.pathSync(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)));
+
             protocolServerResponse(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_REMOVE_STR))
         {
             interface.remove(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)));
+
             protocolServerResponse(server, NULL);
         }
         else

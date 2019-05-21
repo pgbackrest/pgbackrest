@@ -330,6 +330,15 @@ sub process
             eval
             {
                 $hJob->{rResult} = $hLocal->{oLocal}->outputRead(true, undef, undef, true);
+
+                # Create a result array when the result is not already an array.  The Perl locals always return an array but the C
+                # locals only do so when needed.
+                if (ref($hJob->{rResult}) ne 'ARRAY')
+                {
+                    my @resultArray = (${$hJob->{rResult}});
+                    $hJob->{rResult} = \@resultArray;
+                }
+
                 return true;
             }
             or do

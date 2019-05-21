@@ -188,7 +188,7 @@ sub storageRepo
                 $oDriver = new pgBackRest::Storage::S3::Driver(
                     cfgOption(CFGOPT_REPO_S3_BUCKET), cfgOption(CFGOPT_REPO_S3_ENDPOINT), cfgOption(CFGOPT_REPO_S3_REGION),
                     cfgOption(CFGOPT_REPO_S3_KEY), cfgOption(CFGOPT_REPO_S3_KEY_SECRET),
-                    {strHost => cfgOption(CFGOPT_REPO_S3_HOST, false), bVerifySsl => cfgOption(CFGOPT_REPO_S3_VERIFY_SSL, false),
+                    {strHost => cfgOption(CFGOPT_REPO_S3_HOST, false), bVerifySsl => cfgOption(CFGOPT_REPO_S3_VERIFY_TLS, false),
                         strCaPath => cfgOption(CFGOPT_REPO_S3_CA_PATH, false),
                         strCaFile => cfgOption(CFGOPT_REPO_S3_CA_FILE, false), lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE),
                         strSecurityToken => cfgOption(CFGOPT_REPO_S3_TOKEN, false)});

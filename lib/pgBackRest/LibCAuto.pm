@@ -268,7 +268,7 @@ sub libcAutoExportTag
             'CFGOPT_REPO_S3_KEY_SECRET',
             'CFGOPT_REPO_S3_REGION',
             'CFGOPT_REPO_S3_TOKEN',
-            'CFGOPT_REPO_S3_VERIFY_SSL',
+            'CFGOPT_REPO_S3_VERIFY_TLS',
             'CFGOPT_REPO_TYPE',
             'CFGOPT_RESUME',
             'CFGOPT_SET',

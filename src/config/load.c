@@ -220,7 +220,7 @@ cfgLoadUpdateOption(void)
     }
 
     // Error if an S3 bucket name contains dots
-    if (cfgOptionTest(cfgOptRepoS3Bucket) && cfgOptionBool(cfgOptRepoS3VerifySsl) &&
+    if (cfgOptionTest(cfgOptRepoS3Bucket) && cfgOptionBool(cfgOptRepoS3VerifyTls) &&
         strChr(cfgOptionStr(cfgOptRepoS3Bucket), '.') != -1)
     {
         THROW_FMT(

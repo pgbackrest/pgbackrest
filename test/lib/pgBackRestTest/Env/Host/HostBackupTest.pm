@@ -1067,7 +1067,7 @@ sub configCreate
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_BUCKET)} = HOST_S3_BUCKET;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_ENDPOINT)} = HOST_S3_ENDPOINT;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_REGION)} = HOST_S3_REGION;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_VERIFY_SSL)} = 'n';
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-s3-verify-ssl'} = 'n';
         }
 
         if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})

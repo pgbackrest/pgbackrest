@@ -2029,27 +2029,35 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3Token,
     },
 
-    // repo-s3-verify-ssl option and deprecations
+    // repo-s3-verify-tls option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_REPO1_S3_VERIFY_SSL,
-        .val = PARSE_OPTION_FLAG | cfgOptRepoS3VerifySsl,
+        .name = CFGOPT_REPO1_S3_VERIFY_TLS,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoS3VerifyTls,
     },
     {
-        .name = "no-" CFGOPT_REPO1_S3_VERIFY_SSL,
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifySsl,
+        .name = "no-" CFGOPT_REPO1_S3_VERIFY_TLS,
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifyTls,
     },
     {
-        .name = "reset-" CFGOPT_REPO1_S3_VERIFY_SSL,
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3VerifySsl,
+        .name = "reset-" CFGOPT_REPO1_S3_VERIFY_TLS,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3VerifyTls,
     },
     {
         .name = "repo-s3-verify-ssl",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoS3VerifySsl,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoS3VerifyTls,
     },
     {
         .name = "no-repo-s3-verify-ssl",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifySsl,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifyTls,
+    },
+    {
+        .name = "repo1-s3-verify-ssl",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoS3VerifyTls,
+    },
+    {
+        .name = "no-repo1-s3-verify-ssl",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifyTls,
     },
 
     // repo-type option and deprecations
@@ -2397,7 +2405,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoS3KeySecret,
     cfgOptRepoS3Region,
     cfgOptRepoS3Token,
-    cfgOptRepoS3VerifySsl,
+    cfgOptRepoS3VerifyTls,
     cfgOptTarget,
     cfgOptTargetAction,
     cfgOptTargetExclusive,

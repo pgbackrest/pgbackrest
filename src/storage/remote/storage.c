@@ -190,7 +190,7 @@ storageRemotePathCreate(THIS_VOID, const String *path, bool errorOnExists, bool 
         protocolCommandParamAdd(command, VARSTR(path));
         protocolCommandParamAdd(command, VARBOOL(errorOnExists));
         protocolCommandParamAdd(command, VARBOOL(noParentCreate));
-        protocolCommandParamAdd(command, VARUINT64(mode));
+        protocolCommandParamAdd(command, VARUINT(mode));
 
         protocolClientExecute(this->client, command, false);
     }

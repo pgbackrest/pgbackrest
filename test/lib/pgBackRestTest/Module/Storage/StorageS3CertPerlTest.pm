@@ -69,14 +69,14 @@ sub run
                     'cert verify fails on ' . VM_CO7);
 
                 # It should work when verification is disabled
-                $self->optionTestSetBool(CFGOPT_REPO_S3_VERIFY_SSL, false);
+                $self->optionTestSetBool(CFGOPT_REPO_S3_VERIFY_TLS, false);
                 $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
                 $self->testException(
                     sub {storageRepo({strStanza => 'test2'})->list('/')}, ERROR_PROTOCOL, 'S3 request error \[403\] Forbidden.*',
                     'connection succeeds with verification disabled, (expected) error on invalid access key');
 
-                $self->optionTestClear(CFGOPT_REPO_S3_VERIFY_SSL);
+                $self->optionTestClear(CFGOPT_REPO_S3_VERIFY_TLS);
                 $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
             }
 

@@ -172,7 +172,8 @@ sub outputRead
         # Raise the error if a warning is not requested
         if (!$bWarnOnError)
         {
-            confess &log(ERROR, $strError, $hResult->{err}, $bSuppressLog);
+            confess &log(
+                ERROR, $strError . (defined($hResult->{errStack}) ? "\n$hResult->{errStack}" : ''), $hResult->{err}, $bSuppressLog);
         }
 
         &log(WARN, $strError, $hResult->{err});
