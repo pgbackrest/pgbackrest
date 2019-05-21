@@ -343,8 +343,8 @@ Option constants
     STRING_DECLARE(CFGOPT_REPO1_S3_REGION_STR);
 #define CFGOPT_REPO1_S3_TOKEN                                       "repo1-s3-token"
     STRING_DECLARE(CFGOPT_REPO1_S3_TOKEN_STR);
-#define CFGOPT_REPO1_S3_VERIFY_SSL                                  "repo1-s3-verify-ssl"
-    STRING_DECLARE(CFGOPT_REPO1_S3_VERIFY_SSL_STR);
+#define CFGOPT_REPO1_S3_VERIFY_TLS                                  "repo1-s3-verify-tls"
+    STRING_DECLARE(CFGOPT_REPO1_S3_VERIFY_TLS_STR);
 #define CFGOPT_REPO1_TYPE                                           "repo1-type"
     STRING_DECLARE(CFGOPT_REPO1_TYPE_STR);
 #define CFGOPT_RESUME                                               "resume"
@@ -559,7 +559,7 @@ typedef enum
     cfgOptRepoS3KeySecret,
     cfgOptRepoS3Region,
     cfgOptRepoS3Token,
-    cfgOptRepoS3VerifySsl,
+    cfgOptRepoS3VerifyTls,
     cfgOptRepoType,
     cfgOptResume,
     cfgOptSet,

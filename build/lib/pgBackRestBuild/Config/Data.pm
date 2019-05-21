@@ -282,8 +282,8 @@ use constant CFGOPT_REPO_S3_REGION                                  => CFGDEF_RE
     push @EXPORT, qw(CFGOPT_REPO_S3_REGION);
 use constant CFGOPT_REPO_S3_TOKEN                                   => CFGDEF_REPO_S3 . '-token';
     push @EXPORT, qw(CFGOPT_REPO_S3_TOKEN);
-use constant CFGOPT_REPO_S3_VERIFY_SSL                              => CFGDEF_REPO_S3 . '-verify-ssl';
-    push @EXPORT, qw(CFGOPT_REPO_S3_VERIFY_SSL);
+use constant CFGOPT_REPO_S3_VERIFY_TLS                              => CFGDEF_REPO_S3 . '-verify-tls';
+    push @EXPORT, qw(CFGOPT_REPO_S3_VERIFY_TLS);
 
 # Archive options
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -1819,7 +1819,7 @@ my %hConfigDefine =
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
-    &CFGOPT_REPO_S3_VERIFY_SSL =>
+    &CFGOPT_REPO_S3_VERIFY_TLS =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
@@ -1829,6 +1829,7 @@ my %hConfigDefine =
         &CFGDEF_NAME_ALT =>
         {
             'repo-s3-verify-ssl' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'repo?-s3-verify-ssl' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
         &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,

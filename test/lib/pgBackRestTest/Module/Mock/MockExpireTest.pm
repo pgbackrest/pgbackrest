@@ -62,7 +62,7 @@ sub initStanzaOption
         $self->optionTestSet(CFGOPT_REPO_S3_ENDPOINT, HOST_S3_ENDPOINT);
         $self->optionTestSet(CFGOPT_REPO_S3_REGION, HOST_S3_REGION);
         $self->optionTestSet(CFGOPT_REPO_S3_HOST, $oHostS3->ipGet());
-        $self->optionTestSetBool(CFGOPT_REPO_S3_VERIFY_SSL, false);
+        $self->optionTestSetBool(CFGOPT_REPO_S3_VERIFY_TLS, false);
     }
 }
 

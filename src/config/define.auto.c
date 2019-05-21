@@ -3750,7 +3750,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
-        CFGDEFDATA_OPTION_NAME("repo-s3-verify-ssl")
+        CFGDEFDATA_OPTION_NAME("repo-s3-verify-tls")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
@@ -3797,6 +3797,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("repo-s3-verify-ssl")
         )
     )
 

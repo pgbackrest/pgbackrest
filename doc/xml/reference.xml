@@ -446,8 +446,8 @@
                         <example>us-east-1</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-VERIFY-SSL KEY -->
-                    <config-key id="repo-s3-verify-ssl" name="S3 Repository Verify SSL">
+                    <!-- CONFIG - REPO SECTION - REPO-S3-VERIFY-TLS KEY -->
+                    <config-key id="repo-s3-verify-tls" name="S3 Repository Verify TLS">
                         <summary>Verify S3 server certificate.</summary>
 
                         <text>Disables verification of the S3 server certificate.  This should only be used for testing or other scenarios where a certificate has been self-signed.</text>
