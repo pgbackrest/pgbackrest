@@ -417,7 +417,23 @@ sub docGet
                         foreach my $oReleaseFeature ($oRelease->nodeGet($strSectionType)->
                                                      nodeGet($strItemType)->nodeList('release-item'))
                         {
-                            my $oReleaseItemText = $oReleaseFeature->nodeGet('p')->textGet();
+                            my @rhyReleaseItemP = $oReleaseFeature->nodeList('p');
+                            my $oReleaseItemText = $rhyReleaseItemP[0]->textGet();
+
+                            # Append the rest of the text
+                            if (@rhyReleaseItemP > 1)
+                            {
+                                shift(@rhyReleaseItemP);
+
+                                push(@{$oReleaseItemText->{oDoc}{children}}, ' ');
+
+                                foreach my $rhReleaseItemP (@rhyReleaseItemP)
+                                {
+                                    push(@{$oReleaseItemText->{oDoc}{children}}, @{$rhReleaseItemP->textGet()->{oDoc}{children}});
+                                }
+                            }
+
+                            # Append contributor info
                             my $strContributorText = $self->contributorTextGet($oReleaseFeature, $$hItemType{$strItemType}{type});
 
                             if (defined($strContributorText))
@@ -428,6 +444,7 @@ sub docGet
                                 push(@{$oReleaseItemText->{oDoc}{children}}, ')');
                             }
 
+                            # Add the list item
                             $oList->nodeAdd('list-item')->textSet($oReleaseItemText);
                         }
                     }

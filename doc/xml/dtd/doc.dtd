@@ -168,7 +168,7 @@
 <!ELEMENT release-improvement-list (release-item+)>
 <!ELEMENT release-development-list (release-item+)>
 
-<!ELEMENT release-item (release-item-contributor-list?, p)*>
+<!ELEMENT release-item (release-item-contributor-list?, p+)>
 
 <!ELEMENT release-item-contributor-list (release-item-ideator*, release-item-contributor*, release-item-reviewer*)>
 
