@@ -434,7 +434,7 @@ storageS3List(THIS_VOID, const String *path, bool errorOnMissing, const String *
         const String *continuationToken = NULL;
 
         // Prepare regexp if an expression was passed
-        RegExp *regExp = (expression == NULL) ? NULL : regExpNew(expression);
+        RegExp *regExp = expression == NULL ? NULL : regExpNew(expression);
 
         // Build the base prefix by stripping of the initial /
         const String *basePrefix;
