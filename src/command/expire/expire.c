@@ -167,7 +167,7 @@ expireDiffBackup(InfoBackup *infoBackup)
                     {
                         String *removeBackupLabel = strLstGet(removeList, rmvIdx);
 
-                        LOG_DEBUG("Expire process, checking %s for differential expiration",  strPtr(removeBackupLabel));
+                        LOG_DEBUG("checking %s for differential expiration",  strPtr(removeBackupLabel));
 
                         // Remove all differential and incremental backups before the oldest valid differential
                         // (removeBackupLabel < oldest valid differential)
@@ -206,7 +206,6 @@ expireFullBackup(InfoBackup *infoBackup)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // ??? Retention options will need to be indexed
         unsigned int fullRetention = cfgOptionTest(cfgOptRepoRetentionFull) ?
             (unsigned int) cfgOptionInt(cfgOptRepoRetentionFull) : 0;
 
