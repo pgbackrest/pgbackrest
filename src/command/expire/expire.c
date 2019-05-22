@@ -134,7 +134,6 @@ expireDiffBackup(InfoBackup *infoBackup)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // ??? Retention options will need to be indexed
         unsigned int differentialRetention = cfgOptionTest(cfgOptRepoRetentionDiff) ?
             (unsigned int) cfgOptionInt(cfgOptRepoRetentionDiff) : 0;
 
@@ -143,10 +142,10 @@ expireDiffBackup(InfoBackup *infoBackup)
         {
             // Get a list of full and differential backups. Full are considered differential for the purpose of retention.
             // Example: F1, D1, D2, F2, repo-retention-diff=2, then F1,D2,F2 will be retained, not D2 and D1 as might be expected.
-            StringList *currentBackupList = infoBackupDataLabelListP(
-                infoBackup, .filter = backupRegExpP(.full = true, .differential = true));
+            StringList *currentBackupList = infoBackupDataLabelList(
+                infoBackup, backupRegExpP(.full = true, .differential = true));
 
-            // If there are more backups then the number to retain, then expire the oldest ones
+            // If there are more backups than the number to retain, then expire the oldest ones
             if (strLstSize(currentBackupList) > differentialRetention)
             {
                 for (unsigned int diffIdx = 0; diffIdx < strLstSize(currentBackupList) - differentialRetention; diffIdx++)
@@ -157,8 +156,8 @@ expireDiffBackup(InfoBackup *infoBackup)
                         continue;
 
                     // Get a list of all differential and incremental backups
-                    StringList *removeList = infoBackupDataLabelListP(
-                        infoBackup, .filter = backupRegExpP(.differential = true, .incremental = true));
+                    StringList *removeList = infoBackupDataLabelList(
+                        infoBackup, backupRegExpP(.differential = true, .incremental = true));
 
                     // Initialize the log message
                     String *backupExpired = strNew("");
@@ -215,7 +214,7 @@ expireFullBackup(InfoBackup *infoBackup)
         if (fullRetention > 0)
         {
             // Get list of current full backups (default order is oldest to newest)
-            StringList *currentBackupList = infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true));
+            StringList *currentBackupList = infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true));
 
             // If there are more full backups then the number to retain, then expire the oldest ones
             if (strLstSize(currentBackupList) > fullRetention)
@@ -224,8 +223,8 @@ expireFullBackup(InfoBackup *infoBackup)
                 for (unsigned int fullIdx = 0; fullIdx < strLstSize(currentBackupList) - fullRetention; fullIdx++)
                 {
                     // The list of backups to remove includes the full backup and the default sort order will put it first
-                    StringList *removeList = infoBackupDataLabelListP(
-                        infoBackup, .filter = strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList, fullIdx))));
+                    StringList *removeList = infoBackupDataLabelList(
+                        infoBackup, strNewFmt("^%s.*", strPtr(strLstGet(currentBackupList, fullIdx))));
 
                     // Initialize the log message
                     String *backupExpired = strNew("");
@@ -253,7 +252,7 @@ expireFullBackup(InfoBackup *infoBackup)
 /***********************************************************************************************************************************
 Log detailed information about archive logs removed
 ***********************************************************************************************************************************/
-void
+static void
 logExpire(ArchiveExpired *archiveExpire, String *archiveId)
 {
     if (archiveExpire->start != NULL)
@@ -301,19 +300,19 @@ removeExpiredArchive(InfoBackup *infoBackup)
             if (strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL)) == 0)
             {
                 globalBackupRetentionList = strLstSort(
-                    infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true)), sortOrderDesc);
+                    infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderDesc);
             }
             else if (strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF)) == 0)
             {
                 globalBackupRetentionList = strLstSort(
-                    infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full = true, .differential = true)),
+                    infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true)),
                     sortOrderDesc);
             }
             else
             {   // Incrementals can depend on Full or Diff so get a list of all incrementals
                 globalBackupRetentionList = strLstSort(
-                    infoBackupDataLabelListP(
-                        infoBackup, .filter = backupRegExpP(.full = true, .differential = true, .incremental = true)),
+                    infoBackupDataLabelList(
+                        infoBackup, backupRegExpP(.full = true, .differential = true, .incremental = true)),
                     sortOrderDesc);
             }
 
@@ -459,9 +458,9 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                 lstAdd(archiveIdBackupList, &archiveIdBackup);
                         }
 
-                        bool removeArchive = false;
                         // Only expire if the selected backup has archive data - backups performed with --no-online will
                         // not have archive data and cannot be used for expiration.
+                        bool removeArchive = false;
                         if (archiveRetentionBackup.backupArchiveStart != NULL)
                         {
                             // Get archive ranges to preserve.  Because archive retention can be less than total retention it is
@@ -517,7 +516,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                 String *walPath = strLstGet(walPathList, walIdx);
                                 removeArchive = true;
 
-                                LOG_DEBUG("Expire process, found major WAL path: %s", strPtr(walPath));
+                                LOG_DEBUG("found major WAL path: %s", strPtr(walPath));
 
                                 // Keep the path if it falls in the range of any backup in retention
                                 for (unsigned int rangeIdx = 0; rangeIdx < lstSize(archiveRangeList); rangeIdx++)
@@ -537,11 +536,10 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                 {
                                     String *fullPath = strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath));
                                     storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
-                                    LOG_DEBUG("Expire process, remove major WAL path: %s", strPtr(fullPath));
+                                    LOG_DEBUG("remove major WAL path: %s", strPtr(fullPath));
                                     archiveExpire.total++;
                                     archiveExpire.start = strDup(walPath);
                                     archiveExpire.stop = strDup(walPath);
-
                                 }
                                 // Else delete individual files instead if the major path is less than or equal to the most recent
                                 // retention backup.  This optimization prevents scanning though major paths that could not possibly
@@ -584,7 +582,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                                 strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s",
                                                     strPtr(archiveId), strPtr(walPath), strPtr(walSubPath)));
 
-                                            LOG_DEBUG("Expire process, remove WAL segment: %s", strPtr(walSubPath));
+                                            LOG_DEBUG("remove WAL segment: %s", strPtr(walSubPath));
 
                                             // Track that this archive was removed
                                             archiveExpire.total++;
@@ -628,7 +626,7 @@ removeExpiredBackup(InfoBackup *infoBackup)
     ASSERT(infoBackup != NULL);
 
     // Get all the current backups in backup.info
-    StringList *currentBackupList = strLstSort(infoBackupDataLabelListNP(infoBackup), sortOrderDesc);
+    StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
     StringList *backupList = strLstSort(
         storageListP(
             storageRepo(), STRDEF(STORAGE_REPO_BACKUP), .errorOnMissing = false,

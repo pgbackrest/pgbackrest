@@ -197,31 +197,30 @@ testRun(void)
         // infoBackupDataLabelList and infoBackupDataDelete
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(infoBackupDataLabelListNP(infoBackup), sortOrderAsc), ", ")),
-            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I", "infoBackupDataLabelListNP");
+            strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", ")),
+            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I", "infoBackupDataLabelList without expression");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(infoBackupDataLabelListP(
-                infoBackup, .filter = backupRegExpP(.full=true, .differential=true, .incremental=true)), sortOrderAsc), ", ")),
-            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I", "infoBackupDataLabelListP");
+            strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(
+                infoBackup, backupRegExpP(.full=true, .differential=true, .incremental=true)), sortOrderAsc), ", ")),
+            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I", "infoBackupDataLabelList with expression");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.full=true)), ", ")),
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.full=true)), ", ")),
             "20161219-212741F", "  full=true");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.differential=true)), ", ")),
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.differential=true)), ", ")),
             "20161219-212741F_20161219-212803D", "differential=true");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(infoBackupDataLabelListP(infoBackup, .filter = backupRegExpP(.incremental=true)), ", ")),
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.incremental=true)), ", ")),
             "20161219-212741F_20161219-212918I", "incremental=true");
-
 
         TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212918I")), "delete a backup");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(infoBackupDataLabelListNP(infoBackup), sortOrderAsc), ", ")),
+            strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", ")),
             "20161219-212741F, 20161219-212741F_20161219-212803D", "  backup deleted");
 
         TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212803D")), "delete all backups");
         TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F")), "  deleted");
-        TEST_RESULT_UINT(strLstSize(infoBackupDataLabelListNP(infoBackup)), 0, "  no backups remain");
+        TEST_RESULT_UINT(strLstSize(infoBackupDataLabelList(infoBackup, NULL)), 0, "  no backups remain");
 
         // infoBackupDataToLog
         //--------------------------------------------------------------------------------------------------------------------------

@@ -191,7 +191,7 @@ testRun(void)
         TEST_RESULT_VOID(expireBackup(infoBackup, full2, backupExpired), "expire backup with no manifest - does not error");
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(infoBackupDataLabelListNP(infoBackup), ", ")),
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", ")),
                 "20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I, 20181119-152900F, "
                 "20181119-152900F_20181119-152600D",
             "only backups passed to expireBackup are removed from backup:current");
@@ -226,7 +226,7 @@ testRun(void)
         TEST_RESULT_UINT(expireFullBackup(infoBackup), 1, "retention-full=2 - one full backup expired");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 5, "  current backups reduced by 1 full - no dependencies");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(infoBackupDataLabelListNP(infoBackup), ", ")),
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", ")),
             "20181119-152800F, 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I, "
             "20181119-152900F, 20181119-152900F_20181119-152600D", "  remaining backups correct");
         harnessLogResult("P00   INFO: expire full backup 20181119-152138F");
@@ -239,7 +239,7 @@ testRun(void)
         TEST_RESULT_UINT(expireFullBackup(infoBackup), 3, "retention-full=1 - one full backup and dependencies expired");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "  current backups reduced by 1 full and dependencies");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(infoBackupDataLabelListNP(infoBackup), ", ")),
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", ")),
             "20181119-152900F, 20181119-152900F_20181119-152600D", "  remaining backups correct");
         harnessLogResult(
             "P00   INFO: expire full backup set: 20181119-152800F, 20181119-152800F_20181119-152152D, "
@@ -248,7 +248,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_UINT(expireFullBackup(infoBackup), 0, "retention-full=1 - not enough backups to expire any");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(infoBackupDataLabelListNP(infoBackup), ", ")),
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", ")),
             "20181119-152900F, 20181119-152900F_20181119-152600D", "  remaining backups correct");
     }
 
@@ -287,7 +287,7 @@ testRun(void)
         TEST_RESULT_UINT(expireDiffBackup(infoBackup), 2, "retention-diff set - full considered in diff");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 4, "  current backups reduced by 1 diff and dependent increment");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(infoBackupDataLabelListNP(infoBackup), ", ")),
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", ")),
             "20181119-152138F, 20181119-152800F, 20181119-152900F, 20181119-152900F_20181119-152600D",
             "  remaining backups correct");
         harnessLogResult(
@@ -350,7 +350,7 @@ testRun(void)
         TEST_RESULT_UINT(expireDiffBackup(infoBackup), 1, "retention-diff set - only oldest diff expired");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "  current backups reduced by one");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(infoBackupDataLabelListNP(infoBackup), ", ")),
+            strPtr(strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", ")),
             "20181119-152800F, 20181119-152800F_20181119-152155D",
             "  remaining backups correct");
         harnessLogResult(
@@ -773,7 +773,7 @@ testRun(void)
             "  get backup.info");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "  backup.info updated on disk");
         TEST_RESULT_STR(
-            strPtr(strLstJoin(strLstSort(infoBackupDataLabelListNP(infoBackup), sortOrderAsc), ", ")),
+            strPtr(strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", ")),
             "20181119-152900F, 20181119-152900F_20181119-152500I", "  remaining current backups correct");
 
         //--------------------------------------------------------------------------------------------------------------------------

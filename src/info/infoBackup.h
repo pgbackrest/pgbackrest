@@ -70,17 +70,7 @@ void infoBackupSave(
 /***********************************************************************************************************************************
 infoBackupDataLabelList - get a list of current backup labels
 ***********************************************************************************************************************************/
-typedef struct InfoBackupDataLabelListParam
-{
-    const String *filter;
-} InfoBackupDataLabelListParam;
-
-#define infoBackupDataLabelListP(this, ...)                                                                                        \
-    infoBackupDataLabelList(this, (InfoBackupDataLabelListParam){__VA_ARGS__})
-#define infoBackupDataLabelListNP(this)                                                                                            \
-    infoBackupDataLabelList(this, (InfoBackupDataLabelListParam){0})
-
-StringList *infoBackupDataLabelList(const InfoBackup *this, InfoBackupDataLabelListParam param);
+StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
 
 /***********************************************************************************************************************************
 Getters

@@ -329,24 +329,23 @@ infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
     for (unsigned int idx = 0; idx < infoBackupDataTotal(this); idx++)
     {
         InfoBackupData backupData = infoBackupData(this, idx);
+
         if (strCmp(backupData.backupLabel, backupDeleteLabel) == 0)
-        {
             lstRemove(this->backup, idx);
-        }
     }
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
-Return a list of current backup labels, applying a regex filter if provided
+Return a list of current backup labels, applying a regex expression if provided
 ***********************************************************************************************************************************/
 StringList *
-infoBackupDataLabelList(const InfoBackup *this, InfoBackupDataLabelListParam param)
+infoBackupDataLabelList(const InfoBackup *this, const String *expression)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
-        FUNCTION_LOG_PARAM(STRING, param.filter);
+        FUNCTION_LOG_PARAM(STRING, expression);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -356,11 +355,15 @@ infoBackupDataLabelList(const InfoBackup *this, InfoBackupDataLabelListParam par
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Prepare regexp if an expression was passed
+        RegExp *regExp = (expression == NULL) ? NULL : regExpNew(expression);
+
         // For each backup label, compare it to the filter (if any) and sort it for return
         for (unsigned int backupLabelIdx = 0; backupLabelIdx < infoBackupDataTotal(this); backupLabelIdx++)
         {
             InfoBackupData backupData = infoBackupData(this, backupLabelIdx);
-            if (param.filter == NULL || regExpMatchOne(param.filter, backupData.backupLabel))
+
+            if (regExp == NULL || regExpMatch(regExp, backupData.backupLabel))
             {
                 strLstAdd(result, backupData.backupLabel);
             }
