@@ -264,10 +264,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         ini = iniNew();
         iniSet(ini, strNew("section1"), strNew("key1"), strNew("value4"));
-        TEST_RESULT_VOID(infoSave(infoNew(), ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), "save encrypted info");
+        Info *info = infoNew();
+        info->cipherPass = strNew("/badpass");
+        TEST_RESULT_VOID(infoSave(info, ini, storageTest, fileName, cipherTypeAes256Cbc, cipherPass), "save encrypted info");
 
         ini = NULL;
         TEST_RESULT_VOID(infoNewLoad(storageTest, fileName, cipherTypeAes256Cbc, cipherPass, &ini), "    reload info");
         TEST_RESULT_STR(strPtr(iniGet(ini, strNew("section1"), strNew("key1"))), "value4", "    check ini");
+        TEST_RESULT_STR(strPtr(iniGet(ini, strNew("cipher"), strNew("cipher-pass"))), "\"/badpass\"", "    check cipher-pass");
     }
 }

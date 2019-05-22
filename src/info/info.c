@@ -89,8 +89,7 @@ infoHash(const Ini *ini)
                 String *key = strLstGet(keyList, keyIdx);
 
                 // Skip the backrest checksum in the file
-                if ((strEq(section, INFO_SECTION_BACKREST_STR) && !strEq(key, INFO_KEY_CHECKSUM_STR)) ||
-                    !strEq(section, INFO_SECTION_BACKREST_STR))
+                if (!strEq(section, INFO_SECTION_BACKREST_STR) || !strEq(key, INFO_KEY_CHECKSUM_STR))
                 {
                     ioFilterProcessIn(hash, BUFSTRDEF("\""));
                     ioFilterProcessIn(hash, BUFSTR(key));
@@ -325,9 +324,15 @@ infoSave(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Add common info values
+        // Add version and format
         iniSet(ini, INFO_SECTION_BACKREST_STR, INFO_KEY_VERSION_STR, jsonFromStr(STRDEF(PROJECT_VERSION)));
         iniSet(ini, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR, jsonFromUInt(REPOSITORY_FORMAT));
+
+        // Add cipher passphrase if defined
+        if (this->cipherPass != NULL)
+            iniSet(ini, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, jsonFromStr(this->cipherPass));
+
+        // Add checksum (this must be set after all other values or it will not be valid)
         iniSet(ini, INFO_SECTION_BACKREST_STR, INFO_KEY_CHECKSUM_STR, jsonFromStr(infoHash(ini)));
 
         // Save info file
