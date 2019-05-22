@@ -137,7 +137,7 @@ testRun(void)
     {
         TEST_RESULT_STR(strPtr(jsonFromStr(NULL)), "null", "null string");
         TEST_RESULT_STR(strPtr(jsonFromStr(strNew("simple string"))), "\"simple string\"", "simple string");
-        TEST_RESULT_STR(strPtr(jsonFromStr(strNew("\"\\/\b\n\r\t\f"))), "\"\\\"\\\\\\/\\b\\n\\r\\t\\f\"", "string escapes");
+        TEST_RESULT_STR(strPtr(jsonFromStr(strNew("\"\\/\b\n\r\t\f"))), "\"\\\"\\\\/\\b\\n\\r\\t\\f\"", "string escapes");
     }
 
     // *****************************************************************************************************************************
@@ -254,7 +254,7 @@ testRun(void)
             "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"escape\":\"\\\"\\\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}",
+            "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}",
             "  sorted json string result, no pretty print");
 
         TEST_ASSIGN(json, jsonFromVar(keyValue, 4), "KeyValue - indent 4");
@@ -272,7 +272,7 @@ testRun(void)
             "        1\n"
             "    ],\n"
             "    \"section\" : {\n"
-            "        \"escape\" : \"\\\"\\\\\\/\\b\\n\\r\\t\\f\",\n"
+            "        \"escape\" : \"\\\"\\\\/\\b\\n\\r\\t\\f\",\n"
             "        \"key1\" : \"value1\",\n"
             "        \"key2\" : null,\n"
             "        \"key3\" : \"value2\"\n"
@@ -294,7 +294,7 @@ testRun(void)
             "[{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"escape\":\"\\\"\\\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]",
+            "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]",
             "  sorted json string result no pretty print");
 
         Variant *keyValue2 = varDup(keyValue);
@@ -305,11 +305,11 @@ testRun(void)
             "[{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"escape\":\"\\\"\\\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}},"
+            "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}},"
             "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
             "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
             "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"escape\":\"\\\"\\\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]",
+            "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]",
             "  sorted json string result no pretty print");
 
         TEST_ASSIGN(json, jsonFromVar(varListOuter, 2), "VariantList - indent 2 - multiple elements");
@@ -328,7 +328,7 @@ testRun(void)
             "      1\n"
             "    ],\n"
             "    \"section\" : {\n"
-            "      \"escape\" : \"\\\"\\\\\\/\\b\\n\\r\\t\\f\",\n"
+            "      \"escape\" : \"\\\"\\\\/\\b\\n\\r\\t\\f\",\n"
             "      \"key1\" : \"value1\",\n"
             "      \"key2\" : null,\n"
             "      \"key3\" : \"value2\"\n"
@@ -347,7 +347,7 @@ testRun(void)
             "      1\n"
             "    ],\n"
             "    \"section\" : {\n"
-            "      \"escape\" : \"\\\"\\\\\\/\\b\\n\\r\\t\\f\",\n"
+            "      \"escape\" : \"\\\"\\\\/\\b\\n\\r\\t\\f\",\n"
             "      \"key1\" : \"value1\",\n"
             "      \"key2\" : null,\n"
             "      \"key3\" : \"value2\"\n"
