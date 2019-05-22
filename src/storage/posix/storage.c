@@ -284,7 +284,7 @@ storagePosixList(THIS_VOID, const String *path, bool errorOnMissing, const Strin
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 // Prepare regexp if an expression was passed
-                RegExp *regExp = (expression == NULL) ? NULL : regExpNew(expression);
+                RegExp *regExp = expression == NULL ? NULL : regExpNew(expression);
 
                 // Create the string list now that we know the directory is valid
                 result = strLstNew();

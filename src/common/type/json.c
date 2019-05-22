@@ -677,10 +677,6 @@ jsonFromStrInternal(String *json, const String *string)
                     strCat(json, "\\\\");
                     break;
 
-                case '/':
-                    strCat(json, "\\/");
-                    break;
-
                 case '\n':
                     strCat(json, "\\n");
                     break;

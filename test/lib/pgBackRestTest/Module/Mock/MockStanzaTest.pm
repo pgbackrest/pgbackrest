@@ -73,19 +73,13 @@ sub run
         my $bEncrypt = $rhRun->{encrypt};
 
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("remote ${bRemote}, s3 ${bS3}, enc ${bEncrypt}")) {next}
+        if (!$self->begin("remote ${bRemote}, s3 ${bS3}, enc ${bEncrypt}", !$bS3)) {next}
+
+        next if $bS3; # !!! TEMPORARY UNTIL S3 DRIVER SUPPORTS REQUIRED FUNCTIONS
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
-
-        # Reduce console logging to detail
-        $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(DETAIL)}});
-
-        if ($bRemote)
-        {
-            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(DETAIL)}});
-        }
 
         # Create the stanza
         $oHostBackup->stanzaCreate('fail on missing control file', {iExpectedExitStatus => ERROR_FILE_OPEN,

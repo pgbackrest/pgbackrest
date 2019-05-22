@@ -66,7 +66,9 @@ sub run
             "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, cmp ${bCompress}, s3 ${bS3}, " .
                 "enc ${bRepoEncrypt}",
             # Use the most recent db version on the expect vm for expect testing
-            $self->vm() eq VM_EXPECT && $self->pgVersion() eq $strDbVersionMostRecent));
+            $self->vm() eq VM_EXPECT && $self->pgVersion() eq $strDbVersionMostRecent && !$bS3));
+
+        next if $bS3; # !!! TEMPORARY UNTIL S3 DRIVER SUPPORTS REQUIRED FUNCTIONS
 
         # Skip when s3 and host backup tests when there is more than one version of pg being tested and this is not the last one
         if (($bS3 || $bHostBackup) && (@{$hyVm->{$self->vm()}{&VM_DB_TEST}} > 1 && $strDbVersionMostRecent ne $self->pgVersion()))

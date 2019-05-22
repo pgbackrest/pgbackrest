@@ -660,6 +660,9 @@ cmdExpire(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Get the repo storage in case it is remote and encryption settings need to be pulled down
+        storageRepo();
+
         // Load the backup.info
         InfoBackup *infoBackup = infoBackupNew(
             storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE), false,

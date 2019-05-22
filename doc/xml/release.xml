@@ -20,7 +20,9 @@
                     </release-item>
 
                     <release-item>
-                        <p>Rename <br-option>repo-s3-verify-ssl</br-option> option to <br-option>repo-s3-verify-tls</br-option>.  The new name is preferred because pgBackRest does not support any SSL protocol versions (they are all considered to be insecure).  The old name will continue to be accepted.</p>
+                        <p>Rename <br-option>repo-s3-verify-ssl</br-option> option to <br-option>repo-s3-verify-tls</br-option>.</p>
+
+                        <p>The new name is preferred because pgBackRest does not support any SSL protocol versions (they are all considered to be insecure).  The old name will continue to be accepted.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -822,7 +824,9 @@
                     </release-item>
 
                     <release-item>
-                        <p>Simplify <cmd>info</cmd> command text message when no stanzas are present by replacing the repository path with <quote>the repository</quote>.</p>
+                        <p>Simplify <cmd>info</cmd> command text message when no stanzas are present.</p>
+
+                        <p>Replace the repository path with <quote>the repository</quote>.</p>
                     </release-item>
 
                     <release-item>
@@ -1555,7 +1559,9 @@
                     </release-item>
 
                     <release-item>
-                        <p>Fix incorrectly reported error return in <id>info</id> logging.  A return code of 1 from the <cmd>archive-get</cmd> was being logged as an error message at <id>info</id> level but otherwise worked correctly.</p>
+                        <p>Fix incorrectly reported error return in <id>info</id> logging.</p>
+
+                        <p>A return code of 1 from the <cmd>archive-get</cmd> was being logged as an error message at <id>info</id> level but otherwise worked correctly.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -1565,7 +1571,9 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Add checksum delta for incremental backups which uses checksums rather than timestamps to determine if files have changed.</p>
+                        <p>Add checksum delta for incremental backups.</p>
+
+                        <p>Checksum delta backups uses checksums rather than timestamps to determine if files have changed.</p>
                     </release-item>
 
                     <release-item>
@@ -1575,7 +1583,9 @@
 
                 <release-improvement-list>
                     <release-item>
-                        <p>Ignore all files in a linked tablespace directory except the subdirectory for the current version of <postgres/>.  Previously an error would be generated if other files were present and not owned by the <postgres/> user.</p>
+                        <p>Ignore all files in a linked tablespace directory except the subdirectory for the current version of <postgres/>.</p>
+
+                        <p>Previously an error would be generated if other files were present and not owned by the <postgres/> user.</p>
                     </release-item>
 
                     <release-item>
@@ -1789,7 +1799,9 @@
                             <release-item-ideator id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Fix issue where <i>relative</i> links in <path>$PGDATA</path> could be stored in the backup with the wrong path.  This issue did not affect absolute links and relative tablespace links were caught by other checks.</p>
+                        <p>Fix issue where <i>relative</i> links in <path>$PGDATA</path> could be stored in the backup with the wrong path.</p>
+
+                        <p>This issue did not affect absolute links and relative tablespace links were caught by other checks.</p>
                     </release-item>
 
                     <release-item>
@@ -1797,7 +1809,9 @@
                             <release-item-ideator id="jason.odonnell"/>
                         </release-item-contributor-list>
 
-                        <p>Remove incompletely implemented <br-option>online</br-option> option from the <cmd>check</cmd> command.  Offline operation runs counter to the purpose of this command, which is to check if archiving and backups are working correctly.</p>
+                        <p>Remove incompletely implemented <br-option>online</br-option> option from the <cmd>check</cmd> command.</p>
+
+                        <p>Offline operation runs counter to the purpose of this command, which is to check if archiving and backups are working correctly.</p>
                     </release-item>
 
                     <release-item>
@@ -1805,7 +1819,9 @@
                             <release-item-ideator id="douglas.j.hunley"/>
                         </release-item-contributor-list>
 
-                        <p>Fix issue where errors raised in C were not logged when called from Perl.  <backrest/> properly terminated with the correct error code but lacked an error message to aid in debugging.</p>
+                        <p>Fix issue where errors raised in C were not logged when called from Perl.</p>
+
+                        <p><backrest/> properly terminated with the correct error code but lacked an error message to aid in debugging.</p>
                     </release-item>
 
                     <release-item>
@@ -1819,7 +1835,9 @@
 
                 <release-feature-list>
                     <release-item>
-                        <p>Allow any option to be set in an environment variable.  This includes options that previously could only be specified on the command line, e.g. <br-option>stanza</br-option>, and secret options that could not be specified on the command-line, e.g. <br-option>repo1-s3-key-secret</br-option>.</p>
+                        <p>Allow any option to be set in an environment variable.</p>
+
+                        <p>This includes options that previously could only be specified on the command line, e.g. <br-option>stanza</br-option>, and secret options that could not be specified on the command-line, e.g. <br-option>repo1-s3-key-secret</br-option>.</p>
                     </release-item>
 
                     <release-item>
@@ -1827,7 +1845,9 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Exclude temporary and unlogged relation (table/index) files from backup.  Implemented using the same logic as the patches adding this feature to <postgres/>, <link url="https://git.postgresql.org/pg/commitdiff/8694cc96b52a967a49725f32be7aa77fd3b6ac25">8694cc96</link> and <link url="https://git.postgresql.org/pg/commitdiff/920a5e500a119b03356fb1fb64a677eb1aa5fc6f">920a5e50</link>.  Temporary relation exclusion is enabled in <postgres/> &amp;ge; <id>9.0</id>.  Unlogged relation exclusion is enabled in <postgres/> &amp;ge; <id>9.1</id>, where the feature was introduced.</p>
+                        <p>Exclude temporary and unlogged relation (table/index) files from backup.</p>
+
+                        <p>Implemented using the same logic as the patches adding this feature to <postgres/>, <link url="https://git.postgresql.org/pg/commitdiff/8694cc96b52a967a49725f32be7aa77fd3b6ac25">8694cc96</link> and <link url="https://git.postgresql.org/pg/commitdiff/920a5e500a119b03356fb1fb64a677eb1aa5fc6f">920a5e50</link>.  Temporary relation exclusion is enabled in <postgres/> &amp;ge; <id>9.0</id>.  Unlogged relation exclusion is enabled in <postgres/> &amp;ge; <id>9.1</id>, where the feature was introduced.</p>
                     </release-item>
 
                     <release-item>
@@ -1835,7 +1855,9 @@
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Allow arbitrary directories and/or files to be excluded from a backup.  Misuse of this feature can lead to inconsistent backups so read the <br-option>--exclude</br-option> documentation carefully before using.</p>
+                        <p>Allow arbitrary directories and/or files to be excluded from a backup.</p>
+
+                        <p>Misuse of this feature can lead to inconsistent backups so read the <br-option>--exclude</br-option> documentation carefully before using.</p>
                     </release-item>
 
                     <release-item>
@@ -2016,7 +2038,9 @@
                             <release-item-ideator id="christophe.pettus"/>
                         </release-item-contributor-list>
 
-                        <p>Stop trying to arrange contributors in <file>release.xml</file> by last/first name.  Contributor names have always been presented in the release notes exactly as given, but we tried to assign internal IDs based on last/first name which can be hard to determine and ultimately doesn't make sense.  Inspired by Christophe's <proper>PostgresOpen 2017</proper> talk, <quote>Human Beings Do Not Have a Primary Key</quote>.</p>
+                        <p>Stop trying to arrange contributors in <file>release.xml</file> by last/first name.</p>
+
+                        <p>Contributor names have always been presented in the release notes exactly as given, but we tried to assign internal IDs based on last/first name which can be hard to determine and ultimately doesn't make sense.  Inspired by Christophe's <proper>PostgresOpen 2017</proper> talk, <quote>Human Beings Do Not Have a Primary Key</quote>.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -2034,7 +2058,9 @@
             <release-test-list>
                 <release-improvement-list>
                     <release-item>
-                        <p>Error if LibC build is performed outside the test environment.  LibC is no longer required for production builds.</p>
+                        <p>Error if LibC build is performed outside the test environment.</p>
+
+                        <p>LibC is no longer required for production builds.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -2074,7 +2100,9 @@
                             <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Fix critical bug in resume that resulted in inconsistent backups.  A regression in <id>v0.82</id> removed the timestamp comparison when deciding which files from the aborted backup to keep on resume. See note above for more details.</p>
+                        <p>Fix critical bug in resume that resulted in inconsistent backups.</p>
+
+                        <p>A regression in <id>v0.82</id> removed the timestamp comparison when deciding which files from the aborted backup to keep on resume. See note above for more details.</p>
                     </release-item>
 
                     <release-item>
@@ -2091,7 +2119,9 @@
                             <release-item-contributor id="andrew.schwartz"/>
                         </release-item-contributor-list>
 
-                        <p>Fix non-compliant ISO-8601 timestamp format in S3 authorization headers.  AWS and some gateways were tolerant of space rather than zero-padded hours while others were not.</p>
+                        <p>Fix non-compliant ISO-8601 timestamp format in S3 authorization headers.</p>
+
+                        <p>AWS and some gateways were tolerant of space rather than zero-padded hours while others were not.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -2107,7 +2137,9 @@
                             <release-item-ideator id="adam.k.sumner"/>
                         </release-item-contributor-list>
 
-                        <p>Improve the HTTP client to set <id>content-length</id> to 0 when not specified by the server.  S3 (and gateways) always set <id>content-length</id> or <id>transfer-encoding</id> but <id>HTTP 1.1</id> does not require it and proxies (e.g. <proper>HAProxy</proper>) may not include either.</p>
+                        <p>Improve the HTTP client to set <id>content-length</id> to 0 when not specified by the server.</p>
+
+                        <p>S3 (and gateways) always set <id>content-length</id> or <id>transfer-encoding</id> but <id>HTTP 1.1</id> does not require it and proxies (e.g. <proper>HAProxy</proper>) may not include either.</p>
                     </release-item>
 
                     <release-item>
@@ -2327,7 +2359,9 @@
 
                 <release-feature-list>
                     <release-item>
-                        <p>Add asynchronous, parallel <cmd>archive-get</cmd>.  This feature maintains a queue of WAL segments to help reduce latency when <postgres/> requests a WAL segment with <pg-option>restore_command</pg-option>.</p>
+                        <p>Add asynchronous, parallel <cmd>archive-get</cmd>.</p>
+
+                        <p>This feature maintains a queue of WAL segments to help reduce latency when <postgres/> requests a WAL segment with <pg-option>restore_command</pg-option>.</p>
                     </release-item>
 
                     <release-item>
@@ -2335,7 +2369,9 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Add support for additional <backrest/> configuration files in the directory specified by the <br-option>--config-include-path</br-option> option. Add <br-option>--config-path</br-option> option for overriding the default base path of the <br-option>--config</br-option> and <br-option>--config-include-path</br-option> option.</p>
+                        <p>Add support for additional <backrest/> configuration files.</p>
+
+                        <p>The directory is specified by the <br-option>--config-include-path</br-option> option. Add <br-option>--config-path</br-option> option for overriding the default base path of the <br-option>--config</br-option> and <br-option>--config-include-path</br-option> option.</p>
                     </release-item>
 
                     <release-item>
@@ -2343,7 +2379,9 @@
                             <release-item-contributor id="yogesh.sharma"/>
                         </release-item-contributor-list>
 
-                        <p>Add <br-option>repo-s3-token</br-option> option to allow temporary credentials tokens to be configured.  <backrest/> currently has no way to request new credentials so the entire command (e.g. <cmd>backup</cmd>, <cmd>restore</cmd>) must complete before the credentials expire.</p>
+                        <p>Add <br-option>repo-s3-token</br-option> option to allow temporary credentials tokens to be configured.</p>
+
+                        <p><backrest/> currently has no way to request new credentials so the entire command (e.g. <cmd>backup</cmd>, <cmd>restore</cmd>) must complete before the credentials expire.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -2357,7 +2395,9 @@
                     </release-item>
 
                     <release-item>
-                        <p>Make backup/restore path sync more efficient.  Scanning the entire directory can be very expensive if there are a lot of small tables.  The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path.</p>
+                        <p>Make backup/restore path sync more efficient.</p>
+
+                        <p>Scanning the entire directory can be very expensive if there are a lot of small tables.  The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path.</p>
                     </release-item>
 
                     <release-item>
@@ -2365,7 +2405,9 @@
                     </release-item>
 
                     <release-item>
-                        <p>Rename <br-option>archive-queue-max</br-option> option to <br-option>archive-push-queue-max</br-option> to avoid confusion with the new <br-option>archive-get-queue-max</br-option> option.  The old option name will continue to be accepted.</p>
+                        <p>Rename archive-queue-max option to archive-push-queue-max.</p>
+
+                        <p>This is consistent with the new <br-option>archive-get-queue-max</br-option> option. The old option name will continue to be accepted.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -2460,7 +2502,9 @@
                             <release-item-ideator id="viorel.tabara"/>
                         </release-item-contributor-list>
 
-                        <p>Update docs with 32-bit support and caveats. 32-bit support was added in <proper>v1.26</proper>.</p>
+                        <p>Update docs with 32-bit support and caveats.</p>
+
+                        <p>32-bit support was added in <proper>v1.26</proper>.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -2505,7 +2549,9 @@
             <release-test-list>
                 <release-feature-list>
                     <release-item>
-                        <p>Use <proper>lcov</proper> for C unit test coverage reporting.  Switch from <proper>Devel::Cover</proper> because it would not report on branch coverage for reports converted from <proper>gcov</proper>.  Incomplete branch coverage for a module now generates an error.  Coverage of unit tests is not displayed in the report unless they are incomplete for either statement or branch coverage.</p>
+                        <p>Use <proper>lcov</proper> for C unit test coverage reporting.</p>
+
+                        <p>Switch from <proper>Devel::Cover</proper> because it would not report on branch coverage for reports converted from <proper>gcov</proper>.  Incomplete branch coverage for a module now generates an error.  Coverage of unit tests is not displayed in the report unless they are incomplete for either statement or branch coverage.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -2585,7 +2631,9 @@
                             <release-item-ideator id="brad.nicholson"/>
                         </release-item-contributor-list>
 
-                        <p>Immediately error when a secure option (e.g. <br-option>repo1-s3-key</br-option>) is passed on the command line.  Since <backrest/> would not pass secure options on to sub-processes an obscure error was thrown.  The new error is much clearer and provides hints about how to fix the problem.  Update command documentation to omit secure options that cannot be specified on the command-line.</p>
+                        <p>Immediately error when a secure option (e.g. <br-option>repo1-s3-key</br-option>) is passed on the command line.</p>
+
+                        <p>Since <backrest/> would not pass secure options on to sub-processes an obscure error was thrown.  The new error is much clearer and provides hints about how to fix the problem.  Update command documentation to omit secure options that cannot be specified on the command-line.</p>
                     </release-item>
 
                     <release-item>
@@ -2601,7 +2649,9 @@
                             <release-item-ideator id="clinton.adams"/>
                         </release-item-contributor-list>
 
-                        <p>Fix issue where specifying <br-setting>log-level-stderr</br-setting> > <id>warn</id> would cause a <cmd>local</cmd>/<cmd>remote</cmd> process to error on exit due to output found on stderr when none was expected.  The max value for a <cmd>local</cmd>/<cmd>remote</cmd> process is now <id>error</id> since there is no reason for these processes to emit warnings.</p>
+                        <p>Fix issue where specifying <br-option>log-level-stderr</br-option> &gt; <id>warn</id> would cause a <cmd>local</cmd>/<cmd>remote</cmd> process to error on exit due to output found on stderr when none was expected.</p>
+
+                        <p>The max value for a <cmd>local</cmd>/<cmd>remote</cmd> process is now <id>error</id> since there is no reason for these processes to emit warnings.</p>
                     </release-item>
 
                     <release-item>
@@ -2722,7 +2772,9 @@
                     </release-item>
 
                     <release-item>
-                        <p>Use clang for static code analysis.  Nothing found initially except for some functions that should have been marked <code>__noreturn__</code>.</p>
+                        <p>Use clang for static code analysis.</p>
+
+                        <p>Nothing found initially except for some functions that should have been marked <code>__noreturn__</code>.</p>
                     </release-item>
                 </release-feature-list>
 

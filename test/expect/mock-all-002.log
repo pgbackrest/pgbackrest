@@ -12,10 +12,8 @@ info all stanzas - no stanzas exist (db-master host)
 []
 
 stanza-create db - create required data for stanza (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
-P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -56,14 +54,14 @@ db-version="9.4"
 1={"db-id":1000000000000000094,"db-version":"9.4"}
 
 full backup - error on identical link destinations (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00  ERROR: [070]: link [TEST_PATH]/db-master/db/base/pg_hba.conf (../pg_config) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_config_bad (../../db/pg_config)
 
 full backup - error on link to a link (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -99,7 +97,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -108,7 +106,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -204,7 +202,7 @@ pg_data/special-@!#$^&*()-_+~`{}[]\|:;"<>',.?%={"master":true,"repo-size":[SIZE]
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_hba.conf={"destination":"../pg_config/pg_hba.conf"}
@@ -213,7 +211,7 @@ pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -229,7 +227,7 @@ pg_data/pg_tblspc={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -286,7 +284,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -295,7 +293,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -394,7 +392,7 @@ pg_data/zero_from_start={"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_hba.conf={"destination":"../pg_config/pg_hba.conf"}
@@ -403,7 +401,7 @@ pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -419,7 +417,7 @@ pg_data/pg_tblspc={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -445,7 +443,7 @@ db-version="9.4"
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 full backup - invalid repo (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --repo1-path=/bogus_path  --log-level-console=warn --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --repo1-path=/bogus_path --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -462,15 +460,15 @@ restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-master host)
 restore_command = '[BACKREST-BIN] --cmd-ssh=/usr/bin/ssh --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, backup '[BACKUP-FULL-2]' - fix broken symlink (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all --log-level-console=warn --compress-level-network=0  --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all --compress-level-network=0  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --compress-level-network=0 --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --compress-level-network=0 --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, force, backup '[BACKUP-FULL-2]', expect exit 40 - fail on missing PG_VERSION (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=warn  --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '[TEST_PATH]/db-master/db/base' to confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files exist in the destination directories the restore will be aborted.
 P00   WARN: file link pg_hba.conf will be restored as a file at the same location
@@ -479,20 +477,20 @@ P00   WARN: file link postgresql.conf will be restored as a file at the same loc
 P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
 
 restore delta, force, backup '[BACKUP-FULL-2]' - restore succeeds with backup.manifest file (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=warn  --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: group bogus in manifest cannot be used for restore, set to [USER-1]
-P00   WARN: user bogus in manifest cannot be used for restore, set to [USER-1]
+P00   WARN: group bogus in manifest cannot be used for restore, set to [USER-2]
+P00   WARN: user bogus in manifest cannot be used for restore, set to [USER-2]
 P00   WARN: file link pg_hba.conf will be restored as a file at the same location
 P00   WARN: contents of directory link pg_stat will be restored in a directory at the same location
 P00   WARN: file link postgresql.conf will be restored as a file at the same location
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 incr backup - invalid database version (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -500,7 +498,7 @@ P00  ERROR: [051]: database version = 9.4, system-id 1000000000000000094 does no
             HINT: is this the correct stanza?
 
 incr backup - invalid system id (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -508,7 +506,7 @@ P00  ERROR: [051]: database version = 9.4, system-id 1000000000000000094 does no
             HINT: is this the correct stanza?
 
 incr backup - invalid control version (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -516,7 +514,7 @@ P00  ERROR: [051]: database control-version = 942, catalog-version 201409291 doe
             HINT: this may be a symptom of database or repository corruption!
 
 incr backup - invalid catalog version (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -524,7 +522,7 @@ P00  ERROR: [051]: database control-version = 942, catalog-version 201409291 doe
             HINT: this may be a symptom of database or repository corruption!
 
 incr backup - invalid path in pg_tblspc (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -532,7 +530,7 @@ P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to
 P00  ERROR: [069]: pg_tblspc/path is not a symlink - pg_tblspc should contain only symlinks
 
 incr backup - invalid relative tablespace in $PGDATA (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -540,7 +538,7 @@ P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to
 P00  ERROR: [071]: tablespace symlink ../invalid_tblspc destination must not be in $PGDATA
 
 incr backup - invalid tablespace in $PGDATA (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -577,7 +575,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -586,7 +584,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -687,14 +685,14 @@ pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"14c44cef6287269b08d41
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -714,7 +712,7 @@ pg_tblspc/1/[TS_PATH-1]/16384={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -775,7 +773,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -784,7 +782,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -888,7 +886,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
@@ -897,7 +895,7 @@ pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -922,7 +920,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -949,7 +947,7 @@ db-version="9.4"
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 diff backup - cannot resume - new diff (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --process-max=1 --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -983,7 +981,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -992,7 +990,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -1095,7 +1093,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
@@ -1103,7 +1101,7 @@ pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -1126,7 +1124,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -1153,7 +1151,7 @@ db-version="9.4"
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 diff backup - cannot resume - disabled / no repo link (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --no-resume --log-level-console=warn --process-max=1 --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --no-resume --process-max=1 --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -1187,7 +1185,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -1196,7 +1194,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
@@ -1299,7 +1297,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
@@ -1307,7 +1305,7 @@ pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -1330,7 +1328,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -1357,28 +1355,28 @@ db-version="9.4"
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 restore, backup '[BACKUP-DIFF-2]', expect exit 40 - fail on used path (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=warn  --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
 
 restore, backup '[BACKUP-DIFF-2]', remap - remap all paths (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=warn  --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
 ------------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, backup '[BACKUP-DIFF-2]', remap - ensure file in tblspc root remains after --delta (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-DIFF-2] --log-level-console=warn  --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
 ------------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 incr backup - add files and remove tablespace 2 (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --process-max=1 --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -1412,7 +1410,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -1421,7 +1419,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -1524,14 +1522,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -1551,7 +1549,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -1579,11 +1577,9 @@ db-version="9.4"
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 stanza-create db - create required data for stanza (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --force --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
 P00  ERROR: [055]: backup information missing and repo is encrypted and info file(s) are missing, --force cannot be used
-P00   INFO: stanza-create command end: aborted with exception [055]
 
 + supplemental file: /archive/db/archive.info
 ---------------------------------------------
@@ -1604,7 +1600,7 @@ db-version="9.4"
 1={"db-id":1000000000000000094,"db-version":"9.4"}
 
 incr backup - update files (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -1638,7 +1634,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -1647,7 +1643,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -1750,14 +1746,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -1777,7 +1773,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -1806,7 +1802,7 @@ db-version="9.4"
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 diff backup - updates since last full (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --process-max=1 --type=diff --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -1843,7 +1839,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -1852,7 +1848,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -1955,14 +1951,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -1982,7 +1978,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -2012,7 +2008,7 @@ db-version="9.4"
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 incr backup - remove files - but won't affect manifest (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -2046,7 +2042,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -2055,7 +2051,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -2158,14 +2154,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -2185,7 +2181,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -2216,7 +2212,7 @@ db-version="9.4"
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 diff backup - remove files during backup (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --process-max=1 --type=diff --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --type=diff --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -2253,7 +2249,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -2262,7 +2258,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -2363,14 +2359,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -2390,7 +2386,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -2422,7 +2418,7 @@ db-version="9.4"
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 full backup - update file (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -2453,7 +2449,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -2462,7 +2458,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -2563,14 +2559,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=true
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -2590,7 +2586,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -2968,20 +2964,11 @@ info db stanza - normal output (backup host)
 ]
 
 expire full=1 (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --repo1-retention-full=1  --stanza=db expire
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo1-retention-full=1  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-retention-full=1 --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db
-P00   INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3], [BACKUP-INCR-4], [BACKUP-DIFF-3], [BACKUP-INCR-5], [BACKUP-DIFF-4]
-P00   INFO: remove expired backup [BACKUP-DIFF-4]
-P00   INFO: remove expired backup [BACKUP-DIFF-3]
-P00   INFO: remove expired backup [BACKUP-INCR-4]
-P00   INFO: remove expired backup [BACKUP-INCR-3]
-P00   INFO: remove expired backup [BACKUP-DIFF-2]
-P00   INFO: remove expired backup [BACKUP-FULL-2]
-P00   INFO: expire command end: completed successfully
 
 diff backup - add file (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --checksum-page --type=diff --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --checksum-page --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
@@ -3012,7 +2999,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -3021,7 +3008,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
@@ -3124,14 +3111,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -3151,7 +3138,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -3178,20 +3165,20 @@ db-version="9.4"
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 restore delta, remap - selective restore 16384 (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=warn --db-include=16384  --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --db-include=16384  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
 ------------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, remap - selective restore 32768 (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=warn --db-include=32768  --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --db-include=32768  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
 ------------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, remap, expect exit 80 - error on invalid id (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=warn --db-include=7777  --stanza=db restore
@@ -3204,17 +3191,17 @@ restore delta, remap, expect exit 81 - error on system id (db-master host)
 P00  ERROR: [081]: system databases (template0, postgres, etc.) are included by default
 
 restore, remap, expect exit 73 - no tablespace remap - error when tablespace dir does not exist (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --tablespace-map-all=../../tablespace  --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --tablespace-map-all=../../tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00  ERROR: [073]: cannot restore to missing path [TEST_PATH]/db-master/db/base-2/tablespace
 
 restore - no tablespace remap (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --tablespace-map-all=../../tablespace --log-level-console=warn  --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --tablespace-map-all=../../tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/base/recovery.conf
 -----------------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 info all stanzas - normal output (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=warn info
@@ -3356,7 +3343,7 @@ info bogus stanza - bogus stanza (db-master host)
 diff backup - config file not validated on remote (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
@@ -3392,7 +3379,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 bogus=bogus
 
@@ -3402,7 +3389,7 @@ bogus=bogus
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
@@ -3505,14 +3492,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"../../tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -3532,7 +3519,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------
@@ -3562,7 +3549,7 @@ db-version="9.4"
 diff backup - option backup-standby reset - backup performed from master (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --log-subprocess --no-log-timestamp --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-2] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option repo1-retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but standby is not properly configured - backups will be performed from the master
@@ -3599,7 +3586,7 @@ protocol-timeout=60
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
-repo1-host-user=[USER-2]
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -3608,7 +3595,7 @@ spool-path=[TEST_PATH]/db-master/spool
 pg1-host=db-master
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
-pg1-host-user=[USER-1]
+pg1-host-user=[USER-2]
 pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
@@ -3711,14 +3698,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="[GROUP-1]"
 master=false
 mode="0600"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"../../tablespace/ts2"}
 
 [target:link:default]
 group="[GROUP-1]"
-user="[USER-1]"
+user="[USER-2]"
 
 [target:path]
 pg_data={}
@@ -3738,7 +3725,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="[GROUP-1]"
 mode="0700"
-user="[USER-1]"
+user="[USER-2]"
 
 + supplemental file: /backup/db/backup.info
 -------------------------------------------

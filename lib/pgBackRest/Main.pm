@@ -240,17 +240,6 @@ sub main
 
                         new pgBackRest::Backup::Backup()->process();
                     }
-
-                    # Process expire command
-                    # --------------------------------------------------------------------------------------------------------------
-                    elsif (cfgCommandTest(CFGCMD_EXPIRE))
-                    {
-                        # Load module dynamically
-                        require pgBackRest::Expire;
-                        pgBackRest::Expire->import();
-
-                        new pgBackRest::Expire()->process();
-                    }
                 }
             }
         }

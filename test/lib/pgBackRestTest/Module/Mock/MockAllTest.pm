@@ -82,14 +82,13 @@ sub run
         my $bDeltaBackup = $rhRun->{delta};
 
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bEncrypt}, delta ${bDeltaBackup}")) {next}
+        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bEncrypt}, delta ${bDeltaBackup}", !$bS3)) {next}
+
+        next if $bS3; # !!! TEMPORARY UNTIL S3 DRIVER SUPPORTS REQUIRED FUNCTIONS
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3, bRepoEncrypt => $bEncrypt});
-
-        # Reduce log level for many tests
-        my $strLogReduced = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . '=' . lc(DETAIL);
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
@@ -98,10 +97,9 @@ sub run
             $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
             $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
 
-            # Reduce log level to detail because parallel tests do not create deterministic logs
+            # Reduce log level to warn because parallel tests do not create deterministic logs
             $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(WARN)}});
             $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(WARN)}});
-            $strLogReduced = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . '=' . lc(WARN);
         }
 
         # Get base time
@@ -359,8 +357,7 @@ sub run
 
         my $strFullBackup = $oHostBackup->backup(
             $strType, 'error on identical link destinations',
-            {oExpectedManifest => \%oManifest, strOptionalParam => $strLogReduced,
-                iExpectedExitStatus => ERROR_LINK_DESTINATION});
+            {oExpectedManifest => \%oManifest,  iExpectedExitStatus => ERROR_LINK_DESTINATION});
 
         # Remove failing link
         $oHostDbMaster->manifestLinkRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_config_bad');
@@ -372,8 +369,7 @@ sub run
         # Fail bacause two links point to the same place
         $strFullBackup = $oHostBackup->backup(
             $strType, 'error on link to a link',
-            {oExpectedManifest => \%oManifest, strOptionalParam => $strLogReduced,
-                iExpectedExitStatus => ERROR_LINK_DESTINATION});
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
 
         # Remove failing link
         $oHostDbMaster->manifestLinkRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf.bad');
@@ -572,8 +568,8 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->backup(
             $strType, 'invalid repo',
-            {oExpectedManifest => \%oManifest, strOptionalParam => '--' . cfgOptionName(CFGOPT_REPO_PATH) . '=/bogus_path' .
-             "  ${strLogReduced}", iExpectedExitStatus => $bS3 ? ERROR_FILE_MISSING : ERROR_PATH_MISSING});
+            {oExpectedManifest => \%oManifest, strOptionalParam => '--' . cfgOptionName(CFGOPT_REPO_PATH) . '=/bogus_path',
+                iExpectedExitStatus => $bS3 ? ERROR_FILE_MISSING : ERROR_PATH_MISSING});
 
         # Restore - tests various mode, extra files/paths, missing files/paths
         #---------------------------------------------------------------------------------------------------------------------------
@@ -651,7 +647,7 @@ sub run
         $oHostDbMaster->restore(
             'fix broken symlink', $strFullBackup,
             {rhExpectedManifest => \%oManifest, bDelta => true,
-                strOptionalParam => " --link-all ${strLogReduced}" . ($bRemote ? ' --compress-level-network=0' : '')});
+                strOptionalParam => ' --link-all' . ($bRemote ? ' --compress-level-network=0' : '')});
 
         # Test operations not running on their usual host
         if ($bRemote && !$bS3)
@@ -667,7 +663,7 @@ sub run
             $oHostBackup->restore(
                 'on backup host', $strFullBackup,
                 {rhExpectedManifest => \%oManifest, strUser => TEST_USER,
-                    strOptionalParam => "${strLogReduced} --reset-pg1-host --pg1-path=${strBackupHostDbPath}"});
+                    strOptionalParam => "--reset-pg1-host --pg1-path=${strBackupHostDbPath}"});
 
             $oHostDbMaster->backup(
                 $strType, 'backup errors on db host',
@@ -683,7 +679,7 @@ sub run
                 'restore all links by mapping', $strFullBackup,
                 {rhExpectedManifest => \%oManifest, bDelta => true,
                     strOptionalParam =>
-                        $strLogReduced . ' --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf' .
+                        '--link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf' .
                             ' --link-map=pg_hba.conf=../pg_config/pg_hba.conf'});
 
             # Error when links overlap
@@ -728,7 +724,7 @@ sub run
             $oHostDbMaster->restore(
                 'restore all links --link-all and mapping', $strFullBackup,
                 {rhExpectedManifest => \%oManifest, bDelta => true,
-                    strOptionalParam => "${strLogReduced} --link-map=pg_stat=../pg_stat --link-all"});
+                    strOptionalParam => '--link-map=pg_stat=../pg_stat --link-all'});
         }
 
         # Restore - test errors when $PGDATA cannot be verified
@@ -739,8 +735,7 @@ sub run
         # Attempt the restore
         $oHostDbMaster->restore(
             'fail on missing ' . DB_FILE_PGVERSION, $strFullBackup,
-            {rhExpectedManifest => \%oManifest, bDelta => true, bForce => true, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY,
-                strOptionalParam => $strLogReduced});
+            {rhExpectedManifest => \%oManifest, bDelta => true, bForce => true, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
 
         # Write a backup.manifest file to make $PGDATA valid
         testFileCreate($oHostDbMaster->dbBasePath() . '/backup.manifest', 'BOGUS');
@@ -759,8 +754,7 @@ sub run
 
         $oHostDbMaster->restore(
             'restore succeeds with backup.manifest file', $strFullBackup,
-            {rhExpectedManifest => \%oManifest, bDelta => true, bForce => true,
-                strOptionalParam => $strLogReduced});
+            {rhExpectedManifest => \%oManifest, bDelta => true, bForce => true});
 
         # No longer need pg_hba.conf since it is no longer a link and doesn't provide additional coverage
         $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_hba.conf');
@@ -777,7 +771,7 @@ sub run
 
         $oHostBackup->backup(
             $strType, 'invalid database version',
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH, strOptionalParam => $strLogReduced});
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
 
         # Break the database system id
         $oHostBackup->infoMunge(
@@ -786,7 +780,7 @@ sub run
 
         $oHostBackup->backup(
             $strType, 'invalid system id',
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH, strOptionalParam => $strLogReduced});
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
 
         # Break the control version
         $oHostBackup->infoMunge(
@@ -795,7 +789,7 @@ sub run
 
         $oHostBackup->backup(
             $strType, 'invalid control version',
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH, strOptionalParam => $strLogReduced});
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
 
         # Break the catalog version
         $oHostBackup->infoMunge(
@@ -804,7 +798,7 @@ sub run
 
         $oHostBackup->backup(
             $strType, 'invalid catalog version',
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH, strOptionalParam => $strLogReduced});
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
 
         # Restore the file to its original condition
         $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
@@ -819,7 +813,7 @@ sub run
 
         $oHostBackup->backup(
             $strType, 'invalid path in ' . DB_PATH_PGTBLSPC,
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_EXPECTED, strOptionalParam => $strLogReduced});
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_EXPECTED});
 
         testPathRemove("${strTblSpcPath}/path");
 
@@ -830,8 +824,7 @@ sub run
 
             $oHostBackup->backup(
                 $strType, 'invalid relative tablespace is ../',
-                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA,
-                    strOptionalParam => $strLogReduced});
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA});
 
             testFileRemove("${strTblSpcPath}/99999");
 
@@ -839,8 +832,7 @@ sub run
 
             $oHostBackup->backup(
                 $strType, 'invalid relative tablespace is ..',
-                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA,
-                    strOptionalParam => $strLogReduced});
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA});
 
             testFileRemove("${strTblSpcPath}/99999");
 
@@ -848,8 +840,7 @@ sub run
 
             $oHostBackup->backup(
                 $strType, 'invalid relative tablespace is ../../$PGDATA',
-                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA,
-                    strOptionalParam => $strLogReduced});
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA});
 
             testFileRemove("${strTblSpcPath}/99999");
 
@@ -857,8 +848,7 @@ sub run
 
             $oHostBackup->backup(
                 $strType, 'invalid relative tablespace is ../../$PGDATA',
-                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA,
-                    strOptionalParam => $strLogReduced});
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA});
 
             testFileRemove("${strTblSpcPath}/99999");
 
@@ -868,8 +858,7 @@ sub run
 
             $oHostBackup->backup(
                 $strType, 'tablespace link references a link',
-                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION,
-                    strOptionalParam => $strLogReduced});
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION});
 
             testFileRemove($oHostDbMaster->dbPath() . "/intermediate_link");
             testFileRemove("${strTblSpcPath}/99999");
@@ -880,8 +869,7 @@ sub run
 
         $oHostBackup->backup(
             $strType, 'invalid relative tablespace in $PGDATA',
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA,
-                strOptionalParam => $strLogReduced});
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA});
 
         testFileRemove("${strTblSpcPath}/99999");
 
@@ -892,8 +880,7 @@ sub run
 
             $oHostBackup->backup(
                 $strType, '$PGDATA is a substring of valid tblspc excluding / (file missing err expected)',
-                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_MISSING,
-                    strOptionalParam => $strLogReduced});
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_MISSING});
 
             testFileRemove("${strTblSpcPath}/99999");
         }
@@ -903,8 +890,7 @@ sub run
 
         $oHostBackup->backup(
             $strType, 'invalid tablespace in $PGDATA',
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA,
-                strOptionalParam => $strLogReduced});
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA});
 
         testFileRemove("${strTblSpcPath}/99999");
 
@@ -1043,7 +1029,7 @@ sub run
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - new diff',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
-                strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
+                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
                 ($bDeltaBackup ? ' --delta' : '')});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
@@ -1065,7 +1051,7 @@ sub run
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - disabled / no repo link',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
-                strOptionalParam => "--no-resume ${strLogReduced} --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
+                strOptionalParam => '--no-resume --' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
                 ($bDeltaBackup ? ' --delta' : '')});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
@@ -1075,8 +1061,7 @@ sub run
         # Fail on used path
         $oHostDbMaster->restore(
             'fail on used path', $strBackup,
-            {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY,
-                strOptionalParam => $strLogReduced});
+            {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
 
         # Remap the base and tablespace paths
         my %oRemapHash;
@@ -1092,15 +1077,13 @@ sub run
         }
 
         $oHostDbMaster->restore(
-            'remap all paths', $strBackup,
-            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, strOptionalParam => ($bRemote ? $strLogReduced : '')});
+            'remap all paths', $strBackup, {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash});
 
         # Restore (make sure file in root tablespace path is not deleted by --delta)
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->restore(
             'ensure file in tblspc root remains after --delta', $strBackup,
-            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
-                strOptionalParam => $strLogReduced});
+            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true});
 
         if (!-e $strDoNotDeleteFile)
         {
@@ -1129,7 +1112,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'add files and remove tablespace 2',
-            {oExpectedManifest => \%oManifest, strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
+            {oExpectedManifest => \%oManifest, strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
@@ -1164,8 +1147,7 @@ sub run
         {
             $strBackup =$oHostBackup->backup(
             $strType, 'update files - fail on missing backup.info',
-            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_MISSING,
-             strOptionalParam => $strLogReduced});
+            {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_MISSING});
 
             # Fail on attempt to create the stanza data since force was not used
             $oHostBackup->stanzaCreate('fail on backup directory missing backup.info',
@@ -1185,8 +1167,7 @@ sub run
         }
 
         # Perform the backup
-        $strBackup =$oHostBackup->backup(
-            $strType, 'update files', {oExpectedManifest => \%oManifest, strOptionalParam => $strLogReduced});
+        $strBackup =$oHostBackup->backup($strType, 'update files', {oExpectedManifest => \%oManifest});
 
         # Diff Backup
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1197,8 +1178,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'updates since last full', {oExpectedManifest => \%oManifest,
-                strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
-                ($bDeltaBackup ? ' --delta' : '')});
+                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $bS3 ? 2 : 1;
 
@@ -1216,8 +1196,7 @@ sub run
 
         my $oBackupExecute = $oHostBackup->backupBegin(
             $strType, 'remove files - but won\'t affect manifest',
-            {oExpectedManifest => \%oManifest, strTest => TEST_MANIFEST_BUILD, fTestDelay => 1,
-                strOptionalParam => $strLogReduced});
+            {oExpectedManifest => \%oManifest, strTest => TEST_MANIFEST_BUILD, fTestDelay => 1});
 
         $oHostDbMaster->dbFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
@@ -1250,8 +1229,7 @@ sub run
         $oBackupExecute = $oHostBackup->backupBegin(
             $strType, 'remove files during backup',
             {oExpectedManifest => \%oManifest, strTest => TEST_MANIFEST_BUILD, fTestDelay => 1,
-                strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' .
-                ($bDeltaBackup ? ' --delta' : '')});
+                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1' . ($bDeltaBackup ? ' --delta' : '')});
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt', 'TBLSPCBIGGER',
@@ -1285,7 +1263,7 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_CHECKSUM_PAGE} = JSON::PP::false;
 
         $strFullBackup = $oHostBackup->backup(
-            $strType, 'update file', {oExpectedManifest => \%oManifest, strOptionalParam => $strLogReduced});
+            $strType, 'update file', {oExpectedManifest => \%oManifest});
 
         # Backup Info
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1312,8 +1290,8 @@ sub run
             $strFullBackup, {&MANIFEST_SECTION_BACKUP_OPTION => {&MANIFEST_KEY_CHECKSUM_PAGE => undef}}, false);
 
         $strBackup = $oHostBackup->backup(
-            $strType, 'add file', {oExpectedManifest => \%oManifest,
-                strOptionalParam => "${strLogReduced} --" . cfgOptionName(CFGOPT_CHECKSUM_PAGE)});
+            $strType, 'add file',
+            {oExpectedManifest => \%oManifest, strOptionalParam => '--' . cfgOptionName(CFGOPT_CHECKSUM_PAGE)});
 
         # Selective Restore
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1331,7 +1309,7 @@ sub run
         $oHostDbMaster->restore(
             'selective restore 16384', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
-                strOptionalParam => "${strLogReduced} --db-include=16384"});
+                strOptionalParam => '--db-include=16384'});
 
         # Restore checksum values for next test
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
@@ -1349,7 +1327,7 @@ sub run
         $oHostDbMaster->restore(
             'selective restore 32768', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
-                strOptionalParam => "${strLogReduced} --db-include=32768"});
+                strOptionalParam => '--db-include=32768'});
 
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM} =
             '7579ada0808d7f98087a0a586d0df9de009cdc33';
@@ -1377,14 +1355,14 @@ sub run
         $oHostDbMaster->restore(
             'no tablespace remap - error when tablespace dir does not exist', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
             {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, iExpectedExitStatus => ERROR_PATH_MISSING,
-                bTablespace => false, strOptionalParam => "${strLogReduced} --tablespace-map-all=../../tablespace"});
+                bTablespace => false, strOptionalParam => '--tablespace-map-all=../../tablespace'});
 
         storageTest()->pathCreate($oHostDbMaster->dbBasePath(2) . '/tablespace', {strMode => '0700'});
 
         $oHostDbMaster->restore(
             'no tablespace remap', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
             {rhExpectedManifest => \%oManifest, bTablespace => false,
-                strOptionalParam => "--tablespace-map-all=../../tablespace ${strLogReduced}"});
+                strOptionalParam => '--tablespace-map-all=../../tablespace'});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{'pg_tblspc/2'}{&MANIFEST_SUBKEY_PATH} = '../../tablespace/ts2';
         $oManifest{&MANIFEST_SECTION_TARGET_LINK}{'pg_data/pg_tblspc/2'}{&MANIFEST_SUBKEY_DESTINATION} = '../../tablespace/ts2';

@@ -66,7 +66,9 @@ sub run
 
         # Increment the run, log, and decide whether this unit test should be run
         if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, error " . ($iError ? 'connect' : 'version') . ", s3 ${bS3}, " .
-            "enc ${bEncrypt}")) {next}
+            "enc ${bEncrypt}", !$bS3)) {next}
+
+        next if $bS3; # !!! TEMPORARY UNTIL S3 DRIVER SUPPORTS REQUIRED FUNCTIONS
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
