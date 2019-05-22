@@ -386,6 +386,8 @@
                     </release-item>
 
                     <release-item>
+                        <!-- <commit type="depend" subject="Allow three-digits process IDs in logging."/> -->
+
                         <release-item-contributor-list>
                             <release-item-ideator id="rakshitha.br"/>
                         </release-item-contributor-list>
@@ -846,6 +848,9 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="Include Posix-compliant header for strcasecmp()."/>
+                        <commit subject="Include Posix-compliant header for fd_set."/>
+
                         <release-item-contributor-list>
                             <release-item-ideator id="ucando"/>
                         </release-item-contributor-list>
@@ -966,6 +971,9 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="Allow if in manifest variables."/>
+                        <commit subject="Allow if condition in documentation lists and list items."/>
+
                         <p>Allow <code>if</code> in manifest variables, lists, and list items.</p>
                     </release-item>
                 </release-improvement-list>
@@ -1577,6 +1585,10 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="PostgreSQL 11 Beta 4 support."/>
+                        <commit subject="Support configurable WAL segment size."/>
+                        <commit subject="PostgreSQL 11 support."/>
+
                         <p><postgres/> 11 support, including configurable WAL segment size.</p>
                     </release-item>
                 </release-feature-list>
