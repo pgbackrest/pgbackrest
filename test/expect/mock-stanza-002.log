@@ -16,7 +16,6 @@ P00  ERROR: [055]: archive.info does not exist but is required to push/get WAL s
             HINT: is archive_command configured in postgresql.conf?
             HINT: has a stanza-create been performed?
             HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
-            HINT: has a stanza-create been performed?
 P00   INFO: stanza-upgrade command end: aborted with exception [055]
 
 stanza-create db - successfully create the stanza (backup host)

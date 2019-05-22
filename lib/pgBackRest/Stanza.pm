@@ -36,7 +36,6 @@ my $strHintForce = "\nHINT: use stanza-create --force to force the stanza data t
 my $strInfoMissing = " information missing";
 my $strStanzaCreateErrorMsg = "not empty";
 my $strRepoEncryptedMsg = " and repo is encrypted and info file(s) are missing, --force cannot be used";
-my $strHintStanzaCreate = "\nHINT: has a stanza-create been performed?";
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -592,8 +591,7 @@ sub infoObject
         {
             if ($iResult == ERROR_FILE_MISSING)
             {
-                confess &log(ERROR, cfgOptionValid(CFGOPT_FORCE) ? $strResultMessage . $strHintForce :
-                    $strResultMessage . $strHintStanzaCreate, $iResult);
+                confess &log(ERROR, cfgOptionValid(CFGOPT_FORCE) ? $strResultMessage . $strHintForce : $strResultMessage, $iResult);
             }
             else
             {
