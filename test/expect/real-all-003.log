@@ -2,7 +2,7 @@ run 003 - bkp 0, sby 1, dst db-standby, cmp 0, s3 0, enc 0
 ==========================================================
 
 stanza-create db - main create stanza info files (db-standby host)
-> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stanza=db --log-level-console=detail stanza-create
+> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stanza=db stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - update during backup (db-standby host)
@@ -22,7 +22,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
@@ -58,7 +58,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
@@ -103,7 +103,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
@@ -142,7 +142,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
@@ -157,7 +157,7 @@ archive-copy=y
 start-fast=y
 
 check db - confirm standby manifest->build executed (db-standby host)
-> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
+> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 incr backup - update during backup (db-standby host)
@@ -177,7 +177,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
@@ -216,7 +216,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log

@@ -659,7 +659,6 @@ sub check
     $self->executeSimple(
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
-        ' --log-level-console=detail' .
         (defined($$oParam{iTimeout}) ? " --archive-timeout=$$oParam{iTimeout}" : '') .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' --stanza=' . $self->stanza() . ' check',
@@ -702,7 +701,6 @@ sub expire
     $self->executeSimple(
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
-        ' --log-level-console=detail' .
         (defined($$oParam{iRetentionFull}) ? " --repo1-retention-full=$$oParam{iRetentionFull}" : '') .
         (defined($$oParam{iRetentionDiff}) ? " --repo1-retention-diff=$$oParam{iRetentionDiff}" : '') .
         '  --stanza=' . $self->stanza() . ' expire',
@@ -778,7 +776,6 @@ sub stanzaCreate
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
         ' --stanza=' . $self->stanza() .
-        ' --log-level-console=detail' .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' stanza-create',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
@@ -848,7 +845,6 @@ sub stanzaUpgrade
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
         ' --stanza=' . $self->stanza() .
-        ' --log-level-console=detail' .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' stanza-upgrade',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
@@ -905,7 +901,6 @@ sub stanzaDelete
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
         ' --stanza=' . $self->stanza() .
-        ' --log-level-console=detail' .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' stanza-delete',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
@@ -1021,7 +1016,7 @@ sub configCreate
 
     # General options
     # ------------------------------------------------------------------------------------------------------------------------------
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE)} = lc(DEBUG);
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE)} = lc(DETAIL);
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_FILE)} = lc(TRACE);
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_STDERR)} = lc(OFF);
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_SUBPROCESS)} = 'y';

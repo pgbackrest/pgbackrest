@@ -2,15 +2,15 @@ run 004 - bkp 1, sby 0, dst backup, cmp 1, s3 0, enc 1
 ======================================================
 
 stanza-create db - main create stanza info files (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail stanza-create
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on missing archive.info file (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=0.1 --stanza=db check
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 stanza-create db - force create stanza info files (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail  --force stanza-create
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db  --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - fail on archive_mode=off (backup host)
@@ -18,11 +18,11 @@ full backup - fail on archive_mode=off (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on archive_mode=off (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=0.1 --stanza=db check
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on archive_mode=off (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --archive-timeout=0.1 --stanza=db check
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - fail on invalid archive_command (backup host)
@@ -30,71 +30,71 @@ full backup - fail on invalid archive_command (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on invalid archive_command (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=0.1 --stanza=db check
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on invalid archive_command (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --archive-timeout=0.1 --stanza=db check
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on archive timeout when archive-check=n (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=0.1 --no-archive-check --stanza=db check
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=0.1 --no-archive-check --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - verify success (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - verify success (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on archive mismatch after upgrade (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=0.1 --stanza=db check
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on archive mismatch after upgrade (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --archive-timeout=0.1 --stanza=db check
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on archive timeout (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=0.1 --stanza=db check
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on archive timeout (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --archive-timeout=0.1 --stanza=db check
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on backup info mismatch (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - fail on backup info mismatch (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - confirm master manifest->build executed (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - verify success after backup (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - verify success after backup (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 stanza-create db - fail on backup info file missing from non-empty dir (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail stanza-create
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 stanza-create db - successfully create stanza files to be upgraded (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail  --pg1-path=[TEST_PATH]/db-master/db/testbase/ --no-online --force stanza-create
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db  --pg1-path=[TEST_PATH]/db-master/db/testbase/ --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 stanza-upgrade db - upgrade stanza files online (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail stanza-upgrade
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - update during backup (backup host)
@@ -113,7 +113,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
@@ -141,7 +141,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
@@ -184,7 +184,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
@@ -213,7 +213,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
@@ -229,7 +229,7 @@ archive-copy=y
 start-fast=y
 
 check db - check command with tablespace (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 restore, type 'default' (db-master host)
@@ -269,7 +269,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
@@ -298,7 +298,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
@@ -322,7 +322,7 @@ stop db stanza (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 stanza-delete db - delete stanza with --force when pgbackrest on pg host not accessible (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail  --force stanza-delete
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db  --force stanza-delete
 ------------------------------------------------------------------------------------------------------------------------------------
 
 start all stanzas (db-master host)
