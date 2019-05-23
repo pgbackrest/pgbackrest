@@ -2,7 +2,7 @@ run 005 - bkp 1, sby 1, dst backup, cmp , s3 0, enc 0
 =====================================================
 
 stanza-create db - main create stanza info files (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail stanza-create
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - update during backup (backup host)
@@ -22,7 +22,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
@@ -48,7 +48,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
@@ -88,7 +88,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
@@ -132,7 +132,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
@@ -160,7 +160,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
@@ -201,7 +201,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
@@ -215,11 +215,11 @@ archive-copy=y
 start-fast=y
 
 check db - confirm standby manifest->build executed (db-standby host)
-> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
+> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - verify check command on standby (db-standby host)
-> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --log-level-console=detail --stanza=db check
+> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 incr backup - update during backup (backup host)
@@ -239,7 +239,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
@@ -267,7 +267,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
@@ -308,7 +308,7 @@ compress-level=3
 compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
-log-level-console=debug
+log-level-console=detail
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log

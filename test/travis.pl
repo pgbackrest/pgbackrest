@@ -119,7 +119,7 @@ eval
         processEnd();
 
         processBegin('release documentation doc');
-        executeTest("${strReleaseExe} --build --no-coverage", {bShowOutputAsync => true});
+        executeTest("${strReleaseExe} --build --no-gen", {bShowOutputAsync => true});
         processEnd();
     }
 

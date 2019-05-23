@@ -167,8 +167,8 @@ sub new
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strType'},
-            {name => 'oManifest'},
-            {name => 'bExe'},
+            {name => 'oManifest', required => false},
+            {name => 'bExe', required => false},
             {name => 'strRenderOutKey', required => false}
         );
 
@@ -276,6 +276,20 @@ sub new
 }
 
 ####################################################################################################################################
+# Set begin and end values for a tag
+####################################################################################################################################
+sub tagSet
+{
+    my $self = shift;
+    my $strTag = shift;
+    my $strBegin = shift;
+    my $strEnd = shift;
+
+    $oRenderTag->{$self->{strType}}{$strTag}[0] = defined($strBegin) ? $strBegin : '';
+    $oRenderTag->{$self->{strType}}{$strTag}[1] = defined($strEnd) ? $strEnd : '';
+}
+
+####################################################################################################################################
 # variableReplace
 #
 # Replace variables in the string.
@@ -284,7 +298,7 @@ sub variableReplace
 {
     my $self = shift;
 
-    return $self->{oManifest}->variableReplace(shift, $self->{strType});
+    return defined($self->{oManifest}) ? $self->{oManifest}->variableReplace(shift, $self->{strType}) : shift;
 }
 
 ####################################################################################################################################
