@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc SYSTEM "doc.dtd">
+<doc title="{[project]}" subtitle="Frequently Asked Questions" toc="y">
+    <description>{[project]} Frequently Asked Questions (FAQ).</description>
+
+    <section id="s3-bucket">
+        <title>Can I use dots/periods in my S3 bucket name?</title>
+
+        <p>The RFC does not allow wildcards to match on a dot (.), therefore s3 bucket names must not contain dots. If there are dots in the S3 bucket name then an error such as <quote>unable to find hostname 'my.backup.bucket.s3.amazonaws.com' in certificate common name or subject alternative names</quote> will occur.</p>
+
+    </section>
+</doc>
