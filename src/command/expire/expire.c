@@ -165,12 +165,10 @@ expireDiffBackup(InfoBackup *infoBackup)
                     // Remove the manifest files in each directory and remove the backup from the current section of backup.info
                     for (unsigned int rmvIdx = 0; rmvIdx < strLstSize(removeList); rmvIdx++)
                     {
-                        String *removeBackupLabel = strLstGet(removeList, rmvIdx);
-
-                        LOG_DEBUG("checking %s for differential expiration",  strPtr(removeBackupLabel));
-
                         // Remove all differential and incremental backups before the oldest valid differential
                         // (removeBackupLabel < oldest valid differential)
+                        String *removeBackupLabel = strLstGet(removeList, rmvIdx);
+
                         if (strCmp(removeBackupLabel, strLstGet(currentBackupList, diffIdx + 1)) < 0)
                         {
                             expireBackup(infoBackup, removeBackupLabel, backupExpired);
@@ -460,6 +458,7 @@ removeExpiredArchive(InfoBackup *infoBackup)
                         // Only expire if the selected backup has archive data - backups performed with --no-online will
                         // not have archive data and cannot be used for expiration.
                         bool removeArchive = false;
+
                         if (archiveRetentionBackup.backupArchiveStart != NULL)
                         {
                             // Get archive ranges to preserve.  Because archive retention can be less than total retention it is
@@ -515,8 +514,6 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                 String *walPath = strLstGet(walPathList, walIdx);
                                 removeArchive = true;
 
-                                LOG_DEBUG("found major WAL path: %s", strPtr(walPath));
-
                                 // Keep the path if it falls in the range of any backup in retention
                                 for (unsigned int rangeIdx = 0; rangeIdx < lstSize(archiveRangeList); rangeIdx++)
                                 {
@@ -533,9 +530,10 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                 // Remove the entire directory if all archive is expired
                                 if (removeArchive)
                                 {
-                                    String *fullPath = strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId), strPtr(walPath));
-                                    storagePathRemoveP(storageRepoWrite(), fullPath, .recurse = true);
-                                    LOG_DEBUG("remove major WAL path: %s", strPtr(fullPath));
+                                    storagePathRemoveP(
+                                        storageRepoWrite(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strPtr(archiveId),
+                                        strPtr(walPath)), .recurse = true);
+
                                     archiveExpire.total++;
                                     archiveExpire.start = strDup(walPath);
                                     archiveExpire.stop = strDup(walPath);
@@ -580,8 +578,6 @@ removeExpiredArchive(InfoBackup *infoBackup)
                                                 storageRepoWrite(),
                                                 strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s",
                                                     strPtr(archiveId), strPtr(walPath), strPtr(walSubPath)));
-
-                                            LOG_DEBUG("remove WAL segment: %s", strPtr(walSubPath));
 
                                             // Track that this archive was removed
                                             archiveExpire.total++;
