@@ -54,7 +54,7 @@ XmlNodeList *xmlNodeChildList(XmlNode *this, const String *name);
 XmlNode *xmlNodeChildN(XmlNode *this, const String *name, unsigned int index, bool errorOnMissing);
 unsigned int xmlNodeChildTotal(XmlNode *this, const String *name);
 String *xmlNodeContent(XmlNode *this);
-void xmlNodeContentSet(XmlNode *this, String *content);
+void xmlNodeContentSet(XmlNode *this, const String *content);
 
 /***********************************************************************************************************************************
 Node Destructor
