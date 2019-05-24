@@ -57,13 +57,10 @@ storageNew(
     ASSERT(path == NULL || (strSize(path) >= 1 && strPtr(path)[0] == '/'));
     ASSERT(driver != NULL);
     ASSERT(interface.exists != NULL);
-    ASSERT(interface.info != NULL);
     ASSERT(interface.list != NULL);
     ASSERT(interface.newRead != NULL);
     ASSERT(interface.newWrite != NULL);
-    ASSERT(interface.pathCreate != NULL);
     ASSERT(interface.pathRemove != NULL);
-    ASSERT(interface.pathSync != NULL);
     ASSERT(interface.remove != NULL);
 
     Storage *this = NULL;
@@ -243,6 +240,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->interface.info != NULL);
 
     StorageInfo result = {0};
 
@@ -351,6 +349,7 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
         FUNCTION_LOG_PARAM(STORAGE_WRITE, destination);
     FUNCTION_LOG_END();
 
+    ASSERT(this != NULL);
     ASSERT(this->interface.move != NULL);
     ASSERT(source != NULL);
     ASSERT(destination != NULL);
@@ -573,6 +572,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->interface.pathCreate != NULL);
     ASSERT(this->write);
 
     // It doesn't make sense to combine these parameters because if we are creating missing parent paths why error when they exist?
@@ -661,15 +661,19 @@ void storagePathSync(const Storage *this, const String *pathExp, StoragePathSync
     ASSERT(this != NULL);
     ASSERT(this->write);
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    // Not all storage requires path sync so just do nothing if the function is not implemented
+    if (this->interface.pathSync != NULL)
     {
-        // Build the path
-        String *path = storagePathNP(this, pathExp);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Build the path
+            String *path = storagePathNP(this, pathExp);
 
-        // Call driver function
-        this->interface.pathSync(this->driver, path, param.ignoreMissing);
+            // Call driver function
+            this->interface.pathSync(this->driver, path, param.ignoreMissing);
+        }
+        MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }

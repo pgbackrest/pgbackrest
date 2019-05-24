@@ -390,30 +390,6 @@ storageS3Exists(THIS_VOID, const String *path)
 }
 
 /***********************************************************************************************************************************
-File/path info
-***********************************************************************************************************************************/
-static StorageInfo
-storageS3Info(THIS_VOID, const String *file, bool ignoreMissing, bool followLink)
-{
-    THIS(StorageS3);
-
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_S3, this);
-        FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        FUNCTION_LOG_PARAM(BOOL, followLink);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(file != NULL);
-    ASSERT(followLink == false);
-
-    THROW(AssertError, "NOT YET IMPLEMENTED");
-
-    FUNCTION_LOG_RETURN(STORAGE_INFO, (StorageInfo){0});
-}
-
-/***********************************************************************************************************************************
 Get a list of files from a directory
 ***********************************************************************************************************************************/
 static StringList *
@@ -597,31 +573,6 @@ storageS3NewWrite(
 }
 
 /***********************************************************************************************************************************
-Create a path
-
-There are no physical paths on S3 so just return success.
-***********************************************************************************************************************************/
-static void
-storageS3PathCreate(THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode)
-{
-    THIS(StorageS3);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_S3, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, errorOnExists);
-        FUNCTION_LOG_PARAM(BOOL, noParentCreate);
-        FUNCTION_LOG_PARAM(MODE, mode);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
-    ASSERT(mode == 0);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Remove a path
 ***********************************************************************************************************************************/
 static void
@@ -741,28 +692,6 @@ storageS3PathRemove(THIS_VOID, const String *path, bool errorOnMissing, bool rec
 }
 
 /***********************************************************************************************************************************
-Sync a path
-
-There's no need for this on S3 so just return success.
-***********************************************************************************************************************************/
-static void
-storageS3PathSync(THIS_VOID, const String *path, bool ignoreMissing)
-{
-    THIS(StorageS3);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_S3, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Remove a file
 ***********************************************************************************************************************************/
 static void
@@ -861,9 +790,8 @@ storageS3New(
 
         this = storageNewP(
             STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver,
-            .exists = storageS3Exists, .info = storageS3Info, .list = storageS3List, .newRead = storageS3NewRead,
-            .newWrite = storageS3NewWrite, .pathCreate = storageS3PathCreate, .pathRemove = storageS3PathRemove,
-            .pathSync = storageS3PathSync, .remove = storageS3Remove);
+            .exists = storageS3Exists, .list = storageS3List, .newRead = storageS3NewRead, .newWrite = storageS3NewWrite,
+            .pathRemove = storageS3PathRemove, .remove = storageS3Remove);
     }
     MEM_CONTEXT_NEW_END();
 

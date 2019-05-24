@@ -661,7 +661,6 @@ testRun(void)
 
         // Coverage for noop functions
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storagePathCreateNP(s3, strNew("path")), "path create is a noop");
         TEST_RESULT_VOID(storagePathSyncNP(s3, strNew("path")), "path sync is a noop");
 
         // storageS3NewRead() and StorageS3FileRead
@@ -776,10 +775,6 @@ testRun(void)
         // storageDriverRemove()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storageRemoveNP(s3, strNew("/path/to/test.txt")), "remove file");
-
-        // Coverage for unimplemented functions
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(storageInfoNP(s3, strNew("file.txt")), AssertError, "NOT YET IMPLEMENTED");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
