@@ -241,12 +241,10 @@ eval
         # Generate a full copy of the docs for review
         &log(INFO, "Generate full documentation for review");
 
-        executeTest(
-            "${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --include=user-guide --out=html" .
-                " --var=project-url-root=index.html");
+        executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --out=html --var=project-url-root=index.html");
         $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
         executeTest(
-            "${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos6 --out=html --include=user-guide" .
+            "${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos6 --out=html" .
                 " --var=project-url-root=index.html");
         $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos6.html");
 
@@ -263,9 +261,9 @@ eval
         my $strDocExeVersion =
             ${strDocExe} . ($bDev ? ' --dev' : ' --deploy --cache-only') . ' --var=project-url-root=index.html --out=html';
 
-        executeTest("${strDocExeVersion} --key-var=os-type=centos7 --include=user-guide");
+        executeTest("${strDocExeVersion} --key-var=os-type=centos7");
         $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
-        executeTest("${strDocExeVersion} --out-preserve --key-var=os-type=centos6 --include=user-guide");
+        executeTest("${strDocExeVersion} --out-preserve --key-var=os-type=centos6");
         $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos6.html");
 
         $oStorageDoc->remove("$strDocHtml/release.html");
@@ -282,10 +280,9 @@ eval
         {
             &log(INFO, "Generate website documentation");
 
-            executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --include=user-guide --out=html");
+            executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --out=html");
             $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
-            executeTest(
-                "${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos6 --include=user-guide --out=html");
+            executeTest("${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos6 --out=html");
             $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos6.html");
             executeTest("${strDocExe} --deploy --out-preserve --cache-only --out=html");
 
