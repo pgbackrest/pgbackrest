@@ -379,7 +379,8 @@ cfgFileLoad(                                                        // NOTE: Pas
 
         // Get a list of conf files from the specified path -error on missing directory if the option was passed on the command line
         StringList *list = storageListP(
-            storageLocal(), configIncludePath, .expression = STRDEF(".+\\.conf$"), .errorOnMissing = configIncludeRequired);
+            storageLocal(), configIncludePath, .expression = STRDEF(".+\\.conf$"), .errorOnMissing = configIncludeRequired,
+            .nullOnMissing = !configIncludeRequired);
 
         // If conf files are found, then add them to the config string
         if (list != NULL && strLstSize(list) > 0)

@@ -100,6 +100,7 @@ storageList
 typedef struct StorageListParam
 {
     bool errorOnMissing;
+    bool nullOnMissing;
     const String *expression;
 } StorageListParam;
 

@@ -310,10 +310,12 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, pathExp);
         FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.nullOnMissing);
         FUNCTION_LOG_PARAM(STRING, param.expression);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(!param.errorOnMissing || !param.nullOnMissing);
 
     StringList *result = NULL;
 
@@ -322,8 +324,16 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
         // Build the path
         String *path = storagePathNP(this, pathExp);
 
+        // Get the list
+        result = this->interface.list(this->driver, path, param.errorOnMissing, param.expression);
+
+        // Build an empty list if the directory does not exist by default.  This makes the logic in calling functions simpler
+        // when they don't care if the path is missing.
+        if (result == NULL && !param.nullOnMissing)
+            result = strLstNew();
+
         // Move list up to the old context
-        result = strLstMove(this->interface.list(this->driver, path, param.errorOnMissing, param.expression), MEM_CONTEXT_OLD());
+        result = strLstMove(result, MEM_CONTEXT_OLD());
     }
     MEM_CONTEXT_TEMP_END();
 

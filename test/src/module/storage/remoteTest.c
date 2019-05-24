@@ -72,8 +72,8 @@ testRun(void)
         TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
         storagePathCreateNP(storageTest, strNew("repo"));
 
-        TEST_RESULT_STR(strPtr(strLstJoin(storageListNP(storageRemote, NULL), ",")), "" , "list empty path");
-        TEST_RESULT_PTR(storageListNP(storageRemote, strNew(BOGUS_STR)), NULL , "missing directory ignored");
+        TEST_RESULT_PTR(storageListP(storageRemote, strNew(BOGUS_STR), .nullOnMissing = true), NULL, "null for missing dir");
+        TEST_RESULT_UINT(strLstSize(storageListNP(storageRemote, NULL)), 0, "empty list for missing dir");
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateNP(storageTest, strNew("repo/testy"));

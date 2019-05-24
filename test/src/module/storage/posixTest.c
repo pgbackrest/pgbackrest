@@ -344,7 +344,8 @@ testRun(void)
             storageListP(storageTest, strNew(BOGUS_STR), .errorOnMissing = true), PathOpenError,
             "unable to open path '%s/BOGUS' for read: [2] No such file or directory", testPath());
 
-        TEST_RESULT_PTR(storageListNP(storageTest, strNew(BOGUS_STR)), NULL, "ignore missing dir");
+        TEST_RESULT_PTR(storageListP(storageTest, strNew(BOGUS_STR), .nullOnMissing = true), NULL, "null for missing dir");
+        TEST_RESULT_UINT(strLstSize(storageListNP(storageTest, strNew(BOGUS_STR))), 0, "empty list for missing dir");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
