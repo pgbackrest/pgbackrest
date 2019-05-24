@@ -45,7 +45,7 @@ git push release-ci
 ## Clone web documentation into `doc/site`
 ```
 cd doc
-git clone https://github.com/pgbackrest/website.git site
+git clone git@github.com:pgbackrest/website.git site
 ```
 
 ## Deploy web documentation to `doc/site`
