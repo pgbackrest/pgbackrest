@@ -58,7 +58,7 @@ storageReadS3Open(THIS_VOID)
     // On success
     this->httpClient = storageS3HttpClient(this->storage);
 
-    if (httpClientResponseCode(this->httpClient) == HTTP_RESPONSE_CODE_OK)
+    if (httpClientResponseCodeOk(this->httpClient))
         result = true;
 
     // Else error unless ignore missing

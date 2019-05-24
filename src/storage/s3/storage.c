@@ -253,7 +253,6 @@ storageS3Request(
         // Calculate content-md5 header if there is content
         if (body != NULL)
         {
-
             char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
             encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, body)), HASH_TYPE_M5_SIZE, md5Hash);
             httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
@@ -270,7 +269,7 @@ storageS3Request(
         Buffer *response = httpClientRequest(this->httpClient, verb, uri, query, requestHeader, body, returnContent);
 
         // Error if the request was not successful
-        if (httpClientResponseCode(this->httpClient) != HTTP_RESPONSE_CODE_OK &&
+        if (!httpClientResponseCodeOk(this->httpClient) &&
             (!allowMissing || httpClientResponseCode(this->httpClient) != HTTP_RESPONSE_CODE_NOT_FOUND))
         {
             // General error message

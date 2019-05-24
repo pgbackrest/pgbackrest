@@ -42,7 +42,6 @@ HTTP Constants
 #define HTTP_HEADER_ETAG                                            "etag"
     STRING_DECLARE(HTTP_HEADER_ETAG_STR);
 
-#define HTTP_RESPONSE_CODE_OK                                       200
 #define HTTP_RESPONSE_CODE_FORBIDDEN                                403
 #define HTTP_RESPONSE_CODE_NOT_FOUND                                404
 
@@ -66,6 +65,7 @@ IoRead *httpClientIoRead(const HttpClient *this);
 unsigned int httpClientResponseCode(const HttpClient *this);
 const HttpHeader *httpClientReponseHeader(const HttpClient *this);
 const String *httpClientResponseMessage(const HttpClient *this);
+bool httpClientResponseCodeOk(const HttpClient *this);
 
 /***********************************************************************************************************************************
 Destructor

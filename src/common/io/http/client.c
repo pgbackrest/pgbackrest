@@ -378,7 +378,7 @@ httpClientRequest(
 
                 // If all content should be returned from this function then read the buffer.  Also read the reponse if there has
                 // been an error.
-                if (returnContent || httpClientResponseCode(this) != HTTP_RESPONSE_CODE_OK)
+                if (returnContent || !httpClientResponseCodeOk(this))
                 {
                     if (contentExists)
                     {
@@ -408,7 +408,7 @@ httpClientRequest(
                 if (this->closeOnContentEof && !contentExists)
                     tlsClientClose(this->tls);
 
-                // Retry when reponse code is 5xx.  These errors generally represent a server error for a request that looks valid.
+                // Retry when response code is 5xx.  These errors generally represent a server error for a request that looks valid.
                 // There are a few errors that might be permanently fatal but they are rare and it seems best not to try and pick
                 // and choose errors in this class to retry.
                 if (httpClientResponseCode(this) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
@@ -471,6 +471,21 @@ httpClientResponseCode(const HttpClient *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->responseCode);
+}
+
+/***********************************************************************************************************************************
+Is this response code OK, i.e. 2XX?
+***********************************************************************************************************************************/
+bool
+httpClientResponseCodeOk(const HttpClient *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_CLIENT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->responseCode / 100 == 2);
 }
 
 /***********************************************************************************************************************************
