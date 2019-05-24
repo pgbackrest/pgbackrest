@@ -28,6 +28,8 @@ typedef struct HttpClient HttpClient;
 /***********************************************************************************************************************************
 HTTP Constants
 ***********************************************************************************************************************************/
+#define HTTP_VERB_DELETE                                            "DELETE"
+    STRING_DECLARE(HTTP_VERB_DELETE_STR);
 #define HTTP_VERB_GET                                               "GET"
     STRING_DECLARE(HTTP_VERB_GET_STR);
 #define HTTP_VERB_POST                                              "POST"
