@@ -3,10 +3,80 @@
 <doc title="{[project]}" subtitle="Frequently Asked Questions" toc="y">
     <description>{[project]} Frequently Asked Questions (FAQ).</description>
 
+    <section id="introduction">
+        <title>Purpose of this FAQ Page</title>
+
+        <p>The purpose of this Frequently Asked Questions page is to provide details for specific questions that may or may not be covered in the User Guide, Configuration, or Command reference. If you are unable to find the details to your specific issue here, remember the <backrest/> <link url="https://github.com/pgbackrest/pgbackrest/issues">Issues list in GitHub</link> is also a valuable resource.</p>
+    </section>
+
     <section id="s3-bucket">
-        <title>Can I use dots/periods in my S3 bucket name?</title>
+        <title>Can I use dots (periods) in my S3 bucket name?</title>
 
         <p>The RFC does not allow wildcards to match on a dot (.), therefore s3 bucket names must not contain dots. If there are dots in the S3 bucket name then an error such as <quote>unable to find hostname 'my.backup.bucket.s3.amazonaws.com' in certificate common name or subject alternative names</quote> will occur.</p>
+    </section>
 
+    <section id="manual-expire">
+        <title>How do I manually purge a backup set even though the retention period has not yet been reached?</title>
+
+        <p>You cannot expire a backup set in the middle, but you can expire the oldest ones by running the <cmd>expire</cmd> command with retention. For example, the following command will keep only the last two full backups, purging any prior backups including their associated dependent backups (incremental or differential) and associated archive:</p>
+        <code-block>pgbackrest --stanza=xxx --repo1-retention-full=2 expire</code-block>
+        <p>Using the <br-setting>{[dash]}-repo1-retention-full</br-setting> on the command line simply overrides the setting in the configuration file for that one execution of the command, including defaulting the <br-setting>{[dash]}-repo1-retention-archive-type</br-setting> to 'full' and <br-setting>{[dash]}-repo1-retention-archive</br-setting> to the <br-setting>{[dash]}-repo1-retention-full</br-setting> setting. See the <link url='https://pgbackrest.org/user-guide.html#retention'>Retention section of the User Guide</link> for more information on retention.</p>
+    </section>
+
+    <section id="timeout">
+        <title>Could not find WAL segment</title>
+
+        <p>The cause of this error can be a result of many different things, some of which may be:</p>
+        <list>
+            <list-item>a misconfigured archive_command,</list-item>
+            <list-item>misconfigured <backrest/> configuration files,</list-item>
+            <list-item>a network or permissions issue,</list-item>
+            <list-item>a third party product (e.g. S3, Swift or Minio) configuration issue,</list-item>
+            <list-item>a large amount of WAL queueing to be archived</list-item>
+        </list>
+
+        <p>It is advisable to:</p>
+        <list>
+            <list-item>check the archive_command in <postgres/></list-item>
+            <list-item>check the <backrest/> configuration settings on each host (e.g. pg* settings are set on the repository host and repo* settings on the pg host)</list-item>
+            <list-item>run the <cmd>check</cmd> with <br-setting>{[dash]}-archive-timeout</br-setting> set to a higher value than in the <backrest/> configuration file to see if the WALL queue needs more time to clear. If the system is generating a lot of WAL, then consider configuring <link url="https://pgbackrest.org/user-guide.html#async-archiving">asyncronous archiving</link></list-item>
+        </list>
+    </section>
+
+    <section id="optimize-config">
+        <title>Backup/Restore too slow</title>
+
+        <p><backrest/> has the ability to set options differently in the configuration file for each command; <link url="https://pgbackrest.org/user-guide.html#quickstart/configure-stanza">Configure Cluster Stanza</link> details this and option precedence.</p>
+        <p>In particular, <br-option>process-max</br-option> can be optimized for each command. An example to illustrate this point is as follows:</p>
+
+        <code-block>
+        [global]
+        # these are used where not overridden
+        process-max=2
+
+        [global:backup]
+        # more cores for the backup
+        process-max=3
+
+        [global:restore]
+        # all the cores for a restore
+        process-max=6
+
+        [global:archive-push]
+        # less cores for wal push
+        process-max=1
+
+        [global:archive-get]
+        # more cores for wal get
+        process-max=3
+        </code-block>
+    </section>
+
+    <section id="different-server">
+        <title>How to restore a backup to a different server (for example, a production backup to a development server)?</title>
+
+        <p>It is often desireable to restore the latest backup from a production server to a development server. In principal, the instructions are the same as in <link url="https://pgbackrest.org/user-guide.html#replication/hot-standby">setting up a hot standby</link> with a few exceptions.</p>
+
+        <p>NEED TO ELABORATE HERE:  Need an example of the restore command - what settings are different? Would they be --target, --target-action=promote, --type=immediate on the command line? What about in the POSTGRES (e.g. hot_standby = on / wal_level = hot_standby - these would be different, no?) and PGBACKREST (e.g. would recovery-option=standby_mode=on still be set?) config files</p>
     </section>
 </doc>
