@@ -90,5 +90,12 @@
         <title>Patroni</title>
 
         <p>Patroni: https://github.com/pgbackrest/pgbackrest/issues/702</p>
-    </section> -->
+    </section>
+
+    <section id="SOMETHING">
+        <title>SOMETHING</title>
+
+        <p>Issue 610 - you mentioned it has come up a couple times, so you wanted me to distill it and point to this as a resource  https://github.com/pgbackrest/pgbackrest/issues/610</p>
+    </section>
+-->
 </doc>
