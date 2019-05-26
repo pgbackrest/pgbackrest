@@ -10,6 +10,8 @@ Exit Routines
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/exit.h"
+#include "common/io/http/client.h"
+#include "common/io/tls/client.h"
 #include "common/lock.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -151,6 +153,18 @@ exitSafe(int result, bool error, SignalType signalType)
     }
     TRY_END();
 #endif
+
+    // Log tls statistics
+    String *tlsClientStat = tlsClientStatStr();
+
+    if (tlsClientStat != NULL)
+        LOG_DETAIL(strPtr(tlsClientStat));
+
+    // Log http statistics
+    String *httpClientStat = httpClientStatStr();
+
+    if (httpClientStat != NULL)
+        LOG_INFO(strPtr(httpClientStat));
 
     // Log command end if a command is set
     if (cfgCommand() != cfgCmdNone)

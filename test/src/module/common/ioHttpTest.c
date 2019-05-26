@@ -380,6 +380,10 @@ testRun(void)
         HttpClient *client = NULL;
         ioBufferSizeSet(35);
 
+        // Reset statistics
+        httpClientStatLocal = (HttpClientStat){0};
+        TEST_RESULT_STR(httpClientStatStr(), NULL, "no stats yet");
+
         TEST_ASSIGN(client, httpClientNew(strNew("localhost"), TLS_TEST_PORT, 500, true, NULL, NULL), "new client");
 
         TEST_ERROR(
@@ -509,6 +513,8 @@ testRun(void)
         buffer = bufNew(35);
         TEST_RESULT_VOID(ioRead(httpClientIoRead(client), buffer),  "    read response");
         TEST_RESULT_STR(strPtr(strNewBuf(buffer)),  "01234567890123456789012345678901012", "    check response");
+
+        TEST_RESULT_BOOL(httpClientStatStr() != NULL, true, "check statistics exist");
 
         TEST_RESULT_VOID(httpClientFree(client), "free client");
     }

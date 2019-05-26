@@ -2,6 +2,7 @@
 Test Exit Routines
 ***********************************************************************************************************************************/
 #include "common/error.h"
+#include "common/io/tls/client.h"
 #include "common/log.h"
 #include "config/config.h"
 
@@ -126,9 +127,14 @@ testRun(void)
         harnessLogResult("P00   INFO: archive-push command end: terminated on signal from child process");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        tlsClientNew(strNew("BOGUS"), 443, 1000, true, NULL, NULL);
+        httpClientNew(strNew("BOGUS"), 443, 1000, true, NULL, NULL);
+
         TEST_RESULT_INT(
             exitSafe(errorTypeCode(&TermError), false, signalTypeTerm), errorTypeCode(&TermError), "exit on term with SIGTERM");
-        harnessLogResult("P00   INFO: archive-push command end: terminated on signal [SIGTERM]");
+        harnessLogResult(
+            "P00   INFO: http statistics: objects 1, sessions 0, requests 0, retries 0, closes 0\n"
+            "P00   INFO: archive-push command end: terminated on signal [SIGTERM]");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

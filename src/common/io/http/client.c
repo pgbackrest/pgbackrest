@@ -41,6 +41,11 @@ STRING_EXTERN(HTTP_HEADER_ETAG_STR,                                 HTTP_HEADER_
 #define HTTP_RESPONSE_CODE_RETRY_CLASS                              5
 
 /***********************************************************************************************************************************
+Statistics
+***********************************************************************************************************************************/
+static HttpClientStat httpClientStatLocal;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct HttpClient
@@ -192,6 +197,8 @@ httpClientNew(
 
         this->timeout = timeout;
         this->tls = tlsClientNew(host, port, timeout, verifyPeer, caFile, caPath);
+
+        httpClientStatLocal.object++;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -253,7 +260,8 @@ httpClientRequest(
 
             TRY_BEGIN()
             {
-                tlsClientOpen(this->tls);
+                if (tlsClientOpen(this->tls))
+                    httpClientStatLocal.session++;
 
                 // Write the request
                 String *queryStr = httpQueryRender(query);
@@ -361,7 +369,10 @@ httpClientRequest(
                     // If the server notified of a closed connection then close the client connection after reading content.  This
                     // prevents doing a retry on the next request when using the closed connection.
                     if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(headerValue, HTTP_VALUE_CONNECTION_CLOSE_STR))
+                    {
                         this->closeOnContentEof = true;
+                        httpClientStatLocal.close++;
+                    }
                 }
                 while (1);
 
@@ -425,6 +436,8 @@ httpClientRequest(
                 {
                     LOG_DEBUG("retry %s: %s", errorTypeName(errorType()), errorMessage());
                     retry = true;
+
+                    httpClientStatLocal.retry++;
                 }
 
                 tlsClientClose(this->tls);
@@ -438,10 +451,34 @@ httpClientRequest(
 
         // Move the result buffer (if any) to the parent context
         bufMove(result, MEM_CONTEXT_OLD());
+
+        httpClientStatLocal.request++;
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BUFFER, result);
+}
+
+/***********************************************************************************************************************************
+Format statistics to a string
+***********************************************************************************************************************************/
+String *
+httpClientStatStr(void)
+{
+    FUNCTION_TEST_VOID();
+
+    String *result = NULL;
+
+    if (httpClientStatLocal.object > 0)
+    {
+        result = strNewFmt(
+            "http statistics: objects %" PRIu64 ", sessions %" PRIu64 ", requests %" PRIu64 ", retries %" PRIu64
+                ", closes %" PRIu64,
+            httpClientStatLocal.object, httpClientStatLocal.session, httpClientStatLocal.request, httpClientStatLocal.retry,
+            httpClientStatLocal.close);
+    }
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************

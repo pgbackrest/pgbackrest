@@ -30,6 +30,11 @@ TLS Client
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
+Statistics
+***********************************************************************************************************************************/
+static TlsClientStat tlsClientStatLocal;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct TlsClient
@@ -126,6 +131,8 @@ tlsClientNew(
             else
                 cryptoError(SSL_CTX_set_default_verify_paths(this->context) != 1, "unable to set default CA certificate location");
         }
+
+        tlsClientStatLocal.object++;
     }
     MEM_CONTEXT_NEW_END();
 
@@ -411,7 +418,7 @@ tlsClientEof(THIS_VOID)
 /***********************************************************************************************************************************
 Open connection if this is a new client or if the connection was closed by the server
 ***********************************************************************************************************************************/
-void
+bool
 tlsClientOpen(TlsClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
@@ -419,6 +426,8 @@ tlsClientOpen(TlsClient *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+
+    bool result = false;
 
     if (this->session == NULL)
     {
@@ -522,6 +531,8 @@ tlsClientOpen(TlsClient *this)
                     {
                         LOG_DEBUG("retry %s: %s", errorTypeName(errorType()), errorMessage());
                         retry = true;
+
+                        tlsClientStatLocal.retry++;
                     }
 
                     tlsClientClose(this);
@@ -570,9 +581,34 @@ tlsClientOpen(TlsClient *this)
             ioReadOpen(this->read);
         }
         MEM_CONTEXT_END();
+
+        tlsClientStatLocal.session++;
+        result = true;
     }
 
-    FUNCTION_LOG_RETURN_VOID();
+    tlsClientStatLocal.request++;
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
+Format statistics to a string
+***********************************************************************************************************************************/
+String *
+tlsClientStatStr(void)
+{
+    FUNCTION_TEST_VOID();
+
+    String *result = NULL;
+
+    if (tlsClientStatLocal.object > 0)
+    {
+        result = strNewFmt(
+            "tls statistics: objects %" PRIu64 ", sessions %" PRIu64 ", requests %" PRIu64 ", retries %" PRIu64,
+            tlsClientStatLocal.object, tlsClientStatLocal.session, tlsClientStatLocal.request, tlsClientStatLocal.retry);
+    }
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************

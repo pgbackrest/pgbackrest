@@ -48,6 +48,18 @@ HTTP Constants
 #define HTTP_RESPONSE_CODE_NOT_FOUND                                404
 
 /***********************************************************************************************************************************
+Statistics
+***********************************************************************************************************************************/
+typedef struct HttpClientStat
+{
+    uint64_t object;                                                // Objects created
+    uint64_t session;                                               // TLS sessions created
+    uint64_t request;                                               // Requests (i.e. calls to httpClientRequest())
+    uint64_t retry;                                                 // Request retries
+    uint64_t close;                                                 // Closes forced by server
+} HttpClientStat;
+
+/***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
 HttpClient *httpClientNew(
@@ -59,6 +71,7 @@ Functions
 Buffer *httpClientRequest(
     HttpClient *this, const String *verb, const String *uri, const HttpQuery *query, const HttpHeader *requestHeader,
     const Buffer *body, bool returnContent);
+String *httpClientStatStr(void);
 
 /***********************************************************************************************************************************
 Getters
