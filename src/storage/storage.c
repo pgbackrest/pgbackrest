@@ -250,7 +250,11 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         String *file = storagePathNP(this, fileExp);
 
         // Call driver function
-        result = this->interface.info(this->driver, file, param.ignoreMissing, param.followLink);
+        result = this->interface.info(this->driver, file, param.followLink);
+
+        // Error if the file missing and not ignoring
+        if (!result.exists && !param.ignoreMissing)
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO_MISSING, strPtr(file));
 
         // Dup the strings into the calling context
         memContextSwitch(MEM_CONTEXT_OLD());
@@ -282,6 +286,7 @@ storageInfoList(
     ASSERT(this != NULL);
     ASSERT(callback != NULL);
     ASSERT(this->interface.infoList != NULL);
+    ASSERT(!param.errorOnMissing || storageFeature(this, storageFeaturePath));
 
     bool result = false;
 
@@ -291,7 +296,10 @@ storageInfoList(
         String *path = storagePathNP(this, pathExp);
 
         // Call driver function
-        result = this->interface.infoList(this->driver, path, param.errorOnMissing, callback, callbackData);
+        result = this->interface.infoList(this->driver, path, callback, callbackData);
+
+        if (!result && param.errorOnMissing)
+            THROW_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO_MISSING, strPtr(path));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -314,6 +322,7 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
 
     ASSERT(this != NULL);
     ASSERT(!param.errorOnMissing || !param.nullOnMissing);
+    ASSERT(!param.errorOnMissing || storageFeature(this, storageFeaturePath));
 
     StringList *result = NULL;
 
@@ -323,12 +332,20 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
         String *path = storagePathNP(this, pathExp);
 
         // Get the list
-        result = this->interface.list(this->driver, path, param.errorOnMissing, param.expression);
+        result = this->interface.list(this->driver, path, param.expression);
 
-        // Build an empty list if the directory does not exist by default.  This makes the logic in calling functions simpler
-        // when they don't care if the path is missing.
-        if (result == NULL && !param.nullOnMissing)
-            result = strLstNew();
+        // If the path does not exist
+        if (result == NULL)
+        {
+            // Error if requested
+            if (param.errorOnMissing)
+                THROW_FMT(PathOpenError, STORAGE_ERROR_LIST_MISSING, strPtr(path));
+
+            // Build an empty list if the directory does not exist by default.  This makes the logic in calling functions simpler
+            // when they don't care if the path is missing.
+            if (!param.nullOnMissing)
+                result = strLstNew();
+        }
 
         // Move list up to the old context
         result = strLstMove(result, MEM_CONTEXT_OLD());
@@ -372,7 +389,7 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
             // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented becaue there's
             // no way to get coverage on it now.
             if (storageWriteSyncPath(destination))
-                this->interface.pathSync(this->driver, strPath(storageReadName(source)), false);
+                this->interface.pathSync(this->driver, strPath(storageReadName(source)));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -572,7 +589,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->interface.pathCreate != NULL);
+    ASSERT(this->interface.pathCreate != NULL && storageFeature(this, storageFeaturePath));
     ASSERT(this->write);
 
     // It doesn't make sense to combine these parameters because if we are creating missing parent paths why error when they exist?
@@ -633,6 +650,8 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
 
     ASSERT(this != NULL);
     ASSERT(this->write);
+    ASSERT(!param.errorOnMissing || storageFeature(this, storageFeaturePath));
+    ASSERT(param.recurse || storageFeature(this, storageFeaturePath));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -640,7 +659,8 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
         String *path = storagePathNP(this, pathExp);
 
         // Call driver function
-        this->interface.pathRemove(this->driver, path, param.errorOnMissing, param.recurse);
+        if (!this->interface.pathRemove(this->driver, path, param.recurse) && param.errorOnMissing)
+            THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_MISSING, strPtr(path));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -650,12 +670,11 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
 /***********************************************************************************************************************************
 Sync a path
 ***********************************************************************************************************************************/
-void storagePathSync(const Storage *this, const String *pathExp, StoragePathSyncParam param)
+void storagePathSync(const Storage *this, const String *pathExp)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, pathExp);
-        FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -666,11 +685,7 @@ void storagePathSync(const Storage *this, const String *pathExp, StoragePathSync
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Build the path
-            String *path = storagePathNP(this, pathExp);
-
-            // Call driver function
-            this->interface.pathSync(this->driver, path, param.ignoreMissing);
+            this->interface.pathSync(this->driver, storagePathNP(this, pathExp));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -739,6 +754,22 @@ storageDriver(const Storage *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->driver);
+}
+
+/***********************************************************************************************************************************
+Is the feature supported by this storage?
+***********************************************************************************************************************************/
+bool
+storageFeature(const Storage *this, StorageFeature feature)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(ENUM, feature);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->interface.feature >> feature & 1);
 }
 
 /***********************************************************************************************************************************

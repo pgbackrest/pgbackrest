@@ -739,7 +739,8 @@ testRun(void)
         // storageDriverList()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
-            storageListP(s3, strNew("/"), .errorOnMissing = true), AssertError, "assertion '!errorOnMissing' failed");
+            storageListP(s3, strNew("/"), .errorOnMissing = true), AssertError,
+            "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
         TEST_ERROR(storageListNP(s3, strNew("/")), ProtocolError,
             "S3 request failed with 344: Another bad status\n"
             "*** URI/Query ***:\n"
@@ -764,13 +765,15 @@ testRun(void)
 
         // storageDriverPathRemove()
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storagePathRemoveNP(s3, strNew("/")), "do nothing when no recurse");
+        TEST_ERROR(
+            storagePathRemoveNP(s3, strNew("/")), AssertError,
+            "assertion 'param.recurse || storageFeature(this, storageFeaturePath)' failed");
         TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/"), .recurse = true), "remove root path");
         TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/path"), .recurse = true), "nothing to do in empty subpath");
         TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/path/to"), .recurse = true), "delete with continuation");
         TEST_ERROR(
             storagePathRemoveP(s3, strNew("/path"), .recurse = true), FileRemoveError,
-            "unable to remove 'sample2.txt': [AccessDenied] Access Denied");
+            "unable to remove file 'sample2.txt': [AccessDenied] Access Denied");
 
         // storageDriverRemove()
         // -------------------------------------------------------------------------------------------------------------------------

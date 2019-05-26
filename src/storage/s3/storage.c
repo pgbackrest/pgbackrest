@@ -393,20 +393,18 @@ storageS3Exists(THIS_VOID, const String *path)
 Get a list of files from a directory
 ***********************************************************************************************************************************/
 static StringList *
-storageS3List(THIS_VOID, const String *path, bool errorOnMissing, const String *expression)
+storageS3List(THIS_VOID, const String *path, const String *expression)
 {
     THIS(StorageS3);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
         FUNCTION_LOG_PARAM(STRING, expression);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
-    ASSERT(!errorOnMissing);
 
     StringList *result = NULL;
 
@@ -575,120 +573,112 @@ storageS3NewWrite(
 /***********************************************************************************************************************************
 Remove a path
 ***********************************************************************************************************************************/
-static void
-storageS3PathRemove(THIS_VOID, const String *path, bool errorOnMissing, bool recurse)
+static bool
+storageS3PathRemove(THIS_VOID, const String *path, bool recurse)
 {
     THIS(StorageS3);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
         FUNCTION_LOG_PARAM(BOOL, recurse);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
-    ASSERT(!errorOnMissing);
 
-    // S3 doesn't have paths that need to be deleted so nothing to do unless recursing
-    if (recurse)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        MEM_CONTEXT_TEMP_BEGIN()
+        const String *continuationToken = NULL;
+
+        // Build the base prefix by stripping off the initial /
+        const String *basePrefix;
+
+        if (strSize(path) == 1)
+            basePrefix = EMPTY_STR;
+        else
+            basePrefix = strNewFmt("%s/", strPtr(strSub(path, 1)));
+
+        // Loop as long as a continuation token returned
+        do
         {
-            const String *continuationToken = NULL;
-
-            // Build the base prefix by stripping off the initial /
-            const String *basePrefix;
-
-            if (strSize(path) == 1)
-                basePrefix = EMPTY_STR;
-            else
-                basePrefix = strNewFmt("%s/", strPtr(strSub(path, 1)));
-
-            // Loop as long as a continuation token returned
-            do
+            // Use an inner mem context here because we could potentially be retrieving millions of files so it is a good idea to
+            // free memory at regular intervals
+            MEM_CONTEXT_TEMP_BEGIN()
             {
-                // Use an inner mem context here because we could potentially be retrieving millions of files so it is a good idea
-                // to free memory at regular intervals
-                MEM_CONTEXT_TEMP_BEGIN()
+                HttpQuery *query = httpQueryNew();
+
+                // Add continuation token from the prior loop if any
+                if (continuationToken != NULL)
+                    httpQueryAdd(query, S3_QUERY_CONTINUATION_TOKEN_STR, continuationToken);
+
+                // Use list type 2
+                httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
+
+                // Don't specified empty prefix because it is the default
+                if (!strEmpty(basePrefix))
+                    httpQueryAdd(query, S3_QUERY_PREFIX_STR, basePrefix);
+
+                XmlNode *xmlRoot = xmlDocumentRoot(
+                    xmlDocumentNewBuf(storageS3Request(this, HTTP_VERB_GET_STR, FSLASH_STR, query, NULL, true, false).response));
+
+                // Get file list to delete
+                XmlNodeList *fileList = xmlNodeChildList(xmlRoot, S3_XML_TAG_CONTENTS_STR);
+                XmlDocument *delete = NULL;
+
+                for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
                 {
-                    HttpQuery *query = httpQueryNew();
-
-                    // Add continuation token from the prior loop if any
-                    if (continuationToken != NULL)
-                        httpQueryAdd(query, S3_QUERY_CONTINUATION_TOKEN_STR, continuationToken);
-
-                    // Use list type 2
-                    httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
-
-                    // Don't specified empty prefix because it is the default
-                    if (!strEmpty(basePrefix))
-                        httpQueryAdd(query, S3_QUERY_PREFIX_STR, basePrefix);
-
-                    XmlNode *xmlRoot = xmlDocumentRoot(
-                        xmlDocumentNewBuf(
-                            storageS3Request(this, HTTP_VERB_GET_STR, FSLASH_STR, query, NULL, true, false).response));
-
-                    // Get file list to delete
-                    XmlNodeList *fileList = xmlNodeChildList(xmlRoot, S3_XML_TAG_CONTENTS_STR);
-                    XmlDocument *delete = NULL;
-
-                    for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
+                    // If there is something to delete then create the request
+                    if (delete == NULL)
                     {
-                        // If there is something to delete then create the request
-                        if (delete == NULL)
-                        {
-                            delete = xmlDocumentNew(S3_XML_TAG_DELETE_STR);
-                            xmlNodeContentSet(xmlNodeAdd(xmlDocumentRoot(delete), S3_XML_TAG_QUIET_STR), TRUE_STR);
-                        }
-
-                        // Add to delete list
-                        xmlNodeContentSet(
-                            xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(delete), S3_XML_TAG_OBJECT_STR), S3_XML_TAG_KEY_STR),
-                            xmlNodeContent(xmlNodeChild(xmlNodeLstGet(fileList, fileIdx), S3_XML_TAG_KEY_STR, true)));
+                        delete = xmlDocumentNew(S3_XML_TAG_DELETE_STR);
+                        xmlNodeContentSet(xmlNodeAdd(xmlDocumentRoot(delete), S3_XML_TAG_QUIET_STR), TRUE_STR);
                     }
 
-                    // If there is something to delete then send the request
-                    if (delete != NULL)
-                    {
-                        // Delete file list
-                        Buffer *xml = storageS3Request(
-                            this, HTTP_VERB_POST_STR, FSLASH_STR, httpQueryAdd(httpQueryNew(), S3_QUERY_DELETE_STR, EMPTY_STR),
-                            xmlDocumentBuf(delete), true, false).response;
-
-                        // Nothing is returned when there are no errors
-                        if (xml != NULL)
-                        {
-                            XmlNodeList *errorList = xmlNodeChildList(
-                                xmlDocumentRoot(xmlDocumentNewBuf(xml)), S3_XML_TAG_ERROR_STR);
-
-                            if (xmlNodeLstSize(errorList) > 0)
-                            {
-                                XmlNode *error = xmlNodeLstGet(errorList, 0);
-
-                                THROW_FMT(
-                                    FileRemoveError, "unable to remove '%s': [%s] %s",
-                                    strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_KEY_STR, true))),
-                                    strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true))),
-                                    strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
-                            }
-                        }
-                    }
-
-                    // Get the continuation token and store it in the outer temp context
-                    memContextSwitch(MEM_CONTEXT_OLD());
-                    continuationToken = xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
-                    memContextSwitch(MEM_CONTEXT_TEMP());
+                    // Add to delete list
+                    xmlNodeContentSet(
+                        xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(delete), S3_XML_TAG_OBJECT_STR), S3_XML_TAG_KEY_STR),
+                        xmlNodeContent(xmlNodeChild(xmlNodeLstGet(fileList, fileIdx), S3_XML_TAG_KEY_STR, true)));
                 }
-                MEM_CONTEXT_TEMP_END();
-            }
-            while (continuationToken != NULL);
-        }
-        MEM_CONTEXT_TEMP_END();
-    }
 
-    FUNCTION_LOG_RETURN_VOID();
+                // If there is something to delete then send the request
+                if (delete != NULL)
+                {
+                    // Delete file list
+                    Buffer *xml = storageS3Request(
+                        this, HTTP_VERB_POST_STR, FSLASH_STR, httpQueryAdd(httpQueryNew(), S3_QUERY_DELETE_STR, EMPTY_STR),
+                        xmlDocumentBuf(delete), true, false).response;
+
+                    // Nothing is returned when there are no errors
+                    if (xml != NULL)
+                    {
+                        XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(xml)), S3_XML_TAG_ERROR_STR);
+
+                        if (xmlNodeLstSize(errorList) > 0)
+                        {
+                            XmlNode *error = xmlNodeLstGet(errorList, 0);
+
+                            THROW_FMT(
+                                FileRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE ": [%s] %s",
+                                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_KEY_STR, true))),
+                                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true))),
+                                strPtr(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
+                        }
+                    }
+                }
+
+                // Get the continuation token and store it in the outer temp context
+                memContextSwitch(MEM_CONTEXT_OLD());
+                continuationToken = xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
+                memContextSwitch(MEM_CONTEXT_TEMP());
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+        while (continuationToken != NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, true);
 }
 
 /***********************************************************************************************************************************

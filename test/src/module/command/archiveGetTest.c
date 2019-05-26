@@ -269,7 +269,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
-            PathOpenError, "unable to open path '%s/spool/archive/test1/in' for read: [2] No such file or directory", testPath());
+            PathOpenError, "unable to list files for missing path '%s/spool/archive/test1/in'", testPath());
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateNP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
@@ -544,16 +544,16 @@ testRun(void)
                 TEST_ERROR_FMT(
                     cmdArchiveGet(), FileMissingError,
                     "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
-                    "FileMissingError: unable to open '%s/archive/test1/archive.info' for read: [2] No such file or directory\n"
-                    "FileMissingError: unable to open '%s/archive/test1/archive.info.copy' for read: [2] No such file or"
-                        " directory\n"
+                    "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+                    "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
                     "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
                     "HINT: is archive_command configured correctly in postgresql.conf?\n"
                     "HINT: has a stanza-create been performed?\n"
                     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
                         " scheme.",
                     strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)),
-                    strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)));
+                    strPtr(strNewFmt("%s/archive/test1/archive.info", strPtr(cfgOptionStr(cfgOptRepoPath)))),
+                    strPtr(strNewFmt("%s/archive/test1/archive.info.copy", strPtr(cfgOptionStr(cfgOptRepoPath)))));
             }
             HARNESS_FORK_CHILD_END();
         }
@@ -575,16 +575,16 @@ testRun(void)
                 TEST_ERROR_FMT(
                     cmdArchiveGet(), FileMissingError,
                     "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
-                    "FileMissingError: unable to open '%s/archive/test1/archive.info' for read: [2] No such file or directory\n"
-                    "FileMissingError: unable to open '%s/archive/test1/archive.info.copy' for read: [2] No such file or"
-                        " directory\n"
+                    "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+                    "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
                     "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
                     "HINT: is archive_command configured correctly in postgresql.conf?\n"
                     "HINT: has a stanza-create been performed?\n"
                     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
                         " scheme.",
                     strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)),
-                    strPtr(cfgOptionStr(cfgOptRepoPath)), strPtr(cfgOptionStr(cfgOptRepoPath)));
+                    strPtr(strNewFmt("%s/archive/test1/archive.info", strPtr(cfgOptionStr(cfgOptRepoPath)))),
+                    strPtr(strNewFmt("%s/archive/test1/archive.info.copy", strPtr(cfgOptionStr(cfgOptRepoPath)))));
             }
             HARNESS_FORK_CHILD_END();
         }

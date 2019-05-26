@@ -42,6 +42,28 @@ testRun(void)
     bufUsedSet(serverWrite, 0);
 
     // *****************************************************************************************************************************
+    if (testBegin("storageNew()"))
+    {
+        Storage *storageRemote = NULL;
+        TEST_ASSIGN(storageRemote, storageRepoGet(strNew(STORAGE_TYPE_POSIX), false), "get remote repo storage");
+        TEST_RESULT_UINT(storageInterface(storageRemote).feature, storageInterface(storageTest).feature, "    check features");
+
+        // Check protocol function directly
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_FEATURE_STR, varLstNew(), server), true, "protocol feature");
+        TEST_RESULT_STR(
+            strPtr(strNewBuf(serverWrite)), strPtr(strNewFmt("{\"out\":%" PRIu64 "}\n", storageInterface(storageTest).feature)),
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
+
+        // Check invalid protocol function
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_BOOL(storageRemoteProtocol(strNew(BOGUS_STR), varLstNew(), server), false, "invalid function");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("storageExists()"))
     {
         Storage *storageRemote = NULL;
@@ -88,17 +110,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, NULL);
-        varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, varNewStr(strNew("^testy$")));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_LIST_STR, paramList, server), true, "protocol list");
         TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":[\"testy\"]}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
-
-        // Check invalid protocol function
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(storageRemoteProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
     }
 
     // *****************************************************************************************************************************
@@ -115,13 +132,10 @@ testRun(void)
 
         bufUsedSet(contentBuf, bufSize(contentBuf));
 
-        TEST_ERROR(
+        TEST_ERROR_FMT(
             strPtr(strNewBuf(storageGetNP(storageNewReadNP(storageRemote, strNew("test.txt"))))), FileMissingError,
-            strPtr(
-                strNewFmt(
-                    "raised from remote-0 protocol on 'localhost': unable to open '%s/repo/test.txt' for read:"
-                        " [2] No such file or directory",
-                    testPath())));
+            "raised from remote-0 protocol on 'localhost': " STORAGE_ERROR_READ_MISSING,
+            strPtr(strNewFmt("%s/repo/test.txt", testPath())));
 
         storagePutNP(storageNewWriteNP(storageTest, strNew("repo/test.txt")), contentBuf);
 
@@ -403,23 +417,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(path));      // path
-        varLstAdd(paramList, varNewBool(true));     // errorOnMissing
-        varLstAdd(paramList, varNewBool(false));    // recurse
-
-        TEST_ERROR_FMT(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR, paramList, server), PathRemoveError,
-            "raised from remote-0 protocol on 'localhost': unable to remove path '%s/repo/testpath': "
-            "[2] No such file or directory", testPath());
-
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(path));      // path
-        varLstAdd(paramList, varNewBool(false));    // errorOnMissing
-        varLstAdd(paramList, varNewBool(true));     // recurse
+        varLstAdd(paramList, varNewBool(true));    // recurse
 
         TEST_RESULT_BOOL(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR, paramList, server), true,
-            "protocol path remove - no error on missing");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{}\n", "check result");
+            "  protocol path remove missing");
+        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":false}\n", "  check result");
+
         bufUsedSet(serverWrite, 0);
 
         // Write the path and file to the repo and test the protocol
@@ -430,7 +434,8 @@ testRun(void)
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR, paramList, server), true,
             "  protocol path recurse remove");
         TEST_RESULT_BOOL(storagePathExistsNP(storageTest, strNewFmt("repo/%s", strPtr(path))), false, "  recurse path removed");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{}\n", "  check result");
+        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{\"out\":true}\n", "  check result");
+
         bufUsedSet(serverWrite, 0);
     }
 
@@ -510,20 +515,10 @@ testRun(void)
 
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNew("anewpath")));
-        varLstAdd(paramList, varNewBool(false));    // ignoreMissing
         TEST_ERROR_FMT(
             storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), PathMissingError,
-            "raised from remote-0 protocol on 'localhost': unable to open '%s/repo/anewpath' for sync: "
-            "[2] No such file or directory", testPath());
-
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNew("anewpath")));
-        varLstAdd(paramList, varNewBool(true));    // ignoreMissing
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), true,
-            "protocol path sync - ignore missing");
-        TEST_RESULT_STR(strPtr(strNewBuf(serverWrite)), "{}\n", "  check result");
-        bufUsedSet(serverWrite, 0);
+            "raised from remote-0 protocol on 'localhost': " STORAGE_ERROR_PATH_SYNC_MISSING,
+            strPtr(strNewFmt("%s/repo/anewpath", testPath())));
     }
 
     // *****************************************************************************************************************************

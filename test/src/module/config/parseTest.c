@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Test Configuration Parse
 ***********************************************************************************************************************************/
+#include "storage/storage.intern.h"
+
 #define TEST_BACKREST_EXE                                           "pgbackrest"
 
 #define TEST_COMMAND_ARCHIVE_GET                                    "archive-get"
@@ -174,16 +176,15 @@ testRun(void)
         TEST_ERROR(
             cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
                 backupCmdDefConfigInclPathValue, oldConfigDefault), PathOpenError,
-                "unable to open path '/BOGUS' for read: [2] No such file or directory");
+                "unable to list files for missing path '/BOGUS'");
 
         // --config-include-path valid, --config invalid (does not exist)
         parseOptionList[cfgOptConfigIncludePath].valueList = strLstAdd(strLstNew(), configIncludePath);
         parseOptionList[cfgOptConfig].valueList = strLstAdd(strLstNew(), strNewFmt("%s/%s", testPath(), BOGUS_STR));
 
-        TEST_ERROR(
-            cfgFileLoad(parseOptionList, backupCmdDefConfigValue,
-                backupCmdDefConfigInclPathValue, oldConfigDefault), FileMissingError,
-                strPtr(strNewFmt("unable to open '%s/%s' for read: [2] No such file or directory", testPath(), BOGUS_STR)));
+        TEST_ERROR_FMT(
+            cfgFileLoad(parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
+            FileMissingError, STORAGE_ERROR_READ_MISSING, strPtr(strNewFmt("%s/BOGUS", testPath())));
 
         strLstFree(parseOptionList[cfgOptConfig].valueList);
         strLstFree(parseOptionList[cfgOptConfigIncludePath].valueList);

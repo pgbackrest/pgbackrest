@@ -87,7 +87,6 @@ my @stryCFile =
     'config/parse.c',
     'perl/config.c',
     'postgres/pageChecksum.c',
-    'storage/posix/common.c',
     'storage/posix/read.c',
     'storage/posix/storage.c',
     'storage/posix/write.c',

@@ -11,7 +11,6 @@ Posix Storage Read
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/object.h"
-#include "storage/posix/common.h"
 #include "storage/posix/read.h"
 #include "storage/posix/storage.intern.h"
 #include "storage/read.intern.h"
@@ -46,7 +45,7 @@ Close the file handle
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_READ_POSIX, LOG, logLevelTrace)
 {
     if (this->handle != -1)
-        storagePosixFileClose(this->handle, this->interface.name, true);
+        THROW_ON_SYS_ERROR_FMT(close(this->handle) == -1, FileCloseError, STORAGE_ERROR_READ_CLOSE, strPtr(this->interface.name));
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -67,9 +66,20 @@ storageReadPosixOpen(THIS_VOID)
 
     bool result = false;
 
-    // Open the file and handle errors
-        this->handle = storagePosixFileOpen(this->interface.name, O_RDONLY, 0, this->interface.ignoreMissing, true, "read");
+    // Open the file
+    this->handle = open(strPtr(this->interface.name), O_RDONLY, 0);
 
+    // Handle errors
+    if (this->handle == -1)
+    {
+        if (errno == ENOENT)
+        {
+            if (!this->interface.ignoreMissing)
+                THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strPtr(this->interface.name));
+        }
+        else
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strPtr(this->interface.name));
+    }
     // On success set free callback to ensure file handle is freed
     if (this->handle != -1)
     {

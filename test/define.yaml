@@ -511,10 +511,9 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
-        total: 21
+        total: 20
 
         coverage:
-          storage/posix/common: full
           storage/posix/read: full
           storage/posix/storage: full
           storage/posix/write: full
@@ -525,7 +524,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
-        total: 10
+        total: 11
         perlReq: true
 
         coverage:

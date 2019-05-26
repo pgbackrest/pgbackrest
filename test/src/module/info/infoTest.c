@@ -41,14 +41,13 @@ testRun(void)
 
         // Info files missing and at least one is required
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(
+        TEST_ERROR_FMT(
             infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL), FileMissingError,
-            strPtr(
-                strNewFmt(
-                    "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-                    "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
-                    "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory",
-                testPath(), testPath(), testPath(), testPath())));
+            "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING,
+            testPath(), testPath(), strPtr(strNewFmt("%s/test.ini", testPath())),
+            strPtr(strNewFmt("%s/test.ini.copy", testPath())));
 
         // Only copy exists and one is required
         //--------------------------------------------------------------------------------------------------------------------------
@@ -122,14 +121,12 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutNP(storageNewWriteNP(storageLocalWrite(), fileName), BUFSTR(content)), "put invalid br format to file");
 
-        TEST_ERROR(
+        TEST_ERROR_FMT(
             infoNewLoad(storageLocal(), fileName, cipherTypeNone, NULL, NULL), FormatError,
-            strPtr(
-                strNewFmt(
-                    "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-                    "FormatError: invalid format in '%s/test.ini', expected 5 but found 4\n"
-                    "FileMissingError: unable to open '%s/test.ini.copy' for read: [2] No such file or directory",
-                testPath(), testPath(), testPath(), testPath())));
+            "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
+            "FormatError: invalid format in '%s/test.ini', expected 5 but found 4\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING,
+            testPath(), testPath(), testPath(), strPtr(strNewFmt("%s/test.ini.copy", testPath())));
 
         content = strNew
         (
@@ -226,15 +223,13 @@ testRun(void)
         // Encryption error
         //--------------------------------------------------------------------------------------------------------------------------
         storageRemoveNP(storageLocalWrite(), fileName);
-        TEST_ERROR(
+        TEST_ERROR_FMT(
             infoNewLoad(storageLocal(), fileName, cipherTypeAes256Cbc, strNew("12345678"), NULL), CryptoError,
-            strPtr(
-                strNewFmt(
-                    "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
-                    "FileMissingError: unable to open '%s/test.ini' for read: [2] No such file or directory\n"
-                    "CryptoError: '%s/test.ini.copy' cipher header invalid\n"
-                    "HINT: Is or was the repo encrypted?",
-                testPath(), testPath(), testPath(), testPath())));
+            "unable to load info file '%s/test.ini' or '%s/test.ini.copy':\n"
+                "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+                "CryptoError: '%s/test.ini.copy' cipher header invalid\n"
+                "HINT: Is or was the repo encrypted?",
+            testPath(), testPath(), strPtr(strNewFmt("%s/test.ini", testPath())), testPath());
 
         storageRemoveNP(storageLocalWrite(), fileNameCopy);
 

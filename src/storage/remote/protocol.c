@@ -16,6 +16,7 @@ Remote Storage Protocol Handler
 Constants
 ***********************************************************************************************************************************/
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_EXISTS_STR,                  PROTOCOL_COMMAND_STORAGE_EXISTS);
+STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_FEATURE_STR,                 PROTOCOL_COMMAND_STORAGE_FEATURE);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_LIST_STR,                    PROTOCOL_COMMAND_STORAGE_LIST);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR,               PROTOCOL_COMMAND_STORAGE_OPEN_READ);
 STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR,              PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
@@ -68,6 +69,10 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             protocolServerResponse(server, VARBOOL(             // The unusual line break is to make coverage happy -- not sure why
                 interface.exists(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))))));
         }
+        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_FEATURE_STR))
+        {
+            protocolServerResponse(server, varNewUInt64(interface.feature));
+        }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_LIST_STR))
         {
             protocolServerResponse(
@@ -75,8 +80,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 varNewVarLst(
                     varLstNewStrLst(
                         interface.list(
-                            driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)),
-                            varStr(varLstGet(paramList, 2))))));
+                            driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varStr(varLstGet(paramList, 1))))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR))
         {
@@ -187,15 +191,14 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR))
         {
-            interface.pathRemove
-                (driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)),
-                varBool(varLstGet(paramList, 2)));
-
-            protocolServerResponse(server, NULL);
+            protocolServerResponse(server,
+                varNewBool(
+                    interface.pathRemove(
+                        driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR))
         {
-            interface.pathSync(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))), varBool(varLstGet(paramList, 1)));
+            interface.pathSync(driver, storagePathNP(storage, varStr(varLstGet(paramList, 0))));
 
             protocolServerResponse(server, NULL);
         }

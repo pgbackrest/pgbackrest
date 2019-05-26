@@ -18,7 +18,6 @@ Posix Storage
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
-#include "storage/posix/common.h"
 #include "storage/posix/read.h"
 #include "storage/posix/storage.intern.h"
 #include "storage/posix/write.h"
@@ -34,7 +33,7 @@ Object type
 struct StoragePosix
 {
     MemContext *memContext;                                         // Object memory context
-    bool syncPath;                                                  // Will paths be synced?
+    StorageInterface interface;                                     // Storage interface
 };
 
 /***********************************************************************************************************************************
@@ -75,14 +74,13 @@ storagePosixExists(THIS_VOID,  const String *path)
 File/path info
 ***********************************************************************************************************************************/
 static StorageInfo
-storagePosixInfo(THIS_VOID, const String *file, bool ignoreMissing, bool followLink)
+storagePosixInfo(THIS_VOID, const String *file, bool followLink)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, followLink);
     FUNCTION_LOG_END();
 
@@ -96,8 +94,8 @@ storagePosixInfo(THIS_VOID, const String *file, bool ignoreMissing, bool followL
 
     if ((followLink ? stat(strPtr(file), &statFile) : lstat(strPtr(file), &statFile)) == -1)
     {
-        if (errno != ENOENT || !ignoreMissing)
-            THROW_SYS_ERROR_FMT(FileOpenError, "unable to get info for '%s'", strPtr(file));
+        if (errno != ENOENT)
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO, strPtr(file));
     }
     // On success load info into a structure
     else
@@ -170,7 +168,7 @@ storagePosixInfoListEntry(
     {
         String *pathInfo = strEqZ(name, ".") ? strDup(path) : strNewFmt("%s/%s", strPtr(path), strPtr(name));
 
-        StorageInfo storageInfo = storagePosixInfo(this, pathInfo, true, false);
+        StorageInfo storageInfo = storagePosixInfo(this, pathInfo, false);
 
         if (storageInfo.exists)
         {
@@ -185,14 +183,13 @@ storagePosixInfoListEntry(
 }
 
 static bool
-storagePosixInfoList(THIS_VOID, const String *path, bool errorOnMissing, StorageInfoListCallback callback, void *callbackData)
+storagePosixInfoList(THIS_VOID, const String *path, StorageInfoListCallback callback, void *callbackData)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
@@ -201,25 +198,24 @@ storagePosixInfoList(THIS_VOID, const String *path, bool errorOnMissing, Storage
     ASSERT(path != NULL);
     ASSERT(callback != NULL);
 
-    DIR *dir = NULL;
     bool result = false;
 
-    TRY_BEGIN()
+    // Open the directory for read
+    DIR *dir = opendir(strPtr(path));
+
+    // If the directory could not be opened process errors and report missing directories
+    if (dir == NULL)
     {
-        // Open the directory for read
-        dir = opendir(strPtr(path));
+        if (errno != ENOENT)
+            THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strPtr(path));
+    }
+    else
+    {
+        // Directory was found
+        result = true;
 
-        // If the directory could not be opened process errors but ignore missing directories when specified
-        if (!dir)
+        TRY_BEGIN()
         {
-            if (errorOnMissing || errno != ENOENT)
-                THROW_SYS_ERROR_FMT(PathOpenError, "unable to open path '%s' for read", strPtr(path));
-        }
-        else
-        {
-            // Directory was found
-            result = true;
-
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 // Read the directory entries
@@ -236,13 +232,12 @@ storagePosixInfoList(THIS_VOID, const String *path, bool errorOnMissing, Storage
             }
             MEM_CONTEXT_TEMP_END();
         }
-    }
-    FINALLY()
-    {
-        if (dir != NULL)
+        FINALLY()
+        {
             closedir(dir);
+        }
+        TRY_END();
     }
-    TRY_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -251,14 +246,13 @@ storagePosixInfoList(THIS_VOID, const String *path, bool errorOnMissing, Storage
 Get a list of files from a directory
 ***********************************************************************************************************************************/
 static StringList *
-storagePosixList(THIS_VOID, const String *path, bool errorOnMissing, const String *expression)
+storagePosixList(THIS_VOID, const String *path, const String *expression)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
         FUNCTION_LOG_PARAM(STRING, expression);
     FUNCTION_LOG_END();
 
@@ -276,8 +270,8 @@ storagePosixList(THIS_VOID, const String *path, bool errorOnMissing, const Strin
         // If the directory could not be opened process errors but ignore missing directories when specified
         if (!dir)
         {
-            if (errorOnMissing || errno != ENOENT)
-                THROW_SYS_ERROR_FMT(PathOpenError, "unable to open path '%s' for read", strPtr(path));
+            if (errno != ENOENT)
+                THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST, strPtr(path));
         }
         else
         {
@@ -380,7 +374,7 @@ storagePosixMove(THIS_VOID,  StorageRead *source, StorageWrite *destination)
                 String *sourcePath = strPath(sourceFile);
 
                 if (!strEq(destinationPath, sourcePath))
-                    storagePosixPathSync(this, sourcePath, false);
+                    storagePosixPathSync(this, sourcePath);
             }
         }
     }
@@ -439,8 +433,8 @@ storagePosixNewWrite(
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE,
         storageWritePosixNew(
-            this, file, modeFile, modePath, user, group, timeModified, createPath, syncFile, this->syncPath ? syncPath : false,
-            atomic));
+            this, file, modeFile, modePath, user, group, timeModified, createPath, syncFile,
+            this->interface.pathSync != NULL ? syncPath : false, atomic));
 }
 
 /***********************************************************************************************************************************
@@ -516,20 +510,21 @@ storagePosixPathExists(THIS_VOID,  const String *path)
 /***********************************************************************************************************************************
 Remove a path
 ***********************************************************************************************************************************/
-static void
-storagePosixPathRemove(THIS_VOID, const String *path, bool errorOnMissing, bool recurse)
+static bool
+storagePosixPathRemove(THIS_VOID, const String *path, bool recurse)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, errorOnMissing);
         FUNCTION_LOG_PARAM(BOOL, recurse);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
+
+    bool result = true;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -537,7 +532,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool errorOnMissing, bool 
         if (recurse)
         {
             // Get a list of files in this path
-            StringList *fileList = storagePosixList(this, path, errorOnMissing, NULL);
+            StringList *fileList = storagePosixList(this, path, NULL);
 
             // Only continue if the path exists
             if (fileList != NULL)
@@ -552,10 +547,10 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool errorOnMissing, bool 
                     {
                         // These errors indicate that the entry is actually a path so we'll try to delete it that way
                         if (errno == EPERM || errno == EISDIR)              // {uncovered_branch - no EPERM on tested systems}
-                            storagePosixPathRemove(this, file, false, true);
+                            storagePosixPathRemove(this, file, true);
                         // Else error
                         else
-                            THROW_SYS_ERROR_FMT(PathRemoveError, "unable to remove path/file '%s'", strPtr(file));
+                            THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strPtr(file));
                     }
                 }
             }
@@ -564,46 +559,59 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool errorOnMissing, bool 
         // Delete the path
         if (rmdir(strPtr(path)) == -1)
         {
-            if (errorOnMissing || errno != ENOENT)
-                THROW_SYS_ERROR_FMT(PathRemoveError, "unable to remove path '%s'", strPtr(path));
+            if (errno != ENOENT)
+                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strPtr(path));
+
+            // Path does not exist
+            result = false;
         }
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
 Sync a path
 ***********************************************************************************************************************************/
 void
-storagePosixPathSync(THIS_VOID, const String *path, bool ignoreMissing)
+storagePosixPathSync(THIS_VOID, const String *path)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    if (this->syncPath)
+    // Open directory and handle errors
+    int handle = open(strPtr(path), O_RDONLY, 0);
+
+    // Handle errors
+    if (handle == -1)
     {
-        // Open directory and handle errors
-        int handle = storagePosixFileOpen(path, O_RDONLY, 0, ignoreMissing, false, "sync");
-
-        // On success
-        if (handle != -1)
+        if (errno == ENOENT)
+            THROW_FMT(PathMissingError, STORAGE_ERROR_PATH_SYNC_MISSING, strPtr(path));
+        else
+            THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_PATH_SYNC_OPEN, strPtr(path));
+    }
+    else
+    {
+        // Attempt to sync the directory
+        if (fsync(handle) == -1)
         {
-            // Attempt to sync the directory
-            storagePosixFileSync(handle, path, false, true);
+            int errNo = errno;
 
-            // Close the directory
-            storagePosixFileClose(handle, path, false);
+            // Close the handle to free resources but don't check for failure
+            close(handle);
+
+            THROW_SYS_ERROR_CODE_FMT(errNo, PathSyncError, STORAGE_ERROR_PATH_SYNC, strPtr(path));
         }
+
+        THROW_ON_SYS_ERROR_FMT(close(handle) == -1, PathCloseError, STORAGE_ERROR_PATH_SYNC_CLOSE, strPtr(path));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -642,7 +650,7 @@ New object
 Storage *
 storagePosixNewInternal(
     const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
-    StoragePathExpressionCallback pathExpressionFunction, bool syncPath)
+    StoragePathExpressionCallback pathExpressionFunction, bool pathSync)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, type);
@@ -651,7 +659,7 @@ storagePosixNewInternal(
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
-        FUNCTION_LOG_PARAM(BOOL, syncPath);
+        FUNCTION_LOG_PARAM(BOOL, pathSync);
     FUNCTION_LOG_END();
 
     ASSERT(type != NULL);
@@ -666,14 +674,17 @@ storagePosixNewInternal(
     {
         StoragePosix *driver = memNew(sizeof(StoragePosix));
         driver->memContext = MEM_CONTEXT_NEW();
-        driver->syncPath = syncPath;
 
-        this = storageNewP(
-            type, path, modeFile, modePath, write, pathExpressionFunction, driver, .exists = storagePosixExists,
-            .info = storagePosixInfo, .infoList = storagePosixInfoList, .list = storagePosixList, .move = storagePosixMove,
-            .newRead = storagePosixNewRead, .newWrite = storagePosixNewWrite, .pathCreate = storagePosixPathCreate,
-            .pathExists = storagePosixPathExists, .pathRemove = storagePosixPathRemove, .pathSync = storagePosixPathSync,
-            .remove = storagePosixRemove);
+        driver->interface = (StorageInterface)
+        {
+            .feature = (1 << storageFeaturePath), .exists = storagePosixExists, .info = storagePosixInfo,
+            .infoList = storagePosixInfoList, .list = storagePosixList, .move = storagePosixMove, .newRead = storagePosixNewRead,
+            .newWrite = storagePosixNewWrite, .pathCreate = storagePosixPathCreate, .pathExists = storagePosixPathExists,
+            .pathRemove = storagePosixPathRemove, .pathSync = pathSync ? storagePosixPathSync : NULL,
+            .remove = storagePosixRemove
+        };
+
+        this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -693,7 +704,5 @@ storagePosixNew(
     FUNCTION_LOG_END();
 
     FUNCTION_LOG_RETURN(
-        STORAGE,
-        storagePosixNewInternal(
-            STORAGE_POSIX_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, true));
+        STORAGE, storagePosixNewInternal(STORAGE_POSIX_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, true));
 }
