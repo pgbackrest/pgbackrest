@@ -200,6 +200,7 @@
     <!ATTLIST host-define from CDATA #REQUIRED>
 
 <!ELEMENT host-add (execute*)>
+    <!ATTLIST host-add if CDATA "">
     <!ATTLIST host-add id CDATA "">
     <!ATTLIST host-add name CDATA #REQUIRED>
     <!ATTLIST host-add user CDATA #REQUIRED>
