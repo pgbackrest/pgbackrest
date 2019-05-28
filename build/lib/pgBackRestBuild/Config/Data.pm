@@ -108,6 +108,8 @@ use constant CFGCMD_START                                           => 'start';
     push @EXPORT, qw(CFGCMD_START);
 use constant CFGCMD_STOP                                            => 'stop';
     push @EXPORT, qw(CFGCMD_STOP);
+use constant CFGCMD_STORAGE_LIST                                    => 'ls';
+    push @EXPORT, qw(CFGCMD_STORAGE_LIST);
 use constant CFGCMD_VERSION                                         => 'version';
     push @EXPORT, qw(CFGCMD_VERSION);
 
@@ -156,6 +158,13 @@ use constant CFGOPT_PROCESS                                         => 'process'
     push @EXPORT, qw(CFGOPT_PROCESS);
 use constant CFGOPT_HOST_ID                                         => 'host-id';
     push @EXPORT, qw(CFGOPT_HOST_ID);
+
+# Command-line only storage options
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant CFGOPT_FILTER                                          => 'filter';
+    push @EXPORT, qw(CFGOPT_FILTER);
+use constant CFGOPT_SORT                                            => 'sort';
+    push @EXPORT, qw(CFGOPT_SORT);
 
 # Command-line only test options
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -681,6 +690,13 @@ my $rhCommandDefine =
     {
     },
 
+    &CFGCMD_STORAGE_LIST =>
+    {
+        &CFGDEF_LOG_FILE => false,
+        &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
+        &CFGDEF_PARAMETER_ALLOWED => true,
+    },
+
     &CFGCMD_VERSION =>
     {
         &CFGDEF_LOG_FILE => false,
@@ -718,6 +734,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1049,6 +1066,33 @@ my %hConfigDefine =
         },
     },
 
+    # Command-line only storage options
+    #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_FILTER =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_STORAGE_LIST => {},
+        }
+    },
+
+    &CFGOPT_SORT =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'asc',
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'asc',
+            'desc',
+        ],
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_STORAGE_LIST => {},
+        }
+    },
+
     # Command-line only test options
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_TEST =>
@@ -1138,6 +1182,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1160,6 +1205,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1261,6 +1307,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1286,6 +1333,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1337,6 +1385,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1387,6 +1436,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1491,6 +1541,7 @@ my %hConfigDefine =
             },
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1517,6 +1568,7 @@ my %hConfigDefine =
             &CFGCMD_RESTORE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
         &CFGDEF_DEPEND =>
         {
@@ -1767,6 +1819,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1870,6 +1923,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         },
     },
 
@@ -1952,6 +2006,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -1985,6 +2040,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -2012,6 +2068,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 
@@ -2038,6 +2095,7 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+            &CFGCMD_STORAGE_LIST => {},
         }
     },
 

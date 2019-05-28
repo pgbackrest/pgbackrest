@@ -17,6 +17,7 @@ STRING_EXTERN(CFGCMD_EXPIRE_STR,                                    CFGCMD_EXPIR
 STRING_EXTERN(CFGCMD_HELP_STR,                                      CFGCMD_HELP);
 STRING_EXTERN(CFGCMD_INFO_STR,                                      CFGCMD_INFO);
 STRING_EXTERN(CFGCMD_LOCAL_STR,                                     CFGCMD_LOCAL);
+STRING_EXTERN(CFGCMD_LS_STR,                                        CFGCMD_LS);
 STRING_EXTERN(CFGCMD_REMOTE_STR,                                    CFGCMD_REMOTE);
 STRING_EXTERN(CFGCMD_RESTORE_STR,                                   CFGCMD_RESTORE);
 STRING_EXTERN(CFGCMD_STANZA_CREATE_STR,                             CFGCMD_STANZA_CREATE);
@@ -163,6 +164,19 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
     CONFIG_COMMAND
     (
+        CONFIG_COMMAND_NAME(CFGCMD_LS)
+
+        CONFIG_COMMAND_LOG_FILE(false)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
+        CONFIG_COMMAND_LOG_LEVEL_STDERR_MAX(logLevelTrace)
+        CONFIG_COMMAND_LOCK_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
+    )
+
+    CONFIG_COMMAND
+    (
         CONFIG_COMMAND_NAME(CFGCMD_REMOTE)
 
         CONFIG_COMMAND_LOG_FILE(true)
@@ -291,6 +305,7 @@ STRING_EXTERN(CFGOPT_DB_INCLUDE_STR,                                CFGOPT_DB_IN
 STRING_EXTERN(CFGOPT_DB_TIMEOUT_STR,                                CFGOPT_DB_TIMEOUT);
 STRING_EXTERN(CFGOPT_DELTA_STR,                                     CFGOPT_DELTA);
 STRING_EXTERN(CFGOPT_EXCLUDE_STR,                                   CFGOPT_EXCLUDE);
+STRING_EXTERN(CFGOPT_FILTER_STR,                                    CFGOPT_FILTER);
 STRING_EXTERN(CFGOPT_FORCE_STR,                                     CFGOPT_FORCE);
 STRING_EXTERN(CFGOPT_HOST_ID_STR,                                   CFGOPT_HOST_ID);
 STRING_EXTERN(CFGOPT_LINK_ALL_STR,                                  CFGOPT_LINK_ALL);
@@ -419,6 +434,7 @@ STRING_EXTERN(CFGOPT_REPO1_S3_VERIFY_TLS_STR,                       CFGOPT_REPO1
 STRING_EXTERN(CFGOPT_REPO1_TYPE_STR,                                CFGOPT_REPO1_TYPE);
 STRING_EXTERN(CFGOPT_RESUME_STR,                                    CFGOPT_RESUME);
 STRING_EXTERN(CFGOPT_SET_STR,                                       CFGOPT_SET);
+STRING_EXTERN(CFGOPT_SORT_STR,                                      CFGOPT_SORT);
 STRING_EXTERN(CFGOPT_SPOOL_PATH_STR,                                CFGOPT_SPOOL_PATH);
 STRING_EXTERN(CFGOPT_STANZA_STR,                                    CFGOPT_STANZA);
 STRING_EXTERN(CFGOPT_START_FAST_STR,                                CFGOPT_START_FAST);
@@ -613,6 +629,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_EXCLUDE)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptExclude)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_FILTER)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptFilter)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -1637,6 +1661,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_SET)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptSet)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_SORT)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptSort)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

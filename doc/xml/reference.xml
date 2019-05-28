@@ -1218,6 +1218,23 @@
                 </command-example-list>
             </command>
 
+            <!-- OPERATION - STORAGE-LIST COMMAND -->
+            <command id="storage-list" name="Storage List">
+                <summary>List paths/files in the repository.</summary>
+
+                <text>This is intended to be a general purpose list function, but for now it only works on the repository.</text>
+
+                <command-example-list>
+                    <command-example title="List all backups in a stanza">
+                        <text><code-block title="">
+                            {[backrest-exe]} storage-list backup/demo
+                        </code-block>
+
+                        List all backups in the demo stanza.</text>
+                    </command-example>
+                </command-example-list>
+            </command>
+
             <!-- OPERATION - VERSION COMMAND -->
             <command id="version" name="Version">
                 <summary>Get version.</summary>

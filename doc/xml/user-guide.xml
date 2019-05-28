@@ -182,7 +182,7 @@
         <variable key="host-repo1-mount">{[host-mount]}</variable>
 
         <!-- Commands for various operations -->
-        <variable key="cmd-backup-last">ls -1 {[backrest-repo-path]}/backup/demo | tail -5 | head -1</variable>
+        <variable key="cmd-backup-last">pgbackrest ls backup/demo --filter="(F|D|I)$" --sort=desc | head -1</variable>
 
         <!-- Data used to demonstrate backup/restore operations -->
         <variable key="test-table-data">Important Data</variable>

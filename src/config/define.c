@@ -55,7 +55,7 @@ typedef struct ConfigDefineOptionData
     unsigned int section:2;                                         // Config section (e.g. global, stanza, cmd-line)
     bool required:1;                                                // Is the option required?
     bool secure:1;                                                  // Does the option need to be redacted on logs and cmd-line?
-    unsigned int commandValid:18;                                   // Bitmap for commands that the option is valid for
+    unsigned int commandValid:20;                                   // Bitmap for commands that the option is valid for
 
     const char *helpSection;                                        // Classify the option
     const char *helpSummary;                                        // Brief summary of the option

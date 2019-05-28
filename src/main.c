@@ -14,6 +14,7 @@ Main
 #include "command/info/info.h"
 #include "command/local/local.h"
 #include "command/remote/remote.h"
+#include "command/storage/list.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/exit.h"
@@ -225,6 +226,14 @@ main(int argListSize, const char *argList[])
                 case cfgCmdStop:
                 {
                     perlExec();
+                    break;
+                }
+
+                // Storage list command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdLs:
+                {
+                    cmdStorageList();
                     break;
                 }
 

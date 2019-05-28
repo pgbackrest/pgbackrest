@@ -286,6 +286,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExclude,
     },
 
+    // filter option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_FILTER,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptFilter,
+    },
+
     // force option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2100,6 +2108,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptSet,
     },
 
+    // sort option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_SORT,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptSort,
+    },
+
     // spool-path option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2267,6 +2283,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptDbTimeout,
     cfgOptDelta,
     cfgOptExclude,
+    cfgOptFilter,
     cfgOptHostId,
     cfgOptLinkAll,
     cfgOptLinkMap,
@@ -2382,6 +2399,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoType,
     cfgOptResume,
     cfgOptSet,
+    cfgOptSort,
     cfgOptSpoolPath,
     cfgOptStartFast,
     cfgOptStopAuto,

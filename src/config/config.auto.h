@@ -29,6 +29,8 @@ Command constants
     STRING_DECLARE(CFGCMD_INFO_STR);
 #define CFGCMD_LOCAL                                                "local"
     STRING_DECLARE(CFGCMD_LOCAL_STR);
+#define CFGCMD_LS                                                   "ls"
+    STRING_DECLARE(CFGCMD_LS_STR);
 #define CFGCMD_REMOTE                                               "remote"
     STRING_DECLARE(CFGCMD_REMOTE_STR);
 #define CFGCMD_RESTORE                                              "restore"
@@ -46,7 +48,7 @@ Command constants
 #define CFGCMD_VERSION                                              "version"
     STRING_DECLARE(CFGCMD_VERSION_STR);
 
-#define CFG_COMMAND_TOTAL                                           19
+#define CFG_COMMAND_TOTAL                                           20
 
 /***********************************************************************************************************************************
 Option constants
@@ -95,6 +97,8 @@ Option constants
     STRING_DECLARE(CFGOPT_DELTA_STR);
 #define CFGOPT_EXCLUDE                                              "exclude"
     STRING_DECLARE(CFGOPT_EXCLUDE_STR);
+#define CFGOPT_FILTER                                               "filter"
+    STRING_DECLARE(CFGOPT_FILTER_STR);
 #define CFGOPT_FORCE                                                "force"
     STRING_DECLARE(CFGOPT_FORCE_STR);
 #define CFGOPT_HOST_ID                                              "host-id"
@@ -351,6 +355,8 @@ Option constants
     STRING_DECLARE(CFGOPT_RESUME_STR);
 #define CFGOPT_SET                                                  "set"
     STRING_DECLARE(CFGOPT_SET_STR);
+#define CFGOPT_SORT                                                 "sort"
+    STRING_DECLARE(CFGOPT_SORT_STR);
 #define CFGOPT_SPOOL_PATH                                           "spool-path"
     STRING_DECLARE(CFGOPT_SPOOL_PATH_STR);
 #define CFGOPT_STANZA                                               "stanza"
@@ -380,7 +386,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            164
+#define CFG_OPTION_TOTAL                                            166
 
 /***********************************************************************************************************************************
 Command enum
@@ -397,6 +403,7 @@ typedef enum
     cfgCmdHelp,
     cfgCmdInfo,
     cfgCmdLocal,
+    cfgCmdLs,
     cfgCmdRemote,
     cfgCmdRestore,
     cfgCmdStanzaCreate,
@@ -435,6 +442,7 @@ typedef enum
     cfgOptDbTimeout,
     cfgOptDelta,
     cfgOptExclude,
+    cfgOptFilter,
     cfgOptForce,
     cfgOptHostId,
     cfgOptLinkAll,
@@ -563,6 +571,7 @@ typedef enum
     cfgOptRepoType,
     cfgOptResume,
     cfgOptSet,
+    cfgOptSort,
     cfgOptSpoolPath,
     cfgOptStanza,
     cfgOptStartFast,
