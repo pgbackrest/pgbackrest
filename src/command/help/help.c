@@ -165,32 +165,26 @@ helpRender(void)
 
             for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
             {
-                if (commandId == cfgCmdNone)
+                if (commandId == cfgCmdNone || cfgCommandInternal(commandId))
                     continue;
 
-                // Only check size if the command has a help summary so we know it is a documented command
-                if (cfgDefCommandHelpSummary(cfgCommandDefIdFromId(commandId)) != NULL &&
-                    strlen(cfgCommandName(commandId)) > commandSizeMax)
-                {
+                if (strlen(cfgCommandName(commandId)) > commandSizeMax)
                     commandSizeMax = strlen(cfgCommandName(commandId));
-                }
             }
 
             // Output help for each command
             for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
             {
-                if (commandId == cfgCmdNone)
+                if (commandId == cfgCmdNone || cfgCommandInternal(commandId))
                     continue;
 
-                const char *helpSummary = cfgDefCommandHelpSummary(cfgCommandDefIdFromId(commandId));
-
-                if (helpSummary != NULL)
-                {
-                    strCatFmt(
-                        result, "    %s%*s%s\n", cfgCommandName(commandId),
-                        (int)(commandSizeMax - strlen(cfgCommandName(commandId)) + 2), "",
-                        strPtr(helpRenderText(STR(helpSummary), commandSizeMax + 6, false, CONSOLE_WIDTH)));
-                }
+                strCatFmt(
+                    result, "    %s%*s%s\n", cfgCommandName(commandId),
+                    (int)(commandSizeMax - strlen(cfgCommandName(commandId)) + 2), "",
+                    strPtr(
+                        helpRenderText(
+                            STR(cfgDefCommandHelpSummary(cfgCommandDefIdFromId(commandId))), commandSizeMax + 6, false,
+                            CONSOLE_WIDTH)));
             }
 
             // Construct message for more help

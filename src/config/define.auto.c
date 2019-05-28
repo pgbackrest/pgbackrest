@@ -123,6 +123,12 @@ static ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LI
     CFGDEFDATA_COMMAND
     (
         CFGDEFDATA_COMMAND_NAME("ls")
+
+        CFGDEFDATA_COMMAND_HELP_SUMMARY("List paths/files in the repository.")
+        CFGDEFDATA_COMMAND_HELP_DESCRIPTION
+        (
+            "This is intended to be a general purpose list function, but for now it only works on the repository."
+        )
     )
 
     CFGDEFDATA_COMMAND
@@ -1126,6 +1132,20 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLs)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLs)
+
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Filter output with a regular expression.")
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
+                (
+                    "The filter is applied against the file/path names before they are output."
+                )
+            )
         )
     )
 
@@ -4009,6 +4029,20 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("asc")
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLs)
+
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Sort output ascending/descending.")
+                CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
+                (
+                    "The following sort types are supported:\n"
+                    "\n"
+                    "* asc - sort ascending.\n"
+                    "* desc - sort descending."
+                )
+            )
         )
     )
 

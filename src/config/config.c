@@ -17,6 +17,7 @@ typedef struct ConfigCommandData
 {
     const char *name;
 
+    bool internal:1;
     bool lockRequired:1;
     bool lockRemoteRequired:1;
     unsigned int lockType:2;
@@ -34,6 +35,8 @@ typedef struct ConfigCommandData
 #define CONFIG_COMMAND(...)                                                                                                        \
     {__VA_ARGS__},
 
+#define CONFIG_COMMAND_INTERNAL(internalParam)                                                                                     \
+    .internal = internalParam,
 #define CONFIG_COMMAND_LOCK_REQUIRED(lockRequiredParam)                                                                            \
     .lockRequired = lockRequiredParam,
 #define CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(lockRemoteRequiredParam)                                                               \
@@ -326,6 +329,21 @@ cfgExeSet(const String *exeParam)
     MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Is this command internal-only?
+***********************************************************************************************************************************/
+bool
+cfgCommandInternal(ConfigCommand commandId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+    FUNCTION_TEST_END();
+
+    ASSERT(commandId < cfgCmdNone);
+
+    FUNCTION_TEST_RETURN(configCommandData[commandId].internal);
 }
 
 /***********************************************************************************************************************************

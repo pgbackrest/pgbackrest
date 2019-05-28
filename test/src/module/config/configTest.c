@@ -60,6 +60,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup), "command set to backup");
+        TEST_RESULT_INT(cfgCommandInternal(cfgCmdLocal), true, "local is internal");
+        TEST_RESULT_INT(cfgCommandInternal(cfgCmdBackup), false, "backup is external");
         TEST_RESULT_INT(cfgLogLevelDefault(), logLevelInfo, "default log level is info");
         TEST_RESULT_BOOL(cfgLogFile(), true, "log file is on");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "lock is required");

@@ -1218,16 +1218,40 @@
                 </command-example-list>
             </command>
 
-            <!-- OPERATION - STORAGE-LIST COMMAND -->
-            <command id="storage-list" name="Storage List">
+            <!-- OPERATION - LS COMMAND -->
+            <command id="ls" name="Storage List">
                 <summary>List paths/files in the repository.</summary>
 
                 <text>This is intended to be a general purpose list function, but for now it only works on the repository.</text>
 
+                <option-list>
+                    <!-- OPERATION - LS COMMAND - FILTER OPTION -->
+                    <option id="filter" name="Filter Output">
+                        <summary>Filter output with a regular expression.</summary>
+
+                        <text>The filter is applied against the file/path names before they are output.</text>
+
+                        <example>(F|D|I)$</example>
+                    </option>
+
+                    <!-- OPERATION - LS COMMAND - SORT OPTION -->
+                    <option id="sort" name="Sort Output">
+                        <summary>Sort output ascending/descending.</summary>
+
+                        <text>The following sort types are supported:
+                        <ul>
+                            <li><id>asc</id> - sort ascending.</li>
+                            <li><id>desc</id> - sort descending.</li>
+                        </ul></text>
+
+                        <example>desc</example>
+                    </option>
+                </option-list>
+
                 <command-example-list>
                     <command-example title="List all backups in a stanza">
                         <text><code-block title="">
-                            {[backrest-exe]} storage-list backup/demo
+                            {[backrest-exe]} ls backup/demo
                         </code-block>
 
                         List all backups in the demo stanza.</text>

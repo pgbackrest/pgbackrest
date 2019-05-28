@@ -196,7 +196,7 @@ sub process
     foreach my $strCommand (cfgDefineCommandList())
     {
         if ($strCommand eq CFGCMD_REMOTE || $strCommand eq CFGCMD_LOCAL || $strCommand eq CFGCMD_ARCHIVE_GET_ASYNC ||
-            $strCommand eq CFGCMD_ARCHIVE_PUSH_ASYNC || $strCommand eq CFGCMD_STORAGE_LIST)
+            $strCommand eq CFGCMD_ARCHIVE_PUSH_ASYNC)
         {
             next;
         }

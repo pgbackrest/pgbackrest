@@ -596,6 +596,7 @@ my $rhCommandDefine =
 
     &CFGCMD_ARCHIVE_GET_ASYNC =>
     {
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_LOG_FILE => true,
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
@@ -612,6 +613,7 @@ my $rhCommandDefine =
 
     &CFGCMD_ARCHIVE_PUSH_ASYNC =>
     {
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_LOG_FILE => true,
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_REMOTE_REQUIRED => true,
@@ -652,11 +654,13 @@ my $rhCommandDefine =
 
     &CFGCMD_LOCAL =>
     {
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_LOG_LEVEL_STDERR_MAX => ERROR,
     },
 
     &CFGCMD_REMOTE =>
     {
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_LOG_LEVEL_STDERR_MAX => ERROR,
     },
 
@@ -692,6 +696,7 @@ my $rhCommandDefine =
 
     &CFGCMD_STORAGE_LIST =>
     {
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
         &CFGDEF_PARAMETER_ALLOWED => true,
@@ -2575,6 +2580,12 @@ my %hConfigDefine =
 ####################################################################################################################################
 foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
 {
+    # Commands are external by default
+    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_INTERNAL}))
+    {
+        $rhCommandDefine->{$strCommand}{&CFGDEF_INTERNAL} = false;
+    }
+
     # Log files are created by default
     if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOG_FILE}))
     {
