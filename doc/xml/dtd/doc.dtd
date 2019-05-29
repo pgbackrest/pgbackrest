@@ -129,13 +129,14 @@
 
 <!ELEMENT block-define (
     ((p|list|table|host-add|execute-list|backrest-config|postgres-config|cmd-description|
-      option-description|code-block|block)+|
+      option-description|code-block|block|admonition)+|
     ((p|list)*, section+)|(p|list)*))>
     <!ATTLIST block-define id CDATA #REQUIRED>
     <!ATTLIST block-define if CDATA "">
 
-<!ELEMENT block (block-variable-replace+)>
+<!ELEMENT block (block-variable-replace*)>
     <!ATTLIST block id CDATA #REQUIRED>
+    <!ATTLIST block if CDATA "">
 <!ELEMENT block-variable-replace (#PCDATA)>
     <!ATTLIST block-variable-replace key CDATA #REQUIRED>
 

@@ -541,7 +541,7 @@ sub build
 
         my $strNodeJSON = $self->{oJSON}->encode($self->{oyBlockDefine}{$strBlockId});
 
-        foreach my $oVariable ($oNode->nodeList('block-variable-replace'))
+        foreach my $oVariable ($oNode->nodeList('block-variable-replace', false))
         {
             my $strVariableKey = $oVariable->paramGet('key');
             my $strVariableReplace = $oVariable->valueGet();

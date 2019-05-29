@@ -137,6 +137,7 @@
         <variable key="pg-switch-wal" if="{[pg-version]} &gt;= 10">pg_switch_wal</variable>
 
         <!-- S3 Settings -->
+        <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
         <variable key="s3-bucket">demo-bucket</variable>
         <variable key="s3-repo">demo-repo</variable>
@@ -584,6 +585,59 @@
         </execute-list>
     </block-define>
 
+    <!-- ======================================================================================================================= -->
+    <block-define id="s3-setup">
+        <execute-list host="{[s3-setup-host]}">
+            <title>Install packages required for S3-compatible object store support</title>
+
+            <execute if="{[os-type-is-debian]}" user="root" pre="y">
+                <exe-cmd>apt-get install libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+             <execute if="{[os-type-is-centos]}" user="root" pre="y">
+                 <exe-cmd>yum install perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
+                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+             </execute>
+        </execute-list>
+
+        <p><backrest/> supports locating repositories in <proper>S3-compatible</proper> object stores.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
+
+        <execute-list if="'{[s3-local]}' eq 'y'" host="{[s3-setup-host]}" show="n">
+            <title>Create the bucket</title>
+
+            <!-- Set host entries to redirect AWS to local s3 server -->
+            <execute user="root" user-force="y" show="n">
+                <exe-cmd>echo "{[host-s3-ip]} {[s3-bucket]}.{[s3-endpoint]} {[s3-endpoint]}" | tee -a /etc/hosts</exe-cmd>
+            </execute>
+
+            <execute show='n'>
+                <exe-cmd>mc config host add demo https://{[host-s3-ip]} {[s3-key]} {[s3-key-secret]} --insecure</exe-cmd>
+            </execute>
+
+            <execute if="'{[s3-setup-create-bucket]}' eq 'y'" show='n'>
+                <exe-cmd>mc mb demo/{[s3-bucket]} --insecure</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <backrest-config host="{[s3-setup-host]}" file="{[backrest-config-demo]}" owner="{[s3-setup-config-owner]}">
+            <title>Configure <proper>S3</proper></title>
+
+            <backrest-config-option section="global" key="repo1-type">s3</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-path">/{[s3-repo]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-s3-key">{[s3-key]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-s3-key-secret">{[s3-key-secret]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-s3-bucket">{[s3-bucket]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-s3-region">{[s3-region]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-s3-ca-file" if="{[os-type-is-centos]}">/etc/pki/tls/certs/ca-bundle.crt</backrest-config-option>
+
+            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
+        </backrest-config>
+
+        <admonition type="note">The region and endpoint will need to be configured to where the bucket is located.  The values given here are for the <id>{[s3-region]}</id> region.</admonition>
+    </block-define>
+
     <!-- SECTION => INTRODUCTION -->
     <section id="introduction">
         <title>Introduction</title>
@@ -1008,6 +1062,16 @@
             </backrest-config>
 
             <p>Once the repository has been configured and the stanza created and checked, the repository encryption settings cannot be changed.</p>
+        </section>
+
+        <section id="s3-support" if="'{[s3-all]}' eq 'y'">
+            <title>S3-Compatible Object Store Support</title>
+
+            <block id="s3-setup">
+                <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
+                <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
+            </block>
         </section>
 
         <!-- SECTION => QUICKSTART - STANZA CREATE -->
@@ -2005,65 +2069,14 @@
     </section>
 
     <!-- SECTION => S3-SUPPORT -->
-    <section id="s3-support" depend="/quickstart/configure-archiving">
+    <section id="s3-support" if="'{[s3-all]}' ne 'y'" depend="/quickstart/configure-archiving">
         <title>S3-Compatible Object Store Support</title>
 
-        <execute-list host="{[host-pg1]}">
-            <title>Install packages required for S3-compatible object store support</title>
-
-            <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>apt-get install libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-
-             <execute if="{[os-type-is-centos]}" user="root" pre="y">
-                 <exe-cmd>yum install perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
-                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-             </execute>
-        </execute-list>
-
-        <p><backrest/> supports locating repositories in <proper>S3-compatible</proper> object stores.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
-
-        <execute-list if="'{[s3-local]}' eq 'y'" host="{[host-pg1]}" show="n">
-            <title>Create the bucket</title>
-
-            <!-- Set host entries to redirect AWS to local s3 server -->
-            <execute user="root" user-force="y" show="n">
-                <exe-cmd>echo "{[host-s3-ip]} {[s3-bucket]}.{[s3-endpoint]} {[s3-endpoint]}" | tee -a /etc/hosts</exe-cmd>
-            </execute>
-
-            <execute show='n'>
-                <exe-cmd>mc config host add demo https://{[host-s3-ip]} {[s3-key]} {[s3-key-secret]} --insecure</exe-cmd>
-            </execute>
-
-            <execute show='n'>
-                <exe-cmd>mc mb demo/{[s3-bucket]} --insecure</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <backrest-config host="{[host-pg1]}" show="n" file="{[backrest-config-demo]}">
-            <title>Clear the cipher settings</title>
-
-            <backrest-config-option section="global" key="repo1-cipher-type">none</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-cipher-pass"></backrest-config-option>
-        </backrest-config>
-
-        <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
-            <title>Configure <proper>S3</proper></title>
-
-            <backrest-config-option section="global" key="repo1-type">s3</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-path">/{[s3-repo]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-key">{[s3-key]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-key-secret">{[s3-key-secret]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-bucket">{[s3-bucket]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-region">{[s3-region]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-ca-file" if="{[os-type-is-centos]}">/etc/pki/tls/certs/ca-bundle.crt</backrest-config-option>
-
-            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
-        </backrest-config>
-
-        <admonition type="note">The region and endpoint will need to be configured to where the bucket is located.  The values given here are for the <id>{[s3-region]}</id> region.</admonition>
+        <block id="s3-setup">
+            <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
+            <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
+            <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
+        </block>
 
         <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible.  This sample <proper>Amazon S3</proper> policy will restrict all reads and writes to the bucket and repository path.</p>
 
@@ -2318,6 +2331,14 @@
                     </exe-cmd>
                 </execute>
             </execute-list>
+
+            <p if="'{[s3-all]}' eq 'y'">Configure S3-compatible object store if required.</p>
+
+            <block id="s3-setup" if="'{[s3-all]}' eq 'y'">
+                <block-variable-replace key="s3-setup-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="s3-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
+                <block-variable-replace key="s3-setup-create-bucket">n</block-variable-replace>
+            </block>
 
             <p>Create the stanza in the new repository.</p>
 
