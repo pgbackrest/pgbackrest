@@ -88,7 +88,7 @@ sub run
         {vm => VM2, remote =>  true, s3 => false, encrypt =>  true},
         {vm => VM3, remote => false, s3 => false, encrypt =>  true},
         {vm => VM3, remote =>  true, s3 =>  true, encrypt => false},
-        {vm => VM4, remote => false, s3 =>  true, encrypt =>  true},
+        {vm => VM4, remote => false, s3 => false, encrypt => false},
         {vm => VM4, remote =>  true, s3 => false, encrypt => false},
     )
     {

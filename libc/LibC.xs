@@ -73,6 +73,7 @@ These includes define data structures that are required for the C to Perl interf
 #include "xs/crypto/hash.xsh"
 #include "xs/common/encode.xsh"
 #include "xs/storage/storage.xsh"
+#include "xs/storage/storageRead.xsh"
 
 /***********************************************************************************************************************************
 Module definition
@@ -103,4 +104,5 @@ INCLUDE: xs/crypto/hash.xs
 INCLUDE: xs/crypto/random.xs
 INCLUDE: xs/postgres/pageChecksum.xs
 INCLUDE: xs/storage/storage.xs
+INCLUDE: xs/storage/storageRead.xs
 INCLUDE: xs/storage/storageOld.xs

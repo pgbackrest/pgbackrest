@@ -81,6 +81,7 @@ These includes define data structures that are required for the C to Perl interf
 #include "xs/crypto/hash.xsh"
 #include "xs/common/encode.xsh"
 #include "xs/storage/storage.xsh"
+#include "xs/storage/storageRead.xsh"
 
 /***********************************************************************************************************************************
 Module definition
@@ -275,7 +276,10 @@ XS_EUPXS(XS_pgBackRest__LibC_libcUvSize)
 /* INCLUDE:  Including 'xs/storage/storage.xs' from 'xs/postgres/pageChecksum.xs' */
 
 
-/* INCLUDE:  Including 'xs/storage/storageOld.xs' from 'xs/storage/storage.xs' */
+/* INCLUDE:  Including 'xs/storage/storageRead.xs' from 'xs/storage/storage.xs' */
+
+
+/* INCLUDE:  Including 'xs/storage/storageOld.xs' from 'xs/storage/storageRead.xs' */
 
 
 XS_EUPXS(XS_pgBackRest__LibC_storagePosixPathRemove); /* prototype to pass -Wmissing-prototypes */
@@ -316,7 +320,83 @@ XS_EUPXS(XS_pgBackRest__LibC_storageRepoFree)
 }
 
 
-/* INCLUDE: Returning to 'xs/storage/storage.xs' from 'xs/storage/storageOld.xs' */
+/* INCLUDE: Returning to 'xs/storage/storageRead.xs' from 'xs/storage/storageOld.xs' */
+
+
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_new); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_new)
+{
+    dVAR; dXSARGS;
+    if (items != 4)
+       croak_xs_usage(cv,  "class, storage, file, ignoreMissing");
+    {
+	const char *	class = (const char *)SvPV_nolen(ST(0))
+;
+	pgBackRest__LibC__Storage	storage;
+	const char *	file = (const char *)SvPV_nolen(ST(2))
+;
+	bool	ignoreMissing = (bool)SvTRUE(ST(3))
+;
+	pgBackRest__LibC__StorageRead	RETVAL;
+
+	if (SvROK(ST(1)) && sv_derived_from(ST(1), "pgBackRest::LibC::Storage")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(1)));
+	    storage = INT2PTR(pgBackRest__LibC__Storage,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not of type %s",
+			"pgBackRest::LibC::StorageRead::new",
+			"storage", "pgBackRest::LibC::Storage")
+;
+    CHECK(strcmp(class, PACKAGE_NAME_LIBC "::StorageRead") == 0);
+
+    RETVAL = NULL;
+
+    MEM_CONTEXT_XS_NEW_BEGIN("StorageReadXs")
+    {
+        RETVAL = memNew(sizeof(StorageReadXs));
+        RETVAL->memContext = MEM_COMTEXT_XS();
+
+        RETVAL->storage = storage->pxPayload;
+        RETVAL->read = storageNewReadP(RETVAL->storage, STR(file), .ignoreMissing = ignoreMissing);
+    }
+    MEM_CONTEXT_XS_NEW_END();
+	{
+	    SV * RETVALSV;
+	    RETVALSV = sv_newmortal();
+	    sv_setref_pv(RETVALSV, "pgBackRest::LibC::StorageRead", (void*)RETVAL);
+	    ST(0) = RETVALSV;
+	}
+    }
+    XSRETURN(1);
+}
+
+
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_DESTROY); /* prototype to pass -Wmissing-prototypes */
+XS_EUPXS(XS_pgBackRest__LibC__StorageRead_DESTROY)
+{
+    dVAR; dXSARGS;
+    if (items != 1)
+       croak_xs_usage(cv,  "self");
+    {
+	pgBackRest__LibC__StorageRead	self;
+
+	if (SvROK(ST(0))) {
+	    IV tmp = SvIV((SV*)SvRV(ST(0)));
+	    self = INT2PTR(pgBackRest__LibC__StorageRead,tmp);
+	}
+	else
+	    Perl_croak_nocontext("%s: %s is not a reference",
+			"pgBackRest::LibC::StorageRead::DESTROY",
+			"self")
+;
+    MEM_CONTEXT_XS_DESTROY(self->memContext);
+    }
+    XSRETURN_EMPTY;
+}
+
+
+/* INCLUDE: Returning to 'xs/storage/storage.xs' from 'xs/storage/storageRead.xs' */
 
 
 XS_EUPXS(XS_pgBackRest__LibC__Storage_new); /* prototype to pass -Wmissing-prototypes */
@@ -1499,6 +1579,8 @@ XS_EXTERNAL(boot_pgBackRest__LibC)
         newXS_deffile("pgBackRest::LibC::libcUvSize", XS_pgBackRest__LibC_libcUvSize);
         newXS_deffile("pgBackRest::LibC::storagePosixPathRemove", XS_pgBackRest__LibC_storagePosixPathRemove);
         newXS_deffile("pgBackRest::LibC::storageRepoFree", XS_pgBackRest__LibC_storageRepoFree);
+        newXS_deffile("pgBackRest::LibC::StorageRead::new", XS_pgBackRest__LibC__StorageRead_new);
+        newXS_deffile("pgBackRest::LibC::StorageRead::DESTROY", XS_pgBackRest__LibC__StorageRead_DESTROY);
         newXS_deffile("pgBackRest::LibC::Storage::new", XS_pgBackRest__LibC__Storage_new);
         newXS_deffile("pgBackRest::LibC::Storage::list", XS_pgBackRest__LibC__Storage_list);
         newXS_deffile("pgBackRest::LibC::Storage::pathCreate", XS_pgBackRest__LibC__Storage_pathCreate);
